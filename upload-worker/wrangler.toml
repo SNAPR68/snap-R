@@ -1,0 +1,23 @@
+name = "snapr-api"
+main = "src/index.ts"
+compatibility_date = "2024-11-15"
+
+account_id = "fba122ac756d435879872c360b2004f7"
+workers_dev = true
+send_metrics = true
+
+[vars]
+R2_BUCKET = "snap-r"
+CLOUDINARY_CLOUD_NAME = "${CLOUDINARY_CLOUD_NAME}"
+CLOUDINARY_API_KEY = "${CLOUDINARY_API_KEY}"
+CLOUDINARY_API_SECRET = "${CLOUDINARY_API_SECRET}"
+OPENAI_API_KEY = "${OPENAI_API_KEY}"
+RUNWARE_API_KEY = "${RUNWARE_API_KEY}"
+
+[[r2_buckets]]
+binding = "R2"
+bucket_name = "snap-r"
+
+[[queues.producers]]
+queue = "snapr-jobs"
+binding = "JOB_QUEUE"
