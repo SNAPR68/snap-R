@@ -1,9 +1,9 @@
-/** @type {import("next").NextConfig} */
+/** @type {import('next').NextConfig} */
 const nextConfig = {
   output: "standalone",
 
   experimental: {
-    optimizeCss: true,
+    optimizePackageImports: false,
   },
 
   typescript: {
@@ -12,7 +12,7 @@ const nextConfig = {
 
   eslint: {
     ignoreDuringBuilds: true,
-  },
+  }
 };
 
 export default nextConfig;
