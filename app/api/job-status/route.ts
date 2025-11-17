@@ -1,12 +1,26 @@
 export const runtime = "edge";
 export const dynamic = "force-dynamic";
-export const dynamicParams = true;
 
 import { NextRequest, NextResponse } from "next/server";
-import { supabaseAdmin } from "@/lib/supabase";
+import { createClient } from "@supabase/supabase-js";
+
+function getSupabase() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false
+      }
+    }
+  );
+}
 
 export async function GET(request: NextRequest) {
   try {
+    const supabase = getSupabase();
+    
     const searchParams = request.nextUrl.searchParams;
     const id = searchParams.get("id");
 
@@ -18,7 +32,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Fetch job status
-    const { data: job, error: jobError } = await supabaseAdmin
+    const { data: job, error: jobError } = await supabase
       .from("jobs")
       .select("*")
       .eq("id", id)
@@ -33,7 +47,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Fetch associated photos
-    const { data: photos, error: photosError } = await supabaseAdmin
+    const { data: photos, error: photosError } = await supabase
       .from("photos")
       .select("*")
       .eq("job_id", id);
@@ -59,6 +73,3 @@ export async function GET(request: NextRequest) {
     );
   }
 }
-
-
-
