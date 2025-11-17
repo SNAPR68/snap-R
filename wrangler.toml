@@ -1,0 +1,6 @@
+name = "snapr-gpt"
+main = ".next/standalone/server.js"
+compatibility_date = "2024-11-17"
+
+[build]
+command = "npm run build"

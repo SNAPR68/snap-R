@@ -29,13 +29,13 @@ export default function UploadPage() {
       const res = await apiUpload("/upload", formData);
       
       if (!res.ok) {
-        const errorData = await res.json().catch(() => ({ error: "Upload failed" }));
+        const errorData = await res.json().catch(() => ({ error: "Upload failed" })) as { error?: string };
         throw new Error(errorData.error || "Upload failed");
       }
 
-      const data = await res.json();
+      const data = await res.json() as { jobId?: string };
 
-      if (data.jobId) {
+      if (data?.jobId) {
         router.push(`/jobs/${data.jobId}`);
       } else {
         throw new Error("No job ID returned");
