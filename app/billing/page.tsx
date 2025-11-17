@@ -1,3 +1,6 @@
+export const dynamic = "force-dynamic";
+export const runtime = "edge";
+
 import PageShell from "@/components/layout/page-shell";
 import { Button } from "@/components/ui/button";
 

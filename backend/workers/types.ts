@@ -9,5 +9,6 @@ export interface Env {
   OPENAI_API_KEY: string;
   RUNWARE_API_KEY: string;
   REPLICATE_API_TOKEN: string;
+  CLOUDFLARE_R2_PUBLIC_URL?: string;
 }
 
