@@ -1,7 +1,5 @@
 "use client";
 
-export const runtime = "edge";
-
 import PageShell from "@/components/layout/page-shell";
 import { DashboardActionCard } from "@/components/ui/dashboard-action-card";
 import { UploadCloud, Image, Building } from "lucide-react";

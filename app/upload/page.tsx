@@ -1,7 +1,5 @@
 "use client";
 
-export const runtime = "edge";
-
 import { useState } from "react";
 import PageShell from "@/components/layout/page-shell";
 import { apiUpload } from "@/lib/api";

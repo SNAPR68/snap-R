@@ -1,4 +1,4 @@
-export const runtime = "edge";
+"use client";
 
 import PageShell from "@/components/layout/page-shell";
 
@@ -10,6 +10,3 @@ export default function SettingsPage() {
     </PageShell>
   );
 }
-
-
-

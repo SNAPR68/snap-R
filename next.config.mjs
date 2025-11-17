@@ -1,19 +1,18 @@
-// next.config.mjs
-
-import { createRequire } from "module";
-
-const require = createRequire(import.meta.url);
-
-export default {
+/** @type {import('next').NextConfig} */
+const nextConfig = {
   output: "standalone",
-
-  reactStrictMode: true,
-
-  // Allow Cloudflare build to pass
-  typescript: {
-    ignoreBuildErrors: true,
+  experimental: {
+    serverComponentsExternalPackages: ["sharp"],
   },
   eslint: {
     ignoreDuringBuilds: true,
   },
+  typescript: {
+    ignoreBuildErrors: true,
+  },
+  images: {
+    unoptimized: true,
+  }
 };
+
+export default nextConfig;

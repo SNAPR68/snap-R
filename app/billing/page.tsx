@@ -1,4 +1,4 @@
-export const runtime = "edge";
+"use client";
 
 import PageShell from "@/components/layout/page-shell";
 import { Button } from "@/components/ui/button";
@@ -15,6 +15,3 @@ export default function BillingPage() {
     </PageShell>
   );
 }
-
-
-
