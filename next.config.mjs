@@ -1,5 +1,5 @@
 const nextConfig = {
-  output: "standalone",
+  output: "export",
 
   experimental: {
     serverActions: {
@@ -9,10 +9,6 @@ const nextConfig = {
 
   trailingSlash: false,
   skipMiddlewareUrlNormalize: true,
-  optimizePackageImports: [],
-  
-  dynamicIo: true,
-  dynamicParams: true,
   staticPageGenerationTimeout: 1,
 
   generateBuildId: async () => {
