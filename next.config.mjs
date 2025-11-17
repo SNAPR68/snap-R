@@ -1,18 +1,14 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  output: "export",
-  distDir: "out",
-  trailingSlash: true,
+  // standalone server build for SSR
+  output: "standalone",
 
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
-  typescript: {
-    ignoreBuildErrors: true,
-  },
-  images: {
-    unoptimized: true,
-  }
+  // avoid blocking builds with TS/ESLint during CI - adjust later if you want strict checks
+  typescript: { ignoreBuildErrors: true },
+  eslint: { ignoreDuringBuilds: true },
+
+  // keep other defaults
+  reactStrictMode: true,
 };
 
 export default nextConfig;
