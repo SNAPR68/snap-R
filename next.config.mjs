@@ -1,18 +1,19 @@
-/** @type {import('next').NextConfig} */
-const nextConfig = {
-  output: "export",
+// next.config.mjs
 
-  experimental: {
-    optimizePackageImports: [],
-  },
+import { createRequire } from "module";
 
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
+const require = createRequire(import.meta.url);
 
+export default {
+  output: "standalone",
+
+  reactStrictMode: true,
+
+  // Allow Cloudflare build to pass
   typescript: {
     ignoreBuildErrors: true,
   },
+  eslint: {
+    ignoreDuringBuilds: true,
+  },
 };
-
-export default nextConfig;
