@@ -1,10 +1,9 @@
-import { defineConfig } from "next";
-
-export default defineConfig({
-  output: "standalone",
+/** @type {import('next').NextConfig} */
+const nextConfig = {
+  output: "export",
 
   experimental: {
-    serverActions: true,
+    optimizePackageImports: [],
   },
 
   eslint: {
@@ -14,4 +13,6 @@ export default defineConfig({
   typescript: {
     ignoreBuildErrors: true,
   },
-});
+};
+
+export default nextConfig;
