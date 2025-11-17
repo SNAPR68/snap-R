@@ -23,7 +23,7 @@ export default function JobStatusPage({ params }: { params: { id: string } }) {
         throw new Error("Failed to fetch job status");
       }
 
-      const data = await res.json();
+      const data = await res.json() as { status?: string; photos?: any[] };
       setStatus(data.status || "unknown");
       setPhotos(data.photos || []);
       setError(null);
