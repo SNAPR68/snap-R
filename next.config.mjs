@@ -3,7 +3,7 @@ const nextConfig = {
   output: "standalone",
 
   experimental: {
-    optimizePackageImports: false,
+    optimizePackageImports: [],
   },
 
   typescript: {
