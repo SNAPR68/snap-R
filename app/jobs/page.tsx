@@ -1,8 +1,11 @@
 "use client";
 
+export const dynamic = "force-dynamic";
+export const runtime = "edge";
+
 import { useEffect, useState } from "react";
+import { createClient } from "@supabase/supabase-js";
 import PageShell from "@/components/layout/page-shell";
-import { supabase } from "@/lib/supabase";
 import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -15,6 +18,12 @@ export default function JobsPage() {
   useEffect(() => {
     async function fetchJobs() {
       try {
+        // Initialize Supabase client at runtime
+        const supabase = createClient(
+          process.env.NEXT_PUBLIC_SUPABASE_URL!,
+          process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+        );
+
         const { data: jobsData, error: jobsError } = await supabase
           .from("jobs")
           .select("*")

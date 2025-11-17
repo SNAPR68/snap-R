@@ -1,9 +1,12 @@
 "use client";
 
+export const dynamic = "force-dynamic";
+export const runtime = "edge";
+
 import { useEffect, useState } from "react";
+import { createClient } from "@supabase/supabase-js";
 import PageShell from "@/components/layout/page-shell";
 import { BeforeAfterSlider } from "@/components/ui/before-after-slider";
-import { supabase } from "@/lib/supabase";
 import { useParams } from "next/navigation";
 import { getR2PublicUrl } from "@/lib/utils";
 
@@ -18,6 +21,12 @@ export default function ListingDetailsPage() {
   useEffect(() => {
     async function fetchListingData() {
       try {
+        // Initialize Supabase client at runtime
+        const supabase = createClient(
+          process.env.NEXT_PUBLIC_SUPABASE_URL!,
+          process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+        );
+
         // Fetch listing
         const { data: listingData, error: listingError } = await supabase
           .from("listings")

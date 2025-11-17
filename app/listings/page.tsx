@@ -1,9 +1,12 @@
 "use client";
 
+export const dynamic = "force-dynamic";
+export const runtime = "edge";
+
 import { useEffect, useState } from "react";
+import { createClient } from "@supabase/supabase-js";
 import PageShell from "@/components/layout/page-shell";
 import { ListingCard } from "@/components/listing-card";
-import { supabase } from "@/lib/supabase";
 
 export default function ListingsPage() {
   const [listings, setListings] = useState<any[]>([]);
@@ -13,6 +16,12 @@ export default function ListingsPage() {
   useEffect(() => {
     async function fetchListings() {
       try {
+        // Initialize Supabase client at runtime
+        const supabase = createClient(
+          process.env.NEXT_PUBLIC_SUPABASE_URL!,
+          process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+        );
+
         // Fetch listings with photo counts
         const { data: listingsData, error: listingsError } = await supabase
           .from("listings")
