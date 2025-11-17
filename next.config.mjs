@@ -1,9 +1,9 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  output: "standalone",
-  experimental: {
-    serverComponentsExternalPackages: ["sharp"],
-  },
+  output: "export",
+  distDir: "out",
+  trailingSlash: true,
+
   eslint: {
     ignoreDuringBuilds: true,
   },
