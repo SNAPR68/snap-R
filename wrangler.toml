@@ -1,0 +1,6 @@
+name = "snapr-frontend"
+compatibility_date = "2024-11-01"
+
+[pages]
+api = ".next/server"
+

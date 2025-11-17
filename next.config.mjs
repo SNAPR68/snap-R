@@ -1,27 +1,17 @@
-const nextConfig = {
-  output: "export",
+import { defineConfig } from "next";
+
+export default defineConfig({
+  output: "standalone",
 
   experimental: {
-    serverActions: {
-      bodySizeLimit: "10mb",
-    },
-  },
-
-  trailingSlash: false,
-  skipMiddlewareUrlNormalize: true,
-  staticPageGenerationTimeout: 1,
-
-  generateBuildId: async () => {
-    return "build";
-  },
-
-  typescript: {
-    ignoreBuildErrors: true,
+    serverActions: true,
   },
 
   eslint: {
     ignoreDuringBuilds: true,
   },
-};
 
-export default nextConfig;
+  typescript: {
+    ignoreBuildErrors: true,
+  },
+});
