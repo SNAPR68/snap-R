@@ -1,4 +1,4 @@
-import { createRequestHandler } from "@opennextjs/cloudflare";
+import { createRequestHandler, createMetadataHandler } from "open-next/cloudflare";
 
-export default createRequestHandler();
-
+export const onRequest = createRequestHandler();
+export const onMeta = createMetadataHandler();

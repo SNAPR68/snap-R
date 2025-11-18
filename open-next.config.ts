@@ -1,5 +1,6 @@
-import { defineConfig } from "@opennextjs/cloudflare";
+import { defineConfig } from "open-next/config";
 
 export default defineConfig({
-  outputFolder: ".opennext",
+  outDir: ".opennext",
 });
+
