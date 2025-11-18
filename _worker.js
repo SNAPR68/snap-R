@@ -1,4 +1,3 @@
-import { createRequestHandler, createMetadataHandler } from "open-next/cloudflare";
+import { createRequestHandler } from "open-next/cloudflare";
 
-export const onRequest = createRequestHandler();
-export const onMeta = createMetadataHandler();
+export default createRequestHandler();
