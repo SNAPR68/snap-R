@@ -1,18 +1,20 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  output: "standalone",
-
-  experimental: {
-    optimizePackageImports: [],
+  // Disable image optimization (Cloudflare Pages cannot run it)
+  images: {
+    unoptimized: true,
   },
 
+  // ABSOLUTELY REQUIRED — disables ESLint errors during build
+  eslint: {
+    ignoreDuringBuilds: true,
+  },
+
+  // ABSOLUTELY REQUIRED — disables TS errors during build
   typescript: {
     ignoreBuildErrors: true,
   },
-
-  eslint: {
-    ignoreDuringBuilds: true,
-  }
 };
 
 export default nextConfig;
+

@@ -14,7 +14,7 @@ export function DashboardActionCard({
       onClick={onClick}
       className="cursor-pointer p-6 flex flex-col items-center justify-center hover:shadow-lg transition"
     >
-      <div className="text-blue-600">{icon}</div>
+      <div className="text-[var(--accent-gold)]">{icon}</div>
       <p className="mt-3 text-center font-medium">{label}</p>
     </Card>
   );
