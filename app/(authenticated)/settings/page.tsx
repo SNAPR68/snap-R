@@ -1,5 +1,5 @@
-export const dynamic = "force-dynamic";
 "use client";
+export const dynamic = "force-dynamic";
 
 import { useSession } from "@/app/providers/session-provider";
 import { useState } from "react";
