@@ -18,3 +18,4 @@
 - Updated the authenticated upload page to create/select listings via `/api/listings`, choose variants, and submit files to `/api/upload`.
 - Rebuilt the job detail page to consume `/api/jobs/[id]`, show progress, before/after sliders, download links, and retry/refresh controls.
 - Enhanced the listing detail page with richer metadata, status stats, and per-photo status/variant display with download options.
+- Improved the jobs dashboard cards to include listing name, variant, progress bar, and preview thumbnail using the new API data.

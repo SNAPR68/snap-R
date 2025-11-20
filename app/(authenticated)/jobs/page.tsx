@@ -1,9 +1,28 @@
 export const dynamic = "force-dynamic";
+
 import { protect } from "@/lib/auth/protect";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import Link from "next/link";
-import { Clock, CheckCircle, XCircle, Loader2 } from "lucide-react";
+import Image from "next/image";
+import { Clock, CheckCircle, XCircle, Loader2, PlusCircle } from "lucide-react";
 import JobTimestamp from "@/components/ui/job-timestamp";
+
+type JobCard = {
+  id: string;
+  status: string;
+  variant: string | null;
+  created_at: string;
+  updated_at: string | null;
+  listing: {
+    id: string;
+    title: string;
+  } | null;
+  photos: Array<{
+    id: string;
+    processed_url: string | null;
+    status: string;
+  }>;
+};
 
 export default async function JobsPage() {
   const { user } = await protect();
@@ -11,7 +30,11 @@ export default async function JobsPage() {
 
   const { data: jobs, error } = await supabase
     .from("jobs")
-    .select("id, status, created_at, updated_at")
+    .select(
+      `id,status,variant,created_at,updated_at,
+       listing:listings(id,title),
+       photos:photos(id, processed_url, status)`
+    )
     .eq("user_id", user.id)
     .order("created_at", { ascending: false });
 
@@ -26,16 +49,10 @@ export default async function JobsPage() {
   if (!jobs || jobs.length === 0) {
     return (
       <div className="text-center py-20">
-        <h2 className="text-2xl font-semibold mb-2">
-          No Jobs Found
-        </h2>
-        <p className="text-[var(--text-soft)]">
-          You haven't processed any photos yet.
-        </p>
-        <Link
-          href="/upload"
-          className="btn-gold inline-block mt-6"
-        >
+        <h2 className="text-2xl font-semibold mb-2">No Jobs Found</h2>
+        <p className="text-[var(--text-soft)]">You haven't processed any photos yet.</p>
+        <Link href="/upload" className="btn-gold inline-flex items-center gap-2 mt-6">
+          <PlusCircle className="w-4 h-4" />
           Upload Photos
         </Link>
       </div>
@@ -43,43 +60,90 @@ export default async function JobsPage() {
   }
 
   return (
-    <div>
-      <h1 className="text-2xl md:text-3xl font-semibold mb-6 md:mb-8">
-        Recent Jobs
-      </h1>
+    <div className="space-y-6 md:space-y-8">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h1 className="text-2xl md:text-3xl font-semibold">Recent Jobs</h1>
+          <p className="text-[var(--text-soft)] text-sm mt-1">
+            Monitor enhancement progress for your listings.
+          </p>
+        </div>
+        <Link href="/upload" className="btn-gold inline-flex items-center gap-2 h-fit">
+          <PlusCircle className="w-4 h-4" />
+          Upload more photos
+        </Link>
+      </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
-        {jobs.map((job) => (
-          <Link
-            key={job.id}
-            href={`/jobs/${job.id}`}
-            className="card hover:shadow-gold transition block"
-          >
-            <div className="space-y-3">
-              {/* Job ID */}
-              <div className="font-mono text-xs md:text-sm text-[var(--text-soft)] break-all">
-                {job.id.slice(0, 10)}...
+        {jobs.map((job: JobCard) => {
+          const completed = job.photos?.filter((p) => p.status === "completed").length ?? 0;
+          const total = job.photos?.length ?? 0;
+          const previewPhoto = job.photos?.find((p) => !!p.processed_url)?.processed_url;
+
+          return (
+            <Link
+              key={job.id}
+              href={`/jobs/${job.id}`}
+              className="card hover:shadow-gold transition flex flex-col"
+            >
+              <div className="relative w-full h-36 rounded-xl overflow-hidden bg-[var(--surface-soft)]">
+                {previewPhoto ? (
+                  <Image
+                    src={previewPhoto}
+                    alt="Job preview"
+                    fill
+                    sizes="(max-width: 768px) 100vw, 33vw"
+                    className="object-cover"
+                  />
+                ) : (
+                  <div className="flex h-full items-center justify-center text-[var(--text-soft)] text-sm">
+                    Preview coming soon
+                  </div>
+                )}
               </div>
 
-              {/* Status */}
-              <StatusBadge status={job.status} />
+              <div className="space-y-3 pt-4 flex-1">
+                <div className="flex items-center justify-between gap-2">
+                  <div className="font-semibold text-[var(--text-main)]">
+                    {job.listing?.title || "Untitled listing"}
+                  </div>
+                  <StatusPill status={job.status} />
+                </div>
 
-              {/* Timestamps */}
-              <div className="text-[var(--text-soft)] text-sm">
-                Created: <JobTimestamp date={job.created_at} />
+                <div className="text-xs text-[var(--text-soft)] uppercase tracking-wide">
+                  Variant: {job.variant || "standard"}
+                </div>
+
+                <div className="text-sm text-[var(--text-soft)]">
+                  Created: <JobTimestamp date={job.created_at} />
+                </div>
+                <div className="text-sm text-[var(--text-soft)]">
+                  Updated: <JobTimestamp date={job.updated_at} />
+                </div>
+
+                {total > 0 && (
+                  <div className="text-xs text-[var(--text-soft)] flex items-center gap-2">
+                    <div className="flex-1 h-1.5 bg-[var(--surface-soft)] rounded-full overflow-hidden">
+                      <div
+                        className="h-full bg-[var(--accent-gold)] transition-all duration-300"
+                        style={{ width: `${Math.round((completed / total) * 100)}%` }}
+                      />
+                    </div>
+                    <span>
+                      {completed}/{total}
+                    </span>
+                  </div>
+                )}
               </div>
-              <div className="text-[var(--text-soft)] text-sm">
-                Updated: <JobTimestamp date={job.updated_at} />
-              </div>
-            </div>
-          </Link>
-        ))}
+            </Link>
+          );
+        })}
       </div>
     </div>
   );
 }
 
-function StatusBadge({ status }: { status: string }) {
+function StatusPill({ status }: { status: string }) {
   let icon: React.ReactNode;
   let text: string;
   let styles: string;
@@ -90,19 +154,16 @@ function StatusBadge({ status }: { status: string }) {
       text = "Completed";
       styles = "bg-mint-soft text-charcoal border border-mint-dark";
       break;
-
     case "failed":
       icon = <XCircle className="w-4 h-4" />;
       text = "Failed";
       styles = "bg-red-100 text-red-700 border border-red-300";
       break;
-
     case "processing":
       icon = <Loader2 className="w-4 h-4 animate-spin" />;
       text = "Processing";
       styles = "bg-[var(--surface-soft)] text-[var(--text-main)] border border-[var(--surface-soft)]";
       break;
-
     default:
       icon = <Clock className="w-4 h-4" />;
       text = "Queued";
@@ -110,11 +171,9 @@ function StatusBadge({ status }: { status: string }) {
   }
 
   return (
-    <div
-      className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm ${styles}`}
-    >
+    <span className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs ${styles}`}>
       {icon}
       {text}
-    </div>
+    </span>
   );
 }
