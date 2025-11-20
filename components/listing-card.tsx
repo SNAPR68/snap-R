@@ -23,7 +23,7 @@ export function ListingCard({
             src={thumbnail}
             className="rounded-lg w-full h-40 object-cover"
           />
-          <p className="text-sm text-gray-500 mt-2">{count} photos</p>
+          <p className="text-sm text-[var(--text-soft)] mt-2">{count} photos</p>
         </CardContent>
       </Card>
     </Link>
