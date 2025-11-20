@@ -28,6 +28,9 @@ create table if not exists jobs (
   id uuid primary key default uuid_generate_v4(),
   user_id uuid references users(id),
   listing_id uuid,
+  variant text,
+  error text,
+  completed_at timestamp with time zone,
   status text default 'queued',
   created_at timestamp with time zone default now(),
   updated_at timestamp with time zone default now()

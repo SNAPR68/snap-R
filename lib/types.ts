@@ -4,6 +4,9 @@ export interface Job {
   id: string;
   user_id: string | null;
   listing_id: string | null;
+  variant?: string | null;
+  error?: string | null;
+  completed_at?: string | null;
   status: 'queued' | 'processing' | 'completed' | 'failed';
   created_at: string;
   updated_at: string | null;
