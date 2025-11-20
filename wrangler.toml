@@ -17,3 +17,7 @@ bucket_name = "snapr-uploads"
 [[queues.producers]]
 queue = "image-jobs"
 binding = "IMAGE_JOBS"
+
+[[queues.consumers]]
+queue = "image-jobs"
+script_name = "image-jobs-consumer"

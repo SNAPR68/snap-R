@@ -14,3 +14,4 @@
 - Created `/api/listings` route (GET + POST) so clients can create and fetch listings via Supabase securely.
 - Added Cloudinary + Cloudflare queue helpers and implemented `/api/upload` to create jobs, store photos, and enqueue AI work.
 - Extended jobs/photos schema with metadata + indexes and added `/api/jobs/[id]` for status + retry support.
+- Added a Cloudflare queue consumer (`workers/image-jobs-consumer.ts`) and updated `wrangler.toml` so `IMAGE_JOBS` messages run AI processing via Runware (deploy with `wrangler deploy workers/image-jobs-consumer.ts --name image-jobs-consumer`).
