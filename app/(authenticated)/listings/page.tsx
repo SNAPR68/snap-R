@@ -1,3 +1,4 @@
+export const dynamic = "force-dynamic";
 import { protect } from "@/lib/auth/protect";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import Link from "next/link";
@@ -98,6 +99,3 @@ export default async function ListingsPage() {
     </div>
   );
 }
-
-
-

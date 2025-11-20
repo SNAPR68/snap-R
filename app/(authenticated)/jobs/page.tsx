@@ -1,3 +1,4 @@
+export const dynamic = "force-dynamic";
 import { protect } from "@/lib/auth/protect";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import Link from "next/link";
@@ -119,4 +120,3 @@ function StatusBadge({ status }: { status: string }) {
     </div>
   );
 }
-

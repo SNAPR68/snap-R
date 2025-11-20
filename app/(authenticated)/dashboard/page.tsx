@@ -1,3 +1,4 @@
+export const dynamic = "force-dynamic";
 import { protect } from "@/lib/auth/protect";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import {
@@ -103,6 +104,3 @@ function DashboardCard({
     </a>
   );
 }
-
-
-

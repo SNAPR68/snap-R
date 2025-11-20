@@ -1,3 +1,4 @@
+export const dynamic = "force-dynamic";
 "use client";
 
 import { useSession } from "@/app/providers/session-provider";
@@ -142,6 +143,3 @@ export default function UploadPage() {
     </div>
   );
 }
-
-
-
