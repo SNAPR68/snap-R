@@ -10,3 +10,5 @@
 - Memoized Supabase client in `SessionProvider` to avoid infinite render loops during prerender.
 - Removed `export const revalidate = 60` from authenticated server pages so `force-dynamic` pages no longer try to prerender during build.
 - Marked `app/(authenticated)/layout.tsx` as `force-dynamic` so no protected child page is statically prerendered.
+- Added richer listing + photo columns (address, metadata, variant, error) and recorded a Supabase migration.
+- Created `/api/listings` route (GET + POST) so clients can create and fetch listings via Supabase securely.
