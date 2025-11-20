@@ -3,8 +3,6 @@ import { protect } from "@/lib/auth/protect";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import BillingClient from "./billing-client";
 
-export const revalidate = 60;
-
 export default async function BillingPage() {
   const { user } = await protect();
   const supabase = createSupabaseServerClient();

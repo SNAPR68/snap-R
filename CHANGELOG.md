@@ -6,3 +6,7 @@
 - Fixed `"use client"` directive ordering on `app/(authenticated)/jobs/[id]/page.tsx`, `.../settings/page.tsx`, and `.../upload/page.tsx`.
 - Switched `lib/supabase/server.ts` to use `createServerComponentClient` so env vars are read at runtime instead of build time.
 - Normalized Navbar re-exports so default export is used consistently (fixes case-sensitive import warning).
+- Ensured Supabase client helper validates `NEXT_PUBLIC_SUPABASE_URL` + `NEXT_PUBLIC_SUPABASE_ANON_KEY`, after adding the missing URL env locally.
+- Memoized Supabase client in `SessionProvider` to avoid infinite render loops during prerender.
+- Removed `export const revalidate = 60` from authenticated server pages so `force-dynamic` pages no longer try to prerender during build.
+- Marked `app/(authenticated)/layout.tsx` as `force-dynamic` so no protected child page is statically prerendered.

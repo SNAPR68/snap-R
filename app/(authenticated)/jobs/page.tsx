@@ -5,8 +5,6 @@ import Link from "next/link";
 import { Clock, CheckCircle, XCircle, Loader2 } from "lucide-react";
 import JobTimestamp from "@/components/ui/job-timestamp";
 
-export const revalidate = 60;
-
 export default async function JobsPage() {
   const { user } = await protect();
   const supabase = createSupabaseServerClient();
