@@ -13,3 +13,4 @@
 - Added richer listing + photo columns (address, metadata, variant, error) and recorded a Supabase migration.
 - Created `/api/listings` route (GET + POST) so clients can create and fetch listings via Supabase securely.
 - Added Cloudinary + Cloudflare queue helpers and implemented `/api/upload` to create jobs, store photos, and enqueue AI work.
+- Extended jobs/photos schema with metadata + indexes and added `/api/jobs/[id]` for status + retry support.

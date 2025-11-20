@@ -29,6 +29,7 @@ create table if not exists jobs (
   user_id uuid references users(id),
   listing_id uuid,
   variant text,
+  metadata jsonb,
   error text,
   completed_at timestamp with time zone,
   status text default 'queued',
@@ -78,6 +79,7 @@ create index if not exists idx_jobs_created_at on jobs(created_at);
 create index if not exists idx_photos_job_id on photos(job_id);
 create index if not exists idx_photos_listing_id on photos(listing_id);
 create index if not exists idx_photos_status on photos(status);
+create index if not exists idx_photos_listing_status on photos(listing_id, status);
 create index if not exists idx_listings_user_id on listings(user_id);
 create index if not exists idx_listings_created_at on listings(created_at);
 create index if not exists idx_payments_user_id on payments(user_id);
