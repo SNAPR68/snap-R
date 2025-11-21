@@ -8,8 +8,6 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 
-export const revalidate = 60;
-
 export default async function DashboardPage() {
   const { user } = await protect();
   const supabase = createSupabaseServerClient();

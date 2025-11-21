@@ -5,8 +5,6 @@ import Link from "next/link";
 import Image from "next/image";
 import ListingDate from "@/components/ui/listing-date";
 
-export const revalidate = 60;
-
 export default async function ListingsPage() {
   const { user } = await protect();
   const supabase = createSupabaseServerClient();

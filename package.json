@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "next build && rm -rf .next/cache",
     "open-next": "open-next build",
     "deploy": "npx wrangler deploy",
     "preview": "npx wrangler dev",
@@ -25,6 +25,7 @@
     "@supabase/ssr": "^0.7.0",
     "@supabase/supabase-js": "^2.81.1",
     "class-variance-authority": "^0.7.1",
+    "cloudinary": "^2.8.0",
     "clsx": "^2.1.1",
     "critters": "^0.0.23",
     "framer-motion": "^12.23.24",
