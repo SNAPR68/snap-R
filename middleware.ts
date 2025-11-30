@@ -1,34 +1,34 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { createMiddlewareClient } from "@supabase/auth-helpers-nextjs";
+import { createServerClient } from "@supabase/ssr";
 
 export async function middleware(req: NextRequest) {
-  const res = NextResponse.next();
-  const supabase = createMiddlewareClient({ req, res });
+  let res = NextResponse.next({ request: req });
 
-  const {
-    data: { session },
-  } = await supabase.auth.getSession();
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        getAll() {
+          return req.cookies.getAll();
+        },
+        setAll(cookiesToSet) {
+          cookiesToSet.forEach(({ name, value, options }) => {
+            req.cookies.set(name, value);
+            res.cookies.set(name, value, options);
+          });
+        },
+      },
+    }
+  );
 
+  const { data: { session } } = await supabase.auth.getSession();
   const pathname = req.nextUrl.pathname;
-  const isOnboarding = pathname.startsWith("/onboarding");
 
   // If NOT logged in on protected route → force login
   if (!session) {
     return NextResponse.redirect(new URL("/auth/login", req.url));
-  }
-
-  // If logged in but not onboarded → redirect to onboarding
-  if (session && !isOnboarding) {
-    const { data: profile } = await supabase
-      .from("users")
-      .select("has_onboarded")
-      .eq("id", session.user.id)
-      .single();
-
-    if (profile && profile.has_onboarded === false) {
-      return NextResponse.redirect(new URL("/onboarding", req.url));
-    }
   }
 
   return res;
@@ -44,4 +44,3 @@ export const config = {
     "/billing/:path*",
   ],
 };
-

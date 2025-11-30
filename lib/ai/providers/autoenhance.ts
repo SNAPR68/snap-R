@@ -48,3 +48,7 @@ class AutoEnhanceProvider {
 }
 
 export const autoEnhanceClient = new AutoEnhanceProvider();
+
+export async function autoEnhance(imageUrl: string, options: Record<string, any>) {
+  return autoEnhanceClient.processImage(imageUrl, options);
+}

@@ -2,128 +2,104 @@
 @tailwind components;
 @tailwind utilities;
 
-/* LIGHT MODE (default) */
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap');
+
 :root {
-  --accent-gold: #d4a017;
-  --accent-gold-soft: #f5e6c4;
-  --accent-gold-dark: #a07a12;
-  --mint-soft: #d9f7ec;
-  --mint-dark: #0e7a57;
-  --charcoal: #1a1a1a;
-
-  --background: #faf9f7;
-  --surface: #ffffff;
-  --surface-soft: #f2f1ee;
-
-  --text-main: #333333;
-  --text-soft: #666666;
-
-  --bg: var(--background);
-  --accent-mint: #86e3c3;
-
-  --radius: 12px;
-  --radius-lg: 16px;
-
-  --shadow-card: 0 2px 14px rgba(0, 0, 0, 0.06);
+  --gold-light: #FFD700;
+  --gold: #D4A017;
+  --gold-dark: #B8860B;
+  --charcoal-light: #2A2A2A;
+  --charcoal: #1A1A1A;
+  --charcoal-dark: #0F0F0F;
+  --emerald: #10B981;
+  --emerald-dark: #059669;
+  --mint-glow: #C8FCEA;
 }
 
-/* DARK MODE */
-.dark {
-  --bg: #0f0f0f;
-  --background: #0f0f0f;
-  --surface: #1a1a1a;
-  --surface-soft: #2c2c2c;
-
-  --text-main: #ffffff;
-  --text-soft: #9ca3af;
-
-  --accent-gold: #e9b949;
-  --accent-gold-soft: #f0d17a;
-  --accent-gold-dark: #d9a93c;
-
-  --accent-mint: #6bd7b4;
-  --mint-soft: #8ee4c8;
-  --mint-dark: #3a8f71;
-}
-
-/* Optimized transitions - only apply to specific properties */
-a, button, input, select, textarea {
-  transition: color 0.22s cubic-bezier(0.16, 1, 0.3, 1),
-              background-color 0.22s cubic-bezier(0.16, 1, 0.3, 1),
-              border-color 0.22s cubic-bezier(0.16, 1, 0.3, 1),
-              opacity 0.22s cubic-bezier(0.16, 1, 0.3, 1),
-              transform 0.22s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-:focus-visible {
-  outline: 2px solid var(--accent-gold);
-  outline-offset: 2px;
-}
+* { box-sizing: border-box; margin: 0; padding: 0; }
 
 html, body {
-  overflow-x: hidden;
+  font-family: 'Outfit', sans-serif;
+  background: #0F0F0F;
+  color: white;
 }
 
-body {
-  background: var(--background);
-  color: var(--text-main);
-  transition: background 0.3s ease, color 0.3s ease;
-  font-family: "Geist Sans", sans-serif;
+/* Gold Gradient Text */
+.text-gold-gradient {
+  background: linear-gradient(145deg, #FFD700 0%, #D4A017 50%, #B8860B 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
-@layer components {
-  .btn-gold {
-    @apply px-5 py-3 rounded-xl bg-[var(--accent-gold)] text-white font-semibold shadow-sm hover:bg-[var(--accent-gold-dark)] transition;
-  }
-
-  .btn-soft {
-    @apply px-5 py-3 rounded-xl bg-[var(--surface-soft)] text-[var(--text-main)] border border-[var(--surface-soft)] hover:border-[var(--accent-gold)] transition;
-  }
-
-  .input {
-    @apply w-full px-4 py-3 rounded-xl bg-[var(--surface-soft)] border border-[var(--surface-soft)] focus:border-[var(--accent-gold)] outline-none transition text-[var(--text-main)];
-  }
-
-  .card {
-    @apply p-6 rounded-2xl bg-[var(--surface)] border border-[var(--surface-soft)] shadow-card;
-  }
-
-  .shadow-card {
-    box-shadow: 0 4px 14px rgba(0,0,0,0.06);
-  }
-
-  .shadow-quartz {
-    box-shadow: 0 6px 20px rgba(0,0,0,0.08);
-  }
-
-  .nav-link-active {
-    border-bottom: 2px solid var(--accent-gold);
-  }
-
-  .nav-link:hover {
-    color: var(--accent-gold);
-  }
-}
-
-/* MINT BUTTON */
-.btn-mint {
-  background: var(--accent-mint);
-  color: #0f0f0f;
-  padding: 0.75rem 1.5rem;
-  border-radius: var(--radius);
+/* Gold Glass Button */
+.btn-gold-glass {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px 24px;
   font-weight: 600;
-  box-shadow: 0 4px 12px rgba(134, 227, 195, 0.25);
-  transition: 0.3s ease;
+  font-size: 14px;
+  border-radius: 12px;
+  background: linear-gradient(145deg, #FFD700 0%, #D4A017 50%, #B8860B 100%);
+  color: #0F0F0F;
+  border: none;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0px 4px 15px rgba(212, 160, 23, 0.3);
 }
 
-.btn-mint:hover {
-  background: var(--accent-mint-dark);
+.btn-gold-glass:hover {
+  transform: translateY(-2px);
+  box-shadow: 0px 8px 25px rgba(212, 160, 23, 0.4);
 }
 
-/* SURFACE WRAPPER */
-.surface {
-  background: var(--surface);
-  border-radius: var(--radius-lg);
-  padding: 2rem;
-  box-shadow: var(--shadow-card);
+/* Dark Glass Button */
+.btn-dark-glass {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px 24px;
+  font-weight: 600;
+  font-size: 14px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.05);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  cursor: pointer;
+  transition: all 0.3s ease;
 }
+
+.btn-dark-glass:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: #D4A017;
+}
+
+/* Glass Card */
+.glass-card {
+  background: linear-gradient(145deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.02) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  backdrop-filter: blur(10px);
+}
+
+.glass-card-gold {
+  background: linear-gradient(145deg, rgba(212,160,23,0.1) 0%, rgba(212,160,23,0.02) 100%);
+  border: 1px solid rgba(212, 160, 23, 0.3);
+  border-radius: 16px;
+  backdrop-filter: blur(10px);
+}
+
+/* Mobile Badge Animations */
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 20px rgba(16, 185, 129, 0.4), 0 0 40px rgba(16, 185, 129, 0.2); }
+  50% { box-shadow: 0 0 30px rgba(16, 185, 129, 0.6), 0 0 60px rgba(16, 185, 129, 0.4); }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-8px); }
+}
+
+.animate-pulse-glow { animation: pulse-glow 2s ease-in-out infinite; }
+.animate-float { animation: float 3s ease-in-out infinite; }

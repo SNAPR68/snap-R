@@ -1,3 +1,6 @@
+import { randomUUID } from 'node:crypto';
+import { SNAP_R_STACK } from '../utils/config';
+
 class RunwareProvider {
   private apiKey: string;
 
@@ -5,7 +8,7 @@ class RunwareProvider {
     this.apiKey = process.env.RUNWARE_API_KEY || '';
   }
 
-  async processImage(imageUrl: string, prompt: string, strength: number = 0.7): Promise<string> {
+  async processImage(imageUrl: string, prompt: string, strength: number = 0.7, model: string = SNAP_R_STACK.RUNWARE.TWILIGHT_MODE): Promise<string> {
     const response = await fetch(imageUrl);
     const buffer = await response.arrayBuffer();
     const base64 = Buffer.from(buffer).toString('base64');
@@ -15,8 +18,8 @@ class RunwareProvider {
       headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${this.apiKey}` },
       body: JSON.stringify([{
         taskType: 'imageInference',
-        taskUUID: crypto.randomUUID(),
-        model: 'runware:100@1',
+        taskUUID: randomUUID(),
+        model,
         positivePrompt: prompt,
         negativePrompt: 'blurry, distorted, low quality',
         seedImage: `data:image/jpeg;base64,${base64}`,
@@ -30,3 +33,14 @@ class RunwareProvider {
 }
 
 export const runwareClient = new RunwareProvider();
+
+export async function runwareEnhance(
+  imageUrl: string,
+  {
+    prompt,
+    strength = 0.7,
+    model = SNAP_R_STACK.RUNWARE.TWILIGHT_MODE,
+  }: { prompt: string; strength?: number; model?: string }
+) {
+  return runwareClient.processImage(imageUrl, prompt, strength, model);
+}
