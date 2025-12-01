@@ -1,14 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 import { createClient } from '@/lib/supabase/server';
-import { TOOLS } from '@/lib/ai/tools';
-import { scoreEnhancementQuality } from '@/lib/ai/providers/openai-vision';
+import { processEnhancement, ToolId, TOOL_CREDITS } from '@/lib/ai/router';
+
+export const maxDuration = 120;
 
 export async function POST(request: NextRequest) {
+  const startTime = Date.now();
+
   try {
     const { imageId, toolId, options = {} } = await request.json();
 
-    console.log(`[ENHANCE] Tool: ${toolId}, Image: ${imageId}`);
+    console.log(`\n[API] ========== ENHANCE ==========`);    
+    console.log(`[API] Tool: ${toolId}, Image: ${imageId}`);
 
     const supabase = createClient();
     const {
@@ -19,8 +23,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const tool = TOOLS[toolId];
-    if (!tool) {
+    if (!TOOL_CREDITS[toolId as ToolId]) {
       return NextResponse.json({ error: `Unknown tool: ${toolId}` }, { status: 400 });
     }
 
@@ -42,82 +45,66 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Could not get image URL' }, { status: 500 });
     }
 
-    const rawImageUrl = signedUrlData.signedUrl;
+    console.log('[API] Processing...');
+    const result = await processEnhancement(toolId as ToolId, signedUrlData.signedUrl, options);
 
-    console.log('[ENHANCE] Processing image...');
-    const enhancedUrl = await tool(rawImageUrl, options);
-
-    if (!enhancedUrl) {
-      return NextResponse.json({ error: 'Enhancement returned no result' }, { status: 500 });
+    if (!result.success || !result.enhancedUrl) {
+      return NextResponse.json({ error: result.error || 'Enhancement failed' }, { status: 500 });
     }
 
-    console.log('[ENHANCE] Enhancement complete, running QC...');
+    let finalUrl = result.enhancedUrl;
+    let storagePath: string | null = null;
 
-    let qcResult = { score: 8, issues: [], passed: true };
-    if (process.env.ENABLE_QC_SCORING === 'true') {
-      try {
-        qcResult = await scoreEnhancementQuality(rawImageUrl, enhancedUrl, toolId);
-      } catch (qcError) {
-        console.warn('[ENHANCE] QC scoring failed, continuing:', qcError);
+    try {
+      const enhancedResponse = await fetch(result.enhancedUrl);
+      if (enhancedResponse.ok) {
+        const enhancedBuffer = await enhancedResponse.arrayBuffer();
+        storagePath = `enhanced/${user.id}/${photo.listing_id}/${Date.now()}-${toolId}.jpg`;
+
+        const { error: uploadError } = await supabase.storage
+          .from('raw-images')
+          .upload(storagePath, enhancedBuffer, {
+            contentType: 'image/jpeg',
+            upsert: true,
+          });
+
+        if (!uploadError) {
+          const { data: enhancedSignedUrl } = await supabase.storage
+            .from('raw-images')
+            .createSignedUrl(storagePath, 3600);
+
+          if (enhancedSignedUrl?.signedUrl) {
+            finalUrl = enhancedSignedUrl.signedUrl;
+          }
+
+          await supabase
+            .from('photos')
+            .update({
+              processed_url: storagePath,
+              status: 'completed',
+              variant: toolId,
+              updated_at: new Date().toISOString(),
+            })
+            .eq('id', imageId);
+        }
       }
+    } catch (saveError: any) {
+      console.warn('[API] Save error:', saveError.message);
     }
 
-    const enhancedResponse = await fetch(enhancedUrl);
-    const enhancedBuffer = await enhancedResponse.arrayBuffer();
-
-    const storagePath = `enhanced/${user.id}/${photo.listing_id}/${Date.now()}-${toolId}.jpg`;
-
-    const { error: uploadError } = await supabase.storage
-      .from('raw-images')
-      .upload(storagePath, enhancedBuffer, {
-        contentType: 'image/jpeg',
-        upsert: true,
-      });
-
-    if (uploadError) {
-      console.error('[ENHANCE] Upload error:', uploadError);
-      return NextResponse.json({
-        success: true,
-        enhancedUrl,
-        toolId,
-        qcScore: qcResult.score,
-        qcPassed: qcResult.passed,
-        qcIssues: qcResult.issues,
-      });
-    }
-
-    const { data: enhancedSignedUrl } = await supabase.storage
-      .from('raw-images')
-      .createSignedUrl(storagePath, 3600);
-
-    await supabase
-      .from('photos')
-      .update({
-        processed_url: storagePath,
-        status: 'completed',
-        variant: toolId,
-        updated_at: new Date().toISOString(),
-      })
-      .eq('id', imageId);
-
-    console.log('[ENHANCE] Complete!');
+    const duration = Date.now() - startTime;
+    console.log(`[API] ✅ Complete in ${(duration / 1000).toFixed(1)}s`);
 
     return NextResponse.json({
       success: true,
-      enhancedUrl: enhancedSignedUrl?.signedUrl || enhancedUrl,
+      enhancedUrl: finalUrl,
       storagePath,
       toolId,
-      qcScore: qcResult.score,
-      qcPassed: qcResult.passed,
-      qcIssues: qcResult.issues,
+      credits: TOOL_CREDITS[toolId as ToolId],
+      processingTime: duration,
     });
   } catch (error: any) {
-    console.error('[ENHANCE] Error:', error);
-    return NextResponse.json(
-      {
-        error: error.message || 'Enhancement failed',
-      },
-      { status: 500 },
-    );
+    console.error('[API] Error:', error.message);
+    return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
