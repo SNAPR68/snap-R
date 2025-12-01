@@ -2,8 +2,9 @@
 
 import { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase/client';
+import { HumanEditRequestModal } from "./human-edit-request";
 import Link from 'next/link';
-import { ArrowLeft, Upload, Sun, Moon, Leaf, Trash2, Sofa, Sparkles, Wand2, Loader2, ChevronDown, ChevronUp, Check, X, Download, Share2, Copy, LogOut } from 'lucide-react';
+import { ArrowLeft, Upload, Sun, Moon, Leaf, Trash2, Sofa, Sparkles, Wand2, Loader2, ChevronDown, ChevronUp, Check, X, Download, Share2, Copy, LogOut, UserCheck } from 'lucide-react';
 
 const AI_TOOLS = [
   { id: 'sky-replacement', name: 'Sky Replacement', icon: Sun, credits: 1, category: 'EXTERIOR' },
@@ -34,6 +35,7 @@ export function StudioClient({ listingId }: { listingId: string }) {
   const [sliderPosition, setSliderPosition] = useState(50);
   const [completedPhotos, setCompletedPhotos] = useState<any[]>([]);
   const [showShareModal, setShowShareModal] = useState(false);
+  const [showHumanEditModal, setShowHumanEditModal] = useState(false);
   const [shareLink, setShareLink] = useState('');
   const [shareLoading, setShareLoading] = useState(false);
   const [shareOptions, setShareOptions] = useState({
@@ -279,6 +281,13 @@ export function StudioClient({ listingId }: { listingId: string }) {
           </div>
           <div className="p-3 border-t border-white/10 space-y-2">
             <button
+              onClick={() => setShowHumanEditModal(true)}
+              disabled={!selectedPhoto}
+              className="w-full flex items-center justify-center gap-2 px-3 py-2 bg-[#D4A017]/10 hover:bg-[#D4A017]/20 border border-[#D4A017]/30 rounded-lg text-sm text-[#D4A017] disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <UserCheck className="w-4 h-4" /> Request Human Edit
+            </button>
+            <button
               onClick={handleDeleteListing}
               className="w-full flex items-center justify-center gap-2 px-3 py-2 text-red-400 hover:bg-red-500/10 rounded-lg text-sm"
             >
@@ -493,6 +502,14 @@ export function StudioClient({ listingId }: { listingId: string }) {
             <button onClick={() => setShowShareModal(false)} className="w-full mt-4 py-3 border border-white/20 rounded-xl">Close</button>
           </div>
         </div>
+      )}
+      {showHumanEditModal && selectedPhoto && (
+        <HumanEditRequestModal
+          imageId={selectedPhoto.id}
+          photoUrl={selectedPhoto.signedUrl}
+          userId={listing?.user_id}
+          onClose={() => setShowHumanEditModal(false)}
+        />
       )}
     </div>
   );
