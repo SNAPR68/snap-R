@@ -11,7 +11,6 @@ import {
   declutter,
   hdr,
   virtualStaging,
-  upscale,
 } from './providers/replicate';
 
 export type ToolId =
@@ -21,7 +20,6 @@ export type ToolId =
   | 'declutter'
   | 'hdr'
   | 'virtual-staging'
-  | 'upscale'
   | 'auto-enhance';
 
 export const TOOL_CREDITS: Record<ToolId, number> = {
@@ -31,7 +29,6 @@ export const TOOL_CREDITS: Record<ToolId, number> = {
   'declutter': 2,
   'hdr': 1,
   'virtual-staging': 3,
-  'upscale': 2,
   'auto-enhance': 1,
 };
 
@@ -91,10 +88,6 @@ export async function processEnhancement(
           options.roomType || 'living_room',
           options.style || 'modern',
         );
-        break;
-
-      case 'upscale':
-        enhancedUrl = await upscale(imageUrl, options.scale || 2);
         break;
 
       case 'auto-enhance':

@@ -30,10 +30,10 @@ export default function SignupPage() {
 
   return (
     <div className="min-h-screen bg-[#0F0F0F] flex">
-      {/* Left - Emerald Panel */}
-      <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-emerald-500 to-emerald-700 p-12 flex-col justify-between">
+      {/* Left - Gold Panel */}
+      <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-[#D4A017] to-[#B8860B] p-12 flex-col justify-between">
         <Link href="/" className="flex items-center gap-2">
-          <div className="w-10 h-10 rounded-xl flex items-center justify-center text-emerald-500 font-bold bg-white">S</div>
+          <div className="w-10 h-10 rounded-xl flex items-center justify-center text-[#D4A017] font-bold bg-white">S</div>
           <span className="text-2xl font-bold text-white">SnapR</span>
         </Link>
         <div>
@@ -62,17 +62,17 @@ export default function SignupPage() {
           <form onSubmit={handleSignup} className="space-y-4">
             {error && <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-sm">{error}</div>}
             
-            <input type="text" placeholder="Full Name" value={name} onChange={(e) => setName(e.target.value)} className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white focus:outline-none focus:border-emerald-500" required />
-            <input type="email" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white focus:outline-none focus:border-emerald-500" required />
-            <input type="password" placeholder="Password (min 6 chars)" value={password} onChange={(e) => setPassword(e.target.value)} className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white focus:outline-none focus:border-emerald-500" required minLength={6} />
+            <input type="text" placeholder="Full Name" value={name} onChange={(e) => setName(e.target.value)} className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white focus:outline-none focus:border-[#D4A017]" required />
+            <input type="email" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white focus:outline-none focus:border-[#D4A017]" required />
+            <input type="password" placeholder="Password (min 6 chars)" value={password} onChange={(e) => setPassword(e.target.value)} className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white focus:outline-none focus:border-[#D4A017]" required minLength={6} />
             
-            <button type="submit" disabled={loading} className="w-full py-3 rounded-xl font-semibold bg-gradient-to-r from-emerald-400 to-emerald-600 text-white disabled:opacity-50">
+            <button type="submit" disabled={loading} className="w-full py-3 rounded-xl font-semibold bg-gradient-to-r from-[#D4A017] to-[#B8860B] text-black disabled:opacity-50">
               {loading ? <Loader2 className="w-5 h-5 animate-spin mx-auto" /> : 'Create Account'}
             </button>
           </form>
 
           <p className="text-center text-white/40 mt-6">
-            Already have an account? <Link href="/auth/login" className="text-emerald-400 hover:underline">Sign in</Link>
+            Already have an account? <Link href="/auth/login" className="text-[#D4A017] hover:underline">Sign in</Link>
           </p>
         </div>
       </div>

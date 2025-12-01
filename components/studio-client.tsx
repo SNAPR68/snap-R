@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import Link from 'next/link';
-import { ArrowLeft, Upload, Sun, Moon, Leaf, Trash2, Sofa, Sparkles, Maximize, Wand2, Loader2, ChevronDown, ChevronUp, Check, X, Download, Share2, Copy } from 'lucide-react';
+import { ArrowLeft, Upload, Sun, Moon, Leaf, Trash2, Sofa, Sparkles, Wand2, Loader2, ChevronDown, ChevronUp, Check, X, Download, Share2, Copy, LogOut } from 'lucide-react';
 
 const AI_TOOLS = [
   { id: 'sky-replacement', name: 'Sky Replacement', icon: Sun, credits: 1, category: 'EXTERIOR' },
@@ -12,7 +12,6 @@ const AI_TOOLS = [
   { id: 'declutter', name: 'Declutter', icon: Trash2, credits: 2, category: 'INTERIOR' },
   { id: 'virtual-staging', name: 'Virtual Staging', icon: Sofa, credits: 3, category: 'INTERIOR' },
   { id: 'hdr', name: 'HDR Enhancement', icon: Sparkles, credits: 1, category: 'ENHANCE' },
-  { id: 'upscale', name: 'Upscale 2x', icon: Maximize, credits: 2, category: 'ENHANCE' },
   { id: 'auto-enhance', name: 'Auto Enhance', icon: Wand2, credits: 1, category: 'ENHANCE' },
 ];
 
@@ -179,6 +178,28 @@ export function StudioClient({ listingId }: { listingId: string }) {
     window.URL.revokeObjectURL(downloadUrl);
   };
 
+  const handleDeleteListing = async () => {
+    if (!confirm('Delete this entire listing and all photos? This cannot be undone.')) return;
+    await supabase.from('photos').delete().eq('listing_id', listingId);
+    await supabase.from('listings').delete().eq('id', listingId);
+    window.location.href = '/dashboard';
+  };
+
+  const handleDeletePhoto = async (photoId: string, rawUrl: string) => {
+    if (!confirm('Delete this original photo?')) return;
+    await supabase.storage.from('raw-images').remove([rawUrl]);
+    await supabase.from('photos').delete().eq('id', photoId);
+    if (selectedPhoto?.id === photoId) setSelectedPhoto(null);
+    loadData();
+  };
+
+  const handleDeleteEnhanced = async (photoId: string, processedUrl: string) => {
+    if (!confirm('Delete this enhanced photo?')) return;
+    await supabase.storage.from('raw-images').remove([processedUrl]);
+    await supabase.from('photos').update({ processed_url: null, status: 'pending' }).eq('id', photoId);
+    loadData();
+  };
+
   const categories = [...new Set(AI_TOOLS.map(t => t.category))];
 
   return (
@@ -207,39 +228,72 @@ export function StudioClient({ listingId }: { listingId: string }) {
       {/* Main Content - Fixed Height */}
       <div className="flex-1 flex min-h-0">
         {/* Left Sidebar - Tools */}
-        <aside className="w-[200px] bg-[#1A1A1A] border-r border-white/10 p-3 overflow-y-auto flex-shrink-0">
-          <h2 className="text-xs font-semibold text-white/40 mb-3">AI TOOLS</h2>
-          {categories.map(category => (
-            <div key={category} className="mb-3">
-              <button
-                onClick={() => setExpandedCategories(prev => prev.includes(category) ? prev.filter(c => c !== category) : [...prev, category])}
-                className="flex items-center justify-between w-full text-xs font-medium text-white/60 mb-1"
-              >
-                {category}
-                {expandedCategories.includes(category) ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
-              </button>
-              {expandedCategories.includes(category) && (
-                <div className="space-y-1">
-                  {AI_TOOLS.filter(t => t.category === category).map(tool => (
-                    <button
-                      key={tool.id}
-                      onClick={() => handleEnhance(tool.id)}
-                      disabled={processing || !selectedPhoto}
-                      className={`w-full flex items-center justify-between px-2 py-2 rounded-lg text-xs transition-all ${
-                        activeTool === tool.id ? 'bg-gradient-to-r from-[#D4A017] to-[#B8860B] text-black' : 'hover:bg-white/10 text-white/80'
-                      } disabled:opacity-50`}
-                    >
-                      <span className="flex items-center gap-2">
-                        {activeTool === tool.id ? <Loader2 className="w-3 h-3 animate-spin" /> : <tool.icon className="w-3 h-3" />}
-                        <span className="truncate">{tool.name}</span>
-                      </span>
-                      <span className="text-[10px] opacity-60">{tool.credits}cr</span>
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-          ))}
+        <aside className="w-[200px] bg-[#1A1A1A] border-r border-white/10 flex flex-col flex-shrink-0">
+          <div className="flex-1 overflow-y-auto p-3">
+            <h2 className="text-xs font-semibold text-white/40 mb-3">AI TOOLS</h2>
+            {categories.map(category => (
+              <div key={category} className="mb-3">
+                <button
+                  onClick={() =>
+                    setExpandedCategories(prev =>
+                      prev.includes(category) ? prev.filter(c => c !== category) : [...prev, category],
+                    )
+                  }
+                  className="flex items-center justify-between w-full text-xs font-medium text-white/60 mb-1"
+                >
+                  {category}
+                  {expandedCategories.includes(category) ? (
+                    <ChevronUp className="w-3 h-3" />
+                  ) : (
+                    <ChevronDown className="w-3 h-3" />
+                  )}
+                </button>
+                {expandedCategories.includes(category) && (
+                  <div className="space-y-1">
+                    {AI_TOOLS.filter(t => t.category === category).map(tool => (
+                      <button
+                        key={tool.id}
+                        onClick={() => handleEnhance(tool.id)}
+                        disabled={processing || !selectedPhoto}
+                        className={`w-full flex items-center justify-between px-2 py-2 rounded-lg text-xs transition-all ${
+                          activeTool === tool.id
+                            ? 'bg-gradient-to-r from-[#D4A017] to-[#B8860B] text-black'
+                            : 'hover:bg-white/10 text-white/80'
+                        } disabled:opacity-50`}
+                      >
+                        <span className="flex items-center gap-2">
+                          {activeTool === tool.id ? (
+                            <Loader2 className="w-3 h-3 animate-spin" />
+                          ) : (
+                            <tool.icon className="w-3 h-3" />
+                          )}
+                          <span className="truncate">{tool.name}</span>
+                        </span>
+                        <span className="text-[10px] opacity-60">{tool.credits}cr</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+          <div className="p-3 border-t border-white/10 space-y-2">
+            <button
+              onClick={handleDeleteListing}
+              className="w-full flex items-center justify-center gap-2 px-3 py-2 text-red-400 hover:bg-red-500/10 rounded-lg text-sm"
+            >
+              <Trash2 className="w-4 h-4" /> Delete Listing
+            </button>
+            <button
+              onClick={async () => {
+                await supabase.auth.signOut();
+                window.location.href = '/auth/login';
+              }}
+              className="w-full flex items-center justify-center gap-2 px-3 py-2 bg-white/5 hover:bg-white/10 rounded-lg text-sm text-white/60"
+            >
+              <LogOut className="w-4 h-4" /> Sign Out
+            </button>
+          </div>
         </aside>
 
         {/* Center - Image */}
@@ -296,7 +350,7 @@ export function StudioClient({ listingId }: { listingId: string }) {
                     <div className="absolute top-4 right-4 px-3 py-1.5 bg-black/70 rounded-lg text-sm font-medium">After</div>
                   </div>
                 ) : (
-                  <img src={selectedPhoto.signedProcessedUrl || selectedPhoto.signedRawUrl} alt="Selected" className="max-w-full max-h-full object-contain" />
+                  <img src={selectedPhoto.signedRawUrl} alt="Selected" className="max-w-full max-h-full object-contain" />
                 )}
                 {processing && (
                   <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center">
@@ -319,13 +373,28 @@ export function StudioClient({ listingId }: { listingId: string }) {
 
               <div className="flex gap-2 mt-3 overflow-x-auto py-1 flex-shrink-0">
                 {photos.map(photo => (
-                  <button
-                    key={photo.id}
-                    onClick={() => { setSelectedPhoto(photo); setPendingEnhancement(null); }}
-                    className={`flex-shrink-0 w-16 h-16 rounded-lg overflow-hidden border-2 ${selectedPhoto?.id === photo.id ? 'border-[#D4A017]' : 'border-transparent hover:border-white/30'}`}
-                  >
-                    <img src={photo.signedRawUrl} alt="" className="w-full h-full object-cover" />
-                  </button>
+                  <div key={photo.id} className="relative flex-shrink-0 group">
+                    <button
+                      onClick={() => {
+                        setSelectedPhoto(photo);
+                        setPendingEnhancement(null);
+                      }}
+                      className={`w-16 h-16 rounded-lg overflow-hidden border-2 ${
+                        selectedPhoto?.id === photo.id ? 'border-[#D4A017]' : 'border-transparent hover:border-white/30'
+                      }`}
+                    >
+                      <img src={photo.signedRawUrl} alt="" className="w-full h-full object-cover" />
+                    </button>
+                    <button
+                      onClick={e => {
+                        e.stopPropagation();
+                        handleDeletePhoto(photo.id, photo.raw_url);
+                      }}
+                      className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 rounded-full items-center justify-center text-white hidden group-hover:flex"
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  </div>
                 ))}
               </div>
             </>
@@ -348,10 +417,23 @@ export function StudioClient({ listingId }: { listingId: string }) {
           ) : (
             <div className="space-y-2">
               {completedPhotos.map(photo => (
-                <div key={photo.id} className="bg-[#0F0F0F] rounded-lg overflow-hidden border border-white/10">
+                <div
+                  key={photo.id}
+                  className="bg-[#0F0F0F] rounded-lg overflow-hidden border border-white/10 group relative"
+                >
+                  <button
+                    onClick={() => handleDeleteEnhanced(photo.id, photo.processed_url)}
+                    className="absolute top-1 right-1 w-5 h-5 bg-red-500 rounded-full items-center justify-center text-white hidden group-hover:flex z-10"
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
                   <div className="aspect-video relative">
                     <img src={photo.signedProcessedUrl} alt="" className="w-full h-full object-cover" />
-                    {photo.variant && <div className="absolute top-1 left-1 px-1.5 py-0.5 bg-[#D4A017] rounded text-[10px] text-black">{photo.variant}</div>}
+                    {photo.variant && (
+                      <div className="absolute top-1 left-1 px-1.5 py-0.5 bg-[#D4A017] rounded text-[10px] text-black">
+                        {photo.variant}
+                      </div>
+                    )}
                   </div>
                   <button
                     onClick={() => handleDownload(photo.signedProcessedUrl, `enhanced-${photo.id}.jpg`)}

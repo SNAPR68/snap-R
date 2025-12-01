@@ -18,6 +18,7 @@ export default async function ListingsPage() {
       created_at,
       photos:photos(
         id,
+        raw_url,
         processed_url
       )
     `)
@@ -46,14 +47,21 @@ export default async function ListingsPage() {
     );
   }
 
+  const getImageUrl = (path: string | null) => {
+    if (!path) return null;
+    if (path.startsWith("http")) return path;
+    return `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/raw-images/${path}`;
+  };
+
   return (
     <div>
       <h1 className="text-2xl md:text-3xl font-semibold mb-6 md:mb-8">Your Listings</h1>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-8">
+      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-3">
         {listings.map((listing: any) => {
-          const cover = listing.photos?.[0]?.processed_url;
+          const cover = listing.photos?.[0]?.processed_url || listing.photos?.[0]?.raw_url;
           const count = listing.photos?.length ?? 0;
+          const coverUrl = getImageUrl(cover) || undefined;
 
           return (
             <Link
@@ -62,13 +70,13 @@ export default async function ListingsPage() {
               className="card hover:shadow-gold transition block"
             >
               {/* Thumbnail */}
-              <div className="relative w-full h-40 rounded-xl overflow-hidden bg-[var(--surface-soft)]">
-                {cover ? (
+              <div className="relative w-full h-32 rounded-xl overflow-hidden bg-[var(--surface-soft)]">
+                {coverUrl ? (
                   <Image
-                    src={cover}
+                    src={coverUrl}
                     alt="Listing thumbnail"
                     fill
-                    sizes="(max-width: 768px) 100vw, 33vw"
+                    sizes="(max-width: 768px) 50vw, (max-width: 1024px) 25vw, 20vw"
                     className="object-cover"
                   />
                 ) : (
@@ -79,7 +87,7 @@ export default async function ListingsPage() {
               </div>
 
               {/* Listing Info */}
-              <h3 className="text-xl font-semibold mt-4">{listing.title}</h3>
+              <h3 className="text-sm font-semibold mt-3">{listing.title}</h3>
 
               {/* Photo count */}
               <div className="mt-2 text-[var(--text-soft)] text-sm">

@@ -12,22 +12,22 @@ export function MobileBadge() {
       onClick={scrollToSection}
       className="group relative animate-float"
     >
-      <div className="absolute inset-0 bg-emerald-500/30 rounded-2xl blur-xl animate-pulse-glow"></div>
+      <div className="absolute inset-0 bg-[#D4A017]/30 rounded-2xl blur-xl animate-pulse-glow"></div>
       
-      <div className="relative flex items-center gap-3 px-6 py-3 bg-gradient-to-r from-emerald-500/20 to-emerald-600/20 border border-emerald-500/50 rounded-2xl backdrop-blur-sm">
-        <Sparkles className="w-5 h-5 text-emerald-400 animate-pulse" />
+      <div className="relative flex items-center gap-3 px-6 py-3 bg-gradient-to-r from-[#D4A017]/20 to-[#B8860B]/20 border border-[#D4A017]/50 rounded-2xl backdrop-blur-sm">
+        <Sparkles className="w-5 h-5 text-[#D4A017] animate-pulse" />
         
         <div className="relative">
-          <Smartphone className="w-6 h-6 text-emerald-400" />
-          <div className="absolute -top-1 -right-1 w-3 h-3 bg-emerald-400 rounded-full animate-ping"></div>
+          <Smartphone className="w-6 h-6 text-[#D4A017]" />
+          <div className="absolute -top-1 -right-1 w-3 h-3 bg-[#D4A017] rounded-full animate-ping"></div>
         </div>
         
         <div className="text-left">
-          <div className="text-emerald-400 font-semibold text-sm">Mobile Ready</div>
-          <div className="text-emerald-400/70 text-xs">Snap & Enhance on the go</div>
+          <div className="text-[#D4A017] font-semibold text-sm">Mobile Ready</div>
+          <div className="text-[#D4A017]/70 text-xs">Snap & Enhance on the go</div>
         </div>
         
-        <ChevronDown className="w-5 h-5 text-emerald-400 animate-bounce" />
+        <ChevronDown className="w-5 h-5 text-[#D4A017] animate-bounce" />
       </div>
     </button>
   );

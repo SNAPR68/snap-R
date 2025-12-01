@@ -232,25 +232,18 @@ export async function upscale(
 
   console.log('[Replicate] Upscaling with scale:', scale);
 
-  try {
-    const output = await withTimeout(
-      replicate.run('nightmareai/real-esrgan:42fed1c4974146d4d2414e2be2c5277c7fcf05fcc3a73abf41610695738c1d7b', {
-        input: {
-          image: imageUrl,
-          scale: Math.min(scale, 4),
-          face_enhance: false,
-        },
-      }),
-      180000,
-      'Real-ESRGAN',
-    );
-    console.log('[Replicate] Upscale complete');
-    return extractUrl(output);
-  } catch (error: any) {
-    if (error.message?.includes('greater than the max size')) {
-      throw new Error('Image is already high resolution (>2MP). Upscaling not needed.');
-    }
-    throw error;
-  }
+  const output = await withTimeout(
+    replicate.run('nightmareai/real-esrgan', {
+      input: {
+        image: imageUrl,
+        scale: Math.min(scale, 4),
+        face_enhance: false,
+      },
+    }),
+    180000,
+    'Real-ESRGAN',
+  );
+  console.log('[Replicate] Upscale complete');
+  return extractUrl(output);
 }
 
