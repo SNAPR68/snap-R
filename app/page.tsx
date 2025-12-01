@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { Sparkles, Zap, Check, ArrowRight, Smartphone, Camera, Wifi, Shield } from 'lucide-react';
 import { MobileBadge } from '@/components/mobile-badge';
 import { LandingGallery } from '@/components/landing-gallery';
+import { Testimonials } from '@/components/testimonials';
 import { AnimatedBackground } from '@/components/animated-background';
 
 export default function HomePage() {
@@ -67,6 +68,7 @@ export default function HomePage() {
 
       {/* Before/After Gallery */}
       <LandingGallery />
+      <Testimonials />
 
       <section id="mobile-section" className="py-24 px-6 bg-gradient-to-b from-[#0F0F0F] to-[#0A0A0A]">
         <div className="max-w-5xl mx-auto">
