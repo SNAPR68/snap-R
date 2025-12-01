@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import Link from 'next/link';
 import { ArrowLeft, Upload, Sun, Moon, Leaf, Trash2, Sofa, Sparkles, Maximize, Wand2, Loader2, ChevronDown, ChevronUp, Check, X, Download, Share2, Copy } from 'lucide-react';
@@ -24,9 +24,15 @@ export function StudioClient({ listingId }: { listingId: string }) {
   const [processing, setProcessing] = useState(false);
   const [activeTool, setActiveTool] = useState<string | null>(null);
   const [expandedCategories, setExpandedCategories] = useState<string[]>(['EXTERIOR', 'INTERIOR', 'ENHANCE']);
-  const [pendingEnhancement, setPendingEnhancement] = useState<any>(null);
+  type PendingEnhancement = {
+    originalUrl: string;
+    enhancedUrl: string;
+    toolId: string;
+    photoId: string;
+  };
+
+  const [pendingEnhancement, setPendingEnhancement] = useState<PendingEnhancement | null>(null);
   const [sliderPosition, setSliderPosition] = useState(50);
-  const [isDragging, setIsDragging] = useState(false);
   const [completedPhotos, setCompletedPhotos] = useState<any[]>([]);
   const [showShareModal, setShowShareModal] = useState(false);
   const [shareLink, setShareLink] = useState('');
@@ -35,7 +41,6 @@ export function StudioClient({ listingId }: { listingId: string }) {
     allowDownload: true,
     showComparison: true,
   });
-  const sliderRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => { loadData(); }, [listingId]);
 
@@ -174,13 +179,6 @@ export function StudioClient({ listingId }: { listingId: string }) {
     window.URL.revokeObjectURL(downloadUrl);
   };
 
-  const handleMouseMove = (e: React.MouseEvent) => {
-    if (!isDragging || !sliderRef.current) return;
-    const rect = sliderRef.current.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    setSliderPosition(Math.min(Math.max((x / rect.width) * 100, 0), 100));
-  };
-
   const categories = [...new Set(AI_TOOLS.map(t => t.category))];
 
   return (
@@ -251,24 +249,51 @@ export function StudioClient({ listingId }: { listingId: string }) {
               <div className="flex-1 relative flex items-center justify-center bg-[#0A0A0A] rounded-xl overflow-hidden min-h-0">
                 {pendingEnhancement ? (
                   <div 
-                    ref={sliderRef}
-                    className="relative w-full h-full cursor-ew-resize select-none"
-                    onMouseDown={() => setIsDragging(true)}
-                    onMouseUp={() => setIsDragging(false)}
-                    onMouseLeave={() => setIsDragging(false)}
-                    onMouseMove={handleMouseMove}
+                    className="absolute inset-0 cursor-ew-resize select-none"
+                    onMouseDown={(e) => {
+                      const rect = e.currentTarget.getBoundingClientRect();
+                      const updatePosition = (clientX: number) => {
+                        const x = Math.max(0, Math.min(clientX - rect.left, rect.width));
+                        setSliderPosition((x / rect.width) * 100);
+                      };
+                      updatePosition(e.clientX);
+                      const onMouseMove = (event: MouseEvent) => updatePosition(event.clientX);
+                      const onMouseUp = () => {
+                        window.removeEventListener('mousemove', onMouseMove);
+                        window.removeEventListener('mouseup', onMouseUp);
+                      };
+                      window.addEventListener('mousemove', onMouseMove);
+                      window.addEventListener('mouseup', onMouseUp);
+                    }}
                   >
-                    <img src={pendingEnhancement.enhancedUrl} alt="Enhanced" className="absolute inset-0 w-full h-full object-contain" draggable={false} />
-                    <div className="absolute inset-0 overflow-hidden" style={{ width: `${sliderPosition}%` }}>
-                      <img src={pendingEnhancement.originalUrl} alt="Original" className="h-full object-contain" style={{ width: `${100 / (sliderPosition / 100)}%`, maxWidth: 'none' }} draggable={false} />
+                    <img 
+                      src={pendingEnhancement.enhancedUrl} 
+                      alt="Enhanced" 
+                      className="absolute inset-0 w-full h-full object-contain"
+                      draggable={false}
+                    />
+                    <div 
+                      className="absolute inset-0 overflow-hidden"
+                      style={{ width: `${sliderPosition}%` }}
+                    >
+                      <img 
+                        src={pendingEnhancement.originalUrl} 
+                        alt="Original" 
+                        className="absolute inset-0 w-full h-full object-contain"
+                        style={{ maxWidth: 'none', width: `${sliderPosition === 0 ? 0 : 100 / (sliderPosition / 100)}%` }}
+                        draggable={false}
+                      />
                     </div>
-                    <div className="absolute top-0 bottom-0 w-0.5 bg-white" style={{ left: `${sliderPosition}%` }}>
-                      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-8 h-8 bg-white rounded-full shadow-lg flex items-center justify-center">
-                        <span className="text-gray-600 text-xs">↔</span>
+                    <div 
+                      className="absolute top-0 bottom-0 w-0.5 bg-white shadow-lg"
+                      style={{ left: `${sliderPosition}%`, transform: 'translateX(-50%)' }}
+                    >
+                      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-10 h-10 bg-white rounded-full shadow-lg flex items-center justify-center cursor-ew-resize">
+                        <span className="text-gray-600 text-sm font-bold">↔</span>
                       </div>
                     </div>
-                    <div className="absolute top-2 left-2 px-2 py-1 bg-black/70 rounded text-xs">Before</div>
-                    <div className="absolute top-2 right-2 px-2 py-1 bg-black/70 rounded text-xs">After</div>
+                    <div className="absolute top-4 left-4 px-3 py-1.5 bg-black/70 rounded-lg text-sm font-medium">Before</div>
+                    <div className="absolute top-4 right-4 px-3 py-1.5 bg-black/70 rounded-lg text-sm font-medium">After</div>
                   </div>
                 ) : (
                   <img src={selectedPhoto.signedProcessedUrl || selectedPhoto.signedRawUrl} alt="Selected" className="max-w-full max-h-full object-contain" />
