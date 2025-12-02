@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { Sparkles, Zap, Check, ArrowRight, Smartphone, Camera, Wifi, Shield } from 'lucide-react';
+import { Sparkles, Zap, Check, ArrowRight, Smartphone, Camera, Wifi, Shield, Mail, Instagram, Linkedin, Youtube } from 'lucide-react';
 import { MobileBadge } from '@/components/mobile-badge';
 import { LandingGallery } from '@/components/landing-gallery';
 import { Testimonials } from '@/components/testimonials';
@@ -14,7 +14,7 @@ export default function HomePage() {
       <nav className="fixed top-0 left-0 right-0 z-50 border-b border-[#D4A017]/30 bg-[#0F0F0F]/95 backdrop-blur-md">
         <div className="max-w-full mx-auto px-6 h-20 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-3">
-            <img src="/snapr-logo.png" alt="SnapR" className="w-14 h-14" />
+            <img src="/snapr-logo.png" alt="SnapR" className="w-12 h-12" />
             <span className="text-2xl font-bold">
               <span className="text-white">Snap</span>
               <span className="text-[#D4A017]">R</span>
@@ -188,18 +188,59 @@ export default function HomePage() {
       </section>
 
       {/* Footer */}
-      <footer className="py-12 px-6 border-t border-white/10">
-        <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
-          <div className="flex items-center gap-3">
-            <img src="/snapr-logo.png" alt="SnapR" className="w-10 h-10" />
-            <span className="text-white font-semibold">SnapR</span>
+      <footer className="py-16 px-6 border-t border-white/10 bg-[#0A0A0A]">
+        <div className="max-w-6xl mx-auto">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-10 mb-12">
+            {/* Brand */}
+            <div className="col-span-2 md:col-span-1">
+              <div className="flex items-center gap-2 mb-4">
+                <img src="/snapr-logo.png" alt="SnapR" className="w-12 h-12" />
+                <span className="text-xl font-bold text-white">Snap<span className="text-[#D4A017]">R</span></span>
+              </div>
+              <p className="text-white/60 text-sm leading-relaxed">AI Photo Editing Platform that lets Real Estate Media Creators deliver their best work</p>
+            </div>
+            {/* Company */}
+            <div>
+              <h4 className="text-white font-semibold mb-4 text-sm uppercase tracking-wider">Company</h4>
+              <ul className="space-y-3 text-white/60 text-sm">
+                <li><Link href="/" className="hover:text-[#D4A017] transition-colors">Home</Link></li>
+                <li><Link href="/#pricing" className="hover:text-[#D4A017] transition-colors">Pricing</Link></li>
+                <li><Link href="/faq" className="hover:text-[#D4A017] transition-colors">FAQ</Link></li>
+                <li><Link href="/contact" className="hover:text-[#D4A017] transition-colors">Contact</Link></li>
+              </ul>
+            </div>
+            {/* Resources */}
+            <div>
+              <h4 className="text-white font-semibold mb-4 text-sm uppercase tracking-wider">Resources</h4>
+              <ul className="space-y-3 text-white/60 text-sm">
+                <li><Link href="/academy" className="hover:text-[#D4A017] transition-colors">SnapR Academy</Link></li>
+                <li><Link href="/#features" className="hover:text-[#D4A017] transition-colors">Product Features</Link></li>
+                <li><Link href="/academy/enhancing-photos" className="hover:text-[#D4A017] transition-colors">AI Image Features</Link></li>
+                <li><Link href="/dashboard/how-it-works" className="hover:text-[#D4A017] transition-colors">How SnapR Works</Link></li>
+              </ul>
+            </div>
+            {/* Legal */}
+            <div>
+              <h4 className="text-white font-semibold mb-4 text-sm uppercase tracking-wider">Legal</h4>
+              <ul className="space-y-3 text-white/60 text-sm mb-6">
+                <li><Link href="/privacy" className="hover:text-[#D4A017] transition-colors">Privacy Policy</Link></li>
+                <li><Link href="/terms" className="hover:text-[#D4A017] transition-colors">Terms of Service</Link></li>
+              </ul>
+              <h4 className="text-white font-semibold mb-4 text-sm uppercase tracking-wider">Contact</h4>
+              <ul className="space-y-3 text-white/60 text-sm">
+                <li className="flex items-center gap-2"><Mail className="w-4 h-4" />support@snap-r.com</li>
+              </ul>
+            </div>
           </div>
-          <div className="flex items-center gap-6 text-sm text-white/60">
-            <Link href="/privacy" className="hover:text-white">Privacy</Link>
-            <Link href="/terms" className="hover:text-white">Terms</Link>
-            <Link href="/contact" className="hover:text-white">Contact</Link>
+          {/* Bottom Bar */}
+          <div className="pt-8 border-t border-white/10 flex flex-col md:flex-row items-center justify-between gap-4">
+            <p className="text-white/40 text-sm">© 2025 SnapR. All rights reserved.</p>
+            <div className="flex items-center gap-4">
+              <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" className="text-white/40 hover:text-[#D4A017] transition-colors"><Instagram className="w-5 h-5" /></a>
+              <a href="https://linkedin.com" target="_blank" rel="noopener noreferrer" className="text-white/40 hover:text-[#D4A017] transition-colors"><Linkedin className="w-5 h-5" /></a>
+              <a href="https://youtube.com" target="_blank" rel="noopener noreferrer" className="text-white/40 hover:text-[#D4A017] transition-colors"><Youtube className="w-5 h-5" /></a>
+            </div>
           </div>
-          <p className="text-white/40 text-sm">© 2025 SnapR Inc.</p>
         </div>
       </footer>
     </div>

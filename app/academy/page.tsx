@@ -29,7 +29,7 @@ export default async function AcademyPage() {
             {isLoggedIn ? "Back to Dashboard" : "Back to Home"}
           </Link>
           <div className="flex items-center gap-4 mb-4">
-            <img src="/snapr-logo.png" alt="SnapR" className="w-16 h-16" />
+            <img src="/snapr-logo.png" alt="SnapR" className="w-12 h-12" />
             <div>
               <h1 className="text-4xl font-bold">SnapR Academy</h1>
               <p className="text-white/60 text-lg">Learn to transform real estate photos like a pro</p>

@@ -13,7 +13,18 @@ export default function ContactPage() {
         </div>
       </nav>
       
-      <main className="max-w-4xl mx-auto px-6 py-16">
+      <div className="max-w-4xl mx-auto px-6 pt-6">
+        <Link href="/" className="inline-flex items-center gap-2 text-white/60 hover:text-[#D4A017] transition-colors text-sm">
+          <span>←</span> Back to Home
+        </Link>
+      </div>
+      
+      <div className="max-w-4xl mx-auto px-6 pt-6">
+        <Link href="/" className="inline-flex items-center gap-2 text-white/60 hover:text-[#D4A017] transition-colors text-sm">
+          ← Back to Home
+        </Link>
+      </div>
+      <main className="max-w-4xl mx-auto px-6 py-12">
         <h1 className="text-4xl font-bold text-white mb-4">Contact Us</h1>
         <p className="text-white/60 mb-12">Have questions? We'd love to hear from you.</p>
         
@@ -37,11 +48,6 @@ export default function ContactPage() {
               </div>
             </div>
             <div className="glass-card p-6 flex items-start gap-4">
-              <MapPin className="w-6 h-6 text-emerald-400 mt-1" />
-              <div>
-                <h3 className="font-semibold text-white mb-1">Location</h3>
-                <p className="text-white/60">San Francisco, CA</p>
-              </div>
             </div>
           </div>
         </div>

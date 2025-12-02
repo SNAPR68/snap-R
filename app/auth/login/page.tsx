@@ -39,7 +39,7 @@ export default function LoginPage() {
           <h1 className="text-4xl font-bold text-[#0F0F0F] mb-4">Welcome Back</h1>
           <p className="text-[#0F0F0F]/70 text-lg">Sign in to access your AI-enhanced real estate photos.</p>
         </div>
-        <p className="text-[#0F0F0F]/50 text-sm">© 2025 SnapR Inc.</p>
+        <p className="text-[#0F0F0F]/50 text-sm">© 2025 SnapR</p>
       </div>
 
       {/* Right Panel */}

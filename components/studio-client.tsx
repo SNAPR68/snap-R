@@ -232,7 +232,7 @@ export function StudioClient({ listingId }: { listingId: string }) {
         {/* Left Sidebar - Tools */}
         <aside className="w-[200px] bg-[#1A1A1A] border-r border-white/10 flex flex-col flex-shrink-0">
           <div className="flex-1 overflow-y-auto p-3">
-            <h2 className="text-xs font-semibold text-white/40 mb-3">AI TOOLS</h2>
+            <h2 className="text-sm font-bold text-white/80 mb-4">AI TOOLS</h2>
             {categories.map(category => (
               <div key={category} className="mb-3">
                 <button
@@ -241,7 +241,7 @@ export function StudioClient({ listingId }: { listingId: string }) {
                       prev.includes(category) ? prev.filter(c => c !== category) : [...prev, category],
                     )
                   }
-                  className="flex items-center justify-between w-full text-xs font-medium text-white/60 mb-1"
+                  className="flex items-center justify-between w-full text-sm font-semibold text-white/80 mb-2"
                 >
                   {category}
                   {expandedCategories.includes(category) ? (
