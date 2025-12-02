@@ -101,7 +101,7 @@ async function runFluxKontext(imageUrl: string, prompt: string): Promise<string>
 
   const output = await withTimeout(
     replicate.run('black-forest-labs/flux-kontext-dev', {
-      input: {
+    input: {
         input_image: imageUrl,
         prompt,
         guidance: 3.5,
@@ -109,7 +109,7 @@ async function runFluxKontext(imageUrl: string, prompt: string): Promise<string>
         aspect_ratio: 'match_input_image',
         output_format: 'jpg',
         output_quality: 90,
-      },
+    },
     }),
     120000,
     'Flux Kontext',
@@ -234,8 +234,8 @@ export async function upscale(
 
   const output = await withTimeout(
     replicate.run('nightmareai/real-esrgan', {
-      input: {
-        image: imageUrl,
+    input: {
+      image: imageUrl,
         scale: Math.min(scale, 4),
         face_enhance: false,
       },

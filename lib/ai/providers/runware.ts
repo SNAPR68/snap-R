@@ -109,16 +109,16 @@ async function imageToBase64WithDimensions(imageUrl: string): Promise<ImageInfo>
     width,
     height,
   };
-}
+  }
 
 async function runwareRequest(tasks: any[]): Promise<any> {
   console.log('[Runware] API request:', tasks[0]?.taskType);
   const response = await fetchWithTimeout(
     RUNWARE_API,
     {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
         Authorization: `Bearer ${process.env.RUNWARE_API_KEY}`,
       },
       body: JSON.stringify(tasks),
@@ -167,7 +167,7 @@ export async function runwareEnhance(imageUrl: string, options: RunwareOptions):
   ]);
 
   const imageURL = data?.data?.[0]?.imageURL;
-
+  
   if (!imageURL) {
     console.error('[Runware] No imageURL in response:', JSON.stringify(data).substring(0, 300));
     throw new Error('Runware returned no image URL');

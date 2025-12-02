@@ -1,34 +1,49 @@
+
 'use client';
 
-import { Smartphone, ChevronDown, Sparkles } from 'lucide-react';
+import { Smartphone } from 'lucide-react';
+
+
 
 export function MobileBadge() {
+
   const scrollToSection = () => {
+
     document.getElementById('mobile-section')?.scrollIntoView({ behavior: 'smooth' });
+
   };
 
+
+
   return (
+
     <button 
+
       onClick={scrollToSection}
-      className="group relative animate-float"
+
+      className="group relative"
+
     >
-      <div className="absolute inset-0 bg-[#D4A017]/30 rounded-2xl blur-xl animate-pulse-glow"></div>
-      
-      <div className="relative flex items-center gap-3 px-6 py-3 bg-gradient-to-r from-[#D4A017]/20 to-[#B8860B]/20 border border-[#D4A017]/50 rounded-2xl backdrop-blur-sm">
-        <Sparkles className="w-5 h-5 text-[#D4A017] animate-pulse" />
-        
-        <div className="relative">
-          <Smartphone className="w-6 h-6 text-[#D4A017]" />
-          <div className="absolute -top-1 -right-1 w-3 h-3 bg-[#D4A017] rounded-full animate-ping"></div>
-        </div>
-        
+
+      {/* Apple-style badge */}
+
+      <div className="flex items-center gap-3 px-5 py-2.5 bg-black border border-white/20 rounded-xl hover:bg-white/5 transition-colors">
+
+        <Smartphone className="w-8 h-8 text-white" />
+
         <div className="text-left">
-          <div className="text-[#D4A017] font-semibold text-sm">Mobile Ready</div>
-          <div className="text-[#D4A017]/70 text-xs">Snap & Enhance on the go</div>
+
+          <div className="text-[10px] text-white/70 uppercase tracking-wide">Open on</div>
+
+          <div className="text-white font-semibold text-lg -mt-0.5">Mobile Web</div>
+
         </div>
-        
-        <ChevronDown className="w-5 h-5 text-[#D4A017] animate-bounce" />
+
       </div>
+
     </button>
+
   );
+
 }
+

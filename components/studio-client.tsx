@@ -209,7 +209,7 @@ export function StudioClient({ listingId }: { listingId: string }) {
       {/* Header */}
       <header className="h-14 bg-[#1A1A1A] border-b border-white/10 flex items-center justify-between px-4 flex-shrink-0">
         <div className="flex items-center gap-3">
-          <Link href="/dashboard" className="p-2 hover:bg-white/10 rounded-lg"><ArrowLeft className="w-5 h-5" /></Link>
+          <Link href="/dashboard" className="p-2 hover:bg-white/10 rounded-lg"><ArrowLeft className="w-5 h-5" /></Link><Link href="/" className="flex items-center gap-2"><img src="/snapr-logo.png" alt="SnapR" className="w-7 h-7" /></Link>
           <h1 className="font-semibold truncate max-w-[200px]">{listing?.title || 'Loading...'}</h1>
         </div>
         <div className="flex items-center gap-2">
@@ -218,7 +218,7 @@ export function StudioClient({ listingId }: { listingId: string }) {
             disabled={shareLoading}
             className="flex items-center gap-2 px-3 py-2 bg-white/10 hover:bg-white/20 rounded-lg text-sm disabled:opacity-50"
           >
-            {shareLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Share2 className="w-4 h-4" />} Share
+            {shareLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Share2 className="w-4 h-4" />} Share Gallery
           </button>
           <label className="flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-[#D4A017] to-[#B8860B] rounded-lg cursor-pointer text-black font-medium text-sm">
             <Upload className="w-4 h-4" /> Upload

@@ -4,20 +4,17 @@ import { NextResponse } from 'next/server';
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url);
   const code = searchParams.get('code');
-  const isOnboarding = searchParams.get('onboarding') === 'true';
   const next = searchParams.get('next') ?? '/dashboard';
 
   if (code) {
     const supabase = createClient();
     const { data, error } = await supabase.auth.exchangeCodeForSession(code);
-
     if (!error && data.user) {
       const { data: existingUser } = await supabase
         .from('users')
         .select('id')
         .eq('id', data.user.id)
         .single();
-
       if (!existingUser) {
         await supabase.from('users').insert({
           id: data.user.id,
@@ -27,10 +24,8 @@ export async function GET(request: Request) {
           credits: 5,
         });
       }
-
-      return NextResponse.redirect(`${origin}${next}`);
+      return NextResponse.redirect(new URL(next, origin));
     }
   }
-
-  return NextResponse.redirect(`${origin}/auth/login?error=auth_failed`);
+  return NextResponse.redirect(new URL('/auth/login?error=auth_failed', origin));
 }

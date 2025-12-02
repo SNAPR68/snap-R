@@ -31,7 +31,7 @@ class AutoEnhanceProvider {
         throw new Error(`Failed to download image: ${imageResponse.status}`);
       }
       imageBuffer = await imageResponse.arrayBuffer();
-      console.log('[AutoEnhance] Downloaded:', (imageBuffer.byteLength / 1024).toFixed(0), 'KB');
+    console.log('[AutoEnhance] Downloaded:', (imageBuffer.byteLength / 1024).toFixed(0), 'KB');
     } catch (error: any) {
       clearTimeout(downloadTimeout);
       if (error.name === 'AbortError') {
@@ -57,7 +57,7 @@ class AutoEnhanceProvider {
       const errorText = await createRes.text();
       throw new Error(`AutoEnhance create failed: ${createRes.status} - ${errorText}`);
     }
-
+    
     const createData = await createRes.json();
     const imageId = createData.image_id || createData.id;
     const uploadUrl = createData.s3PutObjectUrl;
@@ -76,7 +76,7 @@ class AutoEnhanceProvider {
       });
       if (!uploadRes.ok) {
         throw new Error(`AutoEnhance S3 upload failed: ${uploadRes.status}`);
-      }
+    }
     }
 
     console.log('[AutoEnhance] Polling for result...');
@@ -100,7 +100,7 @@ class AutoEnhanceProvider {
 
       const data = await checkRes.json();
       console.log(`[AutoEnhance] Poll ${i + 1}/${MAX_POLLS}: status=${data.status}`);
-
+      
       if (data.status === 'processed' || data.status === 'completed') {
         const resultUrl = data.enhanced_image_url || data.enhanced_url;
         if (resultUrl) {
@@ -112,7 +112,7 @@ class AutoEnhanceProvider {
 
       if (data.status === 'failed') {
         throw new Error(`AutoEnhance processing failed: ${data.error || 'Unknown error'}`);
-      }
+    }
     }
 
     throw new Error(`AutoEnhance timeout after ${MAX_POLLS} polls`);

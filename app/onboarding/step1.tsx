@@ -107,7 +107,7 @@ export default function OnboardingStep1() {
           </a>
         </p>
       </div>
-    </motion.div>
+      </motion.div>
   );
 }
 

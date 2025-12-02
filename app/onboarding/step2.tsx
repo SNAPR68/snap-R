@@ -108,14 +108,14 @@ export default function OnboardingStep2() {
           See Pricing
         </button>
 
-        <button
+          <button
           onClick={() => router.back()}
           className="w-full py-3 rounded-xl font-semibold border border-white/20 text-white/60 hover:bg-white/5"
-        >
+          >
           Back
-        </button>
-      </div>
-    </motion.div>
+          </button>
+        </div>
+      </motion.div>
   );
 }
 

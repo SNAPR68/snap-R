@@ -7,7 +7,7 @@ export default function ContactPage() {
       <nav className="border-b border-white/10 bg-[#0F0F0F]">
         <div className="max-w-4xl mx-auto px-6 h-20 flex items-center">
           <Link href="/" className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg flex items-center justify-center text-white font-bold text-sm bg-gradient-to-br from-emerald-400 to-emerald-600">S</div>
+            <img src="/snapr-logo.png" alt="SnapR" className="w-[76px] h-[76px]" />
             <span className="text-xl font-bold text-white">Snap<span className="text-emerald-400">R</span></span>
           </Link>
         </div>
@@ -33,7 +33,7 @@ export default function ContactPage() {
               <Mail className="w-6 h-6 text-emerald-400 mt-1" />
               <div>
                 <h3 className="font-semibold text-white mb-1">Email</h3>
-                <p className="text-white/60">support@snapr.ai</p>
+                <p className="text-white/60">support@snap-r.com</p>
               </div>
             </div>
             <div className="glass-card p-6 flex items-start gap-4">
