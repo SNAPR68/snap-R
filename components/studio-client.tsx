@@ -23,6 +23,7 @@ export function StudioClient({ listingId }: { listingId: string }) {
   const [selectedPhoto, setSelectedPhoto] = useState<any>(null);
   const [processing, setProcessing] = useState(false);
   const [activeTool, setActiveTool] = useState<string | null>(null);
+  const [selectedTool, setSelectedTool] = useState<string | null>(null);
   const [expandedCategories, setExpandedCategories] = useState<string[]>(['EXTERIOR', 'INTERIOR', 'ENHANCE']);
   type PendingEnhancement = {
     originalUrl: string;
@@ -209,7 +210,7 @@ export function StudioClient({ listingId }: { listingId: string }) {
       {/* Header */}
       <header className="h-14 bg-[#1A1A1A] border-b border-white/10 flex items-center justify-between px-4 flex-shrink-0">
         <div className="flex items-center gap-3">
-          <Link href="/dashboard" className="p-2 hover:bg-white/10 rounded-lg"><ArrowLeft className="w-5 h-5" /></Link><Link href="/" className="flex items-center gap-2"><img src="/snapr-logo.png" alt="SnapR" className="w-7 h-7" /></Link>
+          <Link href="/dashboard" className="p-2 hover:bg-white/10 rounded-lg"><ArrowLeft className="w-5 h-5" /></Link><Link href="/" className="flex items-center gap-2"><img src="/snapr-logo.png" alt="SnapR" className="w-12 h-12" /></Link>
           <h1 className="font-semibold truncate max-w-[200px]">{listing?.title || 'Loading...'}</h1>
         </div>
         <div className="flex items-center gap-2">
@@ -232,7 +233,7 @@ export function StudioClient({ listingId }: { listingId: string }) {
         {/* Left Sidebar - Tools */}
         <aside className="w-[200px] bg-[#1A1A1A] border-r border-white/10 flex flex-col flex-shrink-0">
           <div className="flex-1 overflow-y-auto p-3">
-            <h2 className="text-sm font-bold text-white/80 mb-4">AI TOOLS</h2>
+            <h2 className="text-base font-bold text-[#D4A017] mb-4 tracking-wider">AI TOOLS</h2>
             {categories.map(category => (
               <div key={category} className="mb-3">
                 <button
@@ -241,7 +242,7 @@ export function StudioClient({ listingId }: { listingId: string }) {
                       prev.includes(category) ? prev.filter(c => c !== category) : [...prev, category],
                     )
                   }
-                  className="flex items-center justify-between w-full text-sm font-semibold text-white/80 mb-2"
+                  className="flex items-center justify-between w-full text-sm font-bold text-[#D4A017] mb-2 tracking-wide"
                 >
                   {category}
                   {expandedCategories.includes(category) ? (
@@ -255,16 +256,16 @@ export function StudioClient({ listingId }: { listingId: string }) {
                     {AI_TOOLS.filter(t => t.category === category).map(tool => (
                       <button
                         key={tool.id}
-                        onClick={() => handleEnhance(tool.id)}
+                        onClick={() => setSelectedTool(selectedTool === tool.id ? null : tool.id)}
                         disabled={processing || !selectedPhoto}
                         className={`w-full flex items-center justify-between px-2 py-2 rounded-lg text-xs transition-all ${
-                          activeTool === tool.id
+                          selectedTool === tool.id
                             ? 'bg-gradient-to-r from-[#D4A017] to-[#B8860B] text-black'
                             : 'hover:bg-white/10 text-white/80'
                         } disabled:opacity-50`}
                       >
                         <span className="flex items-center gap-2">
-                          {activeTool === tool.id ? (
+                          {selectedTool === tool.id ? (
                             <Loader2 className="w-3 h-3 animate-spin" />
                           ) : (
                             <tool.icon className="w-3 h-3" />
@@ -280,6 +281,13 @@ export function StudioClient({ listingId }: { listingId: string }) {
             ))}
           </div>
           <div className="p-3 border-t border-white/10 space-y-2">
+            <button
+              onClick={() => selectedTool && handleEnhance(selectedTool)}
+              disabled={!selectedPhoto || !selectedTool || processing}
+              className="w-full flex items-center justify-center gap-2 px-3 py-3 bg-gradient-to-r from-[#D4A017] to-[#B8860B] rounded-lg text-sm text-black font-bold disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {processing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />} Enhance Now
+            </button>
             <button
               onClick={() => setShowHumanEditModal(true)}
               disabled={!selectedPhoto}
