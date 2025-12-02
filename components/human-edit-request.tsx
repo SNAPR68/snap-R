@@ -1,62 +1,53 @@
 'use client';
 
 import { useState } from 'react';
-import { createClient } from '@/lib/supabase/client';
-import { X, UserCheck, Clock, Send, CheckCircle } from 'lucide-react';
+import { X, UserCheck, Clock, Send, Loader2 } from 'lucide-react';
 
 interface HumanEditRequestProps {
-  imageId: string;
+  listingId: string;
   photoUrl: string;
-  userId: string;
   onClose: () => void;
 }
 
-export function HumanEditRequestModal({ imageId, photoUrl, userId, onClose }: HumanEditRequestProps) {
-  const [reason, setReason] = useState('');
-  const [priority, setPriority] = useState<'normal' | 'urgent'>('normal');
-  const [submitting, setSubmitting] = useState(false);
-  const [submitted, setSubmitted] = useState(false);
-  const supabase = createClient();
+export function HumanEditRequestModal({ listingId, photoUrl, onClose }: HumanEditRequestProps) {
+  const [instructions, setInstructions] = useState('');
+  const [isUrgent, setIsUrgent] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   const handleSubmit = async () => {
-    if (!reason.trim()) return;
+    if (!instructions.trim()) return;
 
-    setSubmitting(true);
+    setLoading(true);
 
-    const { error } = await supabase.from('human_review_queue').insert({
-      image_id: imageId,
-      user_id: userId,
-      reason: reason.trim(),
-      priority: priority,
-      status: 'pending',
-    });
+    try {
+      const res = await fetch('/api/stripe/human-edit-checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          listingId,
+          photoUrl,
+          instructions: instructions.trim(),
+          isUrgent,
+        }),
+      });
 
-    setSubmitting(false);
+      const data = await res.json();
 
-    if (!error) {
-      setSubmitted(true);
-      setTimeout(() => {
-        onClose();
-      }, 2000);
+      if (data.url) {
+        window.location.href = data.url;
+      } else {
+        alert('Failed to create checkout. Please try again.');
+        setLoading(false);
+      }
+    } catch (error) {
+      console.error('Checkout error:', error);
+      alert('Something went wrong. Please try again.');
+      setLoading(false);
     }
   };
 
-  if (submitted) {
-    return (
-      <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50" onClick={onClose}>
-        <div className="bg-[#1A1A1A] rounded-2xl p-8 w-full max-w-md text-center" onClick={(e) => e.stopPropagation()}>
-          <div className="w-16 h-16 bg-green-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
-            <CheckCircle className="w-8 h-8 text-green-400" />
-          </div>
-          <h2 className="text-xl font-bold text-white mb-2">Request Submitted!</h2>
-          <p className="text-white/60">Our team will review your request and get back to you within 24 hours.</p>
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50" onClick={onClose}>
+    <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4" onClick={onClose}>
       <div className="bg-[#1A1A1A] rounded-2xl p-6 w-full max-w-lg" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-3">
@@ -82,8 +73,8 @@ export function HumanEditRequestModal({ imageId, photoUrl, userId, onClose }: Hu
         <div className="mb-4">
           <label className="block text-white/70 text-sm mb-2">Describe the changes you need</label>
           <textarea
-            value={reason}
-            onChange={(e) => setReason(e.target.value)}
+            value={instructions}
+            onChange={(e) => setInstructions(e.target.value)}
             placeholder="e.g., Remove the car from the driveway, fix the lighting in the kitchen, add more vibrant sky..."
             className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl focus:border-[#D4A017] outline-none text-white resize-none h-28"
           />
@@ -94,9 +85,9 @@ export function HumanEditRequestModal({ imageId, photoUrl, userId, onClose }: Hu
           <div className="flex gap-3">
             <button
               type="button"
-              onClick={() => setPriority('normal')}
+              onClick={() => setIsUrgent(false)}
               className={`flex-1 py-3 rounded-xl border transition-colors flex items-center justify-center gap-2 ${
-                priority === 'normal'
+                !isUrgent
                   ? 'border-[#D4A017] bg-[#D4A017]/10 text-[#D4A017]'
                   : 'border-white/10 text-white/60 hover:bg-white/5'
               }`}
@@ -106,9 +97,9 @@ export function HumanEditRequestModal({ imageId, photoUrl, userId, onClose }: Hu
             </button>
             <button
               type="button"
-              onClick={() => setPriority('urgent')}
+              onClick={() => setIsUrgent(true)}
               className={`flex-1 py-3 rounded-xl border transition-colors flex items-center justify-center gap-2 ${
-                priority === 'urgent'
+                isUrgent
                   ? 'border-orange-500 bg-orange-500/10 text-orange-400'
                   : 'border-white/10 text-white/60 hover:bg-white/5'
               }`}
@@ -124,7 +115,7 @@ export function HumanEditRequestModal({ imageId, photoUrl, userId, onClose }: Hu
             <span className="text-white/60">Human Edit Service</span>
             <span className="text-white">$5.00</span>
           </div>
-          {priority === 'urgent' && (
+          {isUrgent && (
             <div className="flex justify-between text-sm mt-1">
               <span className="text-white/60">Urgent Processing</span>
               <span className="text-orange-400">+$10.00</span>
@@ -132,7 +123,7 @@ export function HumanEditRequestModal({ imageId, photoUrl, userId, onClose }: Hu
           )}
           <div className="border-t border-white/10 mt-2 pt-2 flex justify-between font-semibold">
             <span className="text-white">Total</span>
-            <span className="text-[#D4A017]">${priority === 'urgent' ? '15.00' : '5.00'}</span>
+            <span className="text-[#D4A017]">${isUrgent ? '15.00' : '5.00'}</span>
           </div>
         </div>
 
@@ -143,36 +134,23 @@ export function HumanEditRequestModal({ imageId, photoUrl, userId, onClose }: Hu
           <button
             type="button"
             onClick={handleSubmit}
-            disabled={!reason.trim() || submitting}
+            disabled={!instructions.trim() || loading}
             className="flex-1 py-3 bg-gradient-to-r from-[#D4A017] to-[#B8860B] rounded-xl text-black font-medium hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
           >
-            {submitting ? (
+            {loading ? (
               <>
-                <div className="w-4 h-4 border-2 border-black/30 border-t-black rounded-full animate-spin" />
-                Submitting...
+                <Loader2 className="w-4 h-4 animate-spin" />
+                Processing...
               </>
             ) : (
               <>
                 <UserCheck className="w-4 h-4" />
-                Submit Request
+                Pay & Submit
               </>
             )}
           </button>
         </div>
       </div>
     </div>
-  );
-}
-
-export function RequestHumanEditButton({ onClick }: { onClick: () => void }) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className="flex items-center gap-2 px-4 py-2 bg-white/5 border border-white/10 rounded-lg text-white/70 hover:bg-white/10 hover:border-[#D4A017]/50 hover:text-[#D4A017] transition-colors"
-    >
-      <UserCheck className="w-4 h-4" />
-      Request Human Edit
-    </button>
   );
 }
