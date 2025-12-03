@@ -88,7 +88,7 @@ export default function HomePage() {
           </div>
           
           <div className="flex items-center justify-center gap-6 text-sm text-white/50">
-            <span className="flex items-center gap-2"><Check className="w-4 h-4 text-[#D4A017]" /> 5 Free Credits</span>
+            <span className="flex items-center gap-2"><Check className="w-4 h-4 text-[#D4A017]" /> 10 Free Credits</span>
             <span className="flex items-center gap-2"><Check className="w-4 h-4 text-[#D4A017]" /> No Credit Card</span>
             <span className="flex items-center gap-2"><Check className="w-4 h-4 text-[#D4A017]" /> 30-Second Results</span>
           </div>

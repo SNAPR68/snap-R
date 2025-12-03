@@ -61,7 +61,7 @@ export function ShareView({ listing, photos, settings }: ShareViewProps) {
     <div className="min-h-screen bg-[#0F0F0F] text-white">
       <header className="h-16 bg-[#1A1A1A] border-b border-white/10 flex items-center justify-between px-6">
         <div className="flex items-center gap-3">
-          <img src="/snapr-logo.png" alt="SnapR" className="w-[76px] h-[76px]" />
+          <img src="/snapr-logo.png" alt="SnapR" className="w-12 h-12" />
           <span className="font-semibold">{listing.title}</span>
         </div>
         <div className="text-sm text-white/60">

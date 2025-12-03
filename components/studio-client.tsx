@@ -36,6 +36,7 @@ export function StudioClient({ listingId }: { listingId: string }) {
   const [sliderPosition, setSliderPosition] = useState(50);
   const [completedPhotos, setCompletedPhotos] = useState<any[]>([]);
   const [showShareModal, setShowShareModal] = useState(false);
+  const [copied, setCopied] = useState(false);
   const [showHumanEditModal, setShowHumanEditModal] = useState(false);
   const [shareLink, setShareLink] = useState('');
   const [shareLoading, setShareLoading] = useState(false);
@@ -167,7 +168,10 @@ export function StudioClient({ listingId }: { listingId: string }) {
   };
 
   const copyLink = () => {
+    if (!shareLink) return;
     navigator.clipboard.writeText(shareLink);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
   };
 
   const handleDownload = async (url: string, filename: string) => {
@@ -484,7 +488,7 @@ export function StudioClient({ listingId }: { listingId: string }) {
                 disabled={!shareLink}
                 className="px-4 py-3 bg-[#D4A017] rounded-xl text-black disabled:opacity-50"
               >
-                <Copy className="w-4 h-4" />
+                {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
               </button>
             </div>
             <div className="space-y-2 text-sm">
@@ -512,12 +516,7 @@ export function StudioClient({ listingId }: { listingId: string }) {
         </div>
       )}
       {showHumanEditModal && selectedPhoto && (
-        <HumanEditRequestModal
-          imageId={selectedPhoto.id}
-          photoUrl={selectedPhoto.signedUrl}
-          userId={listing?.user_id}
-          onClose={() => setShowHumanEditModal(false)}
-        />
+        <HumanEditRequestModal listingId={listingId} photoUrl={selectedPhoto?.signedUrl || ""} onClose={() => setShowHumanEditModal(false)} />
       )}
     </div>
   );

@@ -46,7 +46,7 @@ export async function POST(request: NextRequest) {
       console.warn('[Share] Could not save share:', error);
     }
 
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://snap-r.com';
     const token = share?.token || shareToken;
     const shareUrl = `${baseUrl}/share/${token}`;
 
