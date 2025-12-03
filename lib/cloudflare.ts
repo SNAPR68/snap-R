@@ -10,15 +10,12 @@ export function getCloudflareConfig() {
 
 // Legacy export with lazy getter - only access env vars when accessed
 // This prevents build-time execution while maintaining backward compatibility
-function createLazyExport<T>(getter: () => T): T {
-  return new Proxy({} as T, {
+function createLazyExport<T extends object>(getter: () => T): T {
+  return new Proxy({}, {
     get(_target, prop) {
       return (getter() as any)[prop];
     },
-  });
+  }) as T;
 }
 
 export const CF = createLazyExport(() => getCloudflareConfig());
-
-
-
