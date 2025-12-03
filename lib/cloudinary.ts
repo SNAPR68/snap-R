@@ -15,7 +15,7 @@ cloudinary.config({
 });
 
 export function uploadBuffer(buffer: Buffer, filename?: string, folder?: string) {
-  return new Promise<cloudinary.UploadApiResponse>((resolve, reject) => {
+  return new Promise<UploadApiResponse>((resolve, reject) => {
     const stream = cloudinary.uploader.upload_stream({
       folder,
       filename_override: filename,
