@@ -21,7 +21,7 @@ interface Listing {
   photo_count?: number;
 }
 
-export function DashboardClient({ user }: { user: any }) {
+export function DashboardClient({ user, listings }: { user: any; listings?: any[] }) {
   const [projects, setProjects] = useState<Project[]>([]);
   const [expandedProjects, setExpandedProjects] = useState<Set<string>>(new Set());
   const [showNewProject, setShowNewProject] = useState(false);
