@@ -1,48 +1,44 @@
 'use client';
+
 import { Smartphone, ChevronDown } from 'lucide-react';
 
 export function MobileBadge() {
-  const scrollToSection = (e: React.MouseEvent | React.TouchEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    const section = document.getElementById('features');
+  const scrollToMobile = () => {
+    const section = document.getElementById('mobile-section');
     if (section) {
       section.scrollIntoView({ behavior: 'smooth' });
     }
   };
-  
+
   return (
-    <div 
-      role="button"
-      tabIndex={0}
-      onClick={scrollToSection}
-      onTouchStart={scrollToSection}
-      onKeyDown={(e) => e.key === 'Enter' && scrollToSection(e as any)}
-      className="relative z-50 cursor-pointer select-none"
-      style={{ WebkitTapHighlightColor: 'transparent' }}
-    >
-      {/* Glowing background */}
-      <div className="absolute inset-0 bg-gradient-to-r from-[#D4A017]/20 to-[#B8860B]/20 rounded-2xl blur-xl animate-pulse" />
+    <div className="flex flex-col items-center gap-3">
+      <span className="text-xs font-bold tracking-widest text-emerald-400 uppercase">
+        Industry First
+      </span>
       
-      {/* Main badge */}
-      <div className="relative flex items-center gap-4 px-6 py-3 bg-gradient-to-r from-[#1A1A1A] to-[#0D0D0D] border border-[#D4A017]/50 rounded-2xl hover:border-[#D4A017] transition-all duration-300 group hover:shadow-lg hover:shadow-[#D4A017]/20">
-        {/* Phone icon with glow */}
+      <p className="text-white/70 text-sm md:text-base text-center max-w-md">
+        World's first real estate photo app that works on mobile
+      </p>
+      
+      <button
+        onClick={scrollToMobile}
+        className="group relative mt-2 inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-emerald-500/10 border border-emerald-500/40 hover:border-emerald-400 hover:bg-emerald-500/20 transition-all duration-300 cursor-pointer"
+      >
+        <div className="absolute inset-0 rounded-full bg-emerald-500/20 blur-md opacity-0 group-hover:opacity-100 transition-opacity" />
+        
         <div className="relative">
-          <div className="absolute inset-0 bg-[#D4A017]/30 rounded-full blur-md group-hover:bg-[#D4A017]/50 transition-all" />
-          <div className="relative w-12 h-12 bg-gradient-to-br from-[#D4A017] to-[#B8860B] rounded-xl flex items-center justify-center">
-            <Smartphone className="w-6 h-6 text-black" />
+          <Smartphone className="w-5 h-5 text-emerald-400" />
+          <div className="absolute inset-0 animate-ping">
+            <Smartphone className="w-5 h-5 text-emerald-400 opacity-40" />
           </div>
         </div>
         
-        {/* Text */}
-        <div className="text-left">
-          <div className="text-xs text-[#D4A017] font-medium tracking-wider uppercase">Works on</div>
-          <div className="text-white font-bold text-lg">Mobile & Desktop</div>
-        </div>
+        <span className="relative text-emerald-400 font-semibold text-sm">
+          See How It Works
+        </span>
         
-        {/* Arrow indicator */}
-        <ChevronDown className="w-5 h-5 text-[#D4A017] animate-bounce ml-2" />
-      </div>
+        <ChevronDown className="relative w-4 h-4 text-emerald-400 animate-bounce" />
+      </button>
     </div>
   );
 }

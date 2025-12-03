@@ -67,11 +67,12 @@ export default function HomePage() {
           </div>
           
           <h1 className="text-5xl md:text-7xl font-bold mb-6 leading-tight text-white">
-            The <span className="text-gold-gradient">Gold Standard</span> in<br />Real Estate Photography
+            The <span className="text-gold-gradient">Gold Standard</span> in<br />Real Estate Photo Enhancement
           </h1>
           
           <p className="text-xl text-white/60 mb-8 max-w-2xl mx-auto">
-            Transform ordinary listings into luxury showcases in seconds. AI enhancements that sell properties faster.
+            Upload Raw. SnapR It. Download Gold.</p>
+          <p className="text-lg text-white/50 mb-8 max-w-2xl mx-auto">Stunning photos sell faster. It's that simple.
           </p>
           
           <div className="flex justify-center mb-8">
