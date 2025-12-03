@@ -5,27 +5,41 @@ import { Resend } from 'resend';
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url);
   const code = searchParams.get('code');
-  const next = searchParams.get('next') ?? '/dashboard';
+  const next = searchParams.get('next');
 
   if (code) {
     const supabase = await createClient();
     const { data, error } = await supabase.auth.exchangeCodeForSession(code);
     
     if (!error && data.user) {
-      // Check if new user (profile doesn't exist or was just created)
+      // Check if profile exists
       const { data: profile } = await supabase
         .from('profiles')
-        .select('created_at')
+        .select('id, plan, created_at')
         .eq('id', data.user.id)
         .single();
 
-      // Send welcome email for new users (created in last 5 minutes)
-      if (profile) {
-        const createdAt = new Date(profile.created_at);
-        const now = new Date();
-        const isNewUser = (now.getTime() - createdAt.getTime()) < 5 * 60 * 1000; // 5 minutes
+      // If no profile, create one (Google sign up doesn't trigger the database function)
+      if (!profile) {
+        const { error: insertError } = await supabase
+          .from('profiles')
+          .insert({
+            id: data.user.id,
+            email: data.user.email,
+            full_name: data.user.user_metadata?.full_name || data.user.user_metadata?.name || null,
+            avatar_url: data.user.user_metadata?.avatar_url || data.user.user_metadata?.picture || null,
+            plan: 'free',
+            credits: 10,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          });
 
-        if (isNewUser && data.user.email) {
+        if (insertError) {
+          console.error('Profile creation error:', insertError);
+        }
+
+        // New user - send welcome email and redirect to onboarding
+        if (data.user.email) {
           try {
             const resend = new Resend(process.env.RESEND_API_KEY);
             await resend.emails.send({
@@ -40,7 +54,7 @@ export async function GET(request: Request) {
                   <ul>
                     <li>🌅 Sky Replacement - Transform dull skies instantly</li>
                     <li>🌙 Virtual Twilight - Create stunning dusk shots</li>
-                    <li>🌿 Lawn Repair - Make grass green and lush</li>
+                    <li>�� Lawn Repair - Make grass green and lush</li>
                     <li>🛋️ Virtual Staging - Furnish empty rooms</li>
                     <li>✨ HDR Enhancement - Professional color correction</li>
                   </ul>
@@ -54,9 +68,23 @@ export async function GET(request: Request) {
             console.error('Welcome email error:', emailError);
           }
         }
+
+        // Redirect new users to onboarding/pricing
+        return NextResponse.redirect(`${origin}/onboarding`);
       }
 
-      return NextResponse.redirect(`${origin}${next}`);
+      // Existing user - check if they have a plan
+      if (profile.plan === 'free' || !profile.plan) {
+        // User exists but no paid plan - check if this is from a specific "next" destination
+        if (next) {
+          return NextResponse.redirect(`${origin}${next}`);
+        }
+        // Otherwise go to dashboard (they already have 10 free credits)
+        return NextResponse.redirect(`${origin}/dashboard`);
+      }
+
+      // Existing user with plan - go to requested page or dashboard
+      return NextResponse.redirect(`${origin}${next || '/dashboard'}`);
     }
   }
 
