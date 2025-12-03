@@ -31,8 +31,8 @@ export default async function AdminUsers() {
                   <p className="text-white/50 text-sm">{user.email}</p>
                 </td>
                 <td className="p-4">
-                  <span className={`text-xs px-2 py-1 rounded ${user.plan === 'agency' ? 'bg-purple-500/20 text-purple-400' : user.plan === 'professional' ? 'bg-blue-500/20 text-blue-400' : user.plan === 'starter' ? 'bg-green-500/20 text-green-400' : 'bg-white/10 text-white/50'}`}>
-                    {user.plan || 'Free'}
+                  <span className={`text-xs px-2 py-1 rounded ${user.subscription_tier === 'agency' ? 'bg-purple-500/20 text-purple-400' : user.subscription_tier === 'professional' ? 'bg-blue-500/20 text-blue-400' : user.subscription_tier === 'starter' ? 'bg-green-500/20 text-green-400' : 'bg-white/10 text-white/50'}`}>
+                    {user.subscription_tier || 'Free'}
                   </span>
                 </td>
                 <td className="p-4">
