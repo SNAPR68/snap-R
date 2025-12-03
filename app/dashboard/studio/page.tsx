@@ -16,20 +16,15 @@ export default async function StudioPage({ searchParams }: { searchParams: Promi
   const listingId = params.id;
   if (!listingId) redirect('/dashboard');
 
+  // Verify listing exists and belongs to user
   const { data: listing } = await supabase
     .from('listings')
-    .select('*, photos(*)')
+    .select('id')
     .eq('id', listingId)
     .eq('user_id', user.id)
     .single();
 
   if (!listing) redirect('/dashboard');
 
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('*')
-    .eq('id', user.id)
-    .single();
-
-  return <StudioClient listing={listing} photos={listing.photos || []} profile={profile} />;
+  return <StudioClient listingId={listingId} />;
 }
