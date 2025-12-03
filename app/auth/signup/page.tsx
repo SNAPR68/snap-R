@@ -18,18 +18,53 @@ export default function SignupPage() {
     e.preventDefault();
     setLoading(true);
     setError('');
-    const { error } = await supabase.auth.signUp({ email, password, options: { data: { full_name: name } } });
-    if (error) { setError(error.message); setLoading(false); return; }
-    router.push('/dashboard');
+    
+    const { data, error } = await supabase.auth.signUp({ 
+      email, 
+      password, 
+      options: { 
+        data: { full_name: name },
+        emailRedirectTo: `${window.location.origin}/auth/callback`
+      } 
+    });
+    
+    if (error) { 
+      setError(error.message); 
+      setLoading(false); 
+      return; 
+    }
+
+    // If email confirmation is disabled, create profile and redirect to onboarding
+    if (data.user) {
+      // Create profile for new user
+      await supabase.from('profiles').upsert({
+        id: data.user.id,
+        email: data.user.email,
+        full_name: name,
+        subscription_tier: 'free',
+        credits: 10,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      });
+      
+      // Redirect to onboarding for new users
+      router.push('/onboarding');
+    } else {
+      // Email confirmation required
+      setError('Please check your email to confirm your account.');
+      setLoading(false);
+    }
   };
 
   const handleGoogleSignup = async () => {
-    await supabase.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: `${window.location.origin}/auth/callback` } });
+    await supabase.auth.signInWithOAuth({ 
+      provider: 'google', 
+      options: { redirectTo: `${window.location.origin}/auth/callback` } 
+    });
   };
 
   return (
     <div className="min-h-screen bg-[#0F0F0F] flex">
-
       {/* Left Panel */}
       <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-[#D4A017] to-[#B8860B] p-12 flex-col justify-between">
         <Link href="/" className="flex items-center gap-3">
@@ -80,7 +115,7 @@ export default function SignupPage() {
             </button>
           </form>
 
-          <p className="text-center text-white/40 mt-6">
+          <p className="mt-6 text-center text-white/50">
             Already have an account? <Link href="/auth/login" className="text-[#D4A017] hover:underline">Sign in</Link>
           </p>
         </div>

@@ -308,7 +308,7 @@ export function StudioClient({ listingId }: { listingId: string }) {
             <button
               onClick={async () => {
                 await supabase.auth.signOut();
-                window.location.href = '/auth/login';
+                window.location.href = '/';
               }}
               className="w-full flex items-center justify-center gap-2 px-3 py-2 bg-white/5 hover:bg-white/10 rounded-lg text-sm text-white/60"
             >

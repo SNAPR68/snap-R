@@ -18,12 +18,12 @@ export default async function AdminDashboard() {
     .order('created_at', { ascending: false })
     .limit(5);
 
-  const { data: planCounts } = await supabase.from('profiles').select('plan');
+  const { data: planCounts } = await supabase.from('profiles').select('subscription_tier');
   const plans = {
-    free: planCounts?.filter(p => !p.plan || p.plan === 'free').length || 0,
-    starter: planCounts?.filter(p => p.plan === 'starter').length || 0,
-    professional: planCounts?.filter(p => p.plan === 'professional').length || 0,
-    agency: planCounts?.filter(p => p.plan === 'agency').length || 0,
+    free: planCounts?.filter(p => !p.subscription_tier || p.subscription_tier === 'free').length || 0,
+    starter: planCounts?.filter(p => p.subscription_tier === 'starter').length || 0,
+    professional: planCounts?.filter(p => p.subscription_tier === 'professional').length || 0,
+    agency: planCounts?.filter(p => p.subscription_tier === 'agency').length || 0,
   };
   const totalUsers = Object.values(plans).reduce((a, b) => a + b, 0);
 

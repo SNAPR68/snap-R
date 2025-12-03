@@ -33,12 +33,40 @@ function extractUrl(output: unknown): string {
 }
 
 // ============================================
-// GROUNDED SAM - Text-prompted segmentation mask
+// FLUX KONTEXT - For creative edits
+// ============================================
+
+async function runFluxKontext(imageUrl: string, prompt: string): Promise<string> {
+  console.log('[Replicate] Running Flux Kontext...');
+  console.log('[Replicate] Prompt:', prompt.substring(0, 80) + '...');
+
+  const output = await withTimeout(
+    replicate.run('black-forest-labs/flux-kontext-dev', {
+      input: {
+        input_image: imageUrl,
+        prompt,
+        guidance: 3.5,
+        num_inference_steps: 28,
+        aspect_ratio: 'match_input_image',
+        output_format: 'jpg',
+        output_quality: 90,
+      },
+    }),
+    120000,
+    'Flux Kontext',
+  );
+
+  console.log('[Replicate] Flux Kontext complete');
+  return extractUrl(output);
+}
+
+// ============================================
+// GROUNDED SAM + SDXL INPAINTING - For precise removal
 // ============================================
 
 async function getSegmentationMask(imageUrl: string, prompt: string): Promise<string> {
   console.log('[Replicate] Getting segmentation mask via Grounded SAM...');
-  console.log('[Replicate] Prompt:', prompt);
+  console.log('[Replicate] Mask prompt:', prompt);
 
   const output = await withTimeout(
     replicate.run('schananas/grounded_sam', {
@@ -56,18 +84,13 @@ async function getSegmentationMask(imageUrl: string, prompt: string): Promise<st
   return resultUrl;
 }
 
-// ============================================
-// SDXL INPAINTING - Fill masked area
-// ============================================
-
 async function inpaintWithMask(
   imageUrl: string,
   maskUrl: string,
   prompt: string,
-  negativePrompt: string = 'blurry, distorted, low quality, artifacts, ugly',
+  negativePrompt: string = 'clutter, mess, objects, items, blurry, distorted',
 ): Promise<string> {
   console.log('[Replicate] Inpainting with SDXL...');
-  console.log('[Replicate] Prompt:', prompt.substring(0, 60) + '...');
 
   const output = await withTimeout(
     replicate.run('lucataco/sdxl-inpainting', {
@@ -92,35 +115,7 @@ async function inpaintWithMask(
 }
 
 // ============================================
-// FLUX KONTEXT - For creative edits
-// ============================================
-
-async function runFluxKontext(imageUrl: string, prompt: string): Promise<string> {
-  console.log('[Replicate] Running Flux Kontext...');
-  console.log('[Replicate] Prompt:', prompt.substring(0, 80) + '...');
-
-  const output = await withTimeout(
-    replicate.run('black-forest-labs/flux-kontext-dev', {
-    input: {
-        input_image: imageUrl,
-        prompt,
-        guidance: 3.5,
-        num_inference_steps: 28,
-        aspect_ratio: 'match_input_image',
-        output_format: 'jpg',
-        output_quality: 90,
-    },
-    }),
-    120000,
-    'Flux Kontext',
-  );
-
-  console.log('[Replicate] Flux Kontext complete');
-  return extractUrl(output);
-}
-
-// ============================================
-// PUBLIC API: SKY REPLACEMENT (Instruction-based - NO MASK)
+// PUBLIC API: SKY REPLACEMENT
 // ============================================
 
 export async function skyReplacement(
@@ -147,7 +142,7 @@ export async function skyReplacement(
 }
 
 // ============================================
-// PUBLIC API: VIRTUAL TWILIGHT (Instruction-based - NO MASK)
+// PUBLIC API: VIRTUAL TWILIGHT
 // ============================================
 
 export async function virtualTwilight(imageUrl: string): Promise<string> {
@@ -163,7 +158,7 @@ export async function virtualTwilight(imageUrl: string): Promise<string> {
 }
 
 // ============================================
-// PUBLIC API: LAWN REPAIR (Instruction-based - NO MASK)
+// PUBLIC API: LAWN REPAIR
 // ============================================
 
 export async function lawnRepair(imageUrl: string): Promise<string> {
@@ -179,19 +174,48 @@ export async function lawnRepair(imageUrl: string): Promise<string> {
 }
 
 // ============================================
-// PUBLIC API: DECLUTTER (Flux Kontext)
+// PUBLIC API: DECLUTTER (Two-step: Mask + Inpaint for reliability)
 // ============================================
 
 export async function declutter(imageUrl: string): Promise<string> {
-  console.log('[Replicate] Declutter');
-  return runFluxKontext(
+  console.log('[Replicate] === DECLUTTER ===');
+
+  // Try mask-based approach first (more reliable)
+  try {
+    console.log('[Replicate] Attempting mask-based declutter...');
+    
+    // Step 1: Get mask for clutter items
+    const maskUrl = await getSegmentationMask(
+      imageUrl,
+      'clutter, mess, toys, papers, clothes, shoes, bags, dishes, cups, bottles, boxes, personal items, small objects on floor, items on furniture'
+    );
+
+    // Step 2: Inpaint to remove clutter
+    const result = await inpaintWithMask(
+      imageUrl,
+      maskUrl,
+      'Clean, tidy, empty floor and surfaces. Professional real estate photography. Clean organized room.',
+      'clutter, mess, toys, papers, clothes, objects, items, dirty, messy'
+    );
+
+    console.log('[Replicate] === DECLUTTER COMPLETE (mask-based) ===');
+    return result;
+  } catch (maskError: any) {
+    console.log('[Replicate] Mask-based failed, falling back to instruction-based:', maskError.message);
+  }
+
+  // Fallback: instruction-based with Flux Kontext
+  const result = await runFluxKontext(
     imageUrl,
-    'Remove clutter, personal items, and mess from this room. Remove items like: toys, papers, magazines, dishes, clothes on furniture, shoes, bags, and small personal belongings. Keep all furniture, fixtures, walls, floors, architectural elements, and permanent features EXACTLY the same. Only remove loose items and clutter.',
+    'IMPORTANT: Remove ALL clutter and mess from this room. Delete these items completely: toys, papers, magazines, books on surfaces, dishes, cups, glasses, clothes draped on furniture, shoes on floor, bags, boxes, personal belongings, toiletries, and any small loose items. The floor should be completely clear. Surfaces should be empty or minimally decorated. Keep all furniture, walls, windows, doors, and permanent fixtures exactly the same. Only remove loose items and clutter. Make it look like a clean, staged real estate photo.',
   );
+
+  console.log('[Replicate] === DECLUTTER COMPLETE (instruction-based) ===');
+  return result;
 }
 
 // ============================================
-// PUBLIC API: HDR (Flux Kontext)
+// PUBLIC API: HDR
 // ============================================
 
 export async function hdr(imageUrl: string): Promise<string> {
@@ -203,7 +227,7 @@ export async function hdr(imageUrl: string): Promise<string> {
 }
 
 // ============================================
-// PUBLIC API: VIRTUAL STAGING (Flux Kontext)
+// PUBLIC API: VIRTUAL STAGING
 // ============================================
 
 export async function virtualStaging(
@@ -219,7 +243,7 @@ export async function virtualStaging(
 }
 
 // ============================================
-// PUBLIC API: UPSCALE (Real-ESRGAN)
+// PUBLIC API: UPSCALE
 // ============================================
 
 export async function upscale(
@@ -234,8 +258,8 @@ export async function upscale(
 
   const output = await withTimeout(
     replicate.run('nightmareai/real-esrgan', {
-    input: {
-      image: imageUrl,
+      input: {
+        image: imageUrl,
         scale: Math.min(scale, 4),
         face_enhance: false,
       },
@@ -246,4 +270,3 @@ export async function upscale(
   console.log('[Replicate] Upscale complete');
   return extractUrl(output);
 }
-

@@ -5,7 +5,7 @@ export function MobileBadge() {
   const scrollToSection = (e: React.MouseEvent | React.TouchEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    const section = document.getElementById('mobile-section');
+    const section = document.getElementById('features');
     if (section) {
       section.scrollIntoView({ behavior: 'smooth' });
     }
