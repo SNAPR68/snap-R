@@ -35,10 +35,6 @@
     ".next/types/**/*.ts"
   ],
   "exclude": [
-    "node_modules",
-    "functions",
-    "workers",
-    "lib/cloudflare.ts",
-    "wrangler.toml"
+    "node_modules"
   ]
 }
