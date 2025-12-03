@@ -32,7 +32,7 @@ export function getSupabaseAdmin(): SupabaseClient {
 
 // Legacy exports with lazy getters - only initialize when accessed
 // This prevents build-time execution while maintaining backward compatibility
-function createLazyExport<T>(getter: () => T): T {
+function createLazyExport<T extends object>(getter: () => T): T {
   return new Proxy({} as T, {
     get(_target, prop) {
       return (getter() as any)[prop];
