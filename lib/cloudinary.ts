@@ -1,17 +1,9 @@
-import { v2 as cloudinary } from "cloudinary";
-
-const cloudName = process.env.CLOUDINARY_CLOUD_NAME;
-const apiKey = process.env.CLOUDINARY_API_KEY;
-const apiSecret = process.env.CLOUDINARY_API_SECRET;
-
-if (!cloudName || !apiKey || !apiSecret) {
-  console.warn("Cloudinary environment variables are missing.");
-}
+import { v2 as cloudinary, UploadApiResponse } from 'cloudinary';
 
 cloudinary.config({
-  cloud_name: cloudName,
-  api_key: apiKey,
-  api_secret: apiSecret,
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
 export function uploadBuffer(buffer: Buffer, filename?: string, folder?: string) {
@@ -19,16 +11,12 @@ export function uploadBuffer(buffer: Buffer, filename?: string, folder?: string)
     const stream = cloudinary.uploader.upload_stream({
       folder,
       filename_override: filename,
-      overwrite: false,
-      resource_type: "image",
     }, (error, result) => {
-      if (error || !result) {
-        reject(error);
-      } else {
-        resolve(result);
-      }
+      if (error) reject(error);
+      else resolve(result!);
     });
-
     stream.end(buffer);
   });
 }
+
+export default cloudinary;
