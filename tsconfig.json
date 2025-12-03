@@ -17,5 +17,5 @@
     "target": "ES2017"
   },
   "include": ["next-env.d.ts", "app/**/*.ts", "app/**/*.tsx", "components/**/*.ts", "components/**/*.tsx", "lib/**/*.ts", ".next/types/**/*.ts"],
-  "exclude": ["node_modules", "functions", "workers", "src"]
+  "exclude": ["node_modules", "functions", "workers", "src", "lib/cloudflare.ts"]
 }
