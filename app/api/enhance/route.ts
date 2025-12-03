@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { processEnhancement, ToolId, TOOL_CREDITS } from '@/lib/ai/router';
 import { Resend } from 'resend';
+import { logApiCost } from '@/lib/cost-logger';
 
 export const maxDuration = 120;
 
@@ -64,6 +65,15 @@ export async function POST(request: NextRequest) {
     console.log('[API] Processing...');
     const result = await processEnhancement(toolId as ToolId, signedUrlData.signedUrl, options);
     
+    // Log API cost
+    await logApiCost({
+      userId: user.id,
+      provider: 'replicate',
+      toolId,
+      success: result.success || false,
+      errorMessage: result.error,
+    });
+
     if (!result.success || !result.enhancedUrl) {
       return NextResponse.json({ error: result.error || 'Enhancement failed' }, { status: 500 });
     }

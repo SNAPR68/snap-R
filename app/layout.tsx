@@ -1,92 +1,67 @@
-import type { Metadata } from "next";
-import localFont from "next/font/local";
-import "./globals.css";
-import { Providers } from "./providers";
-import { CrispChat } from "@/components/crisp-chat";
+import type { Metadata } from 'next';
+import { Inter } from 'next/font/google';
+import './globals.css';
+import { CookieConsent } from '@/components/cookie-consent';
 
-const geistSans = localFont({
-  src: "./fonts/GeistVF.woff",
-  variable: "--font-geist-sans",
-  weight: "100 900",
-});
-const geistMono = localFont({
-  src: "./fonts/GeistMonoVF.woff",
-  variable: "--font-geist-mono",
-  weight: "100 900",
-});
+const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
-  title: "SnapR – AI Enhanced Realty",
-  description: "Transform your real estate photos with AI-powered enhancements: sky replacement, HDR, declutter, twilight mode, and more.",
-  metadataBase: new URL("https://snap-r.com"),
-  keywords: ["real estate", "photo enhancement", "AI editing", "HDR", "sky replacement", "property marketing"],
+  metadataBase: new URL('https://snap-r.com'),
+  title: {
+    default: 'SnapR - AI Real Estate Photo Enhancement',
+    template: '%s | SnapR',
+  },
+  description: 'Transform ordinary property listings into luxury showcases in seconds. AI-powered sky replacement, virtual staging, twilight conversion & more.',
+  keywords: ['real estate photography', 'photo enhancement', 'AI photo editing', 'virtual staging', 'sky replacement', 'property photos', 'real estate marketing'],
+  authors: [{ name: 'SnapR' }],
+  creator: 'SnapR',
+  publisher: 'SnapR',
+  robots: {
+    index: true,
+    follow: true,
+  },
   openGraph: {
-    title: "SnapR – AI Enhanced Realty",
-    description: "Instantly enhance property photos with AI. Built for agents and brokers.",
-    url: "https://snap-r.com",
-    siteName: "SnapR",
+    type: 'website',
+    locale: 'en_US',
+    url: 'https://snap-r.com',
+    siteName: 'SnapR',
+    title: 'SnapR - AI Real Estate Photo Enhancement',
+    description: 'Transform ordinary property listings into luxury showcases in seconds. AI-powered photo enhancement for real estate professionals.',
     images: [
       {
-        url: "/og-image.png",
+        url: '/og-image.png',
         width: 1200,
-        height: 630
-      }
+        height: 630,
+        alt: 'SnapR - AI Real Estate Photo Enhancement',
+      },
     ],
-    type: "website",
   },
   twitter: {
-    card: "summary_large_image",
-    title: "SnapR – AI Enhanced Realty",
-    description: "AI-powered real estate photo enhancement.",
-    images: ["/og-image.png"]
+    card: 'summary_large_image',
+    title: 'SnapR - AI Real Estate Photo Enhancement',
+    description: 'Transform ordinary property listings into luxury showcases in seconds.',
+    images: ['/og-image.png'],
   },
   icons: {
-    icon: [
-      { url: "/favicon.ico" },
-      { url: "/favicon.png", type: "image/png" }
-    ],
-    apple: "/apple-touch-icon.png",
-    shortcut: "/favicon.ico",
+    icon: '/favicon.ico',
+    apple: '/apple-touch-icon.png',
   },
-};
-
-export const viewport = {
-  themeColor: "#ffffff",
+  manifest: '/manifest.json',
 };
 
 export default function RootLayout({
   children,
-}: Readonly<{
+}: {
   children: React.ReactNode;
-}>) {
+}) {
   return (
     <html lang="en">
       <head>
-        <link rel="manifest" href="/manifest.json" />
-        <link
-          rel="preload"
-          as="font"
-          type="font/woff"
-          href="/fonts/GeistVF.woff"
-          crossOrigin="anonymous"
-        />
-        <link
-          rel="preload"
-          as="font"
-          type="font/woff"
-          href="/fonts/GeistMonoVF.woff"
-          crossOrigin="anonymous"
-        />
-        <link rel="preconnect" href="https://res.cloudinary.com" />
-        <link rel="dns-prefetch" href="https://res.cloudinary.com" />
-        <link rel="preconnect" href="https://asoiwonhqoesbvcilqwd.supabase.co" />
-        <link rel="dns-prefetch" href="https://asoiwonhqoesbvcilqwd.supabase.co" />
+        <link rel="canonical" href="https://snap-r.com" />
       </head>
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
-        <Providers>{children}</Providers>
-        <CrispChat />
+      <body className={inter.className}>
+        {children}
+        <CookieConsent />
       </body>
     </html>
   );

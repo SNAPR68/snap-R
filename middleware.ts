@@ -1,46 +1,59 @@
-import { NextResponse } from "next/server";
-import type { NextRequest } from "next/server";
-import { createServerClient } from "@supabase/ssr";
+import { NextResponse } from 'next/server';
+import type { NextRequest } from 'next/server';
 
-export async function middleware(req: NextRequest) {
-  let res = NextResponse.next({ request: req });
+// Simple in-memory rate limiting (use Redis for production scale)
+const rateLimit = new Map<string, { count: number; resetTime: number }>();
 
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        getAll() {
-          return req.cookies.getAll();
-        },
-        setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value, options }) => {
-            req.cookies.set(name, value);
-            res.cookies.set(name, value, options);
-          });
-        },
-      },
-    }
-  );
+const RATE_LIMITS = {
+  api: { limit: 100, window: 60000 }, // 100 requests per minute
+  auth: { limit: 10, window: 60000 },  // 10 auth attempts per minute
+  enhance: { limit: 30, window: 60000 }, // 30 enhancements per minute
+};
 
-  const { data: { session } } = await supabase.auth.getSession();
-  const pathname = req.nextUrl.pathname;
+function checkRateLimit(ip: string, type: keyof typeof RATE_LIMITS): boolean {
+  const now = Date.now();
+  const config = RATE_LIMITS[type];
+  const key = `${type}:${ip}`;
+  const record = rateLimit.get(key);
 
-  // If NOT logged in on protected route → force login
-  if (!session) {
-    return NextResponse.redirect(new URL("/auth/login", req.url));
+  if (!record || now > record.resetTime) {
+    rateLimit.set(key, { count: 1, resetTime: now + config.window });
+    return true;
   }
 
-  return res;
+  if (record.count >= config.limit) {
+    return false;
+  }
+
+  record.count++;
+  return true;
+}
+
+export function middleware(request: NextRequest) {
+  const ip = request.ip || request.headers.get('x-forwarded-for') || 'unknown';
+  const path = request.nextUrl.pathname;
+
+  // Rate limit API routes
+  if (path.startsWith('/api/')) {
+    let limitType: keyof typeof RATE_LIMITS = 'api';
+    
+    if (path.includes('/auth/')) {
+      limitType = 'auth';
+    } else if (path.includes('/enhance')) {
+      limitType = 'enhance';
+    }
+
+    if (!checkRateLimit(ip, limitType)) {
+      return NextResponse.json(
+        { error: 'Too many requests. Please try again later.' },
+        { status: 429 }
+      );
+    }
+  }
+
+  return NextResponse.next();
 }
 
 export const config = {
-  matcher: [
-    "/dashboard/:path*",
-    "/upload/:path*",
-    "/listings/:path*",
-    "/jobs/:path*",
-    "/settings/:path*",
-    "/billing/:path*",
-  ],
+  matcher: ['/api/:path*'],
 };
