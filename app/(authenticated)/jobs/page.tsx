@@ -7,23 +7,6 @@ import Image from "next/image";
 import { Clock, CheckCircle, XCircle, Loader2, PlusCircle } from "lucide-react";
 import JobTimestamp from "@/components/ui/job-timestamp";
 
-type JobCard = {
-  id: string;
-  status: string;
-  variant: string | null;
-  created_at: string;
-  updated_at: string | null;
-  listing: {
-    id: string;
-    title: string;
-  } | null;
-  photos: Array<{
-    id: string;
-    processed_url: string | null;
-    status: string;
-  }>;
-};
-
 export default async function JobsPage() {
   const { user } = await protect();
   const supabase = createSupabaseServerClient();
@@ -75,10 +58,11 @@ export default async function JobsPage() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
-        {jobs.map((job: JobCard) => {
-          const completed = job.photos?.filter((p) => p.status === "completed").length ?? 0;
+        {jobs.map((job: any) => {
+          const completed = job.photos?.filter((p: any) => p.status === "completed").length ?? 0;
           const total = job.photos?.length ?? 0;
-          const previewPhoto = job.photos?.find((p) => !!p.processed_url)?.processed_url;
+          const previewPhoto = job.photos?.find((p: any) => !!p.processed_url)?.processed_url;
+          const listingData = Array.isArray(job.listing) ? job.listing[0] : job.listing;
 
           return (
             <Link
@@ -105,7 +89,7 @@ export default async function JobsPage() {
               <div className="space-y-3 pt-4 flex-1">
                 <div className="flex items-center justify-between gap-2">
                   <div className="font-semibold text-[var(--text-main)]">
-                    {job.listing?.title || "Untitled listing"}
+                    {listingData?.title || "Untitled listing"}
                   </div>
                   <StatusPill status={job.status} />
                 </div>
