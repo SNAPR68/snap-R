@@ -1,85 +1,96 @@
 export const dynamic = 'force-dynamic';
-import { NextRequest, NextResponse } from 'next/server';
-import { stripe } from '@/lib/stripe';
-import { createClient } from '@supabase/supabase-js';
 
-const supabaseAdmin = createClient(
+import { NextRequest, NextResponse } from 'next/server';
+import { createClient } from '@supabase/supabase-js';
+import Stripe from 'stripe';
+
+function getStripe() {
+  return new Stripe(process.env.STRIPE_SECRET_KEY!, {
+    apiVersion: '2025-11-17.clover',
+  });
+}
+
+const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
-export async function POST(req: NextRequest) {
-  const body = await req.text();
-  const signature = req.headers.get('stripe-signature')!;
+const PLAN_CREDITS: Record<string, number> = {
+  starter: 50,
+  professional: 150,
+  agency: 500,
+};
 
-  let event;
+export async function POST(request: NextRequest) {
+  const stripe = getStripe();
+  const body = await request.text();
+  const signature = request.headers.get('stripe-signature')!;
+
+  let event: Stripe.Event;
 
   try {
-    event = stripe.webhooks.constructEvent(
-      body,
-      signature,
-      process.env.STRIPE_WEBHOOK_SECRET!
-    );
-  } catch (err: any) {
-    console.error('Webhook signature verification failed:', err.message);
+    event = stripe.webhooks.constructEvent(body, signature, process.env.STRIPE_WEBHOOK_SECRET!);
+  } catch (err) {
+    console.error('Webhook signature verification failed:', err);
     return NextResponse.json({ error: 'Invalid signature' }, { status: 400 });
   }
 
-  if (event.type === 'checkout.session.completed') {
-    const session = event.data.object;
-    const { userId, credits } = session.metadata || {};
+  try {
+    switch (event.type) {
+      case 'checkout.session.completed': {
+        const session = event.data.object as Stripe.Checkout.Session;
+        const { userId, plan, type, photoId, isUrgent, instructions } = session.metadata || {};
 
-    if (userId && credits) {
-      const creditsToAdd = parseInt(credits);
-      const { data: user } = await supabaseAdmin
-        .from('users')
-        .select('credits')
-        .eq('id', userId)
-        .single();
+        if (type === 'human_edit') {
+          await supabase.from('human_edit_orders').insert({
+            user_id: userId,
+            photo_id: photoId,
+            is_urgent: isUrgent === 'true',
+            instructions,
+            amount_paid: session.amount_total,
+            status: 'pending',
+          });
+        } else if (plan && userId) {
+          const credits = PLAN_CREDITS[plan] || 0;
+          await supabase.from('profiles').update({
+            plan,
+            credits,
+            stripe_customer_id: session.customer as string,
+          }).eq('id', userId);
+        }
+        break;
+      }
 
-      await supabaseAdmin
-        .from('users')
-        .update({ credits: (user?.credits || 0) + creditsToAdd })
-        .eq('id', userId);
-
-      console.log(`Added ${creditsToAdd} credits to user ${userId}`);
-    }
-  }
-
-  
-    // Handle failed payments
-    if (event.type === 'invoice.payment_failed') {
-      const invoice = event.data.object;
-      const customerEmail = invoice.customer_email;
-      
-      if (customerEmail && process.env.RESEND_API_KEY) {
-        const { Resend } = await import('resend');
-        const resend = new Resend(process.env.RESEND_API_KEY);
+      case 'invoice.payment_succeeded': {
+        const invoice = event.data.object as Stripe.Invoice;
+        const customerId = invoice.customer as string;
         
-        await resend.emails.send({
-          from: 'SnapR <onboarding@resend.dev>',
-          to: customerEmail,
-          subject: '⚠️ Payment Failed - Action Required',
-          html: `
-            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-              <h2 style="color: #D4A017;">Payment Failed</h2>
-              <p>We were unable to process your subscription payment.</p>
-              <p>Please update your payment method to continue using SnapR without interruption.</p>
-              <p><a href="https://snap-r.com/dashboard/billing" style="display: inline-block; background: linear-gradient(to right, #D4A017, #B8860B); color: black; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: bold;">Update Payment Method →</a></p>
-              <p style="color: #666; margin-top: 20px;">If you have questions, contact support@snap-r.com</p>
-            </div>
-          `,
-        });
-        
-        // Alert admin
-        await resend.emails.send({
-          from: 'SnapR Alerts <onboarding@resend.dev>',
-          to: 'rajesh@snap-r.com',
-          subject: '⚠️ Payment Failed: ' + customerEmail,
-          html: '<p>Customer payment failed: ' + customerEmail + '</p>',
-        });
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('plan')
+          .eq('stripe_customer_id', customerId)
+          .single();
+
+        if (profile?.plan) {
+          const credits = PLAN_CREDITS[profile.plan] || 0;
+          await supabase.from('profiles').update({ credits }).eq('stripe_customer_id', customerId);
+        }
+        break;
+      }
+
+      case 'customer.subscription.deleted': {
+        const subscription = event.data.object as Stripe.Subscription;
+        await supabase.from('profiles').update({
+          plan: 'free',
+          credits: 0,
+        }).eq('stripe_customer_id', subscription.customer as string);
+        break;
       }
     }
 
     return NextResponse.json({ received: true });
+  } catch (error) {
+    console.error('Webhook error:', error);
+    return NextResponse.json({ error: 'Webhook handler failed' }, { status: 500 });
+  }
 }

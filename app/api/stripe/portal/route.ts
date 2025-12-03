@@ -1,56 +1,43 @@
 export const dynamic = 'force-dynamic';
+
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import Stripe from 'stripe';
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: '2025-11-17.clover',
-});
+function getStripe() {
+  return new Stripe(process.env.STRIPE_SECRET_KEY!, {
+    apiVersion: '2025-11-17.clover',
+  });
+}
 
 export async function GET() {
   try {
+    const stripe = getStripe();
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
 
     if (!user) {
-      return NextResponse.redirect(new URL('/auth/login', process.env.NEXT_PUBLIC_BASE_URL));
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Get or create Stripe customer
     const { data: profile } = await supabase
       .from('profiles')
       .select('stripe_customer_id')
       .eq('id', user.id)
       .single();
 
-    let customerId = profile?.stripe_customer_id;
-
-    if (!customerId) {
-      // Create new Stripe customer
-      const customer = await stripe.customers.create({
-        email: user.email,
-        metadata: { userId: user.id },
-      });
-      customerId = customer.id;
-
-      // Save to profile
-      await supabase
-        .from('profiles')
-        .update({ stripe_customer_id: customerId })
-        .eq('id', user.id);
+    if (!profile?.stripe_customer_id) {
+      return NextResponse.json({ error: 'No subscription found' }, { status: 400 });
     }
 
-    // Create portal session
     const session = await stripe.billingPortal.sessions.create({
-      customer: customerId,
-      return_url: `${process.env.NEXT_PUBLIC_BASE_URL}/dashboard/billing`,
+      customer: profile.stripe_customer_id,
+      return_url: `${process.env.NEXT_PUBLIC_BASE_URL || 'https://snap-r.com'}/dashboard/billing`,
     });
 
     return NextResponse.redirect(session.url);
-  } catch (error: any) {
+  } catch (error) {
     console.error('Portal error:', error);
-    return NextResponse.redirect(
-      new URL('/dashboard/billing?error=portal_failed', process.env.NEXT_PUBLIC_BASE_URL)
-    );
+    return NextResponse.json({ error: 'Failed to create portal session' }, { status: 500 });
   }
 }

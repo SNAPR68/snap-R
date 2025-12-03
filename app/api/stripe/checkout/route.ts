@@ -1,57 +1,50 @@
 export const dynamic = 'force-dynamic';
-import { NextRequest, NextResponse } from 'next/server';
-import { stripe, CREDIT_PACKAGES } from '@/lib/stripe';
-import { createClient } from '@/lib/supabase/server';
 
-export async function POST(req: NextRequest) {
+import { NextRequest, NextResponse } from 'next/server';
+import { createClient } from '@/lib/supabase/server';
+import Stripe from 'stripe';
+
+function getStripe() {
+  return new Stripe(process.env.STRIPE_SECRET_KEY!, {
+    apiVersion: '2025-11-17.clover',
+  });
+}
+
+const PRICE_IDS: Record<string, string> = {
+  starter: process.env.STRIPE_STARTER_PRICE_ID || '',
+  professional: process.env.STRIPE_PRO_PRICE_ID || '',
+  agency: process.env.STRIPE_AGENCY_PRICE_ID || '',
+};
+
+export async function POST(request: NextRequest) {
   try {
-    const supabase = createClient();
+    const stripe = getStripe();
+    const { plan } = await request.json();
+    const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
-    
+
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { packageId } = await req.json();
-    const pkg = CREDIT_PACKAGES.find(p => p.id === packageId);
-    
-    if (!pkg) {
-      return NextResponse.json({ error: 'Invalid package' }, { status: 400 });
+    const priceId = PRICE_IDS[plan];
+    if (!priceId) {
+      return NextResponse.json({ error: 'Invalid plan' }, { status: 400 });
     }
 
-    const origin = req.headers.get('origin') || 'http://localhost:3000';
-
     const session = await stripe.checkout.sessions.create({
-      payment_method_types: ['card'],
-      line_items: [
-        {
-          price_data: {
-            currency: 'usd',
-            product_data: {
-              name: `${pkg.name} Plan - ${pkg.credits} Credits/month`,
-              description: `Monthly subscription with ${pkg.credits} AI enhancement credits`,
-            },
-            unit_amount: pkg.price * 100,
-            recurring: {
-              interval: 'month',
-            },
-          },
-          quantity: 1,
-        },
-      ],
       mode: 'subscription',
-      success_url: `${origin}/billing?success=true`,
-      cancel_url: `${origin}/billing?canceled=true`,
-      metadata: {
-        userId: user.id,
-        credits: pkg.credits.toString(),
-        packageId: pkg.id,
-      },
+      payment_method_types: ['card'],
+      line_items: [{ price: priceId, quantity: 1 }],
+      success_url: `${process.env.NEXT_PUBLIC_BASE_URL || 'https://snap-r.com'}/dashboard?success=true`,
+      cancel_url: `${process.env.NEXT_PUBLIC_BASE_URL || 'https://snap-r.com'}/#pricing`,
+      customer_email: user.email,
+      metadata: { userId: user.id, plan },
     });
 
     return NextResponse.json({ url: session.url });
-  } catch (error: any) {
-    console.error('Stripe checkout error:', error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+  } catch (error) {
+    console.error('Checkout error:', error);
+    return NextResponse.json({ error: 'Failed to create checkout' }, { status: 500 });
   }
 }

@@ -1,12 +1,19 @@
 export const dynamic = 'force-dynamic';
-import { NextRequest, NextResponse } from 'next/server';
-import Stripe from 'stripe';
-import { createClient } from '@/lib/supabase/server';
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: '2025-11-17.clover' });
+import { NextRequest, NextResponse } from 'next/server';
+import { createClient } from '@/lib/supabase/server';
+import Stripe from 'stripe';
+
+function getStripe() {
+  return new Stripe(process.env.STRIPE_SECRET_KEY!, {
+    apiVersion: '2025-11-17.clover',
+  });
+}
 
 export async function POST(request: NextRequest) {
   try {
+    const stripe = getStripe();
+    const { photoId, isUrgent, instructions } = await request.json();
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
 
@@ -14,37 +21,26 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { listingId, photoUrl, instructions, isUrgent } = await request.json();
-
-    const amount = isUrgent ? 1500 : 500; // $15 or $5 in cents
+    const amount = isUrgent ? 1500 : 500; // $15 or $5
 
     const session = await stripe.checkout.sessions.create({
-      payment_method_types: ['card'],
-      line_items: [
-        {
-          price_data: {
-            currency: 'usd',
-            product_data: {
-              name: isUrgent ? 'Urgent Human Edit (4h)' : 'Human Edit Service (24h)',
-              description: 'Professional manual photo editing by our expert team',
-            },
-            unit_amount: amount,
-          },
-          quantity: 1,
-        },
-      ],
       mode: 'payment',
-      success_url: `${process.env.NEXT_PUBLIC_BASE_URL}/dashboard/studio?id=${listingId}&human_edit=success`,
-      cancel_url: `${process.env.NEXT_PUBLIC_BASE_URL}/dashboard/studio?id=${listingId}&human_edit=cancelled`,
-      metadata: {
-        type: 'human_edit',
-        userId: user.id,
-        userEmail: user.email || '',
-        listingId,
-        photoUrl,
-        instructions,
-        isUrgent: isUrgent ? 'true' : 'false',
-      },
+      payment_method_types: ['card'],
+      line_items: [{
+        price_data: {
+          currency: 'usd',
+          product_data: {
+            name: isUrgent ? 'Human Edit (4hr Rush)' : 'Human Edit (24hr)',
+            description: instructions || 'Professional photo editing',
+          },
+          unit_amount: amount,
+        },
+        quantity: 1,
+      }],
+      success_url: `${process.env.NEXT_PUBLIC_BASE_URL || 'https://snap-r.com'}/dashboard?human_edit=success`,
+      cancel_url: `${process.env.NEXT_PUBLIC_BASE_URL || 'https://snap-r.com'}/dashboard`,
+      customer_email: user.email,
+      metadata: { userId: user.id, photoId, isUrgent: String(isUrgent), instructions, type: 'human_edit' },
     });
 
     return NextResponse.json({ url: session.url });
