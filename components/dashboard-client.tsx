@@ -1,9 +1,9 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Plus, LogOut, FolderOpen, Settings, Trash2, Image as ImageIcon, ChevronRight, ChevronDown, X, GraduationCap, Camera } from 'lucide-react';
+import { Plus, LogOut, FolderOpen, Settings, Trash2, Image as ImageIcon, ChevronRight, ChevronDown, X, GraduationCap, Camera, Loader2 } from 'lucide-react';
 import { DashboardAnalytics } from './dashboard-analytics';
 
 interface Project {
@@ -30,6 +30,8 @@ export function DashboardClient({ user, listings }: { user: any; listings?: any[
   const [newListingTitle, setNewListingTitle] = useState('');
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'projects' | 'analytics'>('projects');
+  const [isUploading, setIsUploading] = useState(false);
+  const cameraInputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
   const supabase = createClient();
 
@@ -141,6 +143,85 @@ export function DashboardClient({ user, listings }: { user: any; listings?: any[
     window.location.href = '/';
   };
 
+  const handleCameraCapture = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsUploading(true);
+
+    try {
+      // Get or create a default project
+      let projectId: string;
+      
+      if (projects.length > 0) {
+        projectId = projects[0].id;
+      } else {
+        // Create a default project
+        const { data: newProject } = await supabase
+          .from('projects')
+          .insert({ user_id: user.id, title: 'Quick Captures' })
+          .select()
+          .single();
+        
+        if (!newProject) throw new Error('Failed to create project');
+        projectId = newProject.id;
+      }
+
+      // Create a new listing for this capture
+      const timestamp = new Date().toLocaleString('en-US', { 
+        month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' 
+      });
+      
+      const { data: newListing } = await supabase
+        .from('listings')
+        .insert({ 
+          user_id: user.id, 
+          project_id: projectId, 
+          title: `Snap ${timestamp}` 
+        })
+        .select()
+        .single();
+
+      if (!newListing) throw new Error('Failed to create listing');
+
+      // Upload the photo
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${user.id}/${newListing.id}/${Date.now()}.${fileExt}`;
+      
+      const { error: uploadError } = await supabase.storage
+        .from('photos')
+        .upload(fileName, file);
+
+      if (uploadError) throw uploadError;
+
+      // Get public URL
+      const { data: { publicUrl } } = supabase.storage
+        .from('photos')
+        .getPublicUrl(fileName);
+
+      // Save photo record
+      await supabase.from('photos').insert({
+        listing_id: newListing.id,
+        user_id: user.id,
+        original_url: publicUrl,
+        storage_path: fileName,
+      });
+
+      // Navigate to studio with this listing
+      router.push(`/dashboard/studio?id=${newListing.id}`);
+      
+    } catch (error) {
+      console.error('Upload error:', error);
+      alert('Failed to upload photo. Please try again.');
+    } finally {
+      setIsUploading(false);
+      // Reset input
+      if (cameraInputRef.current) {
+        cameraInputRef.current.value = '';
+      }
+    }
+  };
+
   return (
     <div className="min-h-screen bg-[#0F0F0F] text-white flex flex-col">
       <header className="h-16 bg-[#1A1A1A] border-b border-white/10 flex items-center justify-between px-6">
@@ -162,14 +243,26 @@ export function DashboardClient({ user, listings }: { user: any; listings?: any[
       <div className="flex flex-1">
         <aside className="w-[260px] bg-[#1A1A1A] border-r border-white/10 p-4 flex flex-col">
           <nav className="flex-1 space-y-1">
-            {/* Snap & Enhance - Primary CTA */}
-            <Link
-              href="/dashboard/camera"
-              className="flex items-center gap-3 px-3 py-3 rounded-xl mb-3 bg-gradient-to-r from-[#D4A017] to-[#B8860B] text-black font-semibold hover:opacity-90 transition-opacity shadow-lg shadow-[#D4A017]/25"
+            {/* Snap & Enhance - Direct Camera Trigger */}
+            <label
+              className="flex items-center gap-3 px-3 py-3 rounded-xl mb-3 bg-gradient-to-r from-[#D4A017] to-[#B8860B] text-black font-semibold hover:opacity-90 transition-opacity shadow-lg shadow-[#D4A017]/25 cursor-pointer"
             >
-              <Camera className="w-5 h-5" /> 
-              <span>Snap & Enhance</span>
-            </Link>
+              {isUploading ? (
+                <Loader2 className="w-5 h-5 animate-spin" />
+              ) : (
+                <Camera className="w-5 h-5" />
+              )}
+              <span>{isUploading ? 'Uploading...' : 'Snap & Enhance'}</span>
+              <input
+                ref={cameraInputRef}
+                type="file"
+                accept="image/*"
+                capture="environment"
+                onChange={handleCameraCapture}
+                className="hidden"
+                disabled={isUploading}
+              />
+            </label>
             
             <div className="border-b border-white/10 my-3" />
             
