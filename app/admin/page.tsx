@@ -3,7 +3,6 @@ import { Sparkles, Zap, Check, ArrowRight, Smartphone, Camera, Shield, Mail, Ins
 import { LandingGallery } from '@/components/landing-gallery';
 import { Testimonials } from '@/components/testimonials';
 import { AnimatedBackground } from '@/components/animated-background';
-import { PricingSection } from '@/components/pricing-section';
 
 export default function HomePage() {
   return (
