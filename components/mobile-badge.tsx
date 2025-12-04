@@ -3,25 +3,25 @@
 import { Smartphone, ChevronDown } from 'lucide-react';
 
 export function MobileBadge() {
-  const scrollToMobile = () => {
-    const section = document.getElementById('mobile-section');
+  const scrollToFeatures = () => {
+    const section = document.getElementById('features');
     if (section) {
       section.scrollIntoView({ behavior: 'smooth' });
     }
   };
 
   return (
-    <div className="flex flex-col items-center gap-3">
+    <div className="flex flex-col items-center gap-2">
       <span className="text-xs font-bold tracking-widest text-emerald-400 uppercase">
         Industry First
       </span>
       
-      <p className="text-white/70 text-sm md:text-base text-center max-w-md">
-        World's first real estate photo app that works on mobile
+      <p className="text-white/60 text-sm text-center max-w-sm">
+        Edit directly from your phone browser — no download needed
       </p>
       
       <button
-        onClick={scrollToMobile}
+        onClick={scrollToFeatures}
         className="group relative mt-2 inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-emerald-500/10 border border-emerald-500/40 hover:border-emerald-400 hover:bg-emerald-500/20 transition-all duration-300 cursor-pointer"
       >
         <div className="absolute inset-0 rounded-full bg-emerald-500/20 blur-md opacity-0 group-hover:opacity-100 transition-opacity" />

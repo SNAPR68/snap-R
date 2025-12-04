@@ -72,7 +72,7 @@ export default function HomePage() {
           
           <p className="text-xl text-white/60 mb-8 max-w-2xl mx-auto">
             Upload Raw. <span className="text-white font-bold">Snap</span><span className="text-[#D4A017] font-bold">R</span> It. Download Gold.</p>
-          <p className="text-lg text-white/70 mb-8 max-w-2xl mx-auto">Stunning photos sell faster. It's that simple.
+          <p className="text-base text-white/60 mb-6 max-w-2xl mx-auto">Stunning photos sell faster. It's that simple.
           </p>
           
           <div className="flex justify-center mb-8">
