@@ -181,6 +181,16 @@ export function DashboardClient({ user, listings }: { user: any; listings?: any[
                   : 'text-white/60 hover:bg-white/5'
               }`}
             >
+            {/* Snap & Enhance - Primary CTA */}
+            <Link
+              href="/dashboard/camera"
+              className="flex items-center gap-3 px-3 py-3 rounded-xl mb-3 bg-gradient-to-r from-[#D4A017] to-[#B8860B] text-black font-semibold hover:opacity-90 transition-opacity shadow-lg shadow-[#D4A017]/25"
+            >
+              <Camera className="w-5 h-5" /> 
+              <span>Snap & Enhance</span>
+            </Link>
+            
+            <div className="border-b border-white/10 my-3" />
               <FolderOpen className="w-5 h-5" /> My Projects
             </button>
             <button
