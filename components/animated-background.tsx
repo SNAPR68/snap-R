@@ -1,180 +1,133 @@
-'use client';
-import { useEffect, useRef } from 'react';
+"use client";
+
+import { motion } from "framer-motion";
 
 export function AnimatedBackground() {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-
-    let animationId: number;
-    let time = 0;
-
-    const resize = () => {
-      canvas.width = window.innerWidth;
-      canvas.height = Math.max(document.documentElement.scrollHeight, window.innerHeight * 5);
-    };
-
-    resize();
-    window.addEventListener('resize', resize);
-
-    // Only 2 cameras - left and right
-    const cameras = [
-      {
-        x: 80,
-        y: 350,
-        size: 70,
-        speed: 0.3,
-        delay: 0,
-        flashTimer: 0,
-        flashIntensity: 0,
-      },
-      {
-        x: canvas.width - 80,
-        y: 400,
-        size: 70,
-        speed: 0.25,
-        delay: 1.5,
-        flashTimer: 2,
-        flashIntensity: 0,
-      },
-    ];
-
-    // Load SnapR logo image
-    const logoImg = new Image();
-    logoImg.src = '/snapr-logo.png';
-    let logoLoaded = false;
-    logoImg.onload = () => { logoLoaded = true; };
-
-    const drawCamera = (x: number, y: number, size: number, flashIntensity: number) => {
-      ctx.save();
-      ctx.translate(x, y);
-
-      // Camera body shadow
-      ctx.fillStyle = 'rgba(0, 0, 0, 0.2)';
-      ctx.fillRect(-size/2 + 3, -size/3 + 3, size, size * 0.6);
-
-      // Camera body
-      ctx.fillStyle = '#2a2a2a';
-      ctx.fillRect(-size/2, -size/3, size, size * 0.6);
-      
-      // Body highlight
-      ctx.fillStyle = '#3a3a3a';
-      ctx.fillRect(-size/2, -size/3, size, size * 0.15);
-
-      // Viewfinder
-      ctx.fillStyle = '#1a1a1a';
-      ctx.fillRect(-size/5, -size/2, size/3, size/6);
-
-      // Outer black border
-      ctx.beginPath();
-      ctx.arc(0, 0, size * 0.38, 0, Math.PI * 2);
-      ctx.fillStyle = '#000000';
-      ctx.fill();
-
-      // Gold ring
-      ctx.beginPath();
-      ctx.arc(0, 0, size * 0.35, 0, Math.PI * 2);
-      ctx.fillStyle = '#D4A017';
-      ctx.fill();
-
-      // Thin black separator line
-      ctx.beginPath();
-      ctx.arc(0, 0, size * 0.30, 0, Math.PI * 2);
-      ctx.fillStyle = '#000000';
-      ctx.fill();
-
-      // Draw SnapR logo - FILLS almost entire inner area
-      if (logoLoaded) {
-        const logoSize = size * 0.56;
-        ctx.save();
-        ctx.beginPath();
-        ctx.arc(0, 0, size * 0.28, 0, Math.PI * 2);
-        ctx.clip();
-        ctx.drawImage(logoImg, -logoSize/2, -logoSize/2, logoSize, logoSize);
-        ctx.restore();
-      }
-
-      // Flash unit - gold tinted
-      ctx.fillStyle = 'rgba(212, 160, 23, 0.5)';
-      ctx.fillRect(size/3, -size/3, size/6, size/5);
-
-      // Subtle gold flash glow when active
-      if (flashIntensity > 0.05) {
-        const gradient = ctx.createRadialGradient(
-          size/3 + size/12, -size/3 + size/10, 0,
-          size/3 + size/12, -size/3 + size/10, size * 0.6
-        );
-        gradient.addColorStop(0, `rgba(212, 160, 23, ${flashIntensity * 0.4})`);
-        gradient.addColorStop(0.5, `rgba(212, 160, 23, ${flashIntensity * 0.15})`);
-        gradient.addColorStop(1, 'rgba(212, 160, 23, 0)');
-        ctx.fillStyle = gradient;
-        ctx.beginPath();
-        ctx.arc(size/3 + size/12, -size/3 + size/10, size * 0.6, 0, Math.PI * 2);
-        ctx.fill();
-      }
-
-      ctx.restore();
-    };
-
-    const draw = () => {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-      // Update right camera X position on resize
-      cameras[1].x = canvas.width - 80;
-
-      // Draw cameras
-      cameras.forEach((cam, i) => {
-        // Smooth float animation - just up and down
-        const floatY = Math.sin(time * cam.speed + cam.delay) * 25;
-
-        // Flash timer - every 5 seconds, subtle
-        cam.flashTimer += 0.016;
-        if (cam.flashTimer > 5 + i * 2) {
-          cam.flashTimer = 0;
-          cam.flashIntensity = 0.8;
-        }
-
-        // Decay flash smoothly
-        if (cam.flashIntensity > 0) {
-          cam.flashIntensity *= 0.92;
-          if (cam.flashIntensity < 0.03) cam.flashIntensity = 0;
-        }
-
-        drawCamera(cam.x, cam.y + floatY, cam.size, cam.flashIntensity);
-      });
-
-      time += 0.016;
-      animationId = requestAnimationFrame(draw);
-    };
-
-    draw();
-
-    const handleScroll = () => {
-      const scrollY = window.scrollY;
-      // Keep cameras in view as user scrolls
-      cameras[0].y = 350 + scrollY * 0.1;
-      cameras[1].y = 400 + scrollY * 0.1;
-    };
-
-    window.addEventListener('scroll', handleScroll);
-
-    return () => {
-      window.removeEventListener('resize', resize);
-      window.removeEventListener('scroll', handleScroll);
-      cancelAnimationFrame(animationId);
-    };
-  }, []);
-
   return (
-    <canvas
-      ref={canvasRef}
-      className="fixed inset-0 pointer-events-none"
-      style={{ zIndex: 1 }}
-    />
+    <div className="absolute inset-0 flex items-center justify-center overflow-hidden">
+      {/* Dark gradient background */}
+      <div className="absolute inset-0 bg-gradient-to-b from-[#0a0a0a] via-[#111111] to-[#0a0a0a]" />
+      
+      {/* Subtle grid pattern */}
+      <div 
+        className="absolute inset-0 opacity-[0.03]"
+        style={{
+          backgroundImage: `
+            linear-gradient(rgba(212, 160, 23, 0.5) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(212, 160, 23, 0.5) 1px, transparent 1px)
+          `,
+          backgroundSize: '50px 50px'
+        }}
+      />
+
+      {/* Main camera lens container */}
+      <div className="relative w-[320px] h-[320px] sm:w-[400px] sm:h-[400px] md:w-[500px] md:h-[500px]">
+        
+        {/* Outer gold ring with black border */}
+        <div className="absolute inset-0 rounded-full border-[3px] border-black">
+          <div className="absolute inset-[3px] rounded-full bg-gradient-to-br from-[#D4A017] via-[#FFD700] to-[#B8860B] p-[4px]">
+            {/* Very thin black gap - the lens ring */}
+            <div className="w-full h-full rounded-full bg-black p-[6px]">
+              {/* Inner area where logo sits - fills almost all space */}
+              <div className="w-full h-full rounded-full bg-gradient-to-br from-[#1a1a1a] to-[#0d0d0d] flex items-center justify-center relative overflow-hidden">
+                
+                {/* Subtle lens reflection */}
+                <div className="absolute inset-0 bg-gradient-to-br from-white/5 via-transparent to-transparent" />
+                
+                {/* SnapR Logo - MUCH BIGGER, fills 92% of the inner circle */}
+                <motion.img
+                  src="/snapr-logo.png"
+                  alt="SnapR"
+                  className="w-[92%] h-[92%] object-contain relative z-10 drop-shadow-2xl"
+                  initial={{ scale: 0.8, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  transition={{ duration: 0.8, ease: "easeOut" }}
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Floating Camera 1 - Top Left */}
+        <motion.div
+          className="absolute -top-4 -left-4 sm:-top-6 sm:-left-6"
+          animate={{
+            y: [0, -10, 0],
+            rotate: [-5, 5, -5],
+          }}
+          transition={{
+            duration: 4,
+            repeat: Infinity,
+            ease: "easeInOut",
+          }}
+        >
+          <div className="relative">
+            {/* Camera body */}
+            <div className="w-16 h-12 sm:w-20 sm:h-14 bg-gradient-to-br from-[#2a2a2a] to-[#1a1a1a] rounded-lg shadow-xl border border-[#D4A017]/30">
+              {/* Lens */}
+              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-6 h-6 sm:w-8 sm:h-8 rounded-full bg-gradient-to-br from-[#D4A017] to-[#B8860B] p-[2px]">
+                <div className="w-full h-full rounded-full bg-[#111] flex items-center justify-center">
+                  <div className="w-2 h-2 sm:w-3 sm:h-3 rounded-full bg-[#D4A017]/50" />
+                </div>
+              </div>
+              {/* Flash */}
+              <div className="absolute top-1 right-1 w-2 h-2 rounded-full bg-[#D4A017]" />
+              {/* Viewfinder */}
+              <div className="absolute -top-1 right-2 w-3 h-2 bg-[#333] rounded-sm" />
+            </div>
+            {/* Gold glow */}
+            <div className="absolute inset-0 rounded-lg bg-[#D4A017]/20 blur-md -z-10" />
+          </div>
+        </motion.div>
+
+        {/* Floating Camera 2 - Bottom Right */}
+        <motion.div
+          className="absolute -bottom-4 -right-4 sm:-bottom-6 sm:-right-6"
+          animate={{
+            y: [0, 10, 0],
+            rotate: [5, -5, 5],
+          }}
+          transition={{
+            duration: 4.5,
+            repeat: Infinity,
+            ease: "easeInOut",
+            delay: 0.5,
+          }}
+        >
+          <div className="relative">
+            {/* Camera body */}
+            <div className="w-14 h-10 sm:w-18 sm:h-12 bg-gradient-to-br from-[#2a2a2a] to-[#1a1a1a] rounded-lg shadow-xl border border-[#D4A017]/30">
+              {/* Lens */}
+              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-5 h-5 sm:w-7 sm:h-7 rounded-full bg-gradient-to-br from-[#D4A017] to-[#B8860B] p-[2px]">
+                <div className="w-full h-full rounded-full bg-[#111] flex items-center justify-center">
+                  <div className="w-2 h-2 rounded-full bg-[#D4A017]/50" />
+                </div>
+              </div>
+              {/* Flash */}
+              <div className="absolute top-1 right-1 w-1.5 h-1.5 rounded-full bg-[#D4A017]" />
+            </div>
+            {/* Gold glow */}
+            <div className="absolute inset-0 rounded-lg bg-[#D4A017]/20 blur-md -z-10" />
+          </div>
+        </motion.div>
+
+        {/* Ambient gold glow behind main circle */}
+        <div className="absolute inset-0 rounded-full bg-[#D4A017]/10 blur-3xl -z-10 scale-110" />
+        
+        {/* Pulsing ring effect */}
+        <motion.div
+          className="absolute inset-0 rounded-full border border-[#D4A017]/20"
+          animate={{
+            scale: [1, 1.1, 1],
+            opacity: [0.3, 0, 0.3],
+          }}
+          transition={{
+            duration: 3,
+            repeat: Infinity,
+            ease: "easeInOut",
+          }}
+        />
+      </div>
+    </div>
   );
 }
