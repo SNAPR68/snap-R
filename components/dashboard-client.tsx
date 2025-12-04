@@ -31,6 +31,7 @@ export function DashboardClient({ user, listings }: { user: any; listings?: any[
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'projects' | 'analytics'>('projects');
   const [isUploading, setIsUploading] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
   const supabase = createClient();
@@ -143,11 +144,54 @@ export function DashboardClient({ user, listings }: { user: any; listings?: any[
     window.location.href = '/';
   };
 
+  // Convert HEIC/HEIF to JPEG for mobile compatibility
+  const convertToJpeg = async (file: File): Promise<Blob> => {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      
+      img.onload = () => {
+        // Limit max dimension to 2048 for faster upload
+        const maxDim = 2048;
+        let width = img.width;
+        let height = img.height;
+        
+        if (width > maxDim || height > maxDim) {
+          if (width > height) {
+            height = (height / width) * maxDim;
+            width = maxDim;
+          } else {
+            width = (width / height) * maxDim;
+            height = maxDim;
+          }
+        }
+        
+        canvas.width = width;
+        canvas.height = height;
+        ctx?.drawImage(img, 0, 0, width, height);
+        
+        canvas.toBlob(
+          (blob) => {
+            if (blob) resolve(blob);
+            else reject(new Error('Failed to convert image'));
+          },
+          'image/jpeg',
+          0.9
+        );
+      };
+      
+      img.onerror = () => reject(new Error('Failed to load image'));
+      img.src = URL.createObjectURL(file);
+    });
+  };
+
   const handleCameraCapture = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
     setIsUploading(true);
+    setUploadError(null);
 
     try {
       // Get or create a default project
@@ -157,14 +201,18 @@ export function DashboardClient({ user, listings }: { user: any; listings?: any[
         projectId = projects[0].id;
       } else {
         // Create a default project
-        const { data: newProject } = await supabase
+        const { data: newProject, error: projectError } = await supabase
           .from('projects')
           .insert({ user_id: user.id, title: 'Quick Captures' })
           .select()
           .single();
         
-        if (!newProject) throw new Error('Failed to create project');
+        if (projectError || !newProject) {
+          throw new Error('Failed to create project: ' + (projectError?.message || 'Unknown error'));
+        }
         projectId = newProject.id;
+        // Add to local state
+        setProjects([{ ...newProject, listings: [] }, ...projects]);
       }
 
       // Create a new listing for this capture
@@ -172,7 +220,7 @@ export function DashboardClient({ user, listings }: { user: any; listings?: any[
         month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' 
       });
       
-      const { data: newListing } = await supabase
+      const { data: newListing, error: listingError } = await supabase
         .from('listings')
         .insert({ 
           user_id: user.id, 
@@ -182,17 +230,41 @@ export function DashboardClient({ user, listings }: { user: any; listings?: any[
         .select()
         .single();
 
-      if (!newListing) throw new Error('Failed to create listing');
+      if (listingError || !newListing) {
+        throw new Error('Failed to create listing: ' + (listingError?.message || 'Unknown error'));
+      }
 
-      // Upload the photo
-      const fileExt = file.name.split('.').pop();
+      // Convert to JPEG if needed (handles HEIC from iPhone)
+      let uploadBlob: Blob;
+      const isHeic = file.type === 'image/heic' || file.type === 'image/heif' || file.name.toLowerCase().endsWith('.heic');
+      
+      if (isHeic || file.type === '') {
+        // Mobile sometimes sends empty type for camera photos
+        try {
+          uploadBlob = await convertToJpeg(file);
+        } catch {
+          // Fallback to original file if conversion fails
+          uploadBlob = file;
+        }
+      } else {
+        uploadBlob = file;
+      }
+
+      // Generate unique filename
+      const fileExt = isHeic ? 'jpg' : (file.name.split('.').pop() || 'jpg');
       const fileName = `${user.id}/${newListing.id}/${Date.now()}.${fileExt}`;
       
+      // Upload to Supabase storage
       const { error: uploadError } = await supabase.storage
         .from('photos')
-        .upload(fileName, file);
+        .upload(fileName, uploadBlob, {
+          contentType: isHeic ? 'image/jpeg' : (file.type || 'image/jpeg'),
+          upsert: false
+        });
 
-      if (uploadError) throw uploadError;
+      if (uploadError) {
+        throw new Error('Upload failed: ' + uploadError.message);
+      }
 
       // Get public URL
       const { data: { publicUrl } } = supabase.storage
@@ -200,19 +272,23 @@ export function DashboardClient({ user, listings }: { user: any; listings?: any[
         .getPublicUrl(fileName);
 
       // Save photo record
-      await supabase.from('photos').insert({
+      const { error: photoError } = await supabase.from('photos').insert({
         listing_id: newListing.id,
         user_id: user.id,
         original_url: publicUrl,
         storage_path: fileName,
       });
 
+      if (photoError) {
+        throw new Error('Failed to save photo: ' + photoError.message);
+      }
+
       // Navigate to studio with this listing
       router.push(`/dashboard/studio?id=${newListing.id}`);
       
-    } catch (error) {
+    } catch (error: any) {
       console.error('Upload error:', error);
-      alert('Failed to upload photo. Please try again.');
+      setUploadError(error.message || 'Failed to upload photo. Please try again.');
     } finally {
       setIsUploading(false);
       // Reset input
@@ -263,6 +339,19 @@ export function DashboardClient({ user, listings }: { user: any; listings?: any[
                 disabled={isUploading}
               />
             </label>
+            
+            {/* Show upload error if any */}
+            {uploadError && (
+              <div className="px-3 py-2 mb-3 bg-red-500/20 border border-red-500/30 rounded-lg text-red-400 text-xs">
+                {uploadError}
+                <button 
+                  onClick={() => setUploadError(null)}
+                  className="ml-2 text-red-300 hover:text-white"
+                >
+                  ✕
+                </button>
+              </div>
+            )}
             
             <div className="border-b border-white/10 my-3" />
             

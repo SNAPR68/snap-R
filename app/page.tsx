@@ -16,6 +16,7 @@ const PLANS = [
 
 export default function HomePage() {
   const [selectedPlan, setSelectedPlan] = useState('pro');
+  const [showSnapEnhanceModal, setShowSnapEnhanceModal] = useState(false);
 
   return (
     <div className="min-h-screen bg-[#0F0F0F] font-['Outfit']">
@@ -182,9 +183,19 @@ export default function HomePage() {
               <span className="text-white ml-2">It.</span>
               <span className="text-[#D4A017] font-bold ml-2">Download Gold.</span>
             </p>
-            <p className="text-white/50 max-w-2xl mx-auto">
+            <p className="text-white/50 max-w-2xl mx-auto mb-6">
               No app store. No download. Add SnapR to your home screen and edit like a pro.
             </p>
+            
+            {/* Snap Enhance Button */}
+            <button
+              onClick={() => setShowSnapEnhanceModal(true)}
+              className="inline-flex items-center gap-3 px-8 py-4 bg-gradient-to-r from-[#D4A017] to-[#B8860B] text-black font-bold text-lg rounded-xl hover:opacity-90 transition-all hover:scale-105 shadow-lg shadow-[#D4A017]/30"
+            >
+              <Camera className="w-6 h-6" />
+              Snap Enhance
+              <Sparkles className="w-5 h-5" />
+            </button>
           </div>
           
           {/* How It Works - 3 Steps */}
@@ -410,6 +421,82 @@ export default function HomePage() {
           </div>
         </div>
       </footer>
+
+      {/* Snap Enhance Info Modal */}
+      {showSnapEnhanceModal && (
+        <div 
+          className="fixed inset-0 z-[100] flex items-center justify-center p-4"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) {
+              setShowSnapEnhanceModal(false);
+            }
+          }}
+        >
+          <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" />
+          <div className="relative bg-[#1A1A1A] rounded-3xl border border-[#D4A017]/30 p-8 max-w-lg w-full shadow-2xl">
+            {/* Close button */}
+            <button 
+              onClick={() => setShowSnapEnhanceModal(false)}
+              className="absolute top-4 right-4 text-white/50 hover:text-white"
+            >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+            
+            {/* Header */}
+            <div className="text-center mb-6">
+              <div className="w-20 h-20 mx-auto mb-4 rounded-2xl bg-gradient-to-br from-[#D4A017] to-[#B8860B] flex items-center justify-center">
+                <Camera className="w-10 h-10 text-black" />
+              </div>
+              <h3 className="text-2xl font-bold text-white">Snap Enhance</h3>
+              <p className="text-[#D4A017]">Your pocket photo studio</p>
+            </div>
+            
+            {/* Features */}
+            <div className="space-y-4 mb-8">
+              <div className="flex items-start gap-4 p-4 bg-white/5 rounded-xl">
+                <div className="w-10 h-10 rounded-lg bg-[#D4A017]/20 flex items-center justify-center flex-shrink-0">
+                  <Camera className="w-5 h-5 text-[#D4A017]" />
+                </div>
+                <div>
+                  <h4 className="font-semibold text-white">Instant Camera Access</h4>
+                  <p className="text-white/60 text-sm">Tap to open your phone camera and capture property photos directly</p>
+                </div>
+              </div>
+              
+              <div className="flex items-start gap-4 p-4 bg-white/5 rounded-xl">
+                <div className="w-10 h-10 rounded-lg bg-[#D4A017]/20 flex items-center justify-center flex-shrink-0">
+                  <Sparkles className="w-5 h-5 text-[#D4A017]" />
+                </div>
+                <div>
+                  <h4 className="font-semibold text-white">AI Enhancement</h4>
+                  <p className="text-white/60 text-sm">Sky replacement, virtual twilight, HDR, declutter - all in 30 seconds</p>
+                </div>
+              </div>
+              
+              <div className="flex items-start gap-4 p-4 bg-white/5 rounded-xl">
+                <div className="w-10 h-10 rounded-lg bg-[#D4A017]/20 flex items-center justify-center flex-shrink-0">
+                  <Zap className="w-5 h-5 text-[#D4A017]" />
+                </div>
+                <div>
+                  <h4 className="font-semibold text-white">Instant Download</h4>
+                  <p className="text-white/60 text-sm">Enhanced photos ready to share or upload to MLS immediately</p>
+                </div>
+              </div>
+            </div>
+            
+            {/* CTA */}
+            <Link 
+              href="/auth/signup"
+              className="block w-full text-center py-4 bg-gradient-to-r from-[#D4A017] to-[#B8860B] text-black font-bold rounded-xl hover:opacity-90 transition-opacity"
+            >
+              Get Started Free →
+            </Link>
+            <p className="text-center text-white/40 text-sm mt-3">10 free credits • No credit card required</p>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

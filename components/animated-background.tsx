@@ -70,30 +70,36 @@ export function AnimatedBackground() {
       ctx.fillStyle = '#1a1a1a';
       ctx.fillRect(-size/5, -size/2, size/3, size/6);
 
-      // Lens outer (gold ring)
+      // Lens outer (gold ring) - BIGGER
       ctx.beginPath();
-      ctx.arc(0, 0, size * 0.32, 0, Math.PI * 2);
+      ctx.arc(0, 0, size * 0.38, 0, Math.PI * 2);
       ctx.fillStyle = '#D4A017';
       ctx.fill();
       
-      // Lens inner ring
+      // Lens inner ring (darker gold)
       ctx.beginPath();
-      ctx.arc(0, 0, size * 0.27, 0, Math.PI * 2);
+      ctx.arc(0, 0, size * 0.35, 0, Math.PI * 2);
       ctx.fillStyle = '#B8860B';
       ctx.fill();
 
-      // Lens inner (dark background)
+      // Thin black ring (just 2px visual gap)
       ctx.beginPath();
-      ctx.arc(0, 0, size * 0.22, 0, Math.PI * 2);
+      ctx.arc(0, 0, size * 0.33, 0, Math.PI * 2);
       ctx.fillStyle = '#0F0F0F';
       ctx.fill();
 
-      // Draw SnapR logo in lens
+      // Lens inner (dark background for logo) - BIGGER
+      ctx.beginPath();
+      ctx.arc(0, 0, size * 0.31, 0, Math.PI * 2);
+      ctx.fillStyle = '#0a0a0a';
+      ctx.fill();
+
+      // Draw SnapR logo in lens - EVEN BIGGER
       if (logoLoaded) {
-        const logoSize = size * 0.35;
+        const logoSize = size * 0.72;
         ctx.save();
         ctx.beginPath();
-        ctx.arc(0, 0, size * 0.2, 0, Math.PI * 2);
+        ctx.arc(0, 0, size * 0.36, 0, Math.PI * 2);
         ctx.clip();
         ctx.drawImage(logoImg, -logoSize/2, -logoSize/2, logoSize, logoSize);
         ctx.restore();
