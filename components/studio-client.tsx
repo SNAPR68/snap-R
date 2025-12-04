@@ -4,17 +4,89 @@ import { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { HumanEditRequestModal } from "./human-edit-request";
 import Link from 'next/link';
-import { ArrowLeft, Upload, Sun, Moon, Leaf, Trash2, Sofa, Sparkles, Wand2, Loader2, ChevronDown, ChevronUp, Check, X, Download, Share2, Copy, LogOut, UserCheck } from 'lucide-react';
+import { ArrowLeft, Upload, Sun, Moon, Leaf, Trash2, Sofa, Sparkles, Wand2, Loader2, ChevronDown, ChevronUp, Check, X, Download, Share2, Copy, LogOut, UserCheck, Flame, Tv, Lightbulb, PanelTop, Waves, Move, Circle, Palette } from 'lucide-react';
 
+// Tool definitions - 15 tools total
 const AI_TOOLS = [
-  { id: 'sky-replacement', name: 'Sky Replacement', icon: Sun, credits: 1, category: 'EXTERIOR' },
-  { id: 'virtual-twilight', name: 'Virtual Twilight', icon: Moon, credits: 2, category: 'EXTERIOR' },
-  { id: 'lawn-repair', name: 'Lawn Repair', icon: Leaf, credits: 1, category: 'EXTERIOR' },
-  { id: 'declutter', name: 'Declutter', icon: Trash2, credits: 2, category: 'INTERIOR' },
-  { id: 'virtual-staging', name: 'Virtual Staging', icon: Sofa, credits: 3, category: 'INTERIOR' },
-  { id: 'hdr', name: 'HDR Enhancement', icon: Sparkles, credits: 1, category: 'ENHANCE' },
-  { id: 'auto-enhance', name: 'Auto Enhance', icon: Wand2, credits: 1, category: 'ENHANCE' },
+  // EXTERIOR (4 tools)
+  { id: 'sky-replacement', name: 'Sky Replacement', icon: Sun, credits: 1, category: 'EXTERIOR', hasPresets: true },
+  { id: 'virtual-twilight', name: 'Virtual Twilight', icon: Moon, credits: 2, category: 'EXTERIOR', hasPresets: true },
+  { id: 'lawn-repair', name: 'Lawn Repair', icon: Leaf, credits: 1, category: 'EXTERIOR', hasPresets: true },
+  { id: 'pool-enhance', name: 'Pool Enhancement', icon: Waves, credits: 1, category: 'EXTERIOR', hasPresets: false },
+  // INTERIOR (6 tools)
+  { id: 'declutter', name: 'Declutter', icon: Trash2, credits: 2, category: 'INTERIOR', hasPresets: true },
+  { id: 'virtual-staging', name: 'Virtual Staging', icon: Sofa, credits: 3, category: 'INTERIOR', hasPresets: true },
+  { id: 'fire-fireplace', name: 'Fire in Fireplace', icon: Flame, credits: 1, category: 'INTERIOR', hasPresets: true },
+  { id: 'tv-screen', name: 'TV Screen Replace', icon: Tv, credits: 1, category: 'INTERIOR', hasPresets: true },
+  { id: 'lights-on', name: 'Lights On', icon: Lightbulb, credits: 1, category: 'INTERIOR', hasPresets: true },
+  { id: 'window-masking', name: 'Window Masking', icon: PanelTop, credits: 2, category: 'INTERIOR', hasPresets: true },
+  // ENHANCE (5 tools)
+  { id: 'hdr', name: 'HDR Enhancement', icon: Sparkles, credits: 1, category: 'ENHANCE', hasPresets: false },
+  { id: 'auto-enhance', name: 'Auto Enhance', icon: Wand2, credits: 1, category: 'ENHANCE', hasPresets: false },
+  { id: 'perspective-correction', name: 'Perspective Fix', icon: Move, credits: 1, category: 'ENHANCE', hasPresets: false },
+  { id: 'lens-correction', name: 'Lens Correction', icon: Circle, credits: 1, category: 'ENHANCE', hasPresets: false },
+  { id: 'color-balance', name: 'Color Balance', icon: Palette, credits: 1, category: 'ENHANCE', hasPresets: true },
 ];
+
+// Presets for tools that have them - ALL thumbnails verified
+const TOOL_PRESETS: Record<string, { id: string; name: string; prompt: string; thumbnail: string }[]> = {
+  'sky-replacement': [
+    { id: 'clear-blue', name: 'Clear Blue', prompt: 'Replace ONLY the sky with a perfectly clear bright blue sky with no clouds. Do NOT change the house, trees, lawn, or anything else. Only the sky changes.', thumbnail: 'https://images.unsplash.com/photo-1601297183305-6df142704ea2?w=200&h=120&fit=crop' },
+    { id: 'sunset', name: 'Sunset', prompt: 'Replace ONLY the sky with a dramatic sunset with orange, pink and purple colors. Do NOT change the house, trees, lawn, or anything else. Only the sky changes.', thumbnail: 'https://images.unsplash.com/photo-1495616811223-4d98c6e9c869?w=200&h=120&fit=crop' },
+    { id: 'dramatic-clouds', name: 'Dramatic Clouds', prompt: 'Replace ONLY the sky with dramatic white fluffy clouds against deep blue sky. Do NOT change the house, trees, lawn, or anything else. Only the sky changes.', thumbnail: 'https://images.unsplash.com/photo-1534088568595-a066f410bcda?w=200&h=120&fit=crop' },
+    { id: 'twilight', name: 'Twilight Sky', prompt: 'Replace ONLY the sky with a twilight dusk sky showing deep purple and blue gradient. Do NOT change the house lighting or anything else. Only the sky changes to twilight colors.', thumbnail: 'https://images.unsplash.com/photo-1472120435266-53107fd0c44a?w=200&h=120&fit=crop' },
+  ],
+  'virtual-twilight': [
+    { id: 'dusk', name: 'Dusk', prompt: 'Transform to early dusk with purple-orange sky at horizon, soft twilight beginning, warm glow starting in windows', thumbnail: 'https://images.unsplash.com/photo-1518780664697-55e3ad937233?w=200&h=120&fit=crop' },
+    { id: 'blue-hour', name: 'Blue Hour', prompt: 'Transform to blue hour with DEEP BLUE sky, no orange, all windows glowing bright warm yellow, dramatic blue atmosphere', thumbnail: 'https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=200&h=120&fit=crop' },
+    { id: 'golden-hour', name: 'Golden Hour', prompt: 'Transform to golden hour with WARM ORANGE sunset glow, golden light on house, orange-pink sky, windows lit warmly', thumbnail: 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=200&h=120&fit=crop' },
+    { id: 'deep-night', name: 'Night', prompt: 'Transform to NIGHT scene with DARK BLACK-BLUE sky with stars visible, all house lights glowing bright, nighttime atmosphere', thumbnail: 'https://images.unsplash.com/photo-1449824913935-59a10b8d2000?w=200&h=120&fit=crop' },
+  ],
+  'lawn-repair': [
+    { id: 'lush-green', name: 'Lush Green', prompt: 'Transform lawn into PERFECTLY MANICURED VIBRANT EMERALD GREEN grass like golf course putting green', thumbnail: 'https://images.unsplash.com/photo-1589923188651-268a9765e432?w=200&h=120&fit=crop' },
+    { id: 'natural-green', name: 'Natural Green', prompt: 'Transform lawn into healthy NATURAL looking green grass like well-maintained residential lawn', thumbnail: 'https://images.unsplash.com/photo-1464226184884-fa280b87c399?w=200&h=120&fit=crop' },
+  ],
+  'declutter': [
+    { id: 'light', name: 'Light Clean', prompt: 'Light Clean: Remove only small clutter like papers, cups, remotes from surfaces', thumbnail: 'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=200&h=120&fit=crop' },
+    { id: 'moderate', name: 'Moderate', prompt: 'Moderate: Remove clutter and personal items from counters, tables, floors', thumbnail: 'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=200&h=120&fit=crop' },
+    { id: 'full', name: 'Full Clear', prompt: 'Full Clear: Remove ALL loose items and decorations, keep only furniture, minimalist', thumbnail: 'https://images.unsplash.com/photo-1554995207-c18c203602cb?w=200&h=120&fit=crop' },
+    { id: 'staging-ready', name: 'Staging Ready', prompt: 'Staging Ready: Remove EVERYTHING except walls floors windows. Empty room for virtual staging.', thumbnail: 'https://images.unsplash.com/photo-1560185007-cde436f6a4d0?w=200&h=120&fit=crop' },
+  ],
+  'virtual-staging': [
+    { id: 'modern', name: 'Modern', prompt: 'Stage with modern furniture - clean lines, neutral gray/white, minimal decor', thumbnail: 'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=200&h=120&fit=crop' },
+    { id: 'traditional', name: 'Traditional', prompt: 'Stage with traditional furniture - warm wood, rich fabrics, classic style', thumbnail: 'https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?w=200&h=120&fit=crop' },
+    { id: 'scandinavian', name: 'Scandinavian', prompt: 'Stage with Scandinavian style - light wood, white/beige, cozy minimal', thumbnail: 'https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?w=200&h=120&fit=crop' },
+    { id: 'luxury', name: 'Luxury', prompt: 'Stage with luxury furniture - velvet, gold accents, marble, glamorous', thumbnail: 'https://images.unsplash.com/photo-1600566753086-00f18fb6b3ea?w=200&h=120&fit=crop' },
+  ],
+  'fire-fireplace': [
+    { id: 'cozy-embers', name: 'Cozy Embers', prompt: 'Add gentle glowing embers and small flames, soft warm ambient glow', thumbnail: 'https://images.unsplash.com/photo-1544894079-e81a9eb1da21?w=200&h=120&fit=crop' },
+    { id: 'warm-fire', name: 'Warm Fire', prompt: 'Add medium crackling fire with orange-yellow flames, comfortable warmth', thumbnail: 'https://images.unsplash.com/photo-1600585152915-d208bec867a1?w=200&h=120&fit=crop' },
+    { id: 'roaring-fire', name: 'Roaring Fire', prompt: 'Add large roaring fire with tall bright flames, strong warm glow', thumbnail: 'https://images.unsplash.com/photo-1579548122080-c35fd6820ecb?w=200&h=120&fit=crop' },
+    { id: 'romantic', name: 'Romantic', prompt: 'Add romantic fire with dancing flames, soft golden glow, intimate atmosphere', thumbnail: 'https://images.unsplash.com/photo-1602541680664-739da68d2423?w=200&h=120&fit=crop' },
+  ],
+  'tv-screen': [
+    { id: 'nature', name: 'Nature', prompt: 'Replace TV screen with beautiful mountain landscape, forest and lake scene', thumbnail: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=200&h=120&fit=crop' },
+    { id: 'abstract', name: 'Abstract Art', prompt: 'Replace TV screen with colorful abstract modern art painting', thumbnail: 'https://images.unsplash.com/photo-1541961017774-22349e4a1262?w=200&h=120&fit=crop' },
+    { id: 'ocean', name: 'Ocean View', prompt: 'Replace TV screen with ocean beach scene, blue water sandy beach', thumbnail: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=200&h=120&fit=crop' },
+    { id: 'off', name: 'Black / Off', prompt: 'Make TV screen completely black and off, no reflections, matte black', thumbnail: 'https://images.unsplash.com/photo-1574375927938-d5a98e8ffe85?w=200&h=120&fit=crop' },
+  ],
+  'lights-on': [
+    { id: 'warm-glow', name: 'Warm Glow', prompt: 'Turn on all lights with warm golden glow, cozy tungsten warmth', thumbnail: 'https://images.unsplash.com/photo-1513694203232-719a280e022f?w=200&h=120&fit=crop' },
+    { id: 'bright-white', name: 'Bright White', prompt: 'Turn on all lights with bright clean white light, modern daylight', thumbnail: 'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=200&h=120&fit=crop' },
+    { id: 'ambient', name: 'Ambient', prompt: 'Turn on lights with soft ambient glow, subtle relaxed evening mood', thumbnail: 'https://images.unsplash.com/photo-1600121848594-d8644e57abab?w=200&h=120&fit=crop' },
+    { id: 'all-lights', name: 'All Lights Max', prompt: 'Turn ALL lights on at full brightness, maximum illumination', thumbnail: 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=200&h=120&fit=crop' },
+  ],
+  'window-masking': [
+    { id: 'balanced', name: 'Balanced', prompt: 'Balance window exposure, show clear outdoor view with blue sky, HDR look', thumbnail: 'https://images.unsplash.com/photo-1600585154526-990dced4db0d?w=200&h=120&fit=crop' },
+    { id: 'sunny', name: 'Sunny Day', prompt: 'Show bright sunny day through windows, blue sky with clouds, cheerful', thumbnail: 'https://images.unsplash.com/photo-1600573472592-401b489a3cdc?w=200&h=120&fit=crop' },
+    { id: 'garden', name: 'Garden View', prompt: 'Show garden and greenery through windows, trees landscaping visible', thumbnail: 'https://images.unsplash.com/photo-1600566753190-17f0baa2a6c3?w=200&h=120&fit=crop' },
+    { id: 'soft-light', name: 'Soft Light', prompt: 'Show soft diffused daylight through windows, gentle natural light', thumbnail: 'https://images.unsplash.com/photo-1600210492493-0946911123ea?w=200&h=120&fit=crop' },
+  ],
+  'color-balance': [
+    { id: 'warm', name: 'Warm Tones', prompt: 'Apply warm color balance, cozy golden warmth, inviting atmosphere', thumbnail: 'https://images.unsplash.com/photo-1600607687644-c7171b42498f?w=200&h=120&fit=crop' },
+    { id: 'cool', name: 'Cool Tones', prompt: 'Apply cool color balance, fresh modern blue tones, crisp clean look', thumbnail: 'https://images.unsplash.com/photo-1600566753086-00f18fb6b3ea?w=200&h=120&fit=crop' },
+  ],
+};
 
 export function StudioClient({ listingId }: { listingId: string }) {
   const supabase = createClient();
@@ -24,6 +96,7 @@ export function StudioClient({ listingId }: { listingId: string }) {
   const [processing, setProcessing] = useState(false);
   const [activeTool, setActiveTool] = useState<string | null>(null);
   const [selectedTool, setSelectedTool] = useState<string | null>(null);
+  const [selectedPreset, setSelectedPreset] = useState<{ id: string; name: string; prompt: string } | null>(null);
   const [expandedCategories, setExpandedCategories] = useState<string[]>(['EXTERIOR', 'INTERIOR', 'ENHANCE']);
   type PendingEnhancement = {
     originalUrl: string;
@@ -128,6 +201,13 @@ export function StudioClient({ listingId }: { listingId: string }) {
 
   const handleEnhance = async (toolId: string) => {
     if (!selectedPhoto || processing) return;
+    
+    const tool = AI_TOOLS.find(t => t.id === toolId);
+    if (tool?.hasPresets && !selectedPreset) {
+      alert('Please select a style first');
+      return;
+    }
+    
     setProcessing(true);
     setActiveTool(toolId);
 
@@ -135,7 +215,14 @@ export function StudioClient({ listingId }: { listingId: string }) {
       const res = await fetch('/api/enhance', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ imageId: selectedPhoto.id, toolId }),
+        body: JSON.stringify({ 
+          imageId: selectedPhoto.id, 
+          toolId,
+          options: selectedPreset ? {
+            preset: selectedPreset.id,
+            prompt: selectedPreset.prompt,
+          } : {},
+        }),
       });
       const data = await res.json();
       
@@ -147,6 +234,8 @@ export function StudioClient({ listingId }: { listingId: string }) {
           photoId: selectedPhoto.id,
         });
         setSliderPosition(50);
+      } else {
+        alert(data.error || 'Enhancement failed');
       }
     } catch (error) {
       console.error('Enhancement failed:', error);
@@ -207,7 +296,19 @@ export function StudioClient({ listingId }: { listingId: string }) {
     loadData();
   };
 
+  const handleToolSelect = (toolId: string) => {
+    if (selectedTool === toolId) {
+      setSelectedTool(null);
+      setSelectedPreset(null);
+    } else {
+      setSelectedTool(toolId);
+      setSelectedPreset(null);
+    }
+  };
+
   const categories = [...new Set(AI_TOOLS.map(t => t.category))];
+  const currentTool = AI_TOOLS.find(t => t.id === selectedTool);
+  const currentPresets = selectedTool ? TOOL_PRESETS[selectedTool] : null;
 
   return (
     <div className="h-screen bg-[#0F0F0F] text-white flex flex-col overflow-hidden">
@@ -235,7 +336,7 @@ export function StudioClient({ listingId }: { listingId: string }) {
       {/* Main Content - Fixed Height */}
       <div className="flex-1 flex min-h-0">
         {/* Left Sidebar - Tools */}
-        <aside className="w-[200px] bg-[#1A1A1A] border-r border-white/10 flex flex-col flex-shrink-0">
+        <aside className="w-[240px] bg-[#1A1A1A] border-r border-white/10 flex flex-col flex-shrink-0">
           <div className="flex-1 overflow-y-auto p-3">
             <h2 className="text-base font-bold text-[#D4A017] mb-4 tracking-wider">AI TOOLS</h2>
             {categories.map(category => (
@@ -258,39 +359,80 @@ export function StudioClient({ listingId }: { listingId: string }) {
                 {expandedCategories.includes(category) && (
                   <div className="space-y-1">
                     {AI_TOOLS.filter(t => t.category === category).map(tool => (
-                      <button
-                        key={tool.id}
-                        onClick={() => setSelectedTool(selectedTool === tool.id ? null : tool.id)}
-                        disabled={processing || !selectedPhoto}
-                        className={`w-full flex items-center justify-between px-2 py-2 rounded-lg text-xs transition-all ${
-                          selectedTool === tool.id
-                            ? 'bg-gradient-to-r from-[#D4A017] to-[#B8860B] text-black'
-                            : 'hover:bg-white/10 text-white/80'
-                        } disabled:opacity-50`}
-                      >
-                        <span className="flex items-center gap-2">
-                          {selectedTool === tool.id ? (
-                            <Loader2 className="w-3 h-3 animate-spin" />
-                          ) : (
+                      <div key={tool.id}>
+                        <button
+                          onClick={() => handleToolSelect(tool.id)}
+                          disabled={processing || !selectedPhoto}
+                          className={`w-full flex items-center justify-between px-2 py-2 rounded-lg text-xs transition-all ${
+                            selectedTool === tool.id
+                              ? 'bg-gradient-to-r from-[#D4A017] to-[#B8860B] text-black'
+                              : 'hover:bg-white/10 text-white/80'
+                          } disabled:opacity-50`}
+                        >
+                          <span className="flex items-center gap-2">
                             <tool.icon className="w-3 h-3" />
-                          )}
-                          <span className="truncate">{tool.name}</span>
-                        </span>
-                        <span className="text-[10px] opacity-60">{tool.credits}cr</span>
-                      </button>
+                            <span className="truncate">{tool.name}</span>
+                          </span>
+                          <span className="flex items-center gap-1">
+                            <span className="text-[10px] opacity-60">{tool.credits}cr</span>
+                            {tool.hasPresets && selectedTool === tool.id && <ChevronDown className="w-3 h-3" />}
+                          </span>
+                        </button>
+                        
+                        {/* Presets dropdown */}
+                        {selectedTool === tool.id && tool.hasPresets && currentPresets && (
+                          <div className="mt-2 mb-2 p-2 bg-black/30 rounded-lg">
+                            <p className="text-[10px] text-white/40 mb-2 uppercase">Select Style</p>
+                            <div className="grid grid-cols-2 gap-1.5">
+                              {currentPresets.map(preset => (
+                                <button
+                                  key={preset.id}
+                                  onClick={() => setSelectedPreset(preset)}
+                                  className={`relative aspect-[4/3] rounded overflow-hidden border-2 transition-all ${
+                                    selectedPreset?.id === preset.id 
+                                      ? 'border-[#D4A017] ring-1 ring-[#D4A017]/50' 
+                                      : 'border-transparent hover:border-white/30'
+                                  }`}
+                                >
+                                  <img 
+                                    src={preset.thumbnail} 
+                                    alt={preset.name}
+                                    className="w-full h-full object-cover"
+                                    onError={(e) => {
+                                      (e.target as HTMLImageElement).style.background = '#333';
+                                    }}
+                                  />
+                                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent" />
+                                  <span className="absolute bottom-0.5 left-0.5 right-0.5 text-[9px] font-medium text-white truncate">
+                                    {preset.name}
+                                  </span>
+                                  {selectedPreset?.id === preset.id && (
+                                    <div className="absolute top-0.5 right-0.5 w-4 h-4 bg-[#D4A017] rounded-full flex items-center justify-center">
+                                      <Check className="w-2.5 h-2.5 text-black" />
+                                    </div>
+                                  )}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
                     ))}
                   </div>
                 )}
               </div>
             ))}
           </div>
+          
+          {/* Fixed bottom section */}
           <div className="p-3 border-t border-white/10 space-y-2">
             <button
               onClick={() => selectedTool && handleEnhance(selectedTool)}
-              disabled={!selectedPhoto || !selectedTool || processing}
+              disabled={!selectedPhoto || !selectedTool || processing || (currentTool?.hasPresets && !selectedPreset)}
               className="w-full flex items-center justify-center gap-2 px-3 py-3 bg-gradient-to-r from-[#D4A017] to-[#B8860B] rounded-lg text-sm text-black font-bold disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {processing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />} Enhance Now
+              {processing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
+              {!selectedTool ? 'Select Tool' : currentTool?.hasPresets && !selectedPreset ? 'Select Style' : selectedPreset ? `Apply ${selectedPreset.name}` : 'Enhance Now'}
             </button>
             <button
               onClick={() => setShowHumanEditModal(true)}

@@ -1,133 +1,167 @@
 'use client';
+import { useEffect, useRef } from 'react';
 
 export function AnimatedBackground() {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    let animationId: number;
+    let time = 0;
+
+    const resize = () => {
+      canvas.width = window.innerWidth;
+      canvas.height = Math.max(document.documentElement.scrollHeight, window.innerHeight * 5);
+    };
+
+    resize();
+    window.addEventListener('resize', resize);
+
+    // Only 2 cameras - left and right
+    const cameras = [
+      {
+        x: 80,
+        y: 350,
+        size: 70,
+        speed: 0.3,
+        delay: 0,
+        flashTimer: 0,
+        flashIntensity: 0,
+      },
+      {
+        x: canvas.width - 80,
+        y: 400,
+        size: 70,
+        speed: 0.25,
+        delay: 1.5,
+        flashTimer: 2,
+        flashIntensity: 0,
+      },
+    ];
+
+    const drawCamera = (x: number, y: number, size: number, flashIntensity: number) => {
+      ctx.save();
+      ctx.translate(x, y);
+
+      // Camera body shadow
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.2)';
+      ctx.fillRect(-size/2 + 3, -size/3 + 3, size, size * 0.6);
+
+      // Camera body
+      ctx.fillStyle = '#2a2a2a';
+      ctx.fillRect(-size/2, -size/3, size, size * 0.6);
+      
+      // Body highlight
+      ctx.fillStyle = '#3a3a3a';
+      ctx.fillRect(-size/2, -size/3, size, size * 0.15);
+
+      // Viewfinder
+      ctx.fillStyle = '#1a1a1a';
+      ctx.fillRect(-size/5, -size/2, size/3, size/6);
+
+      // Lens outer (gold ring)
+      ctx.beginPath();
+      ctx.arc(0, 0, size * 0.28, 0, Math.PI * 2);
+      ctx.fillStyle = '#D4A017';
+      ctx.fill();
+      ctx.beginPath();
+      ctx.arc(0, 0, size * 0.23, 0, Math.PI * 2);
+      ctx.fillStyle = '#B8860B';
+      ctx.fill();
+
+      // Lens inner (dark)
+      ctx.beginPath();
+      ctx.arc(0, 0, size * 0.18, 0, Math.PI * 2);
+      ctx.fillStyle = '#111';
+      ctx.fill();
+
+      // Lens reflection
+      ctx.beginPath();
+      ctx.arc(-size * 0.05, -size * 0.05, size * 0.06, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+      ctx.fill();
+
+      // Flash unit - gold tinted
+      ctx.fillStyle = 'rgba(212, 160, 23, 0.5)';
+      ctx.fillRect(size/3, -size/3, size/6, size/5);
+
+      // Subtle gold flash glow when active
+      if (flashIntensity > 0.05) {
+        const gradient = ctx.createRadialGradient(
+          size/3 + size/12, -size/3 + size/10, 0,
+          size/3 + size/12, -size/3 + size/10, size * 0.6
+        );
+        gradient.addColorStop(0, `rgba(212, 160, 23, ${flashIntensity * 0.4})`);
+        gradient.addColorStop(0.5, `rgba(212, 160, 23, ${flashIntensity * 0.15})`);
+        gradient.addColorStop(1, 'rgba(212, 160, 23, 0)');
+        ctx.fillStyle = gradient;
+        ctx.beginPath();
+        ctx.arc(size/3 + size/12, -size/3 + size/10, size * 0.6, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      ctx.restore();
+    };
+
+    const draw = () => {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      // Update right camera X position on resize
+      cameras[1].x = canvas.width - 80;
+
+      // Draw cameras
+      cameras.forEach((cam, i) => {
+        // Smooth float animation - just up and down
+        const floatY = Math.sin(time * cam.speed + cam.delay) * 25;
+
+        // Flash timer - every 5 seconds, subtle
+        cam.flashTimer += 0.016;
+        if (cam.flashTimer > 5 + i * 2) {
+          cam.flashTimer = 0;
+          cam.flashIntensity = 0.8;
+        }
+
+        // Decay flash smoothly
+        if (cam.flashIntensity > 0) {
+          cam.flashIntensity *= 0.92;
+          if (cam.flashIntensity < 0.03) cam.flashIntensity = 0;
+        }
+
+        drawCamera(cam.x, cam.y + floatY, cam.size, cam.flashIntensity);
+      });
+
+      time += 0.016;
+      animationId = requestAnimationFrame(draw);
+    };
+
+    draw();
+
+    const handleScroll = () => {
+      const scrollY = window.scrollY;
+      // Keep cameras in view as user scrolls
+      cameras[0].y = 350 + scrollY * 0.1;
+      cameras[1].y = 400 + scrollY * 0.1;
+    };
+
+    window.addEventListener('scroll', handleScroll);
+
+    return () => {
+      window.removeEventListener('resize', resize);
+      window.removeEventListener('scroll', handleScroll);
+      cancelAnimationFrame(animationId);
+    };
+  }, []);
+
   return (
-    <div className="fixed inset-0 pointer-events-none overflow-hidden" style={{ zIndex: 1 }}>
-      {/* Camera 1 - Left side */}
-      <div
-        className="absolute animate-float"
-        style={{
-          left: '12%',
-          top: '25%',
-          animationDuration: '6s',
-        }}
-      >
-        <div className="relative opacity-40">
-          <div className="w-16 h-11 bg-gradient-to-br from-gray-700 to-gray-900 rounded-lg border border-gray-600">
-            <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-gradient-to-br from-[#D4A017] to-[#B8860B] p-1">
-              <div className="w-full h-full rounded-full bg-gray-900 flex items-center justify-center">
-                <div className="w-2 h-2 rounded-full bg-white/20"></div>
-              </div>
-            </div>
-            <div className="absolute -top-1 right-1 w-3 h-2 bg-gray-500 rounded-sm flash-pulse"></div>
-            <div className="absolute -top-2 left-3 w-4 h-2 bg-gray-800 rounded-t-sm"></div>
-          </div>
-          <div className="absolute -top-1 right-0 w-16 h-16 flash-burst rounded-full"></div>
-        </div>
-      </div>
-
-      {/* Camera 2 - Right side */}
-      <div
-        className="absolute animate-float"
-        style={{
-          right: '15%',
-          top: '45%',
-          animationDelay: '2.5s',
-          animationDuration: '7s',
-        }}
-      >
-        <div className="relative opacity-40">
-          <div className="w-16 h-11 bg-gradient-to-br from-gray-700 to-gray-900 rounded-lg border border-gray-600">
-            <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-gradient-to-br from-[#D4A017] to-[#B8860B] p-1">
-              <div className="w-full h-full rounded-full bg-gray-900 flex items-center justify-center">
-                <div className="w-2 h-2 rounded-full bg-white/20"></div>
-              </div>
-            </div>
-            <div className="absolute -top-1 right-1 w-3 h-2 bg-gray-500 rounded-sm flash-pulse-delayed"></div>
-            <div className="absolute -top-2 left-3 w-4 h-2 bg-gray-800 rounded-t-sm"></div>
-          </div>
-          <div className="absolute -top-1 right-0 w-16 h-16 flash-burst-delayed rounded-full"></div>
-        </div>
-      </div>
-
-      {/* Subtle gold sparkles */}
-      {[...Array(10)].map((_, i) => (
-        <div
-          key={`sparkle-${i}`}
-          className="absolute w-1 h-1 bg-[#D4A017] rounded-full animate-twinkle opacity-30"
-          style={{
-            left: `${10 + (i * 9)}%`,
-            top: `${20 + (i * 7) % 60}%`,
-            animationDelay: `${i * 0.5}s`,
-            animationDuration: `${4 + (i % 3)}s`,
-          }}
-        />
-      ))}
-
-      <style jsx>{`
-        @keyframes float {
-          0%, 100% {
-            transform: translateY(0) rotate(-1deg);
-          }
-          50% {
-            transform: translateY(-15px) rotate(1deg);
-          }
-        }
-        .animate-float {
-          animation: float 6s ease-in-out infinite;
-        }
-        @keyframes twinkle {
-          0%, 100% {
-            opacity: 0;
-            transform: scale(0.5);
-          }
-          50% {
-            opacity: 0.3;
-            transform: scale(1.2);
-          }
-        }
-        .animate-twinkle {
-          animation: twinkle 4s ease-in-out infinite;
-        }
-        @keyframes flashBurst {
-          0%, 96%, 100% {
-            opacity: 0;
-            transform: scale(0);
-          }
-          97% {
-            opacity: 0.4;
-            background: radial-gradient(circle, rgba(212,160,23,0.6) 0%, rgba(212,160,23,0.2) 50%, transparent 70%);
-            transform: scale(1);
-          }
-          99% {
-            opacity: 0.1;
-            transform: scale(0.8);
-          }
-        }
-        .flash-burst {
-          animation: flashBurst 5s ease-out infinite;
-        }
-        .flash-burst-delayed {
-          animation: flashBurst 5s ease-out infinite;
-          animation-delay: 2.5s;
-        }
-        @keyframes flashPulse {
-          0%, 96%, 100% {
-            background-color: #6b7280;
-          }
-          97% {
-            background-color: #D4A017;
-            box-shadow: 0 0 8px rgba(212,160,23,0.5);
-          }
-        }
-        .flash-pulse {
-          animation: flashPulse 5s ease-out infinite;
-        }
-        .flash-pulse-delayed {
-          animation: flashPulse 5s ease-out infinite;
-          animation-delay: 2.5s;
-        }
-      `}</style>
-    </div>
+    <canvas
+      ref={canvasRef}
+      className="fixed inset-0 pointer-events-none"
+      style={{ zIndex: 1 }}
+    />
   );
 }

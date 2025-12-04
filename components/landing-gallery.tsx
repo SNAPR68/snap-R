@@ -115,41 +115,16 @@ function HoverSlider({ item }: { item: typeof GALLERY_ITEMS[0] }) {
 
 export function LandingGallery() {
   return (
-    <section id="gallery" className="py-24 px-6 bg-[#0A0A0A] relative z-10">
-      <div className="max-w-6xl mx-auto">
-        <div className="text-center mb-12">
-          <h2 className="text-4xl font-bold text-white mb-4">
-            See the <span className="text-[#D4A017]">Transformation</span>
-          </h2>
-          <p className="text-white/60 max-w-2xl mx-auto">
-            Hover over each image to see the before and after. Our AI delivers professional results in seconds.
-          </p>
+    <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+      {GALLERY_ITEMS.map((item) => (
+        <div key={item.id}>
+          <HoverSlider item={item} />
+          <div className="mt-3">
+            <h3 className="text-white font-semibold">{item.title}</h3>
+            <p className="text-white/50 text-sm">{item.description}</p>
+          </div>
         </div>
-
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {GALLERY_ITEMS.map((item) => (
-            <div key={item.id}>
-              <HoverSlider item={item} />
-              <div className="mt-3">
-                <h3 className="text-white font-semibold">{item.title}</h3>
-                <p className="text-white/50 text-sm">{item.description}</p>
-              </div>
-            </div>
-          ))}
-        </div>
-
-        <div className="text-center mt-12">
-          <a
-            href="/onboarding"
-            className="inline-flex items-center gap-2 px-8 py-4 bg-gradient-to-r from-[#D4A017] to-[#B8860B] rounded-xl font-semibold text-black hover:opacity-90 transition-opacity"
-          >
-            Try It Free
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
-            </svg>
-          </a>
-        </div>
-      </div>
-    </section>
+      ))}
+    </div>
   );
 }

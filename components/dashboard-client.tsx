@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Plus, LogOut, FolderOpen, Settings, Trash2, Image as ImageIcon, ChevronRight, ChevronDown, X, GraduationCap } from 'lucide-react';
+import { Plus, LogOut, FolderOpen, Settings, Trash2, Image as ImageIcon, ChevronRight, ChevronDown, X, GraduationCap, Camera } from 'lucide-react';
 import { DashboardAnalytics } from './dashboard-analytics';
 
 interface Project {
@@ -162,6 +162,17 @@ export function DashboardClient({ user, listings }: { user: any; listings?: any[
       <div className="flex flex-1">
         <aside className="w-[260px] bg-[#1A1A1A] border-r border-white/10 p-4 flex flex-col">
           <nav className="flex-1 space-y-1">
+            {/* Snap & Enhance - Primary CTA */}
+            <Link
+              href="/dashboard/camera"
+              className="flex items-center gap-3 px-3 py-3 rounded-xl mb-3 bg-gradient-to-r from-[#D4A017] to-[#B8860B] text-black font-semibold hover:opacity-90 transition-opacity shadow-lg shadow-[#D4A017]/25"
+            >
+              <Camera className="w-5 h-5" /> 
+              <span>Snap & Enhance</span>
+            </Link>
+            
+            <div className="border-b border-white/10 my-3" />
+            
             <button
               onClick={() => setActiveTab('projects')}
               className={`flex items-center gap-3 px-3 py-2.5 rounded-lg w-full text-left ${
@@ -304,7 +315,7 @@ export function DashboardClient({ user, listings }: { user: any; listings?: any[
                     className="px-6 py-3 bg-gradient-to-r from-[#D4A017] to-[#B8860B] rounded-xl text-black font-semibold"
                   >
                     Create Project
-```                  </button>
+                  </button>
                 </div>
               ) : (
                 <div className="space-y-4">

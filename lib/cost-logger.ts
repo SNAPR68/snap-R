@@ -1,41 +1,52 @@
 import { createClient } from '@supabase/supabase-js';
 
 const getSupabase = () => {
-  if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  
+  if (!url || !serviceKey) {
+    console.warn('[CostLogger] Missing env vars:', {
+      hasUrl: !!url,
+      hasServiceKey: !!serviceKey,
+    });
     return null;
   }
-  return createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL,
-    process.env.SUPABASE_SERVICE_ROLE_KEY
-  );
+  
+  return createClient(url, serviceKey);
 };
 
 // Cost estimates per provider (in cents per API call)
-// Based on typical pricing - adjust as you get actual billing data
 export const COST_ESTIMATES: Record<string, Record<string, number>> = {
   replicate: {
-    'sky-replacement': 5,      // ~$0.05
-    'virtual-twilight': 6,     // ~$0.06
-    'lawn-repair': 4,          // ~$0.04
-    'declutter': 5,            // ~$0.05
-    'virtual-staging': 8,      // ~$0.08
-    'hdr-enhancement': 3,      // ~$0.03
+    'sky-replacement': 5,
+    'virtual-twilight': 6,
+    'lawn-repair': 4,
+    'declutter': 5,
+    'virtual-staging': 8,
+    'fire-fireplace': 4,
+    'tv-screen': 4,
+    'lights-on': 4,
+    'window-masking': 5,
+    'color-balance': 3,
+    'pool-enhance': 4,
     'hdr': 3,
-    'perspective-fix': 3,
+    'auto-enhance': 3,
+    'perspective-correction': 3,
+    'lens-correction': 3,
     'default': 5,
   },
   runware: {
-    'inpainting': 2,           // ~$0.02
-    'upscale': 1,              // ~$0.01
+    'inpainting': 2,
+    'upscale': 1,
     'default': 2,
   },
   openai: {
-    'vision-analysis': 2,      // ~$0.02 (GPT-4 Vision)
-    'quality-scoring': 2,      // ~$0.02
+    'vision-analysis': 2,
+    'quality-scoring': 2,
     'default': 2,
   },
   autoenhance: {
-    'auto-enhance': 4,         // ~$0.04 (AutoEnhance.ai)
+    'auto-enhance': 4,
     'default': 4,
   },
 };
@@ -62,9 +73,12 @@ export async function logApiCost({
 
   try {
     const supabase = getSupabase();
-    if (!supabase) return;
+    if (!supabase) {
+      console.error('[CostLogger] No Supabase client - check SUPABASE_SERVICE_ROLE_KEY');
+      return;
+    }
 
-    await supabase.from('api_costs').insert({
+    const insertData = {
       user_id: userId || null,
       provider,
       model: provider,
@@ -72,11 +86,19 @@ export async function logApiCost({
       cost_cents: success ? costCents : 0,
       success,
       error_message: errorMessage || null,
-    });
+      created_at: new Date().toISOString(),
+    };
 
-    console.log(`[CostLogger] ${provider}/${toolId}: ${costCents}¢ (${success ? 'success' : 'failed'})`);
-  } catch (e) {
-    console.error('[CostLogger] Failed:', e);
+    const { error } = await supabase.from('api_costs').insert(insertData);
+
+    if (error) {
+      console.error('[CostLogger] Insert failed:', error.message);
+      console.error('[CostLogger] Data:', insertData);
+    } else {
+      console.log(`[CostLogger] ✓ ${provider}/${toolId}: ${costCents}¢ (${success ? 'success' : 'failed'})`);
+    }
+  } catch (e: any) {
+    console.error('[CostLogger] Exception:', e.message);
   }
 }
 
@@ -93,20 +115,28 @@ export async function logSystemEvent({
 }) {
   try {
     const supabase = getSupabase();
-    if (!supabase) return;
+    if (!supabase) {
+      console.error('[SystemLog] No Supabase client');
+      return;
+    }
 
-    await supabase.from('system_logs').insert({
+    const { error } = await supabase.from('system_logs').insert({
       level,
       source,
       message,
       metadata: metadata || null,
+      created_at: new Date().toISOString(),
     });
+
+    if (error) {
+      console.error('[SystemLog] Insert failed:', error.message);
+    }
 
     if (level === 'critical') {
       await sendCriticalAlert(source, message, metadata);
     }
-  } catch (e) {
-    console.error('[SystemLog] Failed:', e);
+  } catch (e: any) {
+    console.error('[SystemLog] Exception:', e.message);
   }
 }
 
