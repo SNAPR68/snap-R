@@ -82,24 +82,18 @@ export function AnimatedBackground() {
       ctx.fillStyle = '#D4A017';
       ctx.fill();
 
-      // Inner black border (thin separator)
+      // Thin black separator line
       ctx.beginPath();
-      ctx.arc(0, 0, size * 0.28, 0, Math.PI * 2);
+      ctx.arc(0, 0, size * 0.30, 0, Math.PI * 2);
       ctx.fillStyle = '#000000';
       ctx.fill();
 
-      // Inner lens area (dark)
-      ctx.beginPath();
-      ctx.arc(0, 0, size * 0.26, 0, Math.PI * 2);
-      ctx.fillStyle = '#0A0A0A';
-      ctx.fill();
-
-      // Draw SnapR logo in lens - BIGGER
+      // Draw SnapR logo - FILLS almost entire inner area
       if (logoLoaded) {
-        const logoSize = size * 0.48;
+        const logoSize = size * 0.56;
         ctx.save();
         ctx.beginPath();
-        ctx.arc(0, 0, size * 0.24, 0, Math.PI * 2);
+        ctx.arc(0, 0, size * 0.28, 0, Math.PI * 2);
         ctx.clip();
         ctx.drawImage(logoImg, -logoSize/2, -logoSize/2, logoSize, logoSize);
         ctx.restore();
