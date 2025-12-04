@@ -215,7 +215,6 @@ export default function HomePage() {
       </section>
 
       {/* Pricing Section - Interactive */}
-      <PricingSection />
 
       {/* Testimonials */}
       <Testimonials />
