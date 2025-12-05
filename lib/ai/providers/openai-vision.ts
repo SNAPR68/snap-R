@@ -1,4 +1,5 @@
 import OpenAI from 'openai';
+import { logApiCost } from '@/lib/cost-logger';
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -22,16 +23,20 @@ export interface ImageAnalysis {
 
 export async function analyzeImage(imageUrl: string): Promise<ImageAnalysis> {
   console.log('[Vision] Analyzing image...');
+  const startTime = Date.now();
+  let success = true;
+  let errorMessage: string | undefined;
   
-  const response = await openai.chat.completions.create({
-    model: 'gpt-4o',
-    messages: [
-      {
-        role: 'user',
-        content: [
-          {
-            type: 'text',
-            text: `Analyze this real estate photo and return ONLY valid JSON (no markdown, no code blocks):
+  try {
+    const response = await openai.chat.completions.create({
+      model: 'gpt-4o',
+      messages: [
+        {
+          role: 'user',
+          content: [
+            {
+              type: 'text',
+              text: `Analyze this real estate photo and return ONLY valid JSON (no markdown, no code blocks):
 {
   "sky_replacement_needed": boolean,
   "sky_condition": "good" | "overcast" | "blown_out" | "dull",
@@ -49,26 +54,47 @@ export async function analyzeImage(imageUrl: string): Promise<ImageAnalysis> {
 }
 
 Be accurate and concise. Only flag issues that are clearly visible.`
-          },
-          {
-            type: 'image_url',
-            image_url: { url: imageUrl }
-          }
-        ]
-      }
-    ],
-    max_tokens: 500,
-  });
+            },
+            {
+              type: 'image_url',
+              image_url: { url: imageUrl }
+            }
+          ]
+        }
+      ],
+      max_tokens: 500,
+    });
 
-  const content = response.choices[0]?.message?.content || '{}';
-  
-  try {
-    const cleanContent = content.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
-    const analysis = JSON.parse(cleanContent) as ImageAnalysis;
-    console.log('[Vision] Analysis complete:', analysis.recommended_enhancements);
-    return analysis;
-  } catch (error) {
-    console.error('[Vision] Failed to parse response:', content);
+    const content = response.choices[0]?.message?.content || '{}';
+    
+    try {
+      const cleanContent = content.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+      const analysis = JSON.parse(cleanContent) as ImageAnalysis;
+      console.log('[Vision] Analysis complete:', analysis.recommended_enhancements);
+      return analysis;
+    } catch (parseError) {
+      console.error('[Vision] Failed to parse response:', content);
+      errorMessage = 'Failed to parse OpenAI response';
+      return {
+        sky_replacement_needed: false,
+        sky_condition: 'good',
+        lawn_repair_needed: false,
+        lawn_condition: 'good',
+        declutter_needed: false,
+        declutter_items: [],
+        virtual_staging_candidate: false,
+        room_type: 'other',
+        lighting_issues: [],
+        perspective_correction_needed: false,
+        day_to_dusk_candidate: false,
+        overall_quality: 7,
+        recommended_enhancements: [],
+      };
+    }
+  } catch (error: any) {
+    success = false;
+    errorMessage = error.message;
+    console.error('[Vision] API error:', error.message);
     return {
       sky_replacement_needed: false,
       sky_condition: 'good',
@@ -84,6 +110,15 @@ Be accurate and concise. Only flag issues that are clearly visible.`
       overall_quality: 7,
       recommended_enhancements: [],
     };
+  } finally {
+    // Log OpenAI cost
+    await logApiCost({
+      provider: 'openai',
+      toolId: 'image-analysis',
+      success,
+      errorMessage,
+      processingTimeMs: Date.now() - startTime,
+    });
   }
 }
 
@@ -93,16 +128,20 @@ export async function scoreEnhancementQuality(
   enhancementType: string
 ): Promise<{ score: number; issues: string[]; passed: boolean }> {
   console.log('[QC] Scoring enhancement quality...');
+  const startTime = Date.now();
+  let success = true;
+  let errorMessage: string | undefined;
   
-  const response = await openai.chat.completions.create({
-    model: 'gpt-4o',
-    messages: [
-      {
-        role: 'user',
-        content: [
-          {
-            type: 'text',
-            text: `Compare these two real estate photos. The second is an AI "${enhancementType}" enhancement of the first.
+  try {
+    const response = await openai.chat.completions.create({
+      model: 'gpt-4o',
+      messages: [
+        {
+          role: 'user',
+          content: [
+            {
+              type: 'text',
+              text: `Compare these two real estate photos. The second is an AI "${enhancementType}" enhancement of the first.
 
 Rate the enhancement quality and return ONLY valid JSON:
 {
@@ -117,29 +156,44 @@ Check for:
 - Artifacts or distortions
 - Overall realism
 - Whether the enhancement looks professional`
-          },
-          {
-            type: 'image_url',
-            image_url: { url: originalUrl }
-          },
-          {
-            type: 'image_url',
-            image_url: { url: enhancedUrl }
-          }
-        ]
-      }
-    ],
-    max_tokens: 300,
-  });
+            },
+            {
+              type: 'image_url',
+              image_url: { url: originalUrl }
+            },
+            {
+              type: 'image_url',
+              image_url: { url: enhancedUrl }
+            }
+          ]
+        }
+      ],
+      max_tokens: 300,
+    });
 
-  const content = response.choices[0]?.message?.content || '{}';
-  
-  try {
-    const cleanContent = content.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
-    const result = JSON.parse(cleanContent);
-    console.log('[QC] Score:', result.score, 'Passed:', result.passed);
-    return result;
-  } catch {
+    const content = response.choices[0]?.message?.content || '{}';
+    
+    try {
+      const cleanContent = content.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+      const result = JSON.parse(cleanContent);
+      console.log('[QC] Score:', result.score, 'Passed:', result.passed);
+      return result;
+    } catch {
+      return { score: 7, issues: [], passed: true };
+    }
+  } catch (error: any) {
+    success = false;
+    errorMessage = error.message;
+    console.error('[QC] API error:', error.message);
     return { score: 7, issues: [], passed: true };
+  } finally {
+    // Log OpenAI cost
+    await logApiCost({
+      provider: 'openai',
+      toolId: 'quality-score',
+      success,
+      errorMessage,
+      processingTimeMs: Date.now() - startTime,
+    });
   }
 }

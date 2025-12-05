@@ -293,7 +293,7 @@ export default function CameraPage() {
               {PRESETS[selectedTool.id].map((preset) => (
                 <button
                   key={preset.id}
-                  onClick={() => handlePresetSelect(preset.id)}
+                  onClick={() => handlePresetSelect(preset.name)}
                   className="p-4 bg-white/5 hover:bg-[#D4A017]/20 border border-white/10 hover:border-[#D4A017]/50 rounded-xl transition-colors"
                 >
                   <span className="text-sm">{preset.name}</span>

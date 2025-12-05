@@ -41,8 +41,8 @@ export const COST_ESTIMATES: Record<string, Record<string, number>> = {
     'default': 2,
   },
   openai: {
-    'vision-analysis': 2,
-    'quality-scoring': 2,
+    'image-analysis': 2,
+    'quality-score': 2,
     'default': 2,
   },
   autoenhance: {
@@ -60,6 +60,9 @@ export async function logApiCost({
   success = true,
   errorMessage,
   actualCost,
+  processingTimeMs,
+  creditsCharged,
+  requestMetadata,
 }: {
   userId?: string;
   provider: AIProvider;
@@ -67,6 +70,9 @@ export async function logApiCost({
   success?: boolean;
   errorMessage?: string;
   actualCost?: number;
+  processingTimeMs?: number;
+  creditsCharged?: number;
+  requestMetadata?: Record<string, any>;
 }) {
   const providerCosts = COST_ESTIMATES[provider] || {};
   const costCents = actualCost || providerCosts[toolId || 'default'] || providerCosts['default'] || 4;
@@ -86,6 +92,9 @@ export async function logApiCost({
       cost_cents: success ? costCents : 0,
       success,
       error_message: errorMessage || null,
+      processing_time_ms: processingTimeMs || null,
+      credits_charged: creditsCharged || null,
+      request_metadata: requestMetadata || null,
       created_at: new Date().toISOString(),
     };
 

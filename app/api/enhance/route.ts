@@ -66,13 +66,22 @@ export async function POST(request: NextRequest) {
     console.log('[API] Processing...');
     const result = await processEnhancement(toolId as ToolId, signedUrlData.signedUrl, options);
     
-    // Log API cost
+    const processingTime = Date.now() - startTime;
+    
+    // Log API cost with full details
     await logApiCost({
       userId: user.id,
       provider: 'replicate',
       toolId,
       success: result.success || false,
       errorMessage: result.error,
+      processingTimeMs: processingTime,
+      creditsCharged: creditsRequired,
+      requestMetadata: {
+        imageId,
+        options,
+        userEmail: user.email,
+      },
     });
 
     if (!result.success || !result.enhancedUrl) {
