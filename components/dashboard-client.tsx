@@ -319,40 +319,14 @@ export function DashboardClient({ user, listings }: { user: any; listings?: any[
       <div className="flex flex-1">
         <aside className="w-[260px] bg-[#1A1A1A] border-r border-white/10 p-4 flex flex-col">
           <nav className="flex-1 space-y-1">
-            {/* Snap & Enhance - Direct Camera Trigger */}
-            <label
-              className="flex items-center gap-3 px-3 py-3 rounded-xl mb-3 bg-gradient-to-r from-[#D4A017] to-[#B8860B] text-black font-semibold hover:opacity-90 transition-opacity shadow-lg shadow-[#D4A017]/25 cursor-pointer"
+            {/* Snap & Enhance - Mobile Only */}
+            <Link
+              href="/dashboard/camera"
+              className="md:hidden flex items-center gap-3 px-3 py-3 rounded-xl mb-3 bg-gradient-to-r from-[#D4A017] to-[#B8860B] text-black font-semibold hover:opacity-90 transition-opacity shadow-lg shadow-[#D4A017]/25"
             >
-              {isUploading ? (
-                <Loader2 className="w-5 h-5 animate-spin" />
-              ) : (
-                <Camera className="w-5 h-5" />
-              )}
-              <span>{isUploading ? 'Uploading...' : 'Snap & Enhance'}</span>
-              <input
-                ref={cameraInputRef}
-                type="file"
-                accept="image/*"
-                capture="environment"
-                onChange={handleCameraCapture}
-                className="hidden"
-                disabled={isUploading}
-              />
-            </label>
-            
-            {/* Show upload error if any */}
-            {uploadError && (
-              <div className="px-3 py-2 mb-3 bg-red-500/20 border border-red-500/30 rounded-lg text-red-400 text-xs">
-                {uploadError}
-                <button 
-                  onClick={() => setUploadError(null)}
-                  className="ml-2 text-red-300 hover:text-white"
-                >
-                  ✕
-                </button>
-              </div>
-            )}
-            
+              <Camera className="w-5 h-5" />
+              <span>Snap & Enhance</span>
+            </Link>
             <div className="border-b border-white/10 my-3" />
             
             <button
