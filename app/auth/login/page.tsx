@@ -23,7 +23,7 @@ export default function LoginPage() {
   };
 
   const handleGoogleLogin = async () => {
-    await supabase.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: `${window.location.origin}/auth/callback` } });
+    await supabase.auth.signInWithOAuth({ provider: 'google', options: { queryParams: { prompt: 'select_account' }, redirectTo: `${window.location.origin}/auth/callback` } });
   };
 
   return (
