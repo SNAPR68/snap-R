@@ -323,7 +323,8 @@ export default function CameraPage() {
             >
               <Download className="w-5 h-5" /> Download
             </button>
-            <button onClick={reset} className="w-full py-3 bg-white/10 rounded-xl text-sm">Enhance Another</button>
+            <Link href={`/dashboard/studio?id=${photoId}`} className="w-full py-3 bg-white/10 rounded-xl text-sm text-center block">Open in Studio</Link>
+            <button onClick={reset} className="w-full py-3 bg-white/5 rounded-xl text-sm text-white/60">Enhance Another</button>
           </div>
         )}
       </div>
