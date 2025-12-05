@@ -85,6 +85,7 @@ export default function CameraPage() {
   const [result, setResult] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [photoId, setPhotoId] = useState<string | null>(null);
+  const [listingId, setListingId] = useState<string | null>(null);
   const [activeCategory, setActiveCategory] = useState<string>('EXTERIOR');
   const fileInputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
@@ -144,7 +145,9 @@ export default function CameraPage() {
 
       const timestamp = new Date().toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
       const { data: listing, error: listError } = await supabase.from('listings').insert({ user_id: user.id, project_id: projectId, title: `Snap ${timestamp}` }).select().single();
+      
       if (listError || !listing) throw new Error('Failed to create listing');
+      setListingId(listing.id);
 
       const fileExt = originalFile.name.split('.').pop() || 'jpg';
       const path = `${listing.id}/${Date.now()}-photo.${fileExt}`;
@@ -323,7 +326,7 @@ export default function CameraPage() {
             >
               <Download className="w-5 h-5" /> Download
             </button>
-            <Link href={`/dashboard/studio?id=${photoId}`} className="w-full py-3 bg-white/10 rounded-xl text-sm text-center block">Open in Studio</Link>
+            <Link href={`/dashboard/studio?id=${listingId}`} className="w-full py-3 bg-white/10 rounded-xl text-sm text-center block">Open in Studio</Link>
             <button onClick={reset} className="w-full py-3 bg-white/5 rounded-xl text-sm text-white/60">Enhance Another</button>
           </div>
         )}
