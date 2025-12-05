@@ -167,7 +167,7 @@ export default function CameraPage() {
         body: JSON.stringify({
           imageId: photo.id,
           toolId,
-          options: presetId ? { preset: presetId } : {}
+          options: presetId ? { prompt: presetId } : {}
         }),
       });
 
