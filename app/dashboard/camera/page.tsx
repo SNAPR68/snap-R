@@ -174,7 +174,7 @@ export default function CameraPage() {
       }
 
       const enhanceData = await enhanceRes.json();
-      setResult(enhanceData.resultUrl || enhanceData.processedUrl);
+      setResult(enhanceData.enhancedUrl);
       setStep('result');
 
     } catch (err: any) {
