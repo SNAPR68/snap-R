@@ -1,8 +1,9 @@
 import { createClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
-import { ArrowLeft, User, Shield, Bell, CreditCard } from 'lucide-react';
+import { ArrowLeft, User, Shield, Bell, CreditCard, Building2 } from 'lucide-react';
 import { DataPrivacyActions } from './data-actions';
+import { ComplianceSettings } from '@/components/compliance-settings';
 
 export const dynamic = 'force-dynamic';
 
@@ -31,6 +32,7 @@ export default async function SettingsPage() {
       <main className="max-w-3xl mx-auto px-6 py-12">
         <h1 className="text-3xl font-bold mb-8">Account Settings</h1>
 
+        {/* Profile Section */}
         <section className="bg-[#1A1A1A] border border-white/10 rounded-xl p-6 mb-6">
           <div className="flex items-center gap-3 mb-6">
             <User className="w-6 h-6 text-[#D4A017]" />
@@ -56,6 +58,7 @@ export default async function SettingsPage() {
           </div>
         </section>
 
+        {/* Subscription Section */}
         <section className="bg-[#1A1A1A] border border-white/10 rounded-xl p-6 mb-6">
           <div className="flex items-center gap-3 mb-6">
             <CreditCard className="w-6 h-6 text-[#D4A017]" />
@@ -66,6 +69,17 @@ export default async function SettingsPage() {
           </Link>
         </section>
 
+        {/* MLS Compliance Section - NEW */}
+        <section className="bg-[#1A1A1A] border border-white/10 rounded-xl p-6 mb-6">
+          <div className="flex items-center gap-3 mb-6">
+            <Building2 className="w-6 h-6 text-[#D4A017]" />
+            <h2 className="text-xl font-semibold">MLS Compliance</h2>
+            <span className="px-2 py-0.5 bg-green-500/20 text-green-400 text-xs rounded-full">US Ready</span>
+          </div>
+          <ComplianceSettings userId={user.id} />
+        </section>
+
+        {/* Data Privacy Section */}
         <section className="bg-[#1A1A1A] border border-white/10 rounded-xl p-6 mb-6">
           <div className="flex items-center gap-3 mb-6">
             <Shield className="w-6 h-6 text-[#D4A017]" />
@@ -77,6 +91,7 @@ export default async function SettingsPage() {
           <DataPrivacyActions userId={user.id} userEmail={user.email || ''} />
         </section>
 
+        {/* Danger Zone */}
         <section className="bg-red-500/10 border border-red-500/30 rounded-xl p-6">
           <h2 className="text-xl font-semibold text-red-400 mb-4">Danger Zone</h2>
           <p className="text-white/70 mb-4">Permanently delete your account and all data.</p>

@@ -3,8 +3,9 @@
 import { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { HumanEditRequestModal } from "./human-edit-request";
+import { MlsExportModal } from "./mls-export-modal";
 import Link from 'next/link';
-import { ArrowLeft, Upload, Sun, Moon, Leaf, Trash2, Sofa, Sparkles, Wand2, Loader2, ChevronDown, ChevronUp, Check, X, Download, Share2, Copy, LogOut, UserCheck, Flame, Tv, Lightbulb, PanelTop, Waves, Move, Circle, Palette } from 'lucide-react';
+import { ArrowLeft, Upload, Sun, Moon, Leaf, Trash2, Sofa, Sparkles, Wand2, Loader2, ChevronDown, ChevronUp, Check, X, Download, Share2, Copy, LogOut, FileArchive, UserCheck, Flame, Tv, Lightbulb, PanelTop, Waves, Move, Circle, Palette } from 'lucide-react';
 
 // Tool definitions - 15 tools total
 const AI_TOOLS = [
@@ -111,6 +112,7 @@ export function StudioClient({ listingId }: { listingId: string }) {
   const [showShareModal, setShowShareModal] = useState(false);
   const [copied, setCopied] = useState(false);
   const [showHumanEditModal, setShowHumanEditModal] = useState(false);
+  const [showMlsExport, setShowMlsExport] = useState(false);
   const [shareLink, setShareLink] = useState('');
   const [shareLoading, setShareLoading] = useState(false);
   const [shareOptions, setShareOptions] = useState({
@@ -656,6 +658,14 @@ export function StudioClient({ listingId }: { listingId: string }) {
             <button onClick={() => setShowShareModal(false)} className="w-full mt-4 py-3 border border-white/20 rounded-xl">Close</button>
           </div>
         </div>
+      )}
+      {showMlsExport && completedPhotos.length > 0 && (
+        <MlsExportModal
+          photos={completedPhotos}
+          listingTitle={listing?.title}
+          listingAddress={listing?.address}
+          onClose={() => setShowMlsExport(false)}
+        />
       )}
       {showHumanEditModal && selectedPhoto && (
         <HumanEditRequestModal listingId={listingId} photoUrl={selectedPhoto?.signedUrl || ""} onClose={() => setShowHumanEditModal(false)} />
