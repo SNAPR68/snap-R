@@ -136,18 +136,18 @@ export async function declutter(imageUrl: string, customPrompt?: string): Promis
   
   if (customPrompt) {
     if (customPrompt.includes('Light Clean')) {
-      prompt = 'Remove ONLY small loose items from this room: papers, magazines, remote controls, cups, glasses, dishes on tables. Keep ALL furniture, keep decorations, keep lamps, keep plants. Only remove small clutter items from surfaces. Everything else stays exactly the same.';
+      prompt = 'Remove ONLY small loose items from this room: papers, magazines, remote controls, cups, glasses, dishes on tables. Keep ALL furniture exactly as-is, keep decorations, keep lamps, keep plants. Only remove small clutter items from surfaces. DO NOT add any new objects. DO NOT change furniture. DO NOT move anything. Everything else stays exactly the same.';
     } else if (customPrompt.includes('Staging Ready')) {
       prompt = 'Remove ALL furniture and ALL items from this room completely. Leave ONLY the empty room with bare walls, floor, windows, and doors. No sofas, no tables, no chairs, no decorations, no rugs, nothing. Completely empty room ready for virtual staging.';
-    } else if (customPrompt.includes('Full Clear')) {
-      prompt = 'Remove all loose items, personal belongings, decorations, books, plants, and accessories from this room. Keep the main furniture (sofas, tables, beds) but remove everything on surfaces and floors. Clean minimalist look with just furniture.';
+    } else if (customPrompt.includes('Full Clean')) {
+      prompt = 'Remove all loose items, personal belongings, decorations, books, plants, and accessories from this room. Keep the main furniture (sofas, tables, beds) but remove everything on surfaces and floors. Clean minimalist look with just furniture. DO NOT add any new objects. DO NOT change or move furniture. Everything structural stays exactly the same.';
     } else if (customPrompt.includes('Moderate')) {
-      prompt = 'Remove clutter and personal items from counters, tables, and floors. Remove papers, dishes, clothes, toys, magazines. Keep furniture and large decorations but clear surfaces of small items.';
+      prompt = 'Remove clutter and personal items from counters, tables, and floors. Remove papers, dishes, clothes, toys, magazines. Keep furniture and large decorations but clear surfaces of small items. DO NOT add anything new.';
     } else {
-      prompt = `${customPrompt}. Keep the room structure exactly the same.`;
+      prompt = `${customPrompt}. Keep the room structure exactly the same. DO NOT add any new objects.`;
     }
   } else {
-    prompt = 'Remove clutter and personal items from this room. Remove papers, magazines, dishes, cups, clothes, toys, and loose items. Keep furniture but clear all surfaces. Make it look like a clean, staged real estate photo.';
+    prompt = 'Remove clutter and personal items from this room. Remove papers, magazines, dishes, cups, clothes, toys, and loose items. Keep furniture but clear all surfaces. DO NOT add any new objects. Make it look like a clean, staged real estate photo.';
   }
 
   const result = await runFluxKontext(imageUrl, prompt);
