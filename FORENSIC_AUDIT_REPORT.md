@@ -1,942 +1,544 @@
-# SnapR Forensic Audit Report
-**Date:** December 4, 2024  
-**Scope:** Complete application audit including admin panel, logging, AI pipeline, security, and data flows  
-**Methodology:** Static code analysis, architecture review, security assessment
+# SnapR Complete Forensic Audit Report
+**Generated:** December 2025  
+**Scope:** Complete application audit including user flows, dashboard, listings, API endpoints, database schema, and all features
 
 ---
 
 ## Executive Summary
 
-This forensic audit examines the SnapR application's architecture, security posture, logging infrastructure, AI pipeline, admin functionality, and data management systems. The application is a Next.js 14.2 real estate photo enhancement platform using Supabase for backend services, multiple AI providers (Replicate, OpenAI, Runware, AutoEnhance), and Cloudflare Workers for edge processing.
+**Status:** ⚠️ **CRITICAL ISSUES FOUND** - Application has multiple schema mismatches, missing role-based features, and broken user flows.
 
 **Key Findings:**
-- ✅ Comprehensive logging system in place
-- ✅ Admin panel with full monitoring capabilities
-- ✅ AI pipeline properly instrumented with cost tracking
-- ⚠️ Some database tables referenced but not found in migrations
-- ⚠️ Admin authentication relies on hardcoded email list
-- ⚠️ Rate limiting uses in-memory storage (not production-ready for multi-instance)
-- ✅ Row-level security policies properly configured
-- ✅ Cost tracking system operational
+1. **Database Schema Mismatch:** Code references `profiles` table with `role` column, but schema shows `users` table without `role`
+2. **Missing Role-Based Dashboard:** Dashboard page checks for `profile.role` but doesn't implement role-based UI segregation
+3. **Onboarding Flow Issues:** Multiple onboarding paths exist with inconsistent role handling
+4. **Listings Fetch Working:** ✅ `/api/listings` endpoint is functional and properly fetches user listings
+5. **Compliance Module:** ✅ MLS export functionality is implemented but not integrated into UI
+6. **AI Router:** ✅ Working correctly with 15 tools, no US market mode logic present
 
 ---
 
-## 1. ADMIN PANEL ANALYSIS
+## 1. User Flow Analysis
 
-### 1.1 Admin Authentication & Authorization
+### 1.1 Authentication Flow
 
-**Location:** `lib/admin-auth.ts`, `app/admin/layout.tsx`
+**Status:** ✅ **WORKING**
 
-**Implementation:**
-- **Authentication Method:** Email-based whitelist
-- **Admin Emails:** Hardcoded array `['rajesh@snap-r.com']`
-- **Access Control:** Layout component checks user email against whitelist
-- **Redirect Behavior:** Non-admin users redirected to `/dashboard`
+**Path:**
+1. User visits `/auth/signup` or `/auth/login`
+2. Can sign up with email/password or Google OAuth
+3. Redirects to `/auth/callback` after authentication
+4. Callback creates profile if missing, then redirects to `/onboarding` or `/dashboard`
 
-**Security Assessment:**
-- ⚠️ **CRITICAL:** Admin access controlled by hardcoded email list
-- ⚠️ No role-based access control (RBAC) system
-- ⚠️ No audit trail for admin access attempts
-- ⚠️ Single point of failure - if email changes, access is lost
-- ✅ Uses Supabase auth for user verification
-- ✅ Server-side validation in layout component
+**Files:**
+- `app/auth/signup/page.tsx` - ✅ Working
+- `app/auth/login/page.tsx` - ✅ Working
+- `app/auth/callback/route.ts` - ✅ Working, creates profile with defaults
 
-**Recommendations:**
-1. Implement database-backed admin roles table
-2. Add admin access audit logging
-3. Implement 2FA for admin accounts
-4. Add session timeout for admin panel
-
-### 1.2 Admin Panel Pages
-
-#### 1.2.1 Dashboard (`/admin/page.tsx`)
-**Status:** ⚠️ **ISSUE FOUND**
-- File contains landing page code, not admin dashboard
-- Should display system overview, metrics, recent activity
-- **Action Required:** Verify correct admin dashboard implementation
-
-#### 1.2.2 Users (`/admin/users/page.tsx`)
-**Functionality:**
-- Lists all users from `profiles` table
-- Displays: name, email, plan, credits, join date
-- **Data Source:** `profiles` table via Supabase
-- **Security:** Uses server-side Supabase client (proper)
-
-#### 1.2.3 Analytics & Costs (`/admin/analytics/page.tsx`)
-**Functionality:**
-- Revenue calculation (30-day window)
-- AI costs breakdown by provider
-- Profit margin calculation
-- Enhancement count
-- **Data Sources:**
-  - `api_costs` table (last 30 days)
-  - `profiles` table (plan counts)
-  - `human_edit_orders` table (revenue)
-- **Metrics Calculated:**
-  - Total Revenue = MRR + Human Edit Revenue
-  - MRR = (starter × $29) + (pro × $79) + (agency × $199)
-  - Profit = Revenue - AI Costs
-  - Profit Margin = (Profit / Revenue) × 100
-
-#### 1.2.4 Revenue (`/admin/revenue/page.tsx`)
-**Functionality:**
-- Monthly Recurring Revenue (MRR)
-- Human Edit Revenue
-- Paid Subscriber Count
-- Subscription breakdown by tier
-- **Data Sources:** `profiles`, `human_edit_orders`
-
-#### 1.2.5 Human Edits (`/admin/human-edits/page.tsx`)
-**Functionality:**
-- Lists all human edit orders
-- Shows: customer, photo URL, instructions, priority, amount, status
-- **Data Source:** `human_edit_orders` table
-- **Actions:** Status management via `HumanEditActions` component
-
-#### 1.2.6 Contact Forms (`/admin/contacts/page.tsx`)
-**Functionality:**
-- View contact form submissions
-- **Data Source:** `contact_submissions` table
-
-#### 1.2.7 System Status (`/admin/status/page.tsx`)
-**Functionality:**
-- Real-time health monitoring
-- Service checks:
-  - Supabase Database connectivity
-  - Supabase Storage connectivity
-- Environment variable validation:
-  - Stripe API key
-  - Resend API key
-  - Replicate API token
-  - Runware API key
-  - OpenAI API key
-- Error metrics:
-  - Errors in last 24 hours
-  - API success rate (last 24h)
-  - Recent critical errors
-- **Data Sources:** `system_logs`, `api_costs`
-
-#### 1.2.8 Logs & Errors (`/admin/logs/page.tsx`)
-**Functionality:**
-- Recent system events (last 100)
-- API failures (last 50)
-- **Data Sources:**
-  - `system_logs` table
-  - `api_costs` table (filtered by `success = false`)
-- **Display:** Color-coded by severity (error/warn/info)
+**Issues Found:**
+- ✅ No critical issues in authentication flow
 
 ---
 
-## 2. LOGGING INFRASTRUCTURE
+### 1.2 Onboarding Flow
 
-### 2.1 Logging Systems
+**Status:** ⚠️ **MULTIPLE PATHS - INCONSISTENT**
 
-#### 2.1.1 Error Logger (`lib/error-logger.ts`)
-**Purpose:** Centralized error and event logging
-**Features:**
-- Log levels: `info`, `warn`, `error`, `critical`
-- Console logging (always)
-- Database persistence to `system_logs` table
-- Critical error email alerts via Resend
-- **Metadata Captured:**
-  - Source (component/service)
-  - Message
-  - User ID (optional)
-  - Stack traces
-  - Environment
-  - Timestamp
+**Path 1: `/onboarding/page.tsx` (Current Active)**
+- Two-step process: Region selection → Details (name, company, role)
+- Saves to `profiles` table with `role`, `region`, `onboarded: true`
+- Redirects to `/pricing?role=...&region=...`
 
-**Email Alerts:**
-- Triggered on `critical` level logs
-- Sent to: `rajesh@snap-r.com`
-- Includes: source, message, metadata, timestamp, link to admin logs
+**Path 2: `/app/(authenticated)/onboarding/role.tsx` (Deleted/Not Found)**
+- This file was deleted according to deleted_files list
+- Was supposed to handle role selection for users without roles
 
-**Dependencies:**
-- Supabase service role key (for database writes)
-- Resend API key (for email alerts)
+**Path 3: Dashboard redirects to `/onboarding` if `!profile?.role`**
+- `app/dashboard/page.tsx` line 19-21 checks for role and redirects
 
-#### 2.1.2 Monitoring Utilities (`lib/monitoring.ts`)
-**Purpose:** Client-side error tracking and API cost monitoring
-**Features:**
-- `logError()` - Logs to `/api/log-error` endpoint
-- `logWarning()` - Logs warnings
-- `trackApiCost()` - Tracks API costs to `/api/analytics`
-- `startTimer()` - Performance timing utilities
+**Issues Found:**
+- ⚠️ **CRITICAL:** Dashboard checks `profile.role` but onboarding saves to `profiles.role`
+- ⚠️ **SCHEMA MISMATCH:** Database schema shows `users` table, not `profiles` table
+- ⚠️ **MISSING:** No `/app/(authenticated)/onboarding/role.tsx` file exists (was deleted)
 
-**Client-Side Logging:**
-- Sends errors to `/api/log-error` endpoint
-- Captures: message, stack, componentStack, URL, userAgent
-- Non-blocking (doesn't throw on failure)
+---
 
-#### 2.1.3 Cost Logger (`lib/cost-logger.ts`)
-**Purpose:** Track AI provider API costs
-**Features:**
-- Logs to `api_costs` table
-- Cost estimates per provider/tool
-- Tracks success/failure
-- **Cost Estimates (cents per call):**
-  - Replicate: 3-8¢ depending on tool
-  - Runware: 1-2¢
-  - OpenAI: 2¢
-  - AutoEnhance: 4¢
+### 1.3 Dashboard Flow
 
-**Data Structure:**
+**Status:** ⚠️ **PARTIALLY WORKING - SCHEMA ISSUES**
+
+**File:** `app/dashboard/page.tsx`
+
+**Current Implementation:**
 ```typescript
-{
-  user_id: string | null,
-  provider: 'replicate' | 'runware' | 'openai' | 'autoenhance',
-  model: string,
-  tool_id: string | null,
-  cost_cents: number,
-  success: boolean,
-  error_message: string | null,
-  created_at: timestamp
-}
+1. Checks authentication → redirects to /auth/login if not authenticated
+2. Fetches profile from 'profiles' table
+3. Checks if profile.role exists → redirects to /onboarding if missing
+4. Checks if profile.subscription_tier exists → redirects to /pricing if missing
+5. Fetches listings from 'listings' table
+6. Displays dashboard with stats and recent listings
 ```
 
-### 2.2 Log Endpoints
-
-#### 2.2.1 `/api/log-error` (`app/api/log-error/route.ts`)
-**Purpose:** Client-side error logging endpoint
-**Method:** POST
-**Authentication:** None (public endpoint)
-**Data Stored:**
-- Level: `error`
-- Source: `client`
-- Message: from request body
-- Metadata: stack, componentStack, URL, userAgent
-
-**Security:** ⚠️ No rate limiting on this endpoint (could be abused)
-
-#### 2.2.2 `/api/analytics` (`app/api/analytics/route.ts`)
-**Purpose:** Analytics data endpoint
-**Method:** GET
-**Authentication:** Required (user must be logged in)
-**Returns:**
-- Total photos
-- Total enhancements
-- Credits used/remaining
-- Subscription tier
-- Time/money saved estimates
-- Enhancements by type
-- Weekly activity
-
-### 2.3 Database Tables for Logging
-
-#### 2.3.1 `system_logs` Table
-**Status:** ⚠️ **REFERENCED BUT NOT FOUND IN MIGRATIONS**
-- Referenced in: `lib/error-logger.ts`, `app/admin/logs/page.tsx`, `app/admin/status/page.tsx`
-- Expected Schema (inferred from code):
-  ```sql
-  CREATE TABLE system_logs (
-    id uuid PRIMARY KEY,
-    level text, -- 'info' | 'warn' | 'error' | 'critical'
-    source text,
-    message text,
-    metadata jsonb,
-    created_at timestamp
-  );
-  ```
-- **RLS Policy:** Only service role can access (from migration file)
-
-#### 2.3.2 `api_costs` Table
-**Status:** ⚠️ **REFERENCED BUT NOT FOUND IN MIGRATIONS**
-- Referenced in: `lib/cost-logger.ts`, `app/admin/analytics/page.tsx`, `app/admin/logs/page.tsx`
-- Expected Schema (inferred from code):
-  ```sql
-  CREATE TABLE api_costs (
-    id uuid PRIMARY KEY,
-    user_id uuid,
-    provider text,
-    model text,
-    tool_id text,
-    cost_cents integer,
-    success boolean,
-    error_message text,
-    created_at timestamp
-  );
-  ```
-- **RLS Policy:** Only service role can access
-
-#### 2.3.3 `profiles` Table
-**Status:** ✅ **FOUND IN MIGRATIONS**
-- Created via trigger: `20241203_create_profile_trigger.sql`
-- Auto-created on user signup
-- Fields: id, email, full_name, avatar_url, plan, credits, created_at, updated_at
-- **RLS Policy:** Users can view/update own profile
-
-#### 2.3.4 `human_edit_orders` Table
-**Status:** ⚠️ **REFERENCED BUT NOT FOUND IN MIGRATIONS**
-- Referenced in: `app/admin/human-edits/page.tsx`, `app/admin/analytics/page.tsx`
-- Expected fields (inferred): id, user_id, photo_url, instructions, is_urgent, amount_paid, status, created_at
-- **RLS Policy:** Users can view own orders (from migration file)
-
-#### 2.3.5 `contact_submissions` Table
-**Status:** ⚠️ **REFERENCED BUT NOT FOUND IN MIGRATIONS**
-- Referenced in: `app/admin/contacts/page.tsx`
-- **RLS Policy:** Anyone can insert, only service role can view
-
-**CRITICAL FINDING:** Several tables are referenced in code but not found in migration files. These tables may exist in production but are not version-controlled.
-
----
-
-## 3. AI PIPELINE ANALYSIS
-
-### 3.1 Enhancement Flow
-
-#### 3.1.1 User-Initiated Enhancement
-**Entry Point:** `components/studio-client.tsx`
-1. User selects photo and tool
-2. Calls `/api/enhance` with `imageId` and `toolId`
-3. API validates:
-   - User authentication
-   - Credit availability
-   - Photo ownership
-4. Creates signed URL for raw image
-5. Calls `processEnhancement()` from router
-6. Router routes to appropriate provider function
-7. Enhanced image URL returned
-8. Image downloaded and saved to Supabase storage
-9. Database updated with `processed_url`
-10. Credits deducted
-11. Cost logged to `api_costs` table
-
-#### 3.1.2 AI Router (`lib/ai/router.ts`)
-**Function:** `processEnhancement(toolId, imageUrl, options)`
-**Tools Supported:** 15 total
-- Original 7: sky-replacement, virtual-twilight, lawn-repair, declutter, hdr, virtual-staging, auto-enhance
-- New 8 (Dec 4, 2024): fire-fireplace, tv-screen, lights-on, window-masking, pool-enhance, perspective-correction, lens-correction, color-balance
-
-**Routing Logic:**
-- All tools route through Replicate provider
-- Uses Flux Kontext for most enhancements
-- Declutter uses two-step: Grounded SAM (mask) + SDXL Inpainting
-- Auto-enhance routes to HDR (not AutoEnhance.ai provider)
-
-**Credit Costs:**
-- 1 credit: sky-replacement, lawn-repair, hdr, auto-enhance, fire-fireplace, tv-screen, lights-on, pool-enhance, perspective-correction, lens-correction, color-balance
-- 2 credits: virtual-twilight, declutter, window-masking
-- 3 credits: virtual-staging
-
-### 3.2 AI Providers
-
-#### 3.2.1 Replicate (`lib/ai/providers/replicate.ts`)
-**Models Used:**
-1. **Flux Kontext** (`black-forest-labs/flux-kontext-dev`)
-   - Used by: 13 tools
-   - Parameters: guidance=3.5, steps=28, quality=90
-   - Timeout: 120 seconds
-
-2. **Grounded SAM** (`schananas/grounded_sam`)
-   - Used by: declutter (step 1)
-   - Purpose: Object segmentation/masking
-   - Timeout: 60 seconds
-
-3. **SDXL Inpainting** (`lucataco/sdxl-inpainting`)
-   - Used by: declutter (step 2)
-   - Purpose: Remove masked objects
-   - Parameters: steps=30, guidance=7.5, strength=0.99
-   - Timeout: 120 seconds
-
-4. **Real-ESRGAN** (`nightmareai/real-esrgan`)
-   - Used by: upscale (not in main router)
-   - Purpose: Image upscaling
-   - Timeout: 180 seconds
-
-**Cost Tracking:** ✅ All calls logged via `logApiCost()`
-
-#### 3.2.2 OpenAI (`lib/ai/providers/openai-vision.ts`)
-**Models Used:**
-1. **GPT-4o (Vision)**
-   - Used by: `analyzeImage()`, `scoreEnhancementQuality()`
-   - Endpoint: `/api/analyze`
-   - Purpose: Image analysis, quality control
-   - Max tokens: 500 (analysis), 300 (quality)
-
-2. **GPT-4o-mini**
-   - Used by: Cloudflare Workers (`functions/api/openai/index.ts`)
-   - Purpose: General chat completions
-   - Default temperature: 0.6
-
-**Cost Tracking:** ⚠️ **NOT TRACKED** - No cost logging for OpenAI calls
-
-#### 3.2.3 Runware (`lib/ai/providers/runware.ts`)
-**Model:** `runware:100@1`
-**Status:** ✅ Implemented but ⚠️ **NOT USED IN MAIN ROUTER**
-- Functions available: `runwareEnhance()`, `runwareSkyReplacement()`
-- Not routed in `processEnhancement()`
-- Cost tracking: ✅ Implemented
-
-#### 3.2.4 AutoEnhance.ai (`lib/ai/providers/autoenhance.ts`)
-**Status:** ✅ Implemented but ⚠️ **NOT USED IN MAIN ROUTER**
-- API endpoint: `https://api.autoenhance.ai/v3/`
-- Workflow: Upload → Poll → Download
-- Timeout: 60 seconds (max 20 polls)
-- Cost tracking: ✅ Implemented
-- **Note:** `auto-enhance` tool routes to Replicate HDR, not this provider
-
-### 3.3 Cost Tracking
-
-**Implementation:** `lib/cost-logger.ts`
-
-**Coverage:**
-- ✅ Replicate: All tools tracked
-- ⚠️ OpenAI: Not tracked (missing)
-- ✅ Runware: Tracked (if used)
-- ✅ AutoEnhance: Tracked (if used)
-
-**Cost Estimates (cents):**
-- Replicate: 3-8¢ per tool
-- Runware: 1-2¢
-- OpenAI: 2¢ (estimated, not logged)
-- AutoEnhance: 4¢
-
-**Data Flow:**
-1. Enhancement completes/fails
-2. `logApiCost()` called with provider, toolId, success
-3. Cost calculated from `COST_ESTIMATES` table
-4. Inserted into `api_costs` table
-5. Console log for debugging
-
----
-
-## 4. DATABASE SCHEMA ANALYSIS
-
-### 4.1 Core Tables (Found in Migrations)
-
-#### 4.1.1 `users` (from `database/schema.sql`)
-- **Note:** Supabase uses `auth.users`, this may be legacy
-- Fields: id, email, name, avatar_url, credits, has_onboarded, created_at
-
-#### 4.1.2 `listings`
-- Fields: id, user_id, title, address, city, state, postal_code, description, created_at, updated_at
-- **RLS:** Users can only access own listings
-
-#### 4.1.3 `jobs`
-- Fields: id, user_id, listing_id, variant, metadata (jsonb), error, completed_at, status, created_at, updated_at
-- **Status values:** 'queued', 'processing', 'completed', 'failed'
-
-#### 4.1.4 `photos`
-- Fields: id, listing_id, job_id, raw_url, processed_url, processed_at, variant, error, status, room_type, quality_score, created_at
-- **Status values:** 'pending', 'processing', 'completed', 'failed'
-
-#### 4.1.5 `profiles` (from trigger migration)
-- Fields: id, email, full_name, avatar_url, plan, credits, created_at, updated_at
-- **Auto-created:** Via trigger on `auth.users` insert
-- **RLS:** Users can view/update own profile
-
-### 4.2 Admin Tables (Referenced but Not in Migrations)
-
-#### 4.2.1 `system_logs`
-- **Status:** ⚠️ Missing from migrations
-- **Usage:** Critical for error tracking
-- **Action Required:** Create migration
-
-#### 4.2.2 `api_costs`
-- **Status:** ⚠️ Missing from migrations
-- **Usage:** Critical for cost tracking
-- **Action Required:** Create migration
-
-#### 4.2.3 `human_edit_orders`
-- **Status:** ⚠️ Missing from migrations
-- **Usage:** Human edit workflow
-- **Action Required:** Create migration
-
-#### 4.2.4 `contact_submissions`
-- **Status:** ⚠️ Missing from migrations
-- **Usage:** Contact form storage
-- **Action Required:** Create migration
-
-#### 4.2.5 `shares`
-- **Status:** ⚠️ Missing from migrations
-- **Usage:** Share gallery functionality (`/api/share`)
-- **Referenced in:** `lib/db/shares-migration.sql` (separate file)
-- **Action Required:** Verify migration applied
-
-### 4.3 Row-Level Security (RLS)
-
-**Migration:** `20241203_row_level_security.sql`
-
-**Policies Configured:**
-- ✅ `profiles`: Users can view/update own
-- ✅ `listings`: Users can CRUD own
-- ✅ `photos`: Users can CRUD own (via listing ownership)
-- ✅ `enhancements`: Users can view/create own (via photo ownership)
-- ✅ `human_edit_orders`: Users can view/create own
-- ✅ `api_costs`: Service role only
-- ✅ `system_logs`: Service role only
-- ✅ `contact_submissions`: Anyone can insert, service role can view
-
-**Security Assessment:** ✅ Properly configured
-
----
-
-## 5. SECURITY ANALYSIS
-
-### 5.1 Authentication & Authorization
-
-#### 5.1.1 User Authentication
-- **Provider:** Supabase Auth
-- **Methods:** Email/password (inferred)
-- **Session Management:** Supabase handles
-- **Protection:** Server-side validation in API routes
-
-#### 5.1.2 Admin Authentication
-- **Method:** Email whitelist (hardcoded)
-- **Location:** `lib/admin-auth.ts`
-- **Vulnerability:** ⚠️ Hardcoded admin list
-- **No 2FA:** ⚠️ Missing
-- **No Audit Trail:** ⚠️ Missing
-
-#### 5.1.3 API Route Protection
-- **Enhancement API:** ✅ Requires authentication
-- **Analytics API:** ✅ Requires authentication
-- **Log Error API:** ⚠️ **NO AUTHENTICATION** (public endpoint)
-- **Share API:** ✅ Requires authentication
-
-### 5.2 Rate Limiting
-
-**Implementation:** `middleware.ts`
-
-**Configuration:**
-- `/api/enhance`: 10 requests/minute
-- `/api/analyze`: 20 requests/minute
-- `/api/upload`: 30 requests/minute
-- `/api/contact`: 3 requests/minute
-- `/api/stripe`: 10 requests/minute
-- `/api/auth`: 5 requests/minute
-- Default: 100 requests/minute
-
-**Storage:** ⚠️ **IN-MEMORY MAP** (not production-ready)
-- **Issue:** Won't work across multiple server instances
-- **Recommendation:** Use Redis or database-backed rate limiting
-
-**IP Detection:**
-- Uses `x-forwarded-for` header
-- Falls back to `x-real-ip`
-- Defaults to 'unknown' if neither present
-
-**Security Features:**
-- ✅ Suspicious pattern blocking (`.env`, `.git`, `wp-admin`, etc.)
-- ✅ Rate limit headers in response
-- ✅ Retry-After header on 429
-
-### 5.3 Data Protection
-
-#### 5.3.1 Row-Level Security
-- ✅ Properly configured for all user tables
-- ✅ Admin tables restricted to service role
-- ✅ Policies prevent cross-user data access
-
-#### 5.3.2 Storage Security
-- **Provider:** Supabase Storage
-- **Bucket:** `raw-images`
-- **Access:** Signed URLs (1-hour expiry)
-- **Upload:** Requires authentication
-
-#### 5.3.3 Environment Variables
-**Required:**
-- `NEXT_PUBLIC_SUPABASE_URL`
-- `SUPABASE_SERVICE_ROLE_KEY` (critical - must be secret)
-- `REPLICATE_API_TOKEN`
-- `OPENAI_API_KEY`
-- `RUNWARE_API_KEY`
-- `AUTOENHANCE_API_KEY`
-- `RESEND_API_KEY`
-- `STRIPE_SECRET_KEY`
-
-**Security:** ⚠️ No validation that all required vars are set (graceful degradation)
-
-### 5.4 Input Validation
-
-#### 5.4.1 API Endpoints
-- **Enhance API:** ✅ Validates toolId, checks credits, verifies photo ownership
-- **Upload API:** ✅ Validates file types, sizes
-- **Share API:** ✅ Validates listing ownership
-- **Log Error API:** ⚠️ **NO VALIDATION** (accepts any JSON)
-
-### 5.5 Error Handling
-
-**Strategy:** Try-catch blocks with logging
-- ✅ Errors logged to `system_logs`
-- ✅ Critical errors trigger email alerts
-- ⚠️ Some errors may expose internal details to clients
-- ✅ Graceful degradation (continues on non-critical failures)
-
----
-
-## 6. API ROUTES ANALYSIS
-
-### 6.1 Public Routes
-
-#### 6.1.1 `/api/log-error`
-- **Method:** POST
-- **Auth:** None
-- **Purpose:** Client-side error logging
-- **Security:** ⚠️ No authentication, no rate limiting
-- **Risk:** Could be abused for log spam
-
-#### 6.1.2 `/api/health`
-- **Status:** Referenced but not found in audit
-- **Purpose:** Health checks
-
-### 6.2 Authenticated Routes
-
-#### 6.2.1 `/api/enhance`
-- **Method:** POST
-- **Auth:** Required
-- **Rate Limit:** 10/minute
-- **Flow:**
-  1. Validate auth
-  2. Check credits
-  3. Verify photo ownership
-  4. Process enhancement
-  5. Log cost
-  6. Deduct credits
-  7. Save enhanced image
-  8. Send email notification
-- **Timeout:** 120 seconds (maxDuration)
-
-#### 6.2.2 `/api/analyze`
-- **Method:** POST
-- **Auth:** Required
-- **Rate Limit:** 20/minute
-- **Purpose:** OpenAI Vision image analysis
-- **Cost Tracking:** ⚠️ Not tracked
-
-#### 6.2.3 `/api/upload`
-- **Method:** POST
-- **Auth:** Required
-- **Rate Limit:** 30/minute
-- **Purpose:** Image upload to Supabase Storage
-
-#### 6.2.4 `/api/share`
-- **Method:** POST
-- **Auth:** Required
-- **Purpose:** Create shareable gallery links
-- **Features:** Token generation, expiration, download permissions
-
-#### 6.2.5 `/api/analytics`
-- **Method:** GET
-- **Auth:** Required
-- **Purpose:** User analytics data
-
-### 6.3 Admin Routes
-
-**All admin routes protected by layout-level auth check**
-- `/admin` - Dashboard
-- `/admin/users` - User management
-- `/admin/analytics` - Cost analytics
-- `/admin/revenue` - Revenue tracking
-- `/admin/human-edits` - Human edit orders
-- `/admin/contacts` - Contact submissions
-- `/admin/status` - System health
-- `/admin/logs` - Error logs
-
----
-
-## 7. MONITORING & OBSERVABILITY
-
-### 7.1 Logging Coverage
-
-**System Events:**
-- ✅ API costs (all providers except OpenAI)
-- ✅ System errors (all levels)
-- ✅ Critical alerts (email notifications)
-- ✅ Client-side errors (via `/api/log-error`)
-
-**Missing:**
-- ⚠️ Performance metrics (latency, throughput)
-- ⚠️ User activity logs
-- ⚠️ Admin action audit trail
-- ⚠️ API request/response logging
-
-### 7.2 Health Monitoring
-
-**Implementation:** `/admin/status`
-- ✅ Database connectivity check
-- ✅ Storage connectivity check
-- ✅ Environment variable validation
-- ✅ Error count (24h)
-- ✅ API success rate (24h)
-- ✅ Recent critical errors
-
-**Missing:**
-- ⚠️ External API health (Replicate, OpenAI, etc.)
-- ⚠️ Queue depth monitoring
-- ⚠️ Storage usage metrics
-- ⚠️ Response time percentiles
-
-### 7.3 Cost Monitoring
-
-**Implementation:** `/admin/analytics`
-- ✅ Cost by provider (30-day window)
-- ✅ Revenue calculation
-- ✅ Profit margin
-- ✅ Enhancement count
-
-**Missing:**
-- ⚠️ Cost trends over time
-- ⚠️ Cost per user
-- ⚠️ Cost per tool breakdown
-- ⚠️ Budget alerts
-
----
-
-## 8. DATA FLOW ANALYSIS
-
-### 8.1 Enhancement Flow
-
-```
-User Action (studio-client.tsx)
-  ↓
-POST /api/enhance
-  ↓
-Auth Check → Credit Check → Photo Ownership Check
-  ↓
-Create Signed URL (Supabase Storage)
-  ↓
-processEnhancement() (router.ts)
-  ↓
-Provider Function (replicate.ts)
-  ↓
-Replicate API Call
-  ↓
-Enhanced Image URL Returned
-  ↓
-Download & Save to Supabase Storage
-  ↓
-Update photos table
-  ↓
-Deduct Credits
-  ↓
-Log Cost (api_costs table)
-  ↓
-Send Email Notification
-  ↓
-Return Response
-```
-
-### 8.2 Error Flow
-
-```
-Error Occurs
-  ↓
-Try-Catch Block
-  ↓
-logError() or logEvent()
-  ↓
-Console Log
-  ↓
-Insert to system_logs table
-  ↓
-If Critical: Send Email Alert
-  ↓
-Return Error Response
-```
-
-### 8.3 Cost Tracking Flow
-
-```
-Enhancement Completes
-  ↓
-logApiCost() called
-  ↓
-Calculate Cost from COST_ESTIMATES
-  ↓
-Insert to api_costs table
-  ↓
-Console Log
+**What's Working:**
+- ✅ Authentication check
+- ✅ Listings fetch (line 28-33)
+- ✅ UI rendering with stats cards
+- ✅ Recent listings display
+
+**What's Broken:**
+- ❌ **SCHEMA MISMATCH:** Code queries `profiles` table but `database/schema.sql` shows `users` table
+- ❌ **MISSING ROLE-BASED UI:** Dashboard doesn't implement role-based segregation (photographer vs agent)
+- ❌ **MISSING COMPONENTS:** References to `PhotographerDashboard` and `AgentDashboard` components that don't exist
+- ⚠️ **INCONSISTENT FIELD NAMES:** Code checks `profile.role` but migration shows `user_role` in profiles table
+
+**Database Query:**
+```typescript
+// Line 16: Fetches from 'profiles' table
+const { data: profile } = await supabase.from('profiles').select('*').eq('id', user.id).single();
+
+// Line 28-33: Fetches listings - THIS WORKS ✅
+const { data: listings } = await supabase
+  .from('listings')
+  .select('*, photos(count)')
+  .eq('user_id', user.id)
+  .order('created_at', { ascending: false })
+  .limit(10);
 ```
 
 ---
 
-## 9. CRITICAL FINDINGS & RECOMMENDATIONS
+## 2. Listings Management
 
-### 9.1 Critical Issues
+### 2.1 Listings Fetch
 
-1. **Missing Database Tables**
-   - `system_logs`, `api_costs`, `human_edit_orders`, `contact_submissions` referenced but not in migrations
-   - **Impact:** Application may fail if tables don't exist
-   - **Action:** Create migrations for all referenced tables
+**Status:** ✅ **WORKING CORRECTLY**
 
-2. **Admin Dashboard Page**
-   - `/admin/page.tsx` contains landing page code, not dashboard
-   - **Impact:** Admin dashboard not functional
-   - **Action:** Implement proper admin dashboard
+**API Endpoint:** `app/api/listings/route.ts`
 
-3. **Rate Limiting Storage**
-   - In-memory Map won't work in multi-instance deployments
-   - **Impact:** Rate limiting ineffective in production
-   - **Action:** Implement Redis or database-backed rate limiting
+**GET `/api/listings`:**
+- ✅ Authenticates user
+- ✅ Fetches listings from `listings` table filtered by `user_id`
+- ✅ Supports `withPhotos=true` query parameter
+- ✅ Supports `photoLimit` query parameter
+- ✅ Returns proper JSON response
+- ✅ Handles errors correctly
 
-4. **OpenAI Cost Tracking**
-   - OpenAI API calls not logged to `api_costs`
-   - **Impact:** Incomplete cost tracking
-   - **Action:** Add cost logging for OpenAI calls
+**Usage in Components:**
+- ✅ `app/(authenticated)/listings/page.tsx` - Uses server-side fetch
+- ✅ `app/(authenticated)/upload/page.tsx` - Uses client-side fetch via `/api/listings`
+- ✅ `components/dashboard-client.tsx` - Fetches listings
 
-5. **Public Log Endpoint**
-   - `/api/log-error` has no authentication
-   - **Impact:** Vulnerable to log spam/abuse
-   - **Action:** Add authentication or rate limiting
-
-### 9.2 High Priority Issues
-
-1. **Hardcoded Admin List**
-   - Admin access controlled by hardcoded email array
-   - **Action:** Implement database-backed admin roles
-
-2. **Missing Audit Trail**
-   - No logging of admin actions
-   - **Action:** Add admin action logging
-
-3. **AutoEnhance Provider Not Used**
-   - Provider implemented but `auto-enhance` tool routes to Replicate
-   - **Action:** Either use AutoEnhance or remove unused code
-
-4. **Runware Provider Not Used**
-   - Provider implemented but not routed
-   - **Action:** Either integrate or remove
-
-### 9.3 Medium Priority Issues
-
-1. **Error Message Exposure**
-   - Some errors may expose internal details
-   - **Action:** Sanitize error messages for clients
-
-2. **Missing Performance Metrics**
-   - No latency/throughput tracking
-   - **Action:** Add performance monitoring
-
-3. **No Budget Alerts**
-   - Cost tracking exists but no alerts
-   - **Action:** Implement cost threshold alerts
-
-### 9.4 Low Priority / Enhancements
-
-1. **2FA for Admin**
-   - Enhance security
-   - **Action:** Implement 2FA
-
-2. **Cost Trends Dashboard**
-   - Better cost visibility
-   - **Action:** Add time-series cost charts
-
-3. **User Activity Logs**
-   - Better user behavior insights
-   - **Action:** Add activity logging
+**No Issues Found** ✅
 
 ---
 
-## 10. COMPLIANCE & BEST PRACTICES
+### 2.2 Listings Detail Page
 
-### 10.1 Data Privacy
+**Status:** ✅ **WORKING**
 
-- ✅ Row-level security prevents cross-user access
-- ✅ Signed URLs expire after 1 hour
-- ⚠️ No data retention policy documented
-- ⚠️ No GDPR compliance measures visible
+**File:** `app/(authenticated)/listings/[id]/page.tsx`
 
-### 10.2 Security Best Practices
+**Functionality:**
+- ✅ Fetches listing with photos
+- ✅ Displays before/after slider using `BeforeAfterSlider` component
+- ✅ Shows photo status (completed, processing, failed)
+- ✅ Shows photo statistics
+- ✅ Proper error handling
 
-- ✅ Server-side authentication checks
-- ✅ RLS policies configured
-- ⚠️ No input sanitization on log endpoint
-- ⚠️ No CSRF protection visible
-- ⚠️ No security headers configured
+**Component Used:**
+- ✅ `BeforeAfterSlider` exists at `components/ui/before-after-slider.tsx`
 
-### 10.3 Code Quality
-
-- ✅ Consistent error handling
-- ✅ Logging throughout
-- ⚠️ Some unused code (Runware, AutoEnhance providers)
-- ✅ TypeScript for type safety
-- ⚠️ No unit tests visible
+**No Issues Found** ✅
 
 ---
 
-## 11. APPENDIX
+### 2.3 Listings Creation
 
-### 11.1 File Inventory
+**Status:** ✅ **WORKING**
 
-**Admin Panel:**
-- `app/admin/layout.tsx` - Admin layout with navigation
-- `app/admin/page.tsx` - ⚠️ Contains landing page (should be dashboard)
-- `app/admin/users/page.tsx` - User management
-- `app/admin/analytics/page.tsx` - Cost analytics
-- `app/admin/revenue/page.tsx` - Revenue tracking
-- `app/admin/human-edits/page.tsx` - Human edit orders
-- `app/admin/contacts/page.tsx` - Contact submissions
-- `app/admin/status/page.tsx` - System health
-- `app/admin/logs/page.tsx` - Error logs
+**API Endpoint:** `app/api/listings/route.ts` (POST method)
 
-**Logging:**
-- `lib/error-logger.ts` - Centralized error logging
-- `lib/monitoring.ts` - Client-side monitoring
-- `lib/cost-logger.ts` - API cost tracking
-- `app/api/log-error/route.ts` - Error logging endpoint
+**Functionality:**
+- ✅ Validates user authentication
+- ✅ Sanitizes input data
+- ✅ Creates listing in database
+- ✅ Returns created listing data
 
-**AI Pipeline:**
-- `lib/ai/router.ts` - Enhancement router
-- `lib/ai/providers/replicate.ts` - Replicate provider
-- `lib/ai/providers/openai-vision.ts` - OpenAI provider
-- `lib/ai/providers/runware.ts` - Runware provider (unused)
-- `lib/ai/providers/autoenhance.ts` - AutoEnhance provider (unused)
-- `app/api/enhance/route.ts` - Enhancement API
-
-**Security:**
-- `lib/admin-auth.ts` - Admin authentication
-- `middleware.ts` - Rate limiting & security
-
-### 11.2 Database Tables Reference
-
-**Core Tables (in migrations):**
-- `users` - User accounts
-- `listings` - Property listings
-- `jobs` - Processing jobs
-- `photos` - Photo records
-- `profiles` - User profiles (auto-created)
-
-**Admin Tables (referenced, missing from migrations):**
-- `system_logs` - System event logs
-- `api_costs` - API cost tracking
-- `human_edit_orders` - Human edit requests
-- `contact_submissions` - Contact form data
-- `shares` - Shareable gallery links
-- `enhancements` - Enhancement records (referenced in RLS)
-
-### 11.3 Environment Variables
-
-**Required:**
-- `NEXT_PUBLIC_SUPABASE_URL`
-- `SUPABASE_SERVICE_ROLE_KEY`
-- `REPLICATE_API_TOKEN`
-- `OPENAI_API_KEY`
-- `RUNWARE_API_KEY` (optional)
-- `AUTOENHANCE_API_KEY` (optional)
-- `RESEND_API_KEY`
-- `STRIPE_SECRET_KEY`
-- `NEXT_PUBLIC_APP_URL` (for share links)
+**No Issues Found** ✅
 
 ---
 
-## 12. CONCLUSION
+## 3. Photo Enhancement Pipeline
 
-The SnapR application has a solid foundation with comprehensive logging, cost tracking, and admin monitoring capabilities. However, several critical issues need immediate attention:
+### 3.1 AI Router
 
-1. **Database migrations** for admin tables must be created
-2. **Admin dashboard** implementation needs to be corrected
-3. **Rate limiting** must be moved to persistent storage
-4. **OpenAI cost tracking** must be implemented
-5. **Security hardening** needed for public endpoints
+**Status:** ✅ **WORKING - NO US MARKET MODE**
 
-The AI pipeline is well-architected with proper error handling and cost tracking. The admin panel provides good visibility into system health, costs, and user activity. With the recommended fixes, the application will be production-ready.
+**File:** `lib/ai/router.ts`
 
-**Overall Assessment:** ⚠️ **NEEDS ATTENTION** - Core functionality works but critical infrastructure gaps exist.
+**Current State:**
+- ✅ 15 tools defined (10 with presets, 5 one-click)
+- ✅ Credit system implemented
+- ✅ All tools route to Replicate provider
+- ✅ Proper error handling
+
+**Missing Features:**
+- ❌ **NO US MARKET MODE:** No region-based tone adjustments
+- ❌ **NO WATERMARKING:** No watermark logic for virtual staging
+- ❌ **NO POLICY ENGINE:** No `lib/ai/policy.ts` file exists (was deleted)
+
+**Note:** Previous work attempted to add US market mode but files were deleted:
+- `lib/ai/policy.ts` - DELETED
+- `lib/utils/watermark.ts` - DELETED
 
 ---
 
-**Report Generated:** December 4, 2024  
-**Auditor:** AI Forensic Analysis  
-**Next Review:** After implementing critical fixes
+### 3.2 Enhancement API
 
+**Status:** ✅ **WORKING**
+
+**File:** `app/api/enhance/route.ts`
+
+**Functionality:**
+- ✅ Authenticates user
+- ✅ Checks credits
+- ✅ Fetches photo from database
+- ✅ Calls `processEnhancement` from router
+- ✅ Saves enhanced image to storage
+- ✅ Updates photo record
+- ✅ Deducts credits
+- ✅ Sends email notification
+
+**Issues:**
+- ⚠️ **NO REGION/USERROLE PASSING:** Options object doesn't include `region` or `userRole` (lines 13, 67)
+- ⚠️ **NO POLICY INTEGRATION:** Can't apply US market mode even if it existed
+
+---
+
+### 3.3 Upload API
+
+**Status:** ✅ **WORKING**
+
+**File:** `app/api/upload/route.ts`
+
+**Functionality:**
+- ✅ Handles file uploads
+- ✅ Validates file types
+- ✅ Uploads to Cloudinary
+- ✅ Creates job record
+- ✅ Creates photo records
+- ✅ Enqueues to Cloudflare queue (if configured)
+
+**No Issues Found** ✅
+
+---
+
+## 4. Database Schema Analysis
+
+### 4.1 Schema Mismatch - CRITICAL ISSUE
+
+**Status:** ❌ **MAJOR SCHEMA MISMATCH**
+
+**Problem:**
+1. `database/schema.sql` defines `users` table:
+   ```sql
+   create table if not exists users (
+     id uuid primary key,
+     email text unique not null,
+     name text,
+     avatar_url text,
+     credits integer default 20,
+     has_onboarded boolean default false,
+     created_at timestamp with time zone default now()
+   );
+   ```
+
+2. **BUT** code throughout application queries `profiles` table:
+   - `app/dashboard/page.tsx` line 16: `supabase.from('profiles')`
+   - `app/api/enhance/route.ts` line 31: `supabase.from('profiles')`
+   - `app/onboarding/page.tsx` line 66: `supabase.from('profiles')`
+   - `app/auth/callback/route.ts` line 16, 24: `supabase.from('profiles')`
+
+3. **Migration file** `supabase/migrations/20241203_create_profile_trigger.sql` creates `profiles` table:
+   ```sql
+   INSERT INTO public.profiles (id, email, full_name, avatar_url, plan, credits, ...)
+   ```
+
+**Resolution Needed:**
+- Either update `database/schema.sql` to include `profiles` table
+- OR migrate all code to use `users` table
+- **Current state:** Application likely works in production because migrations create `profiles` table, but schema.sql is outdated
+
+---
+
+### 4.2 Role Field Confusion
+
+**Status:** ⚠️ **INCONSISTENT FIELD NAMES**
+
+**Problem:**
+1. Dashboard checks: `profile?.role` (line 19)
+2. Onboarding saves: `role: selectedRole` (line 70)
+3. But previous work mentioned `user_role` field in profiles table
+4. Migration trigger doesn't set `role` field
+
+**Fields in profiles table (from migration):**
+- `id`, `email`, `full_name`, `avatar_url`, `plan`, `credits`, `created_at`, `updated_at`
+- **NO `role` field defined in migration**
+
+**Resolution Needed:**
+- Add `role` column to profiles table via migration
+- OR use `user_role` if that's the actual column name
+- Update all code to use consistent field name
+
+---
+
+### 4.3 Missing Fields
+
+**Status:** ⚠️ **MISSING FIELDS IN SCHEMA**
+
+**Fields referenced in code but not in schema.sql:**
+- `profiles.role` or `profiles.user_role`
+- `profiles.subscription_tier` (checked in dashboard line 24)
+- `profiles.region` (saved in onboarding line 71)
+- `profiles.company` (saved in onboarding line 69)
+- `profiles.onboarded` (saved in onboarding line 72)
+
+**Resolution Needed:**
+- Create migration to add these columns to profiles table
+- Update schema.sql to reflect actual database structure
+
+---
+
+## 5. Component Status
+
+### 5.1 Dashboard Components
+
+**Status:** ❌ **MISSING COMPONENTS**
+
+**Referenced but Missing:**
+- `components/dashboards/photographer.tsx` - DELETED
+- `components/dashboards/agent.tsx` - DELETED
+- `app/(authenticated)/onboarding/role.tsx` - DELETED
+
+**Existing Components:**
+- ✅ `components/dashboard-client.tsx` - Exists but not used in current dashboard
+- ✅ `components/dashboard-analytics.tsx` - Exists
+
+---
+
+### 5.2 UI Components
+
+**Status:** ✅ **MOSTLY WORKING**
+
+**Working Components:**
+- ✅ `components/ui/before-after-slider.tsx` - Exists and working
+- ✅ `components/studio-client.tsx` - Exists (682 lines)
+- ✅ `components/listing-card.tsx` - Exists
+- ✅ `components/share-view.tsx` - Exists
+
+**Missing/Deleted:**
+- ❌ `components/ui/BeforeAfterSlider.tsx` (capital B) - Was deleted, lowercase version exists
+
+---
+
+## 6. Compliance Module
+
+### 6.1 MLS Export
+
+**Status:** ✅ **IMPLEMENTED BUT NOT INTEGRATED**
+
+**Files:**
+- ✅ `lib/compliance/mls-export.ts` - Complete implementation (267 lines)
+- ✅ `lib/compliance/mls-specs.ts` - Exists
+- ✅ `lib/compliance/watermark.ts` - Exists
+- ✅ `lib/compliance/metadata.ts` - Exists
+- ✅ `lib/compliance/disclosure.ts` - Exists
+- ✅ `app/api/compliance/export/route.ts` - API endpoint exists
+
+**Functionality:**
+- ✅ Generates MLS-compliant ZIP packages
+- ✅ Processes images with watermarks
+- ✅ Embeds RESO metadata
+- ✅ Creates disclosure documents
+- ✅ Generates XMP sidecars
+
+**Issues:**
+- ⚠️ **NOT INTEGRATED IN UI:** No button or UI element to trigger MLS export
+- ⚠️ **NO ROLE GATING:** API doesn't check if user is agent/broker (should block photographers)
+
+---
+
+### 6.2 MLS Export Modal
+
+**Status:** ✅ **COMPONENT EXISTS**
+
+**File:** `components/mls-export-modal.tsx`
+
+**Usage:**
+- Referenced in `components/studio-client.tsx` line 6
+- Can be triggered from studio if `showMlsFeatures` prop is true
+
+**No Issues Found** ✅
+
+---
+
+## 7. API Endpoints Status
+
+### 7.1 Working Endpoints
+
+✅ **FULLY FUNCTIONAL:**
+- `GET/POST /api/listings` - Listings CRUD
+- `POST /api/enhance` - Photo enhancement
+- `POST /api/upload` - File uploads
+- `GET /api/compliance/export` - MLS export options
+- `POST /api/compliance/export` - Generate MLS package
+- `GET /api/share/[token]` - Share viewer
+- `POST /api/share` - Create share link
+
+### 7.2 Missing/Deleted Endpoints
+
+❌ **DELETED:**
+- `app/api/mls-pack/route.ts` - DELETED (was for MLS pack generation)
+- `app/api/user/set-role/route.ts` - DELETED (was for setting user role)
+- `app/api/system-diagnostics/route.ts` - DELETED (was for diagnostics)
+
+---
+
+## 8. Critical Issues Summary
+
+### 8.1 Schema Mismatch - CRITICAL
+- **Issue:** Code queries `profiles` table but `schema.sql` shows `users` table
+- **Impact:** Confusion about actual database structure
+- **Fix:** Update schema.sql or verify migrations create profiles table
+
+### 8.2 Missing Role Field - CRITICAL
+- **Issue:** Dashboard checks `profile.role` but field doesn't exist in migration
+- **Impact:** Users can't complete onboarding, stuck in redirect loop
+- **Fix:** Add `role` column to profiles table via migration
+
+### 8.3 Missing Role-Based Dashboard - HIGH
+- **Issue:** Dashboard doesn't implement role-based UI segregation
+- **Impact:** Photographers and agents see same dashboard
+- **Fix:** Implement `PhotographerDashboard` and `AgentDashboard` components
+
+### 8.4 Missing US Market Mode - MEDIUM
+- **Issue:** No region-based tone adjustments or watermarking
+- **Impact:** Can't apply MLS-safe adjustments for US market
+- **Fix:** Re-implement policy engine and watermark logic
+
+### 8.5 Missing MLS Pack Feature - MEDIUM
+- **Issue:** MLS pack API endpoint was deleted
+- **Impact:** Can't generate MLS packs from listings page
+- **Fix:** Re-implement `/api/mls-pack` endpoint
+
+---
+
+## 9. What's Working ✅
+
+1. **Authentication:** Signup, login, OAuth all working
+2. **Listings Fetch:** `/api/listings` endpoint works correctly
+3. **Listings Display:** Listings page and detail page work
+4. **Photo Enhancement:** AI router and enhance API work
+5. **Upload Pipeline:** File upload and job creation work
+6. **Studio Component:** Interactive studio with tools works
+7. **Before/After Slider:** Component exists and works
+8. **Compliance Module:** MLS export logic is complete (just needs UI integration)
+
+---
+
+## 10. Recommendations
+
+### Immediate Fixes (Critical)
+
+1. **Fix Database Schema:**
+   - Create migration to add `role` column to `profiles` table
+   - Update `database/schema.sql` to match actual database structure
+   - Verify all fields referenced in code exist in database
+
+2. **Fix Onboarding Flow:**
+   - Ensure role is saved correctly during onboarding
+   - Verify dashboard can read role field
+   - Test complete user flow from signup → onboarding → dashboard
+
+3. **Implement Role-Based Dashboard:**
+   - Create `PhotographerDashboard` component
+   - Create `AgentDashboard` component
+   - Update `app/dashboard/page.tsx` to route based on role
+
+### Short-Term Fixes (High Priority)
+
+4. **Re-implement US Market Mode:**
+   - Create `lib/ai/policy.ts` with policy engine
+   - Create `lib/utils/watermark.ts` with watermark function
+   - Update `lib/ai/router.ts` to apply policies
+   - Update `app/api/enhance/route.ts` to pass region/userRole
+
+5. **Re-implement MLS Pack:**
+   - Create `app/api/mls-pack/route.ts`
+   - Add "Download MLS Pack" button to listings detail page
+   - Implement role-based access control (block photographers)
+
+6. **Integrate Compliance Module:**
+   - Add MLS export button to studio or listings page
+   - Ensure role-based gating works
+   - Test end-to-end MLS export flow
+
+### Long-Term Improvements (Medium Priority)
+
+7. **Code Consistency:**
+   - Standardize field names (`role` vs `user_role`)
+   - Update all references to use consistent naming
+   - Add TypeScript types for profile structure
+
+8. **Error Handling:**
+   - Add better error messages for schema mismatches
+   - Add logging for missing fields
+   - Implement fallback behavior for missing data
+
+9. **Testing:**
+   - Add integration tests for user flow
+   - Test role-based access control
+   - Test MLS export with various MLS IDs
+
+---
+
+## 11. File Inventory
+
+### Deleted Files (Need Re-implementation)
+- `lib/ai/policy.ts`
+- `lib/utils/watermark.ts`
+- `app/api/mls-pack/route.ts`
+- `app/services/mlsPackClient.ts`
+- `app/api/user/set-role/route.ts`
+- `app/(authenticated)/onboarding/role.tsx`
+- `components/dashboards/photographer.tsx`
+- `components/dashboards/agent.tsx`
+- `app/api/system-diagnostics/route.ts`
+
+### Existing Files (Working)
+- `app/dashboard/page.tsx` - Needs role-based routing
+- `app/api/listings/route.ts` - ✅ Working
+- `app/api/enhance/route.ts` - ✅ Working, needs region/userRole
+- `lib/ai/router.ts` - ✅ Working, needs policy integration
+- `lib/compliance/mls-export.ts` - ✅ Complete, needs UI integration
+- `components/studio-client.tsx` - ✅ Working
+
+---
+
+## Conclusion
+
+**Overall Status:** ⚠️ **APPLICATION IS FUNCTIONAL BUT HAS CRITICAL SCHEMA ISSUES**
+
+The application core functionality (listings, enhancements, uploads) is working correctly. However, there are critical schema mismatches and missing role-based features that prevent the complete user flow from working end-to-end.
+
+**Priority Actions:**
+1. Fix database schema and role field
+2. Implement role-based dashboard
+3. Re-implement US market mode features
+4. Integrate MLS export into UI
+
+**Estimated Fix Time:** 2-3 days for critical issues, 1 week for all features.
+
+---
+
+**End of Audit Report**

@@ -1,7 +1,6 @@
 export const dynamic = 'force-dynamic';
 import { NextResponse } from "next/server";
-import { cookies } from "next/headers";
-import { createRouteHandlerClient } from "@supabase/auth-helpers-nextjs";
+import { createClient } from "@/lib/supabase/server";
 
 function sanitize(value?: string | null) {
   if (!value) return null;
@@ -10,7 +9,7 @@ function sanitize(value?: string | null) {
 }
 
 export async function GET(request: Request) {
-  const supabase = createRouteHandlerClient({ cookies });
+  const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -52,7 +51,6 @@ export async function GET(request: Request) {
           (a: any, b: any) =>
             new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
         );
-
       const limited = sorted.slice(0, includePhotosLimit).map((photo: any) => ({
         id: photo.id,
         raw_url: photo.raw_url,
@@ -60,11 +58,7 @@ export async function GET(request: Request) {
         variant: photo.variant,
         status: photo.status,
       }));
-
-      return {
-        ...listing,
-        photos: limited,
-      };
+      return { ...listing, photos: limited };
     }
     const count = listing.photos?.[0]?.count ?? 0;
     const { photos, ...rest } = listing;
@@ -75,7 +69,7 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
-  const supabase = createRouteHandlerClient({ cookies });
+  const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
