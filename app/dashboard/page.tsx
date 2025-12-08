@@ -1,7 +1,7 @@
 import { createClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
-import { Plus, FolderOpen, Clock, Image, Coins, ArrowRight } from 'lucide-react';
+import { Plus, FolderOpen, Image, Coins, ArrowRight } from 'lucide-react';
 
 export const dynamic = 'force-dynamic';
 
@@ -13,20 +13,18 @@ export default async function DashboardPage() {
     redirect('/auth/login');
   }
 
-  // Get profile
   const { data: profile } = await supabase.from('profiles').select('*').eq('id', user.id).single();
 
-  // Check if user has completed onboarding
+  // Check if user has completed onboarding (has role)
   if (!profile?.role) {
     redirect('/onboarding');
   }
 
-  // Check if user has selected a plan (gate access)
-  if (!profile?.subscription_tier || profile?.subscription_tier === 'free') {
-    redirect(`/pricing?role=${encodeURIComponent(profile.role)}`);
+  // Check if user has selected a plan - BUT allow 'free' tier to access dashboard
+  if (!profile?.subscription_tier) {
+    redirect('/pricing?role=' + encodeURIComponent(profile.role));
   }
 
-  // Get user's listings
   const { data: listings } = await supabase
     .from('listings')
     .select('*, photos(count)')
@@ -38,7 +36,6 @@ export default async function DashboardPage() {
 
   return (
     <div className="min-h-screen bg-[#0F0F0F] text-white">
-      {/* Header */}
       <header className="h-16 bg-[#1A1A1A] border-b border-white/10 flex items-center justify-between px-6">
         <Link href="/dashboard" className="flex items-center gap-3">
           <img src="/snapr-logo.png" alt="SnapR" className="w-10 h-10" />
@@ -57,7 +54,6 @@ export default async function DashboardPage() {
       </header>
 
       <main className="max-w-6xl mx-auto px-6 py-8">
-        {/* Welcome */}
         <div className="mb-8">
           <h1 className="text-2xl font-bold mb-1">Welcome back, {profile?.full_name?.split(' ')[0] || 'there'}!</h1>
           <p className="text-white/50">
@@ -66,7 +62,6 @@ export default async function DashboardPage() {
           </p>
         </div>
 
-        {/* Stats */}
         <div className="grid grid-cols-3 gap-4 mb-8">
           <div className="bg-[#1A1A1A] border border-white/10 rounded-xl p-4">
             <div className="flex items-center gap-3 mb-2">
@@ -91,7 +86,6 @@ export default async function DashboardPage() {
           </div>
         </div>
 
-        {/* New Listing CTA */}
         <Link
           href="/upload"
           className="block mb-8 p-6 bg-gradient-to-r from-[#D4A017]/10 to-[#B8860B]/10 border border-[#D4A017]/30 rounded-xl hover:border-[#D4A017]/50 transition-all group"
@@ -110,7 +104,6 @@ export default async function DashboardPage() {
           </div>
         </Link>
 
-        {/* Recent Listings */}
         <div>
           <h2 className="text-lg font-semibold mb-4">Recent Listings</h2>
           {listings && listings.length > 0 ? (

@@ -68,7 +68,7 @@ export default function SignupPage() {
         </Link>
         <div>
           <h1 className="text-4xl font-bold text-[#0F0F0F] mb-4">Start Your Free Trial</h1>
-          <p className="text-[#0F0F0F]/70 text-lg">Get 10 free credits to experience AI-powered photo enhancement.</p>
+          <p className="text-[#0F0F0F]/70 text-lg">Get 25 free credits to experience AI-powered photo enhancement.</p>
         </div>
         <p className="text-[#0F0F0F]/50 text-sm">© 2025 SnapR</p>
       </div>
