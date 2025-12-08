@@ -20,14 +20,13 @@ export async function GET(request: Request) {
 
   const url = new URL(request.url);
   const withPhotos = url.searchParams.get("withPhotos") === "true";
-  const includePhotosLimit = Number(url.searchParams.get("photoLimit") ?? "10");
 
   const query = supabase
     .from("listings")
     .select(
       withPhotos
-        ? `id,title,address,city,state,postal_code,description,created_at,updated_at,photos(id,raw_url,processed_url,variant,status,created_at)`
-        : "id,title,address,city,state,postal_code,description,created_at,updated_at,photos(count)"
+        ? `id,title,address,description,created_at,updated_at,photos(id,raw_url,processed_url,variant,status,created_at)`
+        : "id,title,address,description,created_at,updated_at,photos(count)"
     )
     .eq("user_id", user.id)
     .order("created_at", { ascending: false });
@@ -42,23 +41,11 @@ export async function GET(request: Request) {
   const listings = (data ?? []).map((listing: any) => {
     if (withPhotos) {
       const photos = Array.isArray(listing.photos) ? listing.photos : [];
-      const sorted = photos
-        .map((photo: any) => ({
-          ...photo,
-          created_at: photo.created_at ?? listing.created_at,
-        }))
-        .sort(
-          (a: any, b: any) =>
-            new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-        );
-      const limited = sorted.slice(0, includePhotosLimit).map((photo: any) => ({
-        id: photo.id,
-        raw_url: photo.raw_url,
-        processed_url: photo.processed_url,
-        variant: photo.variant,
-        status: photo.status,
-      }));
-      return { ...listing, photos: limited };
+      const sorted = photos.sort(
+        (a: any, b: any) =>
+          new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+      );
+      return { ...listing, photos: sorted };
     }
     const count = listing.photos?.[0]?.count ?? 0;
     const { photos, ...rest } = listing;
@@ -94,16 +81,13 @@ export async function POST(request: Request) {
     user_id: user.id,
     title,
     address: sanitize(payload?.address),
-    city: sanitize(payload?.city),
-    state: sanitize(payload?.state),
-    postal_code: sanitize(payload?.postal_code),
     description: sanitize(payload?.description),
   };
 
   const { data, error } = await supabase
     .from("listings")
     .insert(insertPayload)
-    .select("id,title,address,city,state,postal_code,description,created_at,updated_at")
+    .select("id,title,address,description,created_at,updated_at")
     .single();
 
   if (error) {
