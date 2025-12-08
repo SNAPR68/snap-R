@@ -1,7 +1,7 @@
 import { createClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
-import { Plus, FolderOpen, Image, Coins, ArrowRight, Upload, Camera } from 'lucide-react';
+import { Plus, FolderOpen, Image, Coins, BarChart3, CreditCard, Settings, Camera, LogOut } from 'lucide-react';
 
 export const dynamic = 'force-dynamic';
 
@@ -9,9 +9,7 @@ export default async function DashboardPage() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   
-  if (!user) {
-    redirect('/auth/login');
-  }
+  if (!user) redirect('/auth/login');
 
   const { data: profile, error: profileError } = await supabase
     .from('profiles')
@@ -19,7 +17,6 @@ export default async function DashboardPage() {
     .eq('id', user.id)
     .single();
 
-  // Handle missing profile - create one
   if (profileError || !profile) {
     await supabase.from('profiles').upsert({
       id: user.id,
@@ -30,12 +27,8 @@ export default async function DashboardPage() {
     redirect('/onboarding');
   }
 
-  // Check if user has completed onboarding (has role)
-  if (!profile.role) {
-    redirect('/onboarding');
-  }
+  if (!profile.role) redirect('/onboarding');
 
-  // Get listings
   const { data: listings } = await supabase
     .from('listings')
     .select('*, photos(count)')
@@ -44,120 +37,168 @@ export default async function DashboardPage() {
     .limit(10);
 
   const totalPhotos = listings?.reduce((acc: number, l: any) => acc + (l.photos?.[0]?.count || 0), 0) || 0;
-  const isAgent = ['agent', 'broker', 'property-manager'].includes(profile.role);
 
   return (
-    <div className="min-h-screen bg-[#0F0F0F] text-white">
-      <header className="h-16 bg-[#1A1A1A] border-b border-white/10 flex items-center justify-between px-6">
-        <Link href="/dashboard" className="flex items-center gap-3">
-          <img src="/snapr-logo.png" alt="SnapR" className="w-10 h-10" />
-          <span className="text-xl font-bold text-[#D4A017]">SnapR</span>
-        </Link>
-        <div className="flex items-center gap-4">
-          <Link href="/dashboard/camera" className="flex items-center gap-2 px-3 py-1.5 bg-[#D4A017]/10 border border-[#D4A017]/30 rounded-lg hover:bg-[#D4A017]/20 transition-all">
-            <Camera className="w-4 h-4 text-[#D4A017]" />
-            <span className="text-[#D4A017] text-sm font-medium">Snap & Enhance</span>
-          </Link>
-          <Link href="/billing" className="flex items-center gap-2 px-3 py-1.5 bg-white/5 rounded-lg hover:bg-white/10">
-            <Coins className="w-4 h-4 text-[#D4A017]" />
-            <span className="font-semibold">{profile.credits || 0}</span>
-            <span className="text-white/50 text-sm">credits</span>
-          </Link>
-          <Link href="/settings" className="w-9 h-9 rounded-full bg-[#D4A017] flex items-center justify-center text-black font-semibold">
-            {profile.full_name?.charAt(0) || user.email?.charAt(0) || 'U'}
+    <div className="min-h-screen bg-[#0F0F0F] text-white flex">
+      {/* Left Sidebar */}
+      <aside className="w-64 bg-[#1A1A1A] border-r border-white/10 flex flex-col">
+        <div className="p-6 border-b border-white/10">
+          <Link href="/dashboard" className="flex items-center gap-3">
+            <img src="/snapr-logo.png" alt="SnapR" className="w-10 h-10" />
+            <span className="text-xl font-bold text-[#D4A017]">SnapR</span>
           </Link>
         </div>
-      </header>
+        
+        <nav className="flex-1 p-4 space-y-2">
+          <Link href="/dashboard" className="flex items-center gap-3 px-4 py-3 rounded-xl bg-[#D4A017]/10 text-[#D4A017]">
+            <FolderOpen className="w-5 h-5" />
+            <span>Listings</span>
+          </Link>
+          <Link href="/dashboard/analytics" className="flex items-center gap-3 px-4 py-3 rounded-xl text-white/60 hover:bg-white/5 hover:text-white transition-all">
+            <BarChart3 className="w-5 h-5" />
+            <span>Analytics</span>
+          </Link>
+          <Link href="/dashboard/billing" className="flex items-center gap-3 px-4 py-3 rounded-xl text-white/60 hover:bg-white/5 hover:text-white transition-all">
+            <CreditCard className="w-5 h-5" />
+            <span>Billing</span>
+          </Link>
+          <Link href="/dashboard/settings" className="flex items-center gap-3 px-4 py-3 rounded-xl text-white/60 hover:bg-white/5 hover:text-white transition-all">
+            <Settings className="w-5 h-5" />
+            <span>Settings</span>
+          </Link>
+        </nav>
 
-      <main className="max-w-6xl mx-auto px-6 py-8">
-        <div className="mb-8">
-          <h1 className="text-2xl font-bold mb-1">Welcome back, {profile.full_name?.split(' ')[0] || 'there'}!</h1>
-          <p className="text-white/50">
-            <span className="capitalize">{profile.subscription_tier || 'Free'} Plan</span>
-            <span className="text-white/30"> · {profile.role?.replace('-', ' ')}</span>
-          </p>
-        </div>
-
-        <div className="grid grid-cols-3 gap-4 mb-8">
-          <div className="bg-[#1A1A1A] border border-white/10 rounded-xl p-4">
-            <div className="flex items-center gap-3 mb-2">
-              <FolderOpen className="w-5 h-5 text-[#D4A017]" />
-              <span className="text-white/50">Listings</span>
+        <div className="p-4 border-t border-white/10">
+          <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-white/5">
+            <div className="w-10 h-10 rounded-full bg-[#D4A017] flex items-center justify-center text-black font-semibold">
+              {profile.full_name?.charAt(0) || user.email?.charAt(0) || 'U'}
             </div>
-            <p className="text-2xl font-bold">{listings?.length || 0}</p>
-          </div>
-          <div className="bg-[#1A1A1A] border border-white/10 rounded-xl p-4">
-            <div className="flex items-center gap-3 mb-2">
-              <Image className="w-5 h-5 text-[#D4A017]" />
-              <span className="text-white/50">Photos</span>
+            <div className="flex-1 min-w-0">
+              <p className="font-medium truncate">{profile.full_name || 'User'}</p>
+              <p className="text-xs text-white/50 truncate">{user.email}</p>
             </div>
-            <p className="text-2xl font-bold">{totalPhotos}</p>
-          </div>
-          <div className="bg-[#1A1A1A] border border-white/10 rounded-xl p-4">
-            <div className="flex items-center gap-3 mb-2">
-              <Coins className="w-5 h-5 text-[#D4A017]" />
-              <span className="text-white/50">Credits</span>
-            </div>
-            <p className="text-2xl font-bold">{profile.credits || 0}</p>
           </div>
         </div>
+      </aside>
 
-        <Link
-          href="/upload"
-          className="block mb-8 p-6 bg-gradient-to-r from-[#D4A017]/10 to-[#B8860B]/10 border border-[#D4A017]/30 rounded-xl hover:border-[#D4A017]/50 transition-all group"
-        >
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-xl bg-[#D4A017] flex items-center justify-center">
-                <Upload className="w-6 h-6 text-black" />
+      {/* Main Content */}
+      <main className="flex-1 overflow-auto">
+        {/* Top Header */}
+        <header className="h-16 bg-[#1A1A1A] border-b border-white/10 flex items-center justify-between px-6">
+          <div>
+            <h1 className="text-lg font-semibold">Welcome back, {profile.full_name?.split(' ')[0] || 'there'}!</h1>
+            <p className="text-sm text-white/50">
+              <span className="capitalize">{profile.subscription_tier || 'Free'} Plan</span>
+              <span className="text-white/30"> · {profile.role?.replace('-', ' ')}</span>
+            </p>
+          </div>
+          <div className="flex items-center gap-4">
+            <Link href="/dashboard/camera" className="flex items-center gap-2 px-4 py-2 bg-[#D4A017]/10 border border-[#D4A017]/30 rounded-xl hover:bg-[#D4A017]/20 transition-all">
+              <Camera className="w-4 h-4 text-[#D4A017]" />
+              <span className="text-[#D4A017] font-medium">Snap & Enhance</span>
+            </Link>
+            <div className="flex items-center gap-2 px-4 py-2 bg-white/5 rounded-xl">
+              <Coins className="w-4 h-4 text-[#D4A017]" />
+              <span className="font-semibold">{profile.credits || 0}</span>
+              <span className="text-white/50 text-sm">credits</span>
+            </div>
+          </div>
+        </header>
+
+        {/* Dashboard Content */}
+        <div className="p-6">
+          {/* Stats */}
+          <div className="grid grid-cols-3 gap-4 mb-6">
+            <div className="bg-[#1A1A1A] border border-white/10 rounded-xl p-5">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="w-10 h-10 rounded-lg bg-[#D4A017]/10 flex items-center justify-center">
+                  <FolderOpen className="w-5 h-5 text-[#D4A017]" />
+                </div>
+                <span className="text-white/50">Total Listings</span>
               </div>
-              <div>
-                <h3 className="font-semibold text-lg">Create New Listing</h3>
-                <p className="text-white/50">Upload photos and enhance them with AI</p>
+              <p className="text-3xl font-bold">{listings?.length || 0}</p>
+            </div>
+            <div className="bg-[#1A1A1A] border border-white/10 rounded-xl p-5">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="w-10 h-10 rounded-lg bg-[#D4A017]/10 flex items-center justify-center">
+                  <Image className="w-5 h-5 text-[#D4A017]" />
+                </div>
+                <span className="text-white/50">Total Photos</span>
+              </div>
+              <p className="text-3xl font-bold">{totalPhotos}</p>
+            </div>
+            <div className="bg-[#1A1A1A] border border-white/10 rounded-xl p-5">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="w-10 h-10 rounded-lg bg-[#D4A017]/10 flex items-center justify-center">
+                  <Coins className="w-5 h-5 text-[#D4A017]" />
+                </div>
+                <span className="text-white/50">Credits Left</span>
+              </div>
+              <p className="text-3xl font-bold">{profile.credits || 0}</p>
+            </div>
+          </div>
+
+          {/* Create Listing Button */}
+          <Link
+            href="/listings/new"
+            className="block mb-6 p-6 bg-gradient-to-r from-[#D4A017]/10 to-[#B8860B]/10 border border-[#D4A017]/30 rounded-xl hover:border-[#D4A017]/50 transition-all group"
+          >
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <div className="w-14 h-14 rounded-xl bg-[#D4A017] flex items-center justify-center">
+                  <Plus className="w-7 h-7 text-black" />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-xl">Create New Listing</h3>
+                  <p className="text-white/50">Upload photos and enhance them with AI</p>
+                </div>
+              </div>
+              <div className="w-10 h-10 rounded-full bg-[#D4A017]/20 flex items-center justify-center group-hover:bg-[#D4A017]/30 transition-all">
+                <Plus className="w-5 h-5 text-[#D4A017]" />
               </div>
             </div>
-            <ArrowRight className="w-5 h-5 text-[#D4A017] group-hover:translate-x-1 transition-transform" />
-          </div>
-        </Link>
+          </Link>
 
-        <div>
-          <h2 className="text-lg font-semibold mb-4">Recent Listings</h2>
-          {listings && listings.length > 0 ? (
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {listings.map((listing: any) => (
-                <Link
-                  key={listing.id}
-                  href={`/dashboard/studio?id=${listing.id}`}
-                  className="bg-[#1A1A1A] border border-white/10 rounded-xl overflow-hidden hover:border-white/20 transition-all group"
-                >
-                  <div className="aspect-video bg-white/5 flex items-center justify-center">
-                    <FolderOpen className="w-8 h-8 text-white/20" />
-                  </div>
-                  <div className="p-4">
-                    <h3 className="font-semibold truncate group-hover:text-[#D4A017] transition-colors">
-                      {listing.title || listing.address || 'Untitled Listing'}
-                    </h3>
-                    <div className="flex items-center gap-3 mt-2 text-sm text-white/50">
-                      <span>{listing.photos?.[0]?.count || 0} photos</span>
-                      <span>·</span>
-                      <span>{new Date(listing.created_at).toLocaleDateString()}</span>
+          {/* Recent Listings */}
+          <div>
+            <h2 className="text-xl font-semibold mb-4">Recent Listings</h2>
+            {listings && listings.length > 0 ? (
+              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {listings.map((listing: any) => (
+                  <Link
+                    key={listing.id}
+                    href={`/dashboard/studio?id=${listing.id}`}
+                    className="bg-[#1A1A1A] border border-white/10 rounded-xl overflow-hidden hover:border-[#D4A017]/50 transition-all group"
+                  >
+                    <div className="aspect-video bg-white/5 flex items-center justify-center">
+                      <FolderOpen className="w-10 h-10 text-white/20" />
                     </div>
-                  </div>
+                    <div className="p-4">
+                      <h3 className="font-semibold text-lg truncate group-hover:text-[#D4A017] transition-colors">
+                        {listing.title || listing.address || 'Untitled Listing'}
+                      </h3>
+                      <div className="flex items-center gap-3 mt-2 text-sm text-white/50">
+                        <span>{listing.photos?.[0]?.count || 0} photos</span>
+                        <span>·</span>
+                        <span>{new Date(listing.created_at).toLocaleDateString()}</span>
+                      </div>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-16 bg-[#1A1A1A] border border-white/10 rounded-xl">
+                <FolderOpen className="w-16 h-16 text-white/20 mx-auto mb-4" />
+                <p className="text-white/50 text-lg mb-6">No listings yet</p>
+                <Link
+                  href="/listings/new"
+                  className="inline-flex items-center gap-2 px-6 py-3 bg-[#D4A017] text-black rounded-xl font-semibold hover:opacity-90 transition-all"
+                >
+                  <Plus className="w-5 h-5" /> Create Your First Listing
                 </Link>
-              ))}
-            </div>
-          ) : (
-            <div className="text-center py-12 bg-[#1A1A1A] border border-white/10 rounded-xl">
-              <FolderOpen className="w-12 h-12 text-white/20 mx-auto mb-4" />
-              <p className="text-white/50 mb-4">No listings yet</p>
-              <Link
-                href="/upload"
-                className="inline-flex items-center gap-2 px-4 py-2 bg-[#D4A017] text-black rounded-lg font-medium"
-              >
-                <Plus className="w-4 h-4" /> Create Your First Listing
-              </Link>
-            </div>
-          )}
+              </div>
+            )}
+          </div>
         </div>
       </main>
     </div>
