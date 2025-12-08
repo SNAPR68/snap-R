@@ -60,6 +60,8 @@ export function MlsExportModal({ photos, listingTitle, listingAddress, onClose }
     setResult(null);
 
     try {
+      console.log("[MLS Modal] Photos received:", photos);
+      console.log("[MLS Modal] Photos received:", photos);
       const exportPhotos = photos.map((photo, index) => ({
         url: photo.signedProcessedUrl || photo.processed_url,
         toolId: photo.variant || 'auto-enhance',

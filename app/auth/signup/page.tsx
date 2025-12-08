@@ -3,13 +3,14 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Eye, EyeOff } from 'lucide-react';
 
 export default function SignupPage() {
   const router = useRouter();
   const supabase = createClient();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [name, setName] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -34,23 +35,18 @@ export default function SignupPage() {
       return; 
     }
 
-    // If email confirmation is disabled, create profile and redirect to onboarding
     if (data.user) {
-      // Create profile for new user
       await supabase.from('profiles').upsert({
         id: data.user.id,
         email: data.user.email,
         full_name: name,
         subscription_tier: 'free',
-        credits: 10,
+        credits: 25,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
       });
-      
-      // Redirect to onboarding for new users
       router.push('/onboarding');
     } else {
-      // Email confirmation required
       setError('Please check your email to confirm your account.');
       setLoading(false);
     }
@@ -65,7 +61,6 @@ export default function SignupPage() {
 
   return (
     <div className="min-h-screen bg-[#0F0F0F] flex">
-      {/* Left Panel */}
       <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-[#D4A017] to-[#B8860B] p-12 flex-col justify-between">
         <Link href="/" className="flex items-center gap-3">
           <img src="/snapr-logo.png" alt="SnapR" className="w-16 h-16" />
@@ -78,10 +73,8 @@ export default function SignupPage() {
         <p className="text-[#0F0F0F]/50 text-sm">© 2025 SnapR</p>
       </div>
 
-      {/* Right Panel */}
       <div className="flex-1 flex items-center justify-center p-8">
         <div className="w-full max-w-md">
-          {/* Mobile Logo */}
           <div className="lg:hidden flex items-center justify-center gap-3 mb-8">
             <img src="/snapr-logo.png" alt="SnapR" className="w-16 h-16" />
             <span className="text-2xl font-bold text-[#D4A017]">SnapR</span>
@@ -109,7 +102,24 @@ export default function SignupPage() {
             {error && <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-sm">{error}</div>}
             <input type="text" placeholder="Full Name" value={name} onChange={(e) => setName(e.target.value)} className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white focus:outline-none focus:border-[#D4A017]" required />
             <input type="email" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white focus:outline-none focus:border-[#D4A017]" required />
-            <input type="password" placeholder="Password (min 6 chars)" value={password} onChange={(e) => setPassword(e.target.value)} className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white focus:outline-none focus:border-[#D4A017]" required minLength={6} />
+            <div className="relative">
+              <input 
+                type={showPassword ? "text" : "password"} 
+                placeholder="Password (min 6 chars)" 
+                value={password} 
+                onChange={(e) => setPassword(e.target.value)} 
+                className="w-full px-4 py-3 pr-12 rounded-xl bg-white/5 border border-white/10 text-white focus:outline-none focus:border-[#D4A017]" 
+                required 
+                minLength={6} 
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-white/40 hover:text-white/70 transition-colors"
+              >
+                {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+              </button>
+            </div>
             <button type="submit" disabled={loading} className="w-full py-3 rounded-xl font-semibold bg-gradient-to-r from-[#D4A017] to-[#B8860B] text-black disabled:opacity-50">
               {loading ? <Loader2 className="w-5 h-5 animate-spin mx-auto" /> : 'Create Account'}
             </button>

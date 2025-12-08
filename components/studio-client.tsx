@@ -89,7 +89,7 @@ const TOOL_PRESETS: Record<string, { id: string; name: string; prompt: string; t
   ],
 };
 
-export function StudioClient({ listingId }: { listingId: string }) {
+export function StudioClient({ listingId, userRole, showMlsFeatures = false, credits = 0 }: { listingId: string; userRole?: string; showMlsFeatures?: boolean; credits?: number }) {
   const supabase = createClient();
   const [listing, setListing] = useState<any>(null);
   const [photos, setPhotos] = useState<any[]>([]);
@@ -321,6 +321,13 @@ export function StudioClient({ listingId }: { listingId: string }) {
           <h1 className="font-semibold truncate max-w-[200px]">{listing?.title || 'Loading...'}</h1>
         </div>
         <div className="flex items-center gap-2">
+          <button
+            onClick={() => setShowMlsExport(true)} style={showMlsFeatures ? {} : {display: "none"}}
+            disabled={completedPhotos.length === 0}
+            className="flex items-center gap-2 px-3 py-2 bg-white/10 hover:bg-white/20 rounded-lg text-sm disabled:opacity-50"
+          >
+            <FileArchive className="w-4 h-4" /> MLS Export
+          </button>
           <button
             onClick={handleShare}
             disabled={shareLoading}
