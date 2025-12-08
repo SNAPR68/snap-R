@@ -1,7 +1,7 @@
 import { createClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
-import { Plus, FolderOpen, Image, Coins, BarChart3, CreditCard, Settings, Camera, LogOut } from 'lucide-react';
+import { Plus, FolderOpen, Image, Coins, BarChart3, CreditCard, Settings, Camera, LogOut, Sparkles, Palette } from 'lucide-react';
 
 export const dynamic = 'force-dynamic';
 
@@ -61,6 +61,14 @@ export default async function DashboardPage() {
           <Link href="/dashboard/billing" className="flex items-center gap-3 px-4 py-3 rounded-xl text-white/60 hover:bg-white/5 hover:text-white transition-all">
             <CreditCard className="w-5 h-5" />
             <span>Billing</span>
+          </Link>
+          <Link href="/dashboard/content-studio" className="flex items-center gap-3 px-4 py-3 rounded-xl text-white/60 hover:bg-white/5 hover:text-white transition-all">
+            <Sparkles className="w-5 h-5" />
+            <span>Content Studio</span>
+          </Link>
+          <Link href="/dashboard/brand" className="flex items-center gap-3 px-4 py-3 rounded-xl text-white/60 hover:bg-white/5 hover:text-white transition-all">
+            <Palette className="w-5 h-5" />
+            <span>Brand Profile</span>
           </Link>
           <Link href="/dashboard/settings" className="flex items-center gap-3 px-4 py-3 rounded-xl text-white/60 hover:bg-white/5 hover:text-white transition-all">
             <Settings className="w-5 h-5" />
