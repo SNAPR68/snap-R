@@ -103,3 +103,80 @@ html, body {
 
 .animate-pulse-glow { animation: pulse-glow 2s ease-in-out infinite; }
 .animate-float { animation: float 3s ease-in-out infinite; }
+
+/* CSS Variables for Authenticated Pages */
+:root {
+  --background: #0F0F0F;
+  --surface: #1A1A1A;
+  --surface-soft: #2A2A2A;
+  --text-main: #FFFFFF;
+  --text-soft: rgba(255, 255, 255, 0.6);
+  --accent-gold: #D4A017;
+}
+
+/* Card styling */
+.card {
+  background: var(--surface);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+}
+
+/* Input styling */
+.input {
+  width: 100%;
+  padding: 12px 16px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  color: white;
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+.input:focus {
+  border-color: var(--accent-gold);
+}
+.input::placeholder {
+  color: rgba(255, 255, 255, 0.4);
+}
+
+/* Button styling */
+.btn-gold {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px 24px;
+  font-weight: 600;
+  font-size: 14px;
+  border-radius: 12px;
+  background: linear-gradient(145deg, #FFD700 0%, #D4A017 50%, #B8860B 100%);
+  color: #0F0F0F;
+  border: none;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+.btn-gold:hover {
+  opacity: 0.9;
+}
+.btn-gold:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-soft {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px 24px;
+  font-weight: 600;
+  font-size: 14px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+.btn-soft:hover {
+  background: rgba(255, 255, 255, 0.15);
+}
