@@ -1,5 +1,6 @@
 # SnapR Complete Forensic Audit Report
 **Generated:** December 2025  
+**Last Updated:** December 2025 (Post-Audit Verification)  
 **Scope:** Complete application audit including user flows, dashboard, listings, API endpoints, database schema, and all features
 
 ---
@@ -184,12 +185,12 @@ const { data: listings } = await supabase
 
 **Missing Features:**
 - ❌ **NO US MARKET MODE:** No region-based tone adjustments
-- ❌ **NO WATERMARKING:** No watermark logic for virtual staging
 - ❌ **NO POLICY ENGINE:** No `lib/ai/policy.ts` file exists (was deleted)
+- ⚠️ **WATERMARK EXISTS BUT NOT INTEGRATED:** `lib/compliance/watermark.ts` exists with full watermark functionality, but not used in router
 
-**Note:** Previous work attempted to add US market mode but files were deleted:
-- `lib/ai/policy.ts` - DELETED
-- `lib/utils/watermark.ts` - DELETED
+**Note:** Previous work attempted to add US market mode but policy engine was deleted:
+- `lib/ai/policy.ts` - DELETED (policy engine for region/role-based rules)
+- ✅ `lib/compliance/watermark.ts` - EXISTS (watermark functionality available but not integrated into AI router)
 
 ---
 
@@ -350,7 +351,7 @@ const { data: listings } = await supabase
 **Files:**
 - ✅ `lib/compliance/mls-export.ts` - Complete implementation (267 lines)
 - ✅ `lib/compliance/mls-specs.ts` - Exists
-- ✅ `lib/compliance/watermark.ts` - Exists
+- ✅ `lib/compliance/watermark.ts` - EXISTS (139 lines, full watermark functionality with `addWatermark`, `requiresWatermark`, `getWatermarkText`)
 - ✅ `lib/compliance/metadata.ts` - Exists
 - ✅ `lib/compliance/disclosure.ts` - Exists
 - ✅ `app/api/compliance/export/route.ts` - API endpoint exists
@@ -422,9 +423,9 @@ const { data: listings } = await supabase
 - **Fix:** Implement `PhotographerDashboard` and `AgentDashboard` components
 
 ### 8.4 Missing US Market Mode - MEDIUM
-- **Issue:** No region-based tone adjustments or watermarking
+- **Issue:** No region-based tone adjustments or watermarking integration
 - **Impact:** Can't apply MLS-safe adjustments for US market
-- **Fix:** Re-implement policy engine and watermark logic
+- **Fix:** Re-implement policy engine (`lib/ai/policy.ts`) and integrate existing watermark logic from `lib/compliance/watermark.ts` into router
 
 ### 8.5 Missing MLS Pack Feature - MEDIUM
 - **Issue:** MLS pack API endpoint was deleted
@@ -469,9 +470,9 @@ const { data: listings } = await supabase
 
 4. **Re-implement US Market Mode:**
    - Create `lib/ai/policy.ts` with policy engine
-   - Create `lib/utils/watermark.ts` with watermark function
-   - Update `lib/ai/router.ts` to apply policies
-   - Update `app/api/enhance/route.ts` to pass region/userRole
+   - Integrate existing `lib/compliance/watermark.ts` into `lib/ai/router.ts`
+   - Update `lib/ai/router.ts` to apply policies and watermarks
+   - Update `app/api/enhance/route.ts` to pass region/userRole to router
 
 5. **Re-implement MLS Pack:**
    - Create `app/api/mls-pack/route.ts`
@@ -505,15 +506,17 @@ const { data: listings } = await supabase
 ## 11. File Inventory
 
 ### Deleted Files (Need Re-implementation)
-- `lib/ai/policy.ts`
-- `lib/utils/watermark.ts`
-- `app/api/mls-pack/route.ts`
-- `app/services/mlsPackClient.ts`
-- `app/api/user/set-role/route.ts`
-- `app/(authenticated)/onboarding/role.tsx`
-- `components/dashboards/photographer.tsx`
-- `components/dashboards/agent.tsx`
-- `app/api/system-diagnostics/route.ts`
+- `lib/ai/policy.ts` - Policy engine for region/role-based rules
+- `app/api/mls-pack/route.ts` - MLS pack generation endpoint
+- `app/services/mlsPackClient.ts` - Client service for MLS pack
+- `app/api/user/set-role/route.ts` - API to set user role
+- `app/(authenticated)/onboarding/role.tsx` - Role selection component
+- `components/dashboards/photographer.tsx` - Photographer dashboard component
+- `components/dashboards/agent.tsx` - Agent dashboard component
+- `app/api/system-diagnostics/route.ts` - Diagnostics endpoint
+
+### Existing Files (Available but Not Integrated)
+- ✅ `lib/compliance/watermark.ts` - Full watermark functionality exists (139 lines) but not integrated into AI router
 
 ### Existing Files (Working)
 - `app/dashboard/page.tsx` - Needs role-based routing
@@ -525,16 +528,66 @@ const { data: listings } = await supabase
 
 ---
 
+## 12. Post-Audit Verification Updates
+
+**Status Check Date:** December 2025 (After initial audit)
+
+### 12.1 Watermark Module Status - CORRECTED
+
+**Previous Status:** ❌ Marked as deleted  
+**Actual Status:** ✅ **EXISTS AND FUNCTIONAL**
+
+**File:** `lib/compliance/watermark.ts` (139 lines)
+
+**Functions Available:**
+- ✅ `addWatermark(imageBuffer, options)` - Full watermark implementation
+- ✅ `requiresWatermark(toolId)` - Checks if tool needs watermark
+- ✅ `getWatermarkText(toolId)` - Returns appropriate watermark text
+
+**Integration Status:**
+- ⚠️ **NOT INTEGRATED:** Watermark module exists but is not called from `lib/ai/router.ts`
+- ⚠️ **NOT INTEGRATED:** No watermark applied during enhancement process
+- ✅ **AVAILABLE FOR USE:** Can be imported and used immediately
+
+**Correction:** The watermark functionality is fully implemented in the compliance module but needs to be integrated into the AI enhancement router to apply watermarks during virtual staging and other applicable tools.
+
+---
+
+### 12.2 Other Status Verifications
+
+**Verified Still Missing:**
+- ❌ `lib/ai/policy.ts` - Still does not exist
+- ❌ `app/api/mls-pack/route.ts` - Still does not exist
+- ❌ `app/api/user/set-role/route.ts` - Still does not exist
+- ❌ `components/dashboards/photographer.tsx` - Still does not exist
+- ❌ `components/dashboards/agent.tsx` - Still does not exist
+
+**Verified Still Working:**
+- ✅ `app/api/listings/route.ts` - Still functional
+- ✅ `app/api/enhance/route.ts` - Still functional (but no region/userRole passing)
+- ✅ `lib/compliance/mls-export.ts` - Still complete and functional
+- ✅ `components/studio-client.tsx` - Still functional
+
+**No Changes Detected:**
+- Dashboard still doesn't implement role-based routing
+- AI router still doesn't have US market mode logic
+- Enhance API still doesn't pass region/userRole
+- Onboarding still saves to profiles.role
+
+---
+
 ## Conclusion
 
 **Overall Status:** ⚠️ **APPLICATION IS FUNCTIONAL BUT HAS CRITICAL SCHEMA ISSUES**
 
 The application core functionality (listings, enhancements, uploads) is working correctly. However, there are critical schema mismatches and missing role-based features that prevent the complete user flow from working end-to-end.
 
+**Key Correction:** Watermark functionality exists and is ready to use - it just needs integration into the AI router.
+
 **Priority Actions:**
 1. Fix database schema and role field
 2. Implement role-based dashboard
-3. Re-implement US market mode features
+3. Re-implement US market mode features (policy engine + integrate existing watermark)
 4. Integrate MLS export into UI
 
 **Estimated Fix Time:** 2-3 days for critical issues, 1 week for all features.

@@ -10,9 +10,7 @@ function sanitize(value?: string | null) {
 
 export async function GET(request: Request) {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const { data: { user } } = await supabase.auth.getUser();
 
   if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -21,6 +19,7 @@ export async function GET(request: Request) {
   const url = new URL(request.url);
   const withPhotos = url.searchParams.get("withPhotos") === "true";
 
+  // Columns that exist: id, user_id, title, address, status, created_at, city, state, postal_code, description, project_id
   const query = supabase
     .from("listings")
     .select(
@@ -41,11 +40,7 @@ export async function GET(request: Request) {
   const listings = (data ?? []).map((listing: any) => {
     if (withPhotos) {
       const photos = Array.isArray(listing.photos) ? listing.photos : [];
-      const sorted = photos.sort(
-        (a: any, b: any) =>
-          new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-      );
-      return { ...listing, photos: sorted };
+      return { ...listing, photos };
     }
     const count = listing.photos?.[0]?.count ?? 0;
     const { photos, ...rest } = listing;
@@ -57,9 +52,7 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const { data: { user } } = await supabase.auth.getUser();
 
   if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -77,19 +70,17 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Title is required" }, { status: 400 });
   }
 
-  const insertPayload = {
-    user_id: user.id,
-    title,
-    address: sanitize(payload?.address),
-    city: sanitize(payload?.city),
-    state: sanitize(payload?.state),
-    postal_code: sanitize(payload?.postal_code),
-    description: sanitize(payload?.description),
-  };
-
   const { data, error } = await supabase
     .from("listings")
-    .insert(insertPayload)
+    .insert({
+      user_id: user.id,
+      title,
+      address: sanitize(payload?.address),
+      city: sanitize(payload?.city),
+      state: sanitize(payload?.state),
+      postal_code: sanitize(payload?.postal_code),
+      description: sanitize(payload?.description),
+    })
     .select("id,title,address,city,state,postal_code,description,status,created_at")
     .single();
 
