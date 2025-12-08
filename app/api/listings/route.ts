@@ -25,8 +25,8 @@ export async function GET(request: Request) {
     .from("listings")
     .select(
       withPhotos
-        ? `id,title,address,description,created_at,updated_at,photos(id,raw_url,processed_url,variant,status,created_at)`
-        : "id,title,address,description,created_at,updated_at,photos(count)"
+        ? `id,title,address,city,state,postal_code,description,status,created_at,photos(id,raw_url,processed_url,variant,status,created_at)`
+        : "id,title,address,city,state,postal_code,description,status,created_at,photos(count)"
     )
     .eq("user_id", user.id)
     .order("created_at", { ascending: false });
@@ -81,13 +81,16 @@ export async function POST(request: Request) {
     user_id: user.id,
     title,
     address: sanitize(payload?.address),
+    city: sanitize(payload?.city),
+    state: sanitize(payload?.state),
+    postal_code: sanitize(payload?.postal_code),
     description: sanitize(payload?.description),
   };
 
   const { data, error } = await supabase
     .from("listings")
     .insert(insertPayload)
-    .select("id,title,address,description,created_at,updated_at")
+    .select("id,title,address,city,state,postal_code,description,status,created_at")
     .single();
 
   if (error) {
