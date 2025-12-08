@@ -3,8 +3,9 @@
 import { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { HumanEditRequestModal } from "./human-edit-request";
+import { MlsExportModal } from "./mls-export-modal";
 import Link from 'next/link';
-import { ArrowLeft, Upload, Sun, Moon, Leaf, Trash2, Sofa, Sparkles, Wand2, Loader2, ChevronDown, ChevronUp, Check, X, Download, Share2, Copy, LogOut, UserCheck, Flame, Tv, Lightbulb, PanelTop, Waves, Move, Circle, Palette } from 'lucide-react';
+import { ArrowLeft, Upload, Sun, Moon, Leaf, Trash2, Sofa, Sparkles, Wand2, Loader2, ChevronDown, ChevronUp, Check, X, Download, Share2, Copy, LogOut, FileArchive, UserCheck, Flame, Tv, Lightbulb, PanelTop, Waves, Move, Circle, Palette } from 'lucide-react';
 
 // Tool definitions - 15 tools total
 const AI_TOOLS = [
@@ -88,7 +89,7 @@ const TOOL_PRESETS: Record<string, { id: string; name: string; prompt: string; t
   ],
 };
 
-export function StudioClient({ listingId }: { listingId: string }) {
+export function StudioClient({ listingId, userRole, showMlsFeatures = false, credits = 0 }: { listingId: string; userRole?: string; showMlsFeatures?: boolean; credits?: number }) {
   const supabase = createClient();
   const [listing, setListing] = useState<any>(null);
   const [photos, setPhotos] = useState<any[]>([]);
@@ -111,6 +112,7 @@ export function StudioClient({ listingId }: { listingId: string }) {
   const [showShareModal, setShowShareModal] = useState(false);
   const [copied, setCopied] = useState(false);
   const [showHumanEditModal, setShowHumanEditModal] = useState(false);
+  const [showMlsExport, setShowMlsExport] = useState(false);
   const [shareLink, setShareLink] = useState('');
   const [shareLoading, setShareLoading] = useState(false);
   const [shareOptions, setShareOptions] = useState({
@@ -319,6 +321,13 @@ export function StudioClient({ listingId }: { listingId: string }) {
           <h1 className="font-semibold truncate max-w-[200px]">{listing?.title || 'Loading...'}</h1>
         </div>
         <div className="flex items-center gap-2">
+          <button
+            onClick={() => setShowMlsExport(true)} style={showMlsFeatures ? {} : {display: "none"}}
+            disabled={completedPhotos.length === 0}
+            className="flex items-center gap-2 px-3 py-2 bg-white/10 hover:bg-white/20 rounded-lg text-sm disabled:opacity-50"
+          >
+            <FileArchive className="w-4 h-4" /> MLS Export
+          </button>
           <button
             onClick={handleShare}
             disabled={shareLoading}
@@ -656,6 +665,14 @@ export function StudioClient({ listingId }: { listingId: string }) {
             <button onClick={() => setShowShareModal(false)} className="w-full mt-4 py-3 border border-white/20 rounded-xl">Close</button>
           </div>
         </div>
+      )}
+      {showMlsExport && completedPhotos.length > 0 && (
+        <MlsExportModal
+          photos={completedPhotos}
+          listingTitle={listing?.title}
+          listingAddress={listing?.address}
+          onClose={() => setShowMlsExport(false)}
+        />
       )}
       {showHumanEditModal && selectedPhoto && (
         <HumanEditRequestModal listingId={listingId} photoUrl={selectedPhoto?.signedUrl || ""} onClose={() => setShowHumanEditModal(false)} />
