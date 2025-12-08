@@ -1,7 +1,7 @@
 import { createClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
-import { Plus, FolderOpen, Image, Coins, ArrowRight } from 'lucide-react';
+import { Plus, FolderOpen, Image, Coins, ArrowRight, Upload, Camera } from 'lucide-react';
 
 export const dynamic = 'force-dynamic';
 
@@ -13,18 +13,29 @@ export default async function DashboardPage() {
     redirect('/auth/login');
   }
 
-  const { data: profile } = await supabase.from('profiles').select('*').eq('id', user.id).single();
+  const { data: profile, error: profileError } = await supabase
+    .from('profiles')
+    .select('*')
+    .eq('id', user.id)
+    .single();
 
-  // Check if user has completed onboarding (has role)
-  if (!profile?.role) {
+  // Handle missing profile - create one
+  if (profileError || !profile) {
+    await supabase.from('profiles').upsert({
+      id: user.id,
+      email: user.email,
+      subscription_tier: 'free',
+      credits: 25,
+    });
     redirect('/onboarding');
   }
 
-  // Check if user has selected a plan - BUT allow 'free' tier to access dashboard
-  if (!profile?.subscription_tier) {
-    redirect('/pricing?role=' + encodeURIComponent(profile.role));
+  // Check if user has completed onboarding (has role)
+  if (!profile.role) {
+    redirect('/onboarding');
   }
 
+  // Get listings
   const { data: listings } = await supabase
     .from('listings')
     .select('*, photos(count)')
@@ -32,7 +43,8 @@ export default async function DashboardPage() {
     .order('created_at', { ascending: false })
     .limit(10);
 
-  const totalPhotos = listings?.reduce((acc, l) => acc + (l.photos?.[0]?.count || 0), 0) || 0;
+  const totalPhotos = listings?.reduce((acc: number, l: any) => acc + (l.photos?.[0]?.count || 0), 0) || 0;
+  const isAgent = ['agent', 'broker', 'property-manager'].includes(profile.role);
 
   return (
     <div className="min-h-screen bg-[#0F0F0F] text-white">
@@ -42,23 +54,27 @@ export default async function DashboardPage() {
           <span className="text-xl font-bold text-[#D4A017]">SnapR</span>
         </Link>
         <div className="flex items-center gap-4">
-          <Link href="/dashboard/billing" className="flex items-center gap-2 px-3 py-1.5 bg-white/5 rounded-lg hover:bg-white/10">
+          <Link href="/dashboard/camera" className="flex items-center gap-2 px-3 py-1.5 bg-[#D4A017]/10 border border-[#D4A017]/30 rounded-lg hover:bg-[#D4A017]/20 transition-all">
+            <Camera className="w-4 h-4 text-[#D4A017]" />
+            <span className="text-[#D4A017] text-sm font-medium">Snap & Enhance</span>
+          </Link>
+          <Link href="/billing" className="flex items-center gap-2 px-3 py-1.5 bg-white/5 rounded-lg hover:bg-white/10">
             <Coins className="w-4 h-4 text-[#D4A017]" />
-            <span className="font-semibold">{profile?.credits || 0}</span>
+            <span className="font-semibold">{profile.credits || 0}</span>
             <span className="text-white/50 text-sm">credits</span>
           </Link>
-          <Link href="/dashboard/settings" className="w-9 h-9 rounded-full bg-[#D4A017] flex items-center justify-center text-black font-semibold">
-            {profile?.full_name?.charAt(0) || user.email?.charAt(0) || 'U'}
+          <Link href="/settings" className="w-9 h-9 rounded-full bg-[#D4A017] flex items-center justify-center text-black font-semibold">
+            {profile.full_name?.charAt(0) || user.email?.charAt(0) || 'U'}
           </Link>
         </div>
       </header>
 
       <main className="max-w-6xl mx-auto px-6 py-8">
         <div className="mb-8">
-          <h1 className="text-2xl font-bold mb-1">Welcome back, {profile?.full_name?.split(' ')[0] || 'there'}!</h1>
+          <h1 className="text-2xl font-bold mb-1">Welcome back, {profile.full_name?.split(' ')[0] || 'there'}!</h1>
           <p className="text-white/50">
-            {profile?.plan && <span className="capitalize">{profile.plan} Plan</span>}
-            {profile?.role && <span className="text-white/30"> · {profile.role}</span>}
+            <span className="capitalize">{profile.subscription_tier || 'Free'} Plan</span>
+            <span className="text-white/30"> · {profile.role?.replace('-', ' ')}</span>
           </p>
         </div>
 
@@ -82,7 +98,7 @@ export default async function DashboardPage() {
               <Coins className="w-5 h-5 text-[#D4A017]" />
               <span className="text-white/50">Credits</span>
             </div>
-            <p className="text-2xl font-bold">{profile?.credits || 0}</p>
+            <p className="text-2xl font-bold">{profile.credits || 0}</p>
           </div>
         </div>
 
@@ -93,7 +109,7 @@ export default async function DashboardPage() {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               <div className="w-12 h-12 rounded-xl bg-[#D4A017] flex items-center justify-center">
-                <Plus className="w-6 h-6 text-black" />
+                <Upload className="w-6 h-6 text-black" />
               </div>
               <div>
                 <h3 className="font-semibold text-lg">Create New Listing</h3>
@@ -108,7 +124,7 @@ export default async function DashboardPage() {
           <h2 className="text-lg font-semibold mb-4">Recent Listings</h2>
           {listings && listings.length > 0 ? (
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {listings.map((listing) => (
+              {listings.map((listing: any) => (
                 <Link
                   key={listing.id}
                   href={`/dashboard/studio?id=${listing.id}`}

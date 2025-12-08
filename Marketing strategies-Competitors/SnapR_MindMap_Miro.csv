@@ -1,0 +1,61 @@
+Category,Topic,Details,Priority,Color
+CENTER,SnapR Market Opportunity,ONLY platform with pre-capture AI + MLS compliance. Score: 9.48/10 vs 3.71,CRITICAL,purple
+COMPETITORS,BoxBrownie (Leader),"125K customers, 117 countries, Brad Filliponi thought leader, $25-50K/mo ads",HIGH,red
+COMPETITORS,BoxBrownie Hooks,"Transform photos in 24 hours | Virtual staging from $24 | CTA: 4 Free Edits",HIGH,red
+COMPETITORS,BoxBrownie Weakness,No pre-capture AI guidance - No MLS compliance features,OPPORTUNITY,red
+COMPETITORS,PhotoUp,"3K photographers, Dedicated editor model, $5-10K/mo ads",MEDIUM,red
+COMPETITORS,PhotoUp Hooks,"Your dedicated photo editor | Edit less shoot more | CTA: 10 Free Edits",MEDIUM,red
+COMPETITORS,PhotoUp Weakness,Photographers only - ignores agent market,OPPORTUNITY,red
+COMPETITORS,Styldod,"10K realtors, Strongest B2B LinkedIn (7.3K), $10-20K/mo ads, $16 pricing",MEDIUM,red
+COMPETITORS,Styldod Hooks,"AI-powered virtual staging | From $16/image | CTA: Free Trial",MEDIUM,red
+COMPETITORS,Styldod Weakness,AI is post-processing only - no pre-capture,OPPORTUNITY,red
+COMPETITORS,Key Insight,ALL competitors focus POST-capture. 80% Before/After format. Zero MLS compliance.,CRITICAL,red
+PAID ADS,Meta (FB/IG) - 50%,"$2,500/mo | CPC $1.50-2.50 | CTR 1.5-2.5% | Video outperforms 2:1",HIGH,green
+PAID ADS,Meta Priority,AI Director demo videos (15-30 sec) - HIGHEST PRIORITY,CRITICAL,green
+PAID ADS,Meta Formats,"Video ads (best), Carousel Before/After, Lead Gen Forms (12-18% CVR)",HIGH,green
+PAID ADS,Google Search - 20%,"$1,000/mo | CPC $3-5 generic | CTR 3-5% | Target AI keywords",HIGH,green
+PAID ADS,Google Keywords,"'AI real estate photography' 590/mo OPEN | 'MLS photo requirements' 720/mo OPEN",OPPORTUNITY,green
+PAID ADS,YouTube - 15%,"$750/mo | View rate 20-30% | Pre-roll on RE photography tutorials",MEDIUM,green
+PAID ADS,LinkedIn - 10%,"$500/mo | CTR 0.4-0.6% | B2B targeting for brokerages",MEDIUM,green
+PAID ADS,Retargeting - 5%,"$250/mo | CVR 3-5% | Website visitors, blog readers",MEDIUM,green
+PAID ADS,Total Budget,$5K/month starting | Target: CPL <$25 | 200+ leads/month by Day 90,HIGH,green
+ORGANIC,Content Marketing,"Blog 4-8x/month | YouTube AI Director tutorials | Own AI + MLS keywords",HIGH,blue
+ORGANIC,Thought Leadership,"Podcast appearances | Monthly webinars | Conference speaking | Be face of brand",HIGH,blue
+ORGANIC,SEO Opportunities,"OPEN: 'AI real estate photography' 590/mo | 'MLS photo requirements' 720/mo",OPPORTUNITY,blue
+ORGANIC,SEO Dominated,"BoxBrownie owns 'virtual staging' 8.1K/mo | 'real estate photo editing' 2.9K/mo",LOW,blue
+ORGANIC,Email Marketing,"Lead magnet: MLS Compliance Checklist | 7-day nurture sequence | Monthly newsletter",MEDIUM,blue
+COMMUNITIES,FB: RE Photography,"45,000 members | 50+ posts/day | All competitors active | BoxBrownie very active",CRITICAL,pink
+COMMUNITIES,FB: RE Photographers,"22,000 members | 20+ posts/day | BoxBrownie very active",HIGH,pink
+COMMUNITIES,FB: Virtual Staging Pros,"8,000 members | 10+ posts/day | All competitors active | MLS angle opportunity",HIGH,pink
+COMMUNITIES,FB: RE Marketing Ideas,"35,000 members | 30+ posts/day | Medium competitor activity",MEDIUM,pink
+COMMUNITIES,FB Strategy,Build authentic presence BEFORE ads. Week 1-4: Observe & help. Week 5+: Establish expertise.,CRITICAL,pink
+COMMUNITIES,PFRE,"50,000+ readers | BoxBrownie sponsor | Sponsor contests & contribute articles",HIGH,pink
+COMMUNITIES,Reddit,"r/RealEstatePhotography 15-25K | r/realtors 75K+ | Low competition = opportunity",MEDIUM,pink
+AD HOOKS,BoxBrownie Pattern,"Speed focus | Price anchoring $24 | Brad Filliponi face | Before/After sliders",HIGH,orange
+AD HOOKS,PhotoUp Pattern,"Relationship focus | Dedicated editor | Consistency messaging | Workflow efficiency",MEDIUM,orange
+AD HOOKS,Styldod Pattern,"Technology focus | Aggressive $16 pricing | Free tools try-before-buy",MEDIUM,orange
+AD HOOKS,Common Patterns,"80%+ Before/After format | Free trial CTAs | Per-image pricing | POST-capture focus",HIGH,orange
+AD HOOKS,Gap Analysis,"NO pre-capture guidance | NO MLS compliance | NO subscription model",OPPORTUNITY,orange
+SNAPR STRATEGY,Hook 1,"Stop fixing bad photos. Start capturing great ones. → Attacks post-processing model",CRITICAL,purple
+SNAPR STRATEGY,Hook 2,"Virtual staging your legal team will love → MLS compliance UNIQUE angle",CRITICAL,purple
+SNAPR STRATEGY,Hook 3,"What if every photo was a hero shot? → Pre-capture guidance UNIQUE",CRITICAL,purple
+SNAPR STRATEGY,Hook 4,"AI Director guides you BEFORE you click → Technology differentiation",HIGH,purple
+SNAPR STRATEGY,Hook 5,"One app: Capture→Enhance→Comply→Create→Distribute → Complete workflow",HIGH,purple
+SNAPR STRATEGY,Hook 6,"$49/month = Professional photos on every listing → Subscription vs per-image",HIGH,purple
+SNAPR STRATEGY,USP 1,Pre-capture AI guidance (AI Director) - ONLY SnapR,CRITICAL,purple
+SNAPR STRATEGY,USP 2,MLS compliance automation (watermarking/disclosure) - ONLY SnapR,CRITICAL,purple
+SNAPR STRATEGY,USP 3,Complete 5-phase workflow - ONLY SnapR,HIGH,purple
+SNAPR STRATEGY,USP 4,Subscription model (predictable vs per-image) - DIFFERENT,HIGH,purple
+90-DAY PLAN,Week 1-2,"Setup: Join FB groups (no promo) | Set up Meta pixel | Film 3 AI Director demos",HIGH,yellow
+90-DAY PLAN,Week 3-4,"Launch: Begin FB engagement | First Meta video campaign $500 | A/B test 3 hooks",HIGH,yellow
+90-DAY PLAN,Week 5-6,"Scale: Scale winning creative $1K | Launch Google Search $500 | First FB promo post",HIGH,yellow
+90-DAY PLAN,Week 7-8,"Expand: Instagram Story ads | YouTube pre-roll $500 | Begin retargeting",MEDIUM,yellow
+90-DAY PLAN,Week 9-10,"B2B: LinkedIn campaign | Podcast outreach 5 pitches | PFRE sponsorship inquiry",MEDIUM,yellow
+90-DAY PLAN,Week 11-12,"Optimize: First webinar | Full $5K budget | Optimize on 60 days data",HIGH,yellow
+90-DAY PLAN,Goal,200+ leads/month | CPL <$25 | Trial conversion >15%,CRITICAL,yellow
+LINKS,Meta Ad Library - BoxBrownie,facebook.com/ads/library/?q=boxbrownie,REFERENCE,gray
+LINKS,Meta Ad Library - PhotoUp,facebook.com/ads/library/?q=photoup,REFERENCE,gray
+LINKS,Meta Ad Library - Styldod,facebook.com/ads/library/?q=styldod,REFERENCE,gray
+LINKS,BoxBrownie Landing,boxbrownie.com/free-virtual-staging-edit-2,REFERENCE,gray
+LINKS,BoxBrownie Instagram,instagram.com/boxbrowniecom (16K followers),REFERENCE,gray
+LINKS,Styldod LinkedIn,linkedin.com/company/styldod (7.3K followers),REFERENCE,gray

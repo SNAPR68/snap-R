@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SnapR Competitive Ads Intelligence Mind Map</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #fff;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .header h1 {
+            font-size: 2.5rem;
+            background: linear-gradient(90deg, #00d4ff, #7c3aed, #f472b6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 10px;
+        }
+        
+        .header p {
+            color: #94a3b8;
+            font-size: 1.1rem;
+        }
+        
+        .mindmap-container {
+            display: flex;
+            flex-direction: column;
+            gap: 40px;
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+        
+        /* Central Node */
+        .central-node {
+            background: linear-gradient(135deg, #7c3aed, #2563eb);
+            border-radius: 20px;
+            padding: 25px 40px;
+            text-align: center;
+            box-shadow: 0 20px 60px rgba(124, 58, 237, 0.4);
+            max-width: 500px;
+            margin: 0 auto;
+        }
+        
+        .central-node h2 {
+            font-size: 1.8rem;
+            margin-bottom: 10px;
+        }
+        
+        .central-node p {
+            color: #e2e8f0;
+            font-size: 0.95rem;
+        }
+        
+        /* Branch Sections */
+        .branches {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 25px;
+        }
+        
+        .branch {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 16px;
+            padding: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        
+        .branch:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.3);
+        }
+        
+        .branch-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 15px;
+            padding-bottom: 12px;
+            border-bottom: 2px solid;
+        }
+        
+        .branch-icon {
+            width: 45px;
+            height: 45px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+        }
+        
+        .branch-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+        }
+        
+        /* Color Themes */
+        .competitors { --color: #ef4444; }
+        .competitors .branch-header { border-color: #ef4444; }
+        .competitors .branch-icon { background: rgba(239, 68, 68, 0.2); }
+        
+        .paid { --color: #22c55e; }
+        .paid .branch-header { border-color: #22c55e; }
+        .paid .branch-icon { background: rgba(34, 197, 94, 0.2); }
+        
+        .organic { --color: #3b82f6; }
+        .organic .branch-header { border-color: #3b82f6; }
+        .organic .branch-icon { background: rgba(59, 130, 246, 0.2); }
+        
+        .hooks { --color: #f59e0b; }
+        .hooks .branch-header { border-color: #f59e0b; }
+        .hooks .branch-icon { background: rgba(245, 158, 11, 0.2); }
+        
+        .snapr { --color: #8b5cf6; }
+        .snapr .branch-header { border-color: #8b5cf6; }
+        .snapr .branch-icon { background: rgba(139, 92, 246, 0.2); }
+        
+        .communities { --color: #ec4899; }
+        .communities .branch-header { border-color: #ec4899; }
+        .communities .branch-icon { background: rgba(236, 72, 153, 0.2); }
+        
+        /* Sub-branches */
+        .sub-branches {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        
+        .sub-branch {
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 10px;
+            padding: 12px 15px;
+            border-left: 3px solid var(--color);
+        }
+        
+        .sub-branch-title {
+            font-weight: 600;
+            color: #f1f5f9;
+            margin-bottom: 5px;
+            font-size: 0.95rem;
+        }
+        
+        .sub-branch-content {
+            color: #94a3b8;
+            font-size: 0.85rem;
+            line-height: 1.5;
+        }
+        
+        .metric {
+            display: inline-block;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            margin: 2px;
+            color: #e2e8f0;
+        }
+        
+        .highlight {
+            color: #00d4ff;
+            font-weight: 600;
+        }
+        
+        .attack {
+            color: #f472b6;
+            font-weight: 600;
+        }
+        
+        /* Legend */
+        .legend {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 20px;
+            margin-top: 30px;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 12px;
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.9rem;
+            color: #94a3b8;
+        }
+        
+        .legend-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+        
+        /* Connector lines visual */
+        .connector-section {
+            display: flex;
+            justify-content: center;
+            margin: -20px 0;
+        }
+        
+        .connector-line {
+            width: 2px;
+            height: 40px;
+            background: linear-gradient(to bottom, #7c3aed, transparent);
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🎯 SnapR Competitive Ads Intelligence</h1>
+        <p>Mind Map: Organic & Inorganic Marketing Strategy Blueprint</p>
+    </div>
+    
+    <div class="mindmap-container">
+        <!-- Central Node -->
+        <div class="central-node">
+            <h2>🚀 SnapR Market Opportunity</h2>
+            <p>ONLY platform with pre-capture AI guidance + MLS compliance<br>
+            <strong>Score: 9.48/10</strong> vs nearest competitor 3.71/10</p>
+        </div>
+        
+        <div class="connector-section">
+            <div class="connector-line"></div>
+        </div>
+        
+        <!-- Main Branches -->
+        <div class="branches">
+            
+            <!-- Competitors Branch -->
+            <div class="branch competitors">
+                <div class="branch-header">
+                    <div class="branch-icon">🏢</div>
+                    <div class="branch-title">COMPETITORS</div>
+                </div>
+                <div class="sub-branches">
+                    <div class="sub-branch">
+                        <div class="sub-branch-title">📦 BoxBrownie (Market Leader)</div>
+                        <div class="sub-branch-content">
+                            <span class="metric">125K+ customers</span>
+                            <span class="metric">117 countries</span>
+                            <span class="metric">$25-50K/mo ads</span><br>
+                            Brad Filliponi = thought leader face of brand<br>
+                            <span class="attack">Weakness: No pre-capture AI, no MLS compliance</span>
+                        </div>
+                    </div>
+                    <div class="sub-branch">
+                        <div class="sub-branch-title">📸 PhotoUp</div>
+                        <div class="sub-branch-content">
+                            <span class="metric">3K+ photographers</span>
+                            <span class="metric">$5-10K/mo ads</span><br>
+                            "Dedicated editor" model - consistency focus<br>
+                            <span class="attack">Weakness: Photographers only, ignores agents</span>
+                        </div>
+                    </div>
+                    <div class="sub-branch">
+                        <div class="sub-branch-title">🎨 Styldod</div>
+                        <div class="sub-branch-content">
+                            <span class="metric">10K+ realtors</span>
+                            <span class="metric">7.3K LinkedIn</span>
+                            <span class="metric">$10-20K/mo ads</span><br>
+                            Strongest B2B presence, aggressive pricing ($16)<br>
+                            <span class="attack">Weakness: AI is post-processing only</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Paid Ads Branch -->
+            <div class="branch paid">
+                <div class="branch-header">
+                    <div class="branch-icon">💰</div>
+                    <div class="branch-title">PAID ADVERTISING</div>
+                </div>
+                <div class="sub-branches">
+                    <div class="sub-branch">
+                        <div class="sub-branch-title">📱 Meta (Facebook/Instagram)</div>
+                        <div class="sub-branch-content">
+                            <span class="metric">CPC: $1.50-2.50</span>
+                            <span class="metric">CTR: 1.5-2.5%</span>
+                            <span class="metric">CVR: 10-15%</span><br>
+                            Video ads outperform static 2:1<br>
+                            <span class="highlight">Priority: AI Director demo videos</span>
+                        </div>
+                    </div>
+                    <div class="sub-branch">
+                        <div class="sub-branch-title">🔍 Google Search</div>
+                        <div class="sub-branch-content">
+                            <span class="metric">CPC: $3-5 generic</span>
+                            <span class="metric">CTR: 3-5%</span>
+                            <span class="metric">CVR: 8-15%</span><br>
+                            Target: "AI real estate photography", "MLS compliance"<br>
+                            <span class="highlight">Competitor keywords opportunity</span>
+                        </div>
+                    </div>
+                    <div class="sub-branch">
+                        <div class="sub-branch-title">▶️ YouTube</div>
+                        <div class="sub-branch-content">
+                            <span class="metric">View rate: 20-30%</span>
+                            <span class="metric">Discovery CTR: 2-4%</span><br>
+                            BoxBrownie dominates with Brad tutorials<br>
+                            <span class="highlight">Target RE photography tutorials</span>
+                        </div>
+                    </div>
+                    <div class="sub-branch">
+                        <div class="sub-branch-title">💼 LinkedIn</div>
+                        <div class="sub-branch-content">
+                            <span class="metric">CTR: 0.4-0.6%</span>
+                            <span class="metric">CVR: 2-4%</span><br>
+                            B2B targeting for brokerages<br>
+                            <span class="highlight">Enterprise/partnership focus</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Organic Branch -->
+            <div class="branch organic">
+                <div class="branch-header">
+                    <div class="branch-icon">🌱</div>
+                    <div class="branch-title">ORGANIC STRATEGY</div>
+                </div>
+                <div class="sub-branches">
+                    <div class="sub-branch">
+                        <div class="sub-branch-title">📝 Content Marketing</div>
+                        <div class="sub-branch-content">
+                            BoxBrownie: 4-8 blog posts/month (SEO leader)<br>
+                            YouTube tutorials 2-4x/month<br>
+                            <span class="highlight">Create: AI Director tutorial series</span>
+                        </div>
+                    </div>
+                    <div class="sub-branch">
+                        <div class="sub-branch-title">🎙️ Thought Leadership</div>
+                        <div class="sub-branch-content">
+                            Brad Filliponi on podcasts, webinars, conferences<br>
+                            Monthly "Property Marketing Power-Up" webinars<br>
+                            <span class="highlight">Launch SnapR founder content series</span>
+                        </div>
+                    </div>
+                    <div class="sub-branch">
+                        <div class="sub-branch-title">🔎 SEO Opportunities</div>
+                        <div class="sub-branch-content">
+                            <span class="metric">"virtual staging" 8.1K/mo</span> - dominated<br>
+                            <span class="metric">"AI real estate photography" 590/mo</span> - OPEN<br>
+                            <span class="metric">"MLS photo requirements" 720/mo</span> - OPEN<br>
+                            <span class="highlight">Own the AI + compliance keywords</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Communities Branch -->
+            <div class="branch communities">
+                <div class="branch-header">
+                    <div class="branch-icon">👥</div>
+                    <div class="branch-title">COMMUNITIES</div>
+                </div>
+                <div class="sub-branches">
+                    <div class="sub-branch">
+                        <div class="sub-branch-title">📘 Facebook Groups (PRIMARY)</div>
+                        <div class="sub-branch-content">
+                            <span class="metric">RE Photography: 45K</span>
+                            <span class="metric">RE Photographers: 22K</span><br>
+                            <span class="metric">Virtual Staging Pros: 8K</span>
+                            <span class="metric">RE Marketing: 35K</span><br>
+                            <span class="highlight">Build authentic presence BEFORE ads</span>
+                        </div>
+                    </div>
+                    <div class="sub-branch">
+                        <div class="sub-branch-title">📷 PFRE (Photography for RE)</div>
+                        <div class="sub-branch-content">
+                            <span class="metric">50K+ readers</span> since 2006<br>
+                            BoxBrownie is sponsor/contributor<br>
+                            <span class="highlight">Sponsor contests, contribute articles</span>
+                        </div>
+                    </div>
+                    <div class="sub-branch">
+                        <div class="sub-branch-title">🔴 Reddit</div>
+                        <div class="sub-branch-content">
+                            <span class="metric">r/RealEstatePhotography: 15-25K</span><br>
+                            <span class="metric">r/realtors: 75K+</span><br>
+                            Low competitor presence - opportunity
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Ad Hooks Branch -->
+            <div class="branch hooks">
+                <div class="branch-header">
+                    <div class="branch-icon">🎣</div>
+                    <div class="branch-title">COMPETITOR AD HOOKS</div>
+                </div>
+                <div class="sub-branches">
+                    <div class="sub-branch">
+                        <div class="sub-branch-title">BoxBrownie Hooks</div>
+                        <div class="sub-branch-content">
+                            "Transform your photos in 24 hours"<br>
+                            "Virtual staging from $24"<br>
+                            "Shoot like a pro with your phone"<br>
+                            <span class="metric">CTA: Get 4 Free Edits</span>
+                        </div>
+                    </div>
+                    <div class="sub-branch">
+                        <div class="sub-branch-title">PhotoUp Hooks</div>
+                        <div class="sub-branch-content">
+                            "Your dedicated photo editor"<br>
+                            "Edit less, shoot more"<br>
+                            <span class="metric">CTA: Get 10 Free Edits</span>
+                        </div>
+                    </div>
+                    <div class="sub-branch">
+                        <div class="sub-branch-title">Styldod Hooks</div>
+                        <div class="sub-branch-content">
+                            "AI-powered virtual staging"<br>
+                            "From $16/image"<br>
+                            <span class="metric">CTA: Free Trial</span>
+                        </div>
+                    </div>
+                    <div class="sub-branch">
+                        <div class="sub-branch-title">Common Creative Patterns</div>
+                        <div class="sub-branch-content">
+                            <span class="metric">80%+ Before/After format</span><br>
+                            <span class="metric">Free trial standard CTA</span><br>
+                            <span class="metric">Price anchoring per-image</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- SnapR Strategy Branch -->
+            <div class="branch snapr">
+                <div class="branch-header">
+                    <div class="branch-icon">⚡</div>
+                    <div class="branch-title">SNAPR ATTACK STRATEGY</div>
+                </div>
+                <div class="sub-branches">
+                    <div class="sub-branch">
+                        <div class="sub-branch-title">🎯 Differentiated Hooks</div>
+                        <div class="sub-branch-content">
+                            <span class="highlight">"Stop fixing bad photos. Start capturing great ones."</span><br>
+                            <span class="highlight">"Virtual staging your legal team will love"</span><br>
+                            <span class="highlight">"What if every photo was a hero shot?"</span><br>
+                            <span class="highlight">"One app. Five workflow phases."</span>
+                        </div>
+                    </div>
+                    <div class="sub-branch">
+                        <div class="sub-branch-title">💎 Unique Selling Points</div>
+                        <div class="sub-branch-content">
+                            <span class="metric">Pre-capture AI guidance</span> - ONLY ONE<br>
+                            <span class="metric">MLS compliance automation</span> - ONLY ONE<br>
+                            <span class="metric">5-phase complete workflow</span> - ONLY ONE<br>
+                            <span class="metric">Subscription vs per-image</span> - Different model
+                        </div>
+                    </div>
+                    <div class="sub-branch">
+                        <div class="sub-branch-title">💵 Budget Allocation ($5K/mo)</div>
+                        <div class="sub-branch-content">
+                            <span class="metric">Meta: $2,500 (50%)</span>
+                            <span class="metric">Google: $1,000 (20%)</span><br>
+                            <span class="metric">YouTube: $750 (15%)</span>
+                            <span class="metric">LinkedIn: $500 (10%)</span><br>
+                            <span class="metric">Retargeting: $250 (5%)</span>
+                        </div>
+                    </div>
+                    <div class="sub-branch">
+                        <div class="sub-branch-title">📅 90-Day Priorities</div>
+                        <div class="sub-branch-content">
+                            Week 1-4: FB group engagement + first video ads<br>
+                            Week 5-8: Scale winning creative + Google launch<br>
+                            Week 9-12: YouTube + LinkedIn + first webinar<br>
+                            <span class="highlight">Target: 200+ leads/month by Day 90</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+        </div>
+        
+        <!-- Legend -->
+        <div class="legend">
+            <div class="legend-item">
+                <div class="legend-dot" style="background: #ef4444;"></div>
+                <span>Competitors</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-dot" style="background: #22c55e;"></div>
+                <span>Paid Channels</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-dot" style="background: #3b82f6;"></div>
+                <span>Organic Strategy</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-dot" style="background: #ec4899;"></div>
+                <span>Communities</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-dot" style="background: #f59e0b;"></div>
+                <span>Ad Hooks</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-dot" style="background: #8b5cf6;"></div>
+                <span>SnapR Strategy</span>
+            </div>
+        </div>
+        
+    </div>
+</body>
+</html>

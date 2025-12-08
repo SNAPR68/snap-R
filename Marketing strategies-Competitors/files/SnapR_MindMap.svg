@@ -1,0 +1,201 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 1200">
+  <defs>
+    <linearGradient id="centerGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#7c3aed"/>
+      <stop offset="100%" style="stop-color:#2563eb"/>
+    </linearGradient>
+    <linearGradient id="competitorGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#ef4444"/>
+      <stop offset="100%" style="stop-color:#f87171"/>
+    </linearGradient>
+    <linearGradient id="paidGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#22c55e"/>
+      <stop offset="100%" style="stop-color:#4ade80"/>
+    </linearGradient>
+    <linearGradient id="organicGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#3b82f6"/>
+      <stop offset="100%" style="stop-color:#60a5fa"/>
+    </linearGradient>
+    <linearGradient id="communityGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#ec4899"/>
+      <stop offset="100%" style="stop-color:#f472b6"/>
+    </linearGradient>
+    <linearGradient id="hooksGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#f59e0b"/>
+      <stop offset="100%" style="stop-color:#fbbf24"/>
+    </linearGradient>
+    <linearGradient id="snaprGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#8b5cf6"/>
+      <stop offset="100%" style="stop-color:#a78bfa"/>
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="2" dy="4" stdDeviation="4" flood-opacity="0.3"/>
+    </filter>
+  </defs>
+  
+  <!-- Background -->
+  <rect width="1600" height="1200" fill="#1a1a2e"/>
+  
+  <!-- Title -->
+  <text x="800" y="45" text-anchor="middle" fill="#fff" font-family="Arial, sans-serif" font-size="28" font-weight="bold">🎯 SnapR Competitive Ads Intelligence Mind Map</text>
+  <text x="800" y="75" text-anchor="middle" fill="#94a3b8" font-family="Arial, sans-serif" font-size="16">Organic &amp; Inorganic Marketing Strategy Blueprint</text>
+  
+  <!-- Connection Lines from Center -->
+  <g stroke-width="3" fill="none">
+    <path d="M800,200 Q650,250 350,180" stroke="#ef4444" opacity="0.6"/>
+    <path d="M800,200 Q950,250 1250,180" stroke="#22c55e" opacity="0.6"/>
+    <path d="M800,200 Q600,350 200,450" stroke="#3b82f6" opacity="0.6"/>
+    <path d="M800,200 Q1000,350 1400,450" stroke="#ec4899" opacity="0.6"/>
+    <path d="M800,200 Q650,500 350,700" stroke="#f59e0b" opacity="0.6"/>
+    <path d="M800,200 Q950,500 1250,700" stroke="#8b5cf6" opacity="0.6"/>
+  </g>
+  
+  <!-- CENTER NODE -->
+  <g filter="url(#shadow)">
+    <ellipse cx="800" cy="160" rx="140" ry="60" fill="url(#centerGrad)"/>
+    <text x="800" y="150" text-anchor="middle" fill="#fff" font-family="Arial, sans-serif" font-size="16" font-weight="bold">🚀 SnapR</text>
+    <text x="800" y="172" text-anchor="middle" fill="#e2e8f0" font-family="Arial, sans-serif" font-size="11">Pre-capture AI + MLS Compliance</text>
+    <text x="800" y="188" text-anchor="middle" fill="#fbbf24" font-family="Arial, sans-serif" font-size="10" font-weight="bold">Score: 9.48/10 vs 3.71</text>
+  </g>
+  
+  <!-- COMPETITORS BRANCH (Top Left) -->
+  <g filter="url(#shadow)">
+    <rect x="150" y="120" width="280" height="180" rx="15" fill="url(#competitorGrad)"/>
+    <text x="290" y="145" text-anchor="middle" fill="#fff" font-family="Arial, sans-serif" font-size="14" font-weight="bold">🏢 COMPETITORS</text>
+    
+    <rect x="160" y="155" width="260" height="35" rx="5" fill="rgba(0,0,0,0.2)"/>
+    <text x="170" y="172" fill="#fff" font-family="Arial, sans-serif" font-size="10" font-weight="bold">📦 BoxBrownie (Leader)</text>
+    <text x="170" y="183" fill="#fef3c7" font-family="Arial, sans-serif" font-size="8">125K customers • Brad Filliponi face of brand</text>
+    
+    <rect x="160" y="195" width="260" height="30" rx="5" fill="rgba(0,0,0,0.2)"/>
+    <text x="170" y="212" fill="#fff" font-family="Arial, sans-serif" font-size="10" font-weight="bold">📸 PhotoUp</text>
+    <text x="170" y="222" fill="#fef3c7" font-family="Arial, sans-serif" font-size="8">3K photographers • Dedicated editor model</text>
+    
+    <rect x="160" y="230" width="260" height="30" rx="5" fill="rgba(0,0,0,0.2)"/>
+    <text x="170" y="247" fill="#fff" font-family="Arial, sans-serif" font-size="10" font-weight="bold">🎨 Styldod</text>
+    <text x="170" y="257" fill="#fef3c7" font-family="Arial, sans-serif" font-size="8">10K realtors • B2B LinkedIn focus • $16 pricing</text>
+    
+    <rect x="160" y="265" width="260" height="28" rx="5" fill="rgba(255,0,0,0.3)"/>
+    <text x="170" y="282" fill="#fef3c7" font-family="Arial, sans-serif" font-size="9" font-weight="bold">⚠️ ALL focus POST-capture only</text>
+  </g>
+  
+  <!-- PAID ADS BRANCH (Top Right) -->
+  <g filter="url(#shadow)">
+    <rect x="1170" y="120" width="280" height="180" rx="15" fill="url(#paidGrad)"/>
+    <text x="1310" y="145" text-anchor="middle" fill="#fff" font-family="Arial, sans-serif" font-size="14" font-weight="bold">💰 PAID ADVERTISING</text>
+    
+    <rect x="1180" y="155" width="260" height="35" rx="5" fill="rgba(0,0,0,0.2)"/>
+    <text x="1190" y="172" fill="#fff" font-family="Arial, sans-serif" font-size="10" font-weight="bold">📱 Meta (FB/IG) - 50% budget</text>
+    <text x="1190" y="183" fill="#d1fae5" font-family="Arial, sans-serif" font-size="8">CPC $1.50-2.50 • CTR 1.5-2.5% • Video 2x better</text>
+    
+    <rect x="1180" y="195" width="260" height="30" rx="5" fill="rgba(0,0,0,0.2)"/>
+    <text x="1190" y="212" fill="#fff" font-family="Arial, sans-serif" font-size="10" font-weight="bold">🔍 Google Search - 20% budget</text>
+    <text x="1190" y="222" fill="#d1fae5" font-family="Arial, sans-serif" font-size="8">CPC $3-5 • Target "AI real estate photography"</text>
+    
+    <rect x="1180" y="230" width="125" height="30" rx="5" fill="rgba(0,0,0,0.2)"/>
+    <text x="1190" y="247" fill="#fff" font-family="Arial, sans-serif" font-size="10" font-weight="bold">▶️ YouTube</text>
+    <text x="1190" y="257" fill="#d1fae5" font-family="Arial, sans-serif" font-size="8">15% • Tutorial pre-roll</text>
+    
+    <rect x="1315" y="230" width="125" height="30" rx="5" fill="rgba(0,0,0,0.2)"/>
+    <text x="1325" y="247" fill="#fff" font-family="Arial, sans-serif" font-size="10" font-weight="bold">💼 LinkedIn</text>
+    <text x="1325" y="257" fill="#d1fae5" font-family="Arial, sans-serif" font-size="8">10% • B2B brokerages</text>
+    
+    <rect x="1180" y="265" width="260" height="28" rx="5" fill="rgba(0,100,0,0.3)"/>
+    <text x="1190" y="282" fill="#d1fae5" font-family="Arial, sans-serif" font-size="9" font-weight="bold">💵 Recommended: $5K/month start</text>
+  </g>
+  
+  <!-- ORGANIC STRATEGY BRANCH (Left) -->
+  <g filter="url(#shadow)">
+    <rect x="50" y="380" width="280" height="170" rx="15" fill="url(#organicGrad)"/>
+    <text x="190" y="405" text-anchor="middle" fill="#fff" font-family="Arial, sans-serif" font-size="14" font-weight="bold">🌱 ORGANIC STRATEGY</text>
+    
+    <rect x="60" y="415" width="260" height="35" rx="5" fill="rgba(0,0,0,0.2)"/>
+    <text x="70" y="432" fill="#fff" font-family="Arial, sans-serif" font-size="10" font-weight="bold">📝 Content Marketing</text>
+    <text x="70" y="443" fill="#dbeafe" font-family="Arial, sans-serif" font-size="8">Blog 4-8x/mo • YouTube tutorials • SEO focus</text>
+    
+    <rect x="60" y="455" width="260" height="35" rx="5" fill="rgba(0,0,0,0.2)"/>
+    <text x="70" y="472" fill="#fff" font-family="Arial, sans-serif" font-size="10" font-weight="bold">🎙️ Thought Leadership</text>
+    <text x="70" y="483" fill="#dbeafe" font-family="Arial, sans-serif" font-size="8">Podcasts • Webinars • Conference speaking</text>
+    
+    <rect x="60" y="495" width="260" height="45" rx="5" fill="rgba(0,0,100,0.3)"/>
+    <text x="70" y="512" fill="#fff" font-family="Arial, sans-serif" font-size="10" font-weight="bold">🔎 SEO Opportunities (OPEN)</text>
+    <text x="70" y="523" fill="#93c5fd" font-family="Arial, sans-serif" font-size="8">"AI real estate photography" 590/mo</text>
+    <text x="70" y="533" fill="#93c5fd" font-family="Arial, sans-serif" font-size="8">"MLS photo requirements" 720/mo</text>
+  </g>
+  
+  <!-- COMMUNITIES BRANCH (Right) -->
+  <g filter="url(#shadow)">
+    <rect x="1270" y="380" width="280" height="170" rx="15" fill="url(#communityGrad)"/>
+    <text x="1410" y="405" text-anchor="middle" fill="#fff" font-family="Arial, sans-serif" font-size="14" font-weight="bold">👥 COMMUNITIES</text>
+    
+    <rect x="1280" y="415" width="260" height="45" rx="5" fill="rgba(0,0,0,0.2)"/>
+    <text x="1290" y="432" fill="#fff" font-family="Arial, sans-serif" font-size="10" font-weight="bold">📘 Facebook Groups (PRIMARY)</text>
+    <text x="1290" y="443" fill="#fce7f3" font-family="Arial, sans-serif" font-size="8">RE Photography 45K • RE Photographers 22K</text>
+    <text x="1290" y="453" fill="#fce7f3" font-family="Arial, sans-serif" font-size="8">Virtual Staging Pros 8K • RE Marketing 35K</text>
+    
+    <rect x="1280" y="465" width="260" height="30" rx="5" fill="rgba(0,0,0,0.2)"/>
+    <text x="1290" y="482" fill="#fff" font-family="Arial, sans-serif" font-size="10" font-weight="bold">📷 PFRE (Photography for RE)</text>
+    <text x="1290" y="492" fill="#fce7f3" font-family="Arial, sans-serif" font-size="8">50K+ readers • Sponsor contests, contribute</text>
+    
+    <rect x="1280" y="500" width="260" height="40" rx="5" fill="rgba(200,0,100,0.3)"/>
+    <text x="1290" y="517" fill="#fff" font-family="Arial, sans-serif" font-size="10" font-weight="bold">⚡ Strategy: Build presence BEFORE ads</text>
+    <text x="1290" y="530" fill="#fce7f3" font-family="Arial, sans-serif" font-size="8">Authentic engagement → then promote</text>
+  </g>
+  
+  <!-- AD HOOKS BRANCH (Bottom Left) -->
+  <g filter="url(#shadow)">
+    <rect x="150" y="620" width="320" height="200" rx="15" fill="url(#hooksGrad)"/>
+    <text x="310" y="645" text-anchor="middle" fill="#fff" font-family="Arial, sans-serif" font-size="14" font-weight="bold">🎣 COMPETITOR AD HOOKS</text>
+    
+    <rect x="160" y="655" width="300" height="35" rx="5" fill="rgba(0,0,0,0.2)"/>
+    <text x="170" y="672" fill="#fff" font-family="Arial, sans-serif" font-size="10" font-weight="bold">📦 BoxBrownie</text>
+    <text x="170" y="683" fill="#fef3c7" font-family="Arial, sans-serif" font-size="8">"Transform photos in 24 hours" • CTA: 4 Free Edits</text>
+    
+    <rect x="160" y="695" width="300" height="35" rx="5" fill="rgba(0,0,0,0.2)"/>
+    <text x="170" y="712" fill="#fff" font-family="Arial, sans-serif" font-size="10" font-weight="bold">📸 PhotoUp</text>
+    <text x="170" y="723" fill="#fef3c7" font-family="Arial, sans-serif" font-size="8">"Your dedicated photo editor" • CTA: 10 Free Edits</text>
+    
+    <rect x="160" y="735" width="300" height="35" rx="5" fill="rgba(0,0,0,0.2)"/>
+    <text x="170" y="752" fill="#fff" font-family="Arial, sans-serif" font-size="10" font-weight="bold">🎨 Styldod</text>
+    <text x="170" y="763" fill="#fef3c7" font-family="Arial, sans-serif" font-size="8">"AI-powered from $16" • CTA: Free Trial</text>
+    
+    <rect x="160" y="775" width="300" height="35" rx="5" fill="rgba(100,50,0,0.3)"/>
+    <text x="170" y="792" fill="#fff" font-family="Arial, sans-serif" font-size="10" font-weight="bold">📊 Common Patterns</text>
+    <text x="170" y="803" fill="#fef3c7" font-family="Arial, sans-serif" font-size="8">80% Before/After • Free trial CTAs • Per-image pricing</text>
+  </g>
+  
+  <!-- SNAPR STRATEGY BRANCH (Bottom Right) -->
+  <g filter="url(#shadow)">
+    <rect x="1130" y="620" width="320" height="200" rx="15" fill="url(#snaprGrad)"/>
+    <text x="1290" y="645" text-anchor="middle" fill="#fff" font-family="Arial, sans-serif" font-size="14" font-weight="bold">⚡ SNAPR ATTACK STRATEGY</text>
+    
+    <rect x="1140" y="655" width="300" height="50" rx="5" fill="rgba(0,0,0,0.2)"/>
+    <text x="1150" y="672" fill="#fff" font-family="Arial, sans-serif" font-size="10" font-weight="bold">🎯 Differentiated Hooks</text>
+    <text x="1150" y="683" fill="#ede9fe" font-family="Arial, sans-serif" font-size="8">"Stop fixing bad photos. Start capturing great ones."</text>
+    <text x="1150" y="693" fill="#ede9fe" font-family="Arial, sans-serif" font-size="8">"Virtual staging your legal team will love"</text>
+    
+    <rect x="1140" y="710" width="300" height="45" rx="5" fill="rgba(0,0,0,0.2)"/>
+    <text x="1150" y="727" fill="#fff" font-family="Arial, sans-serif" font-size="10" font-weight="bold">💎 Unique Selling Points (ONLY ONE)</text>
+    <text x="1150" y="738" fill="#ede9fe" font-family="Arial, sans-serif" font-size="8">✓ Pre-capture AI guidance ✓ MLS compliance</text>
+    <text x="1150" y="748" fill="#ede9fe" font-family="Arial, sans-serif" font-size="8">✓ 5-phase workflow ✓ Subscription model</text>
+    
+    <rect x="1140" y="760" width="300" height="50" rx="5" fill="rgba(100,0,200,0.3)"/>
+    <text x="1150" y="777" fill="#fff" font-family="Arial, sans-serif" font-size="10" font-weight="bold">📅 90-Day Plan</text>
+    <text x="1150" y="788" fill="#ede9fe" font-family="Arial, sans-serif" font-size="8">W1-4: FB groups + video ads • W5-8: Scale + Google</text>
+    <text x="1150" y="798" fill="#fbbf24" font-family="Arial, sans-serif" font-size="9" font-weight="bold">Target: 200+ leads/month by Day 90</text>
+  </g>
+  
+  <!-- Legend -->
+  <g transform="translate(520, 880)">
+    <rect x="0" y="0" width="560" height="45" rx="10" fill="rgba(255,255,255,0.05)" stroke="rgba(255,255,255,0.1)"/>
+    <circle cx="30" cy="22" r="8" fill="#ef4444"/><text x="45" y="27" fill="#94a3b8" font-family="Arial, sans-serif" font-size="11">Competitors</text>
+    <circle cx="140" cy="22" r="8" fill="#22c55e"/><text x="155" y="27" fill="#94a3b8" font-family="Arial, sans-serif" font-size="11">Paid</text>
+    <circle cx="210" cy="22" r="8" fill="#3b82f6"/><text x="225" y="27" fill="#94a3b8" font-family="Arial, sans-serif" font-size="11">Organic</text>
+    <circle cx="295" cy="22" r="8" fill="#ec4899"/><text x="310" y="27" fill="#94a3b8" font-family="Arial, sans-serif" font-size="11">Communities</text>
+    <circle cx="410" cy="22" r="8" fill="#f59e0b"/><text x="425" y="27" fill="#94a3b8" font-family="Arial, sans-serif" font-size="11">Hooks</text>
+    <circle cx="485" cy="22" r="8" fill="#8b5cf6"/><text x="500" y="27" fill="#94a3b8" font-family="Arial, sans-serif" font-size="11">SnapR</text>
+  </g>
+  
+  <!-- Footer -->
+  <text x="800" y="960" text-anchor="middle" fill="#64748b" font-family="Arial, sans-serif" font-size="12">SnapR Competitive Intelligence Report • December 2025</text>
+</svg>

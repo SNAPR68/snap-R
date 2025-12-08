@@ -73,7 +73,7 @@ export default function OnboardingPage() {
         updated_at: new Date().toISOString(),
       });
 
-      router.push('/pricing?role=' + encodeURIComponent(selectedRole) + '&region=' + encodeURIComponent(selectedRegion));
+      router.push('/dashboard');
     }
   };
 
