@@ -100,6 +100,7 @@ export function StudioClient({ listingId, userRole, showMlsFeatures = false, cre
   const [selectedPreset, setSelectedPreset] = useState<{ id: string; name: string; prompt: string } | null>(null);
   const [expandedCategories, setExpandedCategories] = useState<string[]>(['EXTERIOR', 'INTERIOR', 'ENHANCE']);
   type PendingEnhancement = {
+    storagePath?: string;
     originalUrl: string;
     enhancedUrl: string;
     toolId: string;
@@ -231,6 +232,7 @@ export function StudioClient({ listingId, userRole, showMlsFeatures = false, cre
       if (data.success && data.enhancedUrl) {
         setPendingEnhancement({
           originalUrl: selectedPhoto.signedRawUrl,
+          storagePath: data.storagePath,
           enhancedUrl: data.enhancedUrl,
           toolId,
           photoId: selectedPhoto.id,
@@ -248,7 +250,7 @@ export function StudioClient({ listingId, userRole, showMlsFeatures = false, cre
 
   const handleAcceptEnhancement = async () => {
     if (!pendingEnhancement) return;
-    await supabase.from('photos').update({ status: 'completed' }).eq('id', pendingEnhancement.photoId);
+    await supabase.from('photos').update({ status: 'completed', processed_url: pendingEnhancement.storagePath || pendingEnhancement.enhancedUrl, variant: pendingEnhancement.toolId }).eq('id', pendingEnhancement.photoId);
     setPendingEnhancement(null);
     loadData();
   };

@@ -1,7 +1,7 @@
 import { createClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
-import { Plus, FolderOpen, Image, Coins, BarChart3, CreditCard, Settings, Camera, LogOut, Sparkles, Palette } from 'lucide-react';
+import { Plus, FolderOpen, Image, Coins, BarChart3, CreditCard, Settings, Camera, Sparkles, Palette } from 'lucide-react';
 
 export const dynamic = 'force-dynamic';
 
@@ -62,14 +62,33 @@ export default async function DashboardPage() {
             <CreditCard className="w-5 h-5" />
             <span>Billing</span>
           </Link>
-          <Link href="/dashboard/content-studio" className="flex items-center gap-3 px-4 py-3 rounded-xl text-white/60 hover:bg-white/5 hover:text-white transition-all">
-            <Sparkles className="w-5 h-5" />
-            <span>Content Studio</span>
+          
+          {/* Content Studio - Premium Styled */}
+          <div className="pt-4 pb-2">
+            <p className="px-4 text-xs text-white/30 uppercase tracking-wider mb-2">Content</p>
+          </div>
+          <Link href="/dashboard/content-studio" className="relative flex items-center gap-3 px-4 py-3 rounded-xl bg-gradient-to-r from-[#D4A017]/20 via-[#D4A017]/10 to-[#B8860B]/20 border border-[#D4A017]/40 hover:border-[#D4A017]/70 hover:from-[#D4A017]/30 hover:to-[#B8860B]/30 transition-all group overflow-hidden">
+            {/* Glass shine effect */}
+            <div className="absolute inset-0 bg-gradient-to-br from-white/10 via-transparent to-transparent opacity-50" />
+            <div className="absolute top-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-[#D4A017]/50 to-transparent" />
+            <div className="relative flex items-center gap-3">
+              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#D4A017] to-[#B8860B] flex items-center justify-center shadow-lg shadow-[#D4A017]/20">
+                <Sparkles className="w-4 h-4 text-black" />
+              </div>
+              <div>
+                <span className="font-semibold text-[#D4A017] group-hover:text-[#F4CF47] transition-colors">Content Studio</span>
+                <p className="text-[10px] text-white/40">Create social posts</p>
+              </div>
+            </div>
           </Link>
           <Link href="/dashboard/brand" className="flex items-center gap-3 px-4 py-3 rounded-xl text-white/60 hover:bg-white/5 hover:text-white transition-all">
             <Palette className="w-5 h-5" />
             <span>Brand Profile</span>
           </Link>
+
+          <div className="pt-4 pb-2">
+            <p className="px-4 text-xs text-white/30 uppercase tracking-wider mb-2">Account</p>
+          </div>
           <Link href="/dashboard/settings" className="flex items-center gap-3 px-4 py-3 rounded-xl text-white/60 hover:bg-white/5 hover:text-white transition-all">
             <Settings className="w-5 h-5" />
             <span>Settings</span>

@@ -1,6 +1,3 @@
-// GPT-4 Copy Generation Provider
-// Generates property descriptions, social captions, and hashtags
-
 import OpenAI from 'openai'
 
 const openai = new OpenAI({
@@ -11,75 +8,77 @@ export interface PropertyDetails {
   address?: string
   city?: string
   state?: string
+  price?: number
   bedrooms?: number
   bathrooms?: number
   squareFeet?: number
-  price?: number
-  propertyType?: string // 'house', 'condo', 'townhouse', 'land'
-  features?: string[] // 'pool', 'view', 'renovated', etc.
-  style?: string // 'luxury', 'modern', 'cozy', 'family'
+  propertyType?: string
+  features?: string[] | string
 }
 
 export interface CaptionOptions {
   platform: 'instagram' | 'facebook' | 'tiktok' | 'linkedin'
   tone: 'professional' | 'casual' | 'luxury' | 'excited'
-  includeEmojis: boolean
-  includeCallToAction: boolean
+  includeEmojis?: boolean
+  includeCallToAction?: boolean
   maxLength?: number
 }
 
-export interface GeneratedCopy {
+export interface GenerationResult {
   text: string
   tokensUsed: number
   model: string
 }
 
-// Generate Instagram/Facebook/TikTok caption
 export async function generateCaption(
   property: PropertyDetails,
   options: CaptionOptions
-): Promise<GeneratedCopy> {
-  const platformGuidelines = {
-    instagram: 'Instagram caption (max 2200 chars, optimized for engagement, line breaks for readability)',
-    facebook: 'Facebook post (conversational, can be longer, community-focused)',
-    tiktok: 'TikTok caption (short, punchy, trending style, max 150 chars)',
-    linkedin: 'LinkedIn post (professional, business-focused, networking tone)'
+): Promise<GenerationResult> {
+  const { platform, tone, includeEmojis = true, includeCallToAction = true, maxLength = 300 } = options
+
+  const featuresText = Array.isArray(property.features) 
+    ? property.features.join(', ')
+    : (property.features || '')
+
+  const platformGuidelines: Record<string, string> = {
+    instagram: 'Keep it engaging and visual. Use line breaks for readability. Hashtags will be added separately.',
+    facebook: 'More conversational and detailed. Can be slightly longer.',
+    tiktok: 'Short, punchy, and trendy. Use casual language.',
+    linkedin: 'Professional and polished. Focus on investment value and market insights.'
   }
 
-  const toneGuidelines = {
-    professional: 'Professional and polished, focused on value and features',
-    casual: 'Friendly and approachable, like talking to a neighbor',
-    luxury: 'Sophisticated and exclusive, emphasizing prestige and quality',
-    excited: 'Enthusiastic and energetic, creating urgency and excitement'
+  const toneGuidelines: Record<string, string> = {
+    professional: 'Maintain a polished, trustworthy tone. Use industry terminology appropriately.',
+    casual: 'Friendly and approachable. Like talking to a neighbor.',
+    luxury: 'Elegant and sophisticated. Emphasize exclusivity and premium features.',
+    excited: 'Energetic and enthusiastic. Create urgency and excitement.'
   }
 
-  const prompt = `Generate a ${platformGuidelines[options.platform]} for this real estate listing.
+  const prompt = `You are an expert real estate social media copywriter. Write a ${platform} caption for this property listing.
 
 Property Details:
-- Location: ${property.address || 'Beautiful location'}${property.city ? `, ${property.city}` : ''}${property.state ? `, ${property.state}` : ''}
+- Address: ${property.address || 'Beautiful property'}
+- Location: ${property.city || ''}, ${property.state || ''}
+- Price: ${property.price ? `$${property.price.toLocaleString()}` : 'Contact for price'}
 - Bedrooms: ${property.bedrooms || 'N/A'}
 - Bathrooms: ${property.bathrooms || 'N/A'}
-- Square Feet: ${property.squareFeet?.toLocaleString() || 'N/A'}
-- Price: ${property.price ? `$${property.price.toLocaleString()}` : 'Contact for price'}
+- Square Feet: ${property.squareFeet ? property.squareFeet.toLocaleString() : 'N/A'}
 - Property Type: ${property.propertyType || 'Residential'}
-- Key Features: ${property.features?.join(', ') || 'Beautiful home'}
+- Key Features: ${featuresText || 'Modern finishes'}
 
-Tone: ${toneGuidelines[options.tone]}
-${options.includeEmojis ? 'Include relevant emojis throughout.' : 'Do not use emojis.'}
-${options.includeCallToAction ? 'End with a clear call-to-action (DM, link in bio, call, etc.)' : ''}
-${options.maxLength ? `Keep under ${options.maxLength} characters.` : ''}
+Guidelines:
+- Platform: ${platformGuidelines[platform]}
+- Tone: ${toneGuidelines[tone]}
+- ${includeEmojis ? 'Include relevant emojis throughout' : 'Do not use emojis'}
+- ${includeCallToAction ? 'End with a clear call-to-action (e.g., "DM for details", "Link in bio", "Schedule a tour")' : 'No call-to-action needed'}
+- Maximum length: ${maxLength} characters
+- Do NOT include hashtags (they will be added separately)
 
-Write ONLY the caption, no explanations or quotation marks.`
+Write only the caption, nothing else.`
 
   const response = await openai.chat.completions.create({
     model: 'gpt-4o-mini',
-    messages: [
-      {
-        role: 'system',
-        content: 'You are an expert real estate social media copywriter. You write engaging, platform-optimized captions that drive engagement and leads. Never use quotation marks around your response.'
-      },
-      { role: 'user', content: prompt }
-    ],
+    messages: [{ role: 'user', content: prompt }],
     max_tokens: 500,
     temperature: 0.7
   })
@@ -91,42 +90,36 @@ Write ONLY the caption, no explanations or quotation marks.`
   }
 }
 
-// Generate property description for MLS/listing
-export async function generateDescription(
+export async function generateHashtags(
   property: PropertyDetails,
-  style: 'mls' | 'website' | 'brochure' = 'mls'
-): Promise<GeneratedCopy> {
-  const styleGuidelines = {
-    mls: 'MLS listing description (factual, feature-focused, 250-500 words, no excessive adjectives)',
-    website: 'Website listing (engaging, storytelling, highlights lifestyle, 300-600 words)',
-    brochure: 'Print brochure (elegant, concise, luxury feel, 150-300 words)'
-  }
+  platform: string = 'instagram',
+  count: number = 20
+): Promise<GenerationResult> {
+  const featuresText = Array.isArray(property.features) 
+    ? property.features.join(', ')
+    : (property.features || '')
 
-  const prompt = `Write a ${styleGuidelines[style]} for this property.
+  const prompt = `Generate ${count} relevant hashtags for a real estate listing on ${platform}.
 
 Property Details:
-- Location: ${property.address || 'Prime location'}${property.city ? `, ${property.city}` : ''}${property.state ? `, ${property.state}` : ''}
-- Bedrooms: ${property.bedrooms || 'N/A'}
-- Bathrooms: ${property.bathrooms || 'N/A'}
-- Square Feet: ${property.squareFeet?.toLocaleString() || 'N/A'}
-- Price: ${property.price ? `$${property.price.toLocaleString()}` : 'Contact for price'}
-- Property Type: ${property.propertyType || 'Residential'}
-- Key Features: ${property.features?.join(', ') || 'Move-in ready'}
-- Style: ${property.style || 'Well-maintained'}
+- Location: ${property.city || ''}, ${property.state || ''}
+- Property Type: ${property.propertyType || 'House'}
+- Key Features: ${featuresText || 'Modern home'}
 
-Write ONLY the description, no titles or explanations.`
+Requirements:
+- Mix of popular real estate hashtags and location-specific ones
+- Include trending hashtags for ${platform}
+- Format: #hashtag (each on same line, space-separated)
+- No numbering or explanations
+- Just the hashtags
+
+Generate exactly ${count} hashtags.`
 
   const response = await openai.chat.completions.create({
     model: 'gpt-4o-mini',
-    messages: [
-      {
-        role: 'system',
-        content: 'You are an expert real estate copywriter specializing in property descriptions. You write compelling, accurate descriptions that highlight key features and appeal to buyers. Never use quotation marks around your response.'
-      },
-      { role: 'user', content: prompt }
-    ],
-    max_tokens: 800,
-    temperature: 0.6
+    messages: [{ role: 'user', content: prompt }],
+    max_tokens: 300,
+    temperature: 0.8
   })
 
   return {
@@ -136,38 +129,49 @@ Write ONLY the description, no titles or explanations.`
   }
 }
 
-// Generate hashtags
-export async function generateHashtags(
+export interface DescriptionOptions {
+  style: 'mls' | 'website' | 'brochure'
+  maxWords?: number
+}
+
+export async function generateDescription(
   property: PropertyDetails,
-  platform: 'instagram' | 'tiktok' | 'general' = 'instagram',
-  count: number = 20
-): Promise<GeneratedCopy> {
-  const prompt = `Generate ${count} relevant hashtags for a real estate ${platform} post.
+  options: DescriptionOptions
+): Promise<GenerationResult> {
+  const { style, maxWords = 300 } = options
 
-Property: ${property.propertyType || 'home'} in ${property.city || 'the area'}${property.state ? `, ${property.state}` : ''}
-Features: ${property.features?.join(', ') || 'beautiful property'}
-Price Range: ${property.price ? (property.price > 1000000 ? 'luxury' : property.price > 500000 ? 'mid-range' : 'affordable') : 'various'}
+  const featuresText = Array.isArray(property.features) 
+    ? property.features.join(', ')
+    : (property.features || '')
 
-Include a mix of:
-- Location-specific hashtags
-- Property type hashtags
-- Real estate industry hashtags
-- Lifestyle hashtags
-- Trending real estate hashtags
+  const styleGuidelines: Record<string, string> = {
+    mls: 'Concise, factual, uses standard MLS abbreviations (BR, BA, SF). Focus on key selling points.',
+    website: 'Engaging and descriptive. Paint a picture of the lifestyle. Use flowing prose.',
+    brochure: 'Elegant and detailed. Premium feel. Emphasize luxury features and craftsmanship.'
+  }
 
-Return ONLY hashtags separated by spaces, starting with #. No explanations.`
+  const prompt = `Write a ${style} property description for this listing.
+
+Property Details:
+- Address: ${property.address || 'Beautiful property'}
+- Location: ${property.city || ''}, ${property.state || ''}
+- Price: ${property.price ? `$${property.price.toLocaleString()}` : 'Contact for price'}
+- Bedrooms: ${property.bedrooms || 'N/A'}
+- Bathrooms: ${property.bathrooms || 'N/A'}
+- Square Feet: ${property.squareFeet ? property.squareFeet.toLocaleString() : 'N/A'}
+- Property Type: ${property.propertyType || 'Residential'}
+- Key Features: ${featuresText || 'Modern finishes, updated kitchen'}
+
+Style Guidelines: ${styleGuidelines[style]}
+Maximum Words: ${maxWords}
+
+Write only the description, nothing else.`
 
   const response = await openai.chat.completions.create({
     model: 'gpt-4o-mini',
-    messages: [
-      {
-        role: 'system',
-        content: 'You are a social media expert specializing in real estate hashtag strategy. Return only hashtags, no other text.'
-      },
-      { role: 'user', content: prompt }
-    ],
-    max_tokens: 200,
-    temperature: 0.8
+    messages: [{ role: 'user', content: prompt }],
+    max_tokens: 800,
+    temperature: 0.6
   })
 
   return {

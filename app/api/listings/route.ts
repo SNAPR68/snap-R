@@ -11,15 +11,66 @@ function sanitize(value?: string | null) {
 export async function GET(request: Request) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
-
   if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   const url = new URL(request.url);
+  const listingId = url.searchParams.get("id");
   const withPhotos = url.searchParams.get("withPhotos") === "true";
 
-  // Columns that exist: id, user_id, title, address, status, created_at, city, state, postal_code, description, project_id
+  // Single listing fetch with photos and signed URLs
+  if (listingId) {
+    console.log("[API] Fetching single listing:", listingId, "for user:", user.id);
+    
+    const { data: listing, error } = await supabase
+      .from("listings")
+      .select(`id,title,address,city,state,postal_code,description,status,created_at,photos(id,raw_url,processed_url,variant,status,created_at)`)
+      .eq("id", listingId)
+      .single();
+
+    if (error) {
+      console.error("[API] Listing fetch error:", error);
+      return NextResponse.json({ error: "Listing not found", details: error.message }, { status: 404 });
+    }
+
+    if (!listing) {
+      return NextResponse.json({ error: "Listing not found" }, { status: 404 });
+    }
+
+    console.log("[API] Found listing:", listing.title, "with", listing.photos?.length || 0, "photos");
+
+    // Create signed URLs for photos
+    const photos = Array.isArray(listing.photos) ? listing.photos : [];
+    const photosWithSignedUrls = await Promise.all(photos.map(async (photo: any) => {
+      let signedOriginalUrl = null;
+      let signedProcessedUrl = null;
+
+      if (photo.raw_url) {
+        const { data } = await supabase.storage.from('raw-images').createSignedUrl(photo.raw_url, 3600);
+        signedOriginalUrl = data?.signedUrl;
+      }
+
+      if (photo.processed_url) {
+        const { data } = await supabase.storage.from('raw-images').createSignedUrl(photo.processed_url, 3600);
+        signedProcessedUrl = data?.signedUrl;
+        console.log("[API] Created signed URL for processed photo:", photo.id, "->", signedProcessedUrl ? "OK" : "FAILED");
+      }
+
+      return {
+        ...photo,
+        signedOriginalUrl,
+        signedProcessedUrl,
+      };
+    }));
+
+    return NextResponse.json({
+      listing: { ...listing, photos: undefined },
+      photos: photosWithSignedUrls,
+    });
+  }
+
+  // List all listings
   const query = supabase
     .from("listings")
     .select(

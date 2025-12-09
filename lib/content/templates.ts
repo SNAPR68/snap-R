@@ -73,3 +73,144 @@ export function getTemplateById(id: string): TemplateDefinition | undefined {
 export function getTemplatesByCategory(category: string): TemplateDefinition[] {
   return INSTAGRAM_POST_TEMPLATES.filter(t => t.category === category)
 }
+
+// Facebook Post Templates (1200 x 630)
+export const FACEBOOK_POST_TEMPLATES: TemplateDefinition[] = [
+  {
+    id: 'fb-just-listed-modern',
+    name: 'Modern',
+    category: 'just-listed',
+    platform: 'facebook',
+    style: 'modern',
+    thumbnail: '/templates/fb-modern.jpg',
+    dimensions: { width: 1200, height: 630 }
+  },
+  {
+    id: 'fb-just-listed-luxury',
+    name: 'Luxury',
+    category: 'just-listed',
+    platform: 'facebook',
+    style: 'luxury',
+    thumbnail: '/templates/fb-luxury.jpg',
+    dimensions: { width: 1200, height: 630 }
+  },
+  {
+    id: 'fb-just-listed-bold',
+    name: 'Bold',
+    category: 'just-listed',
+    platform: 'facebook',
+    style: 'bold',
+    thumbnail: '/templates/fb-bold.jpg',
+    dimensions: { width: 1200, height: 630 }
+  },
+  {
+    id: 'fb-just-listed-minimal',
+    name: 'Minimal',
+    category: 'just-listed',
+    platform: 'facebook',
+    style: 'minimal',
+    thumbnail: '/templates/fb-minimal.jpg',
+    dimensions: { width: 1200, height: 630 }
+  },
+  {
+    id: 'fb-just-listed-elegant',
+    name: 'Elegant',
+    category: 'just-listed',
+    platform: 'facebook',
+    style: 'elegant',
+    thumbnail: '/templates/fb-elegant.jpg',
+    dimensions: { width: 1200, height: 630 }
+  }
+]
+
+// LinkedIn Post Templates (1200 x 627)
+export const LINKEDIN_POST_TEMPLATES: TemplateDefinition[] = [
+  {
+    id: 'li-just-listed-professional',
+    name: 'Professional',
+    category: 'just-listed',
+    platform: 'linkedin',
+    style: 'modern',
+    thumbnail: '/templates/li-professional.jpg',
+    dimensions: { width: 1200, height: 627 }
+  },
+  {
+    id: 'li-just-listed-corporate',
+    name: 'Corporate',
+    category: 'just-listed',
+    platform: 'linkedin',
+    style: 'minimal',
+    thumbnail: '/templates/li-corporate.jpg',
+    dimensions: { width: 1200, height: 627 }
+  },
+  {
+    id: 'li-just-listed-elegant',
+    name: 'Elegant',
+    category: 'just-listed',
+    platform: 'linkedin',
+    style: 'elegant',
+    thumbnail: '/templates/li-elegant.jpg',
+    dimensions: { width: 1200, height: 627 }
+  }
+]
+
+export function getFacebookTemplates(): TemplateDefinition[] {
+  return FACEBOOK_POST_TEMPLATES
+}
+
+export function getLinkedInTemplates(): TemplateDefinition[] {
+  return LINKEDIN_POST_TEMPLATES
+}
+
+// Vertical Templates (1080 x 1920) - Instagram Stories & TikTok
+export const VERTICAL_TEMPLATES: TemplateDefinition[] = [
+  {
+    id: 'vertical-modern',
+    name: 'Modern',
+    category: 'just-listed',
+    platform: 'story',
+    style: 'modern',
+    thumbnail: '/templates/story-modern.jpg',
+    dimensions: { width: 1080, height: 1920 }
+  },
+  {
+    id: 'vertical-luxury',
+    name: 'Luxury',
+    category: 'just-listed',
+    platform: 'story',
+    style: 'luxury',
+    thumbnail: '/templates/story-luxury.jpg',
+    dimensions: { width: 1080, height: 1920 }
+  },
+  {
+    id: 'vertical-bold',
+    name: 'Bold',
+    category: 'just-listed',
+    platform: 'story',
+    style: 'bold',
+    thumbnail: '/templates/story-bold.jpg',
+    dimensions: { width: 1080, height: 1920 }
+  },
+  {
+    id: 'vertical-minimal',
+    name: 'Minimal',
+    category: 'just-listed',
+    platform: 'story',
+    style: 'minimal',
+    thumbnail: '/templates/story-minimal.jpg',
+    dimensions: { width: 1080, height: 1920 }
+  },
+  {
+    id: 'vertical-elegant',
+    name: 'Elegant',
+    category: 'just-listed',
+    platform: 'story',
+    style: 'elegant',
+    thumbnail: '/templates/story-elegant.jpg',
+    dimensions: { width: 1080, height: 1920 }
+  }
+]
+
+export function getVerticalTemplates(): TemplateDefinition[] {
+  return VERTICAL_TEMPLATES
+}
