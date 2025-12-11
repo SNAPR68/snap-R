@@ -319,8 +319,8 @@ export function StudioClient({ listingId, userRole, showMlsFeatures = false, cre
       {/* Header */}
       <header className="h-14 bg-[#1A1A1A] border-b border-white/10 flex items-center justify-between px-4 flex-shrink-0">
         <div className="flex items-center gap-3">
-          <Link href="/dashboard" className="p-2 hover:bg-white/10 rounded-lg"><ArrowLeft className="w-5 h-5" /></Link><Link href="/" className="flex items-center gap-2"><img src="/snapr-logo.png" alt="SnapR" className="w-12 h-12" /></Link>
-          <h1 className="font-semibold truncate max-w-[200px]">{listing?.title || 'Loading...'}</h1>
+          <Link href="/dashboard" className="flex items-center gap-2 px-3 py-2 hover:bg-white/10 rounded-lg text-white/70 hover:text-white transition-colors"><ArrowLeft className="w-4 h-4" /><span className="text-sm">Back to Dashboard</span></Link><div className="h-6 w-px bg-white/20 mx-2" /><Link href="/" className="flex items-center gap-2"><img src="/snapr-logo.png" alt="SnapR" className="w-10 h-10" /></Link><div className="h-6 w-px bg-white/20 mx-2" />
+          <h1 className="font-semibold truncate max-w-[200px]"><span className="text-white/50">Listing:</span> {listing?.title || 'Loading...'}</h1>
         </div>
         <div className="flex items-center gap-2">
           <button

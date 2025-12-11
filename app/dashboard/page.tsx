@@ -1,7 +1,7 @@
 import { createClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
-import { Plus, FolderOpen, Image, Coins, BarChart3, CreditCard, Settings, Camera, Sparkles, Palette } from 'lucide-react';
+import { Plus, FolderOpen, Image, Coins, BarChart3, CreditCard, Settings, Camera, Sparkles, Palette , LogOut } from 'lucide-react';
 
 export const dynamic = 'force-dynamic';
 
@@ -31,13 +31,19 @@ export default async function DashboardPage() {
 
   const { data: listings } = await supabase
     .from('listings')
-    .select('*, photos(count)')
+    .select('*, photos(id, raw_url, processed_url)')
     .eq('user_id', user.id)
     .order('created_at', { ascending: false })
     .limit(10);
 
-  const totalPhotos = listings?.reduce((acc: number, l: any) => acc + (l.photos?.[0]?.count || 0), 0) || 0;
+  const totalPhotos = listings?.reduce((acc: number, l: any) => acc + (l.photos?.length || 0), 0) || 0;
 
+
+  const getImageUrl = (path: string | null) => {
+    if (!path) return null;
+    if (path.startsWith('http')) return path;
+    return `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/raw-images/${path}`;
+  };
   return (
     <div className="min-h-screen bg-[#0F0F0F] text-white flex">
       {/* Left Sidebar */}
@@ -104,8 +110,15 @@ export default async function DashboardPage() {
               <p className="font-medium truncate">{profile.full_name || 'User'}</p>
               <p className="text-xs text-white/50 truncate">{user.email}</p>
             </div>
+              <p className="text-xs text-[#D4A017] capitalize">{profile.subscription_tier || 'Free'} Plan</p>
           </div>
         </div>
+          <form action="/auth/signout" method="post" className="mt-3">
+            <button type="submit" className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-white/5 hover:bg-red-500/10 border border-white/10 hover:border-red-500/30 rounded-xl text-white/60 hover:text-red-400 transition-all text-sm">
+              <LogOut className="w-4 h-4" />
+              <span>Sign Out</span>
+            </button>
+          </form>
       </aside>
 
       {/* Main Content */}
@@ -113,7 +126,7 @@ export default async function DashboardPage() {
         {/* Top Header */}
         <header className="h-16 bg-[#1A1A1A] border-b border-white/10 flex items-center justify-between px-6">
           <div>
-            <h1 className="text-lg font-semibold">Welcome back, {profile.full_name?.split(' ')[0] || 'there'}!</h1>
+            <h1 className="text-xl font-bold">Dashboard</h1>
             <p className="text-sm text-white/50">
               <span className="capitalize">{profile.subscription_tier || 'Free'} Plan</span>
               <span className="text-white/30"> · {profile.role?.replace('-', ' ')}</span>
@@ -197,15 +210,26 @@ export default async function DashboardPage() {
                     href={`/dashboard/studio?id=${listing.id}`}
                     className="bg-[#1A1A1A] border border-white/10 rounded-xl overflow-hidden hover:border-[#D4A017]/50 transition-all group"
                   >
-                    <div className="aspect-video bg-white/5 flex items-center justify-center">
-                      <FolderOpen className="w-10 h-10 text-white/20" />
+                    <div className="aspect-video bg-white/5 relative overflow-hidden">
+                      {(() => {
+                        const photo = listing.photos?.[0];
+                        const url = photo?.processed_url || photo?.raw_url;
+                        const imageUrl = getImageUrl(url);
+                        return imageUrl ? (
+                          <img src={imageUrl} alt="" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                        ) : (
+                          <div className="absolute inset-0 flex items-center justify-center">
+                            <FolderOpen className="w-10 h-10 text-white/20" />
+                          </div>
+                        );
+                      })()}
                     </div>
                     <div className="p-4">
                       <h3 className="font-semibold text-lg truncate group-hover:text-[#D4A017] transition-colors">
                         {listing.title || listing.address || 'Untitled Listing'}
                       </h3>
                       <div className="flex items-center gap-3 mt-2 text-sm text-white/50">
-                        <span>{listing.photos?.[0]?.count || 0} photos</span>
+                        <span>{listing.photos?.length || 0} photos</span>
                         <span>·</span>
                         <span>{new Date(listing.created_at).toLocaleDateString()}</span>
                       </div>

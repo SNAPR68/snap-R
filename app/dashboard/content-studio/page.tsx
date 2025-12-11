@@ -63,7 +63,8 @@ export default async function ContentStudioPage() {
       
       const firstPhoto = enhancedPhotos[0] || photos?.[0]
       if (firstPhoto) {
-        const photoPath = firstPhoto.processed_url || firstPhoto.raw_url
+      console.log('Photo paths:', firstPhoto?.processed_url, firstPhoto?.raw_url)
+        const photoPath = firstPhoto.raw_url || firstPhoto.processed_url
         if (photoPath && !photoPath.startsWith('http')) {
           const { data } = await supabase.storage
             .from('raw-images')
