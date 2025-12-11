@@ -77,38 +77,38 @@ export default function HomePage() {
         </div>
       </nav>
 
-      {/* Hero Section - Complete Above Fold */}
-      <section className="pt-28 pb-10 px-6 relative overflow-hidden min-h-screen flex flex-col justify-center">
-        <div className="absolute top-20 left-1/4 w-[500px] h-[500px] bg-[#D4A017]/10 rounded-full blur-[100px]"></div>
-        <div className="absolute bottom-0 right-1/4 w-[400px] h-[400px] bg-[#D4A017]/10 rounded-full blur-[80px]"></div>
+      {/* Hero Section */}
+      <section className="pt-32 pb-16 px-6 relative overflow-hidden min-h-screen flex flex-col justify-center">
+        {/* Subtle ambient lighting */}
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[600px] bg-[#D4A017]/5 rounded-full blur-[150px]"></div>
         
-        <div className="max-w-5xl mx-auto text-center relative z-10">
+        <div className="max-w-7xl mx-auto w-full text-center relative z-10">
           {/* Badge */}
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full mb-5 text-sm bg-[#D4A017]/10 border border-[#D4A017]/30">
+          <div className="inline-flex items-center gap-2 px-5 py-2 rounded-full mb-6 text-sm bg-[#D4A017]/10 border border-[#D4A017]/30">
             <Sparkles className="w-4 h-4 text-[#D4A017]" />
-            <span className="text-[#D4A017]">AI-Powered Real Estate Photo Editing</span>
+            <span className="text-[#D4A017] font-medium">AI-Powered Real Estate Photo Editing</span>
           </div>
           
           {/* Main Headline */}
-          <h1 className="text-4xl md:text-6xl font-bold mb-4 leading-tight text-white">
+          <h1 className="text-5xl md:text-7xl font-bold mb-5 leading-tight text-white">
             The <span className="text-[#D4A017]">Gold Standard</span> in<br />Real Estate Photo Editing.
           </h1>
           
           {/* Hook Line */}
-          <p className="text-lg md:text-xl text-white/60 mb-6">
+          <p className="text-xl md:text-2xl text-white/60 mb-8">
             <span className="text-[#D4A017] font-semibold">Shot at 2pm.</span> Posted by 2:12.
           </p>
           
           {/* CTA Buttons */}
-          <div className="flex flex-col sm:flex-row gap-3 justify-center mb-10">
-            <Link href="/auth/signup" className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-[#D4A017] to-[#B8860B] text-black font-semibold rounded-xl hover:opacity-90 transition-opacity">
+          <div className="flex flex-col sm:flex-row gap-4 justify-center mb-14">
+            <Link href="/auth/signup" className="inline-flex items-center justify-center gap-2 px-8 py-4 bg-gradient-to-r from-[#D4A017] to-[#B8860B] text-black font-semibold rounded-xl hover:opacity-90 transition-opacity text-lg">
               <Globe className="w-5 h-5" />
               Try Free on Web
               <ArrowRight className="w-5 h-5" />
             </Link>
             <button 
               onClick={() => setShowIOSNotifyModal(true)}
-              className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-white/10 border border-white/20 text-white font-semibold rounded-xl hover:bg-white/20 transition-colors"
+              className="inline-flex items-center justify-center gap-2 px-8 py-4 bg-white/10 border border-white/20 text-white font-semibold rounded-xl hover:bg-white/20 transition-colors text-lg"
             >
               <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
                 <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/>
@@ -118,80 +118,60 @@ export default function HomePage() {
             </button>
           </div>
           
-          {/* Pipeline Section with Glass Background */}
-          <div className="relative max-w-4xl mx-auto">
-            {/* Glass Card Background */}
-            <div className="absolute inset-0 -inset-x-4 -inset-y-6 bg-white/[0.03] backdrop-blur-sm rounded-3xl border border-white/10"></div>
+          {/* Pipeline - Elegant Sizing */}
+          <div className="flex items-center justify-center gap-4 md:gap-8 mb-10">
             
-            {/* Pipeline Content */}
-            <div className="relative py-8 px-4">
-              {/* Pipeline Steps */}
-              <div className="flex items-center justify-center gap-2 md:gap-4">
-                {/* Step 1: Capture */}
-                <div className="flex flex-col items-center">
-                  <div className="w-16 h-16 md:w-20 md:h-20 rounded-2xl bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center shadow-lg shadow-blue-500/30">
-                    <Camera className="w-8 h-8 md:w-10 md:h-10 text-white" />
-                  </div>
-                  <h3 className="text-white font-semibold mt-3 text-sm md:text-base">Capture</h3>
-                  <p className="text-[#D4A017] text-xs md:text-sm">AI Director</p>
-                </div>
-                
-                {/* Arrow 1 */}
-                <div className="flex-shrink-0 hidden sm:block">
-                  <svg className="w-8 h-8 md:w-10 md:h-10 text-white/30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M5 12h14M12 5l7 7-7 7" strokeLinecap="round" strokeLinejoin="round"/>
-                  </svg>
-                </div>
-                
-                {/* Step 2: Enhance */}
-                <div className="flex flex-col items-center">
-                  <div className="w-16 h-16 md:w-20 md:h-20 rounded-2xl bg-gradient-to-br from-purple-500 to-purple-600 flex items-center justify-center shadow-lg shadow-purple-500/30">
-                    <Wand2 className="w-8 h-8 md:w-10 md:h-10 text-white" />
-                  </div>
-                  <h3 className="text-white font-semibold mt-3 text-sm md:text-base">Enhance</h3>
-                  <p className="text-[#D4A017] text-xs md:text-sm">30 Seconds</p>
-                </div>
-                
-                {/* Arrow 2 */}
-                <div className="flex-shrink-0 hidden sm:block">
-                  <svg className="w-8 h-8 md:w-10 md:h-10 text-white/30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M5 12h14M12 5l7 7-7 7" strokeLinecap="round" strokeLinejoin="round"/>
-                  </svg>
-                </div>
-                
-                {/* Step 3: Create */}
-                <div className="flex flex-col items-center">
-                  <div className="w-16 h-16 md:w-20 md:h-20 rounded-2xl bg-gradient-to-br from-[#D4A017] to-[#B8860B] flex items-center justify-center shadow-lg shadow-[#D4A017]/30">
-                    <Sparkles className="w-8 h-8 md:w-10 md:h-10 text-white" />
-                  </div>
-                  <h3 className="text-white font-semibold mt-3 text-sm md:text-base">Create</h3>
-                  <p className="text-[#D4A017] text-xs md:text-sm">AI Content</p>
-                </div>
-                
-                {/* Arrow 3 */}
-                <div className="flex-shrink-0 hidden sm:block">
-                  <svg className="w-8 h-8 md:w-10 md:h-10 text-white/30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M5 12h14M12 5l7 7-7 7" strokeLinecap="round" strokeLinejoin="round"/>
-                  </svg>
-                </div>
-                
-                {/* Step 4: Publish */}
-                <div className="flex flex-col items-center">
-                  <div className="w-16 h-16 md:w-20 md:h-20 rounded-2xl bg-gradient-to-br from-green-500 to-green-600 flex items-center justify-center shadow-lg shadow-green-500/30">
-                    <Send className="w-8 h-8 md:w-10 md:h-10 text-white" />
-                  </div>
-                  <h3 className="text-white font-semibold mt-3 text-sm md:text-base">Publish</h3>
-                  <p className="text-[#D4A017] text-xs md:text-sm">Everywhere</p>
-                </div>
+            {/* Step 1: Capture */}
+            <div className="flex flex-col items-center group">
+              <div className="w-14 h-14 md:w-16 md:h-16 rounded-2xl bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center mb-3 shadow-lg shadow-blue-500/25 group-hover:shadow-blue-500/40 group-hover:scale-105 transition-all duration-300">
+                <Camera className="w-7 h-7 md:w-8 md:h-8 text-white" strokeWidth={1.5} />
               </div>
+              <h3 className="text-white font-semibold text-sm md:text-base">Capture</h3>
+              <p className="text-[#D4A017] text-xs md:text-sm">AI Director</p>
+            </div>
+            
+            {/* Arrow */}
+            <ArrowRight className="w-5 h-5 text-white/20 hidden md:block" />
+            
+            {/* Step 2: Enhance */}
+            <div className="flex flex-col items-center group">
+              <div className="w-14 h-14 md:w-16 md:h-16 rounded-2xl bg-gradient-to-br from-purple-400 to-purple-600 flex items-center justify-center mb-3 shadow-lg shadow-purple-500/25 group-hover:shadow-purple-500/40 group-hover:scale-105 transition-all duration-300">
+                <Wand2 className="w-7 h-7 md:w-8 md:h-8 text-white" strokeWidth={1.5} />
+              </div>
+              <h3 className="text-white font-semibold text-sm md:text-base">Enhance</h3>
+              <p className="text-[#D4A017] text-xs md:text-sm">30 Seconds</p>
+            </div>
+            
+            {/* Arrow */}
+            <ArrowRight className="w-5 h-5 text-white/20 hidden md:block" />
+            
+            {/* Step 3: Create */}
+            <div className="flex flex-col items-center group">
+              <div className="w-14 h-14 md:w-16 md:h-16 rounded-2xl bg-gradient-to-br from-[#E8B923] to-[#B8860B] flex items-center justify-center mb-3 shadow-lg shadow-[#D4A017]/25 group-hover:shadow-[#D4A017]/40 group-hover:scale-105 transition-all duration-300">
+                <Sparkles className="w-7 h-7 md:w-8 md:h-8 text-white" strokeWidth={1.5} />
+              </div>
+              <h3 className="text-white font-semibold text-sm md:text-base">Create</h3>
+              <p className="text-[#D4A017] text-xs md:text-sm">AI Content</p>
+            </div>
+            
+            {/* Arrow */}
+            <ArrowRight className="w-5 h-5 text-white/20 hidden md:block" />
+            
+            {/* Step 4: Publish */}
+            <div className="flex flex-col items-center group">
+              <div className="w-14 h-14 md:w-16 md:h-16 rounded-2xl bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center mb-3 shadow-lg shadow-emerald-500/25 group-hover:shadow-emerald-500/40 group-hover:scale-105 transition-all duration-300">
+                <Send className="w-7 h-7 md:w-8 md:h-8 text-white" strokeWidth={1.5} />
+              </div>
+              <h3 className="text-white font-semibold text-sm md:text-base">Publish</h3>
+              <p className="text-[#D4A017] text-xs md:text-sm">Everywhere</p>
             </div>
           </div>
           
           {/* Trust Badges */}
-          <div className="flex items-center justify-center gap-6 text-sm text-white/50 mt-8">
-            <span className="flex items-center gap-1.5"><Check className="w-4 h-4 text-[#D4A017]" /> 10 Free Credits</span>
-            <span className="flex items-center gap-1.5"><Check className="w-4 h-4 text-[#D4A017]" /> No Credit Card</span>
-            <span className="flex items-center gap-1.5"><Check className="w-4 h-4 text-[#D4A017]" /> 30-Second Results</span>
+          <div className="flex flex-wrap items-center justify-center gap-6 text-sm text-white/50">
+            <span className="flex items-center gap-2"><Check className="w-4 h-4 text-[#D4A017]" /> 10 Free Credits</span>
+            <span className="flex items-center gap-2"><Check className="w-4 h-4 text-[#D4A017]" /> No Credit Card</span>
+            <span className="flex items-center gap-2"><Check className="w-4 h-4 text-[#D4A017]" /> 30-Second Results</span>
           </div>
         </div>
       </section>
