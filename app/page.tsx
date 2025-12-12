@@ -20,14 +20,23 @@ export default function HomePage() {
   const [notifyEmail, setNotifyEmail] = useState('');
   const [notifySubmitted, setNotifySubmitted] = useState(false);
 
-  const handleNotifySubmit = (e: React.FormEvent) => {
+  const handleNotifySubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setNotifySubmitted(true);
-    setTimeout(() => {
-      setShowIOSNotifyModal(false);
-      setNotifySubmitted(false);
-      setNotifyEmail('');
-    }, 2000);
+    try {
+      await fetch("/api/notify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: notifyEmail }),
+      });
+      setNotifySubmitted(true);
+      setTimeout(() => {
+        setShowIOSNotifyModal(false);
+        setNotifySubmitted(false);
+        setNotifyEmail("");
+      }, 2000);
+    } catch (err) {
+      console.error("Notify error:", err);
+    }
   };
 
   return (
