@@ -130,8 +130,11 @@ export default function OnboardingPage() {
                     >
                       <span className="text-4xl">{region.flag}</span>
                       <div className="flex-1">
-                        <p className={`font-semibold ${isSelected ? 'text-[#D4A017]' : 'text-white'}`}>{region.label}</p>
-                        {region.description && <p className="text-white/50 text-sm">{region.description}</p>}
+                        <div className="flex items-center gap-2">
+                          <p className={`font-semibold ${isSelected ? 'text-[#D4A017]' : 'text-white'}`}>{region.label}</p>
+                          <span className={`text-xs px-2 py-0.5 rounded-full ${isSelected ? 'bg-[#D4A017]/20 text-[#D4A017]' : 'bg-white/10 text-white/50'}`}>{region.currency}</span>
+                        </div>
+                        <p className="text-white/50 text-sm">{region.description}</p>
                       </div>
                       <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${isSelected ? 'border-[#D4A017] bg-[#D4A017]' : 'border-white/20'}`}>
                         {isSelected && <svg className="w-4 h-4 text-black" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>}
