@@ -93,7 +93,7 @@ export default function HomePage() {
       <nav className="fixed top-0 left-0 right-0 z-50 border-b border-[#D4A017]/30 bg-[#0F0F0F]/95 backdrop-blur-md">
         <div className="max-w-full mx-auto px-6 h-20 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-3">
-            <img src="/snapr-logo.png" alt="SnapR" className="w-12 h-12" />
+            <img src="/snapr-logo.png" alt="SnapR" className="w-20 h-20" />
             <span className="text-2xl font-bold">
               <span className="text-white">Snap</span>
               <span className="text-[#D4A017]">R</span>
