@@ -124,7 +124,7 @@ export function UnifiedCreator() {
   const copy = (text: string, type: string) => { navigator.clipboard.writeText(text); setCopied(type); setTimeout(() => setCopied(null), 2000) }
 
   const prop = { address: property.address || '123 Main Street', city: property.city || 'Los Angeles', state: property.state || 'CA', price: property.price || undefined, bedrooms: property.bedrooms || undefined, bathrooms: property.bathrooms || undefined, squareFeet: property.squareFeet || undefined }
-  const currentTemplates = getTemplates(platform)
+  const currentTemplates = getTemplates(platform).filter(t => t.category === category)
   const dims = getDims(platform)
   const currentPlatform = PLATFORMS.find(p => p.id === platform)!
   const isVertical = platform === 'story' || platform === 'tiktok'
@@ -164,7 +164,7 @@ export function UnifiedCreator() {
       {/* Main Grid */}
       <div className="flex-1 grid grid-cols-12 gap-4 p-4 min-h-0">
         {/* LEFT - Compact Controls + Templates */}
-        <div className="col-span-3 flex flex-col gap-3">
+        <div className="col-span-3 flex flex-col gap-3 overflow-y-auto ">
           {/* Mode & Type - Compact */}
           <div className="bg-white/5 rounded-xl p-3 border border-white/10">
             {currentPlatform.supportsCarousel && (
@@ -180,11 +180,34 @@ export function UnifiedCreator() {
             </div>
           </div>
 
+
+          {/* Caption Tone */}
+          <div className="bg-white/5 rounded-xl p-3 border border-white/10">
+            <Label className="text-[10px] text-white/40 uppercase mb-2 block">Caption Tone</Label>
+            <div className="grid grid-cols-2 gap-2">
+              <button onClick={() => setTone('professional')} className={`p-2 rounded-lg text-left transition ${tone === 'professional' ? 'bg-[#D4AF37]/20 border border-[#D4AF37]' : 'bg-white/5 border border-transparent hover:bg-white/10'}`}>
+                <div className="flex items-center gap-2"><span className="text-sm">🏢</span><span className="text-xs font-medium text-white">Professional</span></div>
+                <p className="text-[9px] text-white/50 mt-0.5">Formal, business-focused</p>
+              </button>
+              <button onClick={() => setTone('casual')} className={`p-2 rounded-lg text-left transition ${tone === 'casual' ? 'bg-[#D4AF37]/20 border border-[#D4AF37]' : 'bg-white/5 border border-transparent hover:bg-white/10'}`}>
+                <div className="flex items-center gap-2"><span className="text-sm">❤️</span><span className="text-xs font-medium text-white">Warm</span></div>
+                <p className="text-[9px] text-white/50 mt-0.5">Friendly, inviting</p>
+              </button>
+              <button onClick={() => setTone('luxury')} className={`p-2 rounded-lg text-left transition ${tone === 'luxury' ? 'bg-[#D4AF37]/20 border border-[#D4AF37]' : 'bg-white/5 border border-transparent hover:bg-white/10'}`}>
+                <div className="flex items-center gap-2"><span className="text-sm">👑</span><span className="text-xs font-medium text-white">Luxury</span></div>
+                <p className="text-[9px] text-white/50 mt-0.5">Exclusive, sophisticated</p>
+              </button>
+              <button onClick={() => setTone('excited')} className={`p-2 rounded-lg text-left transition ${tone === 'excited' ? 'bg-[#D4AF37]/20 border border-[#D4AF37]' : 'bg-white/5 border border-transparent hover:bg-white/10'}`}>
+                <div className="flex items-center gap-2"><span className="text-sm">⚡</span><span className="text-xs font-medium text-white">Urgent</span></div>
+                <p className="text-[9px] text-white/50 mt-0.5">FOMO, limited opportunity</p>
+              </button>
+            </div>
+          </div>
           {/* Templates - Smaller */}
           <div className="bg-white/5 rounded-xl p-3 border border-white/10">
             <Label className="text-[10px] text-white/40 uppercase mb-2 block">Templates</Label>
             <div className="grid grid-cols-2 gap-2">
-              {currentTemplates.slice(0, 4).map(t => (
+              {currentTemplates.map(t => (
                 <button key={t.id} onClick={() => setTemplates(prev => ({ ...prev, [platform]: t }))} className={`relative rounded-lg overflow-hidden border-2 transition ${templates[platform].id === t.id ? 'border-[#D4AF37]' : 'border-transparent hover:border-white/20'}`}>
                   <div className="aspect-[4/3] bg-gray-800 relative overflow-hidden">
                     <img src={photoUrl || DEFAULT_PHOTO} alt="" className="w-full h-full object-cover opacity-80" />
@@ -274,7 +297,7 @@ export function UnifiedCreator() {
         </div>
 
         {/* RIGHT - Property Details */}
-        <div className="col-span-3 flex flex-col gap-3">
+        <div className="col-span-3 flex flex-col gap-3 overflow-y-auto ">
           {/* Headline */}
           <div className="bg-white/5 rounded-xl p-3 border border-white/10">
             <Label className="text-[10px] text-white/40 uppercase mb-2 block">Headline</Label>
