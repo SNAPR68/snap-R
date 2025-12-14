@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/client';
 import { HumanEditRequestModal } from "./human-edit-request";
 import { MlsExportModal } from "./mls-export-modal";
 import { AdjustmentPanel } from "./adjustment-panel";
+import { StylePromptModal } from "./style-prompt-modal";
 import Link from 'next/link';
 import { ArrowLeft, Upload, Sun, Moon, Leaf, Trash2, Sofa, Sparkles, Wand2, Loader2, ChevronDown, ChevronUp, Check, X, Download, Share2, Copy, LogOut, FileArchive, UserCheck, Flame, Tv, Lightbulb, PanelTop, Waves, Move, Circle, Palette, Brain } from 'lucide-react';
 
@@ -104,6 +105,10 @@ export function StudioClient({ listingId, userRole, showMlsFeatures = false, cre
   // Post-enhancement adjustment state
   const [adjustments, setAdjustments] = useState({ intensity: 100, brightness: 0, contrast: 0, saturation: 0, warmth: 0 });
   const [showFineTune, setShowFineTune] = useState(false);
+
+  // Listing style state
+  const [showStylePrompt, setShowStylePrompt] = useState(false);
+  const [listingStyle, setListingStyle] = useState<{ brightness: number; contrast: number; saturation: number; warmth: number } | null>(null);
 
   // CSS filter for real-time adjustment preview
   const getFilterStyle = () => {
@@ -267,8 +272,28 @@ export function StudioClient({ listingId, userRole, showMlsFeatures = false, cre
 
   const handleAcceptEnhancement = async () => {
     if (!pendingEnhancement) return;
-    await supabase.from('photos').update({ status: 'completed', processed_url: pendingEnhancement.storagePath || pendingEnhancement.enhancedUrl, variant: pendingEnhancement.toolId }).eq('id', pendingEnhancement.photoId);
+    // Show the style prompt modal instead of saving immediately
+    setShowStylePrompt(true);
+  };
+
+  const handleJustThisPhoto = async () => {
+    if (!pendingEnhancement) return;
+    await supabase.from("photos").update({ status: "completed", processed_url: pendingEnhancement.storagePath || pendingEnhancement.enhancedUrl, variant: pendingEnhancement.toolId }).eq("id", pendingEnhancement.photoId);
     setPendingEnhancement(null);
+    setShowStylePrompt(false);
+    setAdjustments({ intensity: 100, brightness: 0, contrast: 0, saturation: 0, warmth: 0 });
+    loadData();
+  };
+
+  const handleApplyStyleToAll = async (style: { brightness: number; contrast: number; saturation: number; warmth: number }) => {
+    if (!pendingEnhancement) return;
+    // Save the selected style as listing style
+    setListingStyle(style);
+    // Save the photo
+    await supabase.from("photos").update({ status: "completed", processed_url: pendingEnhancement.storagePath || pendingEnhancement.enhancedUrl, variant: pendingEnhancement.toolId }).eq("id", pendingEnhancement.photoId);
+    setPendingEnhancement(null);
+    setShowStylePrompt(false);
+    setAdjustments({ intensity: 100, brightness: 0, contrast: 0, saturation: 0, warmth: 0 });
     loadData();
   };
 
@@ -694,6 +719,12 @@ export function StudioClient({ listingId, userRole, showMlsFeatures = false, cre
           listingTitle={listing?.title}
           listingAddress={listing?.address}
           onClose={() => setShowMlsExport(false)}
+        />
+      )}
+      {showStylePrompt && (
+        <StylePromptModal adjustments={adjustments}
+          onJustThisPhoto={handleJustThisPhoto}
+          onApplyToAll={handleApplyStyleToAll}
         />
       )}
       {showHumanEditModal && selectedPhoto && (
