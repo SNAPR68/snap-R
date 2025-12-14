@@ -6,7 +6,7 @@ import { HumanEditRequestModal } from "./human-edit-request";
 import { MlsExportModal } from "./mls-export-modal";
 import { AdjustmentPanel } from "./adjustment-panel";
 import Link from 'next/link';
-import { ArrowLeft, Upload, Sun, Moon, Leaf, Trash2, Sofa, Sparkles, Wand2, Loader2, ChevronDown, ChevronUp, Check, X, Download, Share2, Copy, LogOut, FileArchive, UserCheck, Flame, Tv, Lightbulb, PanelTop, Waves, Move, Circle, Palette, Brain } from 'lucide-react';
+import { ArrowLeft, Upload, Sun, Moon, Leaf, Trash2, Sofa, Sparkles, Wand2, Loader2, ChevronDown, ChevronUp, Check, X, Download, Share2, Copy, LogOut, FileArchive, UserCheck, Flame, Tv, Lightbulb, PanelTop, Waves, Move, Circle, Palette, Brain, Sliders, RotateCcw } from 'lucide-react';
 
 // Tool definitions - 15 tools total
 const AI_TOOLS = [
@@ -100,22 +100,12 @@ export function StudioClient({ listingId, userRole, showMlsFeatures = false, cre
   const [selectedTool, setSelectedTool] = useState<string | null>(null);
   const [selectedPreset, setSelectedPreset] = useState<{ id: string; name: string; prompt: string } | null>(null);
   const [expandedCategories, setExpandedCategories] = useState<string[]>(['EXTERIOR', 'INTERIOR', 'ENHANCE']);
-
-  // Post-enhancement adjustment state
   const [adjustments, setAdjustments] = useState({ intensity: 100, brightness: 0, contrast: 0, saturation: 0, warmth: 0 });
   const [showFineTune, setShowFineTune] = useState(false);
 
-  // CSS filter for real-time adjustment preview
-  const getFilterStyle = () => {
-    const { brightness, contrast, saturation, warmth } = adjustments;
-    const filters: string[] = [];
-    if (brightness !== 0) filters.push(`brightness(${100 + brightness}%)`);
-    if (contrast !== 0) filters.push(`contrast(${100 + contrast}%)`);
-    if (saturation !== 0) filters.push(`saturate(${100 + saturation}%)`);
-    if (warmth > 0) filters.push(`sepia(${warmth * 0.3}%)`);
-    else if (warmth < 0) filters.push(`hue-rotate(${warmth * 0.5}deg)`);
-    return filters.length > 0 ? filters.join(" ") : "none";
-  };
+  // Post-enhancement adjustments
+  const [adjustments, setAdjustments] = useState({ intensity: 100, brightness: 0, contrast: 0, saturation: 0, warmth: 0 });
+  const [showFineTune, setShowFineTune] = useState(false);
   type PendingEnhancement = {
     storagePath?: string;
     originalUrl: string;
@@ -182,6 +172,16 @@ export function StudioClient({ listingId, userRole, showMlsFeatures = false, cre
     generateLink();
     return () => { cancelled = true; };
   }, [showShareModal, shareOptions.allowDownload, shareOptions.showComparison, listingId]);
+
+  // Reset adjustments when new enhancement is received
+  useEffect(() => {
+    if (pendingEnhancement) {
+      setAdjustments({ intensity: 100, brightness: 0, contrast: 0, saturation: 0, warmth: 0 });
+      setShowFineTune(false);
+    }
+  }, [pendingEnhancement?.enhancedUrl]);
+
+  useEffect(() => { loadData();   }, [showShareModal, shareOptions.allowDownload, shareOptions.showComparison, listingId]);
 
   const loadData = async () => {
     const { data: listingData } = await supabase.from('listings').select('*').eq('id', listingId).single();
@@ -326,6 +326,20 @@ export function StudioClient({ listingId, userRole, showMlsFeatures = false, cre
       setSelectedPreset(null);
     }
   };
+
+  // CSS filter for real-time adjustment preview
+  const getFilterStyle = () => {
+    const { brightness, contrast, saturation, warmth } = adjustments;
+    const filters: string[] = [];
+    if (brightness !== 0) filters.push(`brightness(${100 + brightness}%)`);
+    if (contrast !== 0) filters.push(`contrast(${100 + contrast}%)`);
+    if (saturation !== 0) filters.push(`saturate(${100 + saturation}%)`);
+    if (warmth > 0) filters.push(`sepia(${warmth * 0.3}%)`);
+    else if (warmth < 0) filters.push(`hue-rotate(${warmth * 0.5}deg)`);
+    return filters.length > 0 ? filters.join(" ") : "none";
+  };
+
+  const resetAdjustments = () => setAdjustments({ intensity: 100, brightness: 0, contrast: 0, saturation: 0, warmth: 0 });
 
   const categories = [...new Set(AI_TOOLS.map(t => t.category))];
   const currentTool = AI_TOOLS.find(t => t.id === selectedTool);
@@ -516,7 +530,6 @@ export function StudioClient({ listingId, userRole, showMlsFeatures = false, cre
                       src={pendingEnhancement.enhancedUrl} 
                       alt="Enhanced" 
                       className="absolute inset-0 w-full h-full object-contain"
-                      style={{ filter: getFilterStyle(), opacity: adjustments.intensity / 100 }}
                       draggable={false}
                     />
                     <div 
@@ -554,14 +567,14 @@ export function StudioClient({ listingId, userRole, showMlsFeatures = false, cre
               </div>
 
               {pendingEnhancement && (
-                <AdjustmentPanel
-                  adjustments={adjustments}
-                  setAdjustments={setAdjustments}
-                  showFineTune={showFineTune}
-                  setShowFineTune={setShowFineTune}
-                  onDiscard={() => { setPendingEnhancement(null); setAdjustments({ intensity: 100, brightness: 0, contrast: 0, saturation: 0, warmth: 0 }); }}
-                  onAccept={handleAcceptEnhancement}
-                />
+                <div className="flex items-center justify-center gap-3 mt-3 flex-shrink-0">
+                  <button onClick={() => setPendingEnhancement(null)} className="flex items-center gap-2 px-4 py-2 bg-red-500/20 border border-red-500/50 rounded-lg text-red-400 text-sm">
+                    <X className="w-4 h-4" /> Reset
+                  </button>
+                  <button onClick={handleAcceptEnhancement} className="flex items-center gap-2 px-4 py-2 bg-emerald-500 rounded-lg text-white text-sm">
+                    <Check className="w-4 h-4" /> Accept
+                  </button>
+                </div>
               )}
 
               <div className="flex gap-2 mt-3 overflow-x-auto py-1 flex-shrink-0">
@@ -571,7 +584,6 @@ export function StudioClient({ listingId, userRole, showMlsFeatures = false, cre
                       onClick={() => {
                         setSelectedPhoto(photo);
                         setPendingEnhancement(null);
-                        setAdjustments({ intensity: 100, brightness: 0, contrast: 0, saturation: 0, warmth: 0 });
                       }}
                       className={`w-16 h-16 rounded-lg overflow-hidden border-2 ${
                         selectedPhoto?.id === photo.id ? 'border-[#D4A017]' : 'border-transparent hover:border-white/30'
