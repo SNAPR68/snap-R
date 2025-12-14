@@ -7,10 +7,11 @@ interface HumanEditRequestProps {
   listingId: string;
   photoUrl: string;
   onClose: () => void;
+  initialInstructions?: string;
 }
 
-export function HumanEditRequestModal({ listingId, photoUrl, onClose }: HumanEditRequestProps) {
-  const [instructions, setInstructions] = useState('');
+export function HumanEditRequestModal({ listingId, photoUrl, onClose, initialInstructions = '' }: HumanEditRequestProps) {
+  const [instructions, setInstructions] = useState(initialInstructions);
   const [isUrgent, setIsUrgent] = useState(false);
   const [loading, setLoading] = useState(false);
 

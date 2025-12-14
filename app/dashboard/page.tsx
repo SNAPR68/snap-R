@@ -1,7 +1,7 @@
 import { createClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
-import { Plus, FolderOpen, Image, Coins, BarChart3, CreditCard, Settings, Camera, Sparkles, Palette , LogOut } from 'lucide-react';
+import { Plus, FolderOpen, Image, Coins, BarChart3, CreditCard, Settings, Camera, Sparkles, Palette, LogOut, Brain } from 'lucide-react';
 
 export const dynamic = 'force-dynamic';
 
@@ -87,6 +87,22 @@ export default async function DashboardPage() {
               </div>
             </div>
           </Link>
+          {/* Listing Intelligence AI */}
+          <Link href="/dashboard/listing-intelligence" className="relative flex items-center gap-3 px-4 py-3 rounded-xl bg-gradient-to-r from-purple-500/20 via-purple-500/10 to-indigo-500/20 border border-purple-500/40 hover:border-purple-500/70 hover:from-purple-500/30 hover:to-indigo-500/30 transition-all group overflow-hidden">
+            <div className="absolute inset-0 bg-gradient-to-br from-white/10 via-transparent to-transparent opacity-50" />
+            <div className="absolute top-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-purple-500/50 to-transparent" />
+            <div className="relative flex items-center gap-3">
+              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-purple-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-purple-500/20">
+                <Brain className="w-4 h-4 text-white" />
+              </div>
+              <div>
+                <span className="font-semibold text-purple-400 group-hover:text-purple-300 transition-colors">Listing Intelligence</span>
+                <p className="text-[10px] text-white/40">AI photo analysis</p>
+              </div>
+            </div>
+            <span className="absolute top-1 right-2 px-1.5 py-0.5 bg-purple-500/30 text-purple-300 text-[8px] font-bold rounded">NEW</span>
+          </Link>
+
           <Link href="/dashboard/brand" className="flex items-center gap-3 px-4 py-3 rounded-xl text-white/60 hover:bg-white/5 hover:text-white transition-all">
             <Palette className="w-5 h-5" />
             <span>Brand Profile</span>

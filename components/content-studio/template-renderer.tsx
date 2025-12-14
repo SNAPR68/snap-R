@@ -76,7 +76,7 @@ export const TemplateRenderer = forwardRef<HTMLDivElement, TemplateRendererProps
               {property.squareFeet && <div className="text-center"><div className="text-3xl font-bold">{property.squareFeet.toLocaleString()}</div><div className="text-sm text-white/60 uppercase tracking-wider">Sq Ft</div></div>}
             </div>
             <div className="flex items-center gap-4">
-              <div className="w-14 h-14 rounded-full flex items-center justify-center text-xl font-bold" style={{ backgroundColor: primaryColor, color: secondaryColor }}>{brand.business_name?.[0] || 'A'}</div>
+              {brand.logo_url ? <img src={brand.logo_url} alt="" className="w-14 h-14 rounded-full object-cover" crossOrigin="anonymous" /> : <div className="w-14 h-14 rounded-full flex items-center justify-center text-xl font-bold" style={{ backgroundColor: primaryColor, color: secondaryColor }}>{brand.business_name?.[0] || 'A'}</div>}
               <div><div className="font-semibold text-lg">{brand.business_name || 'Agent Name'}</div>{brand.phone && <div className="text-white/60">{brand.phone}</div>}</div>
             </div>
           </div>
@@ -227,7 +227,7 @@ export const TemplateRenderer = forwardRef<HTMLDivElement, TemplateRendererProps
                 <span className="px-4 py-2 rounded-full bg-white/20">{property.squareFeet?.toLocaleString()} Sq Ft</span>
               </div>
               <div className="flex items-center gap-3 pt-4 border-t border-white/20">
-                <div className="w-12 h-12 rounded-full flex items-center justify-center font-bold" style={{ backgroundColor: primaryColor, color: secondaryColor }}>{brand.business_name?.[0] || 'A'}</div>
+                {brand.logo_url ? <img src={brand.logo_url} alt="" className="w-12 h-12 rounded-full object-cover" crossOrigin="anonymous" /> : <div className="w-12 h-12 rounded-full flex items-center justify-center font-bold" style={{ backgroundColor: primaryColor, color: secondaryColor }}>{brand.business_name?.[0] || 'A'}</div>}
                 <div className="text-white"><div className="font-semibold">{brand.business_name}</div><div className="text-white/60 text-sm">{brand.phone}</div></div>
               </div>
             </div>
@@ -1119,7 +1119,7 @@ export const TemplateRenderer = forwardRef<HTMLDivElement, TemplateRendererProps
             {property.squareFeet && <div className="text-center"><div className="text-3xl font-bold">{property.squareFeet.toLocaleString()}</div><div className="text-sm text-white/60 uppercase">Sq Ft</div></div>}
           </div>
           <div className="flex items-center gap-4">
-            <div className="w-14 h-14 rounded-full flex items-center justify-center text-xl font-bold" style={{ backgroundColor: primaryColor, color: secondaryColor }}>{brand.business_name?.[0] || 'A'}</div>
+            {brand.logo_url ? <img src={brand.logo_url} alt="" className="w-14 h-14 rounded-full object-cover" crossOrigin="anonymous" /> : <div className="w-14 h-14 rounded-full flex items-center justify-center text-xl font-bold" style={{ backgroundColor: primaryColor, color: secondaryColor }}>{brand.business_name?.[0] || 'A'}</div>}
             <div><div className="font-semibold text-lg">{brand.business_name || 'Agent Name'}</div>{brand.phone && <div className="text-white/60">{brand.phone}</div>}</div>
           </div>
         </div>

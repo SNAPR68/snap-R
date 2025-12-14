@@ -9,6 +9,7 @@ import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { ScheduleModal } from './schedule-modal'
 import { TemplateRenderer, FacebookTemplateRenderer, VerticalTemplateRenderer } from './template-renderer'
 import { INSTAGRAM_POST_TEMPLATES, FACEBOOK_POST_TEMPLATES, LINKEDIN_POST_TEMPLATES, VERTICAL_TEMPLATES, TEMPLATE_CATEGORIES, TemplateDefinition } from '@/lib/content/templates'
 
@@ -71,6 +72,7 @@ export function UnifiedCreator() {
   const [photos, setPhotos] = useState<string[]>([])
   const [selectedPhotos, setSelectedPhotos] = useState<string[]>([])
   const [loading, setLoading] = useState(true)
+  const [showSchedule, setShowSchedule] = useState(false)
   const [downloading, setDownloading] = useState<string | null>(null)
   const [listingTitle, setListingTitle] = useState('')
   const [tone, setTone] = useState<Tone>('professional')
@@ -107,6 +109,25 @@ export function UnifiedCreator() {
 
   const selectPhoto = (url: string) => { if (postMode === 'single') { setPhotoUrl(url); return }; setSelectedPhotos(prev => prev.includes(url) ? prev.filter(p => p !== url) : prev.length >= 10 ? prev : [...prev, url]) }
 
+  
+  const handleSchedule = async (scheduledAt: string) => {
+    await fetch('/api/schedule', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        listingId: listingId || null,
+        platform,
+        postType: category,
+        templateId: templates[platform].id,
+        caption,
+        hashtags,
+        scheduledAt,
+        propertyData: property,
+        brandData: brand
+      })
+    })
+  }
+
   const download = async (p: Platform) => {
     if (!downloadRef.current) return; setDownloading(p)
     try { const { w, h } = getDims(p); await new Promise(r => setTimeout(r, 100)); const canvas = await html2canvas(downloadRef.current, { scale: 1, useCORS: true, allowTaint: true, backgroundColor: null, width: w, height: h, windowWidth: w, windowHeight: h }); const link = document.createElement('a'); link.download = `${p}-post-${Date.now()}.png`; link.href = canvas.toDataURL('image/png', 1.0); link.click() } catch (e) { console.error(e) } finally { setDownloading(null) }
@@ -124,7 +145,7 @@ export function UnifiedCreator() {
   const copy = (text: string, type: string) => { navigator.clipboard.writeText(text); setCopied(type); setTimeout(() => setCopied(null), 2000) }
 
   const prop = { address: property.address || '123 Main Street', city: property.city || 'Los Angeles', state: property.state || 'CA', price: property.price || undefined, bedrooms: property.bedrooms || undefined, bathrooms: property.bathrooms || undefined, squareFeet: property.squareFeet || undefined }
-  const currentTemplates = getTemplates(platform).filter(t => t.category === category)
+  const currentTemplates = getTemplates(platform).filter(t => t.category === category).filter(t => t.category === category)
   const dims = getDims(platform)
   const currentPlatform = PLATFORMS.find(p => p.id === platform)!
   const isVertical = platform === 'story' || platform === 'tiktok'
@@ -384,6 +405,13 @@ export function UnifiedCreator() {
           </div>
         )}
       </div>
+      {/* Schedule Modal */}
+      <ScheduleModal 
+        isOpen={showSchedule} 
+        onClose={() => setShowSchedule(false)} 
+        onSchedule={handleSchedule}
+        platform={platform}
+      />
     </div>
   )
 }

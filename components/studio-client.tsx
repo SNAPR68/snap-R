@@ -5,7 +5,7 @@ import { createClient } from '@/lib/supabase/client';
 import { HumanEditRequestModal } from "./human-edit-request";
 import { MlsExportModal } from "./mls-export-modal";
 import Link from 'next/link';
-import { ArrowLeft, Upload, Sun, Moon, Leaf, Trash2, Sofa, Sparkles, Wand2, Loader2, ChevronDown, ChevronUp, Check, X, Download, Share2, Copy, LogOut, FileArchive, UserCheck, Flame, Tv, Lightbulb, PanelTop, Waves, Move, Circle, Palette } from 'lucide-react';
+import { ArrowLeft, Upload, Sun, Moon, Leaf, Trash2, Sofa, Sparkles, Wand2, Loader2, ChevronDown, ChevronUp, Check, X, Download, Share2, Copy, LogOut, FileArchive, UserCheck, Flame, Tv, Lightbulb, PanelTop, Waves, Move, Circle, Palette, Brain } from 'lucide-react';
 
 // Tool definitions - 15 tools total
 const AI_TOOLS = [
@@ -323,6 +323,7 @@ export function StudioClient({ listingId, userRole, showMlsFeatures = false, cre
           <h1 className="font-semibold truncate max-w-[200px]"><span className="text-white/50">Listing:</span> {listing?.title || 'Loading...'}</h1>
         </div>
         <div className="flex items-center gap-2">
+          <a href={`/dashboard/listing-intelligence?listing=${listingId}`} className="flex items-center gap-2 px-3 py-2 bg-purple-500/20 border border-purple-500/40 rounded-lg text-sm text-purple-300"><Brain className="w-4 h-4" /> AI Analysis</a>
           <button
             onClick={() => setShowMlsExport(true)} style={showMlsFeatures ? {} : {display: "none"}}
             disabled={completedPhotos.length === 0}
