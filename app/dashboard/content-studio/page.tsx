@@ -1,19 +1,13 @@
-'use client'
-
-import { Button } from '@/components/ui/button'
+import { createClient } from '@/lib/supabase/server'
+import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { 
   Sparkles, PenTool, Calendar, BarChart3, Zap, FolderOpen, 
-  Mail, Globe, Palette, Image, QrCode, Languages, Video,
-  Instagram, Facebook, Linkedin, ArrowRight, Crown
+  Mail, Globe, Palette, Image, Video, Home, ChevronRight,
+  Instagram, Facebook, Linkedin, ArrowRight, Crown, ImageIcon
 } from 'lucide-react'
 
-const MAIN_TOOLS = [
-  { name: 'Create Post', desc: 'AI-powered social media content', href: '/dashboard/content-studio/create-all', icon: PenTool, color: 'from-[#D4AF37] to-[#B8960C]', featured: true },
-  { name: 'Content Calendar', desc: 'Schedule & manage posts', href: '/dashboard/content-studio/calendar', icon: Calendar, color: 'from-blue-500 to-blue-600' },
-  { name: 'Bulk Creator', desc: 'Generate for multiple listings', href: '/dashboard/content-studio/bulk', icon: Zap, color: 'from-purple-500 to-purple-600' },
-  { name: 'Video Creator', desc: 'Slideshows for Reels & TikTok', href: '/dashboard/content-studio/video', icon: Video, color: 'from-pink-500 to-rose-600' },
-]
+export const dynamic = 'force-dynamic'
 
 const CONTENT_TOOLS = [
   { name: 'Content Library', desc: 'Saved posts & templates', href: '/dashboard/content-studio/library', icon: FolderOpen },
@@ -28,13 +22,51 @@ const CUSTOMIZATION = [
   { name: 'Auto-Post Rules', desc: 'Automation triggers', href: '/dashboard/content-studio/auto-post', icon: Zap },
 ]
 
-const PLATFORMS = [
-  { name: 'Instagram', icon: Instagram, color: 'bg-gradient-to-r from-purple-500 to-pink-500' },
-  { name: 'Facebook', icon: Facebook, color: 'bg-blue-600' },
-  { name: 'LinkedIn', icon: Linkedin, color: 'bg-blue-700' },
-]
+export default async function ContentStudio() {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  
+  if (!user) redirect('/auth/login')
 
-export default function ContentStudio() {
+  // Fetch user's listings with photo counts
+  const { data: listings } = await supabase
+    .from('listings')
+    .select('id, title, address, city, state, price, created_at')
+    .eq('user_id', user.id)
+    .order('created_at', { ascending: false })
+    .limit(20)
+
+  // Get photo counts and first photo for each listing
+  const listingsWithPhotos = await Promise.all(
+    (listings || []).map(async (listing) => {
+      const { data: photos } = await supabase
+        .from('photos')
+        .select('id, processed_url, raw_url, status')
+        .eq('listing_id', listing.id)
+      
+      const enhancedPhotos = photos?.filter(p => p.status === 'completed' && p.processed_url) || []
+      
+      let thumbnailUrl = null
+      const firstPhoto = enhancedPhotos[0] || photos?.[0]
+      if (firstPhoto) {
+        const photoPath = firstPhoto.processed_url || firstPhoto.raw_url
+        if (photoPath && !photoPath.startsWith('http')) {
+          const { data } = await supabase.storage.from('raw-images').createSignedUrl(photoPath, 3600)
+          thumbnailUrl = data?.signedUrl
+        } else {
+          thumbnailUrl = photoPath
+        }
+      }
+      
+      return {
+        ...listing,
+        photoCount: photos?.length || 0,
+        enhancedCount: enhancedPhotos.length,
+        thumbnail: thumbnailUrl
+      }
+    })
+  )
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-900 text-white">
       <header className="border-b border-white/10 px-6 py-4">
@@ -47,42 +79,102 @@ export default function ContentStudio() {
             <p className="text-white/50 text-sm mt-1">Create stunning social media content for your listings</p>
           </div>
           <div className="flex items-center gap-3">
-            {PLATFORMS.map(p => (
-              <div key={p.name} className={`p-2 rounded-lg ${p.color}`}>
-                <p.icon className="w-5 h-5 text-white" />
-              </div>
-            ))}
+            <div className="p-2 rounded-lg bg-gradient-to-r from-purple-500 to-pink-500"><Instagram className="w-5 h-5 text-white" /></div>
+            <div className="p-2 rounded-lg bg-blue-600"><Facebook className="w-5 h-5 text-white" /></div>
+            <div className="p-2 rounded-lg bg-blue-700"><Linkedin className="w-5 h-5 text-white" /></div>
           </div>
         </div>
       </header>
 
       <div className="p-6 max-w-6xl mx-auto space-y-8">
-        {/* Main Tools */}
+        {/* SELECT A LISTING - Primary Section */}
         <section>
-          <h2 className="text-lg font-bold mb-4 flex items-center gap-2">
-            <Crown className="w-5 h-5 text-[#D4AF37]" />Main Tools
-          </h2>
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
-            {MAIN_TOOLS.map(tool => (
-              <Link key={tool.name} href={tool.href}>
-                <div className={`rounded-2xl p-5 border transition hover:scale-[1.02] h-full ${tool.featured ? 'bg-gradient-to-br from-[#D4AF37]/20 to-[#B8960C]/10 border-[#D4AF37]/50' : 'bg-white/5 border-white/10 hover:border-white/20'}`}>
-                  <div className={`w-12 h-12 rounded-xl flex items-center justify-center bg-gradient-to-r ${tool.color} mb-4`}>
-                    <tool.icon className="w-6 h-6 text-white" />
-                  </div>
-                  <h3 className="font-bold text-lg mb-1">{tool.name}</h3>
-                  <p className="text-white/50 text-sm">{tool.desc}</p>
-                  {tool.featured && (
-                    <div className="mt-3 flex items-center text-[#D4AF37] text-sm font-medium">
-                      Get Started <ArrowRight className="w-4 h-4 ml-1" />
-                    </div>
-                  )}
-                </div>
-              </Link>
-            ))}
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-bold flex items-center gap-2">
+              <Crown className="w-5 h-5 text-[#D4AF37]" />
+              Select a Listing to Create Content
+            </h2>
+            <Link href="/dashboard" className="text-sm text-[#D4AF37] hover:underline">View All Listings →</Link>
           </div>
+          
+          {listingsWithPhotos.length === 0 ? (
+            <div className="bg-white/5 rounded-2xl border border-white/10 p-8 text-center">
+              <Home className="w-12 h-12 text-white/20 mx-auto mb-3" />
+              <h3 className="text-lg font-medium mb-2">No Listings Yet</h3>
+              <p className="text-white/50 text-sm mb-4">Create a listing and enhance some photos first</p>
+              <Link href="/dashboard" className="inline-flex items-center gap-2 px-4 py-2 bg-[#D4AF37] text-black rounded-lg font-medium">
+                <ImageIcon className="w-4 h-4" /> Go to Dashboard
+              </Link>
+            </div>
+          ) : (
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {listingsWithPhotos.map(listing => (
+                <Link key={listing.id} href={`/dashboard/content-studio/create-all?listing=${listing.id}`}>
+                  <div className="bg-white/5 rounded-xl border border-white/10 hover:border-[#D4AF37]/50 transition-all group overflow-hidden">
+                    {/* Thumbnail */}
+                    <div className="aspect-video bg-black/40 relative">
+                      {listing.thumbnail ? (
+                        <img src={listing.thumbnail} alt="" className="w-full h-full object-cover" />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center">
+                          <Home className="w-10 h-10 text-white/20" />
+                        </div>
+                      )}
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
+                      <div className="absolute bottom-2 left-2 right-2 flex items-center justify-between">
+                        <span className="text-xs bg-black/60 px-2 py-1 rounded">{listing.photoCount} photos</span>
+                        {listing.enhancedCount > 0 && (
+                          <span className="text-xs bg-green-500/80 px-2 py-1 rounded text-white">{listing.enhancedCount} enhanced</span>
+                        )}
+                      </div>
+                    </div>
+                    {/* Info */}
+                    <div className="p-3">
+                      <h3 className="font-medium truncate group-hover:text-[#D4AF37] transition-colors">
+                        {listing.title || listing.address || 'Untitled Listing'}
+                      </h3>
+                      <p className="text-white/50 text-sm truncate">
+                        {listing.city}{listing.city && listing.state ? ', ' : ''}{listing.state}
+                        {listing.price && ` • $${listing.price.toLocaleString()}`}
+                      </p>
+                      <div className="flex items-center justify-between mt-2">
+                        <span className="text-xs text-white/30">Click to create content</span>
+                        <ChevronRight className="w-4 h-4 text-[#D4AF37] opacity-0 group-hover:opacity-100 transition-opacity" />
+                      </div>
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          )}
         </section>
 
-        {/* Content Tools */}
+        {/* Quick Actions */}
+        <section className="grid md:grid-cols-3 gap-4">
+          <Link href="/dashboard/content-studio/calendar">
+            <div className="bg-gradient-to-br from-blue-500/20 to-blue-600/10 rounded-xl p-4 border border-blue-500/30 hover:border-blue-500/50 transition-all">
+              <Calendar className="w-8 h-8 text-blue-400 mb-2" />
+              <h3 className="font-bold">Content Calendar</h3>
+              <p className="text-white/50 text-sm">Schedule & manage posts</p>
+            </div>
+          </Link>
+          <Link href="/dashboard/content-studio/bulk">
+            <div className="bg-gradient-to-br from-purple-500/20 to-purple-600/10 rounded-xl p-4 border border-purple-500/30 hover:border-purple-500/50 transition-all">
+              <Zap className="w-8 h-8 text-purple-400 mb-2" />
+              <h3 className="font-bold">Bulk Creator</h3>
+              <p className="text-white/50 text-sm">Generate for multiple listings</p>
+            </div>
+          </Link>
+          <Link href="/dashboard/content-studio/video">
+            <div className="bg-gradient-to-br from-pink-500/20 to-rose-600/10 rounded-xl p-4 border border-pink-500/30 hover:border-pink-500/50 transition-all">
+              <Video className="w-8 h-8 text-pink-400 mb-2" />
+              <h3 className="font-bold">Video Creator</h3>
+              <p className="text-white/50 text-sm">Slideshows for Reels & TikTok</p>
+            </div>
+          </Link>
+        </section>
+
+        {/* Content Management */}
         <section>
           <h2 className="text-lg font-bold mb-4">Content Management</h2>
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -120,37 +212,6 @@ export default function ContentStudio() {
               </Link>
             ))}
           </div>
-        </section>
-
-        {/* Stats Preview */}
-        <section className="bg-gradient-to-r from-[#D4AF37]/10 to-transparent rounded-2xl p-6 border border-[#D4AF37]/20">
-          <div className="flex items-center justify-between">
-            <div>
-              <h2 className="text-lg font-bold mb-1">Ready to create amazing content?</h2>
-              <p className="text-white/50 text-sm">108 professional templates • 4 platforms • AI-powered captions</p>
-            </div>
-            <Link href="/dashboard/content-studio/create-all">
-              <Button className="bg-[#D4AF37] hover:bg-[#B8960C] text-black font-bold">
-                <PenTool className="w-4 h-4 mr-2" />Create Now
-              </Button>
-            </Link>
-          </div>
-        </section>
-
-        {/* Quick Links */}
-        <section className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
-          <Link href="/dashboard/content-studio/create-all?type=just-listed" className="bg-white/5 rounded-lg p-3 text-center hover:bg-white/10 transition">
-            🏠 Just Listed Post
-          </Link>
-          <Link href="/dashboard/content-studio/create-all?type=open-house" className="bg-white/5 rounded-lg p-3 text-center hover:bg-white/10 transition">
-            🚪 Open House Post
-          </Link>
-          <Link href="/dashboard/content-studio/create-all?type=just-sold" className="bg-white/5 rounded-lg p-3 text-center hover:bg-white/10 transition">
-            🎉 Just Sold Post
-          </Link>
-          <Link href="/dashboard/content-studio/create-all?type=market-update" className="bg-white/5 rounded-lg p-3 text-center hover:bg-white/10 transition">
-            📊 Market Update
-          </Link>
         </section>
       </div>
     </div>
