@@ -108,7 +108,7 @@ export function StudioClient({ listingId, userRole, showMlsFeatures = false, cre
 
   // Listing style state
   const [showStylePrompt, setShowStylePrompt] = useState(false);
-  const [listingStyle, setListingStyle] = useState<{ brightness: number; contrast: number; saturation: number; warmth: number } | null>(null);
+  const [listingStyle, setListingStyle] = useState<{ name: string; brightness: number; contrast: number; saturation: number; warmth: number } | null>(null);
 
   // CSS filter for real-time adjustment preview
   const getFilterStyle = () => {
@@ -121,6 +121,19 @@ export function StudioClient({ listingId, userRole, showMlsFeatures = false, cre
     else if (warmth < 0) filters.push(`hue-rotate(${warmth * 0.5}deg)`);
     return filters.length > 0 ? filters.join(" ") : "none";
   };
+
+  const getListingStyleFilter = () => {
+    if (!listingStyle) return "none";
+    const { brightness, contrast, saturation, warmth } = listingStyle;
+    const filters: string[] = [];
+    if (brightness !== 0) filters.push(`brightness(${100 + brightness}%)`);
+    if (contrast !== 0) filters.push(`contrast(${100 + contrast}%)`);
+    if (saturation !== 0) filters.push(`saturate(${100 + saturation}%)`);
+    if (warmth > 0) filters.push(`sepia(${warmth * 0.3}%)`);
+    else if (warmth < 0) filters.push(`hue-rotate(${warmth * 0.5}deg)`);
+    return filters.length > 0 ? filters.join(" ") : "none";
+  };
+
   type PendingEnhancement = {
     storagePath?: string;
     originalUrl: string;
@@ -285,7 +298,7 @@ export function StudioClient({ listingId, userRole, showMlsFeatures = false, cre
     loadData();
   };
 
-  const handleApplyStyleToAll = async (style: { brightness: number; contrast: number; saturation: number; warmth: number }) => {
+  const handleApplyStyleToAll = async (style: { name: string; brightness: number; contrast: number; saturation: number; warmth: number }) => {
     if (!pendingEnhancement) return;
     // Save the selected style as listing style
     setListingStyle(style);
@@ -363,6 +376,12 @@ export function StudioClient({ listingId, userRole, showMlsFeatures = false, cre
         <div className="flex items-center gap-3">
           <Link href="/dashboard" className="flex items-center gap-2 px-3 py-2 hover:bg-white/10 rounded-lg text-white/70 hover:text-white transition-colors"><ArrowLeft className="w-4 h-4" /><span className="text-sm">Back to Dashboard</span></Link><div className="h-6 w-px bg-white/20 mx-2" /><Link href="/" className="flex items-center gap-2"><img src="/snapr-logo.png" alt="SnapR" className="w-10 h-10" /></Link><div className="h-6 w-px bg-white/20 mx-2" />
           <h1 className="font-semibold truncate max-w-[200px]"><span className="text-white/50">Listing:</span> {listing?.title || 'Loading...'}</h1>
+          {listingStyle && (
+            <button onClick={() => setListingStyle(null)} className="flex items-center gap-2 ml-3 px-3 py-1.5 bg-[#D4A017] rounded-lg hover:bg-[#D4A017]/90 transition-colors group">
+              <span className="text-sm font-bold text-black">Style: {listingStyle.name}</span>
+              <span className="text-sm text-black/60 group-hover:text-black">✕</span>
+            </button>
+          )}
         </div>
         <div className="flex items-center gap-2">
           <a href={`/dashboard/listing-intelligence?listing=${listingId}`} className="flex items-center gap-2 px-3 py-2 bg-purple-500/20 border border-purple-500/40 rounded-lg text-sm text-purple-300"><Brain className="w-4 h-4" /> AI Analysis</a>
@@ -568,7 +587,7 @@ export function StudioClient({ listingId, userRole, showMlsFeatures = false, cre
                     <div className="absolute top-4 right-4 px-3 py-1.5 bg-black/70 rounded-lg text-sm font-medium">After</div>
                   </div>
                 ) : (
-                  <img src={selectedPhoto.signedRawUrl} alt="Selected" className="max-w-full max-h-full object-contain" />
+                  <img src={selectedPhoto.signedRawUrl} alt="Selected" className="max-w-full max-h-full object-contain" style={{ filter: getListingStyleFilter() }} />
                 )}
                 {processing && (
                   <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center">
@@ -602,7 +621,7 @@ export function StudioClient({ listingId, userRole, showMlsFeatures = false, cre
                         selectedPhoto?.id === photo.id ? 'border-[#D4A017]' : 'border-transparent hover:border-white/30'
                       }`}
                     >
-                      <img src={photo.signedRawUrl} alt="" className="w-full h-full object-cover" />
+                      <img src={photo.signedRawUrl} alt="" className="w-full h-full object-cover" style={{ filter: getListingStyleFilter() }} />
                     </button>
                     <button
                       onClick={e => {
@@ -647,7 +666,7 @@ export function StudioClient({ listingId, userRole, showMlsFeatures = false, cre
                     <X className="w-3 h-3" />
                   </button>
                   <div className="aspect-video relative">
-                    <img src={photo.signedProcessedUrl} alt="" className="w-full h-full object-cover" />
+                    <img src={photo.signedProcessedUrl} alt="" className="w-full h-full object-cover" style={{ filter: getListingStyleFilter() }} />
                     {photo.variant && (
                       <div className="absolute top-1 left-1 px-1.5 py-0.5 bg-[#D4A017] rounded text-[10px] text-black">
                         {photo.variant}

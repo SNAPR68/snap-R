@@ -3,12 +3,12 @@
 import { Check } from 'lucide-react';
 
 const QUICK_STYLES = [
-  { id: 'bright-airy', name: 'Bright & Airy', filters: { brightness: 15, contrast: -10, saturation: -5, warmth: -10 }, color: 'from-sky-200 to-white' },
-  { id: 'warm-inviting', name: 'Warm & Inviting', filters: { brightness: 5, contrast: 5, saturation: 10, warmth: 25 }, color: 'from-orange-300 to-yellow-200' },
-  { id: 'magazine-ready', name: 'Magazine Ready', filters: { brightness: 5, contrast: 20, saturation: 15, warmth: 0 }, color: 'from-purple-300 to-pink-200' },
-  { id: 'mls-standard', name: 'MLS Standard', filters: { brightness: 0, contrast: 0, saturation: 0, warmth: 0 }, color: 'from-gray-300 to-gray-200' },
-  { id: 'twilight-glow', name: 'Twilight Glow', filters: { brightness: -5, contrast: 10, saturation: 5, warmth: 30 }, color: 'from-orange-400 to-purple-400' },
-  { id: 'natural-clean', name: 'Natural Clean', filters: { brightness: 5, contrast: 5, saturation: 0, warmth: 5 }, color: 'from-green-200 to-emerald-100' },
+  { id: 'bright-airy', name: 'Bright & Airy', filters: { brightness: 20, contrast: 5, saturation: -15, warmth: -20 }, color: 'from-sky-200 to-white' },
+  { id: 'warm-inviting', name: 'Warm & Inviting', filters: { brightness: 10, contrast: 10, saturation: 15, warmth: 50 }, color: 'from-orange-300 to-yellow-200' },
+  { id: 'magazine-ready', name: 'Magazine Ready', filters: { brightness: 10, contrast: 30, saturation: 25, warmth: 10 }, color: 'from-purple-300 to-pink-200' },
+  { id: 'mls-standard', name: 'MLS Standard', filters: { brightness: 5, contrast: 10, saturation: 5, warmth: 0 }, color: 'from-gray-300 to-gray-200' },
+  { id: 'twilight-glow', name: 'Twilight Glow', filters: { brightness: -10, contrast: 20, saturation: 20, warmth: 60 }, color: 'from-orange-400 to-purple-400' },
+  { id: 'natural-clean', name: 'Natural Clean', filters: { brightness: 10, contrast: 15, saturation: 10, warmth: 15 }, color: 'from-green-200 to-emerald-100' },
 ];
 
 interface StylePromptModalProps {
@@ -19,7 +19,7 @@ interface StylePromptModalProps {
     warmth: number;
   };
   onJustThisPhoto: () => void;
-  onApplyToAll: (style: { brightness: number; contrast: number; saturation: number; warmth: number }) => void;
+  onApplyToAll: (style: { name: string; brightness: number; contrast: number; saturation: number; warmth: number }) => void;
 }
 
 export function StylePromptModal({ adjustments, onJustThisPhoto, onApplyToAll }: StylePromptModalProps) {
@@ -35,8 +35,11 @@ export function StylePromptModal({ adjustments, onJustThisPhoto, onApplyToAll }:
         
         {/* Title */}
         <h2 className="text-lg font-bold text-center text-white mb-1">Photo Enhanced!</h2>
-        <p className="text-white/50 text-sm text-center mb-5">
-          Choose a style for all your listing photos
+        <p className="text-white/50 text-sm text-center mb-2">
+          Choose a consistent style for your listing
+        </p>
+        <p className="text-[#D4A017] text-xs text-center mb-5">
+          ✨ All photos will have the same professional look
         </p>
         
         {/* Quick Styles Grid */}
@@ -44,10 +47,10 @@ export function StylePromptModal({ adjustments, onJustThisPhoto, onApplyToAll }:
           {QUICK_STYLES.map((style) => (
             <button
               key={style.id}
-              onClick={() => onApplyToAll(style.filters)}
+              onClick={() => onApplyToAll({ name: style.name, ...style.filters })}
               className="group relative p-3 rounded-xl border border-white/10 hover:border-[#D4A017]/50 bg-white/5 hover:bg-white/10 transition-all text-center"
             >
-              <div className={`w-full h-8 rounded-lg bg-gradient-to-br ${style.color} mb-2 group-hover:scale-105 transition-transform`} />
+              <div className={`w-full h-10 rounded-lg bg-gradient-to-br ${style.color} mb-2 group-hover:scale-105 transition-transform`} />
               <span className="text-xs text-white/80 group-hover:text-white font-medium">{style.name}</span>
             </button>
           ))}
