@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase/client';
+import ShareGalleryModal from "./ShareGalleryModal";
 import { HumanEditRequestModal } from "./human-edit-request";
 import { MlsExportModal } from "./mls-export-modal";
 import { AdjustmentPanel } from "./adjustment-panel";
@@ -139,6 +140,7 @@ export function StudioClient({ listingId, userRole, showMlsFeatures = false, cre
   const [showShareModal, setShowShareModal] = useState(false);
   const [copied, setCopied] = useState(false);
   const [showHumanEditModal, setShowHumanEditModal] = useState(false);
+  const [showApprovalModal, setShowApprovalModal] = useState(false);
   const [showMlsExport, setShowMlsExport] = useState(false);
   const [shareLink, setShareLink] = useState('');
   const [shareLoading, setShareLoading] = useState(false);
