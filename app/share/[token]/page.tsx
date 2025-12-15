@@ -2,36 +2,41 @@ import { createClient } from '@/lib/supabase/server';
 import { notFound } from 'next/navigation';
 import { ShareView } from '@/components/share-view';
 
-export default async function SharePage({ params }: { params: { token: string } }) {
-  const supabase = createClient();
+export default async function SharePage({ params }: { params: Promise<{ token: string }> }) {
+  const { token } = await params;
+  const supabase = await createClient();
   
   const { data: share } = await supabase
     .from('shares')
     .select('*, listings(*)')
-    .eq('token', params.token)
+    .eq('token', token)
     .single();
 
   let listing = share?.listings;
+  let shareToken = token;
   let shareSettings = {
     allow_download: true,
     show_comparison: true,
+    allow_approval: true,
   };
 
   if (!listing) {
     const { data: directListing } = await supabase
       .from('listings')
       .select('*')
-      .eq('id', params.token)
+      .eq('id', token)
       .single();
     
     if (!directListing) {
       notFound();
     }
     listing = directListing;
+    shareToken = '';  // No approval for direct listing access
   } else {
     shareSettings = {
-      allow_download: share.allow_download,
-      show_comparison: share.show_comparison,
+      allow_download: share.allow_download ?? true,
+      show_comparison: share.show_comparison ?? true,
+      allow_approval: share.allow_approval ?? true,
     };
     
     if (share.expires_at && new Date(share.expires_at) < new Date()) {
@@ -56,6 +61,8 @@ export default async function SharePage({ params }: { params: { token: string } 
       ...photo,
       rawUrl: rawUrl?.signedUrl,
       processedUrl: processedUrl?.signedUrl,
+      clientApproved: photo.client_approved,
+      clientFeedback: photo.client_feedback,
     };
   }));
 
@@ -64,6 +71,7 @@ export default async function SharePage({ params }: { params: { token: string } 
       listing={listing} 
       photos={photosWithUrls} 
       settings={shareSettings}
+      shareToken={shareToken}
     />
   );
 }
