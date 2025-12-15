@@ -310,7 +310,7 @@ ${agentEmail}
               ${features.length > 0 ? `
               <table width="100%" cellspacing="0" cellpadding="0" style="margin-bottom:30px;background:#f8f9fa;border-radius:10px;overflow:hidden;">
                 <tr>
-                  ${features.slice(0, 4).map(f => `
+                  ${features.filter((f): f is string => Boolean(f)).slice(0, 4).map(f => `
                     <td style="width:25%;text-align:center;padding:20px 10px;border-right:1px solid #e2e8f0;">
                       <p style="margin:0 0 4px;font-size:20px;font-weight:700;color:${colors.primary};">${f.split(' ')[0]}</p>
                       <p style="margin:0;font-size:12px;color:#666;text-transform:uppercase;letter-spacing:0.5px;">${f.split(' ').slice(1).join(' ')}</p>
