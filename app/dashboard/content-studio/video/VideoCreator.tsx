@@ -1,151 +1,340 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
-import { ArrowLeft, Video, Play, Pause, ChevronLeft, ChevronRight, Clock, Download, Image, Loader2, RotateCcw } from 'lucide-react'
+import { ArrowLeft, Video, Play, Pause, Download, Home, Loader2, ChevronLeft, ChevronRight, Clock, Sparkles, Check, Music, Type } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 
-interface Photo {
-  id: string
-  url: string
-}
+interface Photo { id: string; url: string; selected: boolean }
+type Transition = 'fade' | 'slide' | 'zoom' | 'none'
 
 export default function VideoCreatorClient() {
   const searchParams = useSearchParams()
   const listingId = searchParams.get('listing')
-  
   const [photos, setPhotos] = useState<Photo[]>([])
-  const [selectedPhotos, setSelectedPhotos] = useState<string[]>([])
-  const [duration, setDuration] = useState(3)
-  const [transition, setTransition] = useState<'fade' | 'slide' | 'zoom'>('fade')
-  const [isPlaying, setIsPlaying] = useState(false)
-  const [currentIndex, setCurrentIndex] = useState(0)
   const [loading, setLoading] = useState(true)
   const [listingTitle, setListingTitle] = useState('')
+  const [listingPrice, setListingPrice] = useState<number | null>(null)
+  const [listingLocation, setListingLocation] = useState('')
+  const [duration, setDuration] = useState(3)
+  const [transition, setTransition] = useState<Transition>('fade')
+  const [showTitle, setShowTitle] = useState(true)
+  const [showPrice, setShowPrice] = useState(true)
   const [generating, setGenerating] = useState(false)
   const [progress, setProgress] = useState(0)
-  const [generatedVideo, setGeneratedVideo] = useState<string | null>(null)
-  const [showOverlay, setShowOverlay] = useState(true)
-  const [overlayStyle, setOverlayStyle] = useState<'minimal' | 'bold' | 'elegant'>('elegant')
-  
+  const [videoUrl, setVideoUrl] = useState<string | null>(null)
+  const [playing, setPlaying] = useState(false)
+  const [currentPreview, setCurrentPreview] = useState(0)
   const canvasRef = useRef<HTMLCanvasElement>(null)
+  const previewIntervalRef = useRef<NodeJS.Timeout | null>(null)
+
+  useEffect(() => { if (listingId) loadPhotos(listingId) }, [listingId])
 
   useEffect(() => {
-    if (listingId) loadListingPhotos()
-    else setLoading(false)
-  }, [listingId])
+    if (playing && photos.filter(p => p.selected).length > 0) {
+      previewIntervalRef.current = setInterval(() => {
+        setCurrentPreview(prev => (prev + 1) % photos.filter(p => p.selected).length)
+      }, duration * 1000)
+    }
+    return () => { if (previewIntervalRef.current) clearInterval(previewIntervalRef.current) }
+  }, [playing, photos, duration])
 
-  const loadListingPhotos = async () => {
+  const loadPhotos = async (id: string) => {
     setLoading(true)
     const supabase = createClient()
-    try {
-      const { data: listing } = await supabase.from('listings').select('*, photos(id, raw_url, processed_url, status)').eq('id', listingId).single()
-      if (listing) {
-        setListingTitle(listing.title || listing.address || 'Untitled')
-        const photoList = await Promise.all((listing.photos || []).filter((p: any) => p.processed_url || p.raw_url).map(async (photo: any) => {
-          const path = photo.processed_url || photo.raw_url
-          let url = path
-          if (path && !path.startsWith('http')) {
-            const { data } = await supabase.storage.from('raw-images').createSignedUrl(path, 3600)
-            url = data?.signedUrl || path
-          }
-          return { id: photo.id, url }
-        }))
-        setPhotos(photoList)
-        if (photoList.length > 0) setSelectedPhotos(photoList.slice(0, Math.min(5, photoList.length)).map(p => p.id))
-      }
-    } catch (error) { console.error('Error loading photos:', error) }
+    const { data: listing } = await supabase.from('listings').select('*, photos(id, raw_url, processed_url, status, display_order)').eq('id', id).single()
+    if (listing) {
+      setListingTitle(listing.title || listing.address || 'Property')
+      setListingPrice(listing.price)
+      setListingLocation([listing.city, listing.state].filter(Boolean).join(', '))
+      const sortedPhotos = (listing.photos || []).sort((a: any, b: any) => (a.display_order || 0) - (b.display_order || 0))
+      const photoUrls = await Promise.all(sortedPhotos.map(async (photo: any) => {
+        const path = photo.processed_url || photo.raw_url
+        if (!path) return null
+        if (path.startsWith('http')) return { id: photo.id, url: path, selected: true }
+        const { data } = await supabase.storage.from('raw-images').createSignedUrl(path, 3600)
+        return data?.signedUrl ? { id: photo.id, url: data.signedUrl, selected: true } : null
+      }))
+      setPhotos(photoUrls.filter(Boolean) as Photo[])
+    }
     setLoading(false)
   }
 
-  const togglePhoto = (photoId: string) => {
-    if (selectedPhotos.includes(photoId)) setSelectedPhotos(selectedPhotos.filter(id => id !== photoId))
-    else if (selectedPhotos.length < 10) setSelectedPhotos([...selectedPhotos, photoId])
-  }
-
-  const selectedPhotoUrls = photos.filter(p => selectedPhotos.includes(p.id)).map(p => p.url)
+  const togglePhoto = (id: string) => setPhotos(photos.map(p => p.id === id ? { ...p, selected: !p.selected } : p))
+  const selectedPhotos = photos.filter(p => p.selected)
   const totalDuration = selectedPhotos.length * duration
 
-  useEffect(() => {
-    let interval: NodeJS.Timeout
-    if (isPlaying && selectedPhotoUrls.length > 0) {
-      interval = setInterval(() => setCurrentIndex(prev => (prev + 1) % selectedPhotoUrls.length), duration * 1000)
-    }
-    return () => clearInterval(interval)
-  }, [isPlaying, selectedPhotoUrls.length, duration])
-
-  const generateVideo = async () => {
-    if (selectedPhotoUrls.length === 0) return
-    setGenerating(true)
-    setProgress(0)
-    setGeneratedVideo(null)
-    try {
-      const canvas = canvasRef.current
-      if (!canvas) throw new Error('Canvas not found')
-      const ctx = canvas.getContext('2d')
-      if (!ctx) throw new Error('Context not found')
-      canvas.width = 1080
-      canvas.height = 1920
-      const fps = 30
-      const framesPerSlide = duration * fps
-      const transitionFrames = Math.floor(fps * 0.5)
-      const totalFrames = selectedPhotoUrls.length * framesPerSlide
-      const loadImage = (src: string): Promise<HTMLImageElement> => new Promise((resolve, reject) => { const img = new window.Image(); img.crossOrigin = 'anonymous'; img.onload = () => resolve(img); img.onerror = reject; img.src = src })
-      const images = await Promise.all(selectedPhotoUrls.map(loadImage))
-      const stream = canvas.captureStream(fps)
-      const mediaRecorder = new MediaRecorder(stream, { mimeType: 'video/webm;codecs=vp9', videoBitsPerSecond: 8000000 })
-      const chunks: Blob[] = []
-      mediaRecorder.ondataavailable = (e) => { if (e.data.size > 0) chunks.push(e.data) }
-      mediaRecorder.onstop = () => { const blob = new Blob(chunks, { type: 'video/webm' }); setGeneratedVideo(URL.createObjectURL(blob)); setGenerating(false) }
-      mediaRecorder.start()
-      for (let frame = 0; frame < totalFrames; frame++) {
-        const slideIndex = Math.floor(frame / framesPerSlide)
-        const frameInSlide = frame % framesPerSlide
-        ctx.fillStyle = '#000'
-        ctx.fillRect(0, 0, canvas.width, canvas.height)
-        const currentImage = images[slideIndex]
-        const nextImage = images[(slideIndex + 1) % images.length]
-        let transitionProgress = 0
-        if (frameInSlide >= framesPerSlide - transitionFrames && slideIndex < images.length - 1) transitionProgress = (frameInSlide - (framesPerSlide - transitionFrames)) / transitionFrames
-        const drawImageCover = (img: HTMLImageElement, opacity = 1, offsetX = 0, scale = 1) => { ctx.save(); ctx.globalAlpha = opacity; const imgRatio = img.width / img.height; const canvasRatio = canvas.width / canvas.height; let dw, dh, dx, dy; if (imgRatio > canvasRatio) { dh = canvas.height * scale; dw = dh * imgRatio; dx = (canvas.width - dw) / 2 + offsetX; dy = (canvas.height - dh) / 2 } else { dw = canvas.width * scale; dh = dw / imgRatio; dx = (canvas.width - dw) / 2 + offsetX; dy = (canvas.height - dh) / 2 } ctx.drawImage(img, dx, dy, dw, dh); ctx.restore() }
-        if (transition === 'fade') { drawImageCover(currentImage, 1 - transitionProgress); if (transitionProgress > 0) drawImageCover(nextImage, transitionProgress) }
-        else if (transition === 'slide') { const offset = transitionProgress * canvas.width; drawImageCover(currentImage, 1, -offset); if (transitionProgress > 0) drawImageCover(nextImage, 1, canvas.width - offset) }
-        else if (transition === 'zoom') { const scale = 1 + transitionProgress * 0.2; drawImageCover(currentImage, 1 - transitionProgress, 0, scale); if (transitionProgress > 0) drawImageCover(nextImage, transitionProgress) }
-        if (showOverlay) { const gradient = ctx.createLinearGradient(0, canvas.height * 0.6, 0, canvas.height); gradient.addColorStop(0, 'rgba(0,0,0,0)'); gradient.addColorStop(1, 'rgba(0,0,0,0.8)'); ctx.fillStyle = gradient; ctx.fillRect(0, 0, canvas.width, canvas.height); ctx.fillStyle = '#fff'; ctx.textAlign = 'center'; if (overlayStyle === 'elegant') { ctx.font = 'bold 72px system-ui'; ctx.fillText(listingTitle, canvas.width / 2, canvas.height - 200); ctx.font = '36px system-ui'; ctx.fillStyle = 'rgba(255,255,255,0.7)'; ctx.fillText('Swipe for more', canvas.width / 2, canvas.height - 120) } else if (overlayStyle === 'bold') { ctx.font = 'bold 96px system-ui'; ctx.fillText(listingTitle.toUpperCase(), canvas.width / 2, canvas.height - 180) } else { ctx.font = '48px system-ui'; ctx.fillText(listingTitle, canvas.width / 2, canvas.height - 150) } ctx.font = '24px system-ui'; ctx.fillStyle = 'rgba(255,255,255,0.5)'; ctx.fillText('Created with SnapR', canvas.width / 2, canvas.height - 50) }
-        setProgress(Math.round((frame / totalFrames) * 100))
-        await new Promise(r => setTimeout(r, 1))
-      }
-      mediaRecorder.stop()
-    } catch (error) { console.error('Video generation error:', error); setGenerating(false); alert('Error generating video.') }
+  const loadImage = (src: string): Promise<HTMLImageElement> => {
+    return new Promise((resolve, reject) => {
+      const img = new window.Image()
+      img.crossOrigin = 'anonymous'
+      img.onload = () => resolve(img)
+      img.onerror = reject
+      img.src = src
+    })
   }
 
-  const downloadVideo = () => { if (!generatedVideo) return; const a = document.createElement('a'); a.href = generatedVideo; a.download = listingTitle.replace(/[^a-z0-9]/gi, '_') + '_reel.webm'; a.click() }
+  const generateVideo = async () => {
+    if (selectedPhotos.length === 0) return
+    setGenerating(true)
+    setProgress(0)
+    setVideoUrl(null)
+
+    const canvas = canvasRef.current
+    if (!canvas) return
+    const ctx = canvas.getContext('2d')
+    if (!ctx) return
+
+    canvas.width = 1080
+    canvas.height = 1920
+    const fps = 30
+    const frameDuration = 1000 / fps
+    const framesPerPhoto = duration * fps
+    const transitionFrames = Math.floor(fps * 0.5)
+
+    try {
+      const stream = canvas.captureStream(fps)
+      const mediaRecorder = new MediaRecorder(stream, { mimeType: 'video/webm;codecs=vp9', videoBitsPerSecond: 5000000 })
+      const chunks: Blob[] = []
+      mediaRecorder.ondataavailable = (e) => { if (e.data.size > 0) chunks.push(e.data) }
+      
+      const videoPromise = new Promise<string>((resolve) => {
+        mediaRecorder.onstop = () => {
+          const blob = new Blob(chunks, { type: 'video/webm' })
+          resolve(URL.createObjectURL(blob))
+        }
+      })
+
+      mediaRecorder.start()
+
+      const images = await Promise.all(selectedPhotos.map(p => loadImage(p.url)))
+      const totalFrames = selectedPhotos.length * framesPerPhoto
+
+      for (let photoIndex = 0; photoIndex < selectedPhotos.length; photoIndex++) {
+        const img = images[photoIndex]
+        const nextImg = images[(photoIndex + 1) % images.length]
+
+        for (let frame = 0; frame < framesPerPhoto; frame++) {
+          ctx.fillStyle = '#000'
+          ctx.fillRect(0, 0, canvas.width, canvas.height)
+
+          const drawImage = (image: HTMLImageElement, alpha: number = 1, scale: number = 1, offsetX: number = 0) => {
+            ctx.save()
+            ctx.globalAlpha = alpha
+            const imgRatio = image.width / image.height
+            const canvasRatio = canvas.width / canvas.height
+            let dw, dh, dx, dy
+            if (imgRatio > canvasRatio) { dh = canvas.height * scale; dw = dh * imgRatio; dx = (canvas.width - dw) / 2 + offsetX; dy = (canvas.height - dh) / 2 }
+            else { dw = canvas.width * scale; dh = dw / imgRatio; dx = (canvas.width - dw) / 2 + offsetX; dy = (canvas.height - dh) / 2 }
+            ctx.drawImage(image, dx, dy, dw, dh)
+            ctx.restore()
+          }
+
+          const isTransition = frame >= framesPerPhoto - transitionFrames && photoIndex < selectedPhotos.length - 1
+          const transitionProgress = isTransition ? (frame - (framesPerPhoto - transitionFrames)) / transitionFrames : 0
+
+          if (transition === 'fade' && isTransition) {
+            drawImage(img, 1 - transitionProgress)
+            drawImage(nextImg, transitionProgress)
+          } else if (transition === 'slide' && isTransition) {
+            drawImage(img, 1, 1, -canvas.width * transitionProgress)
+            drawImage(nextImg, 1, 1, canvas.width * (1 - transitionProgress))
+          } else if (transition === 'zoom') {
+            const zoomProgress = frame / framesPerPhoto
+            const scale = 1 + zoomProgress * 0.1
+            drawImage(img, 1, scale)
+          } else {
+            drawImage(img)
+          }
+
+          // Gradient overlay
+          const gradient = ctx.createLinearGradient(0, canvas.height * 0.6, 0, canvas.height)
+          gradient.addColorStop(0, 'rgba(0,0,0,0)')
+          gradient.addColorStop(1, 'rgba(0,0,0,0.8)')
+          ctx.fillStyle = gradient
+          ctx.fillRect(0, 0, canvas.width, canvas.height)
+
+          // Text overlays
+          if (showTitle) {
+            ctx.fillStyle = '#fff'
+            ctx.font = 'bold 64px system-ui'
+            ctx.textAlign = 'center'
+            const title = listingTitle.length > 25 ? listingTitle.substring(0, 25) + '...' : listingTitle
+            ctx.fillText(title, canvas.width / 2, canvas.height - 280)
+          }
+          if (listingLocation) {
+            ctx.fillStyle = 'rgba(255,255,255,0.7)'
+            ctx.font = '36px system-ui'
+            ctx.fillText(listingLocation, canvas.width / 2, canvas.height - 210)
+          }
+          if (showPrice && listingPrice) {
+            ctx.fillStyle = '#D4AF37'
+            ctx.font = 'bold 72px system-ui'
+            ctx.fillText('$' + listingPrice.toLocaleString(), canvas.width / 2, canvas.height - 120)
+          }
+
+          // Photo counter
+          ctx.fillStyle = 'rgba(0,0,0,0.6)'
+          ctx.beginPath()
+          ctx.roundRect(canvas.width - 120, 40, 80, 40, 20)
+          ctx.fill()
+          ctx.fillStyle = '#fff'
+          ctx.font = '24px system-ui'
+          ctx.textAlign = 'center'
+          ctx.fillText((photoIndex + 1) + '/' + selectedPhotos.length, canvas.width - 80, 68)
+
+          const currentFrame = photoIndex * framesPerPhoto + frame
+          setProgress(Math.round((currentFrame / totalFrames) * 100))
+          await new Promise(r => setTimeout(r, frameDuration / 3))
+        }
+      }
+
+      mediaRecorder.stop()
+      const url = await videoPromise
+      setVideoUrl(url)
+    } catch (error) {
+      console.error('Video generation error:', error)
+      alert('Error generating video. Please try again.')
+    }
+    setGenerating(false)
+  }
+
+  const downloadVideo = () => {
+    if (!videoUrl) return
+    const a = document.createElement('a')
+    a.href = videoUrl
+    a.download = listingTitle.replace(/[^a-z0-9]/gi, '_') + '_video.webm'
+    a.click()
+  }
 
   return (
     <div className="min-h-screen bg-[#0A0A0A] text-white">
       <canvas ref={canvasRef} className="hidden" />
+      
       <header className="h-14 bg-[#111] border-b border-white/5 flex items-center px-4">
-        <Link href="/dashboard/content-studio" className="flex items-center gap-2 hover:opacity-80"><ArrowLeft className="w-4 h-4 text-white/50" /><span className="text-white/50 text-sm">Back</span></Link>
+        <Link href="/dashboard/content-studio" className="flex items-center gap-2 hover:opacity-80">
+          <ArrowLeft className="w-4 h-4 text-white/50" />
+          <span className="text-white/50 text-sm">Back</span>
+        </Link>
         <div className="h-5 w-px bg-white/10 mx-4" />
-        <div className="flex items-center gap-2"><div className="w-8 h-8 rounded-lg bg-pink-500 flex items-center justify-center"><Video className="w-4 h-4" /></div><span className="font-bold">Video Creator</span>{listingTitle && <span className="text-white/50 text-sm ml-2">• {listingTitle}</span>}</div>
-      </header>
-      <div className="flex h-[calc(100vh-56px)]">
-        <div className="flex-1 flex flex-col items-center justify-center p-8 bg-[#080808]">
-          {loading ? <div className="flex flex-col items-center gap-4"><Loader2 className="w-8 h-8 animate-spin text-pink-500" /><p className="text-white/50">Loading photos...</p></div>
-          : !listingId ? <div className="text-center"><Video className="w-16 h-16 text-white/10 mx-auto mb-4" /><h3 className="text-lg font-medium mb-2">No Listing Selected</h3><p className="text-white/40 mb-4">Go back and select a listing first</p><Link href="/dashboard/content-studio" className="px-4 py-2 bg-pink-500 text-white rounded-lg font-medium">Select Listing</Link></div>
-          : generatedVideo ? <div className="flex flex-col items-center"><div className="w-[280px] h-[500px] bg-black rounded-3xl overflow-hidden border-4 border-gray-800"><video src={generatedVideo} controls autoPlay loop className="w-full h-full object-cover" /></div><div className="flex gap-3 mt-6"><button onClick={() => { setGeneratedVideo(null); setProgress(0) }} className="px-4 py-2 bg-white/10 rounded-lg hover:bg-white/20 flex items-center gap-2"><RotateCcw className="w-4 h-4" />Create New</button><button onClick={downloadVideo} className="px-6 py-2 bg-pink-500 rounded-lg hover:bg-pink-600 flex items-center gap-2 font-semibold"><Download className="w-4 h-4" />Download Video</button></div></div>
-          : <><div className="w-[280px] h-[500px] bg-[#111] rounded-3xl border-4 border-gray-800 overflow-hidden relative">{selectedPhotoUrls.length > 0 ? <><img src={selectedPhotoUrls[currentIndex]} alt="" className="w-full h-full object-cover transition-all duration-500" />{showOverlay && <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent flex flex-col justify-end p-4"><p className={'text-white font-bold ' + (overlayStyle === 'bold' ? 'text-lg uppercase' : 'text-base')}>{listingTitle}</p>{overlayStyle === 'elegant' && <p className="text-white/60 text-xs mt-1">Swipe for more</p>}</div>}</> : <div className="w-full h-full flex flex-col items-center justify-center text-white/30"><Image className="w-12 h-12 mb-2" /><p className="text-sm">Select photos below</p></div>}</div><div className="flex items-center gap-4 mt-6"><button onClick={() => setCurrentIndex(prev => prev > 0 ? prev - 1 : selectedPhotoUrls.length - 1)} className="p-2 bg-white/10 rounded-full hover:bg-white/20" disabled={!selectedPhotoUrls.length}><ChevronLeft className="w-5 h-5" /></button><button onClick={() => setIsPlaying(!isPlaying)} className="p-4 bg-pink-500 rounded-full hover:bg-pink-600" disabled={!selectedPhotoUrls.length}>{isPlaying ? <Pause className="w-6 h-6" /> : <Play className="w-6 h-6" />}</button><button onClick={() => setCurrentIndex(prev => (prev + 1) % selectedPhotoUrls.length)} className="p-2 bg-white/10 rounded-full hover:bg-white/20" disabled={!selectedPhotoUrls.length}><ChevronRight className="w-5 h-5" /></button></div></>}
+        <div className="flex items-center gap-2">
+          <div className="w-8 h-8 rounded-lg bg-pink-500 flex items-center justify-center"><Video className="w-4 h-4" /></div>
+          <span className="font-bold">Video Creator</span>
         </div>
-        <aside className="w-80 bg-[#111] border-l border-white/5 flex flex-col overflow-auto">
-          <div className="p-4 border-b border-white/5"><div className="flex items-center gap-2 mb-3"><Clock className="w-4 h-4 text-white/50" /><h3 className="font-medium">Slide Duration</h3></div><div className="grid grid-cols-3 gap-2">{[2,3,5].map(d => <button key={d} onClick={() => setDuration(d)} className={'py-3 rounded-lg font-medium transition-all ' + (duration === d ? 'bg-pink-500 text-white' : 'bg-white/5 text-white/60 hover:bg-white/10')}><span className="text-lg">{d}s</span><p className="text-[10px] opacity-70">{d === 2 ? 'Fast' : d === 3 ? 'Normal' : 'Slow'}</p></button>)}</div></div>
-          <div className="p-4 border-b border-white/5"><h3 className="font-medium mb-3">Transition</h3><div className="grid grid-cols-3 gap-2">{(['fade','slide','zoom'] as const).map(t => <button key={t} onClick={() => setTransition(t)} className={'py-2 rounded-lg font-medium capitalize transition-all ' + (transition === t ? 'bg-pink-500 text-white' : 'bg-white/5 text-white/60 hover:bg-white/10')}>{t}</button>)}</div></div>
-          <div className="p-4 border-b border-white/5"><div className="flex items-center justify-between mb-3"><h3 className="font-medium">Text Overlay</h3><button onClick={() => setShowOverlay(!showOverlay)} className={'w-10 h-6 rounded-full transition-colors ' + (showOverlay ? 'bg-pink-500' : 'bg-white/20')}><div className={'w-4 h-4 bg-white rounded-full transition-transform mx-1 ' + (showOverlay ? 'translate-x-4' : '')} /></button></div>{showOverlay && <div className="grid grid-cols-3 gap-2">{(['minimal','elegant','bold'] as const).map(s => <button key={s} onClick={() => setOverlayStyle(s)} className={'py-2 rounded-lg text-sm font-medium capitalize transition-all ' + (overlayStyle === s ? 'bg-pink-500 text-white' : 'bg-white/5 text-white/60 hover:bg-white/10')}>{s}</button>)}</div>}</div>
-          <div className="p-4 border-b border-white/5"><div className="bg-white/5 rounded-xl p-4 mb-4"><div className="grid grid-cols-2 gap-4 text-center"><div><p className="text-2xl font-bold">{selectedPhotos.length}</p><p className="text-xs text-white/50">Photos</p></div><div><p className="text-2xl font-bold">{totalDuration}s</p><p className="text-xs text-white/50">Duration</p></div></div></div>{generating ? <div className="space-y-3"><div className="h-2 bg-white/10 rounded-full overflow-hidden"><div className="h-full bg-pink-500 transition-all duration-300" style={{width:progress+'%'}} /></div><p className="text-center text-sm text-white/50">Generating video... {progress}%</p></div> : <button onClick={generateVideo} disabled={!selectedPhotos.length} className="w-full py-3 bg-pink-500 text-white rounded-xl font-semibold flex items-center justify-center gap-2 hover:bg-pink-600 disabled:opacity-50 disabled:cursor-not-allowed"><Video className="w-4 h-4" />Generate Video</button>}</div>
-          <div className="p-4"><h3 className="font-medium mb-2">Output Format:</h3><ul className="text-sm text-white/50 space-y-1"><li>• 1080×1920 (9:16 vertical)</li><li>• WebM format</li><li>• Perfect for Reels & TikTok</li></ul></div>
+        <div className="ml-auto flex items-center gap-3">
+          {videoUrl && (
+            <button onClick={downloadVideo} className="flex items-center gap-2 px-4 py-2 bg-pink-500 rounded-lg font-semibold hover:bg-pink-600">
+              <Download className="w-4 h-4" />
+              Download Video
+            </button>
+          )}
+        </div>
+      </header>
+
+      <div className="flex h-[calc(100vh-56px)]">
+        {/* Preview */}
+        <div className="flex-1 flex items-center justify-center bg-[#080808] p-8">
+          <div className="relative w-full max-w-[400px] aspect-[9/16] bg-black rounded-3xl overflow-hidden shadow-2xl border-4 border-gray-800">
+            {loading ? (
+              <div className="absolute inset-0 flex items-center justify-center"><Loader2 className="w-12 h-12 animate-spin text-pink-500" /></div>
+            ) : videoUrl ? (
+              <video src={videoUrl} controls autoPlay loop className="w-full h-full object-cover" />
+            ) : selectedPhotos.length > 0 ? (
+              <>
+                <img src={selectedPhotos[currentPreview]?.url} alt="" className="w-full h-full object-cover" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
+                <div className="absolute bottom-0 left-0 right-0 p-6 text-center">
+                  {showTitle && <p className="text-white text-2xl font-bold mb-1">{listingTitle}</p>}
+                  {listingLocation && <p className="text-white/70 text-sm mb-2">{listingLocation}</p>}
+                  {showPrice && listingPrice && <p className="text-amber-400 text-3xl font-bold">${listingPrice.toLocaleString()}</p>}
+                </div>
+                <div className="absolute top-4 right-4 px-3 py-1 bg-black/60 rounded-full text-sm">{currentPreview + 1}/{selectedPhotos.length}</div>
+                <button onClick={() => setPlaying(!playing)} className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 p-4 bg-black/50 rounded-full hover:bg-black/70">
+                  {playing ? <Pause className="w-8 h-8" /> : <Play className="w-8 h-8" />}
+                </button>
+              </>
+            ) : (
+              <div className="absolute inset-0 flex flex-col items-center justify-center text-white/30">
+                <Home className="w-16 h-16 mb-4" />
+                <p>Select photos to preview</p>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Sidebar */}
+        <aside className="w-96 bg-[#111] border-l border-white/5 flex flex-col overflow-auto">
+          {/* Photos */}
+          <div className="p-4 border-b border-white/5">
+            <h3 className="font-medium mb-3 flex items-center justify-between">
+              <span>Photos ({selectedPhotos.length} selected)</span>
+              <button onClick={() => setPhotos(photos.map(p => ({ ...p, selected: true })))} className="text-xs text-pink-400 hover:text-pink-300">Select All</button>
+            </h3>
+            <div className="grid grid-cols-4 gap-2 max-h-48 overflow-auto">
+              {photos.map((photo, i) => (
+                <button key={photo.id} onClick={() => togglePhoto(photo.id)} className={'relative aspect-square rounded-lg overflow-hidden border-2 transition-all ' + (photo.selected ? 'border-pink-500 ring-2 ring-pink-500/30' : 'border-transparent opacity-50 hover:opacity-80')}>
+                  <img src={photo.url} alt="" className="w-full h-full object-cover" />
+                  {photo.selected && <div className="absolute top-1 right-1 w-5 h-5 bg-pink-500 rounded-full flex items-center justify-center text-xs font-bold">{photos.filter(p => p.selected).indexOf(photo) + 1}</div>}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Duration */}
+          <div className="p-4 border-b border-white/5">
+            <h3 className="font-medium mb-3 flex items-center gap-2"><Clock className="w-4 h-4 text-pink-400" />Duration per Photo</h3>
+            <div className="flex gap-2">
+              {[2, 3, 4, 5].map(d => (
+                <button key={d} onClick={() => setDuration(d)} className={'flex-1 py-2 rounded-lg font-medium transition-all ' + (duration === d ? 'bg-pink-500' : 'bg-white/10 hover:bg-white/20')}>{d}s</button>
+              ))}
+            </div>
+            <p className="text-white/40 text-xs mt-2 text-center">Total: {totalDuration}s video</p>
+          </div>
+
+          {/* Transition */}
+          <div className="p-4 border-b border-white/5">
+            <h3 className="font-medium mb-3 flex items-center gap-2"><Sparkles className="w-4 h-4 text-pink-400" />Transition Effect</h3>
+            <div className="grid grid-cols-2 gap-2">
+              {[{ id: 'fade', label: 'Fade' }, { id: 'slide', label: 'Slide' }, { id: 'zoom', label: 'Ken Burns' }, { id: 'none', label: 'None' }].map(t => (
+                <button key={t.id} onClick={() => setTransition(t.id as Transition)} className={'py-2 rounded-lg font-medium transition-all ' + (transition === t.id ? 'bg-pink-500' : 'bg-white/10 hover:bg-white/20')}>{t.label}</button>
+              ))}
+            </div>
+          </div>
+
+          {/* Text Options */}
+          <div className="p-4 border-b border-white/5">
+            <h3 className="font-medium mb-3 flex items-center gap-2"><Type className="w-4 h-4 text-pink-400" />Text Overlays</h3>
+            <div className="space-y-2">
+              <button onClick={() => setShowTitle(!showTitle)} className={'w-full flex items-center justify-between p-3 rounded-lg transition-all ' + (showTitle ? 'bg-pink-500/20 border border-pink-500/30' : 'bg-white/5')}>
+                <span>Property Title</span>
+                {showTitle && <Check className="w-4 h-4 text-pink-400" />}
+              </button>
+              <button onClick={() => setShowPrice(!showPrice)} className={'w-full flex items-center justify-between p-3 rounded-lg transition-all ' + (showPrice ? 'bg-pink-500/20 border border-pink-500/30' : 'bg-white/5')}>
+                <span>Price</span>
+                {showPrice && <Check className="w-4 h-4 text-pink-400" />}
+              </button>
+            </div>
+          </div>
+
+          {/* Generate Button */}
+          <div className="p-4 mt-auto">
+            {generating ? (
+              <div className="space-y-3">
+                <div className="h-3 bg-white/10 rounded-full overflow-hidden">
+                  <div className="h-full bg-pink-500 transition-all duration-300" style={{ width: progress + '%' }} />
+                </div>
+                <p className="text-center text-sm text-white/50">Generating video... {progress}%</p>
+              </div>
+            ) : (
+              <button onClick={generateVideo} disabled={selectedPhotos.length === 0} className="w-full py-4 bg-pink-500 text-white rounded-xl font-bold text-lg flex items-center justify-center gap-2 hover:bg-pink-600 disabled:opacity-50 disabled:cursor-not-allowed">
+                <Video className="w-5 h-5" />
+                Generate Video
+              </button>
+            )}
+          </div>
         </aside>
       </div>
-      <div className="fixed bottom-0 left-0 right-80 bg-[#111] border-t border-white/5 p-4"><div className="flex items-center justify-between mb-2"><h3 className="font-medium">Select Photos ({selectedPhotos.length}/10)</h3>{selectedPhotos.length > 0 && <button onClick={() => setSelectedPhotos([])} className="text-xs text-white/50 hover:text-white">Clear all</button>}</div>{photos.length === 0 ? <p className="text-white/40 text-sm">No photos available</p> : <div className="flex gap-2 overflow-x-auto pb-2">{photos.map(photo => <button key={photo.id} onClick={() => togglePhoto(photo.id)} className={'relative flex-shrink-0 w-20 h-20 rounded-lg overflow-hidden border-2 transition-all ' + (selectedPhotos.includes(photo.id) ? 'border-pink-500 ring-2 ring-pink-500/50' : 'border-transparent hover:border-white/30')}><img src={photo.url} alt="" className="w-full h-full object-cover" />{selectedPhotos.includes(photo.id) && <div className="absolute top-1 right-1 w-5 h-5 bg-pink-500 rounded-full flex items-center justify-center text-xs font-bold">{selectedPhotos.indexOf(photo.id) + 1}</div>}</button>)}</div>}</div>
     </div>
   )
 }

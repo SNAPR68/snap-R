@@ -6,13 +6,13 @@ export const dynamic = 'force-dynamic'
 
 export async function generateMetadata({ params }: { params: { slug: string } }) {
   const supabase = await createClient()
-  const idMatch = params.slug.match(/([a-f0-9-]{8,36})$/i)
+  const idMatch = params.slug.match(/([a-f0-9]{8})$/i)
   if (!idMatch) return { title: 'Property Not Found' }
   
   const { data: listings } = await supabase
     .from('listings')
     .select('title, address, city, state, price')
-    .or(`id.eq.${idMatch[1]},id.ilike.${idMatch[1]}%`)
+    .ilike('id', idMatch[1] + '%')
     .limit(1)
   
   const listing = listings?.[0]
@@ -20,29 +20,35 @@ export async function generateMetadata({ params }: { params: { slug: string } })
   
   return {
     title: listing.title || listing.address || 'Property',
-    description: `${listing.address || ''}, ${listing.city || ''}, ${listing.state || ''} - ${listing.price ? '$' + listing.price.toLocaleString() : ''}`
+    description: [listing.address, listing.city, listing.state].filter(Boolean).join(', ') + (listing.price ? ' - $' + listing.price.toLocaleString() : ''),
+    openGraph: {
+      title: listing.title || listing.address || 'Property',
+      description: [listing.address, listing.city, listing.state].filter(Boolean).join(', ')
+    }
   }
 }
 
 export default async function PropertySitePage({ params }: { params: { slug: string } }) {
   const supabase = await createClient()
   
-  const idMatch = params.slug.match(/([a-f0-9-]{8,36})$/i)
+  const idMatch = params.slug.match(/([a-f0-9]{8})$/i)
   if (!idMatch) notFound()
   
   const listingId = idMatch[1]
   
   const { data: listings } = await supabase
     .from('listings')
-    .select('*, photos(id, raw_url, processed_url, status), profiles(full_name, email, phone)')
-    .or(`id.eq.${listingId},id.ilike.${listingId}%`)
+    .select('*, photos(id, raw_url, processed_url, status, display_order), profiles(full_name, email, phone)')
+    .ilike('id', listingId + '%')
     .limit(1)
   
   const listing = listings?.[0]
   if (!listing) notFound()
 
+  const sortedPhotos = (listing.photos || []).sort((a: any, b: any) => (a.display_order || 0) - (b.display_order || 0))
+  
   const photos = await Promise.all(
-    (listing.photos || []).map(async (photo: any) => {
+    sortedPhotos.map(async (photo: any) => {
       const path = photo.processed_url || photo.raw_url
       if (!path) return null
       if (path.startsWith('http')) return path
