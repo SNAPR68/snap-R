@@ -54,7 +54,7 @@ export default function PropertySitesClient() {
   const getPropertyUrl = (listing: Listing) => {
     const slug = listing.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '')
     const origin = typeof window !== 'undefined' ? window.location.origin : 'https://snap-r.com'
-    return origin + '/p/' + slug + '-' + listing.id.slice(0, 8)
+    return origin + '/p/' + slug + '-' + listing.id
   }
 
   const copyToClipboard = () => { if (!selectedListing) return; navigator.clipboard.writeText(getPropertyUrl(selectedListing)); setCopied(true); setTimeout(() => setCopied(false), 2000) }
