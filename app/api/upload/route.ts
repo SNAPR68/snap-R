@@ -58,7 +58,7 @@ export async function POST(request: Request) {
     );
   }
 
-  const uploadedPhotos: { id: string; original_url: string }[] = [];
+  const uploadedPhotos: { id: string; raw_url: string }[] = [];
 
   for (const file of files) {
     if (!ALLOWED_MIME.has(file.type)) {
@@ -84,7 +84,7 @@ export async function POST(request: Request) {
         continue;
       }
 
-      const original_url = uploadData.path;
+      const raw_url = uploadData.path;
 
       // Insert photo record
       const { data: photoRecord, error: photoError } = await supabase
@@ -92,7 +92,7 @@ export async function POST(request: Request) {
         .insert({
           listing_id: listingId,
           user_id: user.id,
-          original_url,
+          raw_url,
           status: "pending",
         })
         .select("id")
@@ -105,7 +105,7 @@ export async function POST(request: Request) {
 
       uploadedPhotos.push({
         id: photoRecord.id,
-        original_url,
+        raw_url,
       });
     } catch (err) {
       console.error("Upload processing error:", err);
