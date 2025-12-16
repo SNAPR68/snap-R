@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { Home, Hammer, LayoutGrid, Image, Palette, FileText, Settings, CheckSquare, Camera, Mic, Sparkles, CreditCard, BookOpen, LogOut } from 'lucide-react'
+import { Home, Users, Hammer, LayoutGrid, Image, Palette, FileText, Settings, CheckSquare, Camera, Mic, Sparkles, CreditCard, BookOpen, LogOut } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 
@@ -38,6 +38,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
           <NavLink href="/dashboard/voiceover" icon={Mic}>AI Voiceover</NavLink>
           
           <p className="text-xs text-white/40 uppercase tracking-wider mb-2 mt-6 px-3">Account</p>
+          <NavLink href="/dashboard/team" icon={Users}>Team</NavLink>
           <NavLink href="/dashboard/settings" icon={Settings}>Settings</NavLink>
           <NavLink href="/dashboard/billing" icon={CreditCard}>Billing</NavLink>
           <NavLink href="/academy" icon={BookOpen}>Academy</NavLink>
