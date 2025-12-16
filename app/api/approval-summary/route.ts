@@ -1,36 +1,68 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET(req: NextRequest) {
   try {
-    const { searchParams } = new URL(req.url);
-    const listingId = searchParams.get('listingId');
-
-    if (!listingId) {
-      return NextResponse.json({ error: 'Listing ID required' }, { status: 400 });
+    const supabase = await createClient();
+    
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const supabase = await createClient();
+    const { data: shares } = await supabase
+      .from('shares')
+      .select('id, token, listing_id, created_at')
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false });
 
-    const { data: photos, error } = await supabase
+    if (!shares || shares.length === 0) {
+      return NextResponse.json({ listings: [] });
+    }
+
+    const listingIds = [...new Set(shares.map(s => s.listing_id))];
+
+    const { data: listings } = await supabase
+      .from('listings')
+      .select('id, title, address')
+      .in('id', listingIds);
+
+    const { data: photos } = await supabase
       .from('photos')
-      .select('id, client_approved, client_feedback, approved_at, variant, processed_url')
-      .eq('listing_id', listingId)
+      .select('id, listing_id, client_approved, processed_url, created_at')
+      .in('listing_id', listingIds)
       .eq('status', 'completed');
 
-    if (error) {
-      return NextResponse.json({ error: 'Failed to fetch photos' }, { status: 500 });
-    }
+    const result = await Promise.all((listings || []).map(async (listing) => {
+      const listingPhotos = (photos || []).filter(p => p.listing_id === listing.id);
+      const share = shares.find(s => s.listing_id === listing.id);
+      const firstPhoto = listingPhotos[0];
+      
+      let thumbnail = null;
+      if (firstPhoto?.processed_url) {
+        const { data } = await supabase.storage.from('raw-images').createSignedUrl(firstPhoto.processed_url, 3600);
+        thumbnail = data?.signedUrl || null;
+      }
+      
+      return {
+        id: listing.id,
+        title: listing.title || 'Untitled',
+        address: listing.address || '',
+        thumbnail,
+        shareToken: share?.token || '',
+        stats: {
+          approved: listingPhotos.filter(p => p.client_approved === true).length,
+          rejected: listingPhotos.filter(p => p.client_approved === false).length,
+          pending: listingPhotos.filter(p => p.client_approved === null).length,
+          total: listingPhotos.length,
+        },
+        lastActivity: share?.created_at || new Date().toISOString(),
+      };
+    }));
 
-    const summary = {
-      total: photos?.length || 0,
-      approved: photos?.filter(p => p.client_approved === true).length || 0,
-      rejected: photos?.filter(p => p.client_approved === false).length || 0,
-      pending: photos?.filter(p => p.client_approved === null).length || 0,
-      photos: photos || [],
-    };
-
-    return NextResponse.json(summary);
+    return NextResponse.json({ listings: result });
   } catch (error) {
     console.error('Approval summary error:', error);
     return NextResponse.json({ error: 'Server error' }, { status: 500 });
