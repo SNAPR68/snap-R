@@ -7,7 +7,7 @@ import ListingDate from "@/components/ui/listing-date";
 
 export default async function ListingsPage() {
   const { user } = await protect();
-  const supabase = await createSupabaseServerClient();
+  const supabase = createSupabaseServerClient();
 
   // Fetch listings + photo counts + cover photo
   const { data: listings, error } = await supabase

@@ -1,20 +1,21 @@
-import { createServerClient } from '@supabase/ssr';
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
 // Rate limit configuration per endpoint type
 const rateLimitConfig = {
-  '/api/enhance': { requests: 10, window: 60 * 1000 },
-  '/api/analyze': { requests: 20, window: 60 * 1000 },
-  '/api/upload': { requests: 30, window: 60 * 1000 },
-  '/api/contact': { requests: 3, window: 60 * 1000 },
-  '/api/stripe': { requests: 10, window: 60 * 1000 },
-  '/api/auth': { requests: 5, window: 60 * 1000 },
-  'default': { requests: 100, window: 60 * 1000 },
+  '/api/enhance': { requests: 10, window: 60 * 1000 }, // 10 per minute
+  '/api/analyze': { requests: 20, window: 60 * 1000 }, // 20 per minute
+  '/api/upload': { requests: 30, window: 60 * 1000 }, // 30 per minute
+  '/api/contact': { requests: 3, window: 60 * 1000 }, // 3 per minute (spam prevention)
+  '/api/stripe': { requests: 10, window: 60 * 1000 }, // 10 per minute
+  '/api/auth': { requests: 5, window: 60 * 1000 }, // 5 per minute (brute force prevention)
+  'default': { requests: 100, window: 60 * 1000 }, // 100 per minute default
 };
 
+// In-memory rate limit store (use Redis in production for multi-instance)
 const rateLimit = new Map<string, { count: number; resetTime: number }>();
 
+// Clean up old entries periodically
 setInterval(() => {
   const now = Date.now();
   for (const [key, value] of rateLimit.entries()) {
@@ -36,59 +37,37 @@ function getRateLimitConfig(pathname: string) {
 function checkRateLimit(key: string, config: { requests: number; window: number }): { allowed: boolean; remaining: number; resetIn: number } {
   const now = Date.now();
   const record = rateLimit.get(key);
+
   if (!record || now > record.resetTime) {
     rateLimit.set(key, { count: 1, resetTime: now + config.window });
     return { allowed: true, remaining: config.requests - 1, resetIn: config.window };
   }
+
   if (record.count >= config.requests) {
     return { allowed: false, remaining: 0, resetIn: record.resetTime - now };
   }
+
   record.count++;
   return { allowed: true, remaining: config.requests - record.count, resetIn: record.resetTime - now };
 }
 
-export async function middleware(request: NextRequest) {
+export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // Create response that we'll modify
-  let response = NextResponse.next({
-    request: {
-      headers: request.headers,
-    },
-  });
-
-  // Supabase session refresh - CRITICAL for auth to work
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        getAll() {
-          return request.cookies.getAll();
-        },
-        setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value, options }) => {
-            request.cookies.set(name, value);
-            response.cookies.set(name, value, options);
-          });
-        },
-      },
-    }
-  );
-
-  // Refresh the session - this updates the cookies
-  await supabase.auth.getUser();
-
-  // Rate limiting for API routes
+  // Only rate limit API routes
   if (pathname.startsWith('/api')) {
+    // Get client identifier (IP or user ID from cookie)
     const forwarded = request.headers.get('x-forwarded-for');
     const ip = forwarded ? forwarded.split(',')[0] : request.headers.get('x-real-ip') || 'unknown';
-    const key = `${ip}:${pathname.split('/').slice(0, 3).join('/')}`;
+    const key = `${ip}:${pathname.split('/').slice(0, 3).join('/')}`; // Group by endpoint prefix
+
     const config = getRateLimitConfig(pathname);
     const { allowed, remaining, resetIn } = checkRateLimit(key, config);
 
     if (!allowed) {
+      // Log rate limit violation
       console.warn(`Rate limit exceeded: ${key}`);
+      
       return NextResponse.json(
         { 
           error: 'Too many requests', 
@@ -107,9 +86,12 @@ export async function middleware(request: NextRequest) {
       );
     }
 
+    // Add rate limit headers to successful responses
+    const response = NextResponse.next();
     response.headers.set('X-RateLimit-Limit', String(config.requests));
     response.headers.set('X-RateLimit-Remaining', String(remaining));
     response.headers.set('X-RateLimit-Reset', String(Date.now() + resetIn));
+    return response;
   }
 
   // Block suspicious patterns
@@ -128,11 +110,12 @@ export async function middleware(request: NextRequest) {
     return new NextResponse('Not Found', { status: 404 });
   }
 
-  return response;
+  return NextResponse.next();
 }
 
 export const config = {
   matcher: [
-    '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+    '/api/:path*',
+    '/((?!_next/static|_next/image|favicon.ico|.*\\.png$|.*\\.jpg$|.*\\.svg$).*)',
   ],
 };
