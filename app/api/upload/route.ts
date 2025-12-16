@@ -73,7 +73,7 @@ export async function POST(request: Request) {
       // Upload to Supabase Storage
       const fileName = `${user.id}/${listingId}/${Date.now()}-${file.name}`;
       const { data: uploadData, error: uploadError } = await supabase.storage
-        .from("uploads")
+        .from("raw-images")
         .upload(fileName, buffer, {
           contentType: file.type,
           upsert: false,
