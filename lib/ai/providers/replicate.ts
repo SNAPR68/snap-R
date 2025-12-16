@@ -329,3 +329,133 @@ export async function upscale(
   console.log('[Replicate] Upscale complete');
   return extractUrl(output);
 }
+
+// ========================================
+// SEASONAL TOOLS (4) - Using Qwen (same as declutter)
+// ========================================
+
+export async function snowRemoval(imageUrl: string): Promise<string> {
+  console.log('[Replicate] Snow Removal');
+  const output = await replicate.run(
+    "bytedance/sdxl-lightning-4step:6f7a773af6fc3e8de9d5a3c00be77c17308914bf67772726aff83496ba1e3bbe",
+    {
+      input: {
+        prompt: "beautiful house, lush green grass lawn, full green leafy trees, clear blue sunny sky, professional real estate photography, summer day",
+        image: imageUrl,
+        strength: 0.4
+      }
+    }
+  );
+  const result = Array.isArray(output) ? output[0] : output;
+  return String(result);
+}
+
+export async function seasonalSpring(imageUrl: string): Promise<string> {
+  console.log('[Replicate] Seasonal - Spring');
+  const output = await replicate.run(
+    "bytedance/sdxl-lightning-4step:6f7a773af6fc3e8de9d5a3c00be77c17308914bf67772726aff83496ba1e3bbe",
+    {
+      input: {
+        prompt: "beautiful house, fresh green grass, blooming flowers, budding trees with light green leaves, clear blue sky, spring day, professional real estate photography",
+        image: imageUrl,
+        strength: 0.4
+      }
+    }
+  );
+  const result = Array.isArray(output) ? output[0] : output;
+  return String(result);
+}
+
+export async function seasonalSummer(imageUrl: string): Promise<string> {
+  console.log('[Replicate] Seasonal - Summer');
+  const output = await replicate.run(
+    "bytedance/sdxl-lightning-4step:6f7a773af6fc3e8de9d5a3c00be77c17308914bf67772726aff83496ba1e3bbe",
+    {
+      input: {
+        prompt: "beautiful house, lush deep green grass, full green trees, bright sunny blue sky with white clouds, summer day, professional real estate photography",
+        image: imageUrl,
+        strength: 0.4
+      }
+    }
+  );
+  const result = Array.isArray(output) ? output[0] : output;
+  return String(result);
+}
+
+export async function seasonalFall(imageUrl: string): Promise<string> {
+  console.log('[Replicate] Seasonal - Fall');
+  const output = await replicate.run(
+    "bytedance/sdxl-lightning-4step:6f7a773af6fc3e8de9d5a3c00be77c17308914bf67772726aff83496ba1e3bbe",
+    {
+      input: {
+        prompt: "beautiful house, orange red golden yellow autumn leaves on trees, some fallen leaves on ground, warm autumn sunlight, fall season, professional real estate photography",
+        image: imageUrl,
+        strength: 0.4
+      }
+    }
+  );
+  const result = Array.isArray(output) ? output[0] : output;
+  return String(result);
+}
+
+// ========================================
+// FIX TOOLS (4) - Using Qwen
+// ========================================
+
+export async function reflectionRemoval(imageUrl: string): Promise<string> {
+  console.log('[Replicate] Reflection Removal');
+  const output = await replicate.run(
+    "qwen/qwen2.5-vl-72b-instruct:c52c45f74815c51db23e4c2c3ab78e59d3a14d3d3e0c3bc4242c1c43c6a6b28c",
+    {
+      input: {
+        image: imageUrl,
+        prompt: "Remove all reflections and glare from the windows. Make the glass crystal clear. Keep everything else exactly the same."
+      }
+    }
+  );
+  return String(output);
+}
+
+export async function powerLineRemoval(imageUrl: string): Promise<string> {
+  console.log('[Replicate] Power Line Removal');
+  const output = await replicate.run(
+    "qwen/qwen2.5-vl-72b-instruct:c52c45f74815c51db23e4c2c3ab78e59d3a14d3d3e0c3bc4242c1c43c6a6b28c",
+    {
+      input: {
+        image: imageUrl,
+        prompt: "Remove all power lines, telephone wires, and electrical cables from the sky. Keep the house and everything else exactly the same."
+      }
+    }
+  );
+  return String(output);
+}
+
+export async function objectRemoval(imageUrl: string, prompt?: string): Promise<string> {
+  console.log('[Replicate] Object Removal');
+  const output = await replicate.run(
+    "qwen/qwen2.5-vl-72b-instruct:c52c45f74815c51db23e4c2c3ab78e59d3a14d3d3e0c3bc4242c1c43c6a6b28c",
+    {
+      input: {
+        image: imageUrl,
+        prompt: prompt || "Remove trash cans, cars, hoses, and clutter from this photo. Keep the house and main features exactly the same."
+      }
+    }
+  );
+  return String(output);
+}
+
+export async function flashFix(imageUrl: string): Promise<string> {
+  console.log('[Replicate] Flash Hotspot Fix');
+  const output = await replicate.run(
+    "bytedance/sdxl-lightning-4step:6f7a773af6fc3e8de9d5a3c00be77c17308914bf67772726aff83496ba1e3bbe",
+    {
+      input: {
+        prompt: "professional real estate interior photo, natural even balanced lighting, no harsh shadows, no bright spots",
+        image: imageUrl,
+        strength: 0.25
+      }
+    }
+  );
+  const result = Array.isArray(output) ? output[0] : output;
+  return String(result);
+}

@@ -1,7 +1,7 @@
 /**
  * SnapR AI Enhancement Router
  * ============================
- * 15 tools: 10 with presets, 5 without (one-click)
+ * 23 tools: 15 original + 4 seasonal + 4 fix
  */
 
 import {
@@ -20,6 +20,16 @@ import {
   perspectiveCorrection,
   lensCorrection,
   autoEnhance,
+  // NEW: Seasonal tools
+  snowRemoval,
+  seasonalSpring,
+  seasonalSummer,
+  seasonalFall,
+  // NEW: Fix tools
+  reflectionRemoval,
+  powerLineRemoval,
+  objectRemoval,
+  flashFix,
 } from './providers/replicate';
 
 export type ToolId =
@@ -28,6 +38,11 @@ export type ToolId =
   | 'virtual-twilight'
   | 'lawn-repair'
   | 'pool-enhance'
+  // SEASONAL (4) - NEW
+  | 'snow-removal'
+  | 'seasonal-spring'
+  | 'seasonal-summer'
+  | 'seasonal-fall'
   // INTERIOR (6)
   | 'declutter'
   | 'virtual-staging'
@@ -40,7 +55,12 @@ export type ToolId =
   | 'auto-enhance'
   | 'perspective-correction'
   | 'lens-correction'
-  | 'color-balance';
+  | 'color-balance'
+  // FIX (4) - NEW
+  | 'reflection-removal'
+  | 'power-line-removal'
+  | 'object-removal'
+  | 'flash-fix';
 
 export const TOOL_CREDITS: Record<ToolId, number> = {
   // EXTERIOR
@@ -48,6 +68,11 @@ export const TOOL_CREDITS: Record<ToolId, number> = {
   'virtual-twilight': 2,
   'lawn-repair': 1,
   'pool-enhance': 1,
+  // SEASONAL - NEW
+  'snow-removal': 2,
+  'seasonal-spring': 2,
+  'seasonal-summer': 2,
+  'seasonal-fall': 2,
   // INTERIOR
   'declutter': 2,
   'virtual-staging': 3,
@@ -61,6 +86,11 @@ export const TOOL_CREDITS: Record<ToolId, number> = {
   'perspective-correction': 1,
   'lens-correction': 1,
   'color-balance': 1,
+  // FIX - NEW
+  'reflection-removal': 2,
+  'power-line-removal': 2,
+  'object-removal': 2,
+  'flash-fix': 1,
 };
 
 export interface EnhancementResult {
@@ -158,6 +188,46 @@ export async function processEnhancement(
 
       case 'lens-correction':
         enhancedUrl = await lensCorrection(imageUrl);
+        break;
+
+      // ========================================
+      // SEASONAL TOOLS (4) - NEW - one-click
+      // ========================================
+
+      case 'snow-removal':
+        enhancedUrl = await snowRemoval(imageUrl);
+        break;
+
+      case 'seasonal-spring':
+        enhancedUrl = await seasonalSpring(imageUrl);
+        break;
+
+      case 'seasonal-summer':
+        enhancedUrl = await seasonalSummer(imageUrl);
+        break;
+
+      case 'seasonal-fall':
+        enhancedUrl = await seasonalFall(imageUrl);
+        break;
+
+      // ========================================
+      // FIX TOOLS (4) - NEW - one-click
+      // ========================================
+
+      case 'reflection-removal':
+        enhancedUrl = await reflectionRemoval(imageUrl);
+        break;
+
+      case 'power-line-removal':
+        enhancedUrl = await powerLineRemoval(imageUrl);
+        break;
+
+      case 'object-removal':
+        enhancedUrl = await objectRemoval(imageUrl, options.prompt);
+        break;
+
+      case 'flash-fix':
+        enhancedUrl = await flashFix(imageUrl);
         break;
 
       default:

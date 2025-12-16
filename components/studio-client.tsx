@@ -26,16 +26,6 @@ const AI_TOOLS = [
   { id: 'perspective-correction', name: 'Perspective Fix', icon: Move, credits: 1, category: 'ENHANCE', hasPresets: false },
   { id: 'lens-correction', name: 'Lens Correction', icon: Circle, credits: 1, category: 'ENHANCE', hasPresets: false },
   { id: 'color-balance', name: 'Color Balance', icon: Palette, credits: 1, category: 'ENHANCE', hasPresets: true },
-  // SEASONAL (4 tools)
-  { id: 'snow-removal', name: 'Snow Removal', icon: Snowflake, credits: 2, category: 'SEASONAL', hasPresets: false },
-  { id: 'seasonal-spring', name: 'Spring Convert', icon: Flower2, credits: 2, category: 'SEASONAL', hasPresets: false },
-  { id: 'seasonal-summer', name: 'Summer Convert', icon: Sun, credits: 2, category: 'SEASONAL', hasPresets: false },
-  { id: 'seasonal-fall', name: 'Fall Convert', icon: Leaf, credits: 2, category: 'SEASONAL', hasPresets: false },
-  // FIX (4 tools)
-  { id: 'reflection-removal', name: 'Reflection Fix', icon: PanelTop, credits: 2, category: 'FIX', hasPresets: false },
-  { id: 'power-line-removal', name: 'Power Lines', icon: Zap, credits: 2, category: 'FIX', hasPresets: false },
-  { id: 'object-removal', name: 'Object Removal', icon: Eraser, credits: 2, category: 'FIX', hasPresets: false },
-  { id: 'flash-fix', name: 'Flash Fix', icon: Lightbulb, credits: 1, category: 'FIX', hasPresets: false },
 ];
 
 const TOOL_PRESETS: Record<string, { id: string; name: string; prompt: string; thumbnail: string }[]> = {
