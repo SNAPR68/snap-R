@@ -29,6 +29,9 @@ export default async function DashboardLayout({ children }: { children: React.Re
           <p className="text-xs text-white/40 uppercase tracking-wider mb-2 mt-6 px-3">Tools</p>
           <NavLink href="/dashboard/listing-intelligence" icon={Sparkles}>AI Analyzer</NavLink>
           <NavLink href="/dashboard/approvals" icon={CheckSquare}>Client Approvals</NavLink>
+          <NavLink href="/dashboard/ai-descriptions" icon={FileText}>AI Descriptions</NavLink>
+          <NavLink href="/dashboard/photo-culling" icon={Image}>Photo Culling</NavLink>
+          <NavLink href="/dashboard/portfolio" icon={Palette}>Portfolios</NavLink>
           
           <p className="text-xs text-white/40 uppercase tracking-wider mb-2 mt-6 px-3">Account</p>
           <NavLink href="/dashboard/settings" icon={Settings}>Settings</NavLink>
