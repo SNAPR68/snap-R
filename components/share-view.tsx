@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Download, Check, X, ChevronLeft, ChevronRight, MessageSquare, Send, Loader2 } from 'lucide-react';
 
 interface Photo {
@@ -30,6 +30,7 @@ export function ShareView({ listing, photos, settings, shareToken }: ShareViewPr
   const [feedbackText, setFeedbackText] = useState<Record<string, string>>({});
   const [showFeedback, setShowFeedback] = useState<string | null>(null);
   const [saving, setSaving] = useState<string | null>(null);
+  const sliderRef = useRef<HTMLDivElement>(null);
 
   const selectedPhoto = photos[selectedIndex];
 
@@ -51,6 +52,14 @@ export function ShareView({ listing, photos, settings, shareToken }: ShareViewPr
     setApprovalStatus(initialStatus);
     setFeedbackText(initialFeedback);
   }, [photos]);
+
+  const handleSliderMove = (e: React.MouseEvent<HTMLDivElement> | React.TouchEvent<HTMLDivElement>) => {
+    if (!sliderRef.current) return;
+    const rect = sliderRef.current.getBoundingClientRect();
+    const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
+    const percent = Math.min(Math.max(((clientX - rect.left) / rect.width) * 100, 0), 100);
+    setSliderPosition(percent);
+  };
 
   const handleApproval = async (photoId: string, approved: boolean) => {
     if (!shareToken) return;
@@ -143,28 +152,51 @@ export function ShareView({ listing, photos, settings, shareToken }: ShareViewPr
 
       <div className="flex h-[calc(100vh-64px)]">
         <main className="flex-1 p-6 flex flex-col">
-          <div className="flex-1 relative bg-[#0A0A0A] rounded-xl overflow-hidden">
+          <div className="flex-1 relative bg-[#0A0A0A] rounded-xl overflow-hidden flex items-center justify-center">
             {settings.show_comparison && selectedPhoto.rawUrl ? (
               <div 
-                className="relative w-full h-full cursor-ew-resize"
-                onMouseMove={(e) => {
-                  if (e.buttons !== 1) return;
-                  const rect = e.currentTarget.getBoundingClientRect();
-                  const percent = Math.min(Math.max(((e.clientX - rect.left) / rect.width) * 100, 0), 100);
-                  setSliderPosition(percent);
-                }}
+                ref={sliderRef}
+                className="relative w-full h-full cursor-col-resize select-none"
+                onMouseMove={handleSliderMove}
+                onTouchMove={handleSliderMove}
               >
-                <img src={selectedPhoto.processedUrl} alt="Enhanced" className="absolute inset-0 w-full h-full object-contain" />
-                <div className="absolute inset-0 overflow-hidden" style={{ width: `${sliderPosition}%` }}>
-                  <img src={selectedPhoto.rawUrl} alt="Original" className="h-full object-contain" style={{ width: `${100 / (sliderPosition / 100)}%` }} />
+                {/* After Image (Enhanced) - Full width background */}
+                <img 
+                  src={selectedPhoto.processedUrl} 
+                  alt="Enhanced" 
+                  className="absolute inset-0 w-full h-full object-contain pointer-events-none" 
+                  draggable={false}
+                />
+                
+                {/* Before Image (Original) - Clipped by slider */}
+                <div 
+                  className="absolute inset-0 overflow-hidden pointer-events-none"
+                  style={{ clipPath: `inset(0 ${100 - sliderPosition}% 0 0)` }}
+                >
+                  <img 
+                    src={selectedPhoto.rawUrl} 
+                    alt="Original" 
+                    className="absolute inset-0 w-full h-full object-contain" 
+                    draggable={false}
+                  />
                 </div>
-                <div className="absolute top-0 bottom-0 w-0.5 bg-white" style={{ left: `${sliderPosition}%` }}>
-                  <div className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-8 h-8 bg-white rounded-full flex items-center justify-center shadow-lg">
-                    <span className="text-gray-600 text-xs">↔</span>
+                
+                {/* Slider Line */}
+                <div 
+                  className="absolute top-0 bottom-0 w-1 bg-white shadow-lg pointer-events-none"
+                  style={{ left: `${sliderPosition}%`, transform: 'translateX(-50%)' }}
+                >
+                  {/* Slider Handle */}
+                  <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-10 h-10 bg-white rounded-full shadow-xl flex items-center justify-center">
+                    <svg className="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 9l4-4 4 4m0 6l-4 4-4-4" />
+                    </svg>
                   </div>
                 </div>
-                <div className="absolute top-4 left-4 px-3 py-1 bg-black/70 rounded text-sm">Before</div>
-                <div className="absolute top-4 right-4 px-3 py-1 bg-black/70 rounded text-sm">After</div>
+                
+                {/* Labels */}
+                <div className="absolute top-4 left-4 px-3 py-1.5 bg-black/80 backdrop-blur rounded-lg text-sm font-medium">Before</div>
+                <div className="absolute top-4 right-4 px-3 py-1.5 bg-black/80 backdrop-blur rounded-lg text-sm font-medium">After</div>
               </div>
             ) : (
               <img src={selectedPhoto.processedUrl} alt="Enhanced" className="w-full h-full object-contain" />
@@ -185,14 +217,14 @@ export function ShareView({ listing, photos, settings, shareToken }: ShareViewPr
                 <button 
                   onClick={() => setSelectedIndex(i => Math.max(0, i - 1))}
                   disabled={selectedIndex === 0}
-                  className="absolute left-4 top-1/2 -translate-y-1/2 p-2 bg-black/50 rounded-full disabled:opacity-30"
+                  className="absolute left-4 top-1/2 -translate-y-1/2 p-3 bg-black/60 hover:bg-black/80 rounded-full disabled:opacity-30 transition-all"
                 >
                   <ChevronLeft className="w-6 h-6" />
                 </button>
                 <button 
                   onClick={() => setSelectedIndex(i => Math.min(photos.length - 1, i + 1))}
                   disabled={selectedIndex === photos.length - 1}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 p-2 bg-black/50 rounded-full disabled:opacity-30"
+                  className="absolute right-4 top-1/2 -translate-y-1/2 p-3 bg-black/60 hover:bg-black/80 rounded-full disabled:opacity-30 transition-all"
                 >
                   <ChevronRight className="w-6 h-6" />
                 </button>
