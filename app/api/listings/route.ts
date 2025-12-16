@@ -137,7 +137,7 @@ export async function POST(request: Request) {
 
   if (error) {
     console.error("Listing create error", error);
-    return NextResponse.json({ error: "Failed to create listing" }, { status: 500 });
+    return NextResponse.json({ error: "Failed to create listing", details: error.message, code: error.code }, { status: 500 });
   }
 
   return NextResponse.json(data, { status: 201 });
