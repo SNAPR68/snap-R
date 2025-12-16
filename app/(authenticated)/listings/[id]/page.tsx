@@ -58,7 +58,7 @@ const statusPill = (status: string) => {
 
 export default async function ListingDetailPage({ params }: { params: { id: string } }) {
   const { user } = await protect();
-  const supabase = createSupabaseServerClient();
+  const supabase = await createSupabaseServerClient();
 
   const { data: listing } = await supabase
     .from("listings")

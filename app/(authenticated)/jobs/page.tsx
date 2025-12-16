@@ -9,7 +9,7 @@ import JobTimestamp from "@/components/ui/job-timestamp";
 
 export default async function JobsPage() {
   const { user } = await protect();
-  const supabase = createSupabaseServerClient();
+  const supabase = await createSupabaseServerClient();
 
   const { data: jobs, error } = await supabase
     .from("jobs")

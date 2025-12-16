@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import BillingClient from "./billing-client";
 
 export default async function BillingPage() {
-  const supabase = createClient();
+  const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   
   if (!user) redirect('/auth/login');
