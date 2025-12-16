@@ -104,7 +104,7 @@ export default function HomePage() {
             <Link href="#features" className="px-4 py-2 text-white font-medium hover:text-[#D4A017] transition-colors">
               Features
             </Link>
-            <Link href="#pricing" className="px-4 py-2 text-white font-medium hover:text-[#D4A017] transition-colors">
+            <Link href="/pricing" className="px-4 py-2 text-white font-medium hover:text-[#D4A017] transition-colors">
               Pricing
             </Link>
             <Link href="/faq" className="px-4 py-2 text-white font-medium hover:text-[#D4A017] transition-colors">
@@ -687,56 +687,6 @@ export default function HomePage() {
       <section className="py-16 px-6 bg-[#1A1A1A]/30">
         <Testimonials />
       </section>
-
-      {/* Pricing Section */}
-      <section id="pricing" className="py-16 px-6">
-        <div className="max-w-5xl mx-auto">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">Simple, Transparent Pricing</h2>
-            <p className="text-white/60">Start free. Upgrade when you're ready.</p>
-          </div>
-          
-          <div className="grid md:grid-cols-4 gap-4">
-            {PLANS.map((plan) => (
-              <div 
-                key={plan.id}
-                onClick={() => setSelectedPlan(plan.id)}
-                className={`relative p-6 rounded-2xl border cursor-pointer transition-all ${
-                  plan.popular 
-                    ? 'bg-gradient-to-b from-[#D4A017]/20 to-transparent border-[#D4A017] shadow-lg shadow-[#D4A017]/20' 
-                    : selectedPlan === plan.id
-                      ? 'bg-white/10 border-white/30'
-                      : 'bg-white/5 border-white/10 hover:border-white/20'
-                }`}
-              >
-                {plan.popular && (
-                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 bg-[#D4A017] text-black text-xs font-bold rounded-full">POPULAR</div>
-                )}
-                <h3 className="text-xl font-bold text-white mb-1">{plan.name}</h3>
-                <p className="text-2xl font-bold text-[#D4A017] mb-1">{plan.price}</p>
-                <p className="text-white/50 text-sm mb-4">{plan.credits}</p>
-                <ul className="space-y-2">
-                  {plan.features.map((feature, i) => (
-                    <li key={i} className="flex items-center gap-2 text-white/70 text-sm">
-                      <Check className="w-4 h-4 text-[#D4A017]" />
-                      {feature}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            ))}
-          </div>
-          
-          <div className="text-center mt-8">
-            <Link href="/auth/signup" className="inline-flex items-center gap-2 px-8 py-4 bg-gradient-to-r from-[#D4A017] to-[#B8860B] text-black font-bold rounded-xl hover:opacity-90 transition-opacity">
-              Get Started Free <ArrowRight className="w-5 h-5" />
-            </Link>
-          </div>
-        </div>
-      </section>
-
-      {/* Footer */}
-      <footer className="border-t border-white/10 py-12 px-6">
         <div className="max-w-5xl mx-auto">
           <div className="flex flex-col md:flex-row items-center justify-between gap-6 mb-8">
             <div className="flex items-center gap-3">
