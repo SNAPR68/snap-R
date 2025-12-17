@@ -118,8 +118,8 @@ export default function PricingPage() {
       return { price: null, total: null, savings: 0 };
     }
     const price = isAnnual ? proTier.annual : proTier.monthly;
-    const total = (proTier.listings as number) * price;
-    const savings = isAnnual ? (proTier.monthly - proTier.annual) * (proTier.listings as number) * 12 : 0;
+    const total = (proTier.listings as number) * (price as number);
+    const savings = isAnnual ? (proTier.monthly as number - (proTier.annual as number)) * (proTier.listings as number) * 12 : 0;
     return { price, total, savings };
   }, [proTier, isAnnual, isEnterprise]);
 
