@@ -14,20 +14,20 @@ const PRO_TIERS = [
   { listings: 125, monthly: 13, annual: 10 },
   { listings: 150, monthly: 12, annual: 9 },
   { listings: '150+', monthly: null, annual: null, enterprise: true },
-];
+] as const;
 
 const TEAM_OPTIONS = [
   { users: 5, monthly: 199, annual: 149 },
   { users: 10, monthly: 399, annual: 299 },
   { users: 25, monthly: 649, annual: 499 },
-];
+] as const;
 
 const ADDONS = [
-  { name: 'Floor Plans', price: 'From $25', icon: 'grid' },
-  { name: 'Virtual Tours', price: 'From $50', icon: 'eye' },
-  { name: 'Virtual Renovation', price: 'From $35', icon: 'brush' },
-  { name: 'AI Voiceovers', price: 'From $15', icon: 'mic' },
-];
+  { id: 'floorplan_2d', name: 'Floor Plans', price: 'From $25', icon: 'grid' },
+  { id: 'virtual_tour', name: 'Virtual Tours', price: 'From $50', icon: 'eye' },
+  { id: 'virtual_renovation', name: 'Virtual Renovation', price: 'From $35', icon: 'brush' },
+  { id: 'ai_voiceover', name: 'AI Voiceovers', price: 'From $15', icon: 'mic' },
+] as const;
 
 const GOLD = '#D4A017';
 
@@ -62,11 +62,20 @@ const AddonIcon = ({ type }: { type: string }) => {
   return null;
 };
 
+const LoadingSpinner = () => (
+  <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
+    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+  </svg>
+);
+
 export default function PricingPage() {
   const [isAnnual, setIsAnnual] = useState(true);
   const [sliderIndex, setSliderIndex] = useState(4);
   const [teamSizeIndex, setTeamSizeIndex] = useState(0);
   const [selectedPlan, setSelectedPlan] = useState<'free' | 'pro' | 'team'>('pro');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const currentTier = PRO_TIERS[sliderIndex];
   const isEnterprise = (currentTier as any).enterprise === true;
@@ -90,6 +99,71 @@ export default function PricingPage() {
     const total = base + listingCost;
     return { base, price, listingCost, total };
   }, [teamOption, currentTier, isAnnual, isEnterprise]);
+
+  // Checkout handler
+  const handleCheckout = async () => {
+    if (selectedPlan === 'free') {
+      window.location.href = '/signup';
+      return;
+    }
+
+    if (isEnterprise) {
+      window.location.href = '/contact';
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
+
+    try {
+      const response = await fetch('/api/stripe/checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          plan: selectedPlan,
+          billing: isAnnual ? 'annual' : 'monthly',
+          listings: currentTier.listings as number,
+          teamSize: selectedPlan === 'team' ? TEAM_OPTIONS[teamSizeIndex].users : undefined,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Checkout failed');
+      }
+
+      window.location.href = data.url;
+    } catch (err: any) {
+      setError(err.message);
+      setLoading(false);
+    }
+  };
+
+  // Addon purchase handler
+  const handleAddonPurchase = async (addonId: string) => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      const response = await fetch('/api/stripe/addon-purchase', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ addonType: addonId }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Purchase failed');
+      }
+
+      window.location.href = data.url;
+    } catch (err: any) {
+      setError(err.message);
+      setLoading(false);
+    }
+  };
 
   const getCardStyle = (plan: 'free' | 'pro' | 'team') => {
     const isSelected = selectedPlan === plan;
@@ -169,53 +243,30 @@ export default function PricingPage() {
           <p className="text-sm" style={{ color: 'rgba(255,255,255,0.5)' }}>Simple, transparent pricing. No hidden fees.</p>
         </div>
 
+        {/* Error Message */}
+        {error && (
+          <div className="mb-4 p-3 rounded-lg text-center text-sm" style={{ backgroundColor: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)', color: '#EF4444' }}>
+            {error}
+          </div>
+        )}
+
         {/* Controls Row */}
         <div className="flex items-center justify-center gap-6 mb-6">
           {/* Billing Toggle */}
-          <div 
-            className="inline-flex items-center p-1 rounded-full"
-            style={{ backgroundColor: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)' }}
-          >
-            <button 
-              onClick={() => setIsAnnual(false)}
-              className="px-4 py-1.5 rounded-full text-sm font-medium cursor-pointer transition-all"
-              style={{ 
-                backgroundColor: !isAnnual ? GOLD : 'transparent',
-                color: !isAnnual ? '#000' : 'rgba(255,255,255,0.5)'
-              }}
-            >
-              Monthly
-            </button>
-            <button 
-              onClick={() => setIsAnnual(true)}
-              className="px-4 py-1.5 rounded-full text-sm font-medium cursor-pointer transition-all flex items-center gap-2"
-              style={{ 
-                backgroundColor: isAnnual ? GOLD : 'transparent',
-                color: isAnnual ? '#000' : 'rgba(255,255,255,0.5)'
-              }}
-            >
+          <div className="inline-flex items-center p-1 rounded-full" style={{ backgroundColor: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)' }}>
+            <button onClick={() => setIsAnnual(false)} className="px-4 py-1.5 rounded-full text-sm font-medium cursor-pointer transition-all" style={{ backgroundColor: !isAnnual ? GOLD : 'transparent', color: !isAnnual ? '#000' : 'rgba(255,255,255,0.5)' }}>Monthly</button>
+            <button onClick={() => setIsAnnual(true)} className="px-4 py-1.5 rounded-full text-sm font-medium cursor-pointer transition-all flex items-center gap-2" style={{ backgroundColor: isAnnual ? GOLD : 'transparent', color: isAnnual ? '#000' : 'rgba(255,255,255,0.5)' }}>
               Annual
               <span className="text-xs px-1.5 py-0.5 rounded-full font-semibold" style={{ backgroundColor: '#10B981', color: '#fff' }}>−20%</span>
             </button>
           </div>
 
           {/* Slider */}
-          <div 
-            className="flex items-center gap-4 px-5 py-2.5 rounded-full"
-            style={{ backgroundColor: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.1)' }}
-          >
+          <div className="flex items-center gap-4 px-5 py-2.5 rounded-full" style={{ backgroundColor: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.1)' }}>
             <span className="text-sm font-medium" style={{ color: GOLD }}>Listings:</span>
             <div className="flex items-center gap-2">
               <span className="text-xs font-medium" style={{ color: 'rgba(255,255,255,0.8)' }}>10</span>
-              <input 
-                type="range" 
-                min="0" 
-                max="8" 
-                value={sliderIndex}
-                onChange={(e) => setSliderIndex(parseInt(e.target.value))}
-                className="pricing-slider"
-                style={sliderStyles}
-              />
+              <input type="range" min="0" max="8" value={sliderIndex} onChange={(e) => setSliderIndex(parseInt(e.target.value))} className="pricing-slider" style={sliderStyles} />
               <span className="text-xs font-medium" style={{ color: 'rgba(255,255,255,0.8)' }}>150+</span>
             </div>
             <span className="text-xl font-bold w-12" style={{ color: GOLD }}>{currentTier.listings}</span>
@@ -224,176 +275,90 @@ export default function PricingPage() {
 
         {/* Pricing Cards */}
         <div className="grid lg:grid-cols-3 gap-5 mb-8">
-          
           {/* FREE */}
-          <div 
-            onClick={() => setSelectedPlan('free')}
-            className="rounded-2xl p-5 relative cursor-pointer transition-all duration-300"
-            style={getCardStyle('free')}
-          >
-            {selectedPlan === 'free' && (
-              <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-0.5 rounded-full text-xs font-semibold" style={{ backgroundColor: GOLD, color: '#000' }}>
-                Selected
-              </div>
-            )}
-            
-            <div style={{ height: '60px' }}>
-              <h2 className="text-xl font-bold">Free</h2>
-              <p className="text-sm" style={{ color: 'rgba(255,255,255,0.5)' }}>Try SnapR risk-free</p>
-            </div>
-            
-            <div style={{ height: '50px' }} className="flex items-baseline">
-              <span className="text-4xl font-bold">$0</span>
-            </div>
-            
+          <div onClick={() => setSelectedPlan('free')} className="rounded-2xl p-5 relative cursor-pointer transition-all duration-300" style={getCardStyle('free')}>
+            {selectedPlan === 'free' && <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-0.5 rounded-full text-xs font-semibold" style={{ backgroundColor: GOLD, color: '#000' }}>Selected</div>}
+            <div style={{ height: '60px' }}><h2 className="text-xl font-bold">Free</h2><p className="text-sm" style={{ color: 'rgba(255,255,255,0.5)' }}>Try SnapR risk-free</p></div>
+            <div style={{ height: '50px' }} className="flex items-baseline"><span className="text-4xl font-bold">$0</span></div>
             <div style={{ height: '100px' }}>
               <div className="p-3 rounded-xl h-full" style={{ backgroundColor: 'rgba(255,255,255,0.03)' }}>
-                <div className="flex justify-between text-sm mb-1.5">
-                  <span style={{ color: 'rgba(255,255,255,0.5)' }}>Listings</span>
-                  <span className="font-semibold">3</span>
-                </div>
-                <div className="flex justify-between text-sm mb-1.5">
-                  <span style={{ color: 'rgba(255,255,255,0.5)' }}>Photos per listing</span>
-                  <span className="font-semibold">10</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span style={{ color: 'rgba(255,255,255,0.5)' }}>Total downloads</span>
-                  <span className="font-semibold">30 images</span>
-                </div>
+                <div className="flex justify-between text-sm mb-1.5"><span style={{ color: 'rgba(255,255,255,0.5)' }}>Listings</span><span className="font-semibold">3</span></div>
+                <div className="flex justify-between text-sm mb-1.5"><span style={{ color: 'rgba(255,255,255,0.5)' }}>Photos per listing</span><span className="font-semibold">10</span></div>
+                <div className="flex justify-between text-sm"><span style={{ color: 'rgba(255,255,255,0.5)' }}>Total downloads</span><span className="font-semibold">30 images</span></div>
               </div>
             </div>
-            
             <div style={{ height: '50px' }} className="flex items-center">
-              <button className="w-full py-3 rounded-xl text-sm font-semibold transition-all" style={getCtaStyle('free')}>
-                {isEnterprise ? 'Contact Sales' : 'Get started free'}
+              <button onClick={(e) => { e.stopPropagation(); if (selectedPlan === 'free') handleCheckout(); }} disabled={loading} className="w-full py-3 rounded-xl text-sm font-semibold transition-all flex items-center justify-center gap-2" style={getCtaStyle('free')}>
+                {loading && selectedPlan === 'free' ? <LoadingSpinner /> : (isEnterprise ? 'Contact Sales' : 'Get started free')}
               </button>
             </div>
-            
             <div className="pt-4 mt-4" style={{ borderTop: '1px solid rgba(255,255,255,0.08)' }}>
               <ul className="space-y-2">
                 {['15 AI enhancement tools', 'Content Studio (limited)', 'Basic photo scoring', 'Watermarked exports'].map((f, i) => (
-                  <li key={i} className="flex items-center gap-2 text-sm" style={{ color: 'rgba(255,255,255,0.7)' }}>
-                    <CheckIcon />
-                    {f}
-                  </li>
+                  <li key={i} className="flex items-center gap-2 text-sm" style={{ color: 'rgba(255,255,255,0.7)' }}><CheckIcon />{f}</li>
                 ))}
               </ul>
             </div>
           </div>
 
           {/* PRO */}
-          <div 
-            onClick={() => setSelectedPlan('pro')}
-            className="rounded-2xl p-5 relative cursor-pointer transition-all duration-300"
-            style={getCardStyle('pro')}
-          >
-            <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-0.5 rounded-full text-xs font-semibold" style={{ backgroundColor: GOLD, color: '#000' }}>
-              {selectedPlan === 'pro' ? 'Selected' : 'Most Popular'}
-            </div>
-            
-            <div style={{ height: '60px' }}>
-              <h2 className="text-xl font-bold">Pro</h2>
-              <p className="text-sm" style={{ color: 'rgba(255,255,255,0.5)' }}>For agents & photographers</p>
-            </div>
-            
+          <div onClick={() => setSelectedPlan('pro')} className="rounded-2xl p-5 relative cursor-pointer transition-all duration-300" style={getCardStyle('pro')}>
+            <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-0.5 rounded-full text-xs font-semibold" style={{ backgroundColor: GOLD, color: '#000' }}>{selectedPlan === 'pro' ? 'Selected' : 'Most Popular'}</div>
+            <div style={{ height: '60px' }}><h2 className="text-xl font-bold">Pro</h2><p className="text-sm" style={{ color: 'rgba(255,255,255,0.5)' }}>For agents & photographers</p></div>
             <div style={{ height: '50px' }} className="flex items-baseline">
-              <span className="text-4xl font-bold" style={{ color: GOLD }}>
-                {isEnterprise ? 'Custom' : `$${proCalc.price}`}
-              </span>
+              <span className="text-4xl font-bold" style={{ color: GOLD }}>{isEnterprise ? 'Custom' : `$${proCalc.price}`}</span>
               {!isEnterprise && <span className="text-base ml-1" style={{ color: 'rgba(255,255,255,0.5)' }}>/listing</span>}
             </div>
-            
             <div style={{ height: '100px' }}>
               <div className="p-3 rounded-xl h-full" style={{ backgroundColor: 'rgba(0,0,0,0.2)' }}>
                 {isEnterprise ? (
-                  <>
-                    <div className="text-sm mb-1" style={{ color: 'rgba(255,255,255,0.5)' }}>High-volume pricing</div>
-                    <div className="text-lg font-bold">Contact us</div>
-                  </>
+                  <><div className="text-sm mb-1" style={{ color: 'rgba(255,255,255,0.5)' }}>High-volume pricing</div><div className="text-lg font-bold">Contact us</div></>
                 ) : (
                   <>
                     <div className="flex justify-between items-center mb-1">
                       <span className="text-sm" style={{ color: 'rgba(255,255,255,0.5)' }}>{currentTier.listings} listings × ${proCalc.price}</span>
                       <span className="text-lg font-bold">${proCalc.total}<span className="text-xs font-normal" style={{ color: 'rgba(255,255,255,0.4)' }}>/mo</span></span>
                     </div>
-                    {isAnnual && proCalc.savings > 0 && (
-                      <div className="text-xs text-right" style={{ color: '#34D399' }}>Save ${proCalc.savings.toLocaleString()}/year</div>
-                    )}
+                    {isAnnual && proCalc.savings > 0 && <div className="text-xs text-right" style={{ color: '#34D399' }}>Save ${proCalc.savings.toLocaleString()}/year</div>}
                     <div className="text-xs mt-1" style={{ color: 'rgba(255,255,255,0.4)' }}>75 photos per listing included</div>
                   </>
                 )}
               </div>
             </div>
-            
             <div style={{ height: '50px' }} className="flex items-center">
-              <button className="w-full py-3 rounded-xl text-sm font-semibold flex items-center justify-center gap-2 transition-all" style={getCtaStyle('pro')}>
-                {ctaText}
-                {!isEnterprise && (
-                  <span className="text-xs px-1.5 py-0.5 rounded-full font-semibold" style={getBonusStyle('pro')}>
-                    {bonusText}
-                  </span>
-                )}
+              <button onClick={(e) => { e.stopPropagation(); if (selectedPlan === 'pro') handleCheckout(); }} disabled={loading} className="w-full py-3 rounded-xl text-sm font-semibold flex items-center justify-center gap-2 transition-all" style={getCtaStyle('pro')}>
+                {loading && selectedPlan === 'pro' ? <LoadingSpinner /> : ctaText}
+                {!isEnterprise && !loading && <span className="text-xs px-1.5 py-0.5 rounded-full font-semibold" style={getBonusStyle('pro')}>{bonusText}</span>}
               </button>
             </div>
-            
             <div className="pt-4 mt-4" style={{ borderTop: '1px solid rgba(255,255,255,0.08)' }}>
               <ul className="space-y-2">
                 {['Listing Intelligence AI', 'Photo Culling AI', 'Content Studio — 150+ templates', 'Video, Email, Property Sites'].map((f, i) => (
-                  <li key={i} className="flex items-center gap-2 text-sm" style={{ color: 'rgba(255,255,255,0.7)' }}>
-                    <CheckIcon />
-                    {f}
-                  </li>
+                  <li key={i} className="flex items-center gap-2 text-sm" style={{ color: 'rgba(255,255,255,0.7)' }}><CheckIcon />{f}</li>
                 ))}
               </ul>
             </div>
           </div>
 
           {/* TEAM */}
-          <div 
-            onClick={() => setSelectedPlan('team')}
-            className="rounded-2xl p-5 relative cursor-pointer transition-all duration-300"
-            style={getCardStyle('team')}
-          >
-            {selectedPlan === 'team' && (
-              <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-0.5 rounded-full text-xs font-semibold" style={{ backgroundColor: GOLD, color: '#000' }}>
-                Selected
-              </div>
-            )}
-            
-            <div style={{ height: '60px' }}>
-              <h2 className="text-xl font-bold">Team</h2>
-              <p className="text-sm" style={{ color: 'rgba(255,255,255,0.5)' }}>For brokerages & teams</p>
-            </div>
-            
+          <div onClick={() => setSelectedPlan('team')} className="rounded-2xl p-5 relative cursor-pointer transition-all duration-300" style={getCardStyle('team')}>
+            {selectedPlan === 'team' && <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-0.5 rounded-full text-xs font-semibold" style={{ backgroundColor: GOLD, color: '#000' }}>Selected</div>}
+            <div style={{ height: '60px' }}><h2 className="text-xl font-bold">Team</h2><p className="text-sm" style={{ color: 'rgba(255,255,255,0.5)' }}>For brokerages & teams</p></div>
             <div style={{ height: '50px' }} className="flex items-baseline">
-              <span className="text-4xl font-bold" style={{ color: GOLD }}>
-                {isEnterprise ? 'Custom' : `$${teamCalc.price}`}
-              </span>
+              <span className="text-4xl font-bold" style={{ color: GOLD }}>{isEnterprise ? 'Custom' : `$${teamCalc.price}`}</span>
               {!isEnterprise && <span className="text-base ml-1" style={{ color: 'rgba(255,255,255,0.5)' }}>/listing + base</span>}
             </div>
-            
             <div style={{ height: '100px' }}>
               <div className="p-3 rounded-xl h-full" style={{ backgroundColor: 'rgba(255,255,255,0.03)' }}>
                 <div className="flex gap-1.5 mb-2">
                   {TEAM_OPTIONS.map((opt, i) => (
-                    <button
-                      key={opt.users}
-                      onClick={(e) => { e.stopPropagation(); setTeamSizeIndex(i); }}
-                      className="flex-1 py-1 rounded text-xs font-medium cursor-pointer transition-all"
-                      style={{ 
-                        backgroundColor: i === teamSizeIndex ? GOLD : 'rgba(255,255,255,0.05)',
-                        color: i === teamSizeIndex ? '#000' : 'rgba(255,255,255,0.5)'
-                      }}
-                    >
+                    <button key={opt.users} onClick={(e) => { e.stopPropagation(); setTeamSizeIndex(i); }} className="flex-1 py-1 rounded text-xs font-medium cursor-pointer transition-all" style={{ backgroundColor: i === teamSizeIndex ? GOLD : 'rgba(255,255,255,0.05)', color: i === teamSizeIndex ? '#000' : 'rgba(255,255,255,0.5)' }}>
                       {i === 0 ? `${opt.users} users` : opt.users}
                     </button>
                   ))}
                 </div>
                 {isEnterprise ? (
-                  <>
-                    <div className="text-xs" style={{ color: 'rgba(255,255,255,0.4)' }}>High-volume pricing</div>
-                    <div className="font-semibold">Contact us</div>
-                  </>
+                  <><div className="text-xs" style={{ color: 'rgba(255,255,255,0.4)' }}>High-volume pricing</div><div className="font-semibold">Contact us</div></>
                 ) : (
                   <div className="flex justify-between text-xs">
                     <span style={{ color: 'rgba(255,255,255,0.4)' }}>${teamCalc.base} base + {currentTier.listings}×${teamCalc.price}</span>
@@ -402,26 +367,17 @@ export default function PricingPage() {
                 )}
               </div>
             </div>
-            
             <div style={{ height: '50px' }} className="flex items-center">
-              <button className="w-full py-3 rounded-xl text-sm font-semibold flex items-center justify-center gap-2 transition-all" style={getCtaStyle('team')}>
-                {ctaText}
-                {!isEnterprise && (
-                  <span className="text-xs px-1.5 py-0.5 rounded-full font-semibold" style={getBonusStyle('team')}>
-                    {bonusText}
-                  </span>
-                )}
+              <button onClick={(e) => { e.stopPropagation(); if (selectedPlan === 'team') handleCheckout(); }} disabled={loading} className="w-full py-3 rounded-xl text-sm font-semibold flex items-center justify-center gap-2 transition-all" style={getCtaStyle('team')}>
+                {loading && selectedPlan === 'team' ? <LoadingSpinner /> : ctaText}
+                {!isEnterprise && !loading && <span className="text-xs px-1.5 py-0.5 rounded-full font-semibold" style={getBonusStyle('team')}>{bonusText}</span>}
               </button>
             </div>
-            
             <div className="pt-4 mt-4" style={{ borderTop: '1px solid rgba(255,255,255,0.08)' }}>
               <p className="text-xs mb-2" style={{ color: 'rgba(255,255,255,0.4)' }}>Everything in Pro, plus:</p>
               <ul className="space-y-2">
                 {['Up to 25 team members', 'Roles, permissions & analytics', 'Shared assets & brand enforcement', 'Dedicated account manager'].map((f, i) => (
-                  <li key={i} className="flex items-center gap-2 text-sm" style={{ color: 'rgba(255,255,255,0.7)' }}>
-                    <CheckIcon />
-                    {f}
-                  </li>
+                  <li key={i} className="flex items-center gap-2 text-sm" style={{ color: 'rgba(255,255,255,0.7)' }}><CheckIcon />{f}</li>
                 ))}
               </ul>
             </div>
@@ -436,10 +392,8 @@ export default function PricingPage() {
           </div>
           <div className="grid grid-cols-4 gap-4">
             {ADDONS.map((addon) => (
-              <div key={addon.name} className="p-4 rounded-xl" style={{ backgroundColor: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}>
-                <div className="w-10 h-10 rounded-lg flex items-center justify-center mb-3" style={{ backgroundColor: 'rgba(212,160,23,0.1)' }}>
-                  <AddonIcon type={addon.icon} />
-                </div>
+              <div key={addon.name} onClick={() => handleAddonPurchase(addon.id)} className="p-4 rounded-xl cursor-pointer transition-all hover:border-amber-500/50" style={{ backgroundColor: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}>
+                <div className="w-10 h-10 rounded-lg flex items-center justify-center mb-3" style={{ backgroundColor: 'rgba(212,160,23,0.1)' }}><AddonIcon type={addon.icon} /></div>
                 <h4 className="font-semibold text-sm mb-1">{addon.name}</h4>
                 <p className="text-xs" style={{ color: GOLD }}>{addon.price}</p>
               </div>
@@ -456,9 +410,7 @@ export default function PricingPage() {
           </div>
           <div className="flex items-center gap-4">
             <span className="text-sm" style={{ color: 'rgba(255,255,255,0.5)' }}>Questions?</span>
-            <Link href="/contact" className="px-4 py-2 rounded-lg text-sm font-medium" style={{ backgroundColor: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)' }}>
-              Contact sales
-            </Link>
+            <Link href="/contact" className="px-4 py-2 rounded-lg text-sm font-medium" style={{ backgroundColor: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)' }}>Contact sales</Link>
           </div>
         </div>
       </div>
