@@ -23,10 +23,10 @@ const TEAM_OPTIONS = [
 ];
 
 const ADDONS = [
-  { name: 'Floor Plans', description: '2D & 3D floor plans from photos', price: 'From $25', icon: 'grid' },
-  { name: 'Virtual Tours', description: '360° interactive property tours', price: 'From $50', icon: 'eye' },
-  { name: 'Virtual Renovation', description: 'Kitchen, bath & flooring makeovers', price: 'From $35', icon: 'brush' },
-  { name: 'AI Voiceovers', description: 'Professional narration for videos', price: 'From $15', icon: 'mic' },
+  { name: 'Floor Plans', price: 'From $25', icon: 'grid' },
+  { name: 'Virtual Tours', price: 'From $50', icon: 'eye' },
+  { name: 'Virtual Renovation', price: 'From $35', icon: 'brush' },
+  { name: 'AI Voiceovers', price: 'From $15', icon: 'mic' },
 ];
 
 const GOLD = '#D4A017';
@@ -38,30 +38,28 @@ const CheckIcon = () => (
 );
 
 const AddonIcon = ({ type }: { type: string }) => {
-  const icons: Record<string, JSX.Element> = {
-    grid: (
-      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke={GOLD} strokeWidth={1.5}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z" />
-      </svg>
-    ),
-    eye: (
-      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke={GOLD} strokeWidth={1.5}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" />
-        <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-      </svg>
-    ),
-    brush: (
-      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke={GOLD} strokeWidth={1.5}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M9.53 16.122a3 3 0 00-5.78 1.128 2.25 2.25 0 01-2.4 2.245 4.5 4.5 0 008.4-2.245c0-.399-.078-.78-.22-1.128zm0 0a15.998 15.998 0 003.388-1.62m-5.043-.025a15.994 15.994 0 011.622-3.395m3.42 3.42a15.995 15.995 0 004.764-4.648l3.876-5.814a1.151 1.151 0 00-1.597-1.597L14.146 6.32a15.996 15.996 0 00-4.649 4.763m3.42 3.42a6.776 6.776 0 00-3.42-3.42" />
-      </svg>
-    ),
-    mic: (
-      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke={GOLD} strokeWidth={1.5}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M12 18.75a6 6 0 006-6v-1.5m-6 7.5a6 6 0 01-6-6v-1.5m6 7.5v3.75m-3.75 0h7.5M12 15.75a3 3 0 01-3-3V4.5a3 3 0 116 0v8.25a3 3 0 01-3 3z" />
-      </svg>
-    ),
-  };
-  return icons[type] || null;
+  if (type === 'grid') return (
+    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke={GOLD} strokeWidth={1.5}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z" />
+    </svg>
+  );
+  if (type === 'eye') return (
+    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke={GOLD} strokeWidth={1.5}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" />
+      <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+    </svg>
+  );
+  if (type === 'brush') return (
+    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke={GOLD} strokeWidth={1.5}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M9.53 16.122a3 3 0 00-5.78 1.128 2.25 2.25 0 01-2.4 2.245 4.5 4.5 0 008.4-2.245c0-.399-.078-.78-.22-1.128zm0 0a15.998 15.998 0 003.388-1.62m-5.043-.025a15.994 15.994 0 011.622-3.395m3.42 3.42a15.995 15.995 0 004.764-4.648l3.876-5.814a1.151 1.151 0 00-1.597-1.597L14.146 6.32a15.996 15.996 0 00-4.649 4.763m3.42 3.42a6.776 6.776 0 00-3.42-3.42" />
+    </svg>
+  );
+  if (type === 'mic') return (
+    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke={GOLD} strokeWidth={1.5}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M12 18.75a6 6 0 006-6v-1.5m-6 7.5a6 6 0 01-6-6v-1.5m6 7.5v3.75m-3.75 0h7.5M12 15.75a3 3 0 01-3-3V4.5a3 3 0 116 0v8.25a3 3 0 01-3 3z" />
+    </svg>
+  );
+  return null;
 };
 
 export default function PricingPage() {
@@ -128,20 +126,21 @@ export default function PricingPage() {
   const ctaText = isEnterprise ? 'Contact Sales' : 'Get started';
   const bonusText = isAnnual ? '+1 month free' : '+1 week free';
 
+  const sliderStyles: React.CSSProperties = {
+    WebkitAppearance: 'none',
+    appearance: 'none',
+    width: '128px',
+    height: '6px',
+    borderRadius: '3px',
+    background: 'rgba(255,255,255,0.1)',
+    outline: 'none',
+    cursor: 'pointer',
+  };
+
   return (
     <div className="min-h-screen text-white" style={{ backgroundColor: '#000' }}>
-      <style jsx global>{\`
-        .slider-track {
-          -webkit-appearance: none;
-          appearance: none;
-          width: 100%;
-          height: 6px;
-          border-radius: 3px;
-          background: rgba(255,255,255,0.1);
-          outline: none;
-          cursor: pointer;
-        }
-        .slider-track::-webkit-slider-thumb {
+      <style dangerouslySetInnerHTML={{ __html: `
+        .pricing-slider::-webkit-slider-thumb {
           -webkit-appearance: none;
           appearance: none;
           width: 18px;
@@ -152,7 +151,7 @@ export default function PricingPage() {
           border: 2px solid #fff;
           box-shadow: 0 0 10px rgba(212,160,23,0.5);
         }
-        .slider-track::-moz-range-thumb {
+        .pricing-slider::-moz-range-thumb {
           width: 18px;
           height: 18px;
           border-radius: 50%;
@@ -161,7 +160,7 @@ export default function PricingPage() {
           border: 2px solid #fff;
           box-shadow: 0 0 10px rgba(212,160,23,0.5);
         }
-      \`}</style>
+      `}} />
 
       <div className="max-w-7xl mx-auto px-6 py-6">
         {/* Header */}
@@ -214,7 +213,8 @@ export default function PricingPage() {
                 max="8" 
                 value={sliderIndex}
                 onChange={(e) => setSliderIndex(parseInt(e.target.value))}
-                className="slider-track w-32"
+                className="pricing-slider"
+                style={sliderStyles}
               />
               <span className="text-xs font-medium" style={{ color: 'rgba(255,255,255,0.8)' }}>150+</span>
             </div>
@@ -298,7 +298,7 @@ export default function PricingPage() {
             
             <div style={{ height: '50px' }} className="flex items-baseline">
               <span className="text-4xl font-bold" style={{ color: GOLD }}>
-                {isEnterprise ? 'Custom' : \`$\${proCalc.price}\`}
+                {isEnterprise ? 'Custom' : `$${proCalc.price}`}
               </span>
               {!isEnterprise && <span className="text-base ml-1" style={{ color: 'rgba(255,255,255,0.5)' }}>/listing</span>}
             </div>
@@ -367,7 +367,7 @@ export default function PricingPage() {
             
             <div style={{ height: '50px' }} className="flex items-baseline">
               <span className="text-4xl font-bold" style={{ color: GOLD }}>
-                {isEnterprise ? 'Custom' : \`$\${teamCalc.price}\`}
+                {isEnterprise ? 'Custom' : `$${teamCalc.price}`}
               </span>
               {!isEnterprise && <span className="text-base ml-1" style={{ color: 'rgba(255,255,255,0.5)' }}>/listing + base</span>}
             </div>
@@ -385,7 +385,7 @@ export default function PricingPage() {
                         color: i === teamSizeIndex ? '#000' : 'rgba(255,255,255,0.5)'
                       }}
                     >
-                      {i === 0 ? \`\${opt.users} users\` : opt.users}
+                      {i === 0 ? `${opt.users} users` : opt.users}
                     </button>
                   ))}
                 </div>
