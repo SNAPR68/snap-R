@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useMemo } from 'react';
+import Link from 'next/link';
 
 // Pro plan pricing tiers (slider-based)
 const PRO_TIERS = [
@@ -12,7 +13,7 @@ const PRO_TIERS = [
   { listings: 100, monthly: 14, annual: 11 },
   { listings: 125, monthly: 13, annual: 10 },
   { listings: 150, monthly: 12, annual: 9 },
-  { listings: 'enterprise', monthly: null, annual: null }, // Custom pricing
+  { listings: 'enterprise', monthly: null, annual: null },
 ];
 
 // Team plan options
@@ -22,13 +23,58 @@ const TEAM_OPTIONS = [
   { users: 25, base: 899, perListing: 8 },
 ];
 
+// Premium Add-ons
+const ADDONS = [
+  { 
+    name: 'Floor Plans', 
+    description: '2D & 3D floor plans from photos',
+    price: 'From $25',
+    icon: (
+      <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z" />
+      </svg>
+    )
+  },
+  { 
+    name: 'Virtual Tours', 
+    description: '360° interactive property tours',
+    price: 'From $50',
+    icon: (
+      <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" />
+        <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+      </svg>
+    )
+  },
+  { 
+    name: 'Virtual Renovation', 
+    description: 'Kitchen, bath & flooring makeovers',
+    price: 'From $35',
+    icon: (
+      <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M9.53 16.122a3 3 0 00-5.78 1.128 2.25 2.25 0 01-2.4 2.245 4.5 4.5 0 008.4-2.245c0-.399-.078-.78-.22-1.128zm0 0a15.998 15.998 0 003.388-1.62m-5.043-.025a15.994 15.994 0 011.622-3.395m3.42 3.42a15.995 15.995 0 004.764-4.648l3.876-5.814a1.151 1.151 0 00-1.597-1.597L14.146 6.32a15.996 15.996 0 00-4.649 4.763m3.42 3.42a6.776 6.776 0 00-3.42-3.42" />
+      </svg>
+    )
+  },
+  { 
+    name: 'AI Voiceovers', 
+    description: 'Professional narration for videos',
+    price: 'From $15',
+    icon: (
+      <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M12 18.75a6 6 0 006-6v-1.5m-6 7.5a6 6 0 01-6-6v-1.5m6 7.5v3.75m-3.75 0h7.5M12 15.75a3 3 0 01-3-3V4.5a3 3 0 116 0v8.25a3 3 0 01-3 3z" />
+      </svg>
+    )
+  },
+];
+
 // Brand colors
 const GOLD = '#D4A017';
 const GOLD_DARK = '#B8860B';
 
 export default function PricingPage() {
   const [isAnnual, setIsAnnual] = useState(true);
-  const [proSliderIndex, setProSliderIndex] = useState(2); // Default to 30 listings
+  const [proSliderIndex, setProSliderIndex] = useState(2);
   const [teamOptionIndex, setTeamOptionIndex] = useState(0);
   const [loading, setLoading] = useState<'pro' | 'team' | null>(null);
 
@@ -154,40 +200,115 @@ export default function PricingPage() {
           </div>
         </div>
 
-        {/* Pricing Cards */}
-        <div className="grid lg:grid-cols-2 gap-6 mb-16 sm:mb-20">
+        {/* Pricing Cards - 3 Column Layout */}
+        <div className="grid lg:grid-cols-3 gap-6 mb-16 sm:mb-20">
           
-          {/* PRO PLAN */}
+          {/* FREE PLAN */}
           <div 
-            className="relative rounded-2xl p-6 sm:p-8 lg:p-10"
+            className="relative rounded-2xl p-6 sm:p-8"
             style={{ backgroundColor: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.1)' }}
           >
-            <div className="mb-6 sm:mb-8">
+            <div className="mb-6">
+              <h2 className="text-xl sm:text-2xl font-semibold mb-2">Free</h2>
+              <p style={{ color: 'rgba(255,255,255,0.5)' }}>Try SnapR with no commitment</p>
+            </div>
+
+            {/* Price */}
+            <div className="mb-6">
+              <div className="flex items-baseline gap-1">
+                <span className="text-4xl sm:text-5xl font-semibold">$0</span>
+                <span style={{ color: 'rgba(255,255,255,0.5)' }}>/forever</span>
+              </div>
+            </div>
+
+            {/* Limits */}
+            <div 
+              className="p-4 rounded-xl mb-6"
+              style={{ backgroundColor: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.1)' }}
+            >
+              <div className="flex items-center justify-between mb-2">
+                <span style={{ color: 'rgba(255,255,255,0.5)' }}>Listings</span>
+                <span className="font-semibold">5/month</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span style={{ color: 'rgba(255,255,255,0.5)' }}>Downloads</span>
+                <span className="font-semibold">50 images</span>
+              </div>
+            </div>
+
+            {/* CTA */}
+            <Link 
+              href="/auth/signup"
+              className="w-full py-3.5 rounded-xl font-semibold transition-all hover:opacity-90 flex items-center justify-center"
+              style={{ backgroundColor: 'rgba(255,255,255,0.1)', color: '#FFFFFF', border: '1px solid rgba(255,255,255,0.2)' }}
+            >
+              Get started free
+            </Link>
+
+            {/* Features */}
+            <div className="mt-6 pt-6" style={{ borderTop: '1px solid rgba(255,255,255,0.1)' }}>
+              <ul className="space-y-3">
+                {[
+                  '15 AI enhancement tools',
+                  'Content Studio access',
+                  'Watermarked exports',
+                  'Email support',
+                ].map((feature, i) => (
+                  <li key={i} className="flex items-center gap-3 text-sm" style={{ color: 'rgba(255,255,255,0.5)' }}>
+                    <svg className="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke={GOLD} strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                    </svg>
+                    {feature}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+
+          {/* PRO PLAN */}
+          <div 
+            className="relative rounded-2xl p-6 sm:p-8"
+            style={{ 
+              background: `linear-gradient(180deg, ${GOLD}15 0%, ${GOLD}05 40%, transparent 100%)`,
+              border: `1px solid ${GOLD}50`
+            }}
+          >
+            {/* Popular Badge */}
+            <div className="absolute -top-3 left-1/2 -translate-x-1/2">
+              <div 
+                className="px-4 py-1 rounded-full text-xs font-semibold"
+                style={{ backgroundColor: GOLD, color: '#000000' }}
+              >
+                Most Popular
+              </div>
+            </div>
+
+            <div className="mb-6">
               <h2 className="text-xl sm:text-2xl font-semibold mb-2">Pro</h2>
-              <p style={{ color: 'rgba(255,255,255,0.5)' }}>For individual agents and photographers</p>
+              <p style={{ color: 'rgba(255,255,255,0.5)' }}>For agents and photographers</p>
             </div>
 
             {/* Slider Section */}
-            <div className="mb-6 sm:mb-8">
-              <div className="flex items-baseline justify-between mb-5 sm:mb-6">
+            <div className="mb-6">
+              <div className="flex items-baseline justify-between mb-4">
                 <div>
-                  <span className="text-4xl sm:text-5xl font-semibold">
+                  <span className="text-3xl sm:text-4xl font-semibold">
                     {isEnterprise ? '150+' : proTier.listings}
                   </span>
-                  <span className="ml-2" style={{ color: 'rgba(255,255,255,0.5)' }}>listings/mo</span>
+                  <span className="ml-2 text-sm" style={{ color: 'rgba(255,255,255,0.5)' }}>listings/mo</span>
                 </div>
                 <div className="text-right">
-                  <div className="text-2xl sm:text-3xl font-semibold" style={{ color: GOLD }}>
+                  <div className="text-xl sm:text-2xl font-semibold" style={{ color: GOLD }}>
                     {isEnterprise ? 'Custom' : `$${proCalc.price}`}
                   </div>
-                  <div className="text-sm" style={{ color: 'rgba(255,255,255,0.4)' }}>
+                  <div className="text-xs" style={{ color: 'rgba(255,255,255,0.4)' }}>
                     {isEnterprise ? 'pricing' : 'per listing'}
                   </div>
                 </div>
               </div>
 
               {/* Slider */}
-              <div className="relative mb-3">
+              <div className="relative mb-2">
                 <div className="h-2 rounded-full" style={{ backgroundColor: 'rgba(255,255,255,0.1)' }}>
                   <div 
                     className="absolute h-full rounded-full transition-all duration-150"
@@ -198,11 +319,11 @@ export default function PricingPage() {
                   />
                 </div>
                 <div 
-                  className="absolute top-1/2 -translate-y-1/2 w-5 h-5 rounded-full transition-all duration-150"
+                  className="absolute top-1/2 -translate-y-1/2 w-4 h-4 rounded-full transition-all duration-150"
                   style={{ 
-                    left: `calc(${(proSliderIndex / (PRO_TIERS.length - 1)) * 100}% - 10px)`,
+                    left: `calc(${(proSliderIndex / (PRO_TIERS.length - 1)) * 100}% - 8px)`,
                     backgroundColor: GOLD,
-                    boxShadow: `0 0 16px ${GOLD}80`
+                    boxShadow: `0 0 12px ${GOLD}80`
                   }}
                 />
                 <input
@@ -212,10 +333,10 @@ export default function PricingPage() {
                   value={proSliderIndex}
                   onChange={(e) => setProSliderIndex(parseInt(e.target.value))}
                   className="absolute inset-0 w-full opacity-0 cursor-pointer"
-                  style={{ height: '28px', top: '-10px' }}
+                  style={{ height: '24px', top: '-8px' }}
                 />
               </div>
-              <div className="flex justify-between text-xs" style={{ color: 'rgba(255,255,255,0.3)' }}>
+              <div className="flex justify-between text-[10px]" style={{ color: 'rgba(255,255,255,0.3)' }}>
                 {PRO_TIERS.map((tier, i) => (
                   <span 
                     key={String(tier.listings)}
@@ -233,32 +354,27 @@ export default function PricingPage() {
             {/* Monthly Total */}
             {isEnterprise ? (
               <div 
-                className="p-4 rounded-xl mb-6 sm:mb-8"
+                className="p-3 rounded-xl mb-6"
                 style={{ backgroundColor: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.1)' }}
               >
-                <div className="text-center">
-                  <p style={{ color: 'rgba(255,255,255,0.6)' }}>
-                    Need more than 150 listings per month?
-                  </p>
-                  <p className="text-sm mt-1" style={{ color: 'rgba(255,255,255,0.4)' }}>
-                    Get custom pricing tailored to your needs
-                  </p>
-                </div>
+                <p className="text-center text-sm" style={{ color: 'rgba(255,255,255,0.5)' }}>
+                  Custom pricing for high-volume needs
+                </p>
               </div>
             ) : (
               <div 
-                className="p-4 rounded-xl mb-6 sm:mb-8"
+                className="p-3 rounded-xl mb-6"
                 style={{ backgroundColor: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.1)' }}
               >
                 <div className="flex items-center justify-between">
-                  <span style={{ color: 'rgba(255,255,255,0.5)' }}>Monthly total</span>
-                  <div className="text-right">
-                    <span className="text-xl sm:text-2xl font-semibold">${proCalc.total}</span>
-                    <span style={{ color: 'rgba(255,255,255,0.4)' }}>/mo</span>
+                  <span className="text-sm" style={{ color: 'rgba(255,255,255,0.5)' }}>Monthly total</span>
+                  <div>
+                    <span className="text-lg font-semibold">${proCalc.total}</span>
+                    <span className="text-sm" style={{ color: 'rgba(255,255,255,0.4)' }}>/mo</span>
                   </div>
                 </div>
                 {isAnnual && proCalc.savings > 0 && (
-                  <div className="text-sm mt-1 text-right" style={{ color: '#34D399' }}>
+                  <div className="text-xs mt-1 text-right" style={{ color: '#34D399' }}>
                     Save ${proCalc.savings}/year
                   </div>
                 )}
@@ -267,16 +383,13 @@ export default function PricingPage() {
 
             {/* CTA */}
             {isEnterprise ? (
-              <a 
+              <Link 
                 href="/contact?plan=enterprise"
                 className="w-full py-3.5 rounded-xl font-semibold transition-all hover:opacity-90 flex items-center justify-center gap-2"
                 style={{ backgroundColor: GOLD, color: '#000000' }}
               >
                 Contact Sales
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3" />
-                </svg>
-              </a>
+              </Link>
             ) : (
               <button 
                 onClick={() => handleCheckout('pro')}
@@ -289,9 +402,8 @@ export default function PricingPage() {
             )}
 
             {/* Features */}
-            <div className="mt-6 sm:mt-8 pt-6 sm:pt-8" style={{ borderTop: '1px solid rgba(255,255,255,0.1)' }}>
-              <div className="text-sm font-medium mb-4" style={{ color: 'rgba(255,255,255,0.7)' }}>Everything you need:</div>
-              <ul className="space-y-3">
+            <div className="mt-6 pt-6" style={{ borderTop: '1px solid rgba(255,255,255,0.1)' }}>
+              <ul className="space-y-2">
                 {[
                   '75 photos per listing',
                   '15 AI enhancement tools',
@@ -299,8 +411,7 @@ export default function PricingPage() {
                   'Video Creator',
                   'Property Sites',
                   'Listing Intelligence AI',
-                  'Email Marketing',
-                  'Client Approval workflow',
+                  'Unwatermarked exports',
                 ].map((feature, i) => (
                   <li key={i} className="flex items-center gap-3 text-sm" style={{ color: 'rgba(255,255,255,0.5)' }}>
                     <svg className="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke={GOLD} strokeWidth={2}>
@@ -315,59 +426,46 @@ export default function PricingPage() {
 
           {/* TEAM PLAN */}
           <div 
-            className="relative rounded-2xl p-6 sm:p-8 lg:p-10"
-            style={{ 
-              background: `linear-gradient(180deg, ${GOLD}18 0%, ${GOLD}08 40%, transparent 100%)`,
-              border: `1px solid ${GOLD}50`
-            }}
+            className="relative rounded-2xl p-6 sm:p-8"
+            style={{ backgroundColor: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.1)' }}
           >
-            {/* Badge */}
-            <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-              <div 
-                className="px-4 py-1 rounded-full text-xs font-semibold"
-                style={{ backgroundColor: GOLD, color: '#000000' }}
-              >
-                Best for teams
-              </div>
-            </div>
-
-            <div className="mb-6 sm:mb-8">
+            <div className="mb-6">
               <h2 className="text-xl sm:text-2xl font-semibold mb-2">Team</h2>
-              <p style={{ color: 'rgba(255,255,255,0.5)' }}>For brokerages and growing teams</p>
+              <p style={{ color: 'rgba(255,255,255,0.5)' }}>For brokerages and teams</p>
             </div>
 
             {/* Team Size */}
-            <div className="mb-6 sm:mb-8">
-              <div className="text-sm mb-3" style={{ color: 'rgba(255,255,255,0.5)' }}>Team size</div>
+            <div className="mb-4">
+              <div className="text-xs mb-2" style={{ color: 'rgba(255,255,255,0.5)' }}>Team size</div>
               <div className="grid grid-cols-3 gap-2">
                 {TEAM_OPTIONS.map((option, i) => (
                   <button
                     key={option.users}
                     onClick={() => setTeamOptionIndex(i)}
-                    className="py-3 rounded-lg text-sm font-medium transition-all"
+                    className="py-2 rounded-lg text-sm font-medium transition-all"
                     style={{ 
                       backgroundColor: i === teamOptionIndex ? GOLD : 'rgba(255,255,255,0.05)',
                       color: i === teamOptionIndex ? '#000000' : 'rgba(255,255,255,0.6)',
                       border: i === teamOptionIndex ? 'none' : '1px solid rgba(255,255,255,0.1)'
                     }}
                   >
-                    {option.users} users
+                    {option.users}
                   </button>
                 ))}
               </div>
             </div>
 
             {/* Pricing */}
-            <div className="mb-6 sm:mb-8">
-              <div className="flex items-baseline gap-1 mb-1">
-                <span className="text-4xl sm:text-5xl font-semibold">${teamCalc.base}</span>
+            <div className="mb-4">
+              <div className="flex items-baseline gap-1">
+                <span className="text-3xl sm:text-4xl font-semibold">${teamCalc.base}</span>
                 <span style={{ color: 'rgba(255,255,255,0.5)' }}>/mo</span>
               </div>
-              <div style={{ color: 'rgba(255,255,255,0.5)' }}>
+              <div className="text-sm" style={{ color: 'rgba(255,255,255,0.5)' }}>
                 + <span style={{ color: GOLD }} className="font-medium">${teamCalc.perListing}</span> per listing
               </div>
               {isAnnual && (
-                <div className="text-sm mt-2" style={{ color: '#34D399' }}>
+                <div className="text-xs mt-1" style={{ color: '#34D399' }}>
                   20% off with annual billing
                 </div>
               )}
@@ -375,15 +473,15 @@ export default function PricingPage() {
 
             {/* Example */}
             <div 
-              className="p-4 rounded-xl mb-6 sm:mb-8"
+              className="p-3 rounded-xl mb-6"
               style={{ backgroundColor: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.1)' }}
             >
-              <div className="text-sm mb-2" style={{ color: 'rgba(255,255,255,0.4)' }}>Example: 50 listings/month</div>
+              <div className="text-xs mb-1" style={{ color: 'rgba(255,255,255,0.4)' }}>Example: 50 listings/mo</div>
               <div className="flex items-center justify-between">
-                <span style={{ color: 'rgba(255,255,255,0.5)' }}>Monthly total</span>
-                <span className="text-xl sm:text-2xl font-semibold">
+                <span className="text-sm" style={{ color: 'rgba(255,255,255,0.5)' }}>Total</span>
+                <span className="text-lg font-semibold">
                   ${teamCalc.base + (50 * teamCalc.perListing)}
-                  <span className="text-base font-normal" style={{ color: 'rgba(255,255,255,0.4)' }}>/mo</span>
+                  <span className="text-sm font-normal" style={{ color: 'rgba(255,255,255,0.4)' }}>/mo</span>
                 </span>
               </div>
             </div>
@@ -399,18 +497,15 @@ export default function PricingPage() {
             </button>
 
             {/* Features */}
-            <div className="mt-6 sm:mt-8 pt-6 sm:pt-8" style={{ borderTop: '1px solid rgba(255,255,255,0.1)' }}>
-              <div className="text-sm font-medium mb-4" style={{ color: 'rgba(255,255,255,0.7)' }}>Everything in Pro, plus:</div>
-              <ul className="space-y-3">
+            <div className="mt-6 pt-6" style={{ borderTop: '1px solid rgba(255,255,255,0.1)' }}>
+              <div className="text-xs font-medium mb-3" style={{ color: 'rgba(255,255,255,0.6)' }}>Everything in Pro, plus:</div>
+              <ul className="space-y-2">
                 {[
                   'Up to 25 team members',
                   'Roles & permissions',
-                  'Shared asset library',
-                  'Team analytics dashboard',
+                  'Team analytics',
                   'Centralized billing',
-                  'Brand enforcement',
                   'Priority support',
-                  'White-label options',
                 ].map((feature, i) => (
                   <li key={i} className="flex items-center gap-3 text-sm" style={{ color: 'rgba(255,255,255,0.5)' }}>
                     <svg className="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke={GOLD} strokeWidth={2}>
@@ -424,16 +519,58 @@ export default function PricingPage() {
           </div>
         </div>
 
-        {/* Add-ons */}
-        <div className="text-center mb-16 sm:mb-20">
+        {/* Premium Add-ons Section */}
+        <div className="mb-16 sm:mb-20">
+          <div className="text-center mb-8">
+            <h2 className="text-2xl sm:text-3xl font-semibold mb-3">Premium Add-ons</h2>
+            <p style={{ color: 'rgba(255,255,255,0.5)' }}>
+              Enhance your listings with powerful extras. Available anytime from your dashboard.
+            </p>
+          </div>
+
+          {/* Add-ons Grid */}
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+            {ADDONS.map((addon) => (
+              <div 
+                key={addon.name}
+                className="p-5 rounded-2xl transition-all hover:scale-[1.02]"
+                style={{ 
+                  backgroundColor: 'rgba(255,255,255,0.03)', 
+                  border: '1px solid rgba(255,255,255,0.1)' 
+                }}
+              >
+                <div 
+                  className="w-12 h-12 rounded-xl flex items-center justify-center mb-4"
+                  style={{ backgroundColor: `${GOLD}15`, color: GOLD }}
+                >
+                  {addon.icon}
+                </div>
+                <h3 className="font-semibold mb-1">{addon.name}</h3>
+                <p className="text-sm mb-3" style={{ color: 'rgba(255,255,255,0.5)' }}>{addon.description}</p>
+                <p className="text-sm font-medium" style={{ color: GOLD }}>{addon.price}</p>
+              </div>
+            ))}
+          </div>
+
+          {/* Info Banner */}
           <div 
-            className="inline-flex items-center gap-3 px-5 sm:px-6 py-3 rounded-full"
-            style={{ backgroundColor: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.1)' }}
+            className="p-4 rounded-xl flex items-center gap-4"
+            style={{ backgroundColor: `${GOLD}10`, border: `1px solid ${GOLD}30` }}
           >
-            <span style={{ color: 'rgba(255,255,255,0.6)' }} className="text-sm sm:text-base">
-              Premium add-ons: Floor Plans, Virtual Tours, Renovations, AI Voiceovers
-            </span>
-            <span style={{ color: GOLD }} className="font-medium">→</span>
+            <div 
+              className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0"
+              style={{ backgroundColor: `${GOLD}20` }}
+            >
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke={GOLD} strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+            <div>
+              <p className="font-medium" style={{ color: GOLD }}>Pay as you go</p>
+              <p className="text-sm" style={{ color: 'rgba(255,255,255,0.5)' }}>
+                Add-ons are purchased separately and can be added to any listing anytime from your dashboard. No subscription required.
+              </p>
+            </div>
           </div>
         </div>
 
@@ -453,12 +590,13 @@ export default function PricingPage() {
           <p className="mb-6" style={{ color: 'rgba(255,255,255,0.5)' }}>
             Our team is here to help you find the right plan.
           </p>
-          <button 
-            className="px-6 py-3 rounded-xl font-medium transition-all hover:opacity-80"
+          <Link 
+            href="/contact"
+            className="inline-block px-6 py-3 rounded-xl font-medium transition-all hover:opacity-80"
             style={{ backgroundColor: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)' }}
           >
             Contact sales
-          </button>
+          </Link>
         </div>
       </div>
     </div>
