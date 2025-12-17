@@ -84,6 +84,10 @@ export function UnifiedCreator() {
 
   const [property, setProperty] = useState({ address: '', city: '', state: '', price: '' as any, bedrooms: '' as any, bathrooms: '' as any, squareFeet: '' as any })
   const [brand, setBrand] = useState({ business_name: '', logo_url: '', primary_color: '#D4AF37', secondary_color: '#1A1A1A', phone: '', tagline: '' })
+  
+  // Publish states
+  const [publishing, setPublishing] = useState(false)
+  const [publishResult, setPublishResult] = useState<{ success: boolean; message: string; url?: string } | null>(null)
 
   useEffect(() => {
     async function load() {
@@ -109,7 +113,6 @@ export function UnifiedCreator() {
 
   const selectPhoto = (url: string) => { if (postMode === 'single') { setPhotoUrl(url); return }; setSelectedPhotos(prev => prev.includes(url) ? prev.filter(p => p !== url) : prev.length >= 10 ? prev : [...prev, url]) }
 
-  
   const handleSchedule = async (scheduledAt: string) => {
     await fetch('/api/schedule', {
       method: 'POST',
@@ -126,6 +129,57 @@ export function UnifiedCreator() {
         brandData: brand
       })
     })
+  }
+
+  // PUBLISH FUNCTION
+  const publishToSocial = async () => {
+    if (platform === 'story' || platform === 'tiktok') {
+      setPublishResult({ success: false, message: `Direct publishing to ${platform} coming soon. Download and upload manually.` })
+      return
+    }
+
+    setPublishing(true)
+    setPublishResult(null)
+
+    try {
+      const imageUrls = postMode === 'carousel' && selectedPhotos.length > 1 
+        ? selectedPhotos 
+        : [photoUrl]
+
+      const content = caption || hashtags 
+        ? `${caption}\n\n${hashtags}`.trim() 
+        : `${headline} - ${property.address}${property.city ? `, ${property.city}` : ''}`
+
+      const response = await fetch('/api/social/publish', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          platform,
+          content,
+          imageUrls,
+          listingId: listingId || undefined,
+        }),
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to publish')
+      }
+
+      setPublishResult({ 
+        success: true, 
+        message: `Published to ${platform}!`,
+        url: data.url,
+      })
+    } catch (error: any) {
+      setPublishResult({ 
+        success: false, 
+        message: error.message || 'Failed to publish. Make sure your account is connected.',
+      })
+    } finally {
+      setPublishing(false)
+    }
   }
 
   const download = async (p: Platform) => {
@@ -175,7 +229,7 @@ export function UnifiedCreator() {
       {/* Platform Tabs */}
       <div className="flex-shrink-0 h-10 px-4 border-b border-white/5 flex items-center gap-2">
         {PLATFORMS.map(p => (
-          <button key={p.id} onClick={() => { setPlatform(p.id); if (!p.supportsCarousel) setPostMode('single') }}
+          <button key={p.id} onClick={() => { setPlatform(p.id); if (!p.supportsCarousel) setPostMode('single'); setPublishResult(null) }}
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition ${platform === p.id ? `bg-gradient-to-r ${p.gradient} text-white` : 'bg-white/5 text-white/50 hover:bg-white/10'}`}>
             <p.icon className="w-3.5 h-3.5" />{p.name}
           </button>
@@ -201,74 +255,30 @@ export function UnifiedCreator() {
             </div>
           </div>
 
-
-          {/* Caption Tone */}
-          <div className="bg-white/5 rounded-xl p-3 border border-white/10">
-            <Label className="text-[10px] text-white/40 uppercase mb-2 block">Caption Tone</Label>
-            <div className="grid grid-cols-2 gap-2">
-              <button onClick={() => setTone('professional')} className={`p-2 rounded-lg text-left transition ${tone === 'professional' ? 'bg-[#D4AF37]/20 border border-[#D4AF37]' : 'bg-white/5 border border-transparent hover:bg-white/10'}`}>
-                <div className="flex items-center gap-2"><span className="text-sm">🏢</span><span className="text-xs font-medium text-white">Professional</span></div>
-                <p className="text-[9px] text-white/50 mt-0.5">Formal, business-focused</p>
-              </button>
-              <button onClick={() => setTone('casual')} className={`p-2 rounded-lg text-left transition ${tone === 'casual' ? 'bg-[#D4AF37]/20 border border-[#D4AF37]' : 'bg-white/5 border border-transparent hover:bg-white/10'}`}>
-                <div className="flex items-center gap-2"><span className="text-sm">❤️</span><span className="text-xs font-medium text-white">Warm</span></div>
-                <p className="text-[9px] text-white/50 mt-0.5">Friendly, inviting</p>
-              </button>
-              <button onClick={() => setTone('luxury')} className={`p-2 rounded-lg text-left transition ${tone === 'luxury' ? 'bg-[#D4AF37]/20 border border-[#D4AF37]' : 'bg-white/5 border border-transparent hover:bg-white/10'}`}>
-                <div className="flex items-center gap-2"><span className="text-sm">👑</span><span className="text-xs font-medium text-white">Luxury</span></div>
-                <p className="text-[9px] text-white/50 mt-0.5">Exclusive, sophisticated</p>
-              </button>
-              <button onClick={() => setTone('excited')} className={`p-2 rounded-lg text-left transition ${tone === 'excited' ? 'bg-[#D4AF37]/20 border border-[#D4AF37]' : 'bg-white/5 border border-transparent hover:bg-white/10'}`}>
-                <div className="flex items-center gap-2"><span className="text-sm">⚡</span><span className="text-xs font-medium text-white">Urgent</span></div>
-                <p className="text-[9px] text-white/50 mt-0.5">FOMO, limited opportunity</p>
-              </button>
-            </div>
-          </div>
-          {/* Templates - Smaller */}
+          {/* Templates */}
           <div className="bg-white/5 rounded-xl p-3 border border-white/10">
             <Label className="text-[10px] text-white/40 uppercase mb-2 block">Templates</Label>
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-3 gap-2 max-h-32 overflow-y-auto">
               {currentTemplates.map(t => (
-                <button key={t.id} onClick={() => setTemplates(prev => ({ ...prev, [platform]: t }))} className={`relative rounded-lg overflow-hidden border-2 transition ${templates[platform].id === t.id ? 'border-[#D4AF37]' : 'border-transparent hover:border-white/20'}`}>
-                  <div className="aspect-[4/3] bg-gray-800 relative overflow-hidden">
-                    <img src={photoUrl || DEFAULT_PHOTO} alt="" className="w-full h-full object-cover opacity-80" />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
-                    <span className="absolute bottom-1 left-1 right-1 text-[9px] text-white font-medium truncate">{t.name}</span>
-                  </div>
-                  {templates[platform].id === t.id && <div className="absolute top-1 right-1 w-4 h-4 bg-[#D4AF37] rounded-full flex items-center justify-center"><Check className="w-2.5 h-2.5 text-black" /></div>}
+                <button key={t.id} onClick={() => setTemplates(prev => ({ ...prev, [platform]: t }))} className={`aspect-square rounded-lg border-2 transition overflow-hidden ${templates[platform].id === t.id ? 'border-[#D4AF37] ring-2 ring-[#D4AF37]/50' : 'border-white/10 hover:border-white/30'}`}>
+                  <div className="w-full h-full bg-gradient-to-br from-white/10 to-white/5 flex items-center justify-center text-[8px] text-white/40">{t.name}</div>
                 </button>
               ))}
             </div>
           </div>
         </div>
 
-        {/* CENTER - Preview + Actions */}
+        {/* CENTER - Preview */}
         <div className="col-span-6 flex flex-col gap-3">
-          {/* Preview - Larger */}
-          <div className="bg-white/5 rounded-xl border border-white/10 p-4 flex-1 flex flex-col">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-xs text-white/50">Preview</span>
-              <span className="text-xs text-white/30">{currentPlatform.dimensions}</span>
-            </div>
-            <div className="flex-1 flex items-center justify-center bg-black/40 rounded-xl overflow-hidden">
-              <div className="relative" style={{ 
-                width: isVertical ? '160px' : platform === 'facebook' || platform === 'linkedin' ? '400px' : '280px',
-                height: isVertical ? '284px' : platform === 'facebook' || platform === 'linkedin' ? '210px' : '280px',
-              }}>
-                <div className="absolute inset-0 origin-top-left" style={{ 
-                  transform: `scale(${isVertical ? 0.148 : platform === 'facebook' || platform === 'linkedin' ? 0.333 : 0.259})`,
-                  width: dims.w, 
-                  height: dims.h 
-                }}>
-                  {platform === 'instagram' && <TemplateRenderer templateId={templates[platform].id} photoUrl={photoUrl} property={prop} brand={brand} headline={headline} />}
-                  {(platform === 'facebook' || platform === 'linkedin') && <FacebookTemplateRenderer templateId={templates[platform].id} photoUrl={photoUrl} property={prop} brand={brand} headline={headline} />}
-                  {isVertical && <VerticalTemplateRenderer templateId={templates[platform].id} photoUrl={photoUrl} property={prop} brand={brand} headline={headline} />}
-                </div>
-              </div>
+          <div className={`flex-1 flex items-center justify-center ${isVertical ? 'py-2' : ''}`}>
+            <div className={`${isVertical ? 'h-full aspect-[9/16]' : 'w-full aspect-video'} max-h-full rounded-2xl overflow-hidden shadow-2xl ring-1 ring-white/20`}>
+              {platform === 'instagram' && <TemplateRenderer templateId={templates[platform].id} photoUrl={photoUrl} property={prop} brand={brand} headline={headline} />}
+              {(platform === 'facebook' || platform === 'linkedin') && <FacebookTemplateRenderer templateId={templates[platform].id} photoUrl={photoUrl} property={prop} brand={brand} headline={headline} />}
+              {isVertical && <VerticalTemplateRenderer templateId={templates[platform].id} photoUrl={photoUrl} property={prop} brand={brand} headline={headline} />}
             </div>
           </div>
 
-          {/* Actions - Bigger */}
+          {/* Actions */}
           <div className="flex gap-3">
             {postMode === 'carousel' ? (
               <Button onClick={downloadCarousel} disabled={downloading !== null || selectedPhotos.length < 2} className="flex-1 bg-gradient-to-r from-[#D4AF37] to-[#B8960C] text-black font-bold h-11 text-sm">
@@ -279,10 +289,46 @@ export function UnifiedCreator() {
                 {downloading === platform ? <Loader2 className="w-5 h-5 animate-spin" /> : <><Download className="w-5 h-5 mr-2" />Download</>}
               </Button>
             )}
-            <Button className={`flex-1 h-11 font-bold text-sm bg-gradient-to-r ${currentPlatform.gradient} text-white`}><Send className="w-5 h-5 mr-2" />Publish</Button>
+            <Button 
+              onClick={publishToSocial} 
+              disabled={publishing}
+              className={`flex-1 h-11 font-bold text-sm bg-gradient-to-r ${currentPlatform.gradient} text-white`}
+            >
+              {publishing ? (
+                <Loader2 className="w-5 h-5 animate-spin" />
+              ) : (
+                <>
+                  <Send className="w-5 h-5 mr-2" />
+                  Publish
+                </>
+              )}
+            </Button>
           </div>
 
-          {/* AI Caption - Bigger */}
+          {/* Publish Result */}
+          {publishResult && (
+            <div className={`p-3 rounded-xl text-sm flex items-center gap-2 ${
+              publishResult.success 
+                ? 'bg-green-500/20 border border-green-500/30 text-green-400' 
+                : 'bg-red-500/20 border border-red-500/30 text-red-400'
+            }`}>
+              {publishResult.success ? <Check className="w-4 h-4" /> : <span>⚠️</span>}
+              <span className="flex-1">{publishResult.message}</span>
+              {publishResult.success && publishResult.url && (
+                <a href={publishResult.url} target="_blank" rel="noopener noreferrer" className="text-xs underline">
+                  View post →
+                </a>
+              )}
+              {!publishResult.success && (
+                <Link href="/dashboard/settings/social" className="text-xs underline">
+                  Connect accounts
+                </Link>
+              )}
+              <button onClick={() => setPublishResult(null)} className="opacity-50 hover:opacity-100 text-lg">×</button>
+            </div>
+          )}
+
+          {/* AI Caption */}
           <div className="bg-white/5 rounded-xl p-4 border border-white/10">
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-2">
@@ -379,7 +425,7 @@ export function UnifiedCreator() {
         </div>
       </div>
 
-      {/* BOTTOM - Photos Filmstrip - Bigger */}
+      {/* BOTTOM - Photos Filmstrip */}
       <div className="flex-shrink-0 h-24 border-t border-white/10 bg-black/60 px-6 flex items-center gap-4">
         <div className="flex items-center gap-3 flex-shrink-0">
           <span className="text-xs text-white/50 uppercase font-medium">Photos</span>
@@ -405,6 +451,7 @@ export function UnifiedCreator() {
           </div>
         )}
       </div>
+      
       {/* Schedule Modal */}
       <ScheduleModal 
         isOpen={showSchedule} 
