@@ -1,7 +1,10 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import Link from 'next/link';
+
+// Calendly URL - replace with your actual Calendly link
+const CALENDLY_URL = 'https://calendly.com/snapr-demo/30min';
 
 // Pro plan pricing tiers (slider-based)
 const PRO_TIERS = [
@@ -74,22 +77,73 @@ const GOLD_DARK = '#B8860B';
 
 export default function PricingPage() {
   const [isAnnual, setIsAnnual] = useState(true);
-  const [proSliderIndex, setProSliderIndex] = useState(2);
+  const [proSliderIndex, setProSliderIndex] = useState(4); // Default 75 listings
+  const [teamSliderIndex, setTeamSliderIndex] = useState(4); // Separate slider for Team
   const [teamOptionIndex, setTeamOptionIndex] = useState(0);
   const [loading, setLoading] = useState<'pro' | 'team' | null>(null);
+  const [selectedPlan, setSelectedPlan] = useState<'free' | 'pro' | 'team'>('pro');
+  const [showModal, setShowModal] = useState(false);
+  const [modalPlan, setModalPlan] = useState<'pro' | 'team'>('pro');
+
+  // Load Calendly widget script and styles
+  useEffect(() => {
+    // Add Calendly CSS
+    const link = document.createElement('link');
+    link.href = 'https://assets.calendly.com/assets/external/widget.css';
+    link.rel = 'stylesheet';
+    document.head.appendChild(link);
+
+    // Add Calendly JS
+    const script = document.createElement('script');
+    script.src = 'https://assets.calendly.com/assets/external/widget.js';
+    script.async = true;
+    document.body.appendChild(script);
+
+    return () => {
+      document.head.removeChild(link);
+      document.body.removeChild(script);
+    };
+  }, []);
+
+  const openBookingModal = (plan: 'pro' | 'team') => {
+    setModalPlan(plan);
+    setShowModal(true);
+  };
+
+  const openCalendly = () => {
+    // @ts-ignore - Calendly is loaded via script
+    if (window.Calendly) {
+      // @ts-ignore
+      window.Calendly.initPopupWidget({ url: CALENDLY_URL });
+    } else {
+      // Fallback: open in new tab
+      window.open(CALENDLY_URL, '_blank');
+    }
+    setShowModal(false);
+  };
+
+  const continueToCheckout = () => {
+    setShowModal(false);
+    handleCheckout(modalPlan);
+  };
 
   const proTier = PRO_TIERS[proSliderIndex];
+  const teamTier = PRO_TIERS[teamSliderIndex];
   const teamOption = TEAM_OPTIONS[teamOptionIndex];
+
+  const isProEnterprise = proTier.listings === 'enterprise';
+  const isTeamEnterprise = teamTier.listings === 'enterprise';
 
   const handleCheckout = async (plan: 'pro' | 'team') => {
     setLoading(plan);
     try {
+      const listings = plan === 'pro' ? proTier.listings : teamTier.listings;
       const response = await fetch('/api/checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           plan,
-          listings: proTier.listings,
+          listings,
           teamSize: plan === 'team' ? teamOption.users : undefined,
           isAnnual,
         }),
@@ -111,29 +165,41 @@ export default function PricingPage() {
     }
   };
 
-  const isEnterprise = proTier.listings === 'enterprise';
-
   const proCalc = useMemo(() => {
-    if (isEnterprise) {
+    if (isProEnterprise) {
       return { price: null, total: null, savings: 0 };
     }
     const price = isAnnual ? proTier.annual : proTier.monthly;
     const total = (proTier.listings as number) * (price as number);
-    const savings = isAnnual ? (proTier.monthly as number - (proTier.annual as number)) * (proTier.listings as number) * 12 : 0;
+    const savings = isAnnual ? ((proTier.monthly as number) - (proTier.annual as number)) * (proTier.listings as number) * 12 : 0;
     return { price, total, savings };
-  }, [proTier, isAnnual, isEnterprise]);
+  }, [proTier, isAnnual, isProEnterprise]);
 
   const teamCalc = useMemo(() => {
     const base = isAnnual ? teamOption.baseAnnual : teamOption.baseMonthly;
-    // Team uses same per-listing pricing as Pro
-    if (isEnterprise) {
-      return { base, listingCost: null, total: null };
+    if (isTeamEnterprise) {
+      return { base, price: null, listingCost: null, total: null };
     }
-    const pricePerListing = isAnnual ? proTier.annual : proTier.monthly;
-    const listingCost = (proTier.listings as number) * (pricePerListing as number);
+    const price = isAnnual ? teamTier.annual : teamTier.monthly;
+    const listingCost = (teamTier.listings as number) * (price as number);
     const total = base + listingCost;
-    return { base, listingCost, total };
-  }, [teamOption, isAnnual, proTier, isEnterprise]);
+    return { base, price, listingCost, total };
+  }, [teamOption, teamTier, isAnnual, isTeamEnterprise]);
+
+  // Card styles based on selection
+  const getCardStyle = (plan: 'free' | 'pro' | 'team') => {
+    const isSelected = selectedPlan === plan;
+    if (isSelected) {
+      return {
+        background: `linear-gradient(180deg, ${GOLD}15 0%, ${GOLD}05 40%, transparent 100%)`,
+        border: `1px solid ${GOLD}50`
+      };
+    }
+    return {
+      backgroundColor: 'rgba(255,255,255,0.03)',
+      border: '1px solid rgba(255,255,255,0.1)'
+    };
+  };
 
   return (
     <div className="min-h-screen text-white antialiased overflow-x-hidden" style={{ backgroundColor: '#000000' }}>
@@ -206,14 +272,26 @@ export default function PricingPage() {
           </div>
         </div>
 
-        {/* Pricing Cards - 3 Column Layout */}
-        <div className="grid lg:grid-cols-3 gap-6 mb-16 sm:mb-20">
+        {/* Pricing Cards - 3 Column Layout with equal heights */}
+        <div className="grid lg:grid-cols-3 gap-6 mb-16 sm:mb-20 items-stretch">
           
           {/* FREE PLAN */}
           <div 
-            className="relative rounded-2xl p-6 sm:p-8"
-            style={{ backgroundColor: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.1)' }}
+            className="relative rounded-2xl p-6 sm:p-8 cursor-pointer transition-all duration-300 flex flex-col"
+            style={getCardStyle('free')}
+            onClick={() => setSelectedPlan('free')}
           >
+            {selectedPlan === 'free' && (
+              <div className="absolute -top-3 left-1/2 -translate-x-1/2">
+                <div 
+                  className="px-4 py-1 rounded-full text-xs font-semibold"
+                  style={{ backgroundColor: GOLD, color: '#000000' }}
+                >
+                  Selected
+                </div>
+              </div>
+            )}
+
             <div className="mb-6">
               <h2 className="text-xl sm:text-2xl font-semibold mb-2">Free</h2>
               <p style={{ color: 'rgba(255,255,255,0.5)' }}>Try SnapR with no commitment</p>
@@ -246,13 +324,17 @@ export default function PricingPage() {
             <Link 
               href="/auth/signup"
               className="w-full py-3.5 rounded-xl font-semibold transition-all hover:opacity-90 flex items-center justify-center"
-              style={{ backgroundColor: 'rgba(255,255,255,0.1)', color: '#FFFFFF', border: '1px solid rgba(255,255,255,0.2)' }}
+              style={{ 
+                backgroundColor: selectedPlan === 'free' ? GOLD : 'rgba(255,255,255,0.1)', 
+                color: selectedPlan === 'free' ? '#000000' : '#FFFFFF', 
+                border: selectedPlan === 'free' ? 'none' : '1px solid rgba(255,255,255,0.2)' 
+              }}
             >
               Get started free
             </Link>
 
-            {/* Features */}
-            <div className="mt-6 pt-6" style={{ borderTop: '1px solid rgba(255,255,255,0.1)' }}>
+            {/* Features - flex-grow to push to bottom */}
+            <div className="mt-6 pt-6 flex-grow" style={{ borderTop: '1px solid rgba(255,255,255,0.1)' }}>
               <ul className="space-y-3">
                 {[
                   '15 AI enhancement tools',
@@ -273,19 +355,17 @@ export default function PricingPage() {
 
           {/* PRO PLAN */}
           <div 
-            className="relative rounded-2xl p-6 sm:p-8"
-            style={{ 
-              background: `linear-gradient(180deg, ${GOLD}15 0%, ${GOLD}05 40%, transparent 100%)`,
-              border: `1px solid ${GOLD}50`
-            }}
+            className="relative rounded-2xl p-6 sm:p-8 cursor-pointer transition-all duration-300 flex flex-col"
+            style={getCardStyle('pro')}
+            onClick={() => setSelectedPlan('pro')}
           >
-            {/* Popular Badge */}
+            {/* Badge */}
             <div className="absolute -top-3 left-1/2 -translate-x-1/2">
               <div 
                 className="px-4 py-1 rounded-full text-xs font-semibold"
                 style={{ backgroundColor: GOLD, color: '#000000' }}
               >
-                Most Popular
+                {selectedPlan === 'pro' ? 'Selected' : 'Most Popular'}
               </div>
             </div>
 
@@ -299,21 +379,21 @@ export default function PricingPage() {
               <div className="flex items-baseline justify-between mb-4">
                 <div>
                   <span className="text-3xl sm:text-4xl font-semibold">
-                    {isEnterprise ? '150+' : proTier.listings}
+                    {isProEnterprise ? '150+' : proTier.listings}
                   </span>
                   <span className="ml-2 text-sm" style={{ color: 'rgba(255,255,255,0.5)' }}>listings/mo</span>
                 </div>
                 <div className="text-right">
                   <div className="text-xl sm:text-2xl font-semibold" style={{ color: GOLD }}>
-                    {isEnterprise ? 'Custom' : `$${proCalc.price}`}
+                    {isProEnterprise ? 'Custom' : `$${proCalc.price}`}
                   </div>
                   <div className="text-xs" style={{ color: 'rgba(255,255,255,0.4)' }}>
-                    {isEnterprise ? 'pricing' : 'per listing'}
+                    {isProEnterprise ? 'pricing' : 'per listing'}
                   </div>
                 </div>
               </div>
 
-              {/* Slider */}
+              {/* Pro Slider */}
               <div className="relative mb-2">
                 <div className="h-2 rounded-full" style={{ backgroundColor: 'rgba(255,255,255,0.1)' }}>
                   <div 
@@ -337,7 +417,10 @@ export default function PricingPage() {
                   min="0"
                   max={PRO_TIERS.length - 1}
                   value={proSliderIndex}
-                  onChange={(e) => setProSliderIndex(parseInt(e.target.value))}
+                  onChange={(e) => {
+                    setProSliderIndex(parseInt(e.target.value));
+                    setSelectedPlan('pro');
+                  }}
                   className="absolute inset-0 w-full opacity-0 cursor-pointer"
                   style={{ height: '24px', top: '-8px' }}
                 />
@@ -358,7 +441,7 @@ export default function PricingPage() {
             </div>
 
             {/* Monthly Total */}
-            {isEnterprise ? (
+            {isProEnterprise ? (
               <div 
                 className="p-3 rounded-xl mb-6"
                 style={{ backgroundColor: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.1)' }}
@@ -388,7 +471,7 @@ export default function PricingPage() {
             )}
 
             {/* CTA */}
-            {isEnterprise ? (
+            {isProEnterprise ? (
               <Link 
                 href="/contact?plan=enterprise"
                 className="w-full py-3.5 rounded-xl font-semibold transition-all hover:opacity-90 flex items-center justify-center gap-2"
@@ -399,7 +482,7 @@ export default function PricingPage() {
             ) : (
               <>
                 <button 
-                  onClick={() => handleCheckout('pro')}
+                  onClick={() => openBookingModal('pro')}
                   disabled={loading === 'pro'}
                   className="w-full py-3.5 rounded-xl font-semibold transition-all hover:opacity-90 disabled:opacity-50"
                   style={{ backgroundColor: '#FFFFFF', color: '#000000' }}
@@ -413,7 +496,7 @@ export default function PricingPage() {
             )}
 
             {/* Features */}
-            <div className="mt-6 pt-6" style={{ borderTop: '1px solid rgba(255,255,255,0.1)' }}>
+            <div className="mt-6 pt-6 flex-grow" style={{ borderTop: '1px solid rgba(255,255,255,0.1)' }}>
               <ul className="space-y-2">
                 {[
                   '75 photos per listing',
@@ -437,9 +520,21 @@ export default function PricingPage() {
 
           {/* TEAM PLAN */}
           <div 
-            className="relative rounded-2xl p-6 sm:p-8"
-            style={{ backgroundColor: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.1)' }}
+            className="relative rounded-2xl p-6 sm:p-8 cursor-pointer transition-all duration-300 flex flex-col"
+            style={getCardStyle('team')}
+            onClick={() => setSelectedPlan('team')}
           >
+            {selectedPlan === 'team' && (
+              <div className="absolute -top-3 left-1/2 -translate-x-1/2">
+                <div 
+                  className="px-4 py-1 rounded-full text-xs font-semibold"
+                  style={{ backgroundColor: GOLD, color: '#000000' }}
+                >
+                  Selected
+                </div>
+              </div>
+            )}
+
             <div className="mb-6">
               <h2 className="text-xl sm:text-2xl font-semibold mb-2">Team</h2>
               <p style={{ color: 'rgba(255,255,255,0.5)' }}>For brokerages and teams</p>
@@ -452,7 +547,11 @@ export default function PricingPage() {
                 {TEAM_OPTIONS.map((option, i) => (
                   <button
                     key={option.users}
-                    onClick={() => setTeamOptionIndex(i)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setTeamOptionIndex(i);
+                      setSelectedPlan('team');
+                    }}
                     className="py-2 rounded-lg text-sm font-medium transition-all"
                     style={{ 
                       backgroundColor: i === teamOptionIndex ? GOLD : 'rgba(255,255,255,0.05)',
@@ -466,32 +565,32 @@ export default function PricingPage() {
               </div>
             </div>
 
-            {/* Listings - Same slider as Pro */}
+            {/* Team Listings Slider */}
             <div className="mb-4">
               <div className="flex items-baseline justify-between mb-2">
                 <div>
                   <span className="text-2xl font-semibold">
-                    {isEnterprise ? '150+' : proTier.listings}
+                    {isTeamEnterprise ? '150+' : teamTier.listings}
                   </span>
                   <span className="ml-1 text-sm" style={{ color: 'rgba(255,255,255,0.5)' }}>listings/mo</span>
                 </div>
                 <div className="text-right">
                   <span className="text-lg font-semibold" style={{ color: GOLD }}>
-                    {isEnterprise ? 'Custom' : `$${proCalc.price}`}
+                    {isTeamEnterprise ? 'Custom' : `$${teamCalc.price}`}
                   </span>
                   <span className="text-xs ml-1" style={{ color: 'rgba(255,255,255,0.4)' }}>
-                    {isEnterprise ? '' : '/listing'}
+                    {isTeamEnterprise ? '' : '/listing'}
                   </span>
                 </div>
               </div>
 
-              {/* Slider - shares with Pro */}
+              {/* Team Slider - SEPARATE from Pro */}
               <div className="relative mb-2">
                 <div className="h-1.5 rounded-full" style={{ backgroundColor: 'rgba(255,255,255,0.1)' }}>
                   <div 
                     className="absolute h-full rounded-full transition-all duration-150"
                     style={{ 
-                      width: `${(proSliderIndex / (PRO_TIERS.length - 1)) * 100}%`,
+                      width: `${(teamSliderIndex / (PRO_TIERS.length - 1)) * 100}%`,
                       background: `linear-gradient(90deg, ${GOLD}, ${GOLD_DARK})`
                     }}
                   />
@@ -499,7 +598,7 @@ export default function PricingPage() {
                 <div 
                   className="absolute top-1/2 -translate-y-1/2 w-3 h-3 rounded-full transition-all duration-150"
                   style={{ 
-                    left: `calc(${(proSliderIndex / (PRO_TIERS.length - 1)) * 100}% - 6px)`,
+                    left: `calc(${(teamSliderIndex / (PRO_TIERS.length - 1)) * 100}% - 6px)`,
                     backgroundColor: GOLD,
                     boxShadow: `0 0 8px ${GOLD}80`
                   }}
@@ -508,8 +607,12 @@ export default function PricingPage() {
                   type="range"
                   min="0"
                   max={PRO_TIERS.length - 1}
-                  value={proSliderIndex}
-                  onChange={(e) => setProSliderIndex(parseInt(e.target.value))}
+                  value={teamSliderIndex}
+                  onChange={(e) => {
+                    e.stopPropagation();
+                    setTeamSliderIndex(parseInt(e.target.value));
+                    setSelectedPlan('team');
+                  }}
                   className="absolute inset-0 w-full opacity-0 cursor-pointer"
                   style={{ height: '20px', top: '-6px' }}
                 />
@@ -519,8 +622,8 @@ export default function PricingPage() {
                   <span 
                     key={String(tier.listings)}
                     style={{ 
-                      color: i === proSliderIndex ? GOLD : undefined,
-                      fontWeight: i === proSliderIndex ? 600 : undefined
+                      color: i === teamSliderIndex ? GOLD : undefined,
+                      fontWeight: i === teamSliderIndex ? 600 : undefined
                     }}
                   >
                     {tier.listings === 'enterprise' ? '150+' : tier.listings}
@@ -530,7 +633,7 @@ export default function PricingPage() {
             </div>
 
             {/* Price Breakdown */}
-            {isEnterprise ? (
+            {isTeamEnterprise ? (
               <div 
                 className="p-3 rounded-xl mb-4"
                 style={{ backgroundColor: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.1)' }}
@@ -549,7 +652,7 @@ export default function PricingPage() {
                   <span style={{ color: 'rgba(255,255,255,0.6)' }}>${teamCalc.base}</span>
                 </div>
                 <div className="flex items-center justify-between text-sm mb-2">
-                  <span style={{ color: 'rgba(255,255,255,0.4)' }}>{proTier.listings} listings × ${proCalc.price}</span>
+                  <span style={{ color: 'rgba(255,255,255,0.4)' }}>{teamTier.listings} listings × ${teamCalc.price}</span>
                   <span style={{ color: 'rgba(255,255,255,0.6)' }}>${teamCalc.listingCost}</span>
                 </div>
                 <div className="flex items-center justify-between pt-2" style={{ borderTop: '1px solid rgba(255,255,255,0.1)' }}>
@@ -563,7 +666,7 @@ export default function PricingPage() {
             )}
 
             {/* CTA */}
-            {isEnterprise ? (
+            {isTeamEnterprise ? (
               <Link 
                 href="/contact?plan=enterprise-team"
                 className="w-full py-3.5 rounded-xl font-semibold transition-all hover:opacity-90 flex items-center justify-center gap-2"
@@ -574,7 +677,7 @@ export default function PricingPage() {
             ) : (
               <>
                 <button 
-                  onClick={() => handleCheckout('team')}
+                  onClick={() => openBookingModal('team')}
                   disabled={loading === 'team'}
                   className="w-full py-3.5 rounded-xl font-semibold transition-all hover:opacity-90 disabled:opacity-50"
                   style={{ backgroundColor: GOLD, color: '#000000' }}
@@ -588,7 +691,7 @@ export default function PricingPage() {
             )}
 
             {/* Features */}
-            <div className="mt-6 pt-6" style={{ borderTop: '1px solid rgba(255,255,255,0.1)' }}>
+            <div className="mt-6 pt-6 flex-grow" style={{ borderTop: '1px solid rgba(255,255,255,0.1)' }}>
               <div className="text-xs font-medium mb-3" style={{ color: 'rgba(255,255,255,0.6)' }}>Everything in Pro, plus:</div>
               <ul className="space-y-2">
                 {[
@@ -690,6 +793,99 @@ export default function PricingPage() {
           </Link>
         </div>
       </div>
+
+      {/* Demo/Subscribe Modal */}
+      {showModal && (
+        <div 
+          className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          onClick={() => setShowModal(false)}
+        >
+          {/* Backdrop */}
+          <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" />
+          
+          {/* Modal */}
+          <div 
+            className="relative w-full max-w-md rounded-2xl p-6 sm:p-8"
+            style={{ backgroundColor: '#111111', border: `1px solid ${GOLD}30` }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Close button */}
+            <button 
+              onClick={() => setShowModal(false)}
+              className="absolute top-4 right-4 p-2 rounded-full transition-all hover:bg-white/10"
+            >
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+
+            {/* Icon */}
+            <div 
+              className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-6"
+              style={{ backgroundColor: `${GOLD}15` }}
+            >
+              <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke={GOLD} strokeWidth={1.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
+              </svg>
+            </div>
+
+            {/* Content */}
+            <div className="text-center mb-8">
+              <h3 className="text-xl sm:text-2xl font-semibold mb-3">
+                Ready to get started?
+              </h3>
+              <p style={{ color: 'rgba(255,255,255,0.6)' }}>
+                Not sure yet? Book a quick demo with our team to see SnapR in action before you subscribe.
+              </p>
+            </div>
+
+            {/* Actions */}
+            <div className="space-y-3">
+              {/* Continue to Subscribe - Primary */}
+              <button
+                onClick={continueToCheckout}
+                disabled={loading === modalPlan}
+                className="w-full py-3.5 rounded-xl font-semibold transition-all hover:opacity-90 disabled:opacity-50 flex items-center justify-center gap-2"
+                style={{ backgroundColor: '#FFFFFF', color: '#000000' }}
+              >
+                {loading === modalPlan ? (
+                  'Loading...'
+                ) : (
+                  <>
+                    Continue to subscribe
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                    </svg>
+                  </>
+                )}
+              </button>
+
+              {/* Divider */}
+              <div className="flex items-center gap-4">
+                <div className="flex-1 h-px" style={{ backgroundColor: 'rgba(255,255,255,0.1)' }} />
+                <span className="text-xs" style={{ color: 'rgba(255,255,255,0.4)' }}>or</span>
+                <div className="flex-1 h-px" style={{ backgroundColor: 'rgba(255,255,255,0.1)' }} />
+              </div>
+
+              {/* Book a Demo - Secondary */}
+              <button
+                onClick={openCalendly}
+                className="w-full py-3.5 rounded-xl font-semibold transition-all hover:opacity-90 flex items-center justify-center gap-2"
+                style={{ backgroundColor: `${GOLD}20`, color: GOLD, border: `1px solid ${GOLD}50` }}
+              >
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5" />
+                </svg>
+                Book a demo first
+              </button>
+
+              <p className="text-center text-xs mt-2" style={{ color: 'rgba(255,255,255,0.4)' }}>
+                30-minute call • See all features • Ask questions
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
