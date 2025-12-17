@@ -77,13 +77,17 @@ const GOLD_DARK = '#B8860B';
 
 export default function PricingPage() {
   const [isAnnual, setIsAnnual] = useState(true);
-  const [proSliderIndex, setProSliderIndex] = useState(4); // Default 75 listings
-  const [teamSliderIndex, setTeamSliderIndex] = useState(4); // Separate slider for Team
+  const [sliderIndex, setSliderIndex] = useState(4); // Default 75 listings - shared across plans
   const [teamOptionIndex, setTeamOptionIndex] = useState(0);
   const [loading, setLoading] = useState<'pro' | 'team' | null>(null);
   const [selectedPlan, setSelectedPlan] = useState<'free' | 'pro' | 'team'>('pro');
   const [showModal, setShowModal] = useState(false);
   const [modalPlan, setModalPlan] = useState<'pro' | 'team'>('pro');
+
+  // Shared tier calculations
+  const currentTier = PRO_TIERS[sliderIndex];
+  const isEnterprise = currentTier.listings === 'enterprise';
+  const currentPrice = isAnnual ? currentTier.annual : currentTier.monthly;
 
   // Load Calendly widget script and styles
   useEffect(() => {
@@ -127,23 +131,17 @@ export default function PricingPage() {
     handleCheckout(modalPlan);
   };
 
-  const proTier = PRO_TIERS[proSliderIndex];
-  const teamTier = PRO_TIERS[teamSliderIndex];
   const teamOption = TEAM_OPTIONS[teamOptionIndex];
-
-  const isProEnterprise = proTier.listings === 'enterprise';
-  const isTeamEnterprise = teamTier.listings === 'enterprise';
 
   const handleCheckout = async (plan: 'pro' | 'team') => {
     setLoading(plan);
     try {
-      const listings = plan === 'pro' ? proTier.listings : teamTier.listings;
       const response = await fetch('/api/checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           plan,
-          listings,
+          listings: currentTier.listings,
           teamSize: plan === 'team' ? teamOption.users : undefined,
           isAnnual,
         }),
@@ -166,25 +164,25 @@ export default function PricingPage() {
   };
 
   const proCalc = useMemo(() => {
-    if (isProEnterprise) {
+    if (isEnterprise) {
       return { price: null, total: null, savings: 0 };
     }
-    const price = isAnnual ? proTier.annual : proTier.monthly;
-    const total = (proTier.listings as number) * (price as number);
-    const savings = isAnnual ? ((proTier.monthly as number) - (proTier.annual as number)) * (proTier.listings as number) * 12 : 0;
+    const price = isAnnual ? currentTier.annual : currentTier.monthly;
+    const total = (currentTier.listings as number) * (price as number);
+    const savings = isAnnual ? ((currentTier.monthly as number) - (currentTier.annual as number)) * (currentTier.listings as number) * 12 : 0;
     return { price, total, savings };
-  }, [proTier, isAnnual, isProEnterprise]);
+  }, [currentTier, isAnnual, isEnterprise]);
 
   const teamCalc = useMemo(() => {
     const base = isAnnual ? teamOption.baseAnnual : teamOption.baseMonthly;
-    if (isTeamEnterprise) {
+    if (isEnterprise) {
       return { base, price: null, listingCost: null, total: null };
     }
-    const price = isAnnual ? teamTier.annual : teamTier.monthly;
-    const listingCost = (teamTier.listings as number) * (price as number);
+    const price = isAnnual ? currentTier.annual : currentTier.monthly;
+    const listingCost = (currentTier.listings as number) * (price as number);
     const total = base + listingCost;
     return { base, price, listingCost, total };
-  }, [teamOption, teamTier, isAnnual, isTeamEnterprise]);
+  }, [teamOption, currentTier, isAnnual, isEnterprise]);
 
   // Card styles based on selection
   const getCardStyle = (plan: 'free' | 'pro' | 'team') => {
@@ -270,6 +268,81 @@ export default function PricingPage() {
               </span>
             </button>
           </div>
+        </div>
+
+        {/* Shared Listings Slider */}
+        <div 
+          className="max-w-xl mx-auto mb-10 p-6 rounded-2xl"
+          style={{ backgroundColor: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.1)' }}
+        >
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <span className="text-sm" style={{ color: 'rgba(255,255,255,0.5)' }}>Monthly listings</span>
+              <div className="flex items-baseline gap-2">
+                <span className="text-3xl font-semibold">
+                  {isEnterprise ? '150+' : currentTier.listings}
+                </span>
+                {!isEnterprise && (
+                  <span className="text-sm" style={{ color: 'rgba(255,255,255,0.4)' }}>listings/mo</span>
+                )}
+              </div>
+            </div>
+            <div className="text-right">
+              <span className="text-sm" style={{ color: 'rgba(255,255,255,0.5)' }}>Per listing</span>
+              <div className="text-2xl font-semibold" style={{ color: GOLD }}>
+                {isEnterprise ? 'Custom' : `$${currentPrice}`}
+              </div>
+            </div>
+          </div>
+
+          {/* Slider */}
+          <div className="relative mb-2">
+            <div className="h-2 rounded-full" style={{ backgroundColor: 'rgba(255,255,255,0.1)' }}>
+              <div 
+                className="absolute h-full rounded-full transition-all duration-150"
+                style={{ 
+                  width: `${(sliderIndex / (PRO_TIERS.length - 1)) * 100}%`,
+                  background: `linear-gradient(90deg, ${GOLD}, ${GOLD_DARK})`
+                }}
+              />
+            </div>
+            <div 
+              className="absolute top-1/2 -translate-y-1/2 w-5 h-5 rounded-full transition-all duration-150"
+              style={{ 
+                left: `calc(${(sliderIndex / (PRO_TIERS.length - 1)) * 100}% - 10px)`,
+                backgroundColor: GOLD,
+                boxShadow: `0 0 12px ${GOLD}80`
+              }}
+            />
+            <input
+              type="range"
+              min="0"
+              max={PRO_TIERS.length - 1}
+              value={sliderIndex}
+              onChange={(e) => setSliderIndex(parseInt(e.target.value))}
+              className="absolute inset-0 w-full opacity-0 cursor-pointer"
+              style={{ height: '24px', top: '-8px' }}
+            />
+          </div>
+          <div className="flex justify-between text-xs" style={{ color: 'rgba(255,255,255,0.3)' }}>
+            {PRO_TIERS.map((tier, i) => (
+              <span 
+                key={String(tier.listings)}
+                style={{ 
+                  color: i === sliderIndex ? GOLD : undefined,
+                  fontWeight: i === sliderIndex ? 600 : undefined
+                }}
+              >
+                {tier.listings === 'enterprise' ? '150+' : tier.listings}
+              </span>
+            ))}
+          </div>
+
+          {isEnterprise && (
+            <p className="text-center text-sm mt-3" style={{ color: 'rgba(255,255,255,0.5)' }}>
+              Need 150+ listings? <Link href="/contact?plan=enterprise" className="underline" style={{ color: GOLD }}>Contact us</Link> for custom pricing
+            </p>
+          )}
         </div>
 
         {/* Pricing Cards - 3 Column Layout with equal heights */}
@@ -382,74 +455,28 @@ export default function PricingPage() {
               <p style={{ color: 'rgba(255,255,255,0.5)' }}>For agents and photographers</p>
             </div>
 
-            {/* Slider Section */}
+            {/* Pricing Display - uses shared slider */}
             <div className="mb-6">
               <div className="flex items-baseline justify-between mb-4">
                 <div>
                   <span className="text-3xl sm:text-4xl font-semibold">
-                    {isProEnterprise ? '150+' : proTier.listings}
+                    {isEnterprise ? '150+' : currentTier.listings}
                   </span>
                   <span className="ml-2 text-sm" style={{ color: 'rgba(255,255,255,0.5)' }}>listings/mo</span>
                 </div>
                 <div className="text-right">
                   <div className="text-xl sm:text-2xl font-semibold" style={{ color: GOLD }}>
-                    {isProEnterprise ? 'Custom' : `$${proCalc.price}`}
+                    {isEnterprise ? 'Custom' : `$${proCalc.price}`}
                   </div>
                   <div className="text-xs" style={{ color: 'rgba(255,255,255,0.4)' }}>
-                    {isProEnterprise ? 'pricing' : 'per listing'}
+                    {isEnterprise ? 'pricing' : 'per listing'}
                   </div>
                 </div>
-              </div>
-
-              {/* Pro Slider */}
-              <div className="relative mb-2">
-                <div className="h-2 rounded-full" style={{ backgroundColor: 'rgba(255,255,255,0.1)' }}>
-                  <div 
-                    className="absolute h-full rounded-full transition-all duration-150"
-                    style={{ 
-                      width: `${(proSliderIndex / (PRO_TIERS.length - 1)) * 100}%`,
-                      background: `linear-gradient(90deg, ${GOLD}, ${GOLD_DARK})`
-                    }}
-                  />
-                </div>
-                <div 
-                  className="absolute top-1/2 -translate-y-1/2 w-4 h-4 rounded-full transition-all duration-150"
-                  style={{ 
-                    left: `calc(${(proSliderIndex / (PRO_TIERS.length - 1)) * 100}% - 8px)`,
-                    backgroundColor: GOLD,
-                    boxShadow: `0 0 12px ${GOLD}80`
-                  }}
-                />
-                <input
-                  type="range"
-                  min="0"
-                  max={PRO_TIERS.length - 1}
-                  value={proSliderIndex}
-                  onChange={(e) => {
-                    setProSliderIndex(parseInt(e.target.value));
-                    setSelectedPlan('pro');
-                  }}
-                  className="absolute inset-0 w-full opacity-0 cursor-pointer"
-                  style={{ height: '24px', top: '-8px' }}
-                />
-              </div>
-              <div className="flex justify-between text-[10px]" style={{ color: 'rgba(255,255,255,0.3)' }}>
-                {PRO_TIERS.map((tier, i) => (
-                  <span 
-                    key={String(tier.listings)}
-                    style={{ 
-                      color: i === proSliderIndex ? GOLD : undefined,
-                      fontWeight: i === proSliderIndex ? 600 : undefined
-                    }}
-                  >
-                    {tier.listings === 'enterprise' ? '150+' : tier.listings}
-                  </span>
-                ))}
               </div>
             </div>
 
             {/* Monthly Total */}
-            {isProEnterprise ? (
+            {isEnterprise ? (
               <div 
                 className="p-3 rounded-xl mb-6"
                 style={{ backgroundColor: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.1)' }}
@@ -479,7 +506,7 @@ export default function PricingPage() {
             )}
 
             {/* CTA */}
-            {isProEnterprise ? (
+            {isEnterprise ? (
               <Link 
                 href="/contact?plan=enterprise"
                 className="w-full py-3.5 rounded-xl font-semibold transition-all hover:opacity-90 flex items-center justify-center gap-2"
@@ -595,75 +622,28 @@ export default function PricingPage() {
               </div>
             </div>
 
-            {/* Team Listings Slider */}
+            {/* Pricing Display - uses shared slider */}
             <div className="mb-4">
               <div className="flex items-baseline justify-between mb-2">
                 <div>
                   <span className="text-2xl font-semibold">
-                    {isTeamEnterprise ? '150+' : teamTier.listings}
+                    {isEnterprise ? '150+' : currentTier.listings}
                   </span>
                   <span className="ml-1 text-sm" style={{ color: 'rgba(255,255,255,0.5)' }}>listings/mo</span>
                 </div>
                 <div className="text-right">
                   <span className="text-lg font-semibold" style={{ color: GOLD }}>
-                    {isTeamEnterprise ? 'Custom' : `$${teamCalc.price}`}
+                    {isEnterprise ? 'Custom' : `$${teamCalc.price}`}
                   </span>
                   <span className="text-xs ml-1" style={{ color: 'rgba(255,255,255,0.4)' }}>
-                    {isTeamEnterprise ? '' : '/listing'}
+                    {isEnterprise ? '' : '/listing'}
                   </span>
                 </div>
-              </div>
-
-              {/* Team Slider - SEPARATE from Pro */}
-              <div className="relative mb-2">
-                <div className="h-1.5 rounded-full" style={{ backgroundColor: 'rgba(255,255,255,0.1)' }}>
-                  <div 
-                    className="absolute h-full rounded-full transition-all duration-150"
-                    style={{ 
-                      width: `${(teamSliderIndex / (PRO_TIERS.length - 1)) * 100}%`,
-                      background: `linear-gradient(90deg, ${GOLD}, ${GOLD_DARK})`
-                    }}
-                  />
-                </div>
-                <div 
-                  className="absolute top-1/2 -translate-y-1/2 w-3 h-3 rounded-full transition-all duration-150"
-                  style={{ 
-                    left: `calc(${(teamSliderIndex / (PRO_TIERS.length - 1)) * 100}% - 6px)`,
-                    backgroundColor: GOLD,
-                    boxShadow: `0 0 8px ${GOLD}80`
-                  }}
-                />
-                <input
-                  type="range"
-                  min="0"
-                  max={PRO_TIERS.length - 1}
-                  value={teamSliderIndex}
-                  onChange={(e) => {
-                    e.stopPropagation();
-                    setTeamSliderIndex(parseInt(e.target.value));
-                    setSelectedPlan('team');
-                  }}
-                  className="absolute inset-0 w-full opacity-0 cursor-pointer"
-                  style={{ height: '20px', top: '-6px' }}
-                />
-              </div>
-              <div className="flex justify-between text-[9px]" style={{ color: 'rgba(255,255,255,0.3)' }}>
-                {PRO_TIERS.map((tier, i) => (
-                  <span 
-                    key={String(tier.listings)}
-                    style={{ 
-                      color: i === teamSliderIndex ? GOLD : undefined,
-                      fontWeight: i === teamSliderIndex ? 600 : undefined
-                    }}
-                  >
-                    {tier.listings === 'enterprise' ? '150+' : tier.listings}
-                  </span>
-                ))}
               </div>
             </div>
 
             {/* Price Breakdown */}
-            {isTeamEnterprise ? (
+            {isEnterprise ? (
               <div 
                 className="p-3 rounded-xl mb-4"
                 style={{ backgroundColor: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.1)' }}
@@ -682,7 +662,7 @@ export default function PricingPage() {
                   <span style={{ color: 'rgba(255,255,255,0.6)' }}>${teamCalc.base}</span>
                 </div>
                 <div className="flex items-center justify-between text-sm mb-2">
-                  <span style={{ color: 'rgba(255,255,255,0.4)' }}>{teamTier.listings} listings × ${teamCalc.price}</span>
+                  <span style={{ color: 'rgba(255,255,255,0.4)' }}>{currentTier.listings} listings × ${teamCalc.price}</span>
                   <span style={{ color: 'rgba(255,255,255,0.6)' }}>${teamCalc.listingCost}</span>
                 </div>
                 <div className="flex items-center justify-between pt-2" style={{ borderTop: '1px solid rgba(255,255,255,0.1)' }}>
@@ -696,7 +676,7 @@ export default function PricingPage() {
             )}
 
             {/* CTA */}
-            {isTeamEnterprise ? (
+            {isEnterprise ? (
               <Link 
                 href="/contact?plan=enterprise-team"
                 className="w-full py-3.5 rounded-xl font-semibold transition-all hover:opacity-90 flex items-center justify-center gap-2"
