@@ -3,11 +3,10 @@
 import React, { Suspense, useEffect, useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import {
-  Loader2, Home, ChevronRight, Upload, Sparkles, Download,
-  Check, X, Image, Grid, Layers, Eye, Clock, DollarSign,
-  FileText, Printer, Share2, Lightbulb, Building, Bed, Bath,
-  Square, Maximize2, Settings, Star, Zap, ArrowRight, Plus,
-  LayoutGrid, Box, MousePointer
+  Loader2, Home, ChevronRight, Download, RefreshCw,
+  Check, Clock, DollarSign, Lightbulb, Bed, Bath,
+  Square, Star, Plus, LayoutGrid, Box, MousePointer, Grid,
+  Sparkles, ArrowLeft, Palette, Settings2
 } from 'lucide-react';
 
 // Plan Types Configuration
@@ -17,21 +16,19 @@ const PLAN_TYPES = {
     label: '2D Basic',
     description: 'Clean black & white floor plan',
     price: 20,
-    credits: 4,
-    turnaround: '24 hours',
+    turnaround: '~30 seconds',
     icon: LayoutGrid,
-    features: ['Room labels', 'Dimensions', 'Total sqft', 'PNG & PDF'],
+    features: ['Room labels', 'Dimensions', 'Total sqft', 'PNG download'],
     popular: false,
   },
   '2d-branded': {
     id: '2d-branded',
     label: '2D Branded',
-    description: 'Colored with your logo',
+    description: 'Colored with furniture icons',
     price: 35,
-    credits: 6,
-    turnaround: '24-48 hours',
+    turnaround: '~30 seconds',
     icon: Grid,
-    features: ['Everything in Basic', 'Your logo', 'Brand colors', 'High-res'],
+    features: ['Color-coded rooms', 'Furniture icons', 'Elegant styling', 'High-res'],
     popular: true,
   },
   '3d-isometric': {
@@ -39,21 +36,19 @@ const PLAN_TYPES = {
     label: '3D Isometric',
     description: '3D dollhouse view',
     price: 50,
-    credits: 8,
-    turnaround: '48 hours',
+    turnaround: '~30 seconds',
     icon: Box,
-    features: ['3D visualization', 'Furniture', 'Multiple angles'],
+    features: ['3D visualization', 'Furniture shown', 'Realistic shadows', 'Premium quality'],
     popular: false,
   },
   'interactive': {
     id: 'interactive',
-    label: 'Interactive',
-    description: 'Clickable room photos',
+    label: '3D Premium',
+    description: 'Magazine-quality render',
     price: 75,
-    credits: 12,
-    turnaround: '48-72 hours',
+    turnaround: '~30 seconds',
     icon: MousePointer,
-    features: ['Clickable rooms', 'Photo links', 'Embed anywhere'],
+    features: ['Photorealistic', 'Luxury styling', 'Marketing ready', 'Best quality'],
     popular: false,
   },
 };
@@ -69,9 +64,9 @@ const STYLES = [
 ];
 
 const COLOR_SCHEMES = [
-  { id: 'color', label: 'Full Color', hex: '#4CAF50' },
-  { id: 'grayscale', label: 'Grayscale', hex: '#9E9E9E' },
-  { id: 'blueprint', label: 'Blueprint', hex: '#2196F3' },
+  { id: 'color', label: 'Full Color', color: 'bg-gradient-to-r from-blue-400 to-purple-400' },
+  { id: 'grayscale', label: 'Grayscale', color: 'bg-gradient-to-r from-gray-400 to-gray-600' },
+  { id: 'blueprint', label: 'Blueprint', color: 'bg-gradient-to-r from-blue-600 to-blue-800' },
 ];
 
 interface Listing {
@@ -92,27 +87,18 @@ interface FloorPlan {
   bedrooms?: number;
   bathrooms?: number;
   created_at: string;
-  listing_id?: string;
 }
 
-// Plan Type Card Component
-function PlanTypeCard({
-  type,
-  selected,
-  onClick,
-}: {
-  type: PlanTypeValue;
-  selected: boolean;
-  onClick: () => void;
-}) {
+// Plan Type Card
+function PlanTypeCard({ type, selected, onClick }: { type: PlanTypeValue; selected: boolean; onClick: () => void }) {
   const Icon = type.icon;
   
   return (
     <button
       onClick={onClick}
-      className={`relative p-6 rounded-2xl border text-left transition-all hover:scale-[1.02] ${
+      className={`relative p-5 rounded-2xl border text-left transition-all hover:scale-[1.02] ${
         selected
-          ? 'bg-amber-500/20 border-amber-500/50 ring-2 ring-amber-500'
+          ? 'bg-blue-500/20 border-blue-500/50 ring-2 ring-blue-500'
           : 'bg-white/5 border-white/10 hover:border-white/30'
       }`}
     >
@@ -122,20 +108,20 @@ function PlanTypeCard({
         </div>
       )}
       
-      <Icon className={`w-10 h-10 mb-4 ${selected ? 'text-amber-400' : 'text-white/50'}`} />
+      <Icon className={`w-8 h-8 mb-3 ${selected ? 'text-blue-400' : 'text-white/50'}`} />
       
-      <h3 className="text-lg font-bold mb-1">{type.label}</h3>
-      <p className="text-sm text-white/50 mb-4">{type.description}</p>
+      <h3 className="text-base font-bold mb-1">{type.label}</h3>
+      <p className="text-xs text-white/50 mb-3">{type.description}</p>
       
-      <div className="flex items-center justify-between mb-4">
-        <span className="text-2xl font-bold text-amber-400">${type.price}</span>
-        <span className="text-sm text-white/40">{type.turnaround}</span>
+      <div className="flex items-center justify-between mb-3">
+        <span className="text-xl font-bold text-blue-400">${type.price}</span>
+        <span className="text-xs text-white/40">{type.turnaround}</span>
       </div>
       
-      <ul className="space-y-2">
-        {type.features.map((feature, i) => (
-          <li key={i} className="flex items-center gap-2 text-sm text-white/60">
-            <Check className="w-4 h-4 text-green-400" />
+      <ul className="space-y-1">
+        {type.features.slice(0, 3).map((feature, i) => (
+          <li key={i} className="flex items-center gap-2 text-xs text-white/60">
+            <Check className="w-3 h-3 text-green-400" />
             {feature}
           </li>
         ))}
@@ -144,7 +130,7 @@ function PlanTypeCard({
   );
 }
 
-// Floor Plan Generator Interface
+// Floor Plan Generator
 function FloorPlanGenerator({
   listingId,
   listingTitle,
@@ -160,29 +146,27 @@ function FloorPlanGenerator({
   const [planType, setPlanType] = useState<string>('2d-branded');
   const [style, setStyle] = useState('modern');
   const [colorScheme, setColorScheme] = useState('color');
-  const [options, setOptions] = useState({
-    showDimensions: true,
-    showFurniture: false,
-    showRoomNames: true,
-    showSqft: true,
-    includeBranding: false,
-  });
   const [propertyDetails, setPropertyDetails] = useState({
     sqft: '',
-    bedrooms: '',
-    bathrooms: '',
+    bedrooms: '3',
+    bathrooms: '2',
     floors: '1',
   });
-  const [rushOrder, setRushOrder] = useState(false);
   const [processing, setProcessing] = useState(false);
+  const [regenerating, setRegenerating] = useState(false);
   const [result, setResult] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
+  const [generationCount, setGenerationCount] = useState(0);
 
   const selectedPlan = PLAN_TYPES[planType as PlanTypeKey];
-  const totalPrice = selectedPlan.price + (rushOrder ? Math.round(selectedPlan.price * 0.5) : 0);
+  const totalPrice = selectedPlan.price;
 
-  const handleGenerate = async () => {
-    setProcessing(true);
+  const handleGenerate = async (isRegenerate = false) => {
+    if (isRegenerate) {
+      setRegenerating(true);
+    } else {
+      setProcessing(true);
+    }
     setError(null);
 
     try {
@@ -197,12 +181,10 @@ function FloorPlanGenerator({
           sourcePhotos: photoUrls,
           propertyDetails: {
             sqft: propertyDetails.sqft ? parseInt(propertyDetails.sqft) : undefined,
-            bedrooms: propertyDetails.bedrooms ? parseInt(propertyDetails.bedrooms) : undefined,
-            bathrooms: propertyDetails.bathrooms ? parseFloat(propertyDetails.bathrooms) : undefined,
+            bedrooms: propertyDetails.bedrooms ? parseInt(propertyDetails.bedrooms) : 3,
+            bathrooms: propertyDetails.bathrooms ? parseFloat(propertyDetails.bathrooms) : 2,
             floors: parseInt(propertyDetails.floors) || 1,
           },
-          options,
-          rushOrder,
         }),
       });
 
@@ -213,18 +195,21 @@ function FloorPlanGenerator({
       }
 
       setResult(data);
+      setGenerationCount(prev => prev + 1);
     } catch (err: any) {
       setError(err.message);
     } finally {
       setProcessing(false);
+      setRegenerating(false);
     }
   };
 
-  // Result view
+  // Result view with Regenerate button
   if (result) {
     return (
       <div className="min-h-screen bg-[#0F0F0F] text-white p-6">
         <div className="max-w-4xl mx-auto">
+          {/* Header */}
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-3">
               <div className="p-3 bg-gradient-to-br from-green-500/20 to-emerald-500/20 rounded-xl">
@@ -234,11 +219,15 @@ function FloorPlanGenerator({
                 <h1 className="text-2xl font-bold">
                   {result.imageUrl ? 'Floor Plan Ready!' : 'Order Placed!'}
                 </h1>
-                <p className="text-white/50">{selectedPlan.label}</p>
+                <p className="text-white/50">{selectedPlan.label} • Generation #{generationCount}</p>
               </div>
             </div>
+            <button onClick={onBack} className="text-white/50 hover:text-white">
+              ← Back to listings
+            </button>
           </div>
 
+          {/* Generated Image */}
           {result.imageUrl ? (
             <div className="bg-white/5 border border-white/10 rounded-2xl overflow-hidden mb-6">
               <img
@@ -264,6 +253,39 @@ function FloorPlanGenerator({
             </div>
           )}
 
+          {/* Room Analysis */}
+          {result.analysis?.rooms && result.analysis.rooms.length > 0 && (
+            <div className="bg-white/5 border border-white/10 rounded-2xl p-4 mb-6">
+              <h3 className="font-medium mb-3 flex items-center gap-2">
+                <Sparkles className="w-4 h-4 text-purple-400" />
+                AI Room Analysis
+              </h3>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                {result.analysis.rooms.slice(0, 8).map((room: any, i: number) => (
+                  <div key={i} className="bg-white/5 rounded-lg p-3 text-center">
+                    <div className="text-sm font-medium">{room.name}</div>
+                    <div className="text-xs text-white/50">{room.sqft || room.estimatedSqft} sq ft</div>
+                  </div>
+                ))}
+              </div>
+              <div className="flex items-center gap-6 mt-4 text-sm text-white/60">
+                <span className="flex items-center gap-1">
+                  <Square className="w-4 h-4" />
+                  {result.analysis.totalSqft || '~2000'} sq ft
+                </span>
+                <span className="flex items-center gap-1">
+                  <Bed className="w-4 h-4" />
+                  {result.analysis.bedrooms || 3} beds
+                </span>
+                <span className="flex items-center gap-1">
+                  <Bath className="w-4 h-4" />
+                  {result.analysis.bathrooms || 2} baths
+                </span>
+              </div>
+            </div>
+          )}
+
+          {/* Action Buttons */}
           <div className="flex gap-4">
             <button
               onClick={onBack}
@@ -271,17 +293,49 @@ function FloorPlanGenerator({
             >
               Create Another
             </button>
+            
             {result.imageUrl && (
-              <a
-                href={result.imageUrl}
-                download="floor-plan.png"
-                className="flex-1 py-3 bg-amber-500 text-black rounded-xl font-bold text-center hover:bg-amber-400 transition-colors flex items-center justify-center gap-2"
-              >
-                <Download className="w-5 h-5" />
-                Download
-              </a>
+              <>
+                {/* Regenerate Button */}
+                <button
+                  onClick={() => handleGenerate(true)}
+                  disabled={regenerating}
+                  className="flex-1 py-3 bg-purple-500 text-white rounded-xl font-bold hover:bg-purple-400 transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
+                >
+                  {regenerating ? (
+                    <>
+                      <Loader2 className="w-5 h-5 animate-spin" />
+                      Regenerating...
+                    </>
+                  ) : (
+                    <>
+                      <RefreshCw className="w-5 h-5" />
+                      Regenerate
+                    </>
+                  )}
+                </button>
+                
+                {/* Download Button */}
+                <a
+                  href={result.imageUrl}
+                  download={`floor-plan-${planType}-${Date.now()}.png`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex-1 py-3 bg-blue-500 text-white rounded-xl font-bold text-center hover:bg-blue-400 transition-colors flex items-center justify-center gap-2"
+                >
+                  <Download className="w-5 h-5" />
+                  Download
+                </a>
+              </>
             )}
           </div>
+
+          {/* Regenerate Info */}
+          {result.imageUrl && (
+            <p className="text-center text-white/40 text-sm mt-4">
+              Not happy with the result? Click Regenerate for a new variation. Each regeneration costs ~$0.08.
+            </p>
+          )}
         </div>
       </div>
     );
@@ -301,34 +355,47 @@ function FloorPlanGenerator({
               <p className="text-white/50">{listingTitle || 'New Floor Plan'}</p>
             </div>
           </div>
-          <button onClick={onBack} className="text-white/50 hover:text-white transition-colors">
-            ← Back
+          <button onClick={onBack} className="text-white/50 hover:text-white transition-colors flex items-center gap-2">
+            <ArrowLeft className="w-4 h-4" /> Back
           </button>
         </div>
 
-        {/* Progress */}
+        {/* Progress Steps */}
         <div className="flex items-center justify-center gap-4 mb-8">
-          {[1, 2, 3].map((s) => (
-            <React.Fragment key={s}>
-              <div
-                className={`w-10 h-10 rounded-full flex items-center justify-center font-bold transition-all ${
-                  step >= s ? 'bg-blue-500 text-white' : 'bg-white/10 text-white/40'
+          {[
+            { num: 1, label: 'Plan Type' },
+            { num: 2, label: 'Style' },
+            { num: 3, label: 'Details' },
+          ].map((s, i) => (
+            <React.Fragment key={s.num}>
+              <button
+                onClick={() => step > s.num && setStep(s.num)}
+                className={`flex items-center gap-2 px-4 py-2 rounded-full transition-all ${
+                  step >= s.num ? 'bg-blue-500 text-white' : 'bg-white/10 text-white/40'
                 }`}
               >
-                {s}
-              </div>
-              {s < 3 && (
-                <div className={`w-16 h-1 rounded ${step > s ? 'bg-blue-500' : 'bg-white/10'}`} />
-              )}
+                <span className="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center text-sm font-bold">
+                  {step > s.num ? <Check className="w-4 h-4" /> : s.num}
+                </span>
+                <span className="text-sm font-medium hidden sm:block">{s.label}</span>
+              </button>
+              {i < 2 && <div className={`w-8 h-0.5 ${step > s.num ? 'bg-blue-500' : 'bg-white/10'}`} />}
             </React.Fragment>
           ))}
         </div>
 
+        {/* Error */}
+        {error && (
+          <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-4 mb-6 text-red-400">
+            {error}
+          </div>
+        )}
+
         {/* Step 1: Choose Plan Type */}
         {step === 1 && (
           <div>
-            <h2 className="text-xl font-bold mb-2">Step 1: Choose Plan Type</h2>
-            <p className="text-white/50 mb-6">Select the type of floor plan you need</p>
+            <h2 className="text-xl font-bold mb-2">Choose Plan Type</h2>
+            <p className="text-white/50 mb-6">Select the style of floor plan you need</p>
             
             <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
               {Object.values(PLAN_TYPES).map((type) => (
@@ -350,266 +417,191 @@ function FloorPlanGenerator({
           </div>
         )}
 
-        {/* Step 2: Property Details */}
+        {/* Step 2: Style Options */}
         {step === 2 && (
           <div>
-            <div className="flex items-center justify-between mb-6">
-              <div>
-                <h2 className="text-xl font-bold mb-1">Step 2: Property Details</h2>
-                <p className="text-white/50">Enter property information (optional but recommended)</p>
+            <h2 className="text-xl font-bold mb-2">Customize Style</h2>
+            <p className="text-white/50 mb-6">Choose the look and feel</p>
+            
+            {/* Style */}
+            <div className="mb-6">
+              <label className="text-sm text-white/60 mb-3 block flex items-center gap-2">
+                <Settings2 className="w-4 h-4" /> Architectural Style
+              </label>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                {STYLES.map((s) => (
+                  <button
+                    key={s.id}
+                    onClick={() => setStyle(s.id)}
+                    className={`p-4 rounded-xl border text-left transition-all ${
+                      style === s.id
+                        ? 'bg-blue-500/20 border-blue-500'
+                        : 'bg-white/5 border-white/10 hover:border-white/30'
+                    }`}
+                  >
+                    <div className="font-medium">{s.label}</div>
+                    <div className="text-xs text-white/50">{s.description}</div>
+                  </button>
+                ))}
               </div>
-              <button onClick={() => setStep(1)} className="text-blue-400 hover:underline text-sm">
-                Change plan type
+            </div>
+
+            {/* Color Scheme */}
+            <div className="mb-6">
+              <label className="text-sm text-white/60 mb-3 block flex items-center gap-2">
+                <Palette className="w-4 h-4" /> Color Scheme
+              </label>
+              <div className="grid grid-cols-3 gap-3">
+                {COLOR_SCHEMES.map((c) => (
+                  <button
+                    key={c.id}
+                    onClick={() => setColorScheme(c.id)}
+                    className={`p-4 rounded-xl border text-center transition-all ${
+                      colorScheme === c.id
+                        ? 'bg-blue-500/20 border-blue-500'
+                        : 'bg-white/5 border-white/10 hover:border-white/30'
+                    }`}
+                  >
+                    <div className={`w-full h-3 rounded-full mb-2 ${c.color}`} />
+                    <div className="font-medium text-sm">{c.label}</div>
+                  </button>
+                ))}
+              </div>
+            </div>
+            
+            <div className="flex gap-4">
+              <button
+                onClick={() => setStep(1)}
+                className="flex-1 py-4 bg-white/10 rounded-xl font-medium hover:bg-white/20"
+              >
+                Back
+              </button>
+              <button
+                onClick={() => setStep(3)}
+                className="flex-1 py-4 bg-blue-500 text-white font-bold rounded-xl hover:bg-blue-400"
+              >
+                Continue
               </button>
             </div>
-
-            <div className="grid md:grid-cols-2 gap-6 mb-6">
-              {/* Property Info */}
-              <div className="bg-white/5 border border-white/10 rounded-2xl p-6">
-                <h3 className="font-bold mb-4">Property Information</h3>
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-sm text-white/60 mb-2">Total Square Feet</label>
-                    <div className="relative">
-                      <Square className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-white/40" />
-                      <input
-                        type="number"
-                        value={propertyDetails.sqft}
-                        onChange={(e) => setPropertyDetails({ ...propertyDetails, sqft: e.target.value })}
-                        placeholder="2,500"
-                        className="w-full pl-10 pr-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder:text-white/30 focus:outline-none focus:border-blue-500/50"
-                      />
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm text-white/60 mb-2">Bedrooms</label>
-                      <div className="relative">
-                        <Bed className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-white/40" />
-                        <input
-                          type="number"
-                          value={propertyDetails.bedrooms}
-                          onChange={(e) => setPropertyDetails({ ...propertyDetails, bedrooms: e.target.value })}
-                          placeholder="3"
-                          className="w-full pl-10 pr-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder:text-white/30 focus:outline-none focus:border-blue-500/50"
-                        />
-                      </div>
-                    </div>
-                    <div>
-                      <label className="block text-sm text-white/60 mb-2">Bathrooms</label>
-                      <div className="relative">
-                        <Bath className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-white/40" />
-                        <input
-                          type="number"
-                          step="0.5"
-                          value={propertyDetails.bathrooms}
-                          onChange={(e) => setPropertyDetails({ ...propertyDetails, bathrooms: e.target.value })}
-                          placeholder="2"
-                          className="w-full pl-10 pr-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder:text-white/30 focus:outline-none focus:border-blue-500/50"
-                        />
-                      </div>
-                    </div>
-                  </div>
-                  <div>
-                    <label className="block text-sm text-white/60 mb-2">Number of Floors</label>
-                    <select
-                      value={propertyDetails.floors}
-                      onChange={(e) => setPropertyDetails({ ...propertyDetails, floors: e.target.value })}
-                      className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:border-blue-500/50"
-                    >
-                      <option value="1">1 Floor</option>
-                      <option value="2">2 Floors</option>
-                      <option value="3">3 Floors</option>
-                      <option value="4">4+ Floors</option>
-                    </select>
-                  </div>
-                </div>
-              </div>
-
-              {/* Style Options */}
-              <div className="bg-white/5 border border-white/10 rounded-2xl p-6">
-                <h3 className="font-bold mb-4">Style Options</h3>
-                
-                <div className="mb-4">
-                  <label className="block text-sm text-white/60 mb-2">Floor Plan Style</label>
-                  <div className="grid grid-cols-2 gap-2">
-                    {STYLES.map((s) => (
-                      <button
-                        key={s.id}
-                        onClick={() => setStyle(s.id)}
-                        className={`p-3 rounded-lg text-sm text-left transition-all ${
-                          style === s.id
-                            ? 'bg-blue-500/20 border border-blue-500/50'
-                            : 'bg-white/5 border border-white/10 hover:border-white/20'
-                        }`}
-                      >
-                        <div className="font-medium">{s.label}</div>
-                        <div className="text-xs text-white/40">{s.description}</div>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="mb-4">
-                  <label className="block text-sm text-white/60 mb-2">Color Scheme</label>
-                  <div className="flex gap-2">
-                    {COLOR_SCHEMES.map((c) => (
-                      <button
-                        key={c.id}
-                        onClick={() => setColorScheme(c.id)}
-                        className={`flex-1 p-3 rounded-lg text-sm text-center transition-all ${
-                          colorScheme === c.id
-                            ? 'bg-blue-500/20 border border-blue-500/50'
-                            : 'bg-white/5 border border-white/10 hover:border-white/20'
-                        }`}
-                      >
-                        <div
-                          className="w-6 h-6 rounded-full mx-auto mb-2"
-                          style={{ backgroundColor: c.hex }}
-                        />
-                        {c.label}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="space-y-3">
-                  <label className="flex items-center gap-3 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={options.showDimensions}
-                      onChange={(e) => setOptions({ ...options, showDimensions: e.target.checked })}
-                      className="w-5 h-5 rounded border-white/20 bg-white/5 text-blue-500 focus:ring-blue-500"
-                    />
-                    <span className="text-sm">Show room dimensions</span>
-                  </label>
-                  <label className="flex items-center gap-3 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={options.showFurniture}
-                      onChange={(e) => setOptions({ ...options, showFurniture: e.target.checked })}
-                      className="w-5 h-5 rounded border-white/20 bg-white/5 text-blue-500 focus:ring-blue-500"
-                    />
-                    <span className="text-sm">Include furniture layout</span>
-                  </label>
-                  <label className="flex items-center gap-3 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={options.showSqft}
-                      onChange={(e) => setOptions({ ...options, showSqft: e.target.checked })}
-                      className="w-5 h-5 rounded border-white/20 bg-white/5 text-blue-500 focus:ring-blue-500"
-                    />
-                    <span className="text-sm">Show square footage per room</span>
-                  </label>
-                </div>
-              </div>
-            </div>
-
-            <button
-              onClick={() => setStep(3)}
-              className="w-full py-4 bg-blue-500 text-white font-bold rounded-xl hover:bg-blue-400 transition-colors"
-            >
-              Continue to Review
-            </button>
           </div>
         )}
 
-        {/* Step 3: Review & Order */}
+        {/* Step 3: Property Details & Generate */}
         {step === 3 && (
           <div>
-            <div className="flex items-center justify-between mb-6">
-              <div>
-                <h2 className="text-xl font-bold mb-1">Step 3: Review & Order</h2>
-                <p className="text-white/50">Confirm your floor plan order</p>
+            <h2 className="text-xl font-bold mb-2">Property Details</h2>
+            <p className="text-white/50 mb-6">Help AI understand your property better</p>
+            
+            <div className="grid md:grid-cols-2 gap-6 mb-6">
+              {/* Left: Details */}
+              <div className="bg-white/5 border border-white/10 rounded-2xl p-6">
+                <h3 className="font-medium mb-4">Property Info</h3>
+                
+                <div className="space-y-4">
+                  <div>
+                    <label className="text-sm text-white/60 mb-1 block">Total Sq Ft (optional)</label>
+                    <input
+                      type="number"
+                      value={propertyDetails.sqft}
+                      onChange={(e) => setPropertyDetails(p => ({ ...p, sqft: e.target.value }))}
+                      placeholder="e.g., 2500"
+                      className="w-full bg-white/5 border border-white/20 rounded-lg px-4 py-3 text-white placeholder:text-white/30"
+                    />
+                  </div>
+                  
+                  <div className="grid grid-cols-3 gap-3">
+                    <div>
+                      <label className="text-sm text-white/60 mb-1 block">Beds</label>
+                      <input
+                        type="number"
+                        value={propertyDetails.bedrooms}
+                        onChange={(e) => setPropertyDetails(p => ({ ...p, bedrooms: e.target.value }))}
+                        className="w-full bg-white/5 border border-white/20 rounded-lg px-4 py-3 text-white"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-sm text-white/60 mb-1 block">Baths</label>
+                      <input
+                        type="number"
+                        step="0.5"
+                        value={propertyDetails.bathrooms}
+                        onChange={(e) => setPropertyDetails(p => ({ ...p, bathrooms: e.target.value }))}
+                        className="w-full bg-white/5 border border-white/20 rounded-lg px-4 py-3 text-white"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-sm text-white/60 mb-1 block">Floors</label>
+                      <input
+                        type="number"
+                        value={propertyDetails.floors}
+                        onChange={(e) => setPropertyDetails(p => ({ ...p, floors: e.target.value }))}
+                        className="w-full bg-white/5 border border-white/20 rounded-lg px-4 py-3 text-white"
+                      />
+                    </div>
+                  </div>
+                </div>
               </div>
-              <button onClick={() => setStep(2)} className="text-blue-400 hover:underline text-sm">
-                Edit details
+
+              {/* Right: Summary */}
+              <div className="bg-gradient-to-br from-blue-500/10 to-purple-500/10 border border-blue-500/20 rounded-2xl p-6">
+                <h3 className="font-medium mb-4">Order Summary</h3>
+                
+                <div className="space-y-3 mb-6">
+                  <div className="flex justify-between">
+                    <span className="text-white/60">Plan Type</span>
+                    <span className="font-medium">{selectedPlan.label}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-white/60">Style</span>
+                    <span className="font-medium capitalize">{style}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-white/60">Color Scheme</span>
+                    <span className="font-medium capitalize">{colorScheme}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-white/60">Source Photos</span>
+                    <span className="font-medium">{photoUrls.length} photos</span>
+                  </div>
+                  <hr className="border-white/10" />
+                  <div className="flex justify-between text-lg">
+                    <span className="font-medium">Total</span>
+                    <span className="font-bold text-blue-400">${totalPrice}</span>
+                  </div>
+                </div>
+
+                <div className="bg-white/5 rounded-lg p-3 text-sm text-white/60">
+                  <Sparkles className="w-4 h-4 inline mr-2 text-purple-400" />
+                  AI will analyze your photos and generate a professional floor plan in ~30 seconds
+                </div>
+              </div>
+            </div>
+            
+            <div className="flex gap-4">
+              <button
+                onClick={() => setStep(2)}
+                className="flex-1 py-4 bg-white/10 rounded-xl font-medium hover:bg-white/20"
+              >
+                Back
+              </button>
+              <button
+                onClick={() => handleGenerate(false)}
+                disabled={processing}
+                className="flex-1 py-4 bg-gradient-to-r from-blue-500 to-purple-500 text-white font-bold rounded-xl hover:opacity-90 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+              >
+                {processing ? (
+                  <>
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                    Generating...
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="w-5 h-5" />
+                    Generate Floor Plan
+                  </>
+                )}
               </button>
             </div>
-
-            {/* Order Summary */}
-            <div className="bg-white/5 border border-white/10 rounded-2xl p-6 mb-6">
-              <h3 className="font-bold mb-4">Order Summary</h3>
-              
-              <div className="space-y-4">
-                <div className="flex items-center justify-between py-3 border-b border-white/10">
-                  <span className="text-white/60">Plan Type</span>
-                  <span className="font-medium">{selectedPlan.label}</span>
-                </div>
-                <div className="flex items-center justify-between py-3 border-b border-white/10">
-                  <span className="text-white/60">Style</span>
-                  <span className="font-medium">{STYLES.find(s => s.id === style)?.label}</span>
-                </div>
-                <div className="flex items-center justify-between py-3 border-b border-white/10">
-                  <span className="text-white/60">Color Scheme</span>
-                  <span className="font-medium">{COLOR_SCHEMES.find(c => c.id === colorScheme)?.label}</span>
-                </div>
-                {propertyDetails.sqft && (
-                  <div className="flex items-center justify-between py-3 border-b border-white/10">
-                    <span className="text-white/60">Square Feet</span>
-                    <span className="font-medium">{propertyDetails.sqft} sqft</span>
-                  </div>
-                )}
-                <div className="flex items-center justify-between py-3 border-b border-white/10">
-                  <span className="text-white/60">Estimated Delivery</span>
-                  <span className="font-medium">{selectedPlan.turnaround}</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Rush Order Option */}
-            <div className="bg-amber-500/10 border border-amber-500/30 rounded-2xl p-6 mb-6">
-              <label className="flex items-center justify-between cursor-pointer">
-                <div className="flex items-center gap-3">
-                  <Zap className="w-6 h-6 text-amber-400" />
-                  <div>
-                    <div className="font-medium">Rush Order</div>
-                    <div className="text-sm text-white/50">Get it 50% faster (+${Math.round(selectedPlan.price * 0.5)})</div>
-                  </div>
-                </div>
-                <input
-                  type="checkbox"
-                  checked={rushOrder}
-                  onChange={(e) => setRushOrder(e.target.checked)}
-                  className="w-6 h-6 rounded border-amber-500/50 bg-amber-500/10 text-amber-500 focus:ring-amber-500"
-                />
-              </label>
-            </div>
-
-            {/* Price */}
-            <div className="bg-blue-500/10 border border-blue-500/30 rounded-2xl p-6 mb-6">
-              <div className="flex items-center justify-between">
-                <span className="text-lg">Total Price</span>
-                <div className="text-right">
-                  <span className="text-3xl font-bold text-blue-400">${totalPrice}</span>
-                  <div className="text-sm text-white/40">{selectedPlan.credits} credits</div>
-                </div>
-              </div>
-            </div>
-
-            {error && (
-              <div className="p-4 bg-red-500/10 border border-red-500/30 rounded-xl mb-6 text-red-400">
-                {error}
-              </div>
-            )}
-
-            <button
-              onClick={handleGenerate}
-              disabled={processing}
-              className="w-full py-4 bg-gradient-to-r from-blue-500 to-cyan-500 text-white font-bold rounded-xl hover:from-blue-400 hover:to-cyan-400 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-            >
-              {processing ? (
-                <>
-                  <Loader2 className="w-5 h-5 animate-spin" />
-                  Processing...
-                </>
-              ) : (
-                <>
-                  <Sparkles className="w-5 h-5" />
-                  Generate Floor Plan
-                </>
-              )}
-            </button>
           </div>
         )}
       </div>
@@ -618,10 +610,16 @@ function FloorPlanGenerator({
 }
 
 // Listing Selector
-function ListingSelector({ onSelect, onUpload }: { onSelect: (listing: any, photos: string[]) => void; onUpload: () => void }) {
+function ListingSelector({
+  onSelect,
+  onUpload,
+}: {
+  onSelect: (listing: any, photos: string[]) => void;
+  onUpload: () => void;
+}) {
   const [listings, setListings] = useState<Listing[]>([]);
-  const [loading, setLoading] = useState(true);
   const [existingPlans, setExistingPlans] = useState<FloorPlan[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     loadData();
@@ -635,27 +633,44 @@ function ListingSelector({ onSelect, onUpload }: { onSelect: (listing: any, phot
     // Load listings
     const { data: listingsData } = await supabase
       .from('listings')
-      .select('*, photos(id, raw_url, processed_url)')
+      .select('id, title, address')
       .eq('user_id', user.id)
       .order('created_at', { ascending: false });
 
     if (listingsData) {
-      const withThumbnails = await Promise.all(
-        listingsData.map(async (listing: any) => {
-          const photos = listing.photos || [];
-          const firstPhoto = photos[0];
-          let thumbnail = null;
-          if (firstPhoto) {
-            const path = firstPhoto.processed_url || firstPhoto.raw_url;
-            if (path && !path.startsWith('http')) {
-              const { data } = await supabase.storage.from('raw-images').createSignedUrl(path, 3600);
-              thumbnail = data?.signedUrl;
-            }
+      const listingsWithPhotos = await Promise.all(
+        listingsData.map(async (listing) => {
+          const { count } = await supabase
+            .from('photos')
+            .select('*', { count: 'exact', head: true })
+            .eq('listing_id', listing.id);
+
+          const { data: thumbnail } = await supabase
+            .from('photos')
+            .select('processed_url, raw_url')
+            .eq('listing_id', listing.id)
+            .limit(1)
+            .single();
+
+          let thumbnailUrl = null;
+          if (thumbnail) {
+            const path = thumbnail.processed_url || thumbnail.raw_url;
+            const { data: signedUrl } = await supabase.storage
+              .from('raw-images')
+              .createSignedUrl(path, 3600);
+            thumbnailUrl = signedUrl?.signedUrl;
           }
-          return { id: listing.id, title: listing.title, address: listing.address, thumbnail, photoCount: photos.length };
+
+          return {
+            id: listing.id,
+            title: listing.title || listing.address || 'Untitled',
+            address: listing.address,
+            thumbnail: thumbnailUrl,
+            photoCount: count || 0,
+          };
         })
       );
-      setListings(withThumbnails);
+      setListings(listingsWithPhotos);
     }
 
     // Load existing floor plans
@@ -664,7 +679,7 @@ function ListingSelector({ onSelect, onUpload }: { onSelect: (listing: any, phot
       .select('*')
       .eq('user_id', user.id)
       .order('created_at', { ascending: false })
-      .limit(10);
+      .limit(6);
 
     if (plansData) {
       setExistingPlans(plansData);
@@ -710,34 +725,22 @@ function ListingSelector({ onSelect, onUpload }: { onSelect: (listing: any, phot
           </div>
           <div>
             <h1 className="text-2xl font-bold">Floor Plans</h1>
-            <p className="text-white/50">Professional 2D & 3D floor plans for your listings</p>
+            <p className="text-white/50">AI-powered 2D & 3D floor plans in seconds</p>
           </div>
         </div>
 
-        {/* What this does */}
+        {/* Info */}
         <div className="bg-blue-500/10 border border-blue-500/30 rounded-xl p-4 mb-8">
           <div className="flex items-start gap-3">
             <Lightbulb className="w-5 h-5 text-blue-400 mt-0.5 flex-shrink-0" />
             <div>
-              <h3 className="font-semibold text-blue-400 mb-1">Why floor plans matter</h3>
+              <h3 className="font-semibold text-blue-400 mb-1">AI Floor Plan Generator</h3>
               <p className="text-sm text-white/70">
-                Listings with floor plans receive 52% more inquiries. Help buyers understand the layout 
-                and flow of the property. We offer 2D, 3D, and interactive floor plans starting at just $20.
+                Upload photos or select a listing. Our AI analyzes your images and generates professional 
+                floor plans in ~30 seconds. Choose from 2D schematics, colored plans, or stunning 3D renders.
               </p>
             </div>
           </div>
-        </div>
-
-        {/* Pricing Overview */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-          {Object.values(PLAN_TYPES).map((type) => (
-            <div key={type.id} className="bg-white/5 border border-white/10 rounded-xl p-4 text-center">
-              <type.icon className="w-8 h-8 text-blue-400 mx-auto mb-2" />
-              <div className="font-medium">{type.label}</div>
-              <div className="text-2xl font-bold text-blue-400">${type.price}</div>
-              <div className="text-xs text-white/40">{type.turnaround}</div>
-            </div>
-          ))}
         </div>
 
         {/* Existing Floor Plans */}
@@ -746,11 +749,11 @@ function ListingSelector({ onSelect, onUpload }: { onSelect: (listing: any, phot
             <h2 className="text-lg font-bold mb-4">Your Floor Plans</h2>
             <div className="grid md:grid-cols-3 gap-4">
               {existingPlans.map((plan) => (
-                <div key={plan.id} className="bg-white/5 border border-white/10 rounded-xl overflow-hidden">
+                <div key={plan.id} className="bg-white/5 border border-white/10 rounded-xl overflow-hidden hover:border-white/20 transition-colors">
                   {plan.image_url ? (
-                    <img src={plan.image_url} alt={plan.name} className="w-full aspect-video object-cover" />
+                    <img src={plan.image_url} alt={plan.name} className="w-full aspect-square object-cover" />
                   ) : (
-                    <div className="w-full aspect-video bg-white/5 flex items-center justify-center">
+                    <div className="w-full aspect-square bg-white/5 flex items-center justify-center">
                       <Clock className="w-8 h-8 text-white/20" />
                     </div>
                   )}
@@ -758,7 +761,7 @@ function ListingSelector({ onSelect, onUpload }: { onSelect: (listing: any, phot
                     <h3 className="font-medium truncate">{plan.name}</h3>
                     <div className="flex items-center justify-between mt-2">
                       <span className="text-sm text-white/50">
-                        {PLAN_TYPES[plan.plan_type as PlanTypeKey]?.label}
+                        {PLAN_TYPES[plan.plan_type as PlanTypeKey]?.label || plan.plan_type}
                       </span>
                       <span className={`text-xs px-2 py-0.5 rounded ${
                         plan.status === 'completed' ? 'bg-green-500/20 text-green-400' :
@@ -775,7 +778,7 @@ function ListingSelector({ onSelect, onUpload }: { onSelect: (listing: any, phot
           </div>
         )}
 
-        {/* Select Listing or Upload */}
+        {/* Select Listing */}
         <h2 className="text-lg font-bold mb-4">Create New Floor Plan</h2>
         
         <div className="grid md:grid-cols-2 gap-6">
@@ -783,41 +786,43 @@ function ListingSelector({ onSelect, onUpload }: { onSelect: (listing: any, phot
           <div className="bg-white/5 border border-white/10 rounded-xl p-4">
             <h3 className="font-medium mb-3">From Existing Listing</h3>
             <div className="space-y-2 max-h-64 overflow-y-auto">
-              {listings.map(listing => (
+              {listings.length > 0 ? listings.map(listing => (
                 <button
                   key={listing.id}
                   onClick={() => handleSelectListing(listing)}
                   className="w-full flex items-center gap-3 p-3 bg-white/5 rounded-lg hover:bg-white/10 transition-colors text-left"
                 >
-                  <div className="w-12 h-8 rounded overflow-hidden bg-white/10">
+                  <div className="w-12 h-12 rounded-lg overflow-hidden bg-white/10 flex-shrink-0">
                     {listing.thumbnail ? (
                       <img src={listing.thumbnail} alt="" className="w-full h-full object-cover" />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center">
-                        <Home className="w-4 h-4 text-white/20" />
+                        <Home className="w-5 h-5 text-white/20" />
                       </div>
                     )}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <div className="font-medium truncate">{listing.title || 'Untitled'}</div>
+                    <div className="font-medium truncate">{listing.title}</div>
                     <div className="text-xs text-white/40">{listing.photoCount} photos</div>
                   </div>
                   <ChevronRight className="w-4 h-4 text-white/30" />
                 </button>
-              ))}
+              )) : (
+                <p className="text-white/40 text-sm p-4 text-center">No listings yet. Create one first or start fresh.</p>
+              )}
             </div>
           </div>
 
-          {/* Upload / New */}
+          {/* Start Fresh */}
           <div className="bg-white/5 border border-white/10 rounded-xl p-4">
             <h3 className="font-medium mb-3">Start Fresh</h3>
             <button
               onClick={onUpload}
-              className="w-full p-6 border-2 border-dashed border-white/20 rounded-xl hover:border-blue-500/50 hover:bg-blue-500/5 transition-all text-center"
+              className="w-full p-8 border-2 border-dashed border-white/20 rounded-xl hover:border-blue-500/50 hover:bg-blue-500/5 transition-all text-center"
             >
               <Plus className="w-10 h-10 text-white/30 mx-auto mb-3" />
               <div className="font-medium">Create Without Listing</div>
-              <div className="text-sm text-white/40 mt-1">Enter details manually</div>
+              <div className="text-sm text-white/40 mt-1">Enter property details manually</div>
             </button>
           </div>
         </div>
@@ -826,7 +831,7 @@ function ListingSelector({ onSelect, onUpload }: { onSelect: (listing: any, phot
   );
 }
 
-// Main Page Component
+// Main Page
 function FloorPlansContent() {
   const [selectedListing, setSelectedListing] = useState<any>(null);
   const [photoUrls, setPhotoUrls] = useState<string[]>([]);

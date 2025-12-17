@@ -77,45 +77,134 @@ Return JSON:
   }
 }
 
-// Generate floor plan image with DALL-E 3
-async function generateFloorPlanImage(analysis: any, style: string, colorScheme: string) {
+// Generate floor plan image with DALL-E 3 - supports multiple plan types
+async function generateFloorPlanImage(
+  analysis: any, 
+  planType: string,
+  style: string, 
+  colorScheme: string
+) {
   if (!OPENAI_API_KEY) return null;
 
   try {
     const roomList = analysis.rooms?.map((r: any) => `${r.name} (${r.sqft || r.estimatedSqft} sq ft)`).join(', ') || 'standard rooms';
+    const beds = analysis.bedrooms || 3;
+    const baths = analysis.bathrooms || 2;
+    const sqft = analysis.totalSqft || 2000;
+    const floors = analysis.floors || 1;
+    const homeStyle = analysis.style || 'modern';
 
-    const styleMap: Record<string, string> = {
-      modern: 'clean minimalist architectural style with thin black lines',
-      classic: 'traditional blueprint architectural drawing style',
-      minimal: 'ultra-simple black and white schematic diagram',
-      detailed: 'detailed floor plan with furniture icons and fixtures shown',
-    };
+    // Different prompts based on plan type
+    const planTypePrompts: Record<string, string> = {
+      '2d-basic': `Professional 2D architectural floor plan, clean top-down bird's eye view.
 
-    const colorMap: Record<string, string> = {
-      color: 'with soft pastel colors for different rooms (blue for bedrooms, green for bathrooms, yellow for kitchen, purple for living areas)',
-      grayscale: 'in professional black, white and gray tones',
-      blueprint: 'in classic blueprint style with white lines on dark blue background',
-    };
-
-    const prompt = `Professional 2D architectural floor plan, top-down bird's eye view.
-
-Property: ${analysis.floors || 1}-story ${analysis.style || 'modern'} home
-Total: ${analysis.totalSqft || 2000} square feet
+Property: ${floors}-story ${homeStyle} home, ${sqft} square feet
 Rooms: ${roomList}
-Layout: ${analysis.bedrooms || 3} bedrooms, ${analysis.bathrooms || 2} bathrooms
+Layout: ${beds} bedrooms, ${baths} bathrooms
 
-Style: ${styleMap[style] || styleMap.modern}
-Colors: ${colorMap[colorScheme] || colorMap.color}
-
-Requirements:
-- Clean top-down architectural view
-- All rooms clearly labeled with names
-- Room dimensions shown
-- Doors as gaps in walls, windows as thin lines
-- Total square footage displayed
+Style: Clean black and white architectural drawing with thin precise lines
+- Pure 2D overhead/top-down view
+- White background
+- All rooms clearly labeled with names in simple font
+- Room dimensions shown (e.g., 12' x 14')
+- Walls shown as thick black lines
+- Doors shown as arcs or gaps
+- Windows shown as thin parallel lines on walls
+- Total square footage displayed at bottom
 - Professional MLS-ready quality
-- White or light background (unless blueprint)
-- No 3D perspective, pure 2D overhead view`;
+- NO furniture, NO colors, just clean architectural lines
+- Looks like a professional blueprint/schematic`,
+
+      '2d-branded': `Professional 2D architectural floor plan with color coding, top-down view.
+
+Property: ${floors}-story ${homeStyle} home, ${sqft} square feet  
+Rooms: ${roomList}
+Layout: ${beds} bedrooms, ${baths} bathrooms
+
+Style: Modern colored floor plan with professional real estate styling
+- Pure 2D overhead/top-down view
+- Light gray or white background
+- Rooms filled with soft pastel colors:
+  * Bedrooms: Light blue (#E3F2FD)
+  * Bathrooms: Light green (#E8F5E9)  
+  * Kitchen: Light orange (#FFF3E0)
+  * Living areas: Light purple (#F3E5F5)
+  * Dining: Light peach (#FBE9E7)
+- All rooms clearly labeled with elegant font
+- Room dimensions shown
+- Walls as clean dark lines
+- Doors and windows marked
+- Small furniture icons in each room (bed, sofa, dining table, toilet)
+- Professional luxury real estate quality
+- Total sqft shown: ${sqft} sq ft`,
+
+      '3d-isometric': `3D isometric dollhouse floor plan illustration, professional real estate visualization.
+
+Property: ${floors}-story ${homeStyle} home, ${sqft} square feet
+Rooms: ${roomList}
+Layout: ${beds} bedrooms, ${baths} bathrooms
+
+Style: Beautiful 3D isometric cutaway view showing the interior from above at 45-degree angle
+- Isometric 3D perspective (not flat 2D)
+- Walls shown in 3D with height (like a dollhouse with roof removed)
+- Clean white/light gray background
+- Soft shadows for depth
+- Furniture shown in 3D inside each room:
+  * Beds in bedrooms
+  * Sofa and TV in living room
+  * Dining table with chairs
+  * Kitchen island and appliances
+  * Bathroom fixtures (tub, toilet, vanity)
+- Warm, inviting color palette
+- Room labels floating above each space
+- Professional architectural illustration quality
+- Modern minimalist furniture style
+- Looks like a high-end real estate marketing render`,
+
+      'interactive': `Professional 3D rendered floor plan with detailed room visualization.
+
+Property: ${floors}-story ${homeStyle} home, ${sqft} square feet
+Rooms: ${roomList}  
+Layout: ${beds} bedrooms, ${baths} bathrooms
+
+Style: High-quality 3D architectural visualization
+- 3D isometric or slightly angled bird's eye view
+- Photorealistic furniture and fixtures in each room
+- Beautiful lighting and shadows
+- Each room distinctly visible and labeled
+- Modern, luxurious interior design
+- Hardwood floors, contemporary furniture
+- Plants and decor for warmth
+- Crystal clear room boundaries
+- Looks like a professional architectural rendering
+- Magazine-quality real estate visualization
+- Total area: ${sqft} sq ft | ${beds} Bed | ${baths} Bath shown elegantly`,
+    };
+
+    // Color scheme modifiers
+    const colorModifiers: Record<string, string> = {
+      color: '', // Default, already in prompts
+      grayscale: '\n\nIMPORTANT: Render entirely in grayscale - black, white, and shades of gray only. No colors.',
+      blueprint: '\n\nIMPORTANT: Render in classic blueprint style - white/light blue lines on dark navy blue background (#0D47A1). Technical drawing aesthetic.',
+    };
+
+    // Style modifiers for 2D plans
+    const styleModifiers: Record<string, string> = {
+      modern: '\n\nArchitectural style: Clean, minimalist, contemporary lines.',
+      classic: '\n\nArchitectural style: Traditional, elegant, classic proportions.',
+      minimal: '\n\nArchitectural style: Ultra-minimal, only essential elements, very clean.',
+      detailed: '\n\nArchitectural style: Highly detailed with all fixtures, outlets, and features shown.',
+    };
+
+    let prompt = planTypePrompts[planType] || planTypePrompts['2d-basic'];
+    
+    // Add modifiers for 2D plans
+    if (planType.startsWith('2d')) {
+      prompt += styleModifiers[style] || '';
+      prompt += colorModifiers[colorScheme] || '';
+    }
+
+    console.log('Generating floor plan type:', planType);
 
     const response = await fetch('https://api.openai.com/v1/images/generations', {
       method: 'POST',
@@ -129,7 +218,7 @@ Requirements:
         n: 1,
         size: '1024x1024',
         quality: 'hd',
-        style: 'natural',
+        style: planType.includes('3d') || planType === 'interactive' ? 'vivid' : 'natural',
       }),
     });
 
@@ -214,7 +303,7 @@ export async function POST(request: NextRequest) {
       .insert({
         user_id: user.id,
         listing_id: listingId || null,
-        name: propertyDetails.address || 'AI Generated Floor Plan',
+        name: propertyDetails.address || `${planConfig.label} Floor Plan`,
         plan_type: planType,
         total_sqft: propertyDetails.sqft || null,
         bedrooms: propertyDetails.bedrooms || null,
@@ -285,8 +374,8 @@ export async function POST(request: NextRequest) {
     }
 
     // Step 2: Generate floor plan image with DALL-E 3
-    console.log('Generating floor plan image...');
-    const dalleImageUrl = await generateFloorPlanImage(analysis, style, colorScheme);
+    console.log('Generating', planType, 'floor plan...');
+    const dalleImageUrl = await generateFloorPlanImage(analysis, planType, style, colorScheme);
 
     if (!dalleImageUrl) {
       // Fall back to manual order
@@ -355,6 +444,7 @@ export async function POST(request: NextRequest) {
       status: 'completed',
       analysis,
       processingMethod: 'ai-generated',
+      planType,
     });
 
   } catch (error: any) {
