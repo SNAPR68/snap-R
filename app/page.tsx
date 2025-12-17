@@ -687,6 +687,10 @@ export default function HomePage() {
       <section className="py-16 px-6 bg-[#1A1A1A]/30">
         <Testimonials />
       </section>
+
+      {/* Pricing Section */}
+      {/* Footer */}
+      <footer className="border-t border-white/10 py-12 px-6">
         <div className="max-w-5xl mx-auto">
           <div className="flex flex-col md:flex-row items-center justify-between gap-6 mb-8">
             <div className="flex items-center gap-3">
