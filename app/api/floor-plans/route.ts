@@ -333,7 +333,7 @@ export async function POST(request: NextRequest) {
     // If no analysis from photos, use property details
     if (!analysis) {
       analysis = {
-        rooms: [],
+        rooms: [] as any[],
         totalSqft: propertyDetails.sqft || 2000,
         floors: propertyDetails.floors || 1,
         bedrooms: propertyDetails.bedrooms || 3,
