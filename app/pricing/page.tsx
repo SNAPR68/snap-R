@@ -16,11 +16,11 @@ const PRO_TIERS = [
   { listings: 'enterprise', monthly: null, annual: null },
 ];
 
-// Team plan options
+// Team plan options (base fee for users only - listings use same pricing as Pro)
 const TEAM_OPTIONS = [
-  { users: 5, base: 299, perListing: 12 },
-  { users: 10, base: 499, perListing: 10 },
-  { users: 25, base: 899, perListing: 8 },
+  { users: 5, baseMonthly: 199, baseAnnual: 149 },
+  { users: 10, baseMonthly: 399, baseAnnual: 299 },
+  { users: 25, baseMonthly: 649, baseAnnual: 499 },
 ];
 
 // Premium Add-ons
@@ -124,10 +124,16 @@ export default function PricingPage() {
   }, [proTier, isAnnual, isEnterprise]);
 
   const teamCalc = useMemo(() => {
-    const base = isAnnual ? Math.round(teamOption.base * 0.8) : teamOption.base;
-    const perListing = isAnnual ? Math.round(teamOption.perListing * 0.8) : teamOption.perListing;
-    return { base, perListing };
-  }, [teamOption, isAnnual]);
+    const base = isAnnual ? teamOption.baseAnnual : teamOption.baseMonthly;
+    // Team uses same per-listing pricing as Pro
+    if (isEnterprise) {
+      return { base, listingCost: null, total: null };
+    }
+    const pricePerListing = isAnnual ? proTier.annual : proTier.monthly;
+    const listingCost = (proTier.listings as number) * (pricePerListing as number);
+    const total = base + listingCost;
+    return { base, listingCost, total };
+  }, [teamOption, isAnnual, proTier, isEnterprise]);
 
   return (
     <div className="min-h-screen text-white antialiased overflow-x-hidden" style={{ backgroundColor: '#000000' }}>
@@ -391,14 +397,19 @@ export default function PricingPage() {
                 Contact Sales
               </Link>
             ) : (
-              <button 
-                onClick={() => handleCheckout('pro')}
-                disabled={loading === 'pro'}
-                className="w-full py-3.5 rounded-xl font-semibold transition-all hover:opacity-90 disabled:opacity-50"
-                style={{ backgroundColor: '#FFFFFF', color: '#000000' }}
-              >
-                {loading === 'pro' ? 'Loading...' : 'Get started'}
-              </button>
+              <>
+                <button 
+                  onClick={() => handleCheckout('pro')}
+                  disabled={loading === 'pro'}
+                  className="w-full py-3.5 rounded-xl font-semibold transition-all hover:opacity-90 disabled:opacity-50"
+                  style={{ backgroundColor: '#FFFFFF', color: '#000000' }}
+                >
+                  {loading === 'pro' ? 'Loading...' : 'Get started'}
+                </button>
+                <p className="text-center text-xs mt-2" style={{ color: 'rgba(255,255,255,0.4)' }}>
+                  {isAnnual ? 'Your first year includes a bonus month — on us' : 'Your first month includes a bonus week — on us'}
+                </p>
+              </>
             )}
 
             {/* Features */}
@@ -455,46 +466,126 @@ export default function PricingPage() {
               </div>
             </div>
 
-            {/* Pricing */}
+            {/* Listings - Same slider as Pro */}
             <div className="mb-4">
-              <div className="flex items-baseline gap-1">
-                <span className="text-3xl sm:text-4xl font-semibold">${teamCalc.base}</span>
-                <span style={{ color: 'rgba(255,255,255,0.5)' }}>/mo</span>
-              </div>
-              <div className="text-sm" style={{ color: 'rgba(255,255,255,0.5)' }}>
-                + <span style={{ color: GOLD }} className="font-medium">${teamCalc.perListing}</span> per listing
-              </div>
-              {isAnnual && (
-                <div className="text-xs mt-1" style={{ color: '#34D399' }}>
-                  20% off with annual billing
+              <div className="flex items-baseline justify-between mb-2">
+                <div>
+                  <span className="text-2xl font-semibold">
+                    {isEnterprise ? '150+' : proTier.listings}
+                  </span>
+                  <span className="ml-1 text-sm" style={{ color: 'rgba(255,255,255,0.5)' }}>listings/mo</span>
                 </div>
-              )}
+                <div className="text-right">
+                  <span className="text-lg font-semibold" style={{ color: GOLD }}>
+                    {isEnterprise ? 'Custom' : `$${proCalc.price}`}
+                  </span>
+                  <span className="text-xs ml-1" style={{ color: 'rgba(255,255,255,0.4)' }}>
+                    {isEnterprise ? '' : '/listing'}
+                  </span>
+                </div>
+              </div>
+
+              {/* Slider - shares with Pro */}
+              <div className="relative mb-2">
+                <div className="h-1.5 rounded-full" style={{ backgroundColor: 'rgba(255,255,255,0.1)' }}>
+                  <div 
+                    className="absolute h-full rounded-full transition-all duration-150"
+                    style={{ 
+                      width: `${(proSliderIndex / (PRO_TIERS.length - 1)) * 100}%`,
+                      background: `linear-gradient(90deg, ${GOLD}, ${GOLD_DARK})`
+                    }}
+                  />
+                </div>
+                <div 
+                  className="absolute top-1/2 -translate-y-1/2 w-3 h-3 rounded-full transition-all duration-150"
+                  style={{ 
+                    left: `calc(${(proSliderIndex / (PRO_TIERS.length - 1)) * 100}% - 6px)`,
+                    backgroundColor: GOLD,
+                    boxShadow: `0 0 8px ${GOLD}80`
+                  }}
+                />
+                <input
+                  type="range"
+                  min="0"
+                  max={PRO_TIERS.length - 1}
+                  value={proSliderIndex}
+                  onChange={(e) => setProSliderIndex(parseInt(e.target.value))}
+                  className="absolute inset-0 w-full opacity-0 cursor-pointer"
+                  style={{ height: '20px', top: '-6px' }}
+                />
+              </div>
+              <div className="flex justify-between text-[9px]" style={{ color: 'rgba(255,255,255,0.3)' }}>
+                {PRO_TIERS.map((tier, i) => (
+                  <span 
+                    key={String(tier.listings)}
+                    style={{ 
+                      color: i === proSliderIndex ? GOLD : undefined,
+                      fontWeight: i === proSliderIndex ? 600 : undefined
+                    }}
+                  >
+                    {tier.listings === 'enterprise' ? '150+' : tier.listings}
+                  </span>
+                ))}
+              </div>
             </div>
 
-            {/* Example */}
-            <div 
-              className="p-3 rounded-xl mb-6"
-              style={{ backgroundColor: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.1)' }}
-            >
-              <div className="text-xs mb-1" style={{ color: 'rgba(255,255,255,0.4)' }}>Example: 50 listings/mo</div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm" style={{ color: 'rgba(255,255,255,0.5)' }}>Total</span>
-                <span className="text-lg font-semibold">
-                  ${teamCalc.base + (50 * teamCalc.perListing)}
-                  <span className="text-sm font-normal" style={{ color: 'rgba(255,255,255,0.4)' }}>/mo</span>
-                </span>
+            {/* Price Breakdown */}
+            {isEnterprise ? (
+              <div 
+                className="p-3 rounded-xl mb-4"
+                style={{ backgroundColor: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.1)' }}
+              >
+                <p className="text-center text-sm" style={{ color: 'rgba(255,255,255,0.5)' }}>
+                  Custom pricing for 150+ listings
+                </p>
               </div>
-            </div>
+            ) : (
+              <div 
+                className="p-3 rounded-xl mb-4"
+                style={{ backgroundColor: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.1)' }}
+              >
+                <div className="flex items-center justify-between text-sm mb-1">
+                  <span style={{ color: 'rgba(255,255,255,0.4)' }}>{teamOption.users} users base</span>
+                  <span style={{ color: 'rgba(255,255,255,0.6)' }}>${teamCalc.base}</span>
+                </div>
+                <div className="flex items-center justify-between text-sm mb-2">
+                  <span style={{ color: 'rgba(255,255,255,0.4)' }}>{proTier.listings} listings × ${proCalc.price}</span>
+                  <span style={{ color: 'rgba(255,255,255,0.6)' }}>${teamCalc.listingCost}</span>
+                </div>
+                <div className="flex items-center justify-between pt-2" style={{ borderTop: '1px solid rgba(255,255,255,0.1)' }}>
+                  <span className="font-medium">Total</span>
+                  <span className="text-lg font-semibold">
+                    ${teamCalc.total}
+                    <span className="text-sm font-normal" style={{ color: 'rgba(255,255,255,0.4)' }}>/mo</span>
+                  </span>
+                </div>
+              </div>
+            )}
 
             {/* CTA */}
-            <button 
-              onClick={() => handleCheckout('team')}
-              disabled={loading === 'team'}
-              className="w-full py-3.5 rounded-xl font-semibold transition-all hover:opacity-90 disabled:opacity-50"
-              style={{ backgroundColor: GOLD, color: '#000000' }}
-            >
-              {loading === 'team' ? 'Loading...' : 'Start free trial'}
-            </button>
+            {isEnterprise ? (
+              <Link 
+                href="/contact?plan=enterprise-team"
+                className="w-full py-3.5 rounded-xl font-semibold transition-all hover:opacity-90 flex items-center justify-center gap-2"
+                style={{ backgroundColor: GOLD, color: '#000000' }}
+              >
+                Contact Sales
+              </Link>
+            ) : (
+              <>
+                <button 
+                  onClick={() => handleCheckout('team')}
+                  disabled={loading === 'team'}
+                  className="w-full py-3.5 rounded-xl font-semibold transition-all hover:opacity-90 disabled:opacity-50"
+                  style={{ backgroundColor: GOLD, color: '#000000' }}
+                >
+                  {loading === 'team' ? 'Loading...' : 'Get started'}
+                </button>
+                <p className="text-center text-xs mt-2" style={{ color: 'rgba(255,255,255,0.4)' }}>
+                  {isAnnual ? 'Your first year includes a bonus month — on us' : 'Your first month includes a bonus week — on us'}
+                </p>
+              </>
+            )}
 
             {/* Features */}
             <div className="mt-6 pt-6" style={{ borderTop: '1px solid rgba(255,255,255,0.1)' }}>
