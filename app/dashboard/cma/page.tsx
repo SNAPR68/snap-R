@@ -1,12 +1,12 @@
 'use client';
 
-import React, { Suspense, useEffect, useState } from 'react';
+import React, { Suspense, useEffect, useState, useRef } from 'react';
 import { createClient } from '@/lib/supabase/client';
+import Script from 'next/script';
 import {
   Loader2, Home, ChevronRight, FileText, Plus, Trash2,
-  Download, Sparkles, DollarSign, MapPin, Bed, Bath,
-  Square, Calendar, TrendingUp, BarChart3, Building,
-  Check, ArrowLeft, Image as ImageIcon, User, Phone, Mail
+  Download, Sparkles, DollarSign,
+  Check, ArrowLeft, User, Eye
 } from 'lucide-react';
 
 interface Listing {
@@ -46,13 +46,21 @@ interface AgentInfo {
   photo?: string;
 }
 
+declare global {
+  interface Window {
+    html2pdf: any;
+  }
+}
+
 function CMAGenerator() {
   const [step, setStep] = useState<'select' | 'comps' | 'review' | 'result'>('select');
   const [listings, setListings] = useState<Listing[]>([]);
   const [selectedListing, setSelectedListing] = useState<Listing | null>(null);
   const [loading, setLoading] = useState(true);
   const [processing, setProcessing] = useState(false);
+  const [downloading, setDownloading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [html2pdfLoaded, setHtml2pdfLoaded] = useState(false);
   
   // Comps state
   const [comps, setComps] = useState<Comparable[]>([
@@ -75,8 +83,10 @@ function CMAGenerator() {
   });
   
   // Result
-  const [reportUrl, setReportUrl] = useState<string>('');
+  const [reportHtml, setReportHtml] = useState<string>('');
   const [reportData, setReportData] = useState<any>(null);
+  const [showPreview, setShowPreview] = useState(false);
+  const reportContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     loadListings();
@@ -233,13 +243,62 @@ function CMAGenerator() {
         throw new Error(data.error || 'Failed to generate report');
       }
 
-      setReportUrl(data.reportUrl);
+      setReportHtml(data.html);
       setReportData(data);
       setStep('result');
     } catch (err: any) {
       setError(err.message);
     } finally {
       setProcessing(false);
+    }
+  };
+
+  const downloadPDF = async () => {
+    if (!reportHtml || !window.html2pdf) {
+      setError('PDF library not loaded. Please try again.');
+      return;
+    }
+
+    setDownloading(true);
+    
+    try {
+      // Create a temporary container for the HTML
+      const container = document.createElement('div');
+      container.innerHTML = reportHtml;
+      container.style.position = 'absolute';
+      container.style.left = '-9999px';
+      container.style.top = '0';
+      document.body.appendChild(container);
+
+      const filename = `CMA-${selectedListing?.address || 'Report'}-${new Date().toISOString().split('T')[0]}.pdf`;
+
+      const opt = {
+        margin: 0,
+        filename: filename,
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { 
+          scale: 2,
+          useCORS: true,
+          allowTaint: true,
+          logging: false,
+        },
+        jsPDF: { 
+          unit: 'in', 
+          format: 'letter', 
+          orientation: 'portrait' 
+        },
+        pagebreak: { mode: 'css', before: '.page' }
+      };
+
+      await window.html2pdf().set(opt).from(container).save();
+      
+      // Cleanup
+      document.body.removeChild(container);
+    } catch (err: any) {
+      console.error('PDF generation error:', err);
+      setError('Failed to generate PDF. Please try again.');
+    } finally {
+      setDownloading(false);
     }
   };
 
@@ -258,10 +317,16 @@ function CMAGenerator() {
   if (step === 'select') {
     return (
       <div className="min-h-screen bg-[#0F0F0F] text-white p-6">
+        {/* Load html2pdf library */}
+        <Script 
+          src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"
+          onLoad={() => setHtml2pdfLoaded(true)}
+        />
+        
         <div className="max-w-4xl mx-auto">
           <div className="flex items-center gap-3 mb-6">
             <div className="p-3 bg-gradient-to-br from-amber-500/20 to-orange-500/20 rounded-xl">
-              <BarChart3 className="w-8 h-8 text-amber-400" />
+              <FileText className="w-8 h-8 text-amber-400" />
             </div>
             <div>
               <h1 className="text-2xl font-bold">CMA Report Generator</h1>
@@ -273,38 +338,12 @@ function CMAGenerator() {
           <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-4 mb-8">
             <h3 className="font-semibold text-amber-400 mb-2">What's included in your CMA Report:</h3>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm text-white/70">
-              <div className="flex items-center gap-2">
-                <Check className="w-4 h-4 text-green-400" />
-                Property photos
-              </div>
-              <div className="flex items-center gap-2">
-                <Check className="w-4 h-4 text-green-400" />
-                Comp comparison
-              </div>
-              <div className="flex items-center gap-2">
-                <Check className="w-4 h-4 text-green-400" />
-                Price analysis
-              </div>
-              <div className="flex items-center gap-2">
-                <Check className="w-4 h-4 text-green-400" />
-                Market narrative
-              </div>
-              <div className="flex items-center gap-2">
-                <Check className="w-4 h-4 text-green-400" />
-                $/sqft charts
-              </div>
-              <div className="flex items-center gap-2">
-                <Check className="w-4 h-4 text-green-400" />
-                Agent branding
-              </div>
-              <div className="flex items-center gap-2">
-                <Check className="w-4 h-4 text-green-400" />
-                PDF download
-              </div>
-              <div className="flex items-center gap-2">
-                <Check className="w-4 h-4 text-green-400" />
-                Shareable link
-              </div>
+              {['Property photos', 'Comp comparison', 'Price analysis', 'Market narrative', '$/sqft charts', 'Agent branding', 'PDF download', 'Professional design'].map((item, i) => (
+                <div key={i} className="flex items-center gap-2">
+                  <Check className="w-4 h-4 text-green-400" />
+                  {item}
+                </div>
+              ))}
             </div>
           </div>
 
@@ -352,8 +391,12 @@ function CMAGenerator() {
   if (step === 'comps') {
     return (
       <div className="min-h-screen bg-[#0F0F0F] text-white p-6">
+        <Script 
+          src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"
+          onLoad={() => setHtml2pdfLoaded(true)}
+        />
+        
         <div className="max-w-5xl mx-auto">
-          {/* Header */}
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-3">
               <button
@@ -382,22 +425,10 @@ function CMAGenerator() {
                 <img src={selectedListing.thumbnail} alt="" className="w-24 h-16 object-cover rounded-lg" />
               )}
               <div className="flex-1 grid grid-cols-4 gap-4 text-sm">
-                <div>
-                  <div className="text-white/50">Beds</div>
-                  <div className="font-bold">{selectedListing?.bedrooms || '—'}</div>
-                </div>
-                <div>
-                  <div className="text-white/50">Baths</div>
-                  <div className="font-bold">{selectedListing?.bathrooms || '—'}</div>
-                </div>
-                <div>
-                  <div className="text-white/50">Sqft</div>
-                  <div className="font-bold">{selectedListing?.sqft?.toLocaleString() || '—'}</div>
-                </div>
-                <div>
-                  <div className="text-white/50">Year Built</div>
-                  <div className="font-bold">{selectedListing?.year_built || '—'}</div>
-                </div>
+                <div><div className="text-white/50">Beds</div><div className="font-bold">{selectedListing?.bedrooms || '—'}</div></div>
+                <div><div className="text-white/50">Baths</div><div className="font-bold">{selectedListing?.bathrooms || '—'}</div></div>
+                <div><div className="text-white/50">Sqft</div><div className="font-bold">{selectedListing?.sqft?.toLocaleString() || '—'}</div></div>
+                <div><div className="text-white/50">Year Built</div><div className="font-bold">{selectedListing?.year_built || '—'}</div></div>
               </div>
             </div>
           </div>
@@ -409,10 +440,7 @@ function CMAGenerator() {
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="font-bold">Comparable #{index + 1}</h3>
                   {comps.length > 1 && (
-                    <button
-                      onClick={() => removeComp(comp.id)}
-                      className="p-1.5 text-red-400 hover:bg-red-500/20 rounded-lg transition-colors"
-                    >
+                    <button onClick={() => removeComp(comp.id)} className="p-1.5 text-red-400 hover:bg-red-500/20 rounded-lg">
                       <Trash2 className="w-4 h-4" />
                     </button>
                   )}
@@ -421,70 +449,32 @@ function CMAGenerator() {
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                   <div className="col-span-2">
                     <label className="block text-xs text-white/50 mb-1">Address *</label>
-                    <input
-                      type="text"
-                      value={comp.address}
-                      onChange={(e) => updateComp(comp.id, 'address', e.target.value)}
-                      placeholder="123 Main St"
-                      className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white placeholder:text-white/30 focus:outline-none focus:border-amber-500/50"
-                    />
+                    <input type="text" value={comp.address} onChange={(e) => updateComp(comp.id, 'address', e.target.value)} placeholder="123 Main St" className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white placeholder:text-white/30 focus:outline-none focus:border-amber-500/50" />
                   </div>
                   <div>
                     <label className="block text-xs text-white/50 mb-1">Sold Price *</label>
-                    <input
-                      type="number"
-                      value={comp.soldPrice || ''}
-                      onChange={(e) => updateComp(comp.id, 'soldPrice', Number(e.target.value))}
-                      placeholder="500000"
-                      className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white placeholder:text-white/30 focus:outline-none focus:border-amber-500/50"
-                    />
+                    <input type="number" value={comp.soldPrice || ''} onChange={(e) => updateComp(comp.id, 'soldPrice', Number(e.target.value))} placeholder="500000" className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white placeholder:text-white/30 focus:outline-none focus:border-amber-500/50" />
                   </div>
                   <div>
                     <label className="block text-xs text-white/50 mb-1">Sold Date</label>
-                    <input
-                      type="date"
-                      value={comp.soldDate}
-                      onChange={(e) => updateComp(comp.id, 'soldDate', e.target.value)}
-                      className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:border-amber-500/50"
-                    />
+                    <input type="date" value={comp.soldDate} onChange={(e) => updateComp(comp.id, 'soldDate', e.target.value)} className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:border-amber-500/50" />
                   </div>
                   <div>
                     <label className="block text-xs text-white/50 mb-1">Beds</label>
-                    <input
-                      type="number"
-                      value={comp.bedrooms || ''}
-                      onChange={(e) => updateComp(comp.id, 'bedrooms', Number(e.target.value))}
-                      placeholder="3"
-                      className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white placeholder:text-white/30 focus:outline-none focus:border-amber-500/50"
-                    />
+                    <input type="number" value={comp.bedrooms || ''} onChange={(e) => updateComp(comp.id, 'bedrooms', Number(e.target.value))} placeholder="3" className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white placeholder:text-white/30 focus:outline-none focus:border-amber-500/50" />
                   </div>
                   <div>
                     <label className="block text-xs text-white/50 mb-1">Baths</label>
-                    <input
-                      type="number"
-                      step="0.5"
-                      value={comp.bathrooms || ''}
-                      onChange={(e) => updateComp(comp.id, 'bathrooms', Number(e.target.value))}
-                      placeholder="2"
-                      className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white placeholder:text-white/30 focus:outline-none focus:border-amber-500/50"
-                    />
+                    <input type="number" step="0.5" value={comp.bathrooms || ''} onChange={(e) => updateComp(comp.id, 'bathrooms', Number(e.target.value))} placeholder="2" className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white placeholder:text-white/30 focus:outline-none focus:border-amber-500/50" />
                   </div>
                   <div>
                     <label className="block text-xs text-white/50 mb-1">Sqft *</label>
-                    <input
-                      type="number"
-                      value={comp.sqft || ''}
-                      onChange={(e) => updateComp(comp.id, 'sqft', Number(e.target.value))}
-                      placeholder="2000"
-                      className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white placeholder:text-white/30 focus:outline-none focus:border-amber-500/50"
-                    />
+                    <input type="number" value={comp.sqft || ''} onChange={(e) => updateComp(comp.id, 'sqft', Number(e.target.value))} placeholder="2000" className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white placeholder:text-white/30 focus:outline-none focus:border-amber-500/50" />
                   </div>
                   <div>
                     <label className="block text-xs text-white/50 mb-1">$/Sqft</label>
                     <div className="px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-amber-400">
-                      {comp.sqft > 0 && comp.soldPrice > 0
-                        ? `$${(comp.soldPrice / comp.sqft).toFixed(0)}`
-                        : '—'}
+                      {comp.sqft > 0 && comp.soldPrice > 0 ? `$${(comp.soldPrice / comp.sqft).toFixed(0)}` : '—'}
                     </div>
                   </div>
                 </div>
@@ -492,10 +482,7 @@ function CMAGenerator() {
             ))}
 
             {comps.length < 6 && (
-              <button
-                onClick={addComp}
-                className="w-full py-3 border-2 border-dashed border-white/20 rounded-xl text-white/50 hover:text-white hover:border-white/40 transition-colors flex items-center justify-center gap-2"
-              >
+              <button onClick={addComp} className="w-full py-3 border-2 border-dashed border-white/20 rounded-xl text-white/50 hover:text-white hover:border-white/40 transition-colors flex items-center justify-center gap-2">
                 <Plus className="w-5 h-5" />
                 Add Another Comparable
               </button>
@@ -507,32 +494,14 @@ function CMAGenerator() {
             <div className="bg-white/5 border border-white/10 rounded-xl p-4 mb-6">
               <h3 className="font-bold mb-3">Quick Analysis</h3>
               <div className="grid grid-cols-3 gap-4">
-                <div>
-                  <div className="text-sm text-white/50">Avg Sold Price</div>
-                  <div className="text-xl font-bold">${Math.round(avgPrice).toLocaleString()}</div>
-                </div>
-                <div>
-                  <div className="text-sm text-white/50">Avg $/Sqft</div>
-                  <div className="text-xl font-bold">${avgPricePerSqft.toFixed(0)}</div>
-                </div>
-                <div>
-                  <div className="text-sm text-white/50">Suggested Price</div>
-                  <div className="text-xl font-bold text-amber-400">
-                    ${selectedListing?.sqft 
-                      ? Math.round(avgPricePerSqft * selectedListing.sqft).toLocaleString()
-                      : '—'}
-                  </div>
-                </div>
+                <div><div className="text-sm text-white/50">Avg Sold Price</div><div className="text-xl font-bold">${Math.round(avgPrice).toLocaleString()}</div></div>
+                <div><div className="text-sm text-white/50">Avg $/Sqft</div><div className="text-xl font-bold">${avgPricePerSqft.toFixed(0)}</div></div>
+                <div><div className="text-sm text-white/50">Suggested Price</div><div className="text-xl font-bold text-amber-400">${selectedListing?.sqft ? Math.round(avgPricePerSqft * selectedListing.sqft).toLocaleString() : '—'}</div></div>
               </div>
             </div>
           )}
 
-          {/* Continue Button */}
-          <button
-            onClick={() => setStep('review')}
-            disabled={validCompsCount < 1}
-            className="w-full py-4 bg-gradient-to-r from-amber-500 to-orange-500 text-black font-bold rounded-xl hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
-          >
+          <button onClick={() => setStep('review')} disabled={validCompsCount < 1} className="w-full py-4 bg-gradient-to-r from-amber-500 to-orange-500 text-black font-bold rounded-xl hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-all">
             Continue to Review ({validCompsCount} comp{validCompsCount !== 1 ? 's' : ''})
           </button>
         </div>
@@ -544,13 +513,14 @@ function CMAGenerator() {
   if (step === 'review') {
     return (
       <div className="min-h-screen bg-[#0F0F0F] text-white p-6">
+        <Script 
+          src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"
+          onLoad={() => setHtml2pdfLoaded(true)}
+        />
+        
         <div className="max-w-4xl mx-auto">
-          {/* Header */}
           <div className="flex items-center gap-3 mb-6">
-            <button
-              onClick={() => setStep('comps')}
-              className="p-2 bg-white/10 rounded-lg hover:bg-white/20 transition-colors"
-            >
+            <button onClick={() => setStep('comps')} className="p-2 bg-white/10 rounded-lg hover:bg-white/20 transition-colors">
               <ArrowLeft className="w-5 h-5" />
             </button>
             <div>
@@ -573,12 +543,7 @@ function CMAGenerator() {
                     <label className="block text-sm text-white/60 mb-2">Recommended List Price</label>
                     <div className="relative">
                       <span className="absolute left-3 top-1/2 -translate-y-1/2 text-white/50">$</span>
-                      <input
-                        type="number"
-                        value={recommendedPrice || ''}
-                        onChange={(e) => setRecommendedPrice(Number(e.target.value))}
-                        className="w-full pl-8 pr-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white text-xl font-bold focus:outline-none focus:border-amber-500/50"
-                      />
+                      <input type="number" value={recommendedPrice || ''} onChange={(e) => setRecommendedPrice(Number(e.target.value))} className="w-full pl-8 pr-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white text-xl font-bold focus:outline-none focus:border-amber-500/50" />
                     </div>
                   </div>
                   
@@ -587,35 +552,22 @@ function CMAGenerator() {
                       <label className="block text-sm text-white/60 mb-2">Price Range Low</label>
                       <div className="relative">
                         <span className="absolute left-3 top-1/2 -translate-y-1/2 text-white/50">$</span>
-                        <input
-                          type="number"
-                          value={priceRangeLow || ''}
-                          onChange={(e) => setPriceRangeLow(Number(e.target.value))}
-                          className="w-full pl-8 pr-4 py-2 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:border-amber-500/50"
-                        />
+                        <input type="number" value={priceRangeLow || ''} onChange={(e) => setPriceRangeLow(Number(e.target.value))} className="w-full pl-8 pr-4 py-2 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:border-amber-500/50" />
                       </div>
                     </div>
                     <div>
                       <label className="block text-sm text-white/60 mb-2">Price Range High</label>
                       <div className="relative">
                         <span className="absolute left-3 top-1/2 -translate-y-1/2 text-white/50">$</span>
-                        <input
-                          type="number"
-                          value={priceRangeHigh || ''}
-                          onChange={(e) => setPriceRangeHigh(Number(e.target.value))}
-                          className="w-full pl-8 pr-4 py-2 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:border-amber-500/50"
-                        />
+                        <input type="number" value={priceRangeHigh || ''} onChange={(e) => setPriceRangeHigh(Number(e.target.value))} className="w-full pl-8 pr-4 py-2 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:border-amber-500/50" />
                       </div>
                     </div>
                   </div>
                 </div>
 
-                {/* Quick suggestion */}
                 {avgPricePerSqft > 0 && selectedListing?.sqft && (
                   <div className="mt-4 p-3 bg-amber-500/10 border border-amber-500/30 rounded-lg">
-                    <div className="text-sm text-white/70">
-                      Based on ${avgPricePerSqft.toFixed(0)}/sqft avg:
-                    </div>
+                    <div className="text-sm text-white/70">Based on ${avgPricePerSqft.toFixed(0)}/sqft avg:</div>
                     <button
                       onClick={() => {
                         const suggested = Math.round(avgPricePerSqft * selectedListing.sqft!);
@@ -635,7 +587,7 @@ function CMAGenerator() {
               <div className="bg-white/5 border border-white/10 rounded-xl p-6">
                 <h3 className="font-bold mb-4">Comparables Summary</h3>
                 <div className="space-y-2 text-sm">
-                  {comps.filter(c => c.address && c.soldPrice > 0).map((comp, i) => (
+                  {comps.filter(c => c.address && c.soldPrice > 0).map((comp) => (
                     <div key={comp.id} className="flex justify-between">
                       <span className="text-white/70 truncate max-w-[200px]">{comp.address}</span>
                       <span className="font-medium">${comp.soldPrice.toLocaleString()}</span>
@@ -656,43 +608,19 @@ function CMAGenerator() {
                 <div className="space-y-4">
                   <div>
                     <label className="block text-sm text-white/60 mb-2">Your Name</label>
-                    <input
-                      type="text"
-                      value={agentInfo.name}
-                      onChange={(e) => setAgentInfo({ ...agentInfo, name: e.target.value })}
-                      placeholder="John Smith"
-                      className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-lg text-white placeholder:text-white/30 focus:outline-none focus:border-amber-500/50"
-                    />
+                    <input type="text" value={agentInfo.name} onChange={(e) => setAgentInfo({ ...agentInfo, name: e.target.value })} placeholder="John Smith" className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-lg text-white placeholder:text-white/30 focus:outline-none focus:border-amber-500/50" />
                   </div>
                   <div>
                     <label className="block text-sm text-white/60 mb-2">Phone</label>
-                    <input
-                      type="text"
-                      value={agentInfo.phone}
-                      onChange={(e) => setAgentInfo({ ...agentInfo, phone: e.target.value })}
-                      placeholder="(555) 123-4567"
-                      className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-lg text-white placeholder:text-white/30 focus:outline-none focus:border-amber-500/50"
-                    />
+                    <input type="text" value={agentInfo.phone} onChange={(e) => setAgentInfo({ ...agentInfo, phone: e.target.value })} placeholder="(555) 123-4567" className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-lg text-white placeholder:text-white/30 focus:outline-none focus:border-amber-500/50" />
                   </div>
                   <div>
                     <label className="block text-sm text-white/60 mb-2">Email</label>
-                    <input
-                      type="email"
-                      value={agentInfo.email}
-                      onChange={(e) => setAgentInfo({ ...agentInfo, email: e.target.value })}
-                      placeholder="john@realty.com"
-                      className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-lg text-white placeholder:text-white/30 focus:outline-none focus:border-amber-500/50"
-                    />
+                    <input type="email" value={agentInfo.email} onChange={(e) => setAgentInfo({ ...agentInfo, email: e.target.value })} placeholder="john@realty.com" className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-lg text-white placeholder:text-white/30 focus:outline-none focus:border-amber-500/50" />
                   </div>
                   <div>
                     <label className="block text-sm text-white/60 mb-2">Brokerage</label>
-                    <input
-                      type="text"
-                      value={agentInfo.brokerage}
-                      onChange={(e) => setAgentInfo({ ...agentInfo, brokerage: e.target.value })}
-                      placeholder="ABC Realty"
-                      className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-lg text-white placeholder:text-white/30 focus:outline-none focus:border-amber-500/50"
-                    />
+                    <input type="text" value={agentInfo.brokerage} onChange={(e) => setAgentInfo({ ...agentInfo, brokerage: e.target.value })} placeholder="ABC Realty" className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-lg text-white placeholder:text-white/30 focus:outline-none focus:border-amber-500/50" />
                   </div>
                 </div>
               </div>
@@ -701,30 +629,12 @@ function CMAGenerator() {
               <div className="bg-gradient-to-br from-amber-500/10 to-orange-500/10 border border-amber-500/30 rounded-xl p-6">
                 <h3 className="font-bold mb-3 text-amber-400">Your Report Will Include:</h3>
                 <ul className="space-y-2 text-sm text-white/70">
-                  <li className="flex items-center gap-2">
-                    <Check className="w-4 h-4 text-green-400" />
-                    Professional cover page
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <Check className="w-4 h-4 text-green-400" />
-                    Property photos gallery
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <Check className="w-4 h-4 text-green-400" />
-                    Side-by-side comp comparison
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <Check className="w-4 h-4 text-green-400" />
-                    Price per sqft analysis chart
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <Check className="w-4 h-4 text-green-400" />
-                    AI-generated market narrative
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <Check className="w-4 h-4 text-green-400" />
-                    Your branding & contact info
-                  </li>
+                  {['Professional cover page', 'Property photos gallery', 'Side-by-side comp comparison', 'Price per sqft analysis chart', 'AI-generated market narrative', 'Your branding & contact info'].map((item, i) => (
+                    <li key={i} className="flex items-center gap-2">
+                      <Check className="w-4 h-4 text-green-400" />
+                      {item}
+                    </li>
+                  ))}
                 </ul>
               </div>
             </div>
@@ -736,22 +646,15 @@ function CMAGenerator() {
             </div>
           )}
 
-          {/* Generate Button */}
           <button
             onClick={generateReport}
             disabled={processing || !recommendedPrice}
             className="w-full mt-8 py-4 bg-gradient-to-r from-amber-500 to-orange-500 text-black font-bold rounded-xl hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2"
           >
             {processing ? (
-              <>
-                <Loader2 className="w-5 h-5 animate-spin" />
-                Generating Report...
-              </>
+              <><Loader2 className="w-5 h-5 animate-spin" />Generating Report...</>
             ) : (
-              <>
-                <Sparkles className="w-5 h-5" />
-                Generate CMA Report
-              </>
+              <><Sparkles className="w-5 h-5" />Generate CMA Report</>
             )}
           </button>
         </div>
@@ -762,6 +665,11 @@ function CMAGenerator() {
   // Step 4: Result
   return (
     <div className="min-h-screen bg-[#0F0F0F] text-white p-6">
+      <Script 
+        src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"
+        onLoad={() => setHtml2pdfLoaded(true)}
+      />
+      
       <div className="max-w-3xl mx-auto">
         <div className="text-center mb-8">
           <div className="p-4 bg-gradient-to-br from-green-500/20 to-emerald-500/20 rounded-full w-20 h-20 mx-auto mb-4 flex items-center justify-center">
@@ -793,9 +701,7 @@ function CMAGenerator() {
             </div>
             <div className="text-center">
               <div className="text-sm text-white/50">Price Range</div>
-              <div className="text-lg font-medium">
-                ${priceRangeLow.toLocaleString()} - ${priceRangeHigh.toLocaleString()}
-              </div>
+              <div className="text-lg font-medium">${priceRangeLow.toLocaleString()} - ${priceRangeHigh.toLocaleString()}</div>
             </div>
             <div className="text-center">
               <div className="text-sm text-white/50">Avg $/Sqft</div>
@@ -803,6 +709,12 @@ function CMAGenerator() {
             </div>
           </div>
         </div>
+
+        {error && (
+          <div className="mb-6 p-4 bg-red-500/10 border border-red-500/30 rounded-xl text-red-400">
+            {error}
+          </div>
+        )}
 
         {/* Actions */}
         <div className="flex gap-4">
@@ -815,24 +727,53 @@ function CMAGenerator() {
                 { id: '2', address: '', soldPrice: 0, soldDate: '', bedrooms: 0, bathrooms: 0, sqft: 0 },
                 { id: '3', address: '', soldPrice: 0, soldDate: '', bedrooms: 0, bathrooms: 0, sqft: 0 },
               ]);
-              setReportUrl('');
+              setReportHtml('');
             }}
             className="flex-1 py-3 bg-white/10 rounded-xl font-medium hover:bg-white/20 transition-colors"
           >
             Create Another
           </button>
-          <a
-            href={reportUrl}
-            download={`CMA-${selectedListing?.address || 'Report'}.pdf`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex-1 py-3 bg-gradient-to-r from-amber-500 to-orange-500 text-black rounded-xl font-bold text-center hover:opacity-90 transition-all flex items-center justify-center gap-2"
+          <button
+            onClick={() => setShowPreview(true)}
+            className="py-3 px-6 bg-white/10 rounded-xl font-medium hover:bg-white/20 transition-colors flex items-center gap-2"
           >
-            <Download className="w-5 h-5" />
-            Download PDF
-          </a>
+            <Eye className="w-5 h-5" />
+            Preview
+          </button>
+          <button
+            onClick={downloadPDF}
+            disabled={downloading || !html2pdfLoaded}
+            className="flex-1 py-3 bg-gradient-to-r from-amber-500 to-orange-500 text-black rounded-xl font-bold hover:opacity-90 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+          >
+            {downloading ? (
+              <><Loader2 className="w-5 h-5 animate-spin" />Generating PDF...</>
+            ) : (
+              <><Download className="w-5 h-5" />Download PDF</>
+            )}
+          </button>
         </div>
       </div>
+
+      {/* Preview Modal */}
+      {showPreview && reportHtml && (
+        <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-xl w-full max-w-4xl max-h-[90vh] overflow-auto">
+            <div className="sticky top-0 bg-gray-100 p-4 border-b flex justify-between items-center">
+              <h3 className="font-bold text-gray-800">Report Preview</h3>
+              <button
+                onClick={() => setShowPreview(false)}
+                className="px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300"
+              >
+                Close
+              </button>
+            </div>
+            <div 
+              ref={reportContainerRef}
+              dangerouslySetInnerHTML={{ __html: reportHtml }}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -117,7 +117,7 @@ Write a professional narrative explaining the pricing recommendation based on th
   }
 }
 
-// Generate HTML report (will be converted to PDF)
+// Generate HTML report
 function generateHTMLReport(
   listing: CMARequest['listing'],
   comparables: Comparable[],
@@ -129,19 +129,30 @@ function generateHTMLReport(
   const subjectPricePerSqft = listing.sqft && pricing.recommended ? pricing.recommended / listing.sqft : 0;
   
   const fullAddress = [listing.address, listing.city, listing.state, listing.zip].filter(Boolean).join(', ');
-  const heroPhoto = listing.photos?.[0]?.url || '';
 
   return `
 <!DOCTYPE html>
 <html>
 <head>
   <meta charset="UTF-8">
+  <title>CMA Report - ${fullAddress || 'Property'}</title>
   <style>
-    @page { size: letter; margin: 0.5in; }
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: 'Helvetica Neue', Arial, sans-serif; color: #1a1a1a; line-height: 1.5; }
+    body { 
+      font-family: 'Helvetica Neue', Arial, sans-serif; 
+      color: #1a1a1a; 
+      line-height: 1.6;
+      background: white;
+    }
     
-    .page { page-break-after: always; min-height: 10in; padding: 0.25in; }
+    .page { 
+      width: 8.5in;
+      min-height: 11in;
+      padding: 0.5in;
+      margin: 0 auto;
+      background: white;
+      page-break-after: always;
+    }
     .page:last-child { page-break-after: avoid; }
     
     /* Cover Page */
@@ -155,106 +166,187 @@ function generateHTMLReport(
       text-align: center;
       position: relative;
     }
-    .cover-title { font-size: 14px; letter-spacing: 3px; text-transform: uppercase; color: #d4af37; margin-bottom: 20px; }
-    .cover-address { font-size: 32px; font-weight: bold; margin-bottom: 10px; }
-    .cover-details { font-size: 18px; color: #888; margin-bottom: 40px; }
-    .cover-price { font-size: 48px; font-weight: bold; color: #d4af37; }
-    .cover-price-label { font-size: 14px; color: #888; margin-top: 5px; }
-    .cover-agent { position: absolute; bottom: 40px; text-align: center; }
-    .cover-agent-name { font-size: 18px; font-weight: bold; }
-    .cover-agent-info { font-size: 14px; color: #888; }
+    .cover-badge {
+      font-size: 12px;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      color: #d4af37;
+      margin-bottom: 30px;
+      padding: 8px 20px;
+      border: 1px solid #d4af37;
+      border-radius: 20px;
+    }
+    .cover-address { font-size: 28px; font-weight: bold; margin-bottom: 15px; max-width: 80%; }
+    .cover-details { font-size: 16px; color: #888; margin-bottom: 50px; }
+    .cover-price { font-size: 52px; font-weight: bold; color: #d4af37; }
+    .cover-price-label { font-size: 14px; color: #888; margin-top: 8px; letter-spacing: 2px; }
+    .cover-agent { 
+      position: absolute; 
+      bottom: 50px; 
+      text-align: center;
+      padding: 20px;
+      border-top: 1px solid rgba(255,255,255,0.1);
+      width: 80%;
+    }
+    .cover-agent-name { font-size: 18px; font-weight: bold; color: #d4af37; }
+    .cover-agent-info { font-size: 13px; color: #888; margin-top: 5px; }
     
     /* Headers */
     .section-header { 
-      font-size: 24px; 
+      font-size: 22px; 
       font-weight: bold; 
       color: #1a1a1a;
       border-bottom: 3px solid #d4af37;
       padding-bottom: 10px;
-      margin-bottom: 20px;
+      margin-bottom: 25px;
     }
     
-    /* Property Details */
-    .property-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-bottom: 30px; }
-    .property-stat { background: #f5f5f5; padding: 15px; border-radius: 8px; text-align: center; }
-    .property-stat-value { font-size: 28px; font-weight: bold; color: #1a1a1a; }
-    .property-stat-label { font-size: 12px; color: #666; text-transform: uppercase; }
+    /* Property Stats */
+    .stats-grid { display: flex; gap: 15px; margin-bottom: 30px; }
+    .stat-box { 
+      flex: 1;
+      background: #f8f8f8; 
+      padding: 20px; 
+      border-radius: 10px; 
+      text-align: center;
+      border: 1px solid #eee;
+    }
+    .stat-value { font-size: 32px; font-weight: bold; color: #1a1a1a; }
+    .stat-label { font-size: 11px; color: #666; text-transform: uppercase; letter-spacing: 1px; margin-top: 5px; }
     
     /* Photos Grid */
-    .photos-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 30px; }
-    .photo { width: 100%; height: 150px; object-fit: cover; border-radius: 8px; background: #eee; }
+    .photos-grid { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 30px; }
+    .photo { 
+      width: calc(33.333% - 7px); 
+      height: 120px; 
+      object-fit: cover; 
+      border-radius: 8px; 
+      background: #eee;
+    }
     
-    /* Comparables Table */
-    .comp-table { width: 100%; border-collapse: collapse; margin-bottom: 30px; font-size: 12px; }
-    .comp-table th { background: #1a1a1a; color: white; padding: 12px 8px; text-align: left; font-weight: 600; }
-    .comp-table td { padding: 10px 8px; border-bottom: 1px solid #eee; }
-    .comp-table tr:nth-child(even) { background: #f9f9f9; }
-    .comp-table .subject { background: #fff8e7 !important; font-weight: bold; }
+    /* Table */
+    .comp-table { width: 100%; border-collapse: collapse; margin-bottom: 30px; font-size: 13px; }
+    .comp-table th { 
+      background: #1a1a1a; 
+      color: white; 
+      padding: 14px 10px; 
+      text-align: left; 
+      font-weight: 600;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .comp-table td { padding: 14px 10px; border-bottom: 1px solid #eee; }
+    .comp-table tr:nth-child(even) { background: #fafafa; }
+    .comp-table .subject { background: #fffbeb !important; }
     .comp-table .price { color: #d4af37; font-weight: bold; }
     
-    /* Analysis */
-    .analysis-box { background: #f5f5f5; padding: 20px; border-radius: 8px; margin-bottom: 20px; }
-    .analysis-title { font-weight: bold; margin-bottom: 10px; }
-    .analysis-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
-    .analysis-item { text-align: center; }
-    .analysis-value { font-size: 24px; font-weight: bold; color: #d4af37; }
-    .analysis-label { font-size: 12px; color: #666; }
+    /* Analysis Box */
+    .analysis-box { 
+      background: linear-gradient(135deg, #f8f8f8 0%, #f0f0f0 100%); 
+      padding: 25px; 
+      border-radius: 12px; 
+      margin-bottom: 25px;
+      border: 1px solid #e5e5e5;
+    }
+    .analysis-title { font-weight: bold; margin-bottom: 15px; font-size: 14px; color: #666; text-transform: uppercase; letter-spacing: 1px; }
+    .analysis-grid { display: flex; gap: 30px; }
+    .analysis-item { flex: 1; text-align: center; }
+    .analysis-value { font-size: 28px; font-weight: bold; color: #d4af37; }
+    .analysis-label { font-size: 11px; color: #666; margin-top: 5px; text-transform: uppercase; }
     
     /* Narrative */
-    .narrative { background: white; border-left: 4px solid #d4af37; padding: 20px; margin-bottom: 30px; }
+    .narrative { 
+      background: white; 
+      border-left: 4px solid #d4af37; 
+      padding: 25px; 
+      margin-bottom: 30px;
+      font-size: 14px;
+      line-height: 1.8;
+    }
     .narrative p { margin-bottom: 15px; }
     .narrative p:last-child { margin-bottom: 0; }
+    
+    /* Price Bar */
+    .price-bar-container { margin: 30px 0; }
+    .price-bar { 
+      height: 12px; 
+      background: #eee; 
+      border-radius: 6px; 
+      position: relative; 
+      overflow: visible;
+    }
+    .price-bar-fill { 
+      height: 100%; 
+      background: linear-gradient(90deg, #d4af37, #f4d03f); 
+      border-radius: 6px;
+    }
+    .price-bar-marker {
+      position: absolute;
+      top: -8px;
+      width: 28px;
+      height: 28px;
+      background: #d4af37;
+      border-radius: 50%;
+      border: 3px solid white;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+      transform: translateX(-50%);
+    }
+    .price-labels { display: flex; justify-content: space-between; margin-top: 15px; font-size: 13px; }
     
     /* Agent Footer */
     .agent-section { 
       background: #1a1a1a; 
       color: white; 
       padding: 30px; 
-      border-radius: 8px; 
+      border-radius: 12px;
       display: flex;
       justify-content: space-between;
       align-items: center;
+      margin-top: 40px;
     }
-    .agent-name { font-size: 24px; font-weight: bold; }
-    .agent-brokerage { color: #d4af37; margin-top: 5px; }
-    .agent-contact { text-align: right; }
+    .agent-name { font-size: 22px; font-weight: bold; color: #d4af37; }
+    .agent-brokerage { color: #888; margin-top: 5px; font-size: 14px; }
+    .agent-contact { text-align: right; font-size: 14px; color: #888; }
     .agent-contact div { margin-bottom: 5px; }
-    
-    /* Price Chart Visual */
-    .price-bar-container { margin: 20px 0; }
-    .price-bar { height: 40px; background: #eee; border-radius: 20px; position: relative; overflow: hidden; }
-    .price-bar-fill { height: 100%; background: linear-gradient(90deg, #d4af37, #f4d03f); border-radius: 20px; }
-    .price-markers { display: flex; justify-content: space-between; margin-top: 5px; font-size: 12px; color: #666; }
     
     /* Footer */
     .footer { 
       text-align: center; 
       font-size: 10px; 
-      color: #888; 
+      color: #999; 
       margin-top: 30px;
-      padding-top: 15px;
+      padding-top: 20px;
       border-top: 1px solid #eee;
+    }
+
+    @media print {
+      .page { 
+        width: 100%;
+        min-height: auto;
+        padding: 0.4in;
+        margin: 0;
+      }
     }
   </style>
 </head>
 <body>
   <!-- Cover Page -->
   <div class="page cover">
-    <div class="cover-title">Comparative Market Analysis</div>
+    <div class="cover-badge">Comparative Market Analysis</div>
     <div class="cover-address">${fullAddress || 'Property Address'}</div>
     <div class="cover-details">
       ${[
         listing.bedrooms && `${listing.bedrooms} Bed`,
         listing.bathrooms && `${listing.bathrooms} Bath`,
         listing.sqft && `${listing.sqft.toLocaleString()} Sqft`
-      ].filter(Boolean).join(' • ') || 'Property Details'}
+      ].filter(Boolean).join('  •  ') || 'Property Details'}
     </div>
     <div class="cover-price">$${pricing.recommended.toLocaleString()}</div>
     <div class="cover-price-label">Recommended List Price</div>
     <div class="cover-agent">
       <div class="cover-agent-name">${agentInfo.name || 'Agent Name'}</div>
-      <div class="cover-agent-info">${agentInfo.brokerage || ''}</div>
-      <div class="cover-agent-info">${agentInfo.phone || ''} • ${agentInfo.email || ''}</div>
+      <div class="cover-agent-info">${[agentInfo.brokerage, agentInfo.phone, agentInfo.email].filter(Boolean).join('  •  ')}</div>
     </div>
   </div>
 
@@ -262,29 +354,29 @@ function generateHTMLReport(
   <div class="page">
     <div class="section-header">Subject Property</div>
     
-    <div class="property-grid">
-      <div class="property-stat">
-        <div class="property-stat-value">${listing.bedrooms || '—'}</div>
-        <div class="property-stat-label">Bedrooms</div>
+    <div class="stats-grid">
+      <div class="stat-box">
+        <div class="stat-value">${listing.bedrooms || '—'}</div>
+        <div class="stat-label">Bedrooms</div>
       </div>
-      <div class="property-stat">
-        <div class="property-stat-value">${listing.bathrooms || '—'}</div>
-        <div class="property-stat-label">Bathrooms</div>
+      <div class="stat-box">
+        <div class="stat-value">${listing.bathrooms || '—'}</div>
+        <div class="stat-label">Bathrooms</div>
       </div>
-      <div class="property-stat">
-        <div class="property-stat-value">${listing.sqft?.toLocaleString() || '—'}</div>
-        <div class="property-stat-label">Square Feet</div>
+      <div class="stat-box">
+        <div class="stat-value">${listing.sqft?.toLocaleString() || '—'}</div>
+        <div class="stat-label">Square Feet</div>
       </div>
-      <div class="property-stat">
-        <div class="property-stat-value">${listing.year_built || '—'}</div>
-        <div class="property-stat-label">Year Built</div>
+      <div class="stat-box">
+        <div class="stat-value">${listing.year_built || '—'}</div>
+        <div class="stat-label">Year Built</div>
       </div>
     </div>
 
     ${listing.photos && listing.photos.length > 0 ? `
     <div class="photos-grid">
       ${listing.photos.slice(0, 6).map(photo => `
-        <img src="${photo.url}" class="photo" alt="Property photo" />
+        <img src="${photo.url}" class="photo" alt="Property photo" crossorigin="anonymous" />
       `).join('')}
     </div>
     ` : ''}
@@ -301,7 +393,7 @@ function generateHTMLReport(
           <div class="analysis-label">Price per Sqft</div>
         </div>
         <div class="analysis-item">
-          <div class="analysis-value">$${pricing.rangeLow.toLocaleString()} - $${pricing.rangeHigh.toLocaleString()}</div>
+          <div class="analysis-value" style="font-size: 20px;">$${pricing.rangeLow.toLocaleString()} - $${pricing.rangeHigh.toLocaleString()}</div>
           <div class="analysis-label">Price Range</div>
         </div>
       </div>
@@ -319,7 +411,7 @@ function generateHTMLReport(
     <table class="comp-table">
       <thead>
         <tr>
-          <th>Address</th>
+          <th style="width: 30%;">Address</th>
           <th>Sale Price</th>
           <th>Beds</th>
           <th>Baths</th>
@@ -383,31 +475,28 @@ function generateHTMLReport(
       ${narrative.split('\n\n').map(p => `<p>${p}</p>`).join('')}
     </div>
 
-    <div class="section-header" style="margin-top: 40px;">Price Positioning</div>
+    <div class="section-header">Price Positioning</div>
     
     <div class="price-bar-container">
-      <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
-        <span style="font-size: 14px; color: #666;">Lower Price Range</span>
-        <span style="font-size: 14px; color: #666;">Higher Price Range</span>
-      </div>
       <div class="price-bar">
         <div class="price-bar-fill" style="width: ${Math.min(100, Math.max(0, ((pricing.recommended - pricing.rangeLow) / (pricing.rangeHigh - pricing.rangeLow)) * 100))}%;"></div>
+        <div class="price-bar-marker" style="left: ${Math.min(100, Math.max(0, ((pricing.recommended - pricing.rangeLow) / (pricing.rangeHigh - pricing.rangeLow)) * 100))}%;"></div>
       </div>
-      <div class="price-markers">
+      <div class="price-labels">
         <span>$${pricing.rangeLow.toLocaleString()}</span>
-        <span style="font-weight: bold; color: #d4af37;">$${pricing.recommended.toLocaleString()} (Recommended)</span>
+        <span style="font-weight: bold; color: #d4af37;">$${pricing.recommended.toLocaleString()}</span>
         <span>$${pricing.rangeHigh.toLocaleString()}</span>
       </div>
     </div>
 
-    <div class="agent-section" style="margin-top: 60px;">
+    <div class="agent-section">
       <div>
         <div class="agent-name">${agentInfo.name || 'Your Agent'}</div>
         <div class="agent-brokerage">${agentInfo.brokerage || ''}</div>
       </div>
       <div class="agent-contact">
-        <div>📞 ${agentInfo.phone || ''}</div>
-        <div>✉️ ${agentInfo.email || ''}</div>
+        ${agentInfo.phone ? `<div>📞 ${agentInfo.phone}</div>` : ''}
+        ${agentInfo.email ? `<div>✉️ ${agentInfo.email}</div>` : ''}
       </div>
     </div>
 
@@ -443,29 +532,27 @@ export async function POST(request: NextRequest) {
     // Generate HTML report
     const htmlReport = generateHTMLReport(listing, comparables, pricing, agentInfo, narrative);
 
-    // For now, return HTML as base64 data URL (can be opened in browser and printed to PDF)
-    // In production, you'd use puppeteer or a PDF service to convert HTML to PDF
-    const reportBase64 = Buffer.from(htmlReport).toString('base64');
-    const reportUrl = `data:text/html;base64,${reportBase64}`;
+    // Save CMA record (ignore errors if table doesn't exist)
+    try {
+      await serviceSupabase
+        .from('cma_reports')
+        .insert({
+          user_id: user.id,
+          listing_id: listing.id,
+          comparables: comparables,
+          pricing: pricing,
+          agent_info: agentInfo,
+          narrative: narrative,
+          created_at: new Date().toISOString(),
+        });
+    } catch (e) {
+      console.log('CMA save skipped:', e);
+    }
 
-    // Save CMA record
-    await serviceSupabase
-      .from('cma_reports')
-      .insert({
-        user_id: user.id,
-        listing_id: listing.id,
-        comparables: comparables,
-        pricing: pricing,
-        agent_info: agentInfo,
-        narrative: narrative,
-        created_at: new Date().toISOString(),
-      })
-      .select()
-      .single();
-
+    // Return HTML report for client-side PDF conversion
     return NextResponse.json({
       success: true,
-      reportUrl,
+      html: htmlReport,
       narrative,
       stats: {
         avgPrice: Math.round(comparables.reduce((s, c) => s + c.soldPrice, 0) / comparables.length),
@@ -492,20 +579,15 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { data: reports, error } = await serviceSupabase
+    const { data: reports } = await serviceSupabase
       .from('cma_reports')
       .select('*')
       .eq('user_id', user.id)
       .order('created_at', { ascending: false })
       .limit(20);
 
-    if (error) {
-      // Table might not exist yet - return empty array
-      return NextResponse.json([]);
-    }
-
     return NextResponse.json(reports || []);
   } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json([]);
   }
 }
