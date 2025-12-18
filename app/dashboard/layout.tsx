@@ -37,6 +37,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
           <NavLink href="/dashboard/virtual-tours" icon={Camera}>Virtual Tours</NavLink>
           <NavLink href="/dashboard/voiceover" icon={Mic}>AI Voiceover</NavLink>
           <NavLink href="/dashboard/campaigns" icon={Zap}>Auto Campaigns</NavLink>
+          <NavLink href="/dashboard/cma" icon={FileText}>CMA Reports</NavLink>
           
           <p className="text-xs text-white/40 uppercase tracking-wider mb-2 mt-6 px-3">Account</p>
           <NavLink href="/dashboard/team" icon={Users}>Team</NavLink>
