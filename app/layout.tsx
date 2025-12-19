@@ -1,3 +1,4 @@
+import Script from 'next/script';
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import './globals.css';
@@ -62,6 +63,7 @@ export default function RootLayout({
       <body className={inter.className}>
         {children}
         <CookieConsent />
+        <Script src="https://t.contentsquare.net/uxa/72ac82fa71720.js" strategy="afterInteractive" id="contentsquare" />
       </body>
     </html>
   );
