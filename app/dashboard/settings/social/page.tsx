@@ -349,19 +349,6 @@ function SocialSettingsContent() {
           </ol>
         </div>
 
-        {/* Setup Instructions */}
-        <div className="mt-6 p-4 bg-blue-500/10 border border-blue-500/30 rounded-xl">
-          <h4 className="font-medium text-blue-400 mb-2">Developer Setup Required</h4>
-          <p className="text-sm text-white/70 mb-3">
-            To enable social publishing, add these environment variables:
-          </p>
-          <code className="block text-xs bg-black/30 p-3 rounded-lg text-white/70 overflow-x-auto">
-            NEXT_PUBLIC_FACEBOOK_APP_ID=your_app_id<br/>
-            FACEBOOK_APP_SECRET=your_app_secret<br/>
-            NEXT_PUBLIC_LINKEDIN_CLIENT_ID=your_client_id<br/>
-            LINKEDIN_CLIENT_SECRET=your_client_secret
-          </code>
-        </div>
       </div>
     </div>
   );
