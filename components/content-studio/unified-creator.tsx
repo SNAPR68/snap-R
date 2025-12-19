@@ -193,11 +193,73 @@ export function UnifiedCreator() {
     try { const zip = new JSZip(); for (let i = 0; i < selectedPhotos.length; i++) { const res = await fetch(selectedPhotos[i]); const blob = await res.blob(); zip.file(`slide-${String(i+1).padStart(2,'0')}.jpg`, blob) }; if (caption || hashtags) zip.file('caption.txt', `${caption}\n\n${hashtags}`.trim()); const blob = await zip.generateAsync({ type: 'blob' }); const link = document.createElement('a'); link.href = URL.createObjectURL(blob); link.download = `carousel-${selectedPhotos.length}-slides.zip`; link.click() } catch (e) { console.error(e) } finally { setDownloading(null) }
   }
 
-  const generateCaption = async () => { setGenCaption(true); try { const res = await fetch('/api/copy/caption', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ platform: platform === 'story' ? 'instagram' : platform, tone, includeEmojis: true, includeCallToAction: true, property: { ...property, propertyType: 'House', features: [] } }) }); const data = await res.json(); if (data.caption) setCaption(data.caption) } catch (e) { console.error(e) } finally { setGenCaption(false) } }
+  const generateCaption = async () => { 
+    setGenCaption(true)
+    try { 
+      const res = await fetch('/api/copy/caption', { 
+        method: 'POST', 
+        headers: { 'Content-Type': 'application/json' }, 
+        body: JSON.stringify({ 
+          platform: platform === 'story' ? 'instagram' : platform, 
+          tone, 
+          includeEmojis: true, 
+          includeCallToAction: true, 
+          property: { ...property, propertyType: 'House', features: [] } 
+        }) 
+      })
+      if (!res.ok) throw new Error('API error')
+      const data = await res.json()
+      if (data.caption) setCaption(data.caption)
+      else if (data.error) console.error('Caption error:', data.error)
+    } catch (e) { 
+      console.error('Failed to generate caption:', e)
+      generateFallbackCaption()
+    } finally { setGenCaption(false) } 
+  }
 
-  const generateHashtags = async () => { setGenHashtags(true); try { const res = await fetch('/api/copy/hashtags', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ platform: platform === 'story' ? 'instagram' : platform, property: { city: property.city, state: property.state, propertyType: 'House', features: [] } }) }); const data = await res.json(); if (data.hashtagsText) setHashtags(data.hashtagsText); else if (data.hashtags) setHashtags(Array.isArray(data.hashtags) ? data.hashtags.join(' ') : data.hashtags) } catch (e) { console.error(e) } finally { setGenHashtags(false) } }
+  const generateHashtags = async () => { 
+    setGenHashtags(true)
+    try { 
+      const res = await fetch('/api/copy/hashtags', { 
+        method: 'POST', 
+        headers: { 'Content-Type': 'application/json' }, 
+        body: JSON.stringify({ 
+          platform: platform === 'story' ? 'instagram' : platform, 
+          property: { city: property.city, state: property.state, propertyType: 'House', features: [] } 
+        }) 
+      })
+      if (!res.ok) throw new Error('API error')
+      const data = await res.json()
+      if (data.hashtagsText) setHashtags(data.hashtagsText)
+      else if (data.hashtags) setHashtags(Array.isArray(data.hashtags) ? data.hashtags.join(' ') : data.hashtags)
+      else if (data.error) console.error('Hashtags error:', data.error)
+    } catch (e) { 
+      console.error('Failed to generate hashtags:', e)
+      generateFallbackHashtags()
+    } finally { setGenHashtags(false) } 
+  }
 
   const copy = (text: string, type: string) => { navigator.clipboard.writeText(text); setCopied(type); setTimeout(() => setCopied(null), 2000) }
+
+  const generateFallbackCaption = () => {
+    const emoji = tone === 'luxury' ? '✨' : tone === 'excited' ? '🎉' : tone === 'casual' ? '🏠' : '🏢'
+    const beds = property.bedrooms ? `${property.bedrooms} bed` : ''
+    const baths = property.bathrooms ? `${property.bathrooms} bath` : ''
+    const sqft = property.squareFeet ? `${Number(property.squareFeet).toLocaleString()} sq ft` : ''
+    const details = [beds, baths, sqft].filter(Boolean).join(' • ')
+    const price = property.price ? `$${Number(property.price).toLocaleString()}` : ''
+    
+    setCaption(`${emoji} ${headline}\n\n📍 ${property.address || 'Beautiful Home'}${property.city ? `, ${property.city}` : ''}${property.state ? ` ${property.state}` : ''}\n${price ? `💰 ${price}\n` : ''}${details ? `${details}\n` : ''}\n📲 Contact us today for a private showing!`)
+  }
+
+  const generateFallbackHashtags = () => {
+    const city = property.city?.toLowerCase().replace(/\s+/g, '').replace(/[^a-z]/g, '') || ''
+    const state = property.state?.toLowerCase().replace(/\s+/g, '') || ''
+    const cityTag = city ? `#${city}realestate #${city}homes` : ''
+    const stateTag = state ? `#${state}realestate` : ''
+    
+    setHashtags(`#realestate #luxuryrealestate #homeforsale #dreamhome #justlisted #realtor #property #househunting #newhome #luxuryhomes #realtorlife #homesforsale ${cityTag} ${stateTag}`.trim())
+  }
 
   const prop = { address: property.address || '123 Main Street', city: property.city || 'Los Angeles', state: property.state || 'CA', price: property.price || undefined, bedrooms: property.bedrooms || undefined, bathrooms: property.bathrooms || undefined, squareFeet: property.squareFeet || undefined }
   const currentTemplates = getTemplates(platform).filter(t => t.category === category).filter(t => t.category === category)
@@ -265,7 +327,16 @@ export function UnifiedCreator() {
                   setTemplates(prev => ({ ...prev, [platform]: t }));
                   trackEvent(SnapREvents.TEMPLATE_SELECTED, { type: t.category });
                 }} className={`aspect-square rounded-lg border-2 transition overflow-hidden ${templates[platform].id === t.id ? 'border-[#D4AF37] ring-2 ring-[#D4AF37]/50' : 'border-white/10 hover:border-white/30'}`}>
-                  <div className="w-full h-full bg-gradient-to-br from-white/10 to-white/5 flex items-center justify-center text-[8px] text-white/40">{t.name}</div>
+                  <div className="w-full h-full relative overflow-hidden bg-black">
+                    <div className="absolute inset-0 scale-[0.12] origin-top-left pointer-events-none" style={{ width: '833%', height: '833%' }}>
+                      {platform === 'instagram' && <TemplateRenderer templateId={t.id} photoUrl={photoUrl || DEFAULT_PHOTO} property={prop} brand={brand} headline={headline} />}
+                      {(platform === 'facebook' || platform === 'linkedin') && <FacebookTemplateRenderer templateId={t.id} photoUrl={photoUrl || DEFAULT_PHOTO} property={prop} brand={brand} headline={headline} />}
+                      {isVertical && <VerticalTemplateRenderer templateId={t.id} photoUrl={photoUrl || DEFAULT_PHOTO} property={prop} brand={brand} headline={headline} />}
+                    </div>
+                    <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 to-transparent py-1">
+                      <span className="text-[7px] text-white/90 font-medium block text-center truncate px-0.5">{t.name}</span>
+                    </div>
+                  </div>
                 </button>
               ))}
             </div>
@@ -275,7 +346,13 @@ export function UnifiedCreator() {
         {/* CENTER - Preview */}
         <div className="col-span-6 flex flex-col gap-3">
           <div className={`flex-1 flex items-center justify-center ${isVertical ? 'py-2' : ''}`}>
-            <div className={`${isVertical ? 'h-full aspect-[9/16]' : 'w-full aspect-video'} max-h-full rounded-2xl overflow-hidden shadow-2xl ring-1 ring-white/20`}>
+            <div className={`${
+              isVertical 
+                ? 'h-full aspect-[9/16]' 
+                : platform === 'instagram' 
+                  ? 'w-full max-w-[400px] aspect-square' 
+                  : 'w-full aspect-video'
+            } max-h-full rounded-2xl overflow-hidden shadow-2xl ring-1 ring-white/20`}>
               {platform === 'instagram' && <TemplateRenderer templateId={templates[platform].id} photoUrl={photoUrl} property={prop} brand={brand} headline={headline} />}
               {(platform === 'facebook' || platform === 'linkedin') && <FacebookTemplateRenderer templateId={templates[platform].id} photoUrl={photoUrl} property={prop} brand={brand} headline={headline} />}
               {isVertical && <VerticalTemplateRenderer templateId={templates[platform].id} photoUrl={photoUrl} property={prop} brand={brand} headline={headline} />}
