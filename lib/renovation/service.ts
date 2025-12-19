@@ -1,5 +1,5 @@
 // Virtual Renovation Service
-// Handles AI-powered room transformations using multiple providers
+// Handles AI-powered room transformations using image-to-image models
 
 import { buildRenovationPrompt, RENOVATION_TYPES } from './config';
 
@@ -24,15 +24,16 @@ interface RenovationResult {
   prompt?: string;
 }
 
-// Primary provider: Replicate with FLUX or similar model
-async function runReplicateRenovation(
+// Primary: Instruct-Pix2Pix - Best for instruction-based image editing
+async function runInstructPix2Pix(
   imageUrl: string,
   prompt: string
 ): Promise<{ url: string; model: string } | null> {
   if (!REPLICATE_API_TOKEN) return null;
 
   try {
-    // Use instruction-based image editing model
+    console.log('Trying Instruct-Pix2Pix...');
+    
     const response = await fetch('https://api.replicate.com/v1/predictions', {
       method: 'POST',
       headers: {
@@ -40,20 +41,21 @@ async function runReplicateRenovation(
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        // Using black-forest-labs/flux-kontext-pro for high-quality image editing
-        version: 'kontext-dev/kontext-dev-v1:latest',
+        version: 'timothybrooks/instruct-pix2pix:30c1d0b916a6f8efce20493f5d61ee27491ab2a60437c13c588468b9810ec23f',
         input: {
           image: imageUrl,
           prompt: prompt,
+          num_inference_steps: 50,
+          image_guidance_scale: 1.5, // How much to follow original image (higher = more faithful)
           guidance_scale: 7.5,
-          num_inference_steps: 28,
-          strength: 0.75, // Balance between original and new
+          scheduler: 'K_EULER_ANCESTRAL',
         },
       }),
     });
 
     if (!response.ok) {
-      console.error('Replicate API error:', await response.text());
+      const errorText = await response.text();
+      console.error('Instruct-Pix2Pix API error:', errorText);
       return null;
     }
 
@@ -62,7 +64,80 @@ async function runReplicateRenovation(
     // Poll for completion
     let result = prediction;
     let attempts = 0;
-    const maxAttempts = 60; // 2 minutes max
+    const maxAttempts = 90; // 3 minutes max
+    
+    while (result.status !== 'succeeded' && result.status !== 'failed' && attempts < maxAttempts) {
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      const pollResponse = await fetch(result.urls.get, {
+        headers: { 'Authorization': `Token ${REPLICATE_API_TOKEN}` },
+      });
+      result = await pollResponse.json();
+      attempts++;
+      
+      if (attempts % 10 === 0) {
+        console.log(`Instruct-Pix2Pix status: ${result.status}, attempt ${attempts}`);
+      }
+    }
+
+    if (result.status === 'succeeded' && result.output) {
+      const outputUrl = Array.isArray(result.output) ? result.output[0] : result.output;
+      console.log('Instruct-Pix2Pix succeeded!');
+      return { url: outputUrl, model: 'instruct-pix2pix' };
+    }
+
+    console.error('Instruct-Pix2Pix failed:', result.error || result.status);
+    return null;
+  } catch (error) {
+    console.error('Instruct-Pix2Pix error:', error);
+    return null;
+  }
+}
+
+// Secondary: SDXL img2img - Good quality, maintains structure
+async function runSDXLImg2Img(
+  imageUrl: string,
+  prompt: string
+): Promise<{ url: string; model: string } | null> {
+  if (!REPLICATE_API_TOKEN) return null;
+
+  try {
+    console.log('Trying SDXL img2img...');
+    
+    const response = await fetch('https://api.replicate.com/v1/predictions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Token ${REPLICATE_API_TOKEN}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        version: 'stability-ai/sdxl:39ed52f2a78e934b3ba6e2a89f5b1c712de7dfea535525255b1aa35c5565e08b',
+        input: {
+          image: imageUrl,
+          prompt: `Interior design photography, ${prompt}, professional real estate photo, high quality, photorealistic, detailed, well-lit`,
+          negative_prompt: 'blurry, distorted, unrealistic, cartoon, drawing, painting, low quality, watermark, text, logo, deformed',
+          prompt_strength: 0.7, // 0.7 = 70% new, 30% original structure
+          num_inference_steps: 40,
+          guidance_scale: 7.5,
+          scheduler: 'K_EULER',
+          refine: 'expert_ensemble_refiner',
+          high_noise_frac: 0.8,
+        },
+      }),
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('SDXL API error:', errorText);
+      return null;
+    }
+
+    const prediction = await response.json();
+    
+    // Poll for completion
+    let result = prediction;
+    let attempts = 0;
+    const maxAttempts = 90;
     
     while (result.status !== 'succeeded' && result.status !== 'failed' && attempts < maxAttempts) {
       await new Promise(resolve => setTimeout(resolve, 2000));
@@ -76,24 +151,28 @@ async function runReplicateRenovation(
 
     if (result.status === 'succeeded' && result.output) {
       const outputUrl = Array.isArray(result.output) ? result.output[0] : result.output;
-      return { url: outputUrl, model: 'replicate-kontext' };
+      console.log('SDXL img2img succeeded!');
+      return { url: outputUrl, model: 'sdxl-img2img' };
     }
 
+    console.error('SDXL failed:', result.error || result.status);
     return null;
   } catch (error) {
-    console.error('Replicate renovation error:', error);
+    console.error('SDXL img2img error:', error);
     return null;
   }
 }
 
-// Alternative: Use Runware for faster processing
-async function runRunwareRenovation(
+// Tertiary: Runware with proper img2img
+async function runRunwareImg2Img(
   imageUrl: string,
   prompt: string
 ): Promise<{ url: string; model: string } | null> {
   if (!RUNWARE_API_KEY) return null;
 
   try {
+    console.log('Trying Runware img2img...');
+    
     const response = await fetch('https://api.runware.ai/v1', {
       method: 'POST',
       headers: {
@@ -105,88 +184,108 @@ async function runRunwareRenovation(
           taskType: 'imageInference',
           taskUUID: crypto.randomUUID(),
           inputImage: imageUrl,
-          positivePrompt: prompt,
-          negativePrompt: 'blurry, distorted, unrealistic, cartoon, drawing, painting, low quality, watermark',
-          model: 'runware:100@1', // Fast model
+          positivePrompt: `Interior design photography, ${prompt}, professional real estate photo, high quality, photorealistic`,
+          negativePrompt: 'blurry, distorted, unrealistic, cartoon, drawing, painting, low quality, watermark, deformed, ugly',
+          model: 'civitai:101055@128078', // RealisticVision V5.1 - good for interiors
           width: 1024,
           height: 768,
-          strength: 0.7,
-          steps: 25,
+          strength: 0.65, // Keep 35% of original structure
+          steps: 30,
           CFGScale: 7,
           scheduler: 'DPM++ 2M Karras',
+          seedImage: imageUrl,
         },
       ]),
     });
 
     if (!response.ok) {
-      console.error('Runware API error:', await response.text());
+      const errorText = await response.text();
+      console.error('Runware API error:', errorText);
       return null;
     }
 
     const data = await response.json();
     
     if (data.data && data.data[0] && data.data[0].imageURL) {
-      return { url: data.data[0].imageURL, model: 'runware' };
+      console.log('Runware img2img succeeded!');
+      return { url: data.data[0].imageURL, model: 'runware-realistic-vision' };
     }
 
+    console.error('Runware response missing imageURL:', data);
     return null;
   } catch (error) {
-    console.error('Runware renovation error:', error);
+    console.error('Runware img2img error:', error);
     return null;
   }
 }
 
-// Fallback: Use OpenAI DALL-E for image editing (if available)
-async function runOpenAIRenovation(
+// Interior design specialized model
+async function runInteriorDesignModel(
   imageUrl: string,
   prompt: string
 ): Promise<{ url: string; model: string } | null> {
-  const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
-  if (!OPENAI_API_KEY) return null;
+  if (!REPLICATE_API_TOKEN) return null;
 
   try {
-    // First, fetch the image and convert to base64
-    const imageResponse = await fetch(imageUrl);
-    const imageBuffer = await imageResponse.arrayBuffer();
-    const base64Image = Buffer.from(imageBuffer).toString('base64');
-
-    // Use GPT-4 Vision to understand the image, then generate with DALL-E
-    // Note: DALL-E 3 doesn't support direct image editing, so we use a workaround
-    const response = await fetch('https://api.openai.com/v1/images/generations', {
+    console.log('Trying Interior Design model...');
+    
+    // Use adirik/interior-design model specifically trained for room transformations
+    const response = await fetch('https://api.replicate.com/v1/predictions', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${OPENAI_API_KEY}`,
+        'Authorization': `Token ${REPLICATE_API_TOKEN}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'dall-e-3',
-        prompt: `Create a photorealistic interior design rendering: ${prompt}. Professional real estate photography, high quality, detailed, realistic lighting.`,
-        n: 1,
-        size: '1792x1024',
-        quality: 'hd',
-        style: 'natural',
+        version: 'adirik/interior-design:76604baddc85b1b4616e1c6475eca080da339c8875bd4996705440484a6eac38',
+        input: {
+          image: imageUrl,
+          prompt: prompt,
+          guidance_scale: 15,
+          negative_prompt: 'lowres, watermark, banner, logo, contactinfo, text, deformed, blurry, blur, out of focus, out of frame, surreal, ugly',
+          prompt_strength: 0.8,
+          num_inference_steps: 50,
+        },
       }),
     });
 
     if (!response.ok) {
-      console.error('OpenAI API error:', await response.text());
+      const errorText = await response.text();
+      console.error('Interior Design model API error:', errorText);
       return null;
     }
 
-    const data = await response.json();
+    const prediction = await response.json();
     
-    if (data.data && data.data[0] && data.data[0].url) {
-      return { url: data.data[0].url, model: 'dall-e-3' };
+    // Poll for completion
+    let result = prediction;
+    let attempts = 0;
+    const maxAttempts = 90;
+    
+    while (result.status !== 'succeeded' && result.status !== 'failed' && attempts < maxAttempts) {
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      const pollResponse = await fetch(result.urls.get, {
+        headers: { 'Authorization': `Token ${REPLICATE_API_TOKEN}` },
+      });
+      result = await pollResponse.json();
+      attempts++;
+    }
+
+    if (result.status === 'succeeded' && result.output) {
+      const outputUrl = Array.isArray(result.output) ? result.output[0] : result.output;
+      console.log('Interior Design model succeeded!');
+      return { url: outputUrl, model: 'interior-design' };
     }
 
     return null;
   } catch (error) {
-    console.error('OpenAI renovation error:', error);
+    console.error('Interior Design model error:', error);
     return null;
   }
 }
 
-// Main renovation function with fallback chain
+// Main renovation function with proper fallback chain
 export async function processRenovation(request: RenovationRequest): Promise<RenovationResult> {
   const startTime = Date.now();
   
@@ -198,24 +297,29 @@ export async function processRenovation(request: RenovationRequest): Promise<Ren
     request.options
   );
 
-  console.log('Renovation prompt:', prompt);
+  console.log('Processing renovation with prompt:', prompt);
 
-  // Try providers in order
   let result: { url: string; model: string } | null = null;
 
-  // Try Replicate first (best quality for image editing)
-  result = await runReplicateRenovation(request.imageUrl, prompt);
+  // Try specialized interior design model first (best for room renovations)
+  result = await runInteriorDesignModel(request.imageUrl, prompt);
   
-  // Fallback to Runware
+  // Fallback to Instruct-Pix2Pix (good for instruction-based editing)
   if (!result) {
-    console.log('Replicate failed, trying Runware...');
-    result = await runRunwareRenovation(request.imageUrl, prompt);
+    console.log('Interior model failed, trying Instruct-Pix2Pix...');
+    result = await runInstructPix2Pix(request.imageUrl, prompt);
+  }
+  
+  // Fallback to SDXL img2img
+  if (!result) {
+    console.log('Instruct-Pix2Pix failed, trying SDXL img2img...');
+    result = await runSDXLImg2Img(request.imageUrl, prompt);
   }
 
-  // Final fallback to OpenAI
+  // Final fallback to Runware
   if (!result) {
-    console.log('Runware failed, trying OpenAI...');
-    result = await runOpenAIRenovation(request.imageUrl, prompt);
+    console.log('SDXL failed, trying Runware...');
+    result = await runRunwareImg2Img(request.imageUrl, prompt);
   }
 
   const processingTime = Date.now() - startTime;
@@ -232,7 +336,7 @@ export async function processRenovation(request: RenovationRequest): Promise<Ren
 
   return {
     success: false,
-    error: 'All renovation providers failed. Please try again.',
+    error: 'All renovation providers failed. Please try again later.',
     processingTime,
     prompt,
   };
@@ -253,9 +357,9 @@ export async function processRenovationWithVariations(
 
   const results: string[] = [];
   
-  // Generate multiple variations
+  // Generate multiple variations using interior design model
   for (let i = 0; i < variationCount; i++) {
-    const result = await runReplicateRenovation(request.imageUrl, prompt);
+    const result = await runInteriorDesignModel(request.imageUrl, prompt);
     if (result?.url) {
       results.push(result.url);
     }
@@ -268,7 +372,7 @@ export async function processRenovationWithVariations(
       success: true,
       resultUrl: results[0],
       resultUrls: results,
-      model: 'replicate-kontext',
+      model: 'interior-design',
       processingTime,
       prompt,
     };
@@ -287,6 +391,6 @@ export function calculateCredits(renovationType: string): number {
 // Estimate cost for analytics
 export function estimateCost(renovationType: string): number {
   const credits = calculateCredits(renovationType);
-  // Rough cost: $0.05 per credit
-  return credits * 0.05;
+  // Rough cost estimate per provider
+  return credits * 0.08; // ~$0.08 per credit for img2img models
 }
