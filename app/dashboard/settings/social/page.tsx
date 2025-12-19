@@ -126,7 +126,7 @@ function SocialSettingsContent() {
       authUrl = `https://www.facebook.com/v18.0/dialog/oauth?client_id=${appId}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${scopes}&state=${state}&response_type=code`;
     } else if (platform === 'linkedin') {
       const clientId = process.env.NEXT_PUBLIC_LINKEDIN_CLIENT_ID;
-      const scopes = 'r_liteprofile%20r_emailaddress%20w_member_social';
+      const scopes = 'openid%20profile%20w_member_social';
       
       authUrl = `https://www.linkedin.com/oauth/v2/authorization?response_type=code&client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${scopes}&state=${state}`;
     }

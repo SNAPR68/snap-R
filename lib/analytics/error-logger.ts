@@ -32,27 +32,3 @@ export const logError = async (options: LogErrorOptions) => {
   }
 };
 
-export const setupGlobalErrorHandler = () => {
-  if (typeof window === 'undefined') return;
-
-  window.onerror = (message, source, lineno, colno, error) => {
-    logError({
-      errorType: 'frontend',
-      message: String(message),
-      stack: error?.stack,
-      code: `${source}:${lineno}:${colno}`,
-      severity: 'error',
-    });
-    return false;
-  };
-
-  window.addEventListener('unhandledrejection', (event) => {
-    logError({
-      errorType: 'frontend',
-      message: event.reason?.message || String(event.reason),
-      stack: event.reason?.stack,
-      severity: 'error',
-    });
-  });
-};
-

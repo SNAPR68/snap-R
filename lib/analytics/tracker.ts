@@ -80,10 +80,6 @@ export const trackEnhancement = (toolType: string, data?: Record<string, any>) =
   trackEvent({ eventType: 'enhancement', eventName: toolType, eventData: data });
 };
 
-export const trackSignup = (method: string, data?: Record<string, any>) => {
-  trackEvent({ eventType: 'signup', eventName: method, eventData: data });
-};
-
 export const trackAction = (actionName: string, data?: Record<string, any>) => {
   trackEvent({ eventType: 'action', eventName: actionName, eventData: data });
 };
