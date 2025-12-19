@@ -41,13 +41,13 @@ export default async function AdminRevenue() {
   const getPlan = (p: any) => p.plan || p.subscription_tier || 'free';
   const paidPlans = {
     starter: profiles?.filter(p => getPlan(p) === 'starter').length || 0,
-    professional: profiles?.filter(p => getPlan(p) === 'professional').length || 0,
+    pro: profiles?.filter(p => getPlan(p) === 'pro').length || 0,
     agency: profiles?.filter(p => getPlan(p) === 'agency').length || 0,
   };
 
-  // Calculate MRR
-  const mrr = (paidPlans.starter * 29) + (paidPlans.professional * 79) + (paidPlans.agency * 199);
-  const totalPaidUsers = paidPlans.starter + paidPlans.professional + paidPlans.agency;
+  // Per-listing model - actual revenue tracked via Stripe
+  const mrr = 0; // Placeholder - integrate Stripe for real data
+  const totalPaidUsers = paidPlans.starter + paidPlans.pro + paidPlans.agency;
 
   // Calculate human edit revenue
   const humanEditRevenue = (humanEdits30d || []).reduce((sum, o) => sum + (o.amount_paid || 0), 0) / 100;
@@ -216,39 +216,37 @@ export default async function AdminRevenue() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Subscription Breakdown */}
         <div className="bg-[#1A1A1A] border border-white/10 rounded-xl p-6">
-          <h2 className="text-xl font-semibold mb-4">Subscription Breakdown</h2>
+          <h2 className="text-xl font-semibold mb-4">User Plans</h2>
           <div className="space-y-4">
-            <div className="flex items-center justify-between p-4 bg-white/5 rounded-lg border-l-4 border-green-500">
+            <div className="flex items-center justify-between p-4 bg-white/5 rounded-lg">
               <div>
-                <p className="font-medium">Starter Plan</p>
-                <p className="text-white/50 text-sm">$29/month</p>
+                <p className="font-medium">Free</p>
+                <p className="text-white/50 text-sm">Limited access</p>
               </div>
               <div className="text-right">
-                <p className="text-2xl font-bold">{paidPlans.starter}</p>
-                <p className="text-green-400">${paidPlans.starter * 29}/mo</p>
+                <p className="text-2xl font-bold">{profiles?.filter((p: any) => !getPlan(p) || getPlan(p) === 'free').length || 0}</p>
               </div>
             </div>
-            <div className="flex items-center justify-between p-4 bg-white/5 rounded-lg border-l-4 border-blue-500">
+            <div className="flex items-center justify-between p-4 bg-white/5 rounded-lg border-l-4 border-green-500">
               <div>
-                <p className="font-medium">Professional Plan</p>
-                <p className="text-white/50 text-sm">$79/month</p>
+                <p className="font-medium">Pro</p>
+                <p className="text-white/50 text-sm">$12/listing</p>
               </div>
               <div className="text-right">
-                <p className="text-2xl font-bold">{paidPlans.professional}</p>
-                <p className="text-blue-400">${paidPlans.professional * 79}/mo</p>
+                <p className="text-2xl font-bold">{profiles?.filter((p: any) => getPlan(p) === 'pro').length || 0}</p>
               </div>
             </div>
             <div className="flex items-center justify-between p-4 bg-white/5 rounded-lg border-l-4 border-purple-500">
               <div>
-                <p className="font-medium">Agency Plan</p>
-                <p className="text-white/50 text-sm">$199/month</p>
+                <p className="font-medium">Team</p>
+                <p className="text-white/50 text-sm">$12/listing + base fee</p>
               </div>
               <div className="text-right">
-                <p className="text-2xl font-bold">{paidPlans.agency}</p>
-                <p className="text-purple-400">${paidPlans.agency * 199}/mo</p>
+                <p className="text-2xl font-bold">{profiles?.filter((p: any) => getPlan(p) === 'team').length || 0}</p>
               </div>
             </div>
           </div>
+          <p className="text-white/40 text-sm mt-4">Note: Revenue is per-listing. Connect Stripe for accurate billing data.</p>
         </div>
 
         {/* Revenue Sources */}

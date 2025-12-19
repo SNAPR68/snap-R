@@ -1,6 +1,39 @@
 import { createClient } from '@/lib/supabase/server';
 import { Users, DollarSign, Zap, Clock, Search, Crown, TrendingUp } from 'lucide-react';
+import { revalidatePath } from 'next/cache';
 export const dynamic = 'force-dynamic';
+
+async function updateUserPlan(formData: FormData) {
+  'use server';
+  const { createClient } = await import('@/lib/supabase/server');
+  const supabase = await createClient();
+  const userId = formData.get('userId') as string;
+  const plan = formData.get('plan') as string;
+  
+  await supabase.from('profiles').update({ plan }).eq('id', userId);
+  revalidatePath('/admin/users');
+}
+
+async function addCredits(formData: FormData) {
+  'use server';
+  const { createClient } = await import('@/lib/supabase/server');
+  const supabase = await createClient();
+  const userId = formData.get('userId') as string;
+  const amount = parseInt(formData.get('amount') as string) || 0;
+  
+  const { data: user } = await supabase
+    .from('profiles')
+    .select('credits')
+    .eq('id', userId)
+    .single();
+  
+  await supabase
+    .from('profiles')
+    .update({ credits: (user?.credits || 0) + amount })
+    .eq('id', userId);
+  
+  revalidatePath('/admin/users');
+}
 
 export default async function AdminUsers() {
   const supabase = await createClient();
@@ -135,6 +168,7 @@ export default async function AdminUsers() {
                 <th className="text-left p-4 text-white/60 font-medium">Cost to You</th>
                 <th className="text-left p-4 text-white/60 font-medium">Last Active</th>
                 <th className="text-left p-4 text-white/60 font-medium">Joined</th>
+                <th className="text-left p-4 text-white/60 font-medium">Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -191,12 +225,46 @@ export default async function AdminUsers() {
                     <td className="p-4 text-white/50 text-sm">
                       {new Date(user.created_at).toLocaleDateString()}
                     </td>
+                    <td className="p-4">
+                      <div className="flex items-center gap-2">
+                        {/* Change Plan */}
+                        <form action={updateUserPlan} className="flex items-center gap-1">
+                          <input type="hidden" name="userId" value={user.id} />
+                          <select 
+                            name="plan" 
+                            defaultValue={plan}
+                            className="bg-white/10 border border-white/20 rounded px-2 py-1 text-xs text-white"
+                          >
+                            <option value="free">Free</option>
+                            <option value="pro">Pro</option>
+                            <option value="team">Team</option>
+                          </select>
+                          <button className="px-2 py-1 bg-[#D4A017]/20 text-[#D4A017] rounded text-xs hover:bg-[#D4A017]/30">
+                            Set
+                          </button>
+                        </form>
+                        
+                        {/* Add Credits */}
+                        <form action={addCredits} className="flex items-center gap-1">
+                          <input type="hidden" name="userId" value={user.id} />
+                          <input 
+                            type="number" 
+                            name="amount" 
+                            defaultValue={50}
+                            className="w-14 bg-white/10 border border-white/20 rounded px-2 py-1 text-xs text-white"
+                          />
+                          <button className="px-2 py-1 bg-green-500/20 text-green-400 rounded text-xs hover:bg-green-500/30">
+                            +Cr
+                          </button>
+                        </form>
+                      </div>
+                    </td>
                   </tr>
                 );
               })}
               {!users?.length && (
                 <tr>
-                  <td colSpan={7} className="p-8 text-center text-white/50">
+                  <td colSpan={8} className="p-8 text-center text-white/50">
                     No users yet
                   </td>
                 </tr>

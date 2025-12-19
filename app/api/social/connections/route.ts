@@ -12,12 +12,13 @@ export async function GET() {
 
     const { data: connections } = await supabase
       .from('social_connections')
-      .select('platform, platform_username, is_active')
+      .select('id, platform, platform_username, is_active, connected_at')
       .eq('user_id', user.id)
       .eq('is_active', true);
 
     return NextResponse.json({ connections: connections || [] });
   } catch (error) {
+    console.error('Error fetching connections:', error);
     return NextResponse.json({ connections: [] });
   }
 }
