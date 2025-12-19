@@ -9,6 +9,7 @@ import {
   Home, Coins, ChevronRight, Hash, Palette, Zap,
   BarChart3, ArrowRight, Loader2
 } from 'lucide-react'
+import { trackEvent, SnapREvents } from '@/lib/analytics'
 
 type TabType = 'social' | 'video' | 'bulk' | 'email'
 
@@ -30,6 +31,10 @@ export default function ContentStudioClient({
   const router = useRouter()
   const [selectedTab, setSelectedTab] = useState<TabType>('social')
   const [listings] = useState<Listing[]>(initialListings)
+
+  useEffect(() => {
+    trackEvent(SnapREvents.CONTENT_STUDIO_OPENED);
+  }, []);
 
   const tabs = [
     { 

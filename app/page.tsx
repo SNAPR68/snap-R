@@ -6,6 +6,7 @@ import { Sparkles, Zap, Check, ArrowRight, Smartphone, Camera, Shield, Mail, Glo
 import { LandingGallery } from '@/components/landing-gallery';
 import { Testimonials } from '@/components/testimonials';
 import { AnimatedBackground } from '@/components/animated-background';
+import { trackEvent, SnapREvents } from '@/lib/analytics';
 
 const PLANS = [
   { id: 'free', name: 'Free', price: '$0', credits: '10 credits', features: ['7-day trial', 'All AI tools', 'Watermarked exports'] },
@@ -104,7 +105,7 @@ export default function HomePage() {
             <Link href="#features" className="px-4 py-2 text-white font-medium hover:text-[#D4A017] transition-colors">
               Features
             </Link>
-            <Link href="/pricing" className="px-4 py-2 text-white font-medium hover:text-[#D4A017] transition-colors">
+            <Link href="/pricing" onClick={() => trackEvent(SnapREvents.HOMEPAGE_PRICING_CLICK)} className="px-4 py-2 text-white font-medium hover:text-[#D4A017] transition-colors">
               Pricing
             </Link>
             <Link href="/faq" className="px-4 py-2 text-white font-medium hover:text-[#D4A017] transition-colors">
@@ -124,6 +125,7 @@ export default function HomePage() {
             </Link>
             <Link 
               href="/auth/signup" 
+              onClick={() => trackEvent(SnapREvents.HOMEPAGE_CTA_CLICK)}
               className="px-5 py-2.5 font-semibold bg-gradient-to-r from-[#D4A017] to-[#B8860B] text-black rounded-xl hover:opacity-90 transition-opacity"
             >
               Sign Up
@@ -179,6 +181,7 @@ export default function HomePage() {
             <div className="flex flex-wrap justify-center gap-3 mb-5">
               <Link 
                 href="/auth/signup" 
+                onClick={() => trackEvent(SnapREvents.HOMEPAGE_CTA_CLICK)}
                 className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-[#D4A017] to-[#B8860B] text-black font-semibold rounded-xl hover:opacity-90 transition-all text-sm"
               >
                 <Globe className="w-4 h-4" />
@@ -763,7 +766,7 @@ export default function HomePage() {
               </div>
             </div>
             
-            <Link href="/auth/signup" className="block w-full text-center py-4 bg-gradient-to-r from-[#D4A017] to-[#B8860B] text-black font-bold rounded-xl hover:opacity-90 transition-opacity">Get Started Free →</Link>
+            <Link href="/auth/signup" onClick={() => trackEvent(SnapREvents.HOMEPAGE_CTA_CLICK)} className="block w-full text-center py-4 bg-gradient-to-r from-[#D4A017] to-[#B8860B] text-black font-bold rounded-xl hover:opacity-90 transition-opacity">Get Started Free →</Link>
             <p className="text-center text-white/40 text-sm mt-3">10 free credits • No credit card required</p>
           </div>
         </div>

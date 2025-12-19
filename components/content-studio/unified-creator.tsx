@@ -12,6 +12,7 @@ import { Label } from '@/components/ui/label'
 import { ScheduleModal } from './schedule-modal'
 import { TemplateRenderer, FacebookTemplateRenderer, VerticalTemplateRenderer } from './template-renderer'
 import { INSTAGRAM_POST_TEMPLATES, FACEBOOK_POST_TEMPLATES, LINKEDIN_POST_TEMPLATES, VERTICAL_TEMPLATES, TEMPLATE_CATEGORIES, TemplateDefinition } from '@/lib/content/templates'
+import { trackEvent, SnapREvents } from '@/lib/analytics'
 
 type Platform = 'instagram' | 'facebook' | 'linkedin' | 'tiktok' | 'story'
 type Tone = 'professional' | 'casual' | 'luxury' | 'excited'
@@ -260,7 +261,10 @@ export function UnifiedCreator() {
             <Label className="text-[10px] text-white/40 uppercase mb-2 block">Templates</Label>
             <div className="grid grid-cols-3 gap-2 max-h-32 overflow-y-auto">
               {currentTemplates.map(t => (
-                <button key={t.id} onClick={() => setTemplates(prev => ({ ...prev, [platform]: t }))} className={`aspect-square rounded-lg border-2 transition overflow-hidden ${templates[platform].id === t.id ? 'border-[#D4AF37] ring-2 ring-[#D4AF37]/50' : 'border-white/10 hover:border-white/30'}`}>
+                <button key={t.id} onClick={() => {
+                  setTemplates(prev => ({ ...prev, [platform]: t }));
+                  trackEvent(SnapREvents.TEMPLATE_SELECTED, { type: t.category });
+                }} className={`aspect-square rounded-lg border-2 transition overflow-hidden ${templates[platform].id === t.id ? 'border-[#D4AF37] ring-2 ring-[#D4AF37]/50' : 'border-white/10 hover:border-white/30'}`}>
                   <div className="w-full h-full bg-gradient-to-br from-white/10 to-white/5 flex items-center justify-center text-[8px] text-white/40">{t.name}</div>
                 </button>
               ))}

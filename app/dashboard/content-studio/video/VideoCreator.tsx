@@ -5,6 +5,7 @@ import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { ArrowLeft, Video, Play, Pause, Download, Home, Loader2, ChevronLeft, ChevronRight, Clock, Sparkles, Check, Music, Type } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
+import { trackEvent, SnapREvents } from '@/lib/analytics'
 
 interface Photo { id: string; url: string; selected: boolean }
 type Transition = 'fade' | 'slide' | 'zoom' | 'none'
@@ -193,6 +194,7 @@ export default function VideoCreatorClient() {
       mediaRecorder.stop()
       const url = await videoPromise
       setVideoUrl(url)
+      trackEvent(SnapREvents.VIDEO_CREATED)
     } catch (error) {
       console.error('Video generation error:', error)
       alert('Error generating video. Please try again.')

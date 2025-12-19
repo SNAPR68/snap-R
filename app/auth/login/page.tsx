@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
 import { Loader2, Eye, EyeOff } from 'lucide-react';
+import { trackEvent, identifyUser, SnapREvents } from '@/lib/analytics';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -18,8 +19,17 @@ export default function LoginPage() {
     e.preventDefault();
     setLoading(true);
     setError('');
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
-    if (error) { setError(error.message); setLoading(false); return; }
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error) { 
+      setError(error.message); 
+      setLoading(false); 
+      trackEvent(SnapREvents.LOGIN_FAILED);
+      return; 
+    }
+    if (data.user) {
+      trackEvent(SnapREvents.LOGIN_COMPLETED);
+      identifyUser(data.user.id, { email: data.user.email });
+    }
     router.push('/dashboard');
   };
 

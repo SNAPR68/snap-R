@@ -1,7 +1,8 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import Link from 'next/link';
+import { trackEvent, SnapREvents } from '@/lib/analytics';
 
 // Pricing data
 const PRO_TIERS = [
@@ -77,6 +78,10 @@ export default function PricingPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  useEffect(() => {
+    trackEvent(SnapREvents.PRICING_PAGE_VIEWED);
+  }, []);
+
   const currentTier = PRO_TIERS[sliderIndex];
   const isEnterprise = (currentTier as any).enterprise === true;
   const teamOption = TEAM_OPTIONS[teamSizeIndex];
@@ -103,6 +108,7 @@ export default function PricingPage() {
   // Checkout handler
   const handleCheckout = async () => {
     if (selectedPlan === 'free') {
+      trackEvent(SnapREvents.CHECKOUT_STARTED, { plan: 'free' });
       window.location.href = '/signup';
       return;
     }
@@ -112,6 +118,7 @@ export default function PricingPage() {
       return;
     }
 
+    trackEvent(SnapREvents.CHECKOUT_STARTED, { plan: selectedPlan });
     setLoading(true);
     setError(null);
 
@@ -266,7 +273,11 @@ export default function PricingPage() {
             <span className="text-sm font-medium" style={{ color: GOLD }}>Listings:</span>
             <div className="flex items-center gap-2">
               <span className="text-xs font-medium" style={{ color: 'rgba(255,255,255,0.8)' }}>10</span>
-              <input type="range" min="0" max="8" value={sliderIndex} onChange={(e) => setSliderIndex(parseInt(e.target.value))} className="pricing-slider" style={sliderStyles} />
+              <input type="range" min="0" max="8" value={sliderIndex} onChange={(e) => {
+                const newValue = parseInt(e.target.value);
+                setSliderIndex(newValue);
+                trackEvent(SnapREvents.PRICING_SLIDER_USED, { value: newValue });
+              }} className="pricing-slider" style={sliderStyles} />
               <span className="text-xs font-medium" style={{ color: 'rgba(255,255,255,0.8)' }}>150+</span>
             </div>
             <span className="text-xl font-bold w-12" style={{ color: GOLD }}>{currentTier.listings}</span>
@@ -276,7 +287,10 @@ export default function PricingPage() {
         {/* Pricing Cards */}
         <div className="grid lg:grid-cols-3 gap-5 mb-8">
           {/* FREE */}
-          <div onClick={() => setSelectedPlan('free')} className="rounded-2xl p-5 relative cursor-pointer transition-all duration-300" style={getCardStyle('free')}>
+          <div onClick={() => {
+            setSelectedPlan('free');
+            trackEvent(SnapREvents.PLAN_SELECTED, { plan: 'free' });
+          }} className="rounded-2xl p-5 relative cursor-pointer transition-all duration-300" style={getCardStyle('free')}>
             {selectedPlan === 'free' && <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-0.5 rounded-full text-xs font-semibold" style={{ backgroundColor: GOLD, color: '#000' }}>Selected</div>}
             <div style={{ height: '60px' }}><h2 className="text-xl font-bold">Free</h2><p className="text-sm" style={{ color: 'rgba(255,255,255,0.5)' }}>Try SnapR risk-free</p></div>
             <div style={{ height: '50px' }} className="flex items-baseline"><span className="text-4xl font-bold">$0</span></div>
@@ -302,7 +316,10 @@ export default function PricingPage() {
           </div>
 
           {/* PRO */}
-          <div onClick={() => setSelectedPlan('pro')} className="rounded-2xl p-5 relative cursor-pointer transition-all duration-300" style={getCardStyle('pro')}>
+          <div onClick={() => {
+            setSelectedPlan('pro');
+            trackEvent(SnapREvents.PLAN_SELECTED, { plan: 'pro' });
+          }} className="rounded-2xl p-5 relative cursor-pointer transition-all duration-300" style={getCardStyle('pro')}>
             <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-0.5 rounded-full text-xs font-semibold" style={{ backgroundColor: GOLD, color: '#000' }}>{selectedPlan === 'pro' ? 'Selected' : 'Most Popular'}</div>
             <div style={{ height: '60px' }}><h2 className="text-xl font-bold">Pro</h2><p className="text-sm" style={{ color: 'rgba(255,255,255,0.5)' }}>For agents & photographers</p></div>
             <div style={{ height: '50px' }} className="flex items-baseline">
@@ -341,7 +358,10 @@ export default function PricingPage() {
           </div>
 
           {/* TEAM */}
-          <div onClick={() => setSelectedPlan('team')} className="rounded-2xl p-5 relative cursor-pointer transition-all duration-300" style={getCardStyle('team')}>
+          <div onClick={() => {
+            setSelectedPlan('team');
+            trackEvent(SnapREvents.PLAN_SELECTED, { plan: 'team' });
+          }} className="rounded-2xl p-5 relative cursor-pointer transition-all duration-300" style={getCardStyle('team')}>
             {selectedPlan === 'team' && <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-0.5 rounded-full text-xs font-semibold" style={{ backgroundColor: GOLD, color: '#000' }}>Selected</div>}
             <div style={{ height: '60px' }}><h2 className="text-xl font-bold">Team</h2><p className="text-sm" style={{ color: 'rgba(255,255,255,0.5)' }}>For brokerages & teams</p></div>
             <div style={{ height: '50px' }} className="flex items-baseline">

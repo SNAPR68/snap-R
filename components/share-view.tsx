@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { Download, Check, X, ChevronLeft, ChevronRight, MessageSquare, Send, Loader2, CheckCircle } from 'lucide-react';
+import { trackEvent, SnapREvents } from '@/lib/analytics';
 
 interface Photo {
   id: string;
@@ -69,6 +70,11 @@ export function ShareView({ listing, photos, settings, shareToken }: ShareViewPr
       });
       if (response.ok) {
         setApprovalStatus(prev => ({ ...prev, [photoId]: approved ? 'approved' : 'rejected' }));
+        if (approved) {
+          trackEvent(SnapREvents.CLIENT_APPROVED_PHOTO);
+        } else {
+          trackEvent(SnapREvents.CLIENT_REJECTED_PHOTO);
+        }
         setShowFeedback(null);
       }
     } catch (error) {

@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
 import { Loader2, Eye, EyeOff } from 'lucide-react';
+import { trackEvent, identifyUser, SnapREvents } from '@/lib/analytics';
 
 export default function SignupPage() {
   const router = useRouter();
@@ -19,6 +20,7 @@ export default function SignupPage() {
     e.preventDefault();
     setLoading(true);
     setError('');
+    trackEvent(SnapREvents.SIGNUP_STARTED);
     
     const { data, error } = await supabase.auth.signUp({ 
       email, 
@@ -45,6 +47,8 @@ export default function SignupPage() {
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
       });
+      trackEvent(SnapREvents.SIGNUP_COMPLETED);
+      identifyUser(data.user.id, { email: data.user.email });
       router.push('/onboarding');
     } else {
       setError('Please check your email to confirm your account.');
