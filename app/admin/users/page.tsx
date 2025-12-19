@@ -1,39 +1,31 @@
-import { createClient } from '@/lib/supabase/server';
-import { createClient as createServiceClient } from '@supabase/supabase-js';
-import { Users, DollarSign, Zap, Clock, Crown, TrendingUp, Download } from 'lucide-react';
+import { adminSupabase } from '@/lib/supabase/admin';
+import { Users, DollarSign, Zap, Clock, Crown, TrendingUp, Download, Search } from 'lucide-react';
 import { revalidatePath } from 'next/cache';
-
-const serviceSupabase = createServiceClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
-
+import Link from 'next/link';
 export const dynamic = 'force-dynamic';
 
 async function updateUserPlan(formData: FormData) {
   'use server';
-  const { createClient } = await import('@/lib/supabase/server');
-  const supabase = await createClient();
+  const { adminSupabase } = await import('@/lib/supabase/admin');
   const userId = formData.get('userId') as string;
   const plan = formData.get('plan') as string;
-  await supabase.from('profiles').update({ plan }).eq('id', userId);
+  await adminSupabase.from('profiles').update({ plan }).eq('id', userId);
   revalidatePath('/admin/users');
 }
 
 async function addCredits(formData: FormData) {
   'use server';
-  const { createClient } = await import('@/lib/supabase/server');
-  const supabase = await createClient();
+  const { adminSupabase } = await import('@/lib/supabase/admin');
   const userId = formData.get('userId') as string;
   const amount = parseInt(formData.get('amount') as string) || 0;
-  const { data: user } = await supabase.from('profiles').select('credits').eq('id', userId).single();
-  await supabase.from('profiles').update({ credits: (user?.credits || 0) + amount }).eq('id', userId);
+  const { data: user } = await adminSupabase.from('profiles').select('credits').eq('id', userId).single();
+  await adminSupabase.from('profiles').update({ credits: (user?.credits || 0) + amount }).eq('id', userId);
   revalidatePath('/admin/users');
 }
 
 export default async function AdminUsers() {
-  const { data: users } = await serviceSupabase.from('profiles').select('*').order('created_at', { ascending: false });
-  const { data: apiCosts } = await serviceSupabase.from('api_costs').select('user_id, cost_cents, credits_charged, created_at');
+  const { data: users } = await adminSupabase.from('profiles').select('*').order('created_at', { ascending: false });
+  const { data: apiCosts } = await adminSupabase.from('api_costs').select('user_id, cost_cents, credits_charged, created_at');
 
   const userStats: Record<string, { cost: number; credits: number; count: number; lastActive: string }> = {};
   (apiCosts || []).forEach((c: any) => {
@@ -50,11 +42,13 @@ export default async function AdminUsers() {
   const now = new Date();
   const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
   const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-  const newUsers30d = users?.filter(u => new Date(u.created_at) >= thirtyDaysAgo).length || 0;
+  const newUsers30d = users?.filter((u: any) => new Date(u.created_at) >= thirtyDaysAgo).length || 0;
   const activeUsers7d = Object.values(userStats).filter(s => new Date(s.lastActive) >= sevenDaysAgo).length;
-  const paidUsers = users?.filter(u => u.plan && u.plan !== 'free').length || 0;
+  const paidUsers = users?.filter((u: any) => u.plan && u.plan !== 'free').length || 0;
+  const totalCost = Object.values(userStats).reduce((s, u) => s + u.cost, 0);
+  const totalCreditsUsed = Object.values(userStats).reduce((s, u) => s + u.credits, 0);
 
-  const sortedUsers = [...(users || [])].sort((a, b) => (userStats[b.id]?.cost || 0) - (userStats[a.id]?.cost || 0));
+  const sortedUsers = [...(users || [])].sort((a: any, b: any) => (userStats[b.id]?.cost || 0) - (userStats[a.id]?.cost || 0));
 
   const timeAgo = (date: string) => {
     if (!date) return 'Never';
@@ -63,13 +57,8 @@ export default async function AdminUsers() {
     if (days === 0) return 'Today';
     if (days === 1) return 'Yesterday';
     if (days < 7) return `${days}d ago`;
-    return `${Math.floor(days / 7)}w ago`;
-  };
-
-  const planColors: Record<string, string> = {
-    team: 'bg-purple-500/20 text-purple-400',
-    pro: 'bg-green-500/20 text-green-400',
-    free: 'bg-white/10 text-white/50',
+    if (days < 30) return `${Math.floor(days / 7)}w ago`;
+    return `${Math.floor(days / 30)}mo ago`;
   };
 
   return (
@@ -79,15 +68,12 @@ export default async function AdminUsers() {
           <h1 className="text-3xl font-bold">Users</h1>
           <p className="text-white/50">Manage users and track activity</p>
         </div>
-        <a 
-          href="/api/admin/users/export" 
-          className="flex items-center gap-2 px-4 py-2 bg-[#D4A017] text-black rounded-lg font-medium hover:bg-[#B8860B]"
-        >
+        <a href="/api/admin/users/export" className="flex items-center gap-2 px-4 py-2 bg-[#D4A017] text-black rounded-lg font-medium hover:bg-[#B8860B]">
           <Download className="w-4 h-4" /> Export CSV
         </a>
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-8">
         <div className="bg-[#1A1A1A] border border-white/10 rounded-xl p-4">
           <Users className="w-5 h-5 text-[#D4A017] mb-2" />
           <p className="text-2xl font-bold">{totalUsers}</p>
@@ -110,8 +96,13 @@ export default async function AdminUsers() {
         </div>
         <div className="bg-[#1A1A1A] border border-white/10 rounded-xl p-4">
           <DollarSign className="w-5 h-5 text-red-400 mb-2" />
-          <p className="text-2xl font-bold">${(Object.values(userStats).reduce((s, u) => s + u.cost, 0) / 100).toFixed(2)}</p>
+          <p className="text-2xl font-bold">${(totalCost / 100).toFixed(2)}</p>
           <p className="text-white/50 text-xs">Total Cost</p>
+        </div>
+        <div className="bg-[#1A1A1A] border border-white/10 rounded-xl p-4">
+          <Zap className="w-5 h-5 text-[#D4A017] mb-2" />
+          <p className="text-2xl font-bold">{totalCreditsUsed}</p>
+          <p className="text-white/50 text-xs">Credits Used</p>
         </div>
       </div>
 
@@ -123,39 +114,64 @@ export default async function AdminUsers() {
                 <th className="text-left p-4 text-white/60 font-medium">User</th>
                 <th className="text-left p-4 text-white/60 font-medium">Plan</th>
                 <th className="text-left p-4 text-white/60 font-medium">Credits</th>
-                <th className="text-left p-4 text-white/60 font-medium">Uses</th>
-                <th className="text-left p-4 text-white/60 font-medium">Cost</th>
+                <th className="text-left p-4 text-white/60 font-medium">Enhancements</th>
+                <th className="text-left p-4 text-white/60 font-medium">Cost to You</th>
                 <th className="text-left p-4 text-white/60 font-medium">Last Active</th>
+                <th className="text-left p-4 text-white/60 font-medium">Joined</th>
                 <th className="text-left p-4 text-white/60 font-medium">Actions</th>
               </tr>
             </thead>
             <tbody>
-              {sortedUsers.map((user: any) => {
+              {sortedUsers.map((user: any, index: number) => {
                 const stats = userStats[user.id] || { cost: 0, credits: 0, count: 0, lastActive: '' };
                 const plan = user.plan || 'free';
+                const isTopCost = index === 0 && stats.cost > 0;
                 return (
                   <tr key={user.id} className="border-t border-white/5 hover:bg-white/5">
                     <td className="p-4">
-                      <div>
-                        <p className="font-medium">{user.full_name || 'No name'}</p>
-                        <p className="text-white/50 text-sm">{user.email}</p>
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#D4A017] to-[#B8860B] flex items-center justify-center text-black font-semibold text-sm">
+                          {(user.full_name || user.email || '?')[0].toUpperCase()}
+                        </div>
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <p className="font-medium">{user.full_name || 'No name'}</p>
+                            {isTopCost && <span className="text-xs px-1.5 py-0.5 bg-red-500/20 text-red-400 rounded">Top Cost</span>}
+                          </div>
+                          <p className="text-white/50 text-sm">{user.email}</p>
+                        </div>
                       </div>
                     </td>
                     <td className="p-4">
-                      <span className={`text-xs px-2 py-1 rounded-full ${planColors[plan] || planColors.free}`}>
-                        {plan}
-                      </span>
+                      <span className={`text-xs px-2 py-1 rounded-full ${
+                        plan === 'team' ? 'bg-purple-500/20 text-purple-400' :
+                        plan === 'pro' ? 'bg-green-500/20 text-green-400' :
+                        'bg-white/10 text-white/50'
+                      }`}>{plan}</span>
                     </td>
                     <td className="p-4">
                       <span className="text-[#D4A017] font-medium">{user.credits || 0}</span>
+                      <span className="text-white/30 text-sm ml-1">left</span>
                     </td>
-                    <td className="p-4">{stats.count}</td>
                     <td className="p-4">
-                      <span className={stats.cost > 100 ? 'text-red-400' : 'text-white/60'}>
+                      <div className="flex items-center gap-2">
+                        <Zap className="w-4 h-4 text-blue-400" />
+                        <span>{stats.count}</span>
+                      </div>
+                    </td>
+                    <td className="p-4">
+                      <span className={`font-medium ${stats.cost > 500 ? 'text-red-400' : stats.cost > 100 ? 'text-orange-400' : 'text-white/60'}`}>
                         ${(stats.cost / 100).toFixed(2)}
                       </span>
                     </td>
-                    <td className="p-4 text-white/50 text-sm">{timeAgo(stats.lastActive)}</td>
+                    <td className="p-4">
+                      <span className={`text-sm ${stats.lastActive && new Date(stats.lastActive) >= new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) ? 'text-green-400' : 'text-white/50'}`}>
+                        {timeAgo(stats.lastActive)}
+                      </span>
+                    </td>
+                    <td className="p-4 text-white/50 text-sm">
+                      {new Date(user.created_at).toLocaleDateString()}
+                    </td>
                     <td className="p-4">
                       <div className="flex items-center gap-2">
                         <form action={updateUserPlan} className="flex items-center gap-1">
@@ -165,12 +181,12 @@ export default async function AdminUsers() {
                             <option value="pro">Pro</option>
                             <option value="team">Team</option>
                           </select>
-                          <button className="px-2 py-1 bg-[#D4A017]/20 text-[#D4A017] rounded text-xs">Set</button>
+                          <button className="px-2 py-1 bg-[#D4A017]/20 text-[#D4A017] rounded text-xs hover:bg-[#D4A017]/30">Set</button>
                         </form>
                         <form action={addCredits} className="flex items-center gap-1">
                           <input type="hidden" name="userId" value={user.id} />
                           <input type="number" name="amount" defaultValue={50} className="w-14 bg-white/10 border border-white/20 rounded px-2 py-1 text-xs text-white" />
-                          <button className="px-2 py-1 bg-green-500/20 text-green-400 rounded text-xs">+Cr</button>
+                          <button className="px-2 py-1 bg-green-500/20 text-green-400 rounded text-xs hover:bg-green-500/30">+Cr</button>
                         </form>
                       </div>
                     </td>
@@ -180,6 +196,10 @@ export default async function AdminUsers() {
             </tbody>
           </table>
         </div>
+      </div>
+
+      <div className="mt-6 p-4 bg-[#1A1A1A] border border-white/10 rounded-xl">
+        <p className="text-white/50 text-sm">Showing {totalUsers} users • Sorted by highest cost to you</p>
       </div>
     </div>
   );
