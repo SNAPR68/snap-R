@@ -1,7 +1,13 @@
 import { createClient } from '@/lib/supabase/server';
+import { createClient as createServiceClient } from '@supabase/supabase-js';
 import { Users, DollarSign, Zap, Clock, Crown, TrendingUp, Download } from 'lucide-react';
 import { revalidatePath } from 'next/cache';
-import Link from 'next/link';
+
+const serviceSupabase = createServiceClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+);
+
 export const dynamic = 'force-dynamic';
 
 async function updateUserPlan(formData: FormData) {
@@ -26,9 +32,8 @@ async function addCredits(formData: FormData) {
 }
 
 export default async function AdminUsers() {
-  const supabase = await createClient();
-  const { data: users } = await supabase.from('profiles').select('*').order('created_at', { ascending: false });
-  const { data: apiCosts } = await supabase.from('api_costs').select('user_id, cost_cents, credits_charged, created_at');
+  const { data: users } = await serviceSupabase.from('profiles').select('*').order('created_at', { ascending: false });
+  const { data: apiCosts } = await serviceSupabase.from('api_costs').select('user_id, cost_cents, credits_charged, created_at');
 
   const userStats: Record<string, { cost: number; credits: number; count: number; lastActive: string }> = {};
   (apiCosts || []).forEach((c: any) => {
@@ -74,12 +79,12 @@ export default async function AdminUsers() {
           <h1 className="text-3xl font-bold">Users</h1>
           <p className="text-white/50">Manage users and track activity</p>
         </div>
-        <Link 
+        <a 
           href="/api/admin/users/export" 
           className="flex items-center gap-2 px-4 py-2 bg-[#D4A017] text-black rounded-lg font-medium hover:bg-[#B8860B]"
         >
           <Download className="w-4 h-4" /> Export CSV
-        </Link>
+        </a>
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">

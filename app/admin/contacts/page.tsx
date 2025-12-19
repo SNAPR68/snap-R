@@ -1,6 +1,13 @@
 import { createClient } from '@/lib/supabase/server';
+import { createClient as createServiceClient } from '@supabase/supabase-js';
 import { Mail, Clock, CheckCircle, MessageSquare, AlertCircle } from 'lucide-react';
 import { revalidatePath } from 'next/cache';
+
+const serviceSupabase = createServiceClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+);
+
 export const dynamic = 'force-dynamic';
 
 async function updateStatus(formData: FormData) {
@@ -15,8 +22,7 @@ async function updateStatus(formData: FormData) {
 }
 
 export default async function AdminContacts() {
-  const supabase = await createClient();
-  const { data: submissions } = await supabase
+  const { data: submissions } = await serviceSupabase
     .from('contact_submissions')
     .select('*')
     .order('created_at', { ascending: false });

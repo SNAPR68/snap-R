@@ -1,17 +1,21 @@
 import { createClient } from '@/lib/supabase/server';
+import { createClient as createServiceClient } from '@supabase/supabase-js';
 import { DollarSign, TrendingUp, Server, Zap, Users, Clock, CheckCircle, XCircle, Cpu, Wrench } from 'lucide-react';
+
+const serviceSupabase = createServiceClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+);
 
 export const dynamic = 'force-dynamic';
 
 export default async function AdminAnalytics() {
-  const supabase = await createClient();
-  
   const now = new Date();
   const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
   const fourteenDaysAgo = new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000);
 
   // Fetch all cost data with user info
-  const { data: costs } = await supabase
+  const { data: costs } = await serviceSupabase
     .from('api_costs')
     .select('user_id, provider, tool_id, model, cost_cents, credits_charged, processing_time_ms, success, tokens_used, created_at')
     .gte('created_at', thirtyDaysAgo.toISOString())
@@ -19,7 +23,7 @@ export default async function AdminAnalytics() {
 
   // Fetch user emails for display
   const userIds = [...new Set((costs || []).map((c: any) => c.user_id))];
-  const { data: profiles } = await supabase
+  const { data: profiles } = await serviceSupabase
     .from('profiles')
     .select('id, email, full_name')
     .in('id', userIds);

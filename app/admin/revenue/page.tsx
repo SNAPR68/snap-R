@@ -1,37 +1,42 @@
 import { createClient } from '@/lib/supabase/server';
+import { createClient as createServiceClient } from '@supabase/supabase-js';
 import { DollarSign, TrendingUp, TrendingDown, CreditCard, Users, Zap, ArrowUpRight, ArrowDownRight, Server } from 'lucide-react';
+
+const serviceSupabase = createServiceClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+);
+
 export const dynamic = 'force-dynamic';
 
 export default async function AdminRevenue() {
-  const supabase = await createClient();
-  
   const now = new Date();
   const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
   const sixtyDaysAgo = new Date(now.getTime() - 60 * 24 * 60 * 60 * 1000);
   const fourteenDaysAgo = new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000);
 
   // Get profiles for plan counts
-  const { data: profiles } = await supabase.from('profiles').select('plan, subscription_tier, created_at');
+  const { data: profiles } = await serviceSupabase.from('profiles').select('plan, subscription_tier, created_at');
 
   // Get AI costs
-  const { data: costs30d } = await supabase
+  const { data: costs30d } = await serviceSupabase
     .from('api_costs')
     .select('cost_cents, credits_charged, created_at')
     .gte('created_at', thirtyDaysAgo.toISOString());
 
-  const { data: costsPrev30d } = await supabase
+  const { data: costsPrev30d } = await serviceSupabase
     .from('api_costs')
     .select('cost_cents')
     .gte('created_at', sixtyDaysAgo.toISOString())
     .lt('created_at', thirtyDaysAgo.toISOString());
 
   // Get human edit orders
-  const { data: humanEdits30d } = await supabase
+  const { data: humanEdits30d } = await serviceSupabase
     .from('human_edit_orders')
     .select('amount_paid, created_at')
     .gte('created_at', thirtyDaysAgo.toISOString());
 
-  const { data: humanEditsPrev30d } = await supabase
+  const { data: humanEditsPrev30d } = await serviceSupabase
     .from('human_edit_orders')
     .select('amount_paid')
     .gte('created_at', sixtyDaysAgo.toISOString())

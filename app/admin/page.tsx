@@ -1,11 +1,16 @@
 import { createClient } from '@/lib/supabase/server';
+import { createClient as createServiceClient } from '@supabase/supabase-js';
 import { Users, DollarSign, TrendingUp, Server, Zap, Camera, Image, Activity, ArrowUpRight } from 'lucide-react';
 import Link from 'next/link';
+
+const serviceSupabase = createServiceClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+);
+
 export const dynamic = 'force-dynamic';
 
 export default async function AdminDashboard() {
-  const supabase = await createClient();
-  
   const now = new Date();
   const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
   const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
@@ -20,12 +25,12 @@ export default async function AdminDashboard() {
     { data: photos },
     { data: recentErrors },
   ] = await Promise.all([
-    supabase.from('profiles').select('id, email, full_name, plan, credits, created_at'),
-    supabase.from('api_costs').select('provider, cost_cents, credits_charged, created_at, user_id').gte('created_at', thirtyDaysAgo.toISOString()),
-    supabase.from('human_edit_orders').select('amount_paid, created_at').gte('created_at', thirtyDaysAgo.toISOString()),
-    supabase.from('listings').select('id, created_at'),
-    supabase.from('photos').select('id, status, created_at'),
-    supabase.from('error_logs').select('id').eq('resolved', false),
+    serviceSupabase.from('profiles').select('id, email, full_name, plan, credits, created_at'),
+    serviceSupabase.from('api_costs').select('provider, cost_cents, credits_charged, created_at, user_id').gte('created_at', thirtyDaysAgo.toISOString()),
+    serviceSupabase.from('human_edit_orders').select('amount_paid, created_at').gte('created_at', thirtyDaysAgo.toISOString()),
+    serviceSupabase.from('listings').select('id, created_at'),
+    serviceSupabase.from('photos').select('id, status, created_at'),
+    serviceSupabase.from('error_logs').select('id').eq('resolved', false),
   ]);
 
   // User metrics
