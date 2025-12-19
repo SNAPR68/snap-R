@@ -5,7 +5,8 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { LogoUploader } from './logo-uploader'
-import { Loader2, Save, CheckCircle } from 'lucide-react'
+import { Loader2, Save, CheckCircle, Facebook, Instagram, Linkedin, Link2, Check, ExternalLink } from 'lucide-react'
+import Link from 'next/link'
 
 interface BrandProfile {
   id?: string
@@ -48,6 +49,7 @@ export function BrandForm() {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
+  const [connections, setConnections] = useState<any[]>([])
 
   // Fetch existing profile on mount
   useEffect(() => {
@@ -65,6 +67,13 @@ export function BrandForm() {
           ...data.brandProfile,
           social_handles: data.brandProfile.social_handles || {}
         })
+      }
+
+      // Fetch social connections
+      const connRes = await fetch('/api/social/connections')
+      const connData = await connRes.json()
+      if (connData.connections) {
+        setConnections(connData.connections)
       }
     } catch (error) {
       console.error('Failed to fetch brand profile:', error)
@@ -353,6 +362,102 @@ export function BrandForm() {
                 className="bg-white/5 border-white/20 rounded-l-none"
               />
             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Connect Social Accounts */}
+      <section className="space-y-4">
+        <h3 className="text-lg font-semibold text-white border-b border-white/10 pb-2">
+          Connect Social Accounts
+        </h3>
+        <p className="text-sm text-white/50">
+          Connect your accounts to publish directly from Content Studio with one click.
+        </p>
+        
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {/* Facebook */}
+          <div className="bg-white/5 border border-white/10 rounded-xl p-4">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-10 h-10 rounded-lg bg-[#1877F2]/20 flex items-center justify-center">
+                <Facebook className="w-5 h-5 text-[#1877F2]" />
+              </div>
+              <div>
+                <p className="font-medium">Facebook</p>
+                {connections.find(c => c.platform === 'facebook') ? (
+                  <p className="text-xs text-green-400 flex items-center gap-1">
+                    <Check className="w-3 h-3" /> Connected
+                  </p>
+                ) : (
+                  <p className="text-xs text-white/40">Not connected</p>
+                )}
+              </div>
+            </div>
+            {connections.find(c => c.platform === 'facebook') ? (
+              <Link href="/dashboard/settings/social" className="text-xs text-white/50 hover:text-white flex items-center gap-1">
+                Manage <ExternalLink className="w-3 h-3" />
+              </Link>
+            ) : (
+              <Link href="/dashboard/settings/social" className="inline-flex items-center gap-2 px-3 py-1.5 bg-[#1877F2] text-white text-sm font-medium rounded-lg hover:bg-[#1877F2]/80">
+                <Link2 className="w-3.5 h-3.5" /> Connect
+              </Link>
+            )}
+          </div>
+
+          {/* Instagram */}
+          <div className="bg-white/5 border border-white/10 rounded-xl p-4">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-10 h-10 rounded-lg bg-[#E4405F]/20 flex items-center justify-center">
+                <Instagram className="w-5 h-5 text-[#E4405F]" />
+              </div>
+              <div>
+                <p className="font-medium">Instagram</p>
+                {connections.find(c => c.platform === 'instagram') ? (
+                  <p className="text-xs text-green-400 flex items-center gap-1">
+                    <Check className="w-3 h-3" /> Connected
+                  </p>
+                ) : (
+                  <p className="text-xs text-white/40">Not connected</p>
+                )}
+              </div>
+            </div>
+            {connections.find(c => c.platform === 'instagram') ? (
+              <Link href="/dashboard/settings/social" className="text-xs text-white/50 hover:text-white flex items-center gap-1">
+                Manage <ExternalLink className="w-3 h-3" />
+              </Link>
+            ) : (
+              <Link href="/dashboard/settings/social" className="inline-flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-[#833AB4] via-[#E4405F] to-[#FCAF45] text-white text-sm font-medium rounded-lg hover:opacity-80">
+                <Link2 className="w-3.5 h-3.5" /> Connect
+              </Link>
+            )}
+          </div>
+
+          {/* LinkedIn */}
+          <div className="bg-white/5 border border-white/10 rounded-xl p-4">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-10 h-10 rounded-lg bg-[#0A66C2]/20 flex items-center justify-center">
+                <Linkedin className="w-5 h-5 text-[#0A66C2]" />
+              </div>
+              <div>
+                <p className="font-medium">LinkedIn</p>
+                {connections.find(c => c.platform === 'linkedin') ? (
+                  <p className="text-xs text-green-400 flex items-center gap-1">
+                    <Check className="w-3 h-3" /> Connected
+                  </p>
+                ) : (
+                  <p className="text-xs text-white/40">Not connected</p>
+                )}
+              </div>
+            </div>
+            {connections.find(c => c.platform === 'linkedin') ? (
+              <Link href="/dashboard/settings/social" className="text-xs text-white/50 hover:text-white flex items-center gap-1">
+                Manage <ExternalLink className="w-3 h-3" />
+              </Link>
+            ) : (
+              <Link href="/dashboard/settings/social" className="inline-flex items-center gap-2 px-3 py-1.5 bg-[#0A66C2] text-white text-sm font-medium rounded-lg hover:bg-[#0A66C2]/80">
+                <Link2 className="w-3.5 h-3.5" /> Connect
+              </Link>
+            )}
           </div>
         </div>
       </section>
