@@ -346,16 +346,16 @@ export function UnifiedCreator() {
         {/* CENTER - Preview */}
         <div className="col-span-6 flex flex-col gap-3">
           <div className={`flex-1 flex items-center justify-center ${isVertical ? 'py-2' : ''}`}>
-            <div className={`${
-              isVertical 
-                ? 'h-full aspect-[9/16]' 
-                : platform === 'instagram' 
-                  ? 'w-full max-w-[400px] aspect-square' 
-                  : 'w-full aspect-video'
-            } max-h-full rounded-2xl overflow-hidden shadow-2xl ring-1 ring-white/20`}>
-              {platform === 'instagram' && <TemplateRenderer templateId={templates[platform].id} photoUrl={photoUrl} property={prop} brand={brand} headline={headline} />}
-              {(platform === 'facebook' || platform === 'linkedin') && <FacebookTemplateRenderer templateId={templates[platform].id} photoUrl={photoUrl} property={prop} brand={brand} headline={headline} />}
-              {isVertical && <VerticalTemplateRenderer templateId={templates[platform].id} photoUrl={photoUrl} property={prop} brand={brand} headline={headline} />}
+            <div className={`${isVertical ? 'h-full aspect-[9/16]' : platform === 'instagram' ? 'w-full max-w-[400px] aspect-square' : 'w-full aspect-video'} max-h-full rounded-2xl overflow-hidden shadow-2xl ring-1 ring-white/20 relative`}>
+              <div className="absolute inset-0 origin-top-left" style={{ 
+                transform: platform === 'instagram' ? 'scale(0.37)' : isVertical ? 'scale(0.25)' : 'scale(0.33)',
+                width: platform === 'instagram' ? '1080px' : isVertical ? '1080px' : '1200px',
+                height: platform === 'instagram' ? '1080px' : isVertical ? '1920px' : platform === 'facebook' ? '630px' : '627px'
+              }}>
+                {platform === 'instagram' && <TemplateRenderer templateId={templates[platform].id} photoUrl={photoUrl} property={prop} brand={brand} headline={headline} />}
+                {(platform === 'facebook' || platform === 'linkedin') && <FacebookTemplateRenderer templateId={templates[platform].id} photoUrl={photoUrl} property={prop} brand={brand} headline={headline} />}
+                {isVertical && <VerticalTemplateRenderer templateId={templates[platform].id} photoUrl={photoUrl} property={prop} brand={brand} headline={headline} />}
+              </div>
             </div>
           </div>
 
