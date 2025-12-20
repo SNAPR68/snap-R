@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
-import { ArrowLeft, Video, Play, Pause, Download, Home, Loader2, ChevronLeft, Clock, Sparkles, Check, Music, Type, Instagram, Facebook, Music2, Calendar, ExternalLink, CheckCircle, Copy, Smartphone, Square, RectangleHorizontal, RectangleVertical, Upload } from 'lucide-react'
+import { ArrowLeft, Video, Play, Pause, Download, Home, Loader2, ChevronLeft, Clock, Sparkles, Check, Music, Type, Instagram, Facebook, Linkedin, Music2, Calendar, ExternalLink, CheckCircle, Copy, Smartphone, Square, RectangleHorizontal, RectangleVertical, Upload } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { trackEvent, SnapREvents } from '@/lib/analytics'
 
@@ -317,22 +317,20 @@ export default function VideoCreatorClient() {
     }
   }
 
-  const handleManualUpload = () => {
-    fileInputRef.current?.click()
-  }
-
-  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (!file || !videoUrl) return
+  const handlePlatformUpload = (platform: 'instagram' | 'facebook' | 'linkedin') => {
+    // Download video first
+    downloadVideo()
     
-    // Open Facebook/Instagram upload pages
-    // The user can manually upload the file from their device
-    window.open('https://business.facebook.com/latest/composer', '_blank')
-    
-    // Reset input
-    if (fileInputRef.current) {
-      fileInputRef.current.value = ''
+    // Open platform-specific upload page
+    const urls = {
+      instagram: 'https://www.instagram.com/',
+      facebook: 'https://business.facebook.com/latest/composer',
+      linkedin: 'https://www.linkedin.com/feed/'
     }
+    
+    setTimeout(() => {
+      window.open(urls[platform], '_blank')
+    }, 500)
   }
 
   const getPreviewAspectClass = () => {
@@ -549,17 +547,40 @@ export default function VideoCreatorClient() {
                 <Download className="w-4 h-4" />
                 Download Video
               </button>
-              <button onClick={handleManualUpload} className="w-full py-3 bg-white/10 rounded-lg font-medium hover:bg-white/20 flex items-center justify-center gap-2">
-                <Upload className="w-4 h-4" />
-                Manual Upload to Platform
-              </button>
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="video/*"
-                onChange={handleFileSelect}
-                className="hidden"
-              />
+              
+              {/* Platform Upload Buttons */}
+              <div className="grid grid-cols-3 gap-2">
+                <button
+                  onClick={() => handlePlatformUpload('instagram')}
+                  className="flex flex-col items-center gap-2 p-3 bg-gradient-to-br from-purple-600/20 to-pink-600/20 rounded-lg border border-purple-500/30 hover:border-purple-500/60 hover:bg-purple-600/30 transition-all"
+                >
+                  <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-pink-500 rounded-lg flex items-center justify-center">
+                    <Instagram className="w-5 h-5 text-white" />
+                  </div>
+                  <span className="text-xs font-medium">Instagram</span>
+                </button>
+                
+                <button
+                  onClick={() => handlePlatformUpload('facebook')}
+                  className="flex flex-col items-center gap-2 p-3 bg-blue-600/20 rounded-lg border border-blue-500/30 hover:border-blue-500/60 hover:bg-blue-600/30 transition-all"
+                >
+                  <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center">
+                    <Facebook className="w-5 h-5 text-white" />
+                  </div>
+                  <span className="text-xs font-medium">Facebook</span>
+                </button>
+                
+                <button
+                  onClick={() => handlePlatformUpload('linkedin')}
+                  className="flex flex-col items-center gap-2 p-3 bg-[#0A66C2]/20 rounded-lg border border-[#0A66C2]/30 hover:border-[#0A66C2]/60 hover:bg-[#0A66C2]/30 transition-all"
+                >
+                  <div className="w-10 h-10 bg-[#0A66C2] rounded-lg flex items-center justify-center">
+                    <Linkedin className="w-5 h-5 text-white" />
+                  </div>
+                  <span className="text-xs font-medium">LinkedIn</span>
+                </button>
+              </div>
+              
               <button onClick={copyVideoLink} className="w-full py-3 bg-white/10 rounded-lg font-medium hover:bg-white/20 flex items-center justify-center gap-2">
                 {copied ? <CheckCircle className="w-4 h-4 text-green-400" /> : <Copy className="w-4 h-4" />}
                 {copied ? 'Copied!' : 'Copy Link'}
