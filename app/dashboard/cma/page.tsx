@@ -93,6 +93,43 @@ function CMAGenerator() {
     loadAgentInfo();
   }, []);
 
+  // Check for html2pdf library loading
+  useEffect(() => {
+    const checkHtml2pdf = () => {
+      if (window.html2pdf) {
+        console.log('[CMA] html2pdf library loaded successfully');
+        setHtml2pdfLoaded(true);
+        return true;
+      }
+      return false;
+    };
+
+    // Check immediately
+    if (checkHtml2pdf()) {
+      return;
+    }
+
+    // Check every second until loaded
+    const interval = setInterval(() => {
+      if (checkHtml2pdf()) {
+        clearInterval(interval);
+      }
+    }, 1000);
+
+    // Cleanup after 30 seconds (fallback)
+    const timeout = setTimeout(() => {
+      clearInterval(interval);
+      if (!window.html2pdf) {
+        console.warn('[CMA] html2pdf library failed to load after 30 seconds');
+      }
+    }, 30000);
+
+    return () => {
+      clearInterval(interval);
+      clearTimeout(timeout);
+    };
+  }, []);
+
   const loadListings = async () => {
     const supabase = createClient();
     const { data: { user } } = await supabase.auth.getUser();
@@ -254,23 +291,42 @@ function CMAGenerator() {
   };
 
   const downloadPDF = async () => {
-    if (!reportHtml || !window.html2pdf) {
-      setError('PDF library not loaded. Please try again.');
+    console.log('[CMA] downloadPDF called');
+    
+    // Check if reportHtml exists
+    if (!reportHtml) {
+      console.error('[CMA] No report HTML available');
+      setError('No report content available. Please generate the report first.');
       return;
     }
 
+    // Check if html2pdf is loaded
+    if (!window.html2pdf) {
+      console.error('[CMA] html2pdf library not available');
+      setError('PDF library not loaded. Please wait a moment and try again.');
+      return;
+    }
+
+    console.log('[CMA] Starting PDF generation');
     setDownloading(true);
+    setError(null);
+    
+    let container: HTMLDivElement | null = null;
     
     try {
       // Create a temporary container for the HTML
-      const container = document.createElement('div');
+      container = document.createElement('div');
       container.innerHTML = reportHtml;
       container.style.position = 'absolute';
       container.style.left = '-9999px';
       container.style.top = '0';
+      container.style.width = '8.5in'; // Letter size width
       document.body.appendChild(container);
 
+      console.log('[CMA] Container created and appended to DOM');
+
       const filename = `CMA-${selectedListing?.address || 'Report'}-${new Date().toISOString().split('T')[0]}.pdf`;
+      console.log('[CMA] Filename:', filename);
 
       const opt = {
         margin: 0,
@@ -290,15 +346,26 @@ function CMAGenerator() {
         pagebreak: { mode: 'css', before: '.page' }
       };
 
+      console.log('[CMA] Calling html2pdf().set().from().save()');
       await window.html2pdf().set(opt).from(container).save();
+      console.log('[CMA] PDF generation completed successfully');
       
-      // Cleanup
-      document.body.removeChild(container);
     } catch (err: any) {
-      console.error('PDF generation error:', err);
-      setError('Failed to generate PDF. Please try again.');
+      console.error('[CMA] PDF generation error:', err);
+      console.error('[CMA] Error details:', {
+        message: err.message,
+        stack: err.stack,
+        name: err.name
+      });
+      setError(`Failed to generate PDF: ${err.message || 'Unknown error'}. Please try again.`);
     } finally {
+      // Cleanup container
+      if (container && container.parentNode) {
+        console.log('[CMA] Cleaning up container');
+        document.body.removeChild(container);
+      }
       setDownloading(false);
+      console.log('[CMA] downloadPDF finished');
     }
   };
 
@@ -742,7 +809,7 @@ function CMAGenerator() {
           </button>
           <button
             onClick={downloadPDF}
-            disabled={downloading || !html2pdfLoaded}
+            disabled={downloading}
             className="flex-1 py-3 bg-gradient-to-r from-amber-500 to-orange-500 text-black rounded-xl font-bold hover:opacity-90 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
           >
             {downloading ? (

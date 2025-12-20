@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
-import { ArrowLeft, Video, Play, Pause, Download, Home, Loader2, ChevronLeft, Clock, Sparkles, Check, Music, Type, Instagram, Facebook, Music2, Calendar, ExternalLink, CheckCircle, Copy, Smartphone, Square, RectangleHorizontal, RectangleVertical } from 'lucide-react'
+import { ArrowLeft, Video, Play, Pause, Download, Home, Loader2, ChevronLeft, Clock, Sparkles, Check, Music, Type, Instagram, Facebook, Music2, Calendar, ExternalLink, CheckCircle, Copy, Smartphone, Square, RectangleHorizontal, RectangleVertical, Upload } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { trackEvent, SnapREvents } from '@/lib/analytics'
 
@@ -43,6 +43,7 @@ export default function VideoCreatorClient() {
   const [addedToCalendar, setAddedToCalendar] = useState(false)
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const previewIntervalRef = useRef<NodeJS.Timeout | null>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => { if (listingId) loadPhotos(listingId) }, [listingId])
 
@@ -316,6 +317,24 @@ export default function VideoCreatorClient() {
     }
   }
 
+  const handleManualUpload = () => {
+    fileInputRef.current?.click()
+  }
+
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file || !videoUrl) return
+    
+    // Open Facebook/Instagram upload pages
+    // The user can manually upload the file from their device
+    window.open('https://business.facebook.com/latest/composer', '_blank')
+    
+    // Reset input
+    if (fileInputRef.current) {
+      fileInputRef.current.value = ''
+    }
+  }
+
   const getPreviewAspectClass = () => {
     switch(aspectRatio) {
       case '16:9': return 'aspect-video'
@@ -530,6 +549,17 @@ export default function VideoCreatorClient() {
                 <Download className="w-4 h-4" />
                 Download Video
               </button>
+              <button onClick={handleManualUpload} className="w-full py-3 bg-white/10 rounded-lg font-medium hover:bg-white/20 flex items-center justify-center gap-2">
+                <Upload className="w-4 h-4" />
+                Manual Upload to Platform
+              </button>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="video/*"
+                onChange={handleFileSelect}
+                className="hidden"
+              />
               <button onClick={copyVideoLink} className="w-full py-3 bg-white/10 rounded-lg font-medium hover:bg-white/20 flex items-center justify-center gap-2">
                 {copied ? <CheckCircle className="w-4 h-4 text-green-400" /> : <Copy className="w-4 h-4" />}
                 {copied ? 'Copied!' : 'Copy Link'}
