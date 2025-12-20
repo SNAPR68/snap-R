@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { Home, Zap, Users, Hammer, LayoutGrid, Image, Palette, FileText, Settings, CheckSquare, Camera, Mic, Sparkles, CreditCard, BookOpen, LogOut } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
+import { FeedbackButton } from '@/components/feedback-button'
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createClient()
@@ -59,6 +60,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
       <main className="flex-1 overflow-auto">
         {children}
       </main>
+      <FeedbackButton />
     </div>
   )
 }

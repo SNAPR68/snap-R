@@ -80,6 +80,7 @@ export const SnapREvents = {
   BULK_DOWNLOAD: 'bulk_download',
   SOCIAL_PUBLISH_STARTED: 'social_publish_started',
   SOCIAL_PUBLISH_COMPLETED: 'social_publish_completed',
+  VIDEO_PUBLISHED: 'video_published',
   
   // Client Approval
   SHARE_LINK_CREATED: 'share_link_created',

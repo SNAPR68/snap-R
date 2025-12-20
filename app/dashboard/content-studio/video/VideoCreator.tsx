@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
-import { ArrowLeft, Video, Play, Pause, Download, Home, Loader2, ChevronLeft, ChevronRight, Clock, Sparkles, Check, Music, Type } from 'lucide-react'
+import { ArrowLeft, Video, Play, Pause, Download, Home, Loader2, ChevronLeft, ChevronRight, Clock, Sparkles, Check, Music, Type, Instagram, Facebook, Music2, Calendar, ExternalLink, CheckCircle, Link2, Copy } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { trackEvent, SnapREvents } from '@/lib/analytics'
 
@@ -22,11 +22,24 @@ export default function VideoCreatorClient() {
   const [transition, setTransition] = useState<Transition>('fade')
   const [showTitle, setShowTitle] = useState(true)
   const [showPrice, setShowPrice] = useState(true)
+  const [fitMode, setFitMode] = useState<'cover' | 'contain'>('contain')
   const [generating, setGenerating] = useState(false)
   const [progress, setProgress] = useState(0)
   const [videoUrl, setVideoUrl] = useState<string | null>(null)
   const [playing, setPlaying] = useState(false)
   const [currentPreview, setCurrentPreview] = useState(0)
+  const [showShareModal, setShowShareModal] = useState(false)
+  const [connectedPlatforms, setConnectedPlatforms] = useState<string[]>([])
+  const [copied, setCopied] = useState(false)
+  const [addingToCalendar, setAddingToCalendar] = useState(false)
+  const [addedToCalendar, setAddedToCalendar] = useState(false)
+  const [publishing, setPublishing] = useState<string | null>(null)
+  const [publishSuccess, setPublishSuccess] = useState<string[]>([])
+  const [publishError, setPublishError] = useState<string | null>(null)
+  const [caption, setCaption] = useState('')
+  const [showCaptionEditor, setShowCaptionEditor] = useState(false)
+  const [uploadingVideo, setUploadingVideo] = useState(false)
+  const [publicVideoUrl, setPublicVideoUrl] = useState<string | null>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const previewIntervalRef = useRef<NodeJS.Timeout | null>(null)
 
@@ -40,6 +53,31 @@ export default function VideoCreatorClient() {
     }
     return () => { if (previewIntervalRef.current) clearInterval(previewIntervalRef.current) }
   }, [playing, photos, duration])
+
+  useEffect(() => {
+    const checkConnections = async () => {
+      const supabase = createClient()
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return
+      
+      const { data: connections } = await supabase
+        .from('social_connections')
+        .select('platform')
+        .eq('user_id', user.id)
+      
+      if (connections) {
+        setConnectedPlatforms(connections.map(c => c.platform))
+      }
+    }
+    checkConnections()
+  }, [])
+
+  useEffect(() => {
+    if (videoUrl && listingTitle) {
+      const defaultCaption = `✨ ${listingTitle}\n📍 ${listingLocation}\n💰 $${listingPrice?.toLocaleString() || ''}\n\n🏠 Stunning property now available!\n\n#realestate #property #home #listing #forsale #realtor #dreamhome`
+      setCaption(defaultCaption)
+    }
+  }, [videoUrl, listingTitle, listingLocation, listingPrice])
 
   const loadPhotos = async (id: string) => {
     setLoading(true)
@@ -126,8 +164,37 @@ export default function VideoCreatorClient() {
             const imgRatio = image.width / image.height
             const canvasRatio = canvas.width / canvas.height
             let dw, dh, dx, dy
-            if (imgRatio > canvasRatio) { dh = canvas.height * scale; dw = dh * imgRatio; dx = (canvas.width - dw) / 2 + offsetX; dy = (canvas.height - dh) / 2 }
-            else { dw = canvas.width * scale; dh = dw / imgRatio; dx = (canvas.width - dw) / 2 + offsetX; dy = (canvas.height - dh) / 2 }
+
+            if (fitMode === 'contain') {
+              // Contain: fit entire image, add letterboxing
+              if (imgRatio > canvasRatio) {
+                // Image is wider - fit to width, letterbox top/bottom
+                dw = canvas.width * scale
+                dh = dw / imgRatio
+                dx = (canvas.width - dw) / 2 + offsetX
+                dy = (canvas.height - dh) / 2
+              } else {
+                // Image is taller - fit to height, letterbox sides
+                dh = canvas.height * scale
+                dw = dh * imgRatio
+                dx = (canvas.width - dw) / 2 + offsetX
+                dy = (canvas.height - dh) / 2
+              }
+            } else {
+              // Cover: fill canvas, crop as needed
+              if (imgRatio > canvasRatio) {
+                dh = canvas.height * scale
+                dw = dh * imgRatio
+                dx = (canvas.width - dw) / 2 + offsetX
+                dy = (canvas.height - dh) / 2
+              } else {
+                dw = canvas.width * scale
+                dh = dw / imgRatio
+                dx = (canvas.width - dw) / 2 + offsetX
+                dy = (canvas.height - dh) / 2
+              }
+            }
+
             ctx.drawImage(image, dx, dy, dw, dh)
             ctx.restore()
           }
@@ -194,6 +261,7 @@ export default function VideoCreatorClient() {
       mediaRecorder.stop()
       const url = await videoPromise
       setVideoUrl(url)
+      setShowShareModal(true)
       trackEvent(SnapREvents.VIDEO_CREATED)
     } catch (error) {
       console.error('Video generation error:', error)
@@ -208,6 +276,139 @@ export default function VideoCreatorClient() {
     a.href = videoUrl
     a.download = listingTitle.replace(/[^a-z0-9]/gi, '_') + '_video.webm'
     a.click()
+  }
+
+  const addToCalendar = async () => {
+    if (!videoUrl || !listingId) return
+    setAddingToCalendar(true)
+    
+    try {
+      const supabase = createClient()
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) throw new Error('Not authenticated')
+      
+      // Save video to storage first
+      const response = await fetch(videoUrl)
+      const blob = await response.blob()
+      const fileName = `videos/${user.id}/${listingId}_${Date.now()}.webm`
+      
+      const { error: uploadError } = await supabase.storage
+        .from('content')
+        .upload(fileName, blob, { contentType: 'video/webm' })
+      
+      if (uploadError) throw uploadError
+      
+      // Create calendar entry
+      const { error: calendarError } = await supabase
+        .from('content_calendar')
+        .insert({
+          user_id: user.id,
+          listing_id: listingId,
+          content_type: 'video',
+          title: `Video: ${listingTitle}`,
+          content_url: fileName,
+          platforms: ['instagram', 'facebook', 'tiktok'],
+          status: 'draft',
+          scheduled_for: null
+        })
+      
+      if (calendarError) throw calendarError
+      
+      setAddedToCalendar(true)
+      setTimeout(() => setAddedToCalendar(false), 3000)
+    } catch (error) {
+      console.error('Error adding to calendar:', error)
+      alert('Failed to add to calendar. Please try again.')
+    }
+    
+    setAddingToCalendar(false)
+  }
+
+  const copyVideoLink = async () => {
+    if (!videoUrl) return
+    try {
+      await navigator.clipboard.writeText(videoUrl)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    } catch (err) {
+      console.error('Failed to copy:', err)
+    }
+  }
+
+  const uploadVideoToStorage = async (): Promise<string | null> => {
+    if (!videoUrl) return null
+    if (publicVideoUrl) return publicVideoUrl
+    
+    setUploadingVideo(true)
+    try {
+      const supabase = createClient()
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) throw new Error('Not authenticated')
+      
+      const response = await fetch(videoUrl)
+      const blob = await response.blob()
+      const fileName = `videos/${user.id}/${listingId}_${Date.now()}.webm`
+      
+      const { error: uploadError } = await supabase.storage
+        .from('content')
+        .upload(fileName, blob, { 
+          contentType: 'video/webm',
+          upsert: true 
+        })
+      
+      if (uploadError) throw uploadError
+      
+      // Get public URL
+      const { data: { publicUrl } } = supabase.storage
+        .from('content')
+        .getPublicUrl(fileName)
+      
+      setPublicVideoUrl(publicUrl)
+      return publicUrl
+    } catch (error) {
+      console.error('Upload error:', error)
+      return null
+    } finally {
+      setUploadingVideo(false)
+    }
+  }
+
+  const publishToPlatform = async (platform: string) => {
+    setPublishing(platform)
+    setPublishError(null)
+    
+    try {
+      // First upload video to get public URL
+      const uploadedUrl = await uploadVideoToStorage()
+      if (!uploadedUrl) {
+        throw new Error('Failed to upload video')
+      }
+      
+      const response = await fetch('/api/publish-video', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          platform,
+          videoUrl: uploadedUrl,
+          caption,
+          listingId
+        })
+      })
+      
+      const result = await response.json()
+      
+      if (!response.ok) {
+        throw new Error(result.error || 'Failed to publish')
+      }
+      
+      setPublishSuccess(prev => [...prev, platform])
+      trackEvent(SnapREvents.VIDEO_PUBLISHED, { platform })
+    } catch (error: any) {
+      console.error('Publish error:', error)
+      setPublishError(error.message || 'Failed to publish')
+    } finally {
+      setPublishing(null)
+    }
   }
 
   return (
@@ -226,9 +427,9 @@ export default function VideoCreatorClient() {
         </div>
         <div className="ml-auto flex items-center gap-3">
           {videoUrl && (
-            <button onClick={downloadVideo} className="flex items-center gap-2 px-4 py-2 bg-pink-500 rounded-lg font-semibold hover:bg-pink-600">
-              <Download className="w-4 h-4" />
-              Download Video
+            <button onClick={() => setShowShareModal(true)} className="flex items-center gap-2 px-4 py-2 bg-pink-500 rounded-lg font-semibold hover:bg-pink-600">
+              <ExternalLink className="w-4 h-4" />
+              Share Video
             </button>
           )}
         </div>
@@ -244,7 +445,7 @@ export default function VideoCreatorClient() {
               <video src={videoUrl} controls autoPlay loop className="w-full h-full object-cover" />
             ) : selectedPhotos.length > 0 ? (
               <>
-                <img src={selectedPhotos[currentPreview]?.url} alt="" className="w-full h-full object-cover" />
+                <img src={selectedPhotos[currentPreview]?.url} alt="" className={`w-full h-full ${fitMode === 'contain' ? 'object-contain' : 'object-cover'}`} />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
                 <div className="absolute bottom-0 left-0 right-0 p-6 text-center">
                   {showTitle && <p className="text-white text-2xl font-bold mb-1">{listingTitle}</p>}
@@ -308,15 +509,57 @@ export default function VideoCreatorClient() {
           <div className="p-4 border-b border-white/5">
             <h3 className="font-medium mb-3 flex items-center gap-2"><Type className="w-4 h-4 text-pink-400" />Text Overlays</h3>
             <div className="space-y-2">
-              <button onClick={() => setShowTitle(!showTitle)} className={'w-full flex items-center justify-between p-3 rounded-lg transition-all ' + (showTitle ? 'bg-pink-500/20 border border-pink-500/30' : 'bg-white/5')}>
+              <button 
+                type="button"
+                onClick={() => setShowTitle(!showTitle)} 
+                className={`w-full flex items-center justify-between p-3 rounded-lg transition-all cursor-pointer ${showTitle ? 'bg-pink-500/20 border border-pink-500/30' : 'bg-white/5 hover:bg-white/10'}`}
+              >
                 <span>Property Title</span>
-                {showTitle && <Check className="w-4 h-4 text-pink-400" />}
+                <div className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-all ${showTitle ? 'bg-pink-500 border-pink-500' : 'border-white/30'}`}>
+                  {showTitle && <Check className="w-3 h-3" />}
+                </div>
               </button>
-              <button onClick={() => setShowPrice(!showPrice)} className={'w-full flex items-center justify-between p-3 rounded-lg transition-all ' + (showPrice ? 'bg-pink-500/20 border border-pink-500/30' : 'bg-white/5')}>
+              <button 
+                type="button"
+                onClick={() => setShowPrice(!showPrice)} 
+                className={`w-full flex items-center justify-between p-3 rounded-lg transition-all cursor-pointer ${showPrice ? 'bg-pink-500/20 border border-pink-500/30' : 'bg-white/5 hover:bg-white/10'}`}
+              >
                 <span>Price</span>
-                {showPrice && <Check className="w-4 h-4 text-pink-400" />}
+                <div className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-all ${showPrice ? 'bg-pink-500 border-pink-500' : 'border-white/30'}`}>
+                  {showPrice && <Check className="w-3 h-3" />}
+                </div>
               </button>
             </div>
+          </div>
+
+          {/* Fit Mode */}
+          <div className="p-4 border-b border-white/5">
+            <h3 className="font-medium mb-3 flex items-center gap-2">
+              <svg className="w-4 h-4 text-pink-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <rect x="3" y="3" width="18" height="18" rx="2" />
+                <path d="M9 3v18M15 3v18M3 9h18M3 15h18" />
+              </svg>
+              Photo Fit
+            </h3>
+            <div className="grid grid-cols-2 gap-2">
+              <button 
+                type="button"
+                onClick={() => setFitMode('contain')} 
+                className={`py-2 rounded-lg font-medium transition-all ${fitMode === 'contain' ? 'bg-pink-500' : 'bg-white/10 hover:bg-white/20'}`}
+              >
+                Fit (Full Photo)
+              </button>
+              <button 
+                type="button"
+                onClick={() => setFitMode('cover')} 
+                className={`py-2 rounded-lg font-medium transition-all ${fitMode === 'cover' ? 'bg-pink-500' : 'bg-white/10 hover:bg-white/20'}`}
+              >
+                Fill (Crop)
+              </button>
+            </div>
+            <p className="text-white/40 text-xs mt-2 text-center">
+              {fitMode === 'contain' ? 'Shows full photo with letterboxing' : 'Fills frame, may crop edges'}
+            </p>
           </div>
 
           {/* Generate Button */}
@@ -337,6 +580,262 @@ export default function VideoCreatorClient() {
           </div>
         </aside>
       </div>
+
+      {/* Share Modal */}
+      {showShareModal && videoUrl && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 overflow-auto">
+          <div className="bg-[#1A1A1A] rounded-2xl w-full max-w-xl border border-white/10 overflow-hidden my-8">
+            {/* Header */}
+            <div className="p-6 border-b border-white/10 text-center">
+              <div className="w-16 h-16 bg-green-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                <CheckCircle className="w-8 h-8 text-green-400" />
+              </div>
+              <h2 className="text-2xl font-bold">Video Ready! 🎬</h2>
+              <p className="text-white/50 mt-1">Your {totalDuration}s reel is ready to share</p>
+            </div>
+            
+            {/* Video Preview */}
+            <div className="px-6 py-4">
+              <video 
+                src={videoUrl} 
+                className="w-full max-h-48 object-contain rounded-lg bg-black"
+                controls
+                muted
+              />
+            </div>
+            
+            {/* Caption Editor */}
+            <div className="px-6 pb-4">
+              <button 
+                onClick={() => setShowCaptionEditor(!showCaptionEditor)}
+                className="w-full flex items-center justify-between p-3 bg-white/5 rounded-lg hover:bg-white/10 transition-colors"
+              >
+                <span className="text-sm font-medium flex items-center gap-2">
+                  <Type className="w-4 h-4 text-pink-400" />
+                  Edit Caption
+                </span>
+                <ChevronRight className={`w-4 h-4 transition-transform ${showCaptionEditor ? 'rotate-90' : ''}`} />
+              </button>
+              
+              {showCaptionEditor && (
+                <textarea
+                  value={caption}
+                  onChange={(e) => setCaption(e.target.value)}
+                  className="w-full mt-3 bg-white/5 border border-white/10 rounded-lg p-3 text-sm text-white placeholder-white/30 focus:outline-none focus:border-pink-500/50 resize-none h-32"
+                  placeholder="Write a caption..."
+                />
+              )}
+            </div>
+            
+            {/* Error Message */}
+            {publishError && (
+              <div className="mx-6 mb-4 p-3 bg-red-500/10 border border-red-500/30 rounded-lg text-red-400 text-sm">
+                {publishError}
+              </div>
+            )}
+            
+            {/* Share Options */}
+            <div className="p-6 space-y-4">
+              {/* Download Button - Primary */}
+              <button
+                onClick={downloadVideo}
+                className="w-full py-4 bg-gradient-to-r from-pink-500 to-purple-500 rounded-xl font-bold text-lg flex items-center justify-center gap-3 hover:opacity-90 transition-opacity"
+              >
+                <Download className="w-5 h-5" />
+                Download Video
+              </button>
+              
+              {/* Divider */}
+              <div className="relative">
+                <div className="absolute inset-0 flex items-center">
+                  <div className="w-full border-t border-white/10"></div>
+                </div>
+                <div className="relative flex justify-center text-sm">
+                  <span className="px-3 bg-[#1A1A1A] text-white/40">or publish directly to</span>
+                </div>
+              </div>
+              
+              {/* Platform Buttons */}
+              <div className="grid grid-cols-3 gap-3">
+                {/* Facebook */}
+                {connectedPlatforms.includes('facebook') ? (
+                  <button
+                    onClick={() => publishToPlatform('facebook')}
+                    disabled={publishing !== null || publishSuccess.includes('facebook')}
+                    className={`flex flex-col items-center gap-2 p-4 rounded-xl border transition-all ${
+                      publishSuccess.includes('facebook')
+                        ? 'bg-green-500/20 border-green-500/50'
+                        : 'bg-blue-600/20 border-blue-500/30 hover:border-blue-500/60'
+                    } disabled:opacity-50`}
+                  >
+                    <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center relative">
+                      <Facebook className="w-5 h-5" />
+                      {connectedPlatforms.includes('facebook') && !publishSuccess.includes('facebook') && (
+                        <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-500 rounded-full border-2 border-[#1A1A1A]" />
+                      )}
+                    </div>
+                    {publishing === 'facebook' ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        <span className="text-xs text-white/60">Publishing...</span>
+                      </>
+                    ) : publishSuccess.includes('facebook') ? (
+                      <>
+                        <span className="text-sm font-medium text-green-400">Published!</span>
+                        <CheckCircle className="w-4 h-4 text-green-400" />
+                      </>
+                    ) : (
+                      <>
+                        <span className="text-sm font-medium">Facebook</span>
+                        <span className="text-xs text-green-400">Connected</span>
+                      </>
+                    )}
+                  </button>
+                ) : (
+                  <Link
+                    href="/dashboard/settings/social"
+                    className="flex flex-col items-center gap-2 p-4 bg-blue-600/10 rounded-xl border border-blue-500/20 hover:border-blue-500/40 transition-all group"
+                  >
+                    <div className="w-10 h-10 bg-blue-600/50 rounded-xl flex items-center justify-center">
+                      <Facebook className="w-5 h-5" />
+                    </div>
+                    <span className="text-sm font-medium">Facebook</span>
+                    <span className="text-xs text-white/40 group-hover:text-blue-400">Connect →</span>
+                  </Link>
+                )}
+                
+                {/* Instagram */}
+                {connectedPlatforms.includes('instagram') ? (
+                  <button
+                    onClick={() => publishToPlatform('instagram')}
+                    disabled={publishing !== null || publishSuccess.includes('instagram')}
+                    className={`flex flex-col items-center gap-2 p-4 rounded-xl border transition-all ${
+                      publishSuccess.includes('instagram')
+                        ? 'bg-green-500/20 border-green-500/50'
+                        : 'bg-gradient-to-br from-purple-600/20 to-pink-600/20 border-purple-500/30 hover:border-purple-500/60'
+                    } disabled:opacity-50`}
+                  >
+                    <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-pink-500 rounded-xl flex items-center justify-center relative">
+                      <Instagram className="w-5 h-5" />
+                      {!publishSuccess.includes('instagram') && (
+                        <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-500 rounded-full border-2 border-[#1A1A1A]" />
+                      )}
+                    </div>
+                    {publishing === 'instagram' ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        <span className="text-xs text-white/60">Publishing...</span>
+                      </>
+                    ) : publishSuccess.includes('instagram') ? (
+                      <>
+                        <span className="text-sm font-medium text-green-400">Published!</span>
+                        <CheckCircle className="w-4 h-4 text-green-400" />
+                      </>
+                    ) : (
+                      <>
+                        <span className="text-sm font-medium">Instagram</span>
+                        <span className="text-xs text-green-400">Connected</span>
+                      </>
+                    )}
+                  </button>
+                ) : (
+                  <Link
+                    href="/dashboard/settings/social"
+                    className="flex flex-col items-center gap-2 p-4 bg-gradient-to-br from-purple-600/10 to-pink-600/10 rounded-xl border border-purple-500/20 hover:border-purple-500/40 transition-all group"
+                  >
+                    <div className="w-10 h-10 bg-gradient-to-br from-purple-500/50 to-pink-500/50 rounded-xl flex items-center justify-center">
+                      <Instagram className="w-5 h-5" />
+                    </div>
+                    <span className="text-sm font-medium">Instagram</span>
+                    <span className="text-xs text-white/40 group-hover:text-purple-400">Connect →</span>
+                  </Link>
+                )}
+                
+                {/* TikTok - Manual for now */}
+                <a
+                  href="https://www.tiktok.com/upload"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex flex-col items-center gap-2 p-4 bg-white/5 rounded-xl border border-white/10 hover:border-white/30 transition-all group"
+                >
+                  <div className="w-10 h-10 bg-black rounded-xl flex items-center justify-center border border-white/20">
+                    <Music2 className="w-5 h-5" />
+                  </div>
+                  <span className="text-sm font-medium">TikTok</span>
+                  <span className="text-xs text-white/40 group-hover:text-white/60 flex items-center gap-1">
+                    Manual <ExternalLink className="w-3 h-3" />
+                  </span>
+                </a>
+              </div>
+              
+              {/* Upload Status */}
+              {uploadingVideo && (
+                <div className="flex items-center justify-center gap-2 text-sm text-white/50">
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Uploading video...
+                </div>
+              )}
+              
+              {/* Secondary Actions */}
+              <div className="grid grid-cols-2 gap-3 pt-2">
+                <button
+                  onClick={addToCalendar}
+                  disabled={addingToCalendar || addedToCalendar}
+                  className="flex items-center justify-center gap-2 py-3 bg-white/5 rounded-xl hover:bg-white/10 transition-colors disabled:opacity-50"
+                >
+                  {addedToCalendar ? (
+                    <>
+                      <CheckCircle className="w-4 h-4 text-green-400" />
+                      <span className="text-sm text-green-400">Added!</span>
+                    </>
+                  ) : addingToCalendar ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      <span className="text-sm">Saving...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Calendar className="w-4 h-4 text-white/60" />
+                      <span className="text-sm">Add to Calendar</span>
+                    </>
+                  )}
+                </button>
+                
+                <button
+                  onClick={copyVideoLink}
+                  className="flex items-center justify-center gap-2 py-3 bg-white/5 rounded-xl hover:bg-white/10 transition-colors"
+                >
+                  {copied ? (
+                    <>
+                      <CheckCircle className="w-4 h-4 text-green-400" />
+                      <span className="text-sm text-green-400">Copied!</span>
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="w-4 h-4 text-white/60" />
+                      <span className="text-sm">Copy Link</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+            
+            {/* Footer */}
+            <div className="px-6 pb-6">
+              <button
+                onClick={() => {
+                  setShowShareModal(false)
+                  setPublishSuccess([])
+                  setPublishError(null)
+                }}
+                className="w-full py-3 text-white/50 hover:text-white transition-colors text-sm"
+              >
+                Close and Edit More
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
