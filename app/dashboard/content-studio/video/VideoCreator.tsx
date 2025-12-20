@@ -3,12 +3,20 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
-import { ArrowLeft, Video, Play, Pause, Download, Home, Loader2, ChevronLeft, Clock, Sparkles, Check, Music, Type, Instagram, Facebook, Music2, Calendar, ExternalLink, CheckCircle, Copy } from 'lucide-react'
+import { ArrowLeft, Video, Play, Pause, Download, Home, Loader2, ChevronLeft, Clock, Sparkles, Check, Music, Type, Instagram, Facebook, Music2, Calendar, ExternalLink, CheckCircle, Copy, Smartphone, Square, RectangleHorizontal, RectangleVertical } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { trackEvent, SnapREvents } from '@/lib/analytics'
 
 interface Photo { id: string; url: string; selected: boolean }
 type Transition = 'fade' | 'slide' | 'zoom' | 'none'
+type AspectRatio = '16:9' | '1:1' | '4:5' | '9:16'
+
+const ASPECT_RATIOS = {
+  '16:9': { width: 1920, height: 1080, label: 'Landscape (Feed)', icon: RectangleHorizontal, platform: 'Facebook/Instagram Feed' },
+  '1:1': { width: 1080, height: 1080, label: 'Square (Feed)', icon: Square, platform: 'Facebook/Instagram Feed' },
+  '4:5': { width: 1080, height: 1350, label: 'Portrait (Feed)', icon: RectangleVertical, platform: 'Facebook/Instagram Feed' },
+  '9:16': { width: 1080, height: 1920, label: 'Vertical (Stories)', icon: Smartphone, platform: 'Instagram/TikTok/Reels' }
+}
 
 export default function VideoCreatorClient() {
   const searchParams = useSearchParams()
@@ -23,6 +31,7 @@ export default function VideoCreatorClient() {
   const [showTitle, setShowTitle] = useState(true)
   const [showPrice, setShowPrice] = useState(true)
   const [fitMode, setFitMode] = useState<'cover' | 'contain'>('contain')
+  const [aspectRatio, setAspectRatio] = useState<AspectRatio>('9:16')
   const [generating, setGenerating] = useState(false)
   const [progress, setProgress] = useState(0)
   const [videoUrl, setVideoUrl] = useState<string | null>(null)
@@ -93,8 +102,11 @@ export default function VideoCreatorClient() {
     const ctx = canvas.getContext('2d')
     if (!ctx) return
 
-    canvas.width = 1080
-    canvas.height = 1920
+    // Set canvas dimensions based on selected aspect ratio
+    const { width, height } = ASPECT_RATIOS[aspectRatio]
+    canvas.width = width
+    canvas.height = height
+
     const fps = 30
     const frameDuration = 1000 / fps
     const framesPerPhoto = duration * fps
@@ -134,22 +146,18 @@ export default function VideoCreatorClient() {
             let dw, dh, dx, dy
 
             if (fitMode === 'contain') {
-              // Contain: fit entire image, add letterboxing
               if (imgRatio > canvasRatio) {
-                // Image is wider - fit to width, letterbox top/bottom
                 dw = canvas.width * scale
                 dh = dw / imgRatio
                 dx = (canvas.width - dw) / 2 + offsetX
                 dy = (canvas.height - dh) / 2
               } else {
-                // Image is taller - fit to height, letterbox sides
                 dh = canvas.height * scale
                 dw = dh * imgRatio
                 dx = (canvas.width - dw) / 2 + offsetX
                 dy = (canvas.height - dh) / 2
               }
             } else {
-              // Cover: fill canvas, crop as needed
               if (imgRatio > canvasRatio) {
                 dh = canvas.height * scale
                 dw = dh * imgRatio
@@ -191,23 +199,30 @@ export default function VideoCreatorClient() {
           ctx.fillStyle = gradient
           ctx.fillRect(0, 0, canvas.width, canvas.height)
 
+          // Dynamic text sizing based on aspect ratio
+          const isVertical = aspectRatio === '9:16'
+          const titleSize = isVertical ? 64 : 48
+          const locationSize = isVertical ? 36 : 28
+          const priceSize = isVertical ? 72 : 56
+          const bottomPadding = isVertical ? 120 : 80
+
           // Text overlays
           if (showTitle) {
             ctx.fillStyle = '#fff'
-            ctx.font = 'bold 64px system-ui'
+            ctx.font = `bold ${titleSize}px system-ui`
             ctx.textAlign = 'center'
             const title = listingTitle.length > 25 ? listingTitle.substring(0, 25) + '...' : listingTitle
-            ctx.fillText(title, canvas.width / 2, canvas.height - 280)
+            ctx.fillText(title, canvas.width / 2, canvas.height - (bottomPadding + 160))
           }
           if (listingLocation) {
             ctx.fillStyle = 'rgba(255,255,255,0.7)'
-            ctx.font = '36px system-ui'
-            ctx.fillText(listingLocation, canvas.width / 2, canvas.height - 210)
+            ctx.font = `${locationSize}px system-ui`
+            ctx.fillText(listingLocation, canvas.width / 2, canvas.height - (bottomPadding + 90))
           }
           if (showPrice && listingPrice) {
             ctx.fillStyle = '#D4AF37'
-            ctx.font = 'bold 72px system-ui'
-            ctx.fillText('$' + listingPrice.toLocaleString(), canvas.width / 2, canvas.height - 120)
+            ctx.font = `bold ${priceSize}px system-ui`
+            ctx.fillText('$' + listingPrice.toLocaleString(), canvas.width / 2, canvas.height - bottomPadding)
           }
 
           // Photo counter
@@ -242,7 +257,7 @@ export default function VideoCreatorClient() {
     if (!videoUrl) return
     const a = document.createElement('a')
     a.href = videoUrl
-    a.download = listingTitle.replace(/[^a-z0-9]/gi, '_') + '_video.webm'
+    a.download = `${listingTitle.replace(/[^a-z0-9]/gi, '_')}_${aspectRatio.replace(':', 'x')}.webm`
     a.click()
   }
 
@@ -255,7 +270,6 @@ export default function VideoCreatorClient() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) throw new Error('Not authenticated')
       
-      // Save video to storage first
       const response = await fetch(videoUrl)
       const blob = await response.blob()
       const fileName = `videos/${user.id}/${listingId}_${Date.now()}.webm`
@@ -266,7 +280,6 @@ export default function VideoCreatorClient() {
       
       if (uploadError) throw uploadError
       
-      // Create calendar entry
       const { error: calendarError } = await supabase
         .from('content_calendar')
         .insert({
@@ -303,6 +316,14 @@ export default function VideoCreatorClient() {
     }
   }
 
+  const getPreviewAspectClass = () => {
+    switch(aspectRatio) {
+      case '16:9': return 'aspect-video'
+      case '1:1': return 'aspect-square'
+      case '4:5': return 'aspect-[4/5]'
+      case '9:16': return 'aspect-[9/16]'
+    }
+  }
 
   return (
     <div className="min-h-screen bg-[#0A0A0A] text-white">
@@ -331,7 +352,7 @@ export default function VideoCreatorClient() {
       <div className="flex h-[calc(100vh-56px)]">
         {/* Preview */}
         <div className="flex-1 flex items-center justify-center bg-[#080808] p-8">
-          <div className="relative w-full max-w-[400px] aspect-[9/16] bg-black rounded-3xl overflow-hidden shadow-2xl border-4 border-gray-800">
+          <div className={`relative w-full max-w-[600px] ${getPreviewAspectClass()} bg-black rounded-2xl overflow-hidden shadow-2xl border-4 border-gray-800`}>
             {loading ? (
               <div className="absolute inset-0 flex items-center justify-center"><Loader2 className="w-12 h-12 animate-spin text-pink-500" /></div>
             ) : videoUrl ? (
@@ -340,300 +361,182 @@ export default function VideoCreatorClient() {
               <>
                 <img src={selectedPhotos[currentPreview]?.url} alt="" className={`w-full h-full ${fitMode === 'contain' ? 'object-contain' : 'object-cover'}`} />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
-                <div className="absolute bottom-0 left-0 right-0 p-6 text-center">
-                  {showTitle && <p className="text-white text-2xl font-bold mb-1">{listingTitle}</p>}
-                  {listingLocation && <p className="text-white/70 text-sm mb-2">{listingLocation}</p>}
-                  {showPrice && listingPrice && <p className="text-amber-400 text-3xl font-bold">${listingPrice.toLocaleString()}</p>}
-                </div>
-                <div className="absolute top-4 right-4 px-3 py-1 bg-black/60 rounded-full text-sm">{currentPreview + 1}/{selectedPhotos.length}</div>
-                <button onClick={() => setPlaying(!playing)} className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 p-4 bg-black/50 rounded-full hover:bg-black/70">
-                  {playing ? <Pause className="w-8 h-8" /> : <Play className="w-8 h-8" />}
-                </button>
+                {showTitle && <div className="absolute bottom-32 left-0 right-0 text-center text-white font-bold text-3xl">{listingTitle}</div>}
+                {listingLocation && <div className="absolute bottom-20 left-0 right-0 text-center text-white/70 text-xl">{listingLocation}</div>}
+                {showPrice && listingPrice && <div className="absolute bottom-8 left-0 right-0 text-center text-[#D4AF37] font-bold text-4xl">${listingPrice.toLocaleString()}</div>}
               </>
             ) : (
-              <div className="absolute inset-0 flex flex-col items-center justify-center text-white/30">
-                <Home className="w-16 h-16 mb-4" />
-                <p>Select photos to preview</p>
-              </div>
+              <div className="absolute inset-0 flex items-center justify-center text-white/30">Select photos to preview</div>
             )}
           </div>
         </div>
 
-        {/* Sidebar */}
-        <aside className="w-96 bg-[#111] border-l border-white/5 flex flex-col overflow-auto">
-          {/* Photos */}
-          <div className="p-4 border-b border-white/5">
-            <h3 className="font-medium mb-3 flex items-center justify-between">
-              <span>Photos ({selectedPhotos.length} selected)</span>
-              <button onClick={() => setPhotos(photos.map(p => ({ ...p, selected: true })))} className="text-xs text-pink-400 hover:text-pink-300">Select All</button>
-            </h3>
-            <div className="grid grid-cols-4 gap-2 max-h-48 overflow-auto">
-              {photos.map((photo, i) => (
-                <button key={photo.id} onClick={() => togglePhoto(photo.id)} className={'relative aspect-square rounded-lg overflow-hidden border-2 transition-all ' + (photo.selected ? 'border-pink-500 ring-2 ring-pink-500/30' : 'border-transparent opacity-50 hover:opacity-80')}>
-                  <img src={photo.url} alt="" className="w-full h-full object-cover" />
-                  {photo.selected && <div className="absolute top-1 right-1 w-5 h-5 bg-pink-500 rounded-full flex items-center justify-center text-xs font-bold">{photos.filter(p => p.selected).indexOf(photo) + 1}</div>}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Duration */}
-          <div className="p-4 border-b border-white/5">
-            <h3 className="font-medium mb-3 flex items-center gap-2"><Clock className="w-4 h-4 text-pink-400" />Duration per Photo</h3>
-            <div className="flex gap-2">
-              {[2, 3, 4, 5].map(d => (
-                <button key={d} onClick={() => setDuration(d)} className={'flex-1 py-2 rounded-lg font-medium transition-all ' + (duration === d ? 'bg-pink-500' : 'bg-white/10 hover:bg-white/20')}>{d}s</button>
-              ))}
-            </div>
-            <p className="text-white/40 text-xs mt-2 text-center">Total: {totalDuration}s video</p>
-          </div>
-
-          {/* Transition */}
-          <div className="p-4 border-b border-white/5">
-            <h3 className="font-medium mb-3 flex items-center gap-2"><Sparkles className="w-4 h-4 text-pink-400" />Transition Effect</h3>
-            <div className="grid grid-cols-2 gap-2">
-              {[{ id: 'fade', label: 'Fade' }, { id: 'slide', label: 'Slide' }, { id: 'zoom', label: 'Ken Burns' }, { id: 'none', label: 'None' }].map(t => (
-                <button key={t.id} onClick={() => setTransition(t.id as Transition)} className={'py-2 rounded-lg font-medium transition-all ' + (transition === t.id ? 'bg-pink-500' : 'bg-white/10 hover:bg-white/20')}>{t.label}</button>
-              ))}
-            </div>
-          </div>
-
-          {/* Text Options */}
-          <div className="p-4 border-b border-white/5">
-            <h3 className="font-medium mb-3 flex items-center gap-2"><Type className="w-4 h-4 text-pink-400" />Text Overlays</h3>
-            <div className="space-y-2">
-              <button 
-                type="button"
-                onClick={() => setShowTitle(!showTitle)} 
-                className={`w-full flex items-center justify-between p-3 rounded-lg transition-all cursor-pointer ${showTitle ? 'bg-pink-500/20 border border-pink-500/30' : 'bg-white/5 hover:bg-white/10'}`}
-              >
-                <span>Property Title</span>
-                <div className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-all ${showTitle ? 'bg-pink-500 border-pink-500' : 'border-white/30'}`}>
-                  {showTitle && <Check className="w-3 h-3" />}
-                </div>
-              </button>
-              <button 
-                type="button"
-                onClick={() => setShowPrice(!showPrice)} 
-                className={`w-full flex items-center justify-between p-3 rounded-lg transition-all cursor-pointer ${showPrice ? 'bg-pink-500/20 border border-pink-500/30' : 'bg-white/5 hover:bg-white/10'}`}
-              >
-                <span>Price</span>
-                <div className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-all ${showPrice ? 'bg-pink-500 border-pink-500' : 'border-white/30'}`}>
-                  {showPrice && <Check className="w-3 h-3" />}
-                </div>
-              </button>
-            </div>
-          </div>
-
-          {/* Fit Mode */}
-          <div className="p-4 border-b border-white/5">
-            <h3 className="font-medium mb-3 flex items-center gap-2">
-              <svg className="w-4 h-4 text-pink-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <rect x="3" y="3" width="18" height="18" rx="2" />
-                <path d="M9 3v18M15 3v18M3 9h18M3 15h18" />
-              </svg>
-              Photo Fit
-            </h3>
-            <div className="grid grid-cols-2 gap-2">
-              <button 
-                type="button"
-                onClick={() => setFitMode('contain')} 
-                className={`py-2 rounded-lg font-medium transition-all ${fitMode === 'contain' ? 'bg-pink-500' : 'bg-white/10 hover:bg-white/20'}`}
-              >
-                Fit (Full Photo)
-              </button>
-              <button 
-                type="button"
-                onClick={() => setFitMode('cover')} 
-                className={`py-2 rounded-lg font-medium transition-all ${fitMode === 'cover' ? 'bg-pink-500' : 'bg-white/10 hover:bg-white/20'}`}
-              >
-                Fill (Crop)
-              </button>
-            </div>
-            <p className="text-white/40 text-xs mt-2 text-center">
-              {fitMode === 'contain' ? 'Shows full photo with letterboxing' : 'Fills frame, may crop edges'}
-            </p>
-          </div>
-
-          {/* Generate Button */}
-          <div className="p-4 mt-auto">
-            {generating ? (
-              <div className="space-y-3">
-                <div className="h-3 bg-white/10 rounded-full overflow-hidden">
-                  <div className="h-full bg-pink-500 transition-all duration-300" style={{ width: progress + '%' }} />
-                </div>
-                <p className="text-center text-sm text-white/50">Generating video... {progress}%</p>
+        {/* Controls */}
+        <div className="w-96 bg-[#111] border-l border-white/5 flex flex-col overflow-y-auto">
+          <div className="p-6 space-y-6">
+            
+            {/* Aspect Ratio Selector - NEW */}
+            <div className="space-y-3">
+              <div className="flex items-center gap-2 text-white/50 text-sm">
+                <RectangleHorizontal className="w-4 h-4" />
+                <span className="font-medium">Aspect Ratio</span>
               </div>
-            ) : (
-              <button onClick={generateVideo} disabled={selectedPhotos.length === 0} className="w-full py-4 bg-pink-500 text-white rounded-xl font-bold text-lg flex items-center justify-center gap-2 hover:bg-pink-600 disabled:opacity-50 disabled:cursor-not-allowed">
-                <Video className="w-5 h-5" />
-                Generate Video
-              </button>
+              <div className="grid grid-cols-2 gap-2">
+                {(Object.keys(ASPECT_RATIOS) as AspectRatio[]).map((ratio) => {
+                  const config = ASPECT_RATIOS[ratio]
+                  const Icon = config.icon
+                  return (
+                    <button
+                      key={ratio}
+                      onClick={() => setAspectRatio(ratio)}
+                      className={`p-3 rounded-lg border transition-all ${
+                        aspectRatio === ratio
+                          ? 'bg-pink-500/20 border-pink-500 text-white'
+                          : 'bg-white/5 border-white/10 text-white/50 hover:bg-white/10'
+                      }`}
+                    >
+                      <div className="flex items-center gap-2 mb-1">
+                        <Icon className="w-4 h-4" />
+                        <span className="font-bold text-sm">{ratio}</span>
+                      </div>
+                      <div className="text-xs opacity-70">{config.label}</div>
+                      <div className="text-[10px] opacity-50 mt-1">{config.platform}</div>
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+
+            {/* Photo Duration */}
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2 text-white/50 text-sm">
+                  <Clock className="w-4 h-4" />
+                  <span className="font-medium">Photo Duration</span>
+                </div>
+                <span className="text-white font-bold">{duration}s</span>
+              </div>
+              <input type="range" min="1" max="5" step="0.5" value={duration} onChange={(e) => setDuration(parseFloat(e.target.value))} className="w-full" />
+              <div className="text-xs text-white/30">Total: {totalDuration}s ({selectedPhotos.length} photos)</div>
+            </div>
+
+            {/* Transition Effect */}
+            <div className="space-y-3">
+              <div className="flex items-center gap-2 text-white/50 text-sm">
+                <Sparkles className="w-4 h-4" />
+                <span className="font-medium">Transition</span>
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                {(['fade', 'slide', 'zoom', 'none'] as Transition[]).map(t => (
+                  <button key={t} onClick={() => setTransition(t)} className={`px-3 py-2 rounded-lg text-sm font-medium transition ${transition === t ? 'bg-pink-500 text-white' : 'bg-white/5 text-white/50 hover:bg-white/10'}`}>
+                    {t.charAt(0).toUpperCase() + t.slice(1)}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Text Overlays */}
+            <div className="space-y-3">
+              <div className="flex items-center gap-2 text-white/50 text-sm">
+                <Type className="w-4 h-4" />
+                <span className="font-medium">Text Overlays</span>
+              </div>
+              <div className="space-y-2">
+                <label className="flex items-center gap-2 p-3 bg-white/5 rounded-lg cursor-pointer hover:bg-white/10">
+                  <input type="checkbox" checked={showTitle} onChange={(e) => setShowTitle(e.target.checked)} className="w-4 h-4" />
+                  <span className="text-sm">Show Title</span>
+                </label>
+                <label className="flex items-center gap-2 p-3 bg-white/5 rounded-lg cursor-pointer hover:bg-white/10">
+                  <input type="checkbox" checked={showPrice} onChange={(e) => setShowPrice(e.target.checked)} className="w-4 h-4" />
+                  <span className="text-sm">Show Price</span>
+                </label>
+              </div>
+            </div>
+
+            {/* Fit Mode */}
+            <div className="space-y-3">
+              <div className="flex items-center gap-2 text-white/50 text-sm">
+                <Square className="w-4 h-4" />
+                <span className="font-medium">Image Fit</span>
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <button onClick={() => setFitMode('contain')} className={`px-3 py-2 rounded-lg text-sm font-medium transition ${fitMode === 'contain' ? 'bg-pink-500 text-white' : 'bg-white/5 text-white/50 hover:bg-white/10'}`}>
+                  Contain (Fit)
+                </button>
+                <button onClick={() => setFitMode('cover')} className={`px-3 py-2 rounded-lg text-sm font-medium transition ${fitMode === 'cover' ? 'bg-pink-500 text-white' : 'bg-white/5 text-white/50 hover:bg-white/10'}`}>
+                  Cover (Fill)
+                </button>
+              </div>
+            </div>
+
+            {/* Generate Button */}
+            <button onClick={generateVideo} disabled={generating || selectedPhotos.length === 0} className="w-full py-4 bg-gradient-to-r from-pink-500 to-purple-600 rounded-xl font-bold text-white hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2">
+              {generating ? (
+                <>
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                  <span>Generating {progress}%</span>
+                </>
+              ) : (
+                <>
+                  <Video className="w-5 h-5" />
+                  <span>Generate Video</span>
+                </>
+              )}
+            </button>
+
+            {videoUrl && (
+              <div className="space-y-2">
+                <button onClick={downloadVideo} className="w-full py-3 bg-white/10 rounded-lg font-medium hover:bg-white/20 flex items-center justify-center gap-2">
+                  <Download className="w-4 h-4" />
+                  Download Video
+                </button>
+                <button onClick={addToCalendar} disabled={addingToCalendar} className="w-full py-3 bg-white/10 rounded-lg font-medium hover:bg-white/20 flex items-center justify-center gap-2">
+                  {addingToCalendar ? <Loader2 className="w-4 h-4 animate-spin" /> : addedToCalendar ? <CheckCircle className="w-4 h-4 text-green-400" /> : <Calendar className="w-4 h-4" />}
+                  {addedToCalendar ? 'Added to Calendar!' : 'Add to Calendar'}
+                </button>
+              </div>
             )}
+
+            {/* Photo Selection */}
+            <div className="space-y-3">
+              <div className="flex items-center gap-2 text-white/50 text-sm">
+                <span className="font-medium">Selected Photos</span>
+                <span className="ml-auto text-pink-500 font-bold">{selectedPhotos.length}/{photos.length}</span>
+              </div>
+              <div className="grid grid-cols-3 gap-2 max-h-64 overflow-y-auto">
+                {photos.map(photo => (
+                  <div key={photo.id} onClick={() => togglePhoto(photo.id)} className={`relative aspect-square rounded-lg overflow-hidden cursor-pointer border-2 transition ${photo.selected ? 'border-pink-500' : 'border-transparent opacity-50 hover:opacity-100'}`}>
+                    <img src={photo.url} alt="" className="w-full h-full object-cover" />
+                    {photo.selected && <div className="absolute top-1 right-1 w-5 h-5 bg-pink-500 rounded-full flex items-center justify-center"><Check className="w-3 h-3 text-white" /></div>}
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
-        </aside>
+        </div>
       </div>
 
       {/* Share Modal */}
       {showShareModal && videoUrl && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 overflow-auto">
-          <div className="bg-[#1A1A1A] rounded-2xl w-full max-w-xl border border-white/10 overflow-hidden my-8">
-            {/* Header */}
-            <div className="p-6 border-b border-white/10 text-center">
-              <div className="w-16 h-16 bg-green-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
-                <CheckCircle className="w-8 h-8 text-green-400" />
-              </div>
-              <h2 className="text-2xl font-bold">Video Ready! 🎬</h2>
-              <p className="text-white/50 mt-1">Your {totalDuration}s reel is ready to share</p>
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-[#111] rounded-2xl p-6 max-w-md w-full space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="text-xl font-bold">Video Ready!</h3>
+              <button onClick={() => setShowShareModal(false)} className="text-white/50 hover:text-white">✕</button>
             </div>
-            
-            {/* Video Preview */}
-            <div className="px-6 py-4">
-              <video 
-                src={videoUrl} 
-                className="w-full max-h-48 object-contain rounded-lg bg-black"
-                controls
-                muted
-              />
-            </div>
-            
-            {/* Share Options */}
-            <div className="p-6 space-y-4">
-              {/* Download Button - Primary */}
-              <button
-                onClick={downloadVideo}
-                className="w-full py-4 bg-gradient-to-r from-pink-500 to-purple-500 rounded-xl font-bold text-lg flex items-center justify-center gap-3 hover:opacity-90 transition-opacity"
-              >
-                <Download className="w-5 h-5" />
+            <p className="text-white/70 text-sm">Your {aspectRatio} video has been generated successfully.</p>
+            <div className="space-y-2">
+              <button onClick={downloadVideo} className="w-full py-3 bg-pink-500 rounded-lg font-semibold hover:bg-pink-600 flex items-center justify-center gap-2">
+                <Download className="w-4 h-4" />
                 Download Video
               </button>
-              
-              {/* Divider */}
-              <div className="relative">
-                <div className="absolute inset-0 flex items-center">
-                  <div className="w-full border-t border-white/10"></div>
-                </div>
-                <div className="relative flex justify-center text-sm">
-                  <span className="px-3 bg-[#1A1A1A] text-white/40">or share to</span>
-                </div>
-              </div>
-              
-              {/* Platform Buttons - Manual Upload */}
-              <div className="grid grid-cols-3 gap-3">
-                {/* Facebook */}
-                <a
-                  href="https://business.facebook.com/latest/composer"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  onClick={downloadVideo}
-                  className="flex flex-col items-center gap-2 p-4 bg-blue-600/20 rounded-xl border border-blue-500/30 hover:border-blue-500/60 hover:bg-blue-600/30 transition-all group"
-                >
-                  <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center">
-                    <Facebook className="w-5 h-5" />
-                  </div>
-                  <span className="text-sm font-medium">Facebook</span>
-                  <span className="text-xs text-blue-400 group-hover:text-blue-300 flex items-center gap-1">
-                    Upload <ExternalLink className="w-3 h-3" />
-                  </span>
-                </a>
-                
-                {/* Instagram */}
-                <a
-                  href="https://www.instagram.com/"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  onClick={downloadVideo}
-                  className="flex flex-col items-center gap-2 p-4 bg-gradient-to-br from-purple-600/20 to-pink-600/20 rounded-xl border border-purple-500/30 hover:border-purple-500/60 transition-all group"
-                >
-                  <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-pink-500 rounded-xl flex items-center justify-center">
-                    <Instagram className="w-5 h-5" />
-                  </div>
-                  <span className="text-sm font-medium">Instagram</span>
-                  <span className="text-xs text-purple-400 group-hover:text-purple-300 flex items-center gap-1">
-                    Reels <ExternalLink className="w-3 h-3" />
-                  </span>
-                </a>
-                
-                {/* TikTok */}
-                <a
-                  href="https://www.tiktok.com/upload"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  onClick={downloadVideo}
-                  className="flex flex-col items-center gap-2 p-4 bg-white/5 rounded-xl border border-white/10 hover:border-white/30 transition-all group"
-                >
-                  <div className="w-10 h-10 bg-black rounded-xl flex items-center justify-center border border-white/20">
-                    <Music2 className="w-5 h-5" />
-                  </div>
-                  <span className="text-sm font-medium">TikTok</span>
-                  <span className="text-xs text-white/40 group-hover:text-white/60 flex items-center gap-1">
-                    Video <ExternalLink className="w-3 h-3" />
-                  </span>
-                </a>
-              </div>
-              
-              {/* Quick Tips */}
-              <div className="bg-amber-500/10 border border-amber-500/20 rounded-xl p-4">
-                <p className="text-sm text-amber-400 font-medium mb-2">📱 Quick Upload Steps:</p>
-                <ol className="text-xs text-white/50 space-y-1 list-decimal list-inside">
-                  <li>Click any platform above (video downloads automatically)</li>
-                  <li>Open the platform app on your phone</li>
-                  <li>Create new Reel/Video → Select downloaded file</li>
-                  <li>Add your caption, hashtags & music!</li>
-                </ol>
-              </div>
-              
-              {/* Secondary Actions */}
-              <div className="grid grid-cols-2 gap-3 pt-2">
-                <button
-                  onClick={addToCalendar}
-                  disabled={addingToCalendar || addedToCalendar}
-                  className="flex items-center justify-center gap-2 py-3 bg-white/5 rounded-xl hover:bg-white/10 transition-colors disabled:opacity-50"
-                >
-                  {addedToCalendar ? (
-                    <>
-                      <CheckCircle className="w-4 h-4 text-green-400" />
-                      <span className="text-sm text-green-400">Added!</span>
-                    </>
-                  ) : addingToCalendar ? (
-                    <>
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                      <span className="text-sm">Saving...</span>
-                    </>
-                  ) : (
-                    <>
-                      <Calendar className="w-4 h-4 text-white/60" />
-                      <span className="text-sm">Add to Calendar</span>
-                    </>
-                  )}
-                </button>
-                
-                <button
-                  onClick={copyVideoLink}
-                  className="flex items-center justify-center gap-2 py-3 bg-white/5 rounded-xl hover:bg-white/10 transition-colors"
-                >
-                  {copied ? (
-                    <>
-                      <CheckCircle className="w-4 h-4 text-green-400" />
-                      <span className="text-sm text-green-400">Copied!</span>
-                    </>
-                  ) : (
-                    <>
-                      <Copy className="w-4 h-4 text-white/60" />
-                      <span className="text-sm">Copy Link</span>
-                    </>
-                  )}
-                </button>
-              </div>
-            </div>
-            
-            {/* Footer */}
-            <div className="px-6 pb-6">
-              <button
-                onClick={() => setShowShareModal(false)}
-                className="w-full py-3 text-white/50 hover:text-white transition-colors text-sm"
-              >
-                Close and Edit More
+              <button onClick={copyVideoLink} className="w-full py-3 bg-white/10 rounded-lg font-medium hover:bg-white/20 flex items-center justify-center gap-2">
+                {copied ? <CheckCircle className="w-4 h-4 text-green-400" /> : <Copy className="w-4 h-4" />}
+                {copied ? 'Copied!' : 'Copy Link'}
+              </button>
+              <button onClick={addToCalendar} disabled={addingToCalendar} className="w-full py-3 bg-white/10 rounded-lg font-medium hover:bg-white/20 flex items-center justify-center gap-2">
+                {addingToCalendar ? <Loader2 className="w-4 h-4 animate-spin" /> : addedToCalendar ? <CheckCircle className="w-4 h-4 text-green-400" /> : <Calendar className="w-4 h-4" />}
+                {addedToCalendar ? 'Added!' : 'Add to Calendar'}
               </button>
             </div>
           </div>
