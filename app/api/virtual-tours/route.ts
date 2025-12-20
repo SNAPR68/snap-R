@@ -88,7 +88,7 @@ export async function POST(request: NextRequest) {
       listingId,
       name,
       description,
-      tourType = 'standard',
+      tourType = 'regular',
       settings = {},
       scenes = [],
     } = body;
@@ -101,7 +101,7 @@ export async function POST(request: NextRequest) {
         listing_id: listingId || null,
         name: name || 'Virtual Tour',
         description,
-        tour_type: tourType,
+        tour_type: tourType || 'regular',
         auto_rotate: settings.autoRotate ?? true,
         show_compass: settings.showCompass ?? true,
         show_floor_plan: settings.showFloorPlan ?? false,

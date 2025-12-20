@@ -41,6 +41,7 @@ interface Tour {
   name: string;
   description?: string;
   slug: string;
+  tour_type: 'regular' | '360';
   auto_rotate: boolean;
   show_compass: boolean;
   logo_url?: string;
@@ -240,10 +241,67 @@ function SceneStrip({
   );
 }
 
+// Regular Photo Gallery Viewer
+function RegularGalleryViewer({
+  scenes,
+  currentIndex,
+  onNavigate,
+}: {
+  scenes: Scene[];
+  currentIndex: number;
+  onNavigate: (direction: 'left' | 'right') => void;
+}) {
+  const [transition, setTransition] = useState<'fade' | 'slide'>('fade');
+
+  return (
+    <div className="relative w-full h-full bg-black overflow-hidden">
+      <div className="relative w-full h-full">
+        {scenes.map((scene, index) => (
+          <div
+            key={scene.id}
+            className={`absolute inset-0 transition-opacity duration-500 ${
+              index === currentIndex ? 'opacity-100 z-10' : 'opacity-0 z-0'
+            }`}
+          >
+            <img
+              src={scene.image_url}
+              alt={scene.name}
+              className="w-full h-full object-contain"
+            />
+          </div>
+        ))}
+      </div>
+
+      {/* Navigation */}
+      {scenes.length > 1 && (
+        <>
+          <button
+            onClick={() => onNavigate('left')}
+            className="absolute left-4 top-1/2 -translate-y-1/2 p-3 bg-black/50 rounded-full hover:bg-black/70 transition-colors z-20"
+          >
+            <ChevronLeft className="w-6 h-6 text-white" />
+          </button>
+          <button
+            onClick={() => onNavigate('right')}
+            className="absolute right-4 top-1/2 -translate-y-1/2 p-3 bg-black/50 rounded-full hover:bg-black/70 transition-colors z-20"
+          >
+            <ChevronRight className="w-6 h-6 text-white" />
+          </button>
+        </>
+      )}
+
+      {/* Photo Counter */}
+      <div className="absolute bottom-4 left-1/2 -translate-x-1/2 px-4 py-2 bg-black/50 rounded-full text-white/70 text-sm z-20">
+        {currentIndex + 1} / {scenes.length}
+      </div>
+    </div>
+  );
+}
+
 // Main Tour Viewer Page
 export default function TourViewerPage() {
   const params = useParams();
-  const slug = params.slug as string;
+  const slug = params?.slug as string;
   
   const [tour, setTour] = useState<Tour | null>(null);
   const [currentSceneIndex, setCurrentSceneIndex] = useState(0);
@@ -254,19 +312,38 @@ export default function TourViewerPage() {
   const [copied, setCopied] = useState(false);
 
   useEffect(() => {
-    loadTour();
+    if (slug) {
+      loadTour();
+    }
   }, [slug]);
 
   const loadTour = async () => {
+    if (!slug) {
+      setError('Tour slug is required');
+      setLoading(false);
+      return;
+    }
+
     try {
-      // First try public endpoint
+      setLoading(true);
+      setError(null);
+      
+      // Fetch tour from API
       const response = await fetch(`/api/tour/${slug}`);
       
       if (!response.ok) {
-        throw new Error('Tour not found');
+        if (response.status === 404) {
+          throw new Error('Tour not found');
+        }
+        throw new Error('Failed to load tour');
       }
       
       const data = await response.json();
+      
+      if (!data || !data.id) {
+        throw new Error('Invalid tour data');
+      }
+      
       setTour(data);
       
       // Find start scene
@@ -274,7 +351,8 @@ export default function TourViewerPage() {
       setCurrentSceneIndex(Math.max(0, startIndex));
       
     } catch (err: any) {
-      setError(err.message);
+      console.error('Load tour error:', err);
+      setError(err.message || 'Failed to load tour');
     } finally {
       setLoading(false);
     }
@@ -388,12 +466,22 @@ export default function TourViewerPage() {
 
       {/* Main Viewer */}
       <div className="flex-1 relative">
-        {currentScene && (
+        {currentScene && tour.tour_type === '360' ? (
           <PanoramaViewer
             imageUrl={currentScene.image_url}
             autoRotate={tour.auto_rotate}
             onNavigate={tour.tour_scenes.length > 1 ? navigateScene : undefined}
           />
+        ) : tour.tour_scenes && tour.tour_scenes.length > 0 ? (
+          <RegularGalleryViewer
+            scenes={tour.tour_scenes}
+            currentIndex={currentSceneIndex}
+            onNavigate={navigateScene}
+          />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center text-white/50">
+            No scenes available
+          </div>
         )}
       </div>
 

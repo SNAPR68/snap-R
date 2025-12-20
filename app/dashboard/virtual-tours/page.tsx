@@ -1,6 +1,6 @@
 'use client';
 
-import React, { Suspense, useEffect, useState, useCallback } from 'react';
+import React, { Suspense, useEffect, useState, useCallback, useRef } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import {
   Loader2, Home, ChevronRight, Upload, Sparkles, Download,
@@ -157,16 +157,19 @@ function TourCreator({
   onBack: () => void;
   onComplete: (tour: Tour) => void;
 }) {
-  const [step, setStep] = useState(1);
+  const [step, setStep] = useState(0);
   const [tourName, setTourName] = useState(listingTitle || 'Virtual Tour');
-  const [selectedPhotos, setSelectedPhotos] = useState<{ url: string; id: string; name: string }[]>([]);
+  const [tourType, setTourType] = useState<'regular' | '360'>('regular');
+  const [selectedPhotos, setSelectedPhotos] = useState<{ url: string; id: string; name: string; file?: File }[]>([]);
+  const [uploading, setUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
   const [settings, setSettings] = useState({
     autoRotate: true,
     showCompass: true,
-    tourType: 'standard',
   });
   const [processing, setProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const togglePhoto = (photo: { url: string; id: string }) => {
     const exists = selectedPhotos.find(p => p.id === photo.id);
@@ -175,6 +178,76 @@ function TourCreator({
     } else {
       setSelectedPhotos([...selectedPhotos, { ...photo, name: `Scene ${selectedPhotos.length + 1}` }]);
     }
+  };
+
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+
+    setUploading(true);
+    setUploadProgress(0);
+    setError(null);
+
+    try {
+      const supabase = createClient();
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
+
+      const uploadedUrls: { url: string; id: string; name: string; file: File }[] = [];
+      const totalFiles = files.length;
+
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        setUploadProgress(Math.round(((i + 1) / totalFiles) * 100));
+
+        // Upload to Supabase storage
+        const fileName = `tour-photos/${user.id}/${Date.now()}-${file.name}`;
+        const { data: uploadData, error: uploadError } = await supabase.storage
+          .from('tour-photos')
+          .upload(fileName, file, {
+            contentType: file.type,
+            upsert: false,
+          });
+
+        if (uploadError) {
+          console.error('Upload error:', uploadError);
+          continue;
+        }
+
+        // Get signed URL
+        const { data: urlData } = await supabase.storage
+          .from('tour-photos')
+          .createSignedUrl(fileName, 3600 * 24 * 365); // 1 year expiry
+
+        if (urlData?.signedUrl) {
+          uploadedUrls.push({
+            url: urlData.signedUrl,
+            id: `uploaded-${Date.now()}-${i}`,
+            name: `Scene ${selectedPhotos.length + uploadedUrls.length + 1}`,
+            file,
+          });
+        }
+      }
+
+      setSelectedPhotos([...selectedPhotos, ...uploadedUrls]);
+      setUploadProgress(0);
+    } catch (err: any) {
+      setError(err.message || 'Failed to upload photos');
+    } finally {
+      setUploading(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    }
+  };
+
+  const removePhoto = (id: string) => {
+    setSelectedPhotos(selectedPhotos.filter(p => p.id !== id));
+  };
+
+  const handleSelectFromListing = () => {
+    // This will show the photo selection grid
+    setStep(1);
   };
 
   const updateSceneName = (id: string, name: string) => {
@@ -202,10 +275,10 @@ function TourCreator({
       const response = await fetch('/api/virtual-tours', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
+          body: JSON.stringify({
           listingId,
           name: tourName,
-          tourType: settings.tourType,
+          tourType: tourType === '360' ? '360' : 'regular',
           settings: {
             autoRotate: settings.autoRotate,
             showCompass: settings.showCompass,
@@ -213,7 +286,7 @@ function TourCreator({
           scenes: selectedPhotos.map((photo, index) => ({
             name: photo.name,
             imageUrl: photo.url,
-            is360: true, // Assume 360 for now
+            is360: tourType === '360',
             sortOrder: index,
           })),
         }),
@@ -254,14 +327,14 @@ function TourCreator({
 
         {/* Progress Steps */}
         <div className="flex items-center justify-center gap-4 mb-8">
-          {[1, 2, 3].map((s) => (
+          {[0, 1, 2, 3].map((s) => (
             <React.Fragment key={s}>
               <div
                 className={`w-10 h-10 rounded-full flex items-center justify-center font-bold transition-all ${
                   step >= s ? 'bg-purple-500 text-white' : 'bg-white/10 text-white/40'
                 }`}
               >
-                {s}
+                {s === 0 ? 'Type' : s}
               </div>
               {s < 3 && (
                 <div className={`w-16 h-1 rounded ${step > s ? 'bg-purple-500' : 'bg-white/10'}`} />
@@ -270,51 +343,210 @@ function TourCreator({
           ))}
         </div>
 
+        {/* Step 0: Tour Type Selection */}
+        {step === 0 && (
+          <div>
+            <h2 className="text-xl font-bold mb-2">Choose Tour Type</h2>
+            <p className="text-white/50 mb-6">Select the type of virtual tour you want to create</p>
+
+            <div className="grid md:grid-cols-2 gap-6 mb-6">
+              <button
+                onClick={() => {
+                  setTourType('regular');
+                  setStep(1);
+                }}
+                className={`p-6 border-2 rounded-xl transition-all text-left ${
+                  tourType === 'regular'
+                    ? 'border-purple-500 bg-purple-500/10'
+                    : 'border-white/10 hover:border-white/30'
+                }`}
+              >
+                <div className="flex items-center gap-3 mb-3">
+                  <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${
+                    tourType === 'regular' ? 'bg-purple-500' : 'bg-white/10'
+                  }`}>
+                    <Image className="w-6 h-6" />
+                  </div>
+                  <h3 className="text-lg font-bold">Regular Photo Tour</h3>
+                </div>
+                <p className="text-white/60 text-sm">Use your existing listing photos</p>
+              </button>
+
+              <button
+                onClick={() => {
+                  setTourType('360');
+                  setStep(1);
+                }}
+                className={`p-6 border-2 rounded-xl transition-all text-left ${
+                  tourType === '360'
+                    ? 'border-purple-500 bg-purple-500/10'
+                    : 'border-white/10 hover:border-white/30'
+                }`}
+              >
+                <div className="flex items-center gap-3 mb-3">
+                  <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${
+                    tourType === '360' ? 'bg-purple-500' : 'bg-white/10'
+                  }`}>
+                    <Compass className="w-6 h-6" />
+                  </div>
+                  <h3 className="text-lg font-bold">360° Panoramic Tour</h3>
+                </div>
+                <p className="text-white/60 text-sm">Upload panoramic photos from 360° camera (Ricoh Theta, Insta360, etc.)</p>
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* Step 1: Select Photos */}
         {step === 1 && (
           <div>
-            <h2 className="text-xl font-bold mb-2">Step 1: Select Photos</h2>
-            <p className="text-white/50 mb-6">
-              Choose the photos to include in your tour. For best results, use 360° panoramic photos.
-            </p>
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <h2 className="text-xl font-bold mb-2">Step 1: Select Photos</h2>
+                <p className="text-white/50">
+                  {tourType === 'regular' 
+                    ? 'Choose photos from your listing or upload new ones'
+                    : 'Upload 360° panoramic photos'}
+                </p>
+              </div>
+              <button onClick={() => setStep(0)} className="text-purple-400 hover:underline text-sm">
+                Change type
+              </button>
+            </div>
 
-            <div className="grid grid-cols-4 md:grid-cols-6 gap-3 mb-6">
-              {photoUrls.map((photo, index) => {
-                const isSelected = selectedPhotos.find(p => p.id === photo.id);
-                const selectionIndex = selectedPhotos.findIndex(p => p.id === photo.id);
-                
-                return (
-                  <button
-                    key={photo.id}
-                    onClick={() => togglePhoto(photo)}
-                    className={`relative aspect-square rounded-lg overflow-hidden border-2 transition-all ${
-                      isSelected
-                        ? 'border-purple-500 ring-2 ring-purple-500/50'
-                        : 'border-transparent hover:border-white/30'
-                    }`}
-                  >
-                    <img
-                      src={photo.url}
-                      alt={`Photo ${index + 1}`}
-                      className="w-full h-full object-cover"
+            {/* Photo Selection Options */}
+            <div className="mb-6 space-y-4">
+              {tourType === 'regular' ? (
+                <div className="grid md:grid-cols-2 gap-4">
+                  {photoUrls.length > 0 && (
+                    <button
+                      onClick={handleSelectFromListing}
+                      className="p-6 border-2 border-dashed border-white/20 rounded-xl hover:border-purple-500/50 hover:bg-purple-500/5 transition-all text-center"
+                    >
+                      <Image className="w-10 h-10 text-white/30 mx-auto mb-3" />
+                      <div className="font-medium">Select from Listing</div>
+                      <div className="text-sm text-white/40 mt-1">{photoUrls.length} photos available</div>
+                    </button>
+                  )}
+                  <label className="p-6 border-2 border-dashed border-white/20 rounded-xl hover:border-purple-500/50 hover:bg-purple-500/5 transition-all text-center cursor-pointer">
+                    <Upload className="w-10 h-10 text-white/30 mx-auto mb-3" />
+                    <div className="font-medium">Upload New Photos</div>
+                    <div className="text-sm text-white/40 mt-1">Select multiple images</div>
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      multiple
+                      accept="image/*"
+                      onChange={handleFileSelect}
+                      className="hidden"
                     />
-                    {isSelected && (
-                      <div className="absolute inset-0 bg-purple-500/20 flex items-center justify-center">
-                        <div className="w-8 h-8 rounded-full bg-purple-500 flex items-center justify-center font-bold">
-                          {selectionIndex + 1}
+                  </label>
+                </div>
+              ) : (
+                <label className="block p-6 border-2 border-dashed border-white/20 rounded-xl hover:border-purple-500/50 hover:bg-purple-500/5 transition-all text-center cursor-pointer">
+                  <Upload className="w-10 h-10 text-white/30 mx-auto mb-3" />
+                  <div className="font-medium">Upload 360° Photos</div>
+                  <div className="text-sm text-white/40 mt-1">Select panoramic images from your 360° camera</div>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    multiple
+                    accept="image/*"
+                    onChange={handleFileSelect}
+                    className="hidden"
+                  />
+                </label>
+              )}
+
+              {/* Upload Progress */}
+              {uploading && (
+                <div className="bg-white/5 rounded-xl p-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-sm text-white/70">Uploading photos...</span>
+                    <span className="text-sm text-purple-400">{uploadProgress}%</span>
+                  </div>
+                  <div className="w-full bg-white/10 rounded-full h-2">
+                    <div
+                      className="bg-purple-500 h-2 rounded-full transition-all"
+                      style={{ width: `${uploadProgress}%` }}
+                    />
+                  </div>
+                </div>
+              )}
+
+              {/* Selected Photos Grid */}
+              {selectedPhotos.length > 0 && (
+                <div>
+                  <h3 className="text-sm font-medium mb-3 text-white/70">Selected Photos ({selectedPhotos.length})</h3>
+                  <div className="grid grid-cols-4 md:grid-cols-6 gap-3">
+                    {selectedPhotos.map((photo, index) => (
+                      <div key={photo.id} className="relative aspect-square rounded-lg overflow-hidden border-2 border-purple-500 ring-2 ring-purple-500/50">
+                        <img
+                          src={photo.url}
+                          alt={photo.name}
+                          className="w-full h-full object-cover"
+                        />
+                        <div className="absolute inset-0 bg-purple-500/20 flex items-center justify-center">
+                          <div className="w-8 h-8 rounded-full bg-purple-500 flex items-center justify-center font-bold">
+                            {index + 1}
+                          </div>
                         </div>
+                        <button
+                          onClick={() => removePhoto(photo.id)}
+                          className="absolute top-1 right-1 p-1 bg-red-500 rounded-full hover:bg-red-600 transition-colors"
+                        >
+                          <X className="w-4 h-4 text-white" />
+                        </button>
                       </div>
-                    )}
-                  </button>
-                );
-              })}
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Listing Photos Grid (only show if regular type and photos available) */}
+              {tourType === 'regular' && photoUrls.length > 0 && selectedPhotos.length === 0 && (
+                <div>
+                  <h3 className="text-sm font-medium mb-3 text-white/70">Listing Photos</h3>
+                  <div className="grid grid-cols-4 md:grid-cols-6 gap-3">
+                    {photoUrls.map((photo, index) => {
+                      const isSelected = selectedPhotos.find(p => p.id === photo.id);
+                      const selectionIndex = selectedPhotos.findIndex(p => p.id === photo.id);
+                      
+                      return (
+                        <button
+                          key={photo.id}
+                          onClick={() => togglePhoto(photo)}
+                          className={`relative aspect-square rounded-lg overflow-hidden border-2 transition-all ${
+                            isSelected
+                              ? 'border-purple-500 ring-2 ring-purple-500/50'
+                              : 'border-transparent hover:border-white/30'
+                          }`}
+                        >
+                          <img
+                            src={photo.url}
+                            alt={`Photo ${index + 1}`}
+                            className="w-full h-full object-cover"
+                          />
+                          {isSelected && (
+                            <div className="absolute inset-0 bg-purple-500/20 flex items-center justify-center">
+                              <div className="w-8 h-8 rounded-full bg-purple-500 flex items-center justify-center font-bold">
+                                {selectionIndex + 1}
+                              </div>
+                            </div>
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
             </div>
 
             <div className="flex items-center justify-between">
               <span className="text-white/50">{selectedPhotos.length} photos selected</span>
               <button
                 onClick={() => setStep(2)}
-                disabled={selectedPhotos.length === 0}
+                disabled={selectedPhotos.length === 0 || uploading}
                 className="px-6 py-3 bg-purple-500 text-white font-bold rounded-xl hover:bg-purple-400 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Continue

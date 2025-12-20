@@ -9,10 +9,10 @@ const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { slug: string } }
+  { params }: { params: Promise<{ slug: string }> }
 ) {
   try {
-    const slug = params.slug;
+    const { slug } = await params;
 
     if (!slug) {
       return NextResponse.json({ error: 'Missing tour slug' }, { status: 400 });
@@ -38,6 +38,7 @@ export async function GET(
         cover_image_url,
         status,
         is_public,
+        tour_type,
         tour_scenes (
           id,
           name,
