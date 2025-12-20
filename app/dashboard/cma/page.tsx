@@ -300,16 +300,27 @@ function CMAGenerator() {
       return;
     }
 
-    // Check if html2pdf is loaded
+    setDownloading(true);
+    setError(null);
+
+    // Wait for html2pdf library to load (with timeout)
+    let attempts = 0;
+    const maxAttempts = 30; // 30 seconds max wait
+    
+    while (!window.html2pdf && attempts < maxAttempts) {
+      console.log(`[CMA] Waiting for html2pdf library... attempt ${attempts + 1}`);
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      attempts++;
+    }
+
     if (!window.html2pdf) {
-      console.error('[CMA] html2pdf library not available');
-      setError('PDF library not loaded. Please wait a moment and try again.');
+      console.error('[CMA] html2pdf library not available after waiting');
+      setError('PDF library failed to load. Please refresh the page and try again.');
+      setDownloading(false);
       return;
     }
 
-    console.log('[CMA] Starting PDF generation');
-    setDownloading(true);
-    setError(null);
+    console.log('[CMA] html2pdf library loaded, starting PDF generation');
     
     let container: HTMLDivElement | null = null;
     
@@ -347,7 +358,15 @@ function CMAGenerator() {
       };
 
       console.log('[CMA] Calling html2pdf().set().from().save()');
-      await window.html2pdf().set(opt).from(container).save();
+      console.log('[CMA] html2pdf function type:', typeof window.html2pdf);
+      
+      // Use html2pdf library
+      const html2pdf = window.html2pdf;
+      if (typeof html2pdf !== 'function') {
+        throw new Error('html2pdf is not a function. Library may not be loaded correctly.');
+      }
+      
+      await html2pdf().set(opt).from(container).save();
       console.log('[CMA] PDF generation completed successfully');
       
     } catch (err: any) {
@@ -734,7 +753,19 @@ function CMAGenerator() {
     <div className="min-h-screen bg-[#0F0F0F] text-white p-6">
       <Script 
         src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"
-        onLoad={() => setHtml2pdfLoaded(true)}
+        strategy="afterInteractive"
+        onLoad={() => {
+          console.log('[CMA] html2pdf script loaded');
+          setHtml2pdfLoaded(true);
+          // Ensure it's available on window
+          if (typeof window !== 'undefined' && !window.html2pdf && (window as any).html2pdf) {
+            (window as any).html2pdf = (window as any).html2pdf;
+          }
+        }}
+        onError={(e) => {
+          console.error('[CMA] html2pdf script failed to load:', e);
+          setError('Failed to load PDF library. Please refresh the page.');
+        }}
       />
       
       <div className="max-w-3xl mx-auto">
