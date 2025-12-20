@@ -11,9 +11,10 @@ export async function GET() {
   }
 
   const scopes = [
-    'pages_show_list',
-    'pages_read_engagement', 
     'pages_manage_posts',
+    'pages_read_engagement',
+    'publish_video',
+    'pages_show_list',
     'instagram_basic',
     'instagram_content_publish',
     'business_management'

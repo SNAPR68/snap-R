@@ -20,7 +20,7 @@ export async function GET() {
       }, { status: 400 });
     }
 
-    const scope = 'pages_show_list,pages_read_engagement,pages_manage_posts,instagram_basic,instagram_content_publish';
+    const scope = 'pages_manage_posts,pages_read_engagement,publish_video,pages_show_list,instagram_basic,instagram_content_publish';
     
     const authUrl = `https://www.facebook.com/v18.0/dialog/oauth?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${encodeURIComponent(scope)}&state=${user.id}`;
 

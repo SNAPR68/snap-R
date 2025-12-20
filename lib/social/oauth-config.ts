@@ -7,7 +7,7 @@ export const SOCIAL_PLATFORMS = {
     name: 'Facebook',
     icon: 'Facebook',
     color: '#1877F2',
-    scopes: ['pages_show_list', 'pages_read_engagement', 'pages_manage_posts', 'publish_to_groups'],
+    scopes: ['pages_manage_posts', 'pages_read_engagement', 'publish_video', 'pages_show_list', 'publish_to_groups'],
     authUrl: 'https://www.facebook.com/v18.0/dialog/oauth',
     tokenUrl: 'https://graph.facebook.com/v18.0/oauth/access_token',
     apiBase: 'https://graph.facebook.com/v18.0',

@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
-import { ArrowLeft, Video, Play, Pause, Download, Home, Loader2, ChevronLeft, ChevronRight, Clock, Sparkles, Check, Music, Type, Instagram, Facebook, Music2, Calendar, ExternalLink, CheckCircle, Link2, Copy } from 'lucide-react'
+import { ArrowLeft, Video, Play, Pause, Download, Home, Loader2, ChevronLeft, Clock, Sparkles, Check, Music, Type, Instagram, Facebook, Music2, Calendar, ExternalLink, CheckCircle, Copy } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { trackEvent, SnapREvents } from '@/lib/analytics'
 
@@ -29,17 +29,9 @@ export default function VideoCreatorClient() {
   const [playing, setPlaying] = useState(false)
   const [currentPreview, setCurrentPreview] = useState(0)
   const [showShareModal, setShowShareModal] = useState(false)
-  const [connectedPlatforms, setConnectedPlatforms] = useState<string[]>([])
   const [copied, setCopied] = useState(false)
   const [addingToCalendar, setAddingToCalendar] = useState(false)
   const [addedToCalendar, setAddedToCalendar] = useState(false)
-  const [publishing, setPublishing] = useState<string | null>(null)
-  const [publishSuccess, setPublishSuccess] = useState<string[]>([])
-  const [publishError, setPublishError] = useState<string | null>(null)
-  const [caption, setCaption] = useState('')
-  const [showCaptionEditor, setShowCaptionEditor] = useState(false)
-  const [uploadingVideo, setUploadingVideo] = useState(false)
-  const [publicVideoUrl, setPublicVideoUrl] = useState<string | null>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const previewIntervalRef = useRef<NodeJS.Timeout | null>(null)
 
@@ -54,30 +46,6 @@ export default function VideoCreatorClient() {
     return () => { if (previewIntervalRef.current) clearInterval(previewIntervalRef.current) }
   }, [playing, photos, duration])
 
-  useEffect(() => {
-    const checkConnections = async () => {
-      const supabase = createClient()
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) return
-      
-      const { data: connections } = await supabase
-        .from('social_connections')
-        .select('platform')
-        .eq('user_id', user.id)
-      
-      if (connections) {
-        setConnectedPlatforms(connections.map(c => c.platform))
-      }
-    }
-    checkConnections()
-  }, [])
-
-  useEffect(() => {
-    if (videoUrl && listingTitle) {
-      const defaultCaption = `✨ ${listingTitle}\n📍 ${listingLocation}\n💰 $${listingPrice?.toLocaleString() || ''}\n\n🏠 Stunning property now available!\n\n#realestate #property #home #listing #forsale #realtor #dreamhome`
-      setCaption(defaultCaption)
-    }
-  }, [videoUrl, listingTitle, listingLocation, listingPrice])
 
   const loadPhotos = async (id: string) => {
     setLoading(true)
@@ -335,81 +303,6 @@ export default function VideoCreatorClient() {
     }
   }
 
-  const uploadVideoToStorage = async (): Promise<string | null> => {
-    if (!videoUrl) return null
-    if (publicVideoUrl) return publicVideoUrl
-    
-    setUploadingVideo(true)
-    try {
-      const supabase = createClient()
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) throw new Error('Not authenticated')
-      
-      const response = await fetch(videoUrl)
-      const blob = await response.blob()
-      const fileName = `videos/${user.id}/${listingId}_${Date.now()}.webm`
-      
-      const { error: uploadError } = await supabase.storage
-        .from('content')
-        .upload(fileName, blob, { 
-          contentType: 'video/webm',
-          upsert: true 
-        })
-      
-      if (uploadError) throw uploadError
-      
-      // Get public URL
-      const { data: { publicUrl } } = supabase.storage
-        .from('content')
-        .getPublicUrl(fileName)
-      
-      setPublicVideoUrl(publicUrl)
-      return publicUrl
-    } catch (error) {
-      console.error('Upload error:', error)
-      return null
-    } finally {
-      setUploadingVideo(false)
-    }
-  }
-
-  const publishToPlatform = async (platform: string) => {
-    setPublishing(platform)
-    setPublishError(null)
-    
-    try {
-      // First upload video to get public URL
-      const uploadedUrl = await uploadVideoToStorage()
-      if (!uploadedUrl) {
-        throw new Error('Failed to upload video')
-      }
-      
-      const response = await fetch('/api/publish-video', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          platform,
-          videoUrl: uploadedUrl,
-          caption,
-          listingId
-        })
-      })
-      
-      const result = await response.json()
-      
-      if (!response.ok) {
-        throw new Error(result.error || 'Failed to publish')
-      }
-      
-      setPublishSuccess(prev => [...prev, platform])
-      trackEvent(SnapREvents.VIDEO_PUBLISHED, { platform })
-    } catch (error: any) {
-      console.error('Publish error:', error)
-      setPublishError(error.message || 'Failed to publish')
-    } finally {
-      setPublishing(null)
-    }
-  }
 
   return (
     <div className="min-h-screen bg-[#0A0A0A] text-white">
@@ -604,36 +497,6 @@ export default function VideoCreatorClient() {
               />
             </div>
             
-            {/* Caption Editor */}
-            <div className="px-6 pb-4">
-              <button 
-                onClick={() => setShowCaptionEditor(!showCaptionEditor)}
-                className="w-full flex items-center justify-between p-3 bg-white/5 rounded-lg hover:bg-white/10 transition-colors"
-              >
-                <span className="text-sm font-medium flex items-center gap-2">
-                  <Type className="w-4 h-4 text-pink-400" />
-                  Edit Caption
-                </span>
-                <ChevronRight className={`w-4 h-4 transition-transform ${showCaptionEditor ? 'rotate-90' : ''}`} />
-              </button>
-              
-              {showCaptionEditor && (
-                <textarea
-                  value={caption}
-                  onChange={(e) => setCaption(e.target.value)}
-                  className="w-full mt-3 bg-white/5 border border-white/10 rounded-lg p-3 text-sm text-white placeholder-white/30 focus:outline-none focus:border-pink-500/50 resize-none h-32"
-                  placeholder="Write a caption..."
-                />
-              )}
-            </div>
-            
-            {/* Error Message */}
-            {publishError && (
-              <div className="mx-6 mb-4 p-3 bg-red-500/10 border border-red-500/30 rounded-lg text-red-400 text-sm">
-                {publishError}
-              </div>
-            )}
-            
             {/* Share Options */}
             <div className="p-6 space-y-4">
               {/* Download Button - Primary */}
@@ -651,111 +514,52 @@ export default function VideoCreatorClient() {
                   <div className="w-full border-t border-white/10"></div>
                 </div>
                 <div className="relative flex justify-center text-sm">
-                  <span className="px-3 bg-[#1A1A1A] text-white/40">or publish directly to</span>
+                  <span className="px-3 bg-[#1A1A1A] text-white/40">or share to</span>
                 </div>
               </div>
               
-              {/* Platform Buttons */}
+              {/* Platform Buttons - Manual Upload */}
               <div className="grid grid-cols-3 gap-3">
                 {/* Facebook */}
-                {connectedPlatforms.includes('facebook') ? (
-                  <button
-                    onClick={() => publishToPlatform('facebook')}
-                    disabled={publishing !== null || publishSuccess.includes('facebook')}
-                    className={`flex flex-col items-center gap-2 p-4 rounded-xl border transition-all ${
-                      publishSuccess.includes('facebook')
-                        ? 'bg-green-500/20 border-green-500/50'
-                        : 'bg-blue-600/20 border-blue-500/30 hover:border-blue-500/60'
-                    } disabled:opacity-50`}
-                  >
-                    <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center relative">
-                      <Facebook className="w-5 h-5" />
-                      {connectedPlatforms.includes('facebook') && !publishSuccess.includes('facebook') && (
-                        <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-500 rounded-full border-2 border-[#1A1A1A]" />
-                      )}
-                    </div>
-                    {publishing === 'facebook' ? (
-                      <>
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                        <span className="text-xs text-white/60">Publishing...</span>
-                      </>
-                    ) : publishSuccess.includes('facebook') ? (
-                      <>
-                        <span className="text-sm font-medium text-green-400">Published!</span>
-                        <CheckCircle className="w-4 h-4 text-green-400" />
-                      </>
-                    ) : (
-                      <>
-                        <span className="text-sm font-medium">Facebook</span>
-                        <span className="text-xs text-green-400">Connected</span>
-                      </>
-                    )}
-                  </button>
-                ) : (
-                  <Link
-                    href="/dashboard/settings/social"
-                    className="flex flex-col items-center gap-2 p-4 bg-blue-600/10 rounded-xl border border-blue-500/20 hover:border-blue-500/40 transition-all group"
-                  >
-                    <div className="w-10 h-10 bg-blue-600/50 rounded-xl flex items-center justify-center">
-                      <Facebook className="w-5 h-5" />
-                    </div>
-                    <span className="text-sm font-medium">Facebook</span>
-                    <span className="text-xs text-white/40 group-hover:text-blue-400">Connect →</span>
-                  </Link>
-                )}
+                <a
+                  href="https://business.facebook.com/latest/composer"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={downloadVideo}
+                  className="flex flex-col items-center gap-2 p-4 bg-blue-600/20 rounded-xl border border-blue-500/30 hover:border-blue-500/60 hover:bg-blue-600/30 transition-all group"
+                >
+                  <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center">
+                    <Facebook className="w-5 h-5" />
+                  </div>
+                  <span className="text-sm font-medium">Facebook</span>
+                  <span className="text-xs text-blue-400 group-hover:text-blue-300 flex items-center gap-1">
+                    Upload <ExternalLink className="w-3 h-3" />
+                  </span>
+                </a>
                 
                 {/* Instagram */}
-                {connectedPlatforms.includes('instagram') ? (
-                  <button
-                    onClick={() => publishToPlatform('instagram')}
-                    disabled={publishing !== null || publishSuccess.includes('instagram')}
-                    className={`flex flex-col items-center gap-2 p-4 rounded-xl border transition-all ${
-                      publishSuccess.includes('instagram')
-                        ? 'bg-green-500/20 border-green-500/50'
-                        : 'bg-gradient-to-br from-purple-600/20 to-pink-600/20 border-purple-500/30 hover:border-purple-500/60'
-                    } disabled:opacity-50`}
-                  >
-                    <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-pink-500 rounded-xl flex items-center justify-center relative">
-                      <Instagram className="w-5 h-5" />
-                      {!publishSuccess.includes('instagram') && (
-                        <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-500 rounded-full border-2 border-[#1A1A1A]" />
-                      )}
-                    </div>
-                    {publishing === 'instagram' ? (
-                      <>
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                        <span className="text-xs text-white/60">Publishing...</span>
-                      </>
-                    ) : publishSuccess.includes('instagram') ? (
-                      <>
-                        <span className="text-sm font-medium text-green-400">Published!</span>
-                        <CheckCircle className="w-4 h-4 text-green-400" />
-                      </>
-                    ) : (
-                      <>
-                        <span className="text-sm font-medium">Instagram</span>
-                        <span className="text-xs text-green-400">Connected</span>
-                      </>
-                    )}
-                  </button>
-                ) : (
-                  <Link
-                    href="/dashboard/settings/social"
-                    className="flex flex-col items-center gap-2 p-4 bg-gradient-to-br from-purple-600/10 to-pink-600/10 rounded-xl border border-purple-500/20 hover:border-purple-500/40 transition-all group"
-                  >
-                    <div className="w-10 h-10 bg-gradient-to-br from-purple-500/50 to-pink-500/50 rounded-xl flex items-center justify-center">
-                      <Instagram className="w-5 h-5" />
-                    </div>
-                    <span className="text-sm font-medium">Instagram</span>
-                    <span className="text-xs text-white/40 group-hover:text-purple-400">Connect →</span>
-                  </Link>
-                )}
+                <a
+                  href="https://www.instagram.com/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={downloadVideo}
+                  className="flex flex-col items-center gap-2 p-4 bg-gradient-to-br from-purple-600/20 to-pink-600/20 rounded-xl border border-purple-500/30 hover:border-purple-500/60 transition-all group"
+                >
+                  <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-pink-500 rounded-xl flex items-center justify-center">
+                    <Instagram className="w-5 h-5" />
+                  </div>
+                  <span className="text-sm font-medium">Instagram</span>
+                  <span className="text-xs text-purple-400 group-hover:text-purple-300 flex items-center gap-1">
+                    Reels <ExternalLink className="w-3 h-3" />
+                  </span>
+                </a>
                 
-                {/* TikTok - Manual for now */}
+                {/* TikTok */}
                 <a
                   href="https://www.tiktok.com/upload"
                   target="_blank"
                   rel="noopener noreferrer"
+                  onClick={downloadVideo}
                   className="flex flex-col items-center gap-2 p-4 bg-white/5 rounded-xl border border-white/10 hover:border-white/30 transition-all group"
                 >
                   <div className="w-10 h-10 bg-black rounded-xl flex items-center justify-center border border-white/20">
@@ -763,18 +567,21 @@ export default function VideoCreatorClient() {
                   </div>
                   <span className="text-sm font-medium">TikTok</span>
                   <span className="text-xs text-white/40 group-hover:text-white/60 flex items-center gap-1">
-                    Manual <ExternalLink className="w-3 h-3" />
+                    Video <ExternalLink className="w-3 h-3" />
                   </span>
                 </a>
               </div>
               
-              {/* Upload Status */}
-              {uploadingVideo && (
-                <div className="flex items-center justify-center gap-2 text-sm text-white/50">
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                  Uploading video...
-                </div>
-              )}
+              {/* Quick Tips */}
+              <div className="bg-amber-500/10 border border-amber-500/20 rounded-xl p-4">
+                <p className="text-sm text-amber-400 font-medium mb-2">📱 Quick Upload Steps:</p>
+                <ol className="text-xs text-white/50 space-y-1 list-decimal list-inside">
+                  <li>Click any platform above (video downloads automatically)</li>
+                  <li>Open the platform app on your phone</li>
+                  <li>Create new Reel/Video → Select downloaded file</li>
+                  <li>Add your caption, hashtags & music!</li>
+                </ol>
+              </div>
               
               {/* Secondary Actions */}
               <div className="grid grid-cols-2 gap-3 pt-2">
@@ -823,11 +630,7 @@ export default function VideoCreatorClient() {
             {/* Footer */}
             <div className="px-6 pb-6">
               <button
-                onClick={() => {
-                  setShowShareModal(false)
-                  setPublishSuccess([])
-                  setPublishError(null)
-                }}
+                onClick={() => setShowShareModal(false)}
                 className="w-full py-3 text-white/50 hover:text-white transition-colors text-sm"
               >
                 Close and Edit More

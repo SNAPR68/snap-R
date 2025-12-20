@@ -121,7 +121,7 @@ function SocialSettingsContent() {
       const appId = process.env.NEXT_PUBLIC_FACEBOOK_APP_ID;
       const scopes = platform === 'instagram' 
         ? 'instagram_basic,instagram_content_publish,pages_show_list,pages_read_engagement'
-        : 'pages_show_list,pages_read_engagement,pages_manage_posts';
+        : 'pages_manage_posts,pages_read_engagement,publish_video,pages_show_list';
       
       authUrl = `https://www.facebook.com/v18.0/dialog/oauth?client_id=${appId}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${scopes}&state=${state}&response_type=code`;
     } else if (platform === 'linkedin') {
