@@ -13,7 +13,7 @@ export async function GET() {
 
     // Instagram uses the same Facebook OAuth - just redirect to Facebook connect
     // Instagram Business accounts are connected through Facebook Pages
-    const clientId = process.env.FACEBOOK_APP_ID;
+    const clientId = process.env.NEXT_PUBLIC_FACEBOOK_APP_ID;
     const redirectUri = `${process.env.NEXT_PUBLIC_APP_URL || 'https://snap-r.com'}/api/social/callback/facebook`;
     
     if (!clientId) {
