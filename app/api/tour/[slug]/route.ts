@@ -3,9 +3,7 @@ export const dynamic = 'force-dynamic';
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
-// Use service role for public access (no auth required)
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+
 
 export async function GET(
   request: NextRequest,
@@ -14,11 +12,14 @@ export async function GET(
   try {
     const { slug } = await params;
 
+    // Create service client for public access
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+
     if (!slug) {
       return NextResponse.json({ error: 'Missing tour slug' }, { status: 400 });
     }
 
-    // Create service client for public access
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
     // Fetch the tour with scenes and hotspots
