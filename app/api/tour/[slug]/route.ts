@@ -57,7 +57,7 @@ export async function GET(
       tour_hotspots: hotspots.filter((h: any) => h.scene_id === scene.id)
     }));
 
-    supabase.rpc('increment_tour_views', { tour_slug: decodedSlug }).then(() => {}).catch(() => {});
+    try { supabase.rpc('increment_tour_views', { tour_slug: decodedSlug }); } catch (e) {}
 
     return NextResponse.json({
       ...tour,
