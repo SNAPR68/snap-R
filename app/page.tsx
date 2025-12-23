@@ -28,7 +28,6 @@ const TEAM_OPTIONS = [
 ] as const;
 
 const ADDONS = [
-  { id: 'floorplan_2d', name: 'Floor Plans', price: 'From $25', icon: 'grid' },
   { id: 'virtual_tour', name: 'Virtual Tours', price: 'From $50', icon: 'eye' },
   { id: 'virtual_renovation', name: 'Virtual Renovation', price: 'From $35', icon: 'brush' },
   { id: 'ai_voiceover', name: 'AI Voiceovers', price: 'From $15', icon: 'mic' },
