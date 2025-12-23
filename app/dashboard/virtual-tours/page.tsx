@@ -504,7 +504,7 @@ function TourCreator({
               )}
 
               {/* Listing Photos Grid (only show if regular type and photos available) */}
-              {tourType === 'regular' && photoUrls.length > 0 && selectedPhotos.length === 0 && (
+              {tourType === 'regular' && photoUrls.length > 0 && (
                 <div>
                   <h3 className="text-sm font-medium mb-3 text-white/70">Listing Photos</h3>
                   <div className="grid grid-cols-4 md:grid-cols-6 gap-3">

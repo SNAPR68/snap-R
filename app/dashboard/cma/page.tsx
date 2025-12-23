@@ -293,7 +293,6 @@ function CMAGenerator() {
   const downloadPDF = async () => {
     console.log('[CMA] downloadPDF called');
     
-    // Check if reportHtml exists
     if (!reportHtml) {
       console.error('[CMA] No report HTML available');
       setError('No report content available. Please generate the report first.');
@@ -302,85 +301,60 @@ function CMAGenerator() {
 
     setDownloading(true);
     setError(null);
-
-    // Wait for html2pdf library to load (with timeout)
-    let attempts = 0;
-    const maxAttempts = 30; // 30 seconds max wait
-    
-    while (!window.html2pdf && attempts < maxAttempts) {
-      console.log(`[CMA] Waiting for html2pdf library... attempt ${attempts + 1}`);
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      attempts++;
-    }
-
-    if (!window.html2pdf) {
-      console.error('[CMA] html2pdf library not available after waiting');
-      setError('PDF library failed to load. Please refresh the page and try again.');
-      setDownloading(false);
-      return;
-    }
-
-    console.log('[CMA] html2pdf library loaded, starting PDF generation');
     
     let container: HTMLDivElement | null = null;
     
     try {
-      // Create a temporary container for the HTML
+      const html2canvas = (await import('html2canvas')).default;
+      const { jsPDF } = await import('jspdf');
+      console.log('[CMA] Libraries loaded via npm');
+
       container = document.createElement('div');
       container.innerHTML = reportHtml;
       container.style.position = 'absolute';
       container.style.left = '-9999px';
       container.style.top = '0';
-      container.style.width = '8.5in'; // Letter size width
+      container.style.width = '8.5in';
+      container.style.background = 'white';
       document.body.appendChild(container);
 
-      console.log('[CMA] Container created and appended to DOM');
+      const canvas = await html2canvas(container, {
+        scale: 2,
+        useCORS: true,
+        allowTaint: true,
+        logging: false,
+      });
+
+      const imgData = canvas.toDataURL('image/jpeg', 0.95);
+      const pdf = new jsPDF('p', 'in', 'letter');
+      
+      const pdfWidth = 8.5;
+      const pdfHeight = 11;
+      const imgWidth = pdfWidth;
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+      
+      let heightLeft = imgHeight;
+      let position = 0;
+      
+      pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight);
+      heightLeft -= pdfHeight;
+      
+      while (heightLeft > 0) {
+        position = heightLeft - imgHeight;
+        pdf.addPage();
+        pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight);
+        heightLeft -= pdfHeight;
+      }
 
       const filename = `CMA-${selectedListing?.address || 'Report'}-${new Date().toISOString().split('T')[0]}.pdf`;
-      console.log('[CMA] Filename:', filename);
-
-      const opt = {
-        margin: 0,
-        filename: filename,
-        image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: { 
-          scale: 2,
-          useCORS: true,
-          allowTaint: true,
-          logging: false,
-        },
-        jsPDF: { 
-          unit: 'in', 
-          format: 'letter', 
-          orientation: 'portrait' 
-        },
-        pagebreak: { mode: 'css', before: '.page' }
-      };
-
-      console.log('[CMA] Calling html2pdf().set().from().save()');
-      console.log('[CMA] html2pdf function type:', typeof window.html2pdf);
-      
-      // Use html2pdf library
-      const html2pdf = window.html2pdf;
-      if (typeof html2pdf !== 'function') {
-        throw new Error('html2pdf is not a function. Library may not be loaded correctly.');
-      }
-      
-      await html2pdf().set(opt).from(container).save();
-      console.log('[CMA] PDF generation completed successfully');
+      pdf.save(filename);
+      console.log('[CMA] PDF saved:', filename);
       
     } catch (err: any) {
       console.error('[CMA] PDF generation error:', err);
-      console.error('[CMA] Error details:', {
-        message: err.message,
-        stack: err.stack,
-        name: err.name
-      });
       setError(`Failed to generate PDF: ${err.message || 'Unknown error'}. Please try again.`);
     } finally {
-      // Cleanup container
       if (container && container.parentNode) {
-        console.log('[CMA] Cleaning up container');
         document.body.removeChild(container);
       }
       setDownloading(false);
