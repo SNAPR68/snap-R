@@ -71,8 +71,8 @@ export async function GET(
         )
       `)
       .eq('slug', slug)
-      // .eq('is_public', true)
-      // .eq('status', 'published')
+      // // .eq('is_public', true)
+      // // .eq('status', 'published')
       .single();
 
     if (error || !tour) {
