@@ -1,4 +1,5 @@
 export const dynamic = 'force-dynamic';
+
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
@@ -8,56 +9,60 @@ export async function GET(
 ) {
   try {
     const { slug } = await params;
+
     if (!slug) {
       return NextResponse.json({ error: 'Missing tour slug' }, { status: 400 });
     }
 
-    const decodedSlug = decodeURIComponent(slug);
     const supabaseUrl = process.env.SUPABASE_URL;
     const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
     if (!supabaseUrl || !supabaseServiceKey) {
-      console.error('Missing Supabase configuration');
+      console.error('[Tour API] Missing env vars:', { 
+        hasUrl: !!supabaseUrl, 
+        hasKey: !!supabaseServiceKey 
+      });
       return NextResponse.json({ error: 'Server configuration error' }, { status: 500 });
     }
 
-    const supabase = createClient(supabaseUrl, supabaseServiceKey, {
-      auth: { autoRefreshToken: false, persistSession: false }
-    });
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
+    // First get the tour
     const { data: tour, error: tourError } = await supabase
       .from('virtual_tours')
       .select('*')
-      .eq('slug', decodedSlug)
+      .eq('slug', slug)
       .single();
 
     if (tourError || !tour) {
+      console.error('[Tour API] Tour error:', tourError);
       return NextResponse.json({ error: 'Tour not found' }, { status: 404 });
     }
 
-    const { data: scenes } = await supabase
+    // Get scenes separately
+    const { data: scenes, error: scenesError } = await supabase
       .from('tour_scenes')
       .select('*')
       .eq('tour_id', tour.id)
       .order('sort_order', { ascending: true });
 
-    const sceneIds = (scenes || []).map((s: any) => s.id);
-    let hotspots: any[] = [];
-    
-    if (sceneIds.length > 0) {
-      const { data: hotspotsData } = await supabase
-        .from('tour_hotspots')
-        .select('*')
-        .in('scene_id', sceneIds);
-      hotspots = hotspotsData || [];
+    if (scenesError) {
+      console.error('[Tour API] Scenes error:', scenesError);
     }
 
-    const scenesWithHotspots = (scenes || []).map((scene: any) => ({
-      ...scene,
-      tour_hotspots: hotspots.filter((h: any) => h.scene_id === scene.id)
-    }));
+    // Get hotspots for each scene
+    const scenesWithHotspots = await Promise.all(
+      (scenes || []).map(async (scene: any) => {
+        const { data: hotspots } = await supabase
+          .from('tour_hotspots')
+          .select('*')
+          .eq('scene_id', scene.id);
+        return { ...scene, tour_hotspots: hotspots || [] };
+      })
+    );
 
-    try { supabase.rpc('increment_tour_views', { tour_slug: decodedSlug }); } catch (e) {}
+    // Increment view count (fire and forget)
+    supabase.rpc('increment_tour_views', { tour_slug: slug }).catch(() => {});
 
     return NextResponse.json({
       ...tour,
@@ -65,9 +70,9 @@ export async function GET(
     });
 
   } catch (error: any) {
-    console.error('Tour API error:', error);
+    console.error('[Tour API] Error:', error);
     return NextResponse.json(
-      { error: error.message || 'Internal server error' },
+      { error: 'Internal server error', details: error.message },
       { status: 500 }
     );
   }
