@@ -2,29 +2,31 @@ export const dynamic = 'force-dynamic';
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
-
 export async function GET(req: NextRequest) {
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://snap-r.com';
+  
   try {
+    const supabase = createClient(
+      process.env.SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!
+    );
+
     const code = req.nextUrl.searchParams.get('code');
     const state = req.nextUrl.searchParams.get('state');
     const error = req.nextUrl.searchParams.get('error');
 
     if (error) {
-      return NextResponse.redirect(`${process.env.NEXT_PUBLIC_APP_URL}/dashboard/settings/social?error=${error}`);
+      return NextResponse.redirect(`${baseUrl}/dashboard/settings/social?error=${error}`);
     }
 
     if (!code || !state) {
-      return NextResponse.redirect(`${process.env.NEXT_PUBLIC_APP_URL}/dashboard/settings/social?error=missing_params`);
+      return NextResponse.redirect(`${baseUrl}/dashboard/settings/social?error=missing_params`);
     }
 
     const userId = state;
     const clientId = process.env.LINKEDIN_CLIENT_ID;
     const clientSecret = process.env.LINKEDIN_CLIENT_SECRET;
-    const redirectUri = `${process.env.NEXT_PUBLIC_APP_URL}/api/social/callback/linkedin`;
+    const redirectUri = `${baseUrl}/api/social/callback/linkedin`;
 
     // Exchange code for access token
     const tokenResponse = await fetch('https://www.linkedin.com/oauth/v2/accessToken', {
@@ -38,11 +40,12 @@ export async function GET(req: NextRequest) {
         client_secret: clientSecret!,
       }),
     });
+
     const tokenData = await tokenResponse.json();
 
     if (tokenData.error) {
-      console.error('LinkedIn token error:', tokenData.error);
-      return NextResponse.redirect(`${process.env.NEXT_PUBLIC_APP_URL}/dashboard/settings/social?error=token_error`);
+      console.error('LinkedIn token error:', tokenData);
+      return NextResponse.redirect(`${baseUrl}/dashboard/settings/social?error=token_error`);
     }
 
     const accessToken = tokenData.access_token;
@@ -51,10 +54,12 @@ export async function GET(req: NextRequest) {
     const profileResponse = await fetch('https://api.linkedin.com/v2/userinfo', {
       headers: { Authorization: `Bearer ${accessToken}` },
     });
+
     const profileData = await profileResponse.json();
+    console.log('LinkedIn profile:', profileData);
 
     // Save LinkedIn connection
-    await supabase.from('social_connections').upsert({
+    const { error: dbError } = await supabase.from('social_connections').upsert({
       user_id: userId,
       platform: 'linkedin',
       platform_user_id: profileData.sub,
@@ -66,9 +71,14 @@ export async function GET(req: NextRequest) {
       is_active: true,
     }, { onConflict: 'user_id,platform' });
 
-    return NextResponse.redirect(`${process.env.NEXT_PUBLIC_APP_URL}/dashboard/settings/social?success=linkedin`);
+    if (dbError) {
+      console.error('DB error:', dbError);
+      return NextResponse.redirect(`${baseUrl}/dashboard/settings/social?error=db_error`);
+    }
+
+    return NextResponse.redirect(`${baseUrl}/dashboard/settings/social?success=linkedin`);
   } catch (error) {
     console.error('LinkedIn callback error:', error);
-    return NextResponse.redirect(`${process.env.NEXT_PUBLIC_APP_URL}/dashboard/settings/social?error=server_error`);
+    return NextResponse.redirect(`${baseUrl}/dashboard/settings/social?error=server_error`);
   }
 }
