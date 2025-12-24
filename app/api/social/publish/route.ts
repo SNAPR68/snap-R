@@ -198,62 +198,64 @@ async function publishToInstagram(connection: any, content: string, imageUrls: s
 
 async function publishToLinkedIn(connection: any, content: string, imageUrls: string[]) {
   const accessToken = connection.access_token;
-  const personId = connection.platform_user_id;
+  let personId = connection.platform_user_id;
+
+  // If personId is null, fetch it from LinkedIn
+  if (!personId) {
+    const profileRes = await fetch('https://api.linkedin.com/v2/userinfo', {
+      headers: { 'Authorization': `Bearer ${accessToken}` }
+    });
+    const profile = await profileRes.json();
+    personId = profile.sub;
+    
+    if (!personId) {
+      throw new Error('Could not get LinkedIn user ID');
+    }
+  }
 
   console.log('[LinkedIn] Publishing for person:', personId);
 
-  // Use the new Posts API (not deprecated ugcPosts)
-  const postBody: any = {
+  // Use ugcPosts API (still works and more reliable)
+  const postBody = {
     author: `urn:li:person:${personId}`,
-    commentary: content,
-    visibility: 'PUBLIC',
-    distribution: {
-      feedDistribution: 'MAIN_FEED',
-      targetEntities: [],
-      thirdPartyDistributionChannels: []
-    },
     lifecycleState: 'PUBLISHED',
+    specificContent: {
+      'com.linkedin.ugc.ShareContent': {
+        shareCommentary: { text: content },
+        shareMediaCategory: imageUrls?.length > 0 ? 'ARTICLE' : 'NONE',
+        ...(imageUrls?.length > 0 && {
+          media: [{
+            status: 'READY',
+            originalUrl: imageUrls[0],
+          }]
+        })
+      },
+    },
+    visibility: {
+      'com.linkedin.ugc.MemberNetworkVisibility': 'PUBLIC',
+    },
   };
-
-  // Add article content if image URL provided
-  if (imageUrls && imageUrls.length > 0) {
-    postBody.content = {
-      article: {
-        source: imageUrls[0],
-        title: 'Property Listing',
-      }
-    };
-  }
 
   console.log('[LinkedIn] Request:', JSON.stringify(postBody));
 
-  const response = await fetch('https://api.linkedin.com/rest/posts', {
+  const response = await fetch('https://api.linkedin.com/v2/ugcPosts', {
     method: 'POST',
     headers: {
       'Authorization': `Bearer ${accessToken}`,
       'Content-Type': 'application/json',
       'X-Restli-Protocol-Version': '2.0.0',
-      'LinkedIn-Version': '202401',
     },
     body: JSON.stringify(postBody),
   });
 
-  const responseText = await response.text();
-  console.log('[LinkedIn] Response:', response.status, responseText);
+  const data = await response.json();
+  console.log('[LinkedIn] Response:', response.status, JSON.stringify(data));
 
-  if (!response.ok) {
-    let errorMsg = `LinkedIn API error: ${response.status}`;
-    try {
-      const errorData = JSON.parse(responseText);
-      errorMsg = errorData.message || errorData.error || errorMsg;
-    } catch (e) {}
-    throw new Error(errorMsg);
+  if (!response.ok || data.status === 422) {
+    throw new Error(data.message || `LinkedIn error: ${response.status}`);
   }
 
-  // Get post URN from header
-  const postUrn = response.headers.get('x-restli-id') || response.headers.get('X-RestLi-Id');
-  console.log('[LinkedIn] Post URN:', postUrn);
-
+  const postUrn = data.id;
   const postUrl = postUrn 
     ? `https://www.linkedin.com/feed/update/${postUrn}`
     : `https://www.linkedin.com/feed/`;
