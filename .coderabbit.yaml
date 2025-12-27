@@ -2,11 +2,13 @@ language: en
 reviews:
   request_changes_workflow: true
   high_level_summary: true
-  poem: false
-  review_status: true
-  collapse_walkthrough: false
   auto_review:
     enabled: true
     drafts: false
+  path_instructions:
+    - path: "app/api/**"
+      instructions: "Check for authentication, authorization, input validation, and secure use of environment variables"
+    - path: "lib/**"
+      instructions: "Check for security issues and proper error handling"
 chat:
   auto_reply: true
