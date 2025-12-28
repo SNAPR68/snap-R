@@ -60,6 +60,7 @@ export function ShareView({ listing, photos, settings, shareToken }: ShareViewPr
   };
 
   const handleApproval = async (photoId: string, approved: boolean) => {
+    console.log("handleApproval called:", { photoId, approved, shareToken });
     if (!shareToken) return;
     setSaving(photoId);
     try {
