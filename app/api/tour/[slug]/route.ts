@@ -62,7 +62,7 @@ export async function GET(
     );
 
     // Increment view count (fire and forget)
-    supabase.rpc('increment_tour_views', { tour_slug: slug }).catch(() => {});
+    void supabase.rpc('increment_tour_views', { tour_slug: slug });
 
     return NextResponse.json({
       ...tour,
