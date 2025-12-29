@@ -14,21 +14,27 @@ const PRO_TIERS = [
   { listings: 20, monthly: 22, annual: 18 },
   { listings: 30, monthly: 19, annual: 15 },
   { listings: 50, monthly: 17, annual: 13 },
-  { listings: '50+', monthly: null, annual: null, enterprise: true },
+  { listings: 75, monthly: 15, annual: 12 },
+  { listings: 100, monthly: 14, annual: 11 },
+  { listings: 125, monthly: 13, annual: 10 },
+  { listings: 150, monthly: 12, annual: 9 },
+  { listings: '150+', monthly: null, annual: null, enterprise: true },
 ] as const;
 
 const TEAM_OPTIONS = [
   { users: 5, monthly: 199, annual: 149 },
+  { users: 10, monthly: 399, annual: 299 },
+  { users: 25, monthly: 649, annual: 499 },
 ] as const;
 
 const ADDONS = [
-  { id: 'virtual_tour', name: 'Virtual Tours', price: 'From $50', icon: 'eye', tooltip: 'Interactive 360° walkthrough tours that let buyers explore properties remotely' },
-  { id: 'virtual_renovation', name: 'Virtual Renovation', price: 'From $35', icon: 'brush', tooltip: 'Digitally remodel kitchens, bathrooms, flooring & more to show potential' },
-  { id: 'ai_voiceover', name: 'AI Voiceovers', price: 'From $15', icon: 'mic', tooltip: 'Professional AI-generated narration for property videos in multiple voices' },
-  { id: 'cma_report', name: 'CMA Reports', price: 'From $20', icon: 'file', tooltip: 'Comparative Market Analysis reports with your photos & branding' },
-  { id: 'auto_campaigns', name: 'Auto Campaigns', price: 'From $30', icon: 'zap', tooltip: 'Automated social media posting schedules & email drip campaigns' },
-  { id: 'white_label', name: 'White Label', price: '$99/mo', icon: 'tag', tooltip: 'Remove SnapR branding & use your own logo for client-facing deliverables' },
-  { id: 'human_editing', name: 'Human Editing', price: 'From $5/image', icon: 'user', tooltip: 'Complex edits by professionals: object removal, compositing, retouching' },
+  { id: 'virtual_tour', name: 'Virtual Tours', price: 'From $50', icon: 'eye', tooltip: '360° immersive walkthrough experiences. Matterport-style, embed anywhere.' },
+  { id: 'virtual_renovation', name: 'Virtual Renovation', price: 'From $35', icon: 'brush', tooltip: 'Show buyers the potential. Kitchen remodels, flooring changes, paint colors.' },
+  { id: 'ai_voiceover', name: 'AI Voiceovers', price: 'From $15', icon: 'mic', tooltip: 'Professional narration for videos. 20+ voices, AI-generated scripts.' },
+  { id: 'cma_report', name: 'CMA Reports', price: 'From $20', icon: 'file', tooltip: 'Beautiful comparative market analysis PDFs with your photos and branding.' },
+  { id: 'auto_campaigns', name: 'Auto Campaigns', price: 'From $30', icon: 'zap', tooltip: 'Set it and forget it. Automated posting for new listings, price drops, sold.' },
+  { id: 'white_label', name: 'White Label', price: '$99/mo', icon: 'tag', tooltip: 'Your brand, your domain. Full white-label solution for brokerages.' },
+  { id: 'human_editing', name: 'Human Editing', price: 'From $5/image', icon: 'user', tooltip: 'Complex edits by professionals. Object removal, compositing, retouching.' },
 ] as const;
 
 const GOLD = '#D4A017';
@@ -303,6 +309,15 @@ export default function HomePage() {
           position: relative;
           z-index: 1;
         }
+        
+        /* Impressive FREE badge pulsing animation */
+        @keyframes freeBadgePulse {
+          0%, 100% { box-shadow: 0 0 20px rgba(212, 160, 23, 0.4), 0 0 40px rgba(212, 160, 23, 0.2); }
+          50% { box-shadow: 0 0 30px rgba(212, 160, 23, 0.6), 0 0 60px rgba(212, 160, 23, 0.3); }
+        }
+        .free-badge-glow {
+          animation: freeBadgePulse 2s ease-in-out infinite;
+        }
       `}</style>
       
       {/* Header */}
@@ -369,6 +384,24 @@ export default function HomePage() {
               <span className="text-white text-xs font-medium">Brokers</span>
             </div>
             
+            {/* IMPRESSIVE FREE FOREVER BADGE */}
+            <div className="mb-6">
+              <div className="inline-block relative">
+                <div className="absolute -inset-1 bg-gradient-to-r from-[#D4A017] to-[#B8860B] rounded-2xl blur-sm opacity-60"></div>
+                <div className="relative free-badge-glow bg-gradient-to-r from-[#D4A017] to-[#B8860B] rounded-2xl px-6 py-3 md:px-8 md:py-4">
+                  <div className="flex items-center justify-center gap-3">
+                    <div className="flex items-center justify-center w-8 h-8 md:w-10 md:h-10 bg-black/20 rounded-full">
+                      <Sparkles className="w-5 h-5 md:w-6 md:h-6 text-black" />
+                    </div>
+                    <div className="text-left">
+                      <p className="text-black font-bold text-lg md:text-xl tracking-tight">Enhancement FREE Forever</p>
+                      <p className="text-black/70 text-xs md:text-sm">All 15 AI tools • Unlimited photos • No credit card</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
             {/* Main Headline */}
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white leading-[1.1] mb-3">
               The <span className="text-[#D4A017]">Gold Standard</span> in Listing Visuals.
@@ -383,29 +416,6 @@ export default function HomePage() {
             <p className="text-lg text-[#D4A017] font-semibold mb-6">
               Shot at 2pm. Posted by 2:12.
             </p>
-            
-            {/* FREE Enhancement Badge - Main CTA */}
-            <Link 
-              href="/auth/signup" 
-              onClick={() => trackEvent(SnapREvents.HOMEPAGE_CTA_CLICK)}
-              className="inline-flex items-center gap-4 px-6 py-3 bg-gradient-to-r from-green-500/20 to-emerald-500/10 border-2 border-green-500/50 rounded-full mb-5 hover:border-green-400 hover:scale-105 transition-all cursor-pointer group"
-            >
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-green-500 flex items-center justify-center shadow-lg shadow-green-500/30 group-hover:scale-110 transition-transform">
-                  <Check className="w-6 h-6 text-white" />
-                </div>
-                <div className="text-left">
-                  <div className="text-green-400 text-xs font-bold tracking-wide">ENHANCEMENT</div>
-                  <div className="text-white text-xl font-black">FREE FOREVER</div>
-                </div>
-              </div>
-              <div className="h-10 w-px bg-white/20"></div>
-              <div className="text-left">
-                <div className="text-white/80 text-sm font-medium">All 15 AI tools</div>
-                <div className="text-white/50 text-xs">No credit card required</div>
-              </div>
-              <ArrowRight className="w-5 h-5 text-green-400 group-hover:translate-x-1 transition-transform" />
-            </Link>
             
             {/* Trust Signals */}
             <div className="flex flex-wrap justify-center items-center gap-5 text-xs">
@@ -424,233 +434,57 @@ export default function HomePage() {
             </div>
           </div>
           
-        </div>
-      </section>
-
-      {/* Pain Points Section - 6 Cards */}
-      <section className="py-16 px-6 bg-[#0F0F0F]">
-        <div className="max-w-6xl mx-auto">
-          <p className="text-center text-[#D4A017] text-sm font-semibold tracking-wider mb-3">THE INDUSTRY PROBLEM</p>
-          <h2 className="text-3xl md:text-4xl font-bold text-white text-center mb-4">
-            The Real Estate Marketing Struggle
-          </h2>
-          <p className="text-lg text-white/60 text-center mb-12 max-w-2xl mx-auto">
-            Every day, agents and photographers face these frustrations. Sound familiar?
-          </p>
-
-          {/* 6 Pain Point Cards */}
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-16">
+          {/* 4 Workflow Panels - Compact */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             
-            {/* Pain 1: Wait Times */}
-            <div className="bg-red-500/5 border border-red-500/20 rounded-2xl p-6 hover:border-red-500/40 transition-all">
-              <div className="w-12 h-12 rounded-xl bg-red-500/10 flex items-center justify-center mb-4">
-                <svg className="w-6 h-6 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-              </div>
-              <h3 className="text-lg font-bold text-red-400 mb-2">24-48 Hour Wait Times</h3>
-              <p className="text-white/60 text-sm">Your listing goes live with terrible photos while you wait for edits to come back.</p>
-            </div>
-            
-            {/* Pain 2: Cost */}
-            <div className="bg-red-500/5 border border-red-500/20 rounded-2xl p-6 hover:border-red-500/40 transition-all">
-              <div className="w-12 h-12 rounded-xl bg-red-500/10 flex items-center justify-center mb-4">
-                <svg className="w-6 h-6 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v12m-3-2.818l.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-              </div>
-              <h3 className="text-lg font-bold text-red-400 mb-2">$400+/Month on Photo Editing</h3>
-              <p className="text-white/60 text-sm">$2-4 per photo × 100+ photos = bleeding money on every listing.</p>
-            </div>
-            
-            {/* Pain 3: Tool Juggling */}
-            <div className="bg-red-500/5 border border-red-500/20 rounded-2xl p-6 hover:border-red-500/40 transition-all">
-              <div className="w-12 h-12 rounded-xl bg-red-500/10 flex items-center justify-center mb-4">
-                <svg className="w-6 h-6 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 7.5l3 2.25-3 2.25m4.5 0h3m-9 8.25h13.5A2.25 2.25 0 0021 18V6a2.25 2.25 0 00-2.25-2.25H5.25A2.25 2.25 0 003 6v12a2.25 2.25 0 002.25 2.25z" />
-                </svg>
-              </div>
-              <h3 className="text-lg font-bold text-red-400 mb-2">Juggling 5 Different Tools</h3>
-              <p className="text-white/60 text-sm">Photo editor, Canva, Hootsuite, email platform, MLS upload... the chaos never ends.</p>
-            </div>
-            
-            {/* Pain 4: No Quality Feedback */}
-            <div className="bg-red-500/5 border border-red-500/20 rounded-2xl p-6 hover:border-red-500/40 transition-all">
-              <div className="w-12 h-12 rounded-xl bg-red-500/10 flex items-center justify-center mb-4">
-                <svg className="w-6 h-6 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9 5.25h.008v.008H12v-.008z" />
-                </svg>
-              </div>
-              <h3 className="text-lg font-bold text-red-400 mb-2">No Idea If Your Photos Are Good</h3>
-              <p className="text-white/60 text-sm">Shoot 100 photos, hope some turn out okay. No guidance, no scoring, just guessing.</p>
-            </div>
-            
-            {/* Pain 5: Social Media Guilt */}
-            <div className="bg-red-500/5 border border-red-500/20 rounded-2xl p-6 hover:border-red-500/40 transition-all">
-              <div className="w-12 h-12 rounded-xl bg-red-500/10 flex items-center justify-center mb-4">
-                <svg className="w-6 h-6 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5" />
-                </svg>
-              </div>
-              <h3 className="text-lg font-bold text-red-400 mb-2">Social Media Guilt</h3>
-              <p className="text-white/60 text-sm">Know you should post daily, actually post monthly. The content creation struggle is real.</p>
-            </div>
-            
-            {/* Pain 6: Email Approval Chains */}
-            <div className="bg-red-500/5 border border-red-500/20 rounded-2xl p-6 hover:border-red-500/40 transition-all">
-              <div className="w-12 h-12 rounded-xl bg-red-500/10 flex items-center justify-center mb-4">
-                <svg className="w-6 h-6 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75" />
-                </svg>
-              </div>
-              <h3 className="text-lg font-bold text-red-400 mb-2">Endless Email Approval Chains</h3>
-              <p className="text-white/60 text-sm">"Can you resend photo #7?" "Which one did you approve?" Back and forth forever.</p>
-            </div>
-            
-          </div>
-
-          {/* Solutions Section Header */}
-          <p className="text-center text-[#D4A017] text-sm font-semibold tracking-wider mb-3">THE SNAPR SOLUTION</p>
-          <h2 className="text-3xl md:text-4xl font-bold text-white text-center mb-4">
-            SnapR Fixes Everything
-          </h2>
-          <p className="text-lg text-white/60 text-center mb-12 max-w-2xl mx-auto">
-            One platform. Every problem solved. Here's how we do it differently.
-          </p>
-
-          {/* 6 Solution Cards */}
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
-            
-            {/* Solution 1: Speed */}
-            <div className="bg-green-500/5 border border-green-500/20 rounded-2xl p-6 hover:border-green-500/40 transition-all">
-              <div className="w-12 h-12 rounded-xl bg-green-500/10 flex items-center justify-center mb-4">
-                <svg className="w-6 h-6 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z" />
-                </svg>
-              </div>
-              <h3 className="text-lg font-bold text-green-400 mb-2">30-Second Enhancement</h3>
-              <p className="text-white/60 text-sm">AI processes your photos instantly. No waiting, no delays, no excuses.</p>
-            </div>
-            
-            {/* Solution 2: Free Enhancement */}
-            <div className="bg-green-500/5 border border-green-500/20 rounded-2xl p-6 hover:border-green-500/40 transition-all">
-              <div className="w-12 h-12 rounded-xl bg-green-500/10 flex items-center justify-center mb-4">
-                <svg className="w-6 h-6 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-              </div>
-              <h3 className="text-lg font-bold text-green-400 mb-2">Enhancement FREE Forever</h3>
-              <p className="text-white/60 text-sm">All 15 AI enhancement tools included free. Only pay when you publish listings.</p>
-            </div>
-            
-            {/* Solution 3: All-in-One */}
-            <div className="bg-green-500/5 border border-green-500/20 rounded-2xl p-6 hover:border-green-500/40 transition-all">
-              <div className="w-12 h-12 rounded-xl bg-green-500/10 flex items-center justify-center mb-4">
-                <svg className="w-6 h-6 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z" />
-                </svg>
-              </div>
-              <h3 className="text-lg font-bold text-green-400 mb-2">One Platform Does It All</h3>
-              <p className="text-white/60 text-sm">Photos, videos, social posts, emails, property sites — everything in one place.</p>
-            </div>
-            
-            {/* Solution 4: AI Scoring */}
-            <div className="bg-green-500/5 border border-green-500/20 rounded-2xl p-6 hover:border-green-500/40 transition-all">
-              <div className="w-12 h-12 rounded-xl bg-green-500/10 flex items-center justify-center mb-4">
-                <svg className="w-6 h-6 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M11.48 3.499a.562.562 0 011.04 0l2.125 5.111a.563.563 0 00.475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 00-.182.557l1.285 5.385a.562.562 0 01-.84.61l-4.725-2.885a.563.563 0 00-.586 0L6.982 20.54a.562.562 0 01-.84-.61l1.285-5.386a.562.562 0 00-.182-.557l-4.204-3.602a.563.563 0 01.321-.988l5.518-.442a.563.563 0 00.475-.345L11.48 3.5z" />
-                </svg>
-              </div>
-              <h3 className="text-lg font-bold text-green-400 mb-2">Listing Intelligence AI</h3>
-              <p className="text-white/60 text-sm">AI scores your photos, picks the hero image, and tells you exactly what to improve.</p>
-            </div>
-            
-            {/* Solution 5: Content Studio */}
-            <div className="bg-green-500/5 border border-green-500/20 rounded-2xl p-6 hover:border-green-500/40 transition-all">
-              <div className="w-12 h-12 rounded-xl bg-green-500/10 flex items-center justify-center mb-4">
-                <svg className="w-6 h-6 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M7.5 7.5h-.75A2.25 2.25 0 004.5 9.75v7.5a2.25 2.25 0 002.25 2.25h7.5a2.25 2.25 0 002.25-2.25v-7.5a2.25 2.25 0 00-2.25-2.25h-.75m0-3l-3-3m0 0l-3 3m3-3v11.25m6-2.25h.75a2.25 2.25 0 012.25 2.25v7.5a2.25 2.25 0 01-2.25 2.25h-7.5a2.25 2.25 0 01-2.25-2.25v-.75" />
-                </svg>
-              </div>
-              <h3 className="text-lg font-bold text-green-400 mb-2">150+ Ready Templates</h3>
-              <p className="text-white/60 text-sm">Social posts, videos, emails — all auto-generated and ready to publish in seconds.</p>
-            </div>
-            
-            {/* Solution 6: Client Approval */}
-            <div className="bg-green-500/5 border border-green-500/20 rounded-2xl p-6 hover:border-green-500/40 transition-all">
-              <div className="w-12 h-12 rounded-xl bg-green-500/10 flex items-center justify-center mb-4">
-                <svg className="w-6 h-6 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z" />
-                </svg>
-              </div>
-              <h3 className="text-lg font-bold text-green-400 mb-2">One-Click Client Approval</h3>
-              <p className="text-white/60 text-sm">Share a link, client approves with one click. No more email chains or confusion.</p>
-            </div>
-            
-          </div>
-
-          {/* Stats Row */}
-          <div className="grid md:grid-cols-3 gap-6 text-center">
-            <div>
-              <div className="text-4xl font-bold text-[#D4A017] mb-2">96%</div>
-              <div className="text-white/60 text-sm">Less cost per listing</div>
-            </div>
-            <div>
-              <div className="text-4xl font-bold text-[#D4A017] mb-2">99%</div>
-              <div className="text-white/60 text-sm">Faster turnaround</div>
-            </div>
-            <div>
-              <div className="text-4xl font-bold text-[#D4A017] mb-2">1</div>
-              <div className="text-white/60 text-sm">Platform for everything</div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* How It Works - 4 Step Workflow */}
-      <section className="py-16 px-6 bg-gradient-to-b from-[#0F0F0F] to-[#1A1A1A]">
-        <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-10">
-            <p className="text-[#D4A017] text-sm font-semibold tracking-wider mb-3">HOW IT WORKS</p>
-            <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
-              Four Steps to Listing Gold
-            </h2>
-            <p className="text-lg text-white/60 max-w-2xl mx-auto">
-              From raw photos to published everywhere in under 12 minutes.
-            </p>
-          </div>
-          
-          {/* 4 Workflow Panels */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {/* Panel 1: UPLOAD */}
+            {/* Panel 1: CAPTURE */}
             <div className="group">
               <div className="gold-border-animate mb-2">
                 <div className="aspect-[4/3] relative p-1.5">
-                  <div className="w-full h-full bg-[#0A0A0A] rounded-lg overflow-hidden relative flex flex-col items-center justify-center">
-                    {/* Film strip / Upload visual */}
-                    <div className="flex gap-1 mb-2">
-                      <div className="w-6 h-8 bg-white/20 rounded-sm"></div>
-                      <div className="w-6 h-8 bg-white/30 rounded-sm"></div>
-                      <div className="w-6 h-8 bg-white/40 rounded-sm"></div>
-                      <div className="w-6 h-8 bg-[#D4A017]/60 rounded-sm"></div>
+                  <div className="w-full h-full bg-[#0A0A0A] rounded-lg overflow-hidden relative">
+                    <img 
+                      src="https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=300" 
+                      className="w-full h-full object-cover opacity-75" 
+                      alt="Camera view"
+                    />
+                    
+                    {/* Overlay */}
+                    <div className="absolute inset-0">
+                      {/* Grid */}
+                      <div className="absolute inset-0 grid grid-cols-3 grid-rows-3 opacity-20">
+                        <div className="border-r border-b border-white"></div>
+                        <div className="border-r border-b border-white"></div>
+                        <div className="border-b border-white"></div>
+                        <div className="border-r border-b border-white"></div>
+                        <div className="border-r border-b border-white"></div>
+                        <div className="border-b border-white"></div>
+                        <div className="border-r border-white"></div>
+                        <div className="border-r border-white"></div>
+                      </div>
+                      
+                      {/* AI Bubble */}
+                      <div className="absolute top-1.5 left-1.5 right-1.5 bg-black/80 rounded p-1.5 border border-[#D4A017]/30">
+                        <div className="flex items-center gap-1.5">
+                          <div className="w-4 h-4 rounded-full bg-[#D4A017] flex items-center justify-center">
+                            <span className="text-black text-[6px] font-bold">AI</span>
+                          </div>
+                          <p className="text-white text-[8px]">Move left for framing</p>
+                        </div>
+                      </div>
+                      
+                      {/* Capture btn */}
+                      <div className="absolute bottom-2 left-1/2 -translate-x-1/2">
+                        <div className="w-6 h-6 rounded-full bg-white border-2 border-white/40"></div>
+                      </div>
                     </div>
-                    {/* Upload Icon */}
-                    <div className="w-8 h-8 rounded-full bg-[#D4A017]/20 border border-[#D4A017]/40 flex items-center justify-center">
-                      <svg className="w-4 h-4 text-[#D4A017]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
-                      </svg>
-                    </div>
-                    <p className="text-white/50 text-[8px] mt-1">Drop photos here</p>
                   </div>
                 </div>
               </div>
               
               {/* Gold Button */}
               <div className="flex items-center justify-center gap-1.5 py-2.5 bg-gradient-to-r from-[#D4A017] to-[#B8860B] rounded-lg">
-                <svg className="w-4 h-4 text-black" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
-                </svg>
-                <span className="text-black font-semibold text-sm">Upload</span>
+                <Camera className="w-4 h-4 text-black" />
+                <span className="text-black font-semibold text-sm">Capture</span>
               </div>
             </div>
             
@@ -816,8 +650,124 @@ export default function HomePage() {
                 <span className="text-black font-semibold text-sm">Publish</span>
               </div>
             </div>
+            
           </div>
           
+        </div>
+      </section>
+
+      {/* Pain Points Section */}
+      <section className="py-16 px-6 bg-[#0F0F0F]">
+        <div className="max-w-6xl mx-auto">
+          <p className="text-center text-[#D4A017] text-xs font-medium tracking-widest uppercase mb-3">The Industry Problem</p>
+          <h2 className="text-3xl md:text-4xl font-bold text-white text-center mb-4">
+            The Real Estate Marketing Struggle
+          </h2>
+          <p className="text-lg text-white/60 text-center mb-12 max-w-2xl mx-auto">
+            Right now, getting a listing from photos to published means juggling tools, waiting days, and spending hundreds.
+          </p>
+
+          {/* Two Column Comparison */}
+          <div className="grid md:grid-cols-2 gap-6 mb-12">
+            {/* LEFT: Without SnapR */}
+            <div className="bg-red-500/10 border border-red-500/30 rounded-2xl p-6">
+              <h3 className="text-xl font-bold text-red-400 mb-6">Without SnapR</h3>
+              <div className="space-y-3">
+                <div className="flex justify-between text-sm">
+                  <span className="text-white/70">Photo editing service:</span>
+                  <span className="text-white font-semibold">$125 - $625</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-white/70">Wait time:</span>
+                  <span className="text-white font-semibold">24 - 48 hours</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-white/70">Social graphics (Canva):</span>
+                  <span className="text-white font-semibold">45 min</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-white/70">Video slideshow:</span>
+                  <span className="text-white font-semibold">30 min</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-white/70">Email campaign:</span>
+                  <span className="text-white font-semibold">20 min</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-white/70">Description writing:</span>
+                  <span className="text-white font-semibold">15 min</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-white/70">Scheduling & posting:</span>
+                  <span className="text-white font-semibold">20 min</span>
+                </div>
+                <div className="pt-4 mt-4 border-t border-red-500/30 flex justify-between text-lg font-bold">
+                  <span className="text-white">Total:</span>
+                  <span className="text-red-400">$300+ & 2-3 days</span>
+                </div>
+              </div>
+            </div>
+
+            {/* RIGHT: With SnapR */}
+            <div className="bg-gradient-to-br from-[#D4A017]/20 to-[#B8860B]/10 border-2 border-[#D4A017] rounded-2xl p-6 relative">
+              <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-4 py-1 bg-[#D4A017] text-black text-xs font-bold rounded-full">
+                RECOMMENDED
+              </div>
+              <h3 className="text-xl font-bold text-[#D4A017] mb-6 mt-2">With SnapR</h3>
+              <div className="space-y-3">
+                <div className="flex justify-between text-sm items-center">
+                  <span className="text-white/70">Upload photos:</span>
+                  <span className="text-white font-semibold flex items-center gap-1">
+                    Instant <Check className="w-4 h-4 text-green-400" />
+                  </span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-white/70">AI Enhancement (all 15 tools):</span>
+                  <span className="text-white font-semibold">30 sec</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-white/70">Social posts (150+ templates):</span>
+                  <span className="text-white font-semibold">2 min</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-white/70">Video created:</span>
+                  <span className="text-white font-semibold">Auto</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-white/70">Email campaign ready:</span>
+                  <span className="text-white font-semibold">Auto</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-white/70">AI description written:</span>
+                  <span className="text-white font-semibold">Auto</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-white/70">Published everywhere:</span>
+                  <span className="text-white font-semibold">1 click</span>
+                </div>
+                <div className="pt-4 mt-4 border-t border-[#D4A017]/30 flex justify-between text-lg font-bold">
+                  <span className="text-white">Total:</span>
+                  <span className="text-[#D4A017]">$12 & 12 minutes</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Stats Row */}
+          <div className="grid md:grid-cols-3 gap-6 text-center">
+            <div>
+              <div className="text-4xl font-bold text-[#D4A017] mb-2">96%</div>
+              <div className="text-white/60 text-sm">Less cost per listing</div>
+            </div>
+            <div>
+              <div className="text-4xl font-bold text-[#D4A017] mb-2">99%</div>
+              <div className="text-white/60 text-sm">Faster turnaround</div>
+            </div>
+            <div>
+              <div className="text-4xl font-bold text-[#D4A017] mb-2">1</div>
+              <div className="text-white/60 text-sm">Platform for everything</div>
+            </div>
+          </div>
         </div>
       </section>
 
@@ -864,7 +814,7 @@ export default function HomePage() {
                     </span>
                   </div>
                   <p className="text-white/70 text-sm">Edit real estate photos from any device</p>
-                  <p className="text-[#D4A017]/80 text-xs font-medium mt-1">✓ iOS App Soon &nbsp; ✓ Android App Soon &nbsp; ✓ Web App Now</p>
+                  <p className="text-[#D4A017]/80 text-xs font-medium mt-1">✓ iOS App Soon &nbsp; ✓ Web App Now &nbsp; ✓ Same AI Tools</p>
                 </div>
               </div>
             </div>
@@ -884,8 +834,8 @@ export default function HomePage() {
             
           </div>
           
-          {/* iOS + Android + Web App Cards */}
-          <div className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto">
+          {/* iOS + Web App Cards */}
+          <div className="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto">
             
             {/* iOS App Card */}
             <div className="relative bg-[#1A1A1A] border border-white/10 rounded-2xl p-6 overflow-hidden">
@@ -957,86 +907,6 @@ export default function HomePage() {
                   Notify Me When Available
                 </button>
                 <p className="text-white/30 text-xs mt-2">Launching in App Store soon</p>
-              </div>
-            </div>
-            
-            {/* Android App Card */}
-            <div className="relative bg-[#1A1A1A] border border-white/10 rounded-2xl p-6 overflow-hidden">
-              {/* Coming Soon Banner */}
-              <div className="absolute top-4 right-4 px-3 py-1 bg-[#D4A017]/20 border border-[#D4A017]/40 rounded-full">
-                <span className="text-[#D4A017] text-xs font-semibold">COMING SOON</span>
-              </div>
-              
-              {/* Phone Mockup - Android style */}
-              <div className="flex justify-center mb-6 mt-4">
-                <div className="relative">
-                  <div className="w-32 h-56 bg-gradient-to-b from-[#2A2A2A] to-[#1A1A1A] rounded-[1.5rem] border-4 border-[#3A3A3A] p-2 shadow-2xl">
-                    <div className="w-full h-full bg-[#0A0A0A] rounded-[1rem] flex flex-col items-center justify-center relative overflow-hidden">
-                      {/* Camera punch hole */}
-                      <div className="absolute top-2 left-1/2 -translate-x-1/2 w-2 h-2 bg-[#2A2A2A] rounded-full"></div>
-                      {/* App Screen */}
-                      <div className="flex flex-col items-center">
-                        <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#D4A017] to-[#B8860B] flex items-center justify-center mb-2">
-                          <Camera className="w-6 h-6 text-black" />
-                        </div>
-                        <span className="text-white text-[10px] font-semibold">SnapR</span>
-                        <span className="text-white/40 text-[8px]">AI Director</span>
-                      </div>
-                      {/* Android nav bar */}
-                      <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-4">
-                        <div className="w-3 h-3 border border-white/30 rounded-sm"></div>
-                        <div className="w-3 h-3 border border-white/30 rounded-full"></div>
-                        <div className="w-3 h-3 border-l-2 border-white/30"></div>
-                      </div>
-                    </div>
-                  </div>
-                  {/* Glow */}
-                  <div className="absolute -inset-4 bg-[#3DDC84]/10 rounded-full blur-2xl -z-10"></div>
-                </div>
-              </div>
-              
-              {/* Content */}
-              <div className="text-center">
-                <div className="flex items-center justify-center gap-2 mb-2">
-                  {/* Android Icon */}
-                  <svg className="w-6 h-6 text-[#3DDC84]" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M17.6 9.48l1.84-3.18c.16-.31.04-.69-.26-.85-.29-.15-.65-.06-.83.22l-1.88 3.24c-1.42-.59-3.02-.59-4.48 0L10.1 5.67c-.18-.28-.54-.37-.83-.22-.3.16-.42.54-.26.85L10.85 9.48C7.58 11.05 5.45 14.27 5 18h14c-.45-3.73-2.58-6.95-5.85-8.52zM10 15c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1zm4 0c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1z"/>
-                  </svg>
-                  <h3 className="text-xl font-bold text-white">Android App</h3>
-                </div>
-                <p className="text-[#3DDC84] font-semibold mb-4">SnapR Camera with AI Director</p>
-                
-                {/* Features */}
-                <ul className="space-y-2 text-left mb-6">
-                  <li className="flex items-center gap-2 text-white/70 text-sm">
-                    <Check className="w-4 h-4 text-[#3DDC84]" />
-                    AI guides you before the shot
-                  </li>
-                  <li className="flex items-center gap-2 text-white/70 text-sm">
-                    <Check className="w-4 h-4 text-[#3DDC84]" />
-                    Real-time composition tips
-                  </li>
-                  <li className="flex items-center gap-2 text-white/70 text-sm">
-                    <Check className="w-4 h-4 text-[#3DDC84]" />
-                    MLS compliance built-in
-                  </li>
-                  <li className="flex items-center gap-2 text-white/70 text-sm">
-                    <Check className="w-4 h-4 text-[#3DDC84]" />
-                    All 15 AI enhancement tools
-                  </li>
-                </ul>
-                
-                {/* Notify Button */}
-                <button 
-                  onClick={() => setShowIOSNotifyModal(true)}
-                  className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-white/5 border border-white/20 text-white font-semibold rounded-xl hover:bg-white/10 transition-colors"
-                >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-                  </svg>
-                  Notify Me When Available
-                </button>
-                <p className="text-white/30 text-xs mt-2">Launching in Play Store soon</p>
               </div>
             </div>
             
@@ -1146,17 +1016,6 @@ export default function HomePage() {
 
       {/* Gallery Section */}
       <section id="features" className="py-16 px-6">
-        <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-12">
-            <p className="text-[#D4A017] text-sm font-semibold tracking-wider mb-3">15 AI ENHANCEMENT TOOLS</p>
-            <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
-              See the Transformation
-            </h2>
-            <p className="text-lg text-white/60 max-w-2xl mx-auto">
-              From dull to dazzling in 30 seconds. Drag the slider to see the magic.
-            </p>
-          </div>
-        </div>
         <LandingGallery />
       </section>
 
@@ -1196,12 +1055,10 @@ export default function HomePage() {
             <p className="text-sm text-white/50">Simple, transparent pricing. No hidden fees.</p>
           </div>
 
-          {/* Error Message - User Friendly */}
+          {/* Error Message */}
           {error && (
             <div className="mb-4 p-3 rounded-lg text-center text-sm bg-red-500/10 border border-red-500/30 text-red-400">
-              {error.includes('API key') || error.includes('authenticator') 
-                ? 'Payment system is being configured. Please try again later or contact support.'
-                : error}
+              {error}
             </div>
           )}
 
@@ -1221,12 +1078,12 @@ export default function HomePage() {
               <span className="text-sm font-medium text-[#D4A017]">Listings:</span>
               <div className="flex items-center gap-2">
                 <span className="text-xs font-medium text-white/80">10</span>
-                <input type="range" min="0" max="4" value={sliderIndex} onChange={(e) => {
+                <input type="range" min="0" max="8" value={sliderIndex} onChange={(e) => {
                   const newValue = parseInt(e.target.value);
                   setSliderIndex(newValue);
                   trackEvent(SnapREvents.PRICING_SLIDER_USED, { value: newValue });
                 }} className="pricing-slider" style={sliderStyles} />
-                <span className="text-xs font-medium text-white/80">50+</span>
+                <span className="text-xs font-medium text-white/80">150+</span>
               </div>
               <span className="text-xl font-bold w-12 text-[#D4A017]">{currentTier.listings}</span>
             </div>
@@ -1352,139 +1209,27 @@ export default function HomePage() {
             </div>
           </div>
 
-          {/* Premium Add-ons - Circular Layout */}
+          {/* Add-ons */}
           <div className="mb-8">
-            <div className="text-center mb-8">
-              <h3 className="text-xl font-bold">Premium Add-ons</h3>
-              <p className="text-sm text-white/50">Unlock advanced capabilities • Pay as you go</p>
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h3 className="text-lg font-semibold">Premium Add-ons</h3>
+                <p className="text-xs text-white/40">Hover for details</p>
+              </div>
+              <span className="text-sm text-white/40">Pay as you go</span>
             </div>
-            
-            {/* Circular Grid */}
-            <div className="relative w-full max-w-3xl mx-auto h-[500px]">
-              
-              {/* Center - White Label */}
-              <div 
-                onClick={() => handleAddonPurchase('white_label')}
-                className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-44 h-44 group cursor-pointer z-10"
-              >
-                <div className="w-full h-full rounded-full bg-gradient-to-br from-[#D4A017]/20 via-[#1A1A1A] to-[#D4A017]/10 border-2 border-[#D4A017]/40 hover:border-[#D4A017] transition-all flex flex-col items-center justify-center text-center p-4 shadow-2xl shadow-[#D4A017]/10">
-                  <div className="w-12 h-12 rounded-full bg-[#D4A017]/20 border border-[#D4A017]/40 flex items-center justify-center mb-2">
-                    <svg className="w-6 h-6 text-[#D4A017]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M9.568 3H5.25A2.25 2.25 0 003 5.25v4.318c0 .597.237 1.17.659 1.591l9.581 9.581c.699.699 1.78.872 2.121.332a11.203 11.203 0 001.719-4.72l-3.75-3.75a3 3 0 00-4.243-4.243l-3.75-3.75z" />
-                    </svg>
+            <div className="grid grid-cols-4 gap-4">
+              {ADDONS.map((addon) => (
+                <div key={addon.name} onClick={() => handleAddonPurchase(addon.id)} className="group relative p-4 rounded-xl cursor-pointer transition-all hover:border-amber-500/50 bg-white/5 border border-white/10">
+                  {/* Tooltip */}
+                  <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-56 p-3 bg-[#1A1A1A] border border-white/20 rounded-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50 pointer-events-none">
+                    <p className="text-xs text-white/70">{addon.tooltip}</p>
                   </div>
-                  <h4 className="font-bold text-white text-sm mb-1">White Label</h4>
-                  <p className="text-white/50 text-xs mb-2">Your brand everywhere</p>
-                  <span className="text-[#D4A017] font-bold">$99/mo</span>
+                  <div className="w-10 h-10 rounded-lg flex items-center justify-center mb-3 bg-[#D4A017]/10"><AddonIcon type={addon.icon} /></div>
+                  <h4 className="font-semibold text-sm mb-1">{addon.name}</h4>
+                  <p className="text-xs text-[#D4A017]">{addon.price}</p>
                 </div>
-              </div>
-              
-              {/* Connecting lines (decorative) */}
-              <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-72 h-72 rounded-full border border-dashed border-white/10" />
-              
-              {/* Position 1: Virtual Tours (Top) */}
-              <div 
-                onClick={() => handleAddonPurchase('virtual_tour')}
-                className="absolute left-1/2 -translate-x-1/2 top-0 w-36 h-36 group cursor-pointer"
-              >
-                <div className="w-full h-full rounded-2xl bg-gradient-to-br from-blue-500/20 to-blue-600/5 border border-blue-400/30 hover:border-blue-400 transition-all flex flex-col items-center justify-center text-center p-3">
-                  <div className="w-10 h-10 rounded-xl bg-blue-500/20 border border-blue-400/30 flex items-center justify-center mb-2">
-                    <svg className="w-5 h-5 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" />
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                    </svg>
-                  </div>
-                  <h4 className="font-semibold text-white text-xs mb-0.5">Virtual Tours</h4>
-                  <p className="text-white/40 text-[10px] mb-1">360° walkthroughs</p>
-                  <span className="text-[#D4A017] text-xs font-semibold">From $50</span>
-                </div>
-              </div>
-              
-              {/* Position 2: Virtual Renovation (Top Right) */}
-              <div 
-                onClick={() => handleAddonPurchase('virtual_renovation')}
-                className="absolute right-8 top-16 w-36 h-36 group cursor-pointer"
-              >
-                <div className="w-full h-full rounded-2xl bg-gradient-to-br from-orange-500/20 to-orange-600/5 border border-orange-400/30 hover:border-orange-400 transition-all flex flex-col items-center justify-center text-center p-3">
-                  <div className="w-10 h-10 rounded-xl bg-orange-500/20 border border-orange-400/30 flex items-center justify-center mb-2">
-                    <svg className="w-5 h-5 text-orange-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M9.53 16.122a3 3 0 00-5.78 1.128 2.25 2.25 0 01-2.4 2.245 4.5 4.5 0 008.4-2.245c0-.399-.078-.78-.22-1.128zm0 0a15.998 15.998 0 003.388-1.62m-5.043-.025a15.994 15.994 0 011.622-3.395m3.42 3.42a15.995 15.995 0 004.764-4.648l3.876-5.814a1.151 1.151 0 00-1.597-1.597L14.146 6.32a15.996 15.996 0 00-4.649 4.763m3.42 3.42a6.776 6.776 0 00-3.42-3.42" />
-                    </svg>
-                  </div>
-                  <h4 className="font-semibold text-white text-xs mb-0.5">Renovation</h4>
-                  <p className="text-white/40 text-[10px] mb-1">Digital remodeling</p>
-                  <span className="text-[#D4A017] text-xs font-semibold">From $35</span>
-                </div>
-              </div>
-              
-              {/* Position 3: AI Voiceovers (Bottom Right) */}
-              <div 
-                onClick={() => handleAddonPurchase('ai_voiceover')}
-                className="absolute right-8 bottom-16 w-36 h-36 group cursor-pointer"
-              >
-                <div className="w-full h-full rounded-2xl bg-gradient-to-br from-green-500/20 to-green-600/5 border border-green-400/30 hover:border-green-400 transition-all flex flex-col items-center justify-center text-center p-3">
-                  <div className="w-10 h-10 rounded-xl bg-green-500/20 border border-green-400/30 flex items-center justify-center mb-2">
-                    <svg className="w-5 h-5 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 18.75a6 6 0 006-6v-1.5m-6 7.5a6 6 0 01-6-6v-1.5m6 7.5v3.75m-3.75 0h7.5M12 15.75a3 3 0 01-3-3V4.5a3 3 0 116 0v8.25a3 3 0 01-3 3z" />
-                    </svg>
-                  </div>
-                  <h4 className="font-semibold text-white text-xs mb-0.5">AI Voiceovers</h4>
-                  <p className="text-white/40 text-[10px] mb-1">Pro narration</p>
-                  <span className="text-[#D4A017] text-xs font-semibold">From $15</span>
-                </div>
-              </div>
-              
-              {/* Position 4: Human Editing (Bottom) */}
-              <div 
-                onClick={() => handleAddonPurchase('human_editing')}
-                className="absolute left-1/2 -translate-x-1/2 bottom-0 w-36 h-36 group cursor-pointer"
-              >
-                <div className="w-full h-full rounded-2xl bg-gradient-to-br from-cyan-500/20 to-cyan-600/5 border border-cyan-400/30 hover:border-cyan-400 transition-all flex flex-col items-center justify-center text-center p-3">
-                  <div className="w-10 h-10 rounded-xl bg-cyan-500/20 border border-cyan-400/30 flex items-center justify-center mb-2">
-                    <svg className="w-5 h-5 text-cyan-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z" />
-                    </svg>
-                  </div>
-                  <h4 className="font-semibold text-white text-xs mb-0.5">Human Editing</h4>
-                  <p className="text-white/40 text-[10px] mb-1">Pro retouching</p>
-                  <span className="text-[#D4A017] text-xs font-semibold">From $5/img</span>
-                </div>
-              </div>
-              
-              {/* Position 5: Auto Campaigns (Bottom Left) */}
-              <div 
-                onClick={() => handleAddonPurchase('auto_campaigns')}
-                className="absolute left-8 bottom-16 w-36 h-36 group cursor-pointer"
-              >
-                <div className="w-full h-full rounded-2xl bg-gradient-to-br from-yellow-500/20 to-yellow-600/5 border border-yellow-400/30 hover:border-yellow-400 transition-all flex flex-col items-center justify-center text-center p-3">
-                  <div className="w-10 h-10 rounded-xl bg-yellow-500/20 border border-yellow-400/30 flex items-center justify-center mb-2">
-                    <svg className="w-5 h-5 text-yellow-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z" />
-                    </svg>
-                  </div>
-                  <h4 className="font-semibold text-white text-xs mb-0.5">Auto Campaigns</h4>
-                  <p className="text-white/40 text-[10px] mb-1">Scheduled posts</p>
-                  <span className="text-[#D4A017] text-xs font-semibold">From $30</span>
-                </div>
-              </div>
-              
-              {/* Position 6: CMA Reports (Top Left) */}
-              <div 
-                onClick={() => handleAddonPurchase('cma_report')}
-                className="absolute left-8 top-16 w-36 h-36 group cursor-pointer"
-              >
-                <div className="w-full h-full rounded-2xl bg-gradient-to-br from-indigo-500/20 to-indigo-600/5 border border-indigo-400/30 hover:border-indigo-400 transition-all flex flex-col items-center justify-center text-center p-3">
-                  <div className="w-10 h-10 rounded-xl bg-indigo-500/20 border border-indigo-400/30 flex items-center justify-center mb-2">
-                    <svg className="w-5 h-5 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
-                    </svg>
-                  </div>
-                  <h4 className="font-semibold text-white text-xs mb-0.5">CMA Reports</h4>
-                  <p className="text-white/40 text-[10px] mb-1">Market analysis</p>
-                  <span className="text-[#D4A017] text-xs font-semibold">From $20</span>
-                </div>
-              </div>
-              
+              ))}
             </div>
           </div>
 
