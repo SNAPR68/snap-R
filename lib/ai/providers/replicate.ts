@@ -33,23 +33,40 @@ function extractUrl(output: unknown): string {
 }
 
 // ============================================
-// FLUX KONTEXT - For creative edits
+// FLUX KONTEXT - With configurable settings
 // ============================================
 
-async function runFluxKontext(imageUrl: string, prompt: string): Promise<string> {
+interface FluxKontextOptions {
+  guidance?: number;      // Lower = more preservation, Higher = more change
+  steps?: number;         // More steps = higher quality
+  outputQuality?: number; // JPEG quality
+}
+
+async function runFluxKontext(
+  imageUrl: string, 
+  prompt: string, 
+  options: FluxKontextOptions = {}
+): Promise<string> {
+  const {
+    guidance = 3.0,      // Default lowered from 3.5 for better preservation
+    steps = 28,
+    outputQuality = 95   // Increased from 90
+  } = options;
+
   console.log('[Replicate] Running Flux Kontext...');
   console.log('[Replicate] Prompt:', prompt.substring(0, 100) + '...');
+  console.log('[Replicate] Settings: guidance=' + guidance + ', steps=' + steps);
 
   const output = await withTimeout(
     replicate.run('black-forest-labs/flux-kontext-dev', {
       input: {
         input_image: imageUrl,
         prompt,
-        guidance: 3.5,
-        num_inference_steps: 28,
+        guidance,
+        num_inference_steps: steps,
         aspect_ratio: 'match_input_image',
         output_format: 'jpg',
-        output_quality: 90,
+        output_quality: outputQuality,
       },
     }),
     120000,
@@ -61,241 +78,442 @@ async function runFluxKontext(imageUrl: string, prompt: string): Promise<string>
 }
 
 // ============================================
-// TOOLS WITH PRESETS (10 tools)
+// 1. SKY REPLACEMENT - Use low guidance for localized edit
 // ============================================
-
-// 1. SKY REPLACEMENT (4 presets)
 export async function skyReplacement(imageUrl: string, customPrompt?: string): Promise<string> {
   console.log('[Replicate] === SKY REPLACEMENT ===');
-  console.log('[Replicate] Custom prompt:', customPrompt ? 'YES' : 'NO');
 
-  const prompt = customPrompt 
-    ? `${customPrompt}. IMPORTANT: Keep the house, roof, trees, lawn, driveway, and ALL other elements exactly the same. Do not change lighting on the house. Only replace the sky.`
-    : 'Replace ONLY the sky with a beautiful clear blue sky with white fluffy clouds. Keep the house, roof, trees, lawn, driveway, and everything else exactly the same. Do not change lighting on the house.';
+  let skyDescription = 'a clear blue sky with soft white clouds';
+  
+  if (customPrompt) {
+    if (customPrompt.toLowerCase().includes('sunset') || customPrompt.toLowerCase().includes('dramatic')) {
+      skyDescription = 'a dramatic sunset sky with orange, pink, and purple colors';
+    } else if (customPrompt.toLowerCase().includes('cloudy') || customPrompt.toLowerCase().includes('overcast')) {
+      skyDescription = 'a soft overcast sky with light gray clouds, even lighting';
+    } else if (customPrompt.toLowerCase().includes('twilight') || customPrompt.toLowerCase().includes('dusk')) {
+      skyDescription = 'a twilight sky with deep blue and purple gradient';
+    } else {
+      skyDescription = customPrompt;
+    }
+  }
 
-  const result = await runFluxKontext(imageUrl, prompt);
+  const prompt = `This is a real estate photograph. Replace ONLY the sky area with ${skyDescription}. 
+CRITICAL: The house, roof, walls, windows, trees, lawn, driveway, cars, and ALL ground-level elements must remain EXACTLY as they are in the original photo. 
+Do NOT change the lighting on the building.
+Do NOT change any colors except the sky.
+Do NOT add or remove any objects.
+Only the sky pixels should change.`;
+
+  // Use lower guidance for more preservation
+  const result = await runFluxKontext(imageUrl, prompt, { guidance: 2.5, steps: 30 });
   console.log('[Replicate] === SKY REPLACEMENT COMPLETE ===');
   return result;
 }
 
-// 2. VIRTUAL TWILIGHT (4 presets)
+// ============================================
+// 2. VIRTUAL TWILIGHT - Subtle transformation
+// ============================================
 export async function virtualTwilight(imageUrl: string, customPrompt?: string): Promise<string> {
   console.log('[Replicate] === VIRTUAL TWILIGHT ===');
-  console.log('[Replicate] Custom prompt:', customPrompt ? 'YES' : 'NO');
 
-  let prompt: string;
+  let twilightStyle = 'classic twilight with deep blue sky and warm window glow';
   
   if (customPrompt) {
-    if (customPrompt.includes('NIGHT') || customPrompt.includes('DARK BLACK-BLUE') || customPrompt.includes('stars')) {
-      prompt = 'Transform this to a NIGHT scene. Make the sky completely DARK BLACK with some stars visible. Turn on ALL lights in the house with bright warm yellow glow from every window. The sky must be very dark like midnight. Keep house structure exactly the same.';
-    } else if (customPrompt.includes('DEEP BLUE') || customPrompt.includes('blue hour') || customPrompt.includes('Blue Hour')) {
-      prompt = 'Transform this to BLUE HOUR. Make the sky a rich DEEP BLUE color with no orange or sunset colors. All windows should glow with bright warm yellow light. Blue twilight atmosphere. Keep house structure exactly the same.';
-    } else if (customPrompt.includes('WARM ORANGE') || customPrompt.includes('golden hour') || customPrompt.includes('Golden Hour')) {
-      prompt = 'Transform this to GOLDEN HOUR. Make the sky show warm ORANGE and PINK sunset colors. Golden warm light illuminating the house. Windows glowing warmly. Dramatic golden sunset atmosphere. Keep house structure exactly the same.';
-    } else {
-      prompt = `${customPrompt}. Add warm light glowing from inside all windows. Keep the house structure exactly the same. Professional real estate twilight photography.`;
+    if (customPrompt.includes('NIGHT') || customPrompt.includes('stars')) {
+      twilightStyle = 'nighttime with dark navy-black sky, some stars visible, all windows glowing warm yellow';
+    } else if (customPrompt.includes('blue hour') || customPrompt.includes('Blue Hour')) {
+      twilightStyle = 'blue hour with rich deep blue sky (no orange), windows glowing warm yellow';
+    } else if (customPrompt.includes('golden hour') || customPrompt.includes('Golden Hour')) {
+      twilightStyle = 'golden hour with warm orange-pink sunset sky, golden light on building, windows glowing';
     }
-  } else {
-    prompt = 'Transform this daytime exterior photo into a beautiful twilight/dusk scene. Replace the sky with a deep blue and purple gradient with golden orange sunset glow on the horizon. Add warm yellow-orange light glowing from inside all the windows as if interior lights are on. Keep the house structure, landscaping, and all other elements exactly the same. Professional real estate twilight photography style.';
   }
 
-  const result = await runFluxKontext(imageUrl, prompt);
+  const prompt = `Transform this exterior real estate photo into a professional ${twilightStyle} scene.
+
+CHANGES TO MAKE:
+1. Sky: Change to appropriate twilight/dusk colors
+2. Windows: Add warm yellow-orange glow as if interior lights are on
+3. Ambient: Subtle dusk atmosphere
+
+MUST PRESERVE EXACTLY:
+- House structure, shape, and architecture
+- Roof, walls, and all building materials
+- Landscaping, lawn, trees, bushes
+- Driveway, walkways, and hardscape
+- All cars, objects, and details
+- Building proportions and perspective
+
+This should look like a professional real estate twilight photo, NOT a filter or overlay.`;
+
+  // Use moderate guidance for balanced transformation
+  const result = await runFluxKontext(imageUrl, prompt, { guidance: 2.8, steps: 32 });
   console.log('[Replicate] === VIRTUAL TWILIGHT COMPLETE ===');
   return result;
 }
 
-// 3. LAWN REPAIR (2 presets)
+// ============================================
+// 3. LAWN REPAIR - Natural green grass
+// ============================================
 export async function lawnRepair(imageUrl: string, customPrompt?: string): Promise<string> {
   console.log('[Replicate] === LAWN REPAIR ===');
-  console.log('[Replicate] Custom prompt:', customPrompt ? 'YES' : 'NO');
 
-  let prompt: string;
+  let grassStyle = 'healthy, natural-looking green residential lawn';
   
   if (customPrompt) {
-    if (customPrompt.includes('EMERALD') || customPrompt.includes('golf course') || customPrompt.includes('PERFECTLY MANICURED')) {
-      prompt = 'Transform the lawn into PERFECTLY MANICURED, VIBRANT EMERALD GREEN grass like a professional golf course putting green. Thick, lush, flawless turf with no brown patches, no weeds, deep rich green color. Keep the house, driveway, landscaping features, and everything else exactly the same. Only make the lawn ultra-green and perfect.';
-    } else {
-      prompt = 'Transform the lawn into healthy NATURAL looking green grass, like a well-maintained residential lawn. Realistic green color, not too dark or artificial. Normal healthy yard appearance. Keep the house, driveway, landscaping features, and everything else exactly the same. Only improve the grass to look naturally healthy.';
+    if (customPrompt.includes('EMERALD') || customPrompt.includes('golf course')) {
+      grassStyle = 'lush, vibrant emerald green grass like a golf course - thick and perfectly manicured';
+    } else if (customPrompt.includes('natural') || customPrompt.includes('Natural')) {
+      grassStyle = 'naturally healthy green lawn with realistic color variation';
     }
-  } else {
-    prompt = 'Make the lawn and grass in this photo healthy and green. Transform any brown, patchy, or dead grass into well-maintained green turf. Keep the house, driveway, landscaping features, and everything else exactly the same. Only improve the grass and lawn areas.';
   }
 
-  const result = await runFluxKontext(imageUrl, prompt);
+  const prompt = `In this real estate photo, improve ONLY the lawn/grass areas to look like ${grassStyle}.
+
+GRASS IMPROVEMENTS:
+- Make brown or patchy grass look healthy green
+- Natural grass color (not neon or artificial looking)
+- Realistic grass texture
+
+MUST NOT CHANGE:
+- House, building, roof, walls
+- Driveway, walkways, patio
+- Trees, shrubs, flower beds (only lawn grass)
+- Any objects, cars, furniture
+- Sky, lighting conditions
+- Anything that is not lawn grass
+
+The grass should look NATURAL and REALISTIC, like a well-maintained yard, not fake or overly saturated.`;
+
+  // Very low guidance to only affect grass color
+  const result = await runFluxKontext(imageUrl, prompt, { guidance: 2.2, steps: 28 });
   console.log('[Replicate] === LAWN REPAIR COMPLETE ===');
   return result;
 }
 
-// 4. DECLUTTER (4 presets)
+// ============================================
+// 4. DECLUTTER - Remove items carefully
+// ============================================
 export async function declutter(imageUrl: string, customPrompt?: string): Promise<string> {
   console.log('[Replicate] === DECLUTTER ===');
-  console.log('[Replicate] Custom prompt:', customPrompt ? 'YES' : 'NO');
 
-  // Make prompts very specific based on level
-  let prompt: string;
+  let declutterLevel = 'Remove small clutter items like papers, cups, remote controls from surfaces';
   
   if (customPrompt) {
     if (customPrompt.includes('Light Clean')) {
-      prompt = 'Remove ONLY small loose items from this room: papers, magazines, remote controls, cups, glasses, dishes on tables. Keep ALL furniture exactly as-is, keep decorations, keep lamps, keep plants. Only remove small clutter items from surfaces. DO NOT add any new objects. DO NOT change furniture. DO NOT move anything. Everything else stays exactly the same.';
+      declutterLevel = 'Remove ONLY very small items: papers, cups, remotes, magazines from tables and counters';
     } else if (customPrompt.includes('Staging Ready')) {
-      prompt = 'Remove ALL furniture and ALL items from this room completely. Leave ONLY the empty room with bare walls, floor, windows, and doors. No sofas, no tables, no chairs, no decorations, no rugs, nothing. Completely empty room ready for virtual staging.';
+      declutterLevel = 'Remove ALL furniture and items, leaving completely empty room with just walls, floor, windows';
     } else if (customPrompt.includes('Full Clean')) {
-      prompt = 'Remove all loose items, personal belongings, decorations, books, plants, and accessories from this room. Keep the main furniture (sofas, tables, beds) but remove everything on surfaces and floors. Clean minimalist look with just furniture. DO NOT add any new objects. DO NOT change or move furniture. Everything structural stays exactly the same.';
+      declutterLevel = 'Remove all loose items, decorations, and personal belongings. Keep main furniture only';
     } else if (customPrompt.includes('Moderate')) {
-      prompt = 'Remove clutter and personal items from counters, tables, and floors. Remove papers, dishes, clothes, toys, magazines. Keep furniture and large decorations but clear surfaces of small items. DO NOT add anything new.';
-    } else {
-      prompt = `${customPrompt}. Keep the room structure exactly the same. DO NOT add any new objects.`;
+      declutterLevel = 'Remove clutter from surfaces: papers, dishes, toys, clothes. Keep furniture and large decor';
     }
-  } else {
-    prompt = 'Remove clutter and personal items from this room. Remove papers, magazines, dishes, cups, clothes, toys, and loose items. Keep furniture but clear all surfaces. DO NOT add any new objects. Make it look like a clean, staged real estate photo.';
   }
 
-  const result = await runFluxKontext(imageUrl, prompt);
+  const prompt = `${declutterLevel}
+
+RULES:
+1. Do NOT add any new objects
+2. Do NOT move or rearrange furniture
+3. Do NOT change wall colors, flooring, or architecture
+4. Fill removed areas with appropriate background (floor, counter, table surface)
+5. Maintain realistic lighting and shadows
+
+This should look like a clean, staged real estate photo.`;
+
+  const result = await runFluxKontext(imageUrl, prompt, { guidance: 3.0, steps: 30 });
   console.log('[Replicate] === DECLUTTER COMPLETE ===');
   return result;
 }
 
-// 5. VIRTUAL STAGING (4 presets)
+// ============================================
+// 5. VIRTUAL STAGING - Add furniture
+// ============================================
 export async function virtualStaging(imageUrl: string, customPrompt?: string): Promise<string> {
   console.log('[Replicate] === VIRTUAL STAGING ===');
-  console.log('[Replicate] Custom prompt:', customPrompt ? 'YES' : 'NO');
 
-  const prompt = customPrompt
-    ? `${customPrompt}. Keep the room architecture, walls, windows, flooring, and layout EXACTLY the same. Only add furniture and decor. Professional real estate virtual staging quality.`
-    : 'Stage this empty room with beautiful modern furniture and decor. Add appropriate furniture: sofas, chairs, tables, rugs, lamps, artwork, plants, and decorative accessories. Keep the room architecture, walls, windows, flooring, and layout EXACTLY the same. Only add furniture and decor. Professional real estate virtual staging quality.';
+  const style = customPrompt || 'modern minimalist';
 
-  const result = await runFluxKontext(imageUrl, prompt);
+  const prompt = `Add beautiful ${style} furniture and decor to stage this empty room.
+
+ADD:
+- Appropriate furniture for the room type (sofa, bed, dining table, etc.)
+- Rugs, lamps, artwork, plants
+- Tasteful decorative accessories
+
+MUST PRESERVE:
+- Room architecture exactly as-is
+- Walls, ceiling, flooring
+- Windows, doors, built-ins
+- Room dimensions and perspective
+- Lighting direction
+
+Furniture should be:
+- Properly scaled to the room
+- Realistically placed with proper shadows
+- High quality, professional staging look`;
+
+  // Higher guidance for staging to ensure furniture is added
+  const result = await runFluxKontext(imageUrl, prompt, { guidance: 3.5, steps: 35 });
   console.log('[Replicate] === VIRTUAL STAGING COMPLETE ===');
   return result;
 }
 
-// 6. FIRE IN FIREPLACE (4 presets)
+// ============================================
+// 6. FIRE IN FIREPLACE - Very localized edit
+// ============================================
 export async function fireFireplace(imageUrl: string, customPrompt?: string): Promise<string> {
   console.log('[Replicate] === FIRE IN FIREPLACE ===');
-  console.log('[Replicate] Custom prompt:', customPrompt ? 'YES' : 'NO');
 
-  const prompt = customPrompt
-    ? `${customPrompt}. Keep the rest of the room exactly the same. Only add fire to the fireplace.`
-    : 'Add a beautiful warm crackling fire to the fireplace in this room. The fire should have realistic orange and yellow flames with a warm cozy glow. Keep the rest of the room exactly the same. Only add fire to the fireplace.';
+  let fireStyle = 'a warm, realistic crackling fire with orange and yellow flames';
+  
+  if (customPrompt) {
+    if (customPrompt.includes('roaring') || customPrompt.includes('Roaring')) {
+      fireStyle = 'a large, roaring fire with tall bright flames';
+    } else if (customPrompt.includes('gentle') || customPrompt.includes('Gentle')) {
+      fireStyle = 'a gentle, small fire with soft warm flames';
+    } else if (customPrompt.includes('ember') || customPrompt.includes('Ember')) {
+      fireStyle = 'glowing red-orange embers with small flames';
+    }
+  }
 
-  const result = await runFluxKontext(imageUrl, prompt);
+  const prompt = `Add ${fireStyle} ONLY inside the fireplace opening in this room.
+
+CRITICAL RULES:
+1. Fire goes ONLY inside the fireplace firebox/opening
+2. Fire must NOT spread outside the fireplace
+3. Room must remain EXACTLY the same
+4. Do NOT change room lighting or add orange glow to walls
+5. Do NOT modify furniture, decor, or any other elements
+6. The fire should look realistic and contained
+
+The rest of the room must be IDENTICAL to the original photo.`;
+
+  // Very low guidance to minimize changes outside fireplace
+  const result = await runFluxKontext(imageUrl, prompt, { guidance: 2.0, steps: 28 });
   console.log('[Replicate] === FIRE IN FIREPLACE COMPLETE ===');
   return result;
 }
 
-// 7. TV SCREEN REPLACE (4 presets)
+// ============================================
+// 7. TV SCREEN REPLACE
+// ============================================
 export async function tvScreen(imageUrl: string, customPrompt?: string): Promise<string> {
   console.log('[Replicate] === TV SCREEN REPLACE ===');
-  console.log('[Replicate] Custom prompt:', customPrompt ? 'YES' : 'NO');
 
-  const prompt = customPrompt
-    ? `${customPrompt}. Keep the TV frame, TV stand, and the rest of the room exactly the same. Only change what's displayed on the TV screen.`
-    : 'Replace the TV screen with a beautiful nature landscape scene showing mountains and a lake. Keep the TV frame, TV stand, and the rest of the room exactly the same. Only change what is displayed on the TV screen.';
+  const screenContent = customPrompt || 'a beautiful mountain landscape with a lake';
 
-  const result = await runFluxKontext(imageUrl, prompt);
+  const prompt = `Replace ONLY the TV screen content with ${screenContent}.
+
+MUST PRESERVE:
+- TV frame and bezel exactly as-is
+- TV stand/mount
+- All furniture in the room
+- Walls, decor, everything else
+
+ONLY the pixels inside the TV screen should change to show the new content.
+Match the screen perspective and brightness to look natural.`;
+
+  const result = await runFluxKontext(imageUrl, prompt, { guidance: 2.5, steps: 28 });
   console.log('[Replicate] === TV SCREEN REPLACE COMPLETE ===');
   return result;
 }
 
-// 8. LIGHTS ON (4 presets)
+// ============================================
+// 8. LIGHTS ON
+// ============================================
 export async function lightsOn(imageUrl: string, customPrompt?: string): Promise<string> {
   console.log('[Replicate] === LIGHTS ON ===');
-  console.log('[Replicate] Custom prompt:', customPrompt ? 'YES' : 'NO');
 
-  const prompt = customPrompt
-    ? `${customPrompt}. Keep everything else in the room exactly the same. Only turn on the lights.`
-    : 'Turn on all the lights in this room. Make all light fixtures, lamps, ceiling lights, and recessed lights appear to be turned on with a warm inviting glow. Keep everything else in the room exactly the same. Only turn on the lights.';
+  const prompt = `Turn on all the lights in this room to create a warm, inviting atmosphere.
 
-  const result = await runFluxKontext(imageUrl, prompt);
+CHANGES:
+- Light fixtures should appear illuminated
+- Lamps should glow warmly
+- Ceiling lights, recessed lights activated
+- Natural warm light emanating from fixtures
+
+PRESERVE:
+- All furniture positions exactly
+- Wall colors and decor
+- Window views
+- Room layout
+
+The lighting should look natural, not like a filter was applied.`;
+
+  const result = await runFluxKontext(imageUrl, prompt, { guidance: 2.8, steps: 28 });
   console.log('[Replicate] === LIGHTS ON COMPLETE ===');
   return result;
 }
 
-// 9. WINDOW MASKING (4 presets)
+// ============================================
+// 9. WINDOW MASKING / VIEW REPLACEMENT
+// ============================================
 export async function windowMasking(imageUrl: string, customPrompt?: string): Promise<string> {
   console.log('[Replicate] === WINDOW MASKING ===');
-  console.log('[Replicate] Custom prompt:', customPrompt ? 'YES' : 'NO');
 
-  const prompt = customPrompt
-    ? `${customPrompt}. Keep the interior room, furniture, and everything else exactly the same. Only change what is visible through the windows.`
-    : 'Balance the window exposure to show a clear view outside. Replace any blown-out white windows with a beautiful blue sky and green landscaping visible through the windows. Keep the interior room, furniture, and everything else exactly the same. Only change what is visible through the windows.';
+  const viewDescription = customPrompt || 'a clear blue sky with trees and landscaping';
 
-  const result = await runFluxKontext(imageUrl, prompt);
+  const prompt = `Fix the overexposed/blown-out windows to show ${viewDescription} through them.
+
+CHANGES:
+- Replace white/blown-out window areas with visible outdoor view
+- Show realistic view through each window
+- Balance exposure between interior and window
+
+PRESERVE EXACTLY:
+- Window frames, trim, and muntins
+- All interior elements
+- Furniture, decor, flooring
+- Wall colors and materials
+
+Only the view THROUGH the window glass should change.`;
+
+  const result = await runFluxKontext(imageUrl, prompt, { guidance: 2.5, steps: 30 });
   console.log('[Replicate] === WINDOW MASKING COMPLETE ===');
   return result;
 }
 
-// 10. COLOR BALANCE (2 presets)
+// ============================================
+// 10. COLOR BALANCE / WHITE BALANCE
+// ============================================
 export async function colorBalance(imageUrl: string, customPrompt?: string): Promise<string> {
   console.log('[Replicate] === COLOR BALANCE ===');
-  console.log('[Replicate] Custom prompt:', customPrompt ? 'YES' : 'NO');
 
-  const prompt = customPrompt
-    ? `${customPrompt}. Keep EVERYTHING in the scene exactly the same - same composition, same objects. Only adjust the color temperature and tones.`
-    : 'Apply warm color balance to this photo with cozy golden warmth and inviting atmosphere. Keep EVERYTHING in the scene exactly the same - same composition, same objects. Only adjust the color temperature and tones.';
+  let colorAdjustment = 'warm and inviting with natural color tones';
+  
+  if (customPrompt) {
+    if (customPrompt.includes('cool') || customPrompt.includes('Cool')) {
+      colorAdjustment = 'cool and crisp with neutral white balance';
+    } else if (customPrompt.includes('warm') || customPrompt.includes('Warm')) {
+      colorAdjustment = 'warm and cozy with golden undertones';
+    } else if (customPrompt.includes('neutral') || customPrompt.includes('Neutral')) {
+      colorAdjustment = 'perfectly neutral white balance, true-to-life colors';
+    }
+  }
 
-  const result = await runFluxKontext(imageUrl, prompt);
+  const prompt = `Adjust the color balance of this photo to be ${colorAdjustment}.
+
+CHANGES:
+- Correct any color cast (too yellow, too blue, etc.)
+- Balanced, professional color grading
+- Natural skin tones if people present
+
+PRESERVE:
+- Every single object in the scene
+- Composition and framing
+- All details and textures
+
+This is color correction, NOT content modification.`;
+
+  // Very low guidance - this is just color adjustment
+  const result = await runFluxKontext(imageUrl, prompt, { guidance: 2.0, steps: 25 });
   console.log('[Replicate] === COLOR BALANCE COMPLETE ===');
   return result;
 }
 
 // ============================================
-// TOOLS WITHOUT PRESETS (5 tools - one-click)
+// 11. POOL ENHANCEMENT
 // ============================================
-
-// 11. POOL ENHANCEMENT (no presets)
 export async function poolEnhance(imageUrl: string): Promise<string> {
   console.log('[Replicate] === POOL ENHANCEMENT ===');
 
-  const result = await runFluxKontext(
-    imageUrl,
-    'Make the swimming pool water crystal clear, clean, and inviting with a beautiful vibrant blue-turquoise color. Remove any debris, leaves, pool cleaners, hoses, or equipment from the pool. The pool should look pristine and ready for a magazine photoshoot. Keep the pool shape, surrounding deck, landscaping, and everything else exactly the same. Only improve the pool water appearance.',
-  );
+  const prompt = `Make the swimming pool water look crystal clear and inviting.
 
+CHANGES:
+- Water should be clean, clear turquoise-blue
+- Remove any debris, leaves, or pool equipment visible
+- Water should look pristine and refreshing
+
+PRESERVE:
+- Pool shape and edges exactly
+- Pool deck and surrounding area
+- Landscaping, furniture, building
+- Everything except the pool water itself`;
+
+  const result = await runFluxKontext(imageUrl, prompt, { guidance: 2.5, steps: 28 });
   console.log('[Replicate] === POOL ENHANCEMENT COMPLETE ===');
   return result;
 }
 
-// 12. HDR ENHANCEMENT (no presets)
+// ============================================
+// 12. HDR ENHANCEMENT - Global improvement
+// ============================================
 export async function hdr(imageUrl: string): Promise<string> {
   console.log('[Replicate] === HDR ENHANCEMENT ===');
 
-  const result = await runFluxKontext(
-    imageUrl,
-    'Apply professional HDR enhancement to this real estate photo. Brighten dark shadow areas to reveal detail, balance overexposed highlights, make colors more vibrant and saturated, improve overall exposure balance for a magazine-quality look. Keep EVERYTHING in the scene exactly the same - same furniture, same room, same composition. Only improve lighting, exposure, and color vibrancy.',
-  );
+  const prompt = `Enhance this real estate photo with professional HDR processing.
 
+IMPROVEMENTS:
+- Brighten dark shadow areas to reveal detail
+- Recover blown-out highlights
+- Increase color vibrancy naturally
+- Improve overall dynamic range
+- Magazine-quality exposure balance
+
+PRESERVE:
+- Every object and piece of furniture
+- Room layout and composition
+- Architectural details
+- Natural appearance (no over-processed look)`;
+
+  // Higher guidance for global enhancement
+  const result = await runFluxKontext(imageUrl, prompt, { guidance: 3.2, steps: 30 });
   console.log('[Replicate] === HDR ENHANCEMENT COMPLETE ===');
   return result;
 }
 
-// 13. PERSPECTIVE CORRECTION (no presets)
+// ============================================
+// 13. PERSPECTIVE CORRECTION
+// ============================================
 export async function perspectiveCorrection(imageUrl: string): Promise<string> {
   console.log('[Replicate] === PERSPECTIVE CORRECTION ===');
 
-  const result = await runFluxKontext(
-    imageUrl,
-    'Correct the perspective and vertical lines in this architectural photo. Make all vertical lines perfectly straight and parallel. Fix any lens distortion or tilted angles. The walls, doors, windows, and architectural elements should all have proper vertical alignment. Keep everything else exactly the same. Professional architectural photography perspective correction.',
-  );
+  const prompt = `Correct the perspective in this architectural/real estate photo.
 
+CORRECTIONS:
+- Make vertical lines perfectly straight and parallel
+- Fix any keystoning or tilted angles
+- Correct lens distortion
+- Professional architectural perspective
+
+PRESERVE:
+- All content and objects
+- Colors and lighting
+- Interior/exterior details`;
+
+  const result = await runFluxKontext(imageUrl, prompt, { guidance: 2.8, steps: 28 });
   console.log('[Replicate] === PERSPECTIVE CORRECTION COMPLETE ===');
   return result;
 }
 
-// 14. LENS CORRECTION (no presets)
+// ============================================
+// 14. LENS CORRECTION
+// ============================================
 export async function lensCorrection(imageUrl: string): Promise<string> {
   console.log('[Replicate] === LENS CORRECTION ===');
 
-  const result = await runFluxKontext(
-    imageUrl,
-    'Correct any lens distortion in this photo. Fix barrel distortion and pincushion distortion. Straighten any curved lines that should be straight, especially at the edges of the frame. Remove any vignetting or light falloff at corners. Keep everything else exactly the same. Professional lens correction quality.',
-  );
+  const prompt = `Correct lens distortion in this photo.
 
+CORRECTIONS:
+- Fix barrel or pincushion distortion
+- Straighten curved lines at edges
+- Remove vignetting
+- Professional lens correction
+
+PRESERVE:
+- All content exactly
+- Colors and exposure
+- Image details`;
+
+  const result = await runFluxKontext(imageUrl, prompt, { guidance: 2.5, steps: 25 });
   console.log('[Replicate] === LENS CORRECTION COMPLETE ===');
   return result;
 }
 
-// 15. AUTO ENHANCE (no presets - uses HDR)
+// ============================================
+// 15. AUTO ENHANCE
+// ============================================
 export async function autoEnhance(imageUrl: string): Promise<string> {
   console.log('[Replicate] === AUTO ENHANCE ===');
   return hdr(imageUrl);
@@ -304,7 +522,6 @@ export async function autoEnhance(imageUrl: string): Promise<string> {
 // ============================================
 // UPSCALE (utility function)
 // ============================================
-
 export async function upscale(
   imageUrl: string,
   options?: { scale?: number } | number,
@@ -331,7 +548,7 @@ export async function upscale(
 }
 
 // ========================================
-// SEASONAL TOOLS (4) - Using Qwen (same as declutter)
+// SEASONAL TOOLS - Using SDXL Lightning with LOW strength
 // ========================================
 
 export async function snowRemoval(imageUrl: string): Promise<string> {
@@ -340,14 +557,13 @@ export async function snowRemoval(imageUrl: string): Promise<string> {
     "bytedance/sdxl-lightning-4step:6f7a773af6fc3e8de9d5a3c00be77c17308914bf67772726aff83496ba1e3bbe",
     {
       input: {
-        prompt: "beautiful house, lush green grass lawn, full green leafy trees, clear blue sunny sky, professional real estate photography, summer day",
+        prompt: "same house, green grass lawn, green leafy trees, blue sky, summer, real estate photo",
         image: imageUrl,
-        strength: 0.4
+        strength: 0.35  // Lowered from 0.4
       }
     }
   );
-  const result = Array.isArray(output) ? output[0] : output;
-  return String(result);
+  return extractUrl(output);
 }
 
 export async function seasonalSpring(imageUrl: string): Promise<string> {
@@ -356,14 +572,13 @@ export async function seasonalSpring(imageUrl: string): Promise<string> {
     "bytedance/sdxl-lightning-4step:6f7a773af6fc3e8de9d5a3c00be77c17308914bf67772726aff83496ba1e3bbe",
     {
       input: {
-        prompt: "beautiful house, fresh green grass, blooming flowers, budding trees with light green leaves, clear blue sky, spring day, professional real estate photography",
+        prompt: "same house, fresh green grass, blooming flowers, budding trees, blue sky, spring, real estate photo",
         image: imageUrl,
-        strength: 0.4
+        strength: 0.35
       }
     }
   );
-  const result = Array.isArray(output) ? output[0] : output;
-  return String(result);
+  return extractUrl(output);
 }
 
 export async function seasonalSummer(imageUrl: string): Promise<string> {
@@ -372,14 +587,13 @@ export async function seasonalSummer(imageUrl: string): Promise<string> {
     "bytedance/sdxl-lightning-4step:6f7a773af6fc3e8de9d5a3c00be77c17308914bf67772726aff83496ba1e3bbe",
     {
       input: {
-        prompt: "beautiful house, lush deep green grass, full green trees, bright sunny blue sky with white clouds, summer day, professional real estate photography",
+        prompt: "same house, lush green grass, full green trees, sunny blue sky, summer day, real estate photo",
         image: imageUrl,
-        strength: 0.4
+        strength: 0.35
       }
     }
   );
-  const result = Array.isArray(output) ? output[0] : output;
-  return String(result);
+  return extractUrl(output);
 }
 
 export async function seasonalFall(imageUrl: string): Promise<string> {
@@ -388,74 +602,55 @@ export async function seasonalFall(imageUrl: string): Promise<string> {
     "bytedance/sdxl-lightning-4step:6f7a773af6fc3e8de9d5a3c00be77c17308914bf67772726aff83496ba1e3bbe",
     {
       input: {
-        prompt: "beautiful house, orange red golden yellow autumn leaves on trees, some fallen leaves on ground, warm autumn sunlight, fall season, professional real estate photography",
+        prompt: "same house, orange golden autumn leaves, fall colors, warm light, autumn, real estate photo",
         image: imageUrl,
-        strength: 0.4
+        strength: 0.35
       }
     }
   );
-  const result = Array.isArray(output) ? output[0] : output;
-  return String(result);
+  return extractUrl(output);
 }
 
 // ========================================
-// FIX TOOLS (4) - Using Qwen
+// FIX TOOLS - These need proper inpainting (limited with current setup)
 // ========================================
 
 export async function reflectionRemoval(imageUrl: string): Promise<string> {
   console.log('[Replicate] Reflection Removal');
-  const output = await replicate.run(
-    "qwen/qwen2.5-vl-72b-instruct:c52c45f74815c51db23e4c2c3ab78e59d3a14d3d3e0c3bc4242c1c43c6a6b28c",
-    {
-      input: {
-        image: imageUrl,
-        prompt: "Remove all reflections and glare from the windows. Make the glass crystal clear. Keep everything else exactly the same."
-      }
-    }
+  // Note: Qwen is a vision-language model, not an image editor
+  // This won't actually edit the image, just describe it
+  // Using Flux Kontext instead
+  return runFluxKontext(
+    imageUrl,
+    'Remove window reflections and glare. Make glass clear. Keep everything else exactly the same.',
+    { guidance: 2.0, steps: 25 }
   );
-  return String(output);
 }
 
 export async function powerLineRemoval(imageUrl: string): Promise<string> {
   console.log('[Replicate] Power Line Removal');
-  const output = await replicate.run(
-    "qwen/qwen2.5-vl-72b-instruct:c52c45f74815c51db23e4c2c3ab78e59d3a14d3d3e0c3bc4242c1c43c6a6b28c",
-    {
-      input: {
-        image: imageUrl,
-        prompt: "Remove all power lines, telephone wires, and electrical cables from the sky. Keep the house and everything else exactly the same."
-      }
-    }
+  return runFluxKontext(
+    imageUrl,
+    'Remove power lines, telephone wires, and cables from the sky. Fill with sky. Keep house and everything else exactly the same.',
+    { guidance: 2.0, steps: 25 }
   );
-  return String(output);
 }
 
 export async function objectRemoval(imageUrl: string, prompt?: string): Promise<string> {
   console.log('[Replicate] Object Removal');
-  const output = await replicate.run(
-    "qwen/qwen2.5-vl-72b-instruct:c52c45f74815c51db23e4c2c3ab78e59d3a14d3d3e0c3bc4242c1c43c6a6b28c",
-    {
-      input: {
-        image: imageUrl,
-        prompt: prompt || "Remove trash cans, cars, hoses, and clutter from this photo. Keep the house and main features exactly the same."
-      }
-    }
+  const removePrompt = prompt || 'Remove trash cans, hoses, and clutter. Keep house and main features.';
+  return runFluxKontext(
+    imageUrl,
+    removePrompt + ' Fill removed areas naturally. Do not add new objects.',
+    { guidance: 2.5, steps: 28 }
   );
-  return String(output);
 }
 
 export async function flashFix(imageUrl: string): Promise<string> {
   console.log('[Replicate] Flash Hotspot Fix');
-  const output = await replicate.run(
-    "bytedance/sdxl-lightning-4step:6f7a773af6fc3e8de9d5a3c00be77c17308914bf67772726aff83496ba1e3bbe",
-    {
-      input: {
-        prompt: "professional real estate interior photo, natural even balanced lighting, no harsh shadows, no bright spots",
-        image: imageUrl,
-        strength: 0.25
-      }
-    }
+  return runFluxKontext(
+    imageUrl,
+    'Fix flash hotspots and harsh bright spots. Create even, natural lighting. Keep all furniture and objects exactly the same.',
+    { guidance: 2.0, steps: 25 }
   );
-  const result = Array.isArray(output) ? output[0] : output;
-  return String(result);
 }
