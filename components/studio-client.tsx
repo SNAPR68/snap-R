@@ -233,19 +233,47 @@ export function StudioClient({ listingId, userRole, showMlsFeatures = false, cre
     setShowStylePrompt(true);
   };
 
+  // FIXED: INSERT new record instead of UPDATE - so multiple enhancements ADD to downloads
   const handleJustThisPhoto = async () => {
     if (!pendingEnhancement) return;
-    await supabase.from("photos").update({ status: "completed", processed_url: pendingEnhancement.storagePath || pendingEnhancement.enhancedUrl, variant: pendingEnhancement.toolId }).eq("id", pendingEnhancement.photoId);
+    
+    // Get the original photo to copy its raw_url
+    const originalPhoto = photos.find(p => p.id === pendingEnhancement.photoId);
+    if (!originalPhoto) return;
+    
+    // INSERT a new photo record (not UPDATE) so we get MULTIPLE enhanced versions in downloads
+    await supabase.from("photos").insert({
+      listing_id: listingId,
+      raw_url: originalPhoto.raw_url,
+      processed_url: pendingEnhancement.storagePath || pendingEnhancement.enhancedUrl,
+      status: "completed",
+      variant: pendingEnhancement.toolId,
+    });
+    
     setPendingEnhancement(null);
     setShowStylePrompt(false);
     setAdjustments({ intensity: 100, brightness: 0, contrast: 0, saturation: 0, warmth: 0 });
     loadData();
   };
 
+  // FIXED: INSERT new record instead of UPDATE - so multiple enhancements ADD to downloads
   const handleApplyStyleToAll = async (style: { brightness: number; contrast: number; saturation: number; warmth: number }) => {
     if (!pendingEnhancement) return;
     setListingStyle(style);
-    await supabase.from("photos").update({ status: "completed", processed_url: pendingEnhancement.storagePath || pendingEnhancement.enhancedUrl, variant: pendingEnhancement.toolId }).eq("id", pendingEnhancement.photoId);
+    
+    // Get the original photo to copy its raw_url
+    const originalPhoto = photos.find(p => p.id === pendingEnhancement.photoId);
+    if (!originalPhoto) return;
+    
+    // INSERT a new photo record (not UPDATE) so we get MULTIPLE enhanced versions in downloads
+    await supabase.from("photos").insert({
+      listing_id: listingId,
+      raw_url: originalPhoto.raw_url,
+      processed_url: pendingEnhancement.storagePath || pendingEnhancement.enhancedUrl,
+      status: "completed",
+      variant: pendingEnhancement.toolId,
+    });
+    
     setPendingEnhancement(null);
     setShowStylePrompt(false);
     setAdjustments({ intensity: 100, brightness: 0, contrast: 0, saturation: 0, warmth: 0 });
@@ -313,7 +341,7 @@ export function StudioClient({ listingId, userRole, showMlsFeatures = false, cre
   const handleDeleteEnhanced = async (photoId: string, processedUrl: string) => {
     if (!window.confirm('Delete this enhanced photo?')) return;
     await supabase.storage.from('raw-images').remove([processedUrl]);
-    await supabase.from('photos').update({ processed_url: null, status: 'pending' }).eq('id', photoId);
+    await supabase.from('photos').delete().eq('id', photoId);
     loadData();
   };
 
@@ -450,8 +478,15 @@ export function StudioClient({ listingId, userRole, showMlsFeatures = false, cre
               {completedPhotos.map(photo => (
                 <div key={photo.id} className="bg-[#0F0F0F] rounded-lg overflow-hidden border border-white/10 group relative">
                   <button onClick={() => handleDeleteEnhanced(photo.id, photo.processed_url)} className="absolute top-1 right-1 w-5 h-5 bg-red-500 rounded-full items-center justify-center text-white hidden group-hover:flex z-10"><X className="w-3 h-3" /></button>
-                  <div className="aspect-video relative"><img src={photo.signedProcessedUrl} alt="" className="w-full h-full object-cover" />{photo.variant && <div className="absolute top-1 left-1 px-1.5 py-0.5 bg-[#D4A017] rounded text-[10px] text-black">{photo.variant}</div>}</div>
-                  <button onClick={() => handleDownload(photo.signedProcessedUrl, `enhanced-${photo.id}.jpg`)} className="w-full flex items-center justify-center gap-1 px-2 py-1.5 bg-gradient-to-r from-[#D4A017] to-[#B8860B] text-black text-xs font-medium"><Download className="w-3 h-3" /> Download</button>
+                  <div className="aspect-video relative">
+                    <img src={photo.signedProcessedUrl} alt="" className="w-full h-full object-cover" />
+                    {photo.variant && (
+                      <div className="absolute top-1 left-1 px-1.5 py-0.5 bg-[#D4A017] rounded text-[10px] text-black capitalize">
+                        {photo.variant.replace(/-/g, ' ')}
+                      </div>
+                    )}
+                  </div>
+                  <button onClick={() => handleDownload(photo.signedProcessedUrl, `enhanced-${photo.variant || 'photo'}-${photo.id.slice(0,6)}.jpg`)} className="w-full flex items-center justify-center gap-1 px-2 py-1.5 bg-gradient-to-r from-[#D4A017] to-[#B8860B] text-black text-xs font-medium"><Download className="w-3 h-3" /> Download</button>
                 </div>
               ))}
             </div>
