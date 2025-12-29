@@ -396,7 +396,7 @@ export default function HomePage() {
                 </div>
                 <div className="text-left">
                   <div className="text-green-400 text-xs font-bold tracking-wide">ENHANCEMENT</div>
-                  <div className="text-white text-xl font-black">FREE FOREVER</div>
+                  <div className="text-white text-xl font-black">30 FREE/MONTH</div>
                 </div>
               </div>
               <div className="h-10 w-px bg-white/20"></div>
@@ -539,8 +539,8 @@ export default function HomePage() {
                   <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
               </div>
-              <h3 className="text-lg font-bold text-green-400 mb-2">Enhancement FREE Forever</h3>
-              <p className="text-white/60 text-sm">All 15 AI enhancement tools included free. Only pay when you publish listings.</p>
+              <h3 className="text-lg font-bold text-green-400 mb-2">30 Free Enhancements/Month</h3>
+              <p className="text-white/60 text-sm">All 15 AI enhancement tools included free. Upgrade for unlimited + listings.</p>
             </div>
             
             {/* Solution 3: All-in-One */}
@@ -1114,7 +1114,7 @@ export default function HomePage() {
                   Open Web App
                   <ArrowRight className="w-4 h-4" />
                 </Link>
-                <p className="text-white/30 text-xs mt-2">10 free credits • No credit card</p>
+                <p className="text-white/30 text-xs mt-2">30 free enhancements/month • No credit card</p>
               </div>
             </div>
             
@@ -1244,9 +1244,9 @@ export default function HomePage() {
               <div style={{ height: '50px' }} className="flex items-baseline"><span className="text-4xl font-bold">$0</span></div>
               <div style={{ height: '100px' }}>
                 <div className="p-3 rounded-xl h-full bg-white/5">
-                  <div className="flex justify-between text-sm mb-1.5"><span className="text-white/50">Listings</span><span className="font-semibold">3</span></div>
-                  <div className="flex justify-between text-sm mb-1.5"><span className="text-white/50">Photos per listing</span><span className="font-semibold">10</span></div>
-                  <div className="flex justify-between text-sm"><span className="text-white/50">Total downloads</span><span className="font-semibold">30 images</span></div>
+                  <div className="flex justify-between text-sm mb-1.5"><span className="text-white/50">Enhancements</span><span className="font-semibold">30/month</span></div>
+                  <div className="flex justify-between text-sm mb-1.5"><span className="text-white/50">AI tools</span><span className="font-semibold">All 15</span></div>
+                  <div className="flex justify-between text-sm"><span className="text-white/50">Listings</span><span className="font-semibold">—</span></div>
                 </div>
               </div>
               <div style={{ height: '50px' }} className="flex items-center">
@@ -1578,7 +1578,7 @@ export default function HomePage() {
             </div>
             
             <Link href="/auth/signup" onClick={() => trackEvent(SnapREvents.HOMEPAGE_CTA_CLICK)} className="block w-full text-center py-4 bg-gradient-to-r from-[#D4A017] to-[#B8860B] text-black font-bold rounded-xl hover:opacity-90 transition-opacity">Get Started Free →</Link>
-            <p className="text-center text-white/40 text-sm mt-3">10 free credits • No credit card required</p>
+            <p className="text-center text-white/40 text-sm mt-3">30 free enhancements/month • No credit card required</p>
           </div>
         </div>
       )}
