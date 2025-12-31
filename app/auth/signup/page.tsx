@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
@@ -24,7 +24,7 @@ const PLAN_INFO: Record<string, { title: string; subtitle: string; features: str
   },
 };
 
-export default function SignupPage() {
+function SignupForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const supabase = createClient();
@@ -199,5 +199,17 @@ export default function SignupPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function SignupPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-[#0F0F0F] flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-[#D4A017]" />
+      </div>
+    }>
+      <SignupForm />
+    </Suspense>
   );
 }
