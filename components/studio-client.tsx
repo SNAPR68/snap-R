@@ -373,7 +373,7 @@ export function StudioClient({ listingId, userRole, showMlsFeatures = false, cre
 
   const sendPrepareNotification = async (prepareData: any) => {
     try {
-      await fetch('/api/notify', {
+      await fetch('/api/prepare-notification', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

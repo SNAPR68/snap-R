@@ -1,127 +1,56 @@
 export const dynamic = 'force-dynamic';
-import { NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
-import { uploadBuffer } from "@/lib/cloudinary";
-import { enqueueImageJob } from "@/lib/queues";
+export const runtime = 'nodejs';
+export const maxDuration = 60;
 
-export const runtime = "nodejs";
+import { NextRequest, NextResponse } from "next/server";
+import { createClient } from "@/lib/supabase/server";
 
 const MAX_FILES_PER_JOB = 50;
-const ALLOWED_MIME = new Set([
-  "image/jpeg",
-  "image/png",
-  "image/webp",
-  "image/heic",
-]);
+const MAX_FILE_SIZE = 25 * 1024 * 1024;
+const ALLOWED_MIME = new Set(["image/jpeg", "image/png", "image/webp", "image/heic"]);
 
-export async function POST(request: Request) {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+export async function POST(request: NextRequest) {
+  try {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+    const formData = await request.formData();
+    const listingId = formData.get("listingId")?.toString();
+    const variant = formData.get("variant")?.toString()?.trim() || "sky-replacement";
 
-  const formData = await request.formData();
-  const listingId = formData.get("listingId")?.toString();
-  const rawVariant = formData.get("variant")?.toString();
-  const variant = rawVariant?.trim() || "sky-replacement";
+    if (!listingId) return NextResponse.json({ error: "listingId is required" }, { status: 400 });
 
-  if (!listingId) {
-    return NextResponse.json({ error: "listingId is required" }, { status: 400 });
-  }
+    const { data: listing, error: listingError } = await supabase
+      .from("listings").select("id").eq("id", listingId).eq("user_id", user.id).single();
+    if (listingError || !listing) return NextResponse.json({ error: "Listing not found" }, { status: 404 });
 
-  const { data: listing, error: listingError } = await supabase
-    .from("listings")
-    .select("id")
-    .eq("id", listingId)
-    .eq("user_id", user.id)
-    .single();
+    const files: File[] = formData.getAll("files").filter((e): e is File => e instanceof File);
+    if (files.length === 0) return NextResponse.json({ error: "No files provided" }, { status: 400 });
+    if (files.length > MAX_FILES_PER_JOB) return NextResponse.json({ error: `Max ${MAX_FILES_PER_JOB} files` }, { status: 400 });
 
-  if (listingError || !listing) {
-    return NextResponse.json({ error: "Listing not found" }, { status: 404 });
-  }
+    const uploadedPhotos: { id: string; raw_url: string }[] = [];
 
-  const fileEntries = formData.getAll("files");
-  const files: File[] = fileEntries.filter((entry): entry is File => entry instanceof File);
+    for (const file of files) {
+      if (!ALLOWED_MIME.has(file.type) || file.size > MAX_FILE_SIZE) continue;
+      try {
+        const buffer = Buffer.from(await file.arrayBuffer());
+        const fileName = `${user.id}/${listingId}/${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
+        const { data: uploadData, error: uploadError } = await supabase.storage
+          .from("raw-images").upload(fileName, buffer, { contentType: file.type, upsert: false });
+        if (uploadError) continue;
 
-  if (files.length === 0) {
-    return NextResponse.json({ error: "No files provided" }, { status: 400 });
-  }
-
-  if (files.length > MAX_FILES_PER_JOB) {
-    return NextResponse.json(
-      { error: `Maximum ${MAX_FILES_PER_JOB} files allowed per upload` },
-      { status: 400 }
-    );
-  }
-
-  const uploadedPhotos: { id: string; raw_url: string }[] = [];
-
-  for (const file of files) {
-    if (!ALLOWED_MIME.has(file.type)) {
-      console.warn(`Skipping unsupported file type: ${file.type}`);
-      continue;
+        const { data: photo } = await supabase.from("photos").insert({
+          listing_id: listingId, user_id: user.id, raw_url: uploadData.path,
+          status: "pending", variant, file_name: file.name, file_size: file.size, mime_type: file.type,
+        }).select("id, raw_url").single();
+        if (photo) uploadedPhotos.push(photo);
+      } catch (e) { continue; }
     }
 
-    try {
-      const arrayBuffer = await file.arrayBuffer();
-      const buffer = Buffer.from(arrayBuffer);
-
-      // Upload to Supabase Storage
-      const fileName = `${user.id}/${listingId}/${Date.now()}-${file.name}`;
-      const { data: uploadData, error: uploadError } = await supabase.storage
-        .from("raw-images")
-        .upload(fileName, buffer, {
-          contentType: file.type,
-          upsert: false,
-        });
-
-      if (uploadError) {
-        console.error("Storage upload error:", uploadError);
-        continue;
-      }
-
-      const raw_url = uploadData.path;
-
-      // Insert photo record
-      const { data: photoRecord, error: photoError } = await supabase
-        .from("photos")
-        .insert({
-          listing_id: listingId,
-          user_id: user.id,
-          raw_url,
-          status: "pending",
-        })
-        .select("id")
-        .single();
-
-      if (photoError) {
-        console.error("Photo insert error:", photoError);
-        continue;
-      }
-
-      uploadedPhotos.push({
-        id: photoRecord.id,
-        raw_url,
-      });
-    } catch (err) {
-      console.error("Upload processing error:", err);
-    }
+    await supabase.from("listings").update({ updated_at: new Date().toISOString() }).eq("id", listingId);
+    return NextResponse.json({ success: true, uploaded: uploadedPhotos.length, photos: uploadedPhotos });
+  } catch (error: any) {
+    return NextResponse.json({ error: error.message || "Upload failed" }, { status: 500 });
   }
-
-  if (uploadedPhotos.length === 0) {
-    return NextResponse.json(
-      { error: "No files were uploaded successfully" },
-      { status: 500 }
-    );
-  }
-
-  return NextResponse.json({
-    success: true,
-    uploaded: uploadedPhotos.length,
-    photos: uploadedPhotos,
-  });
 }
