@@ -358,7 +358,7 @@ export default function HomePage() {
         
         <div className="max-w-6xl mx-auto relative z-10">
           
-          {/* Hero Text - Complete Marketing OS */}
+          {/* Hero Text - Centered & Compact */}
           <div className="text-center mb-10">
             {/* Category Badge */}
             <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-white/5 border border-white/10 rounded-full mb-5">
@@ -371,69 +371,48 @@ export default function HomePage() {
             </div>
             
             {/* Main Headline */}
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white leading-[1.1] mb-4">
-              The Complete <span className="text-[#D4A017]">Real Estate Marketing</span> OS
+            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white leading-[1.1] mb-3">
+              The <span className="text-[#D4A017]">Gold Standard</span> in Listing Visuals.
             </h1>
             
-            {/* Feature Stack */}
-            <p className="text-sm md:text-base text-white/50 mb-4 max-w-3xl mx-auto">
-              Photo enhancement • Content studio • Video + AI voiceovers • Virtual tours • CMA reports • Email marketing • Social publishing • Client approval
+            {/* Sub-headline */}
+            <p className="text-lg text-white/40 mb-4">
+              One Platform. Upload to Published.
             </p>
             
-            {/* Empowerment Hook */}
-            <p className="text-lg text-white/80 font-medium mb-2">
-              One upload. AI does everything. <span className="text-[#D4A017]">WhatsApp alerts you when clients engage.</span>
+            {/* Tagline */}
+            <p className="text-lg text-[#D4A017] font-semibold mb-6">
+              Shot at 2pm. Posted by 2:12.
             </p>
             
-            {/* Speed Line */}
-            <p className="text-base text-[#D4A017] font-semibold mb-6">
-              "Shot at 2pm. Listed, marketed & shared by 2:12."
-            </p>
-            
-            {/* FREE Plan CTA */}
+            {/* FREE Enhancement Badge - Main CTA */}
             <Link 
               href="/auth/signup" 
               onClick={() => trackEvent(SnapREvents.HOMEPAGE_CTA_CLICK)}
-              className="inline-flex items-center gap-4 px-6 py-3 bg-gradient-to-r from-[#D4A017]/20 to-[#D4A017]/10 border-2 border-[#D4A017]/50 rounded-full mb-6 hover:border-[#D4A017] hover:scale-105 transition-all cursor-pointer group"
+              className="inline-flex items-center gap-4 px-6 py-3 bg-gradient-to-r from-green-500/20 to-emerald-500/10 border-2 border-green-500/50 rounded-full mb-5 hover:border-green-400 hover:scale-105 transition-all cursor-pointer group"
             >
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-[#D4A017] flex items-center justify-center shadow-lg shadow-[#D4A017]/30 group-hover:scale-110 transition-transform">
-                  <Check className="w-6 h-6 text-black" />
+                <div className="w-10 h-10 rounded-full bg-green-500 flex items-center justify-center shadow-lg shadow-green-500/30 group-hover:scale-110 transition-transform">
+                  <Check className="w-6 h-6 text-white" />
                 </div>
                 <div className="text-left">
-                  <div className="text-[#D4A017] text-xs font-bold tracking-wide">FREE PLAN</div>
-                  <div className="text-white text-xl font-black">3 Listings/month</div>
+                  <div className="text-green-400 text-xs font-bold tracking-wide">ENHANCEMENT</div>
+                  <div className="text-white text-xl font-black">30 FREE/MONTH</div>
                 </div>
               </div>
               <div className="h-10 w-px bg-white/20"></div>
               <div className="text-left">
-                <div className="text-white/80 text-sm font-medium">All Features Included</div>
+                <div className="text-white/80 text-sm font-medium">All 15 AI tools</div>
                 <div className="text-white/50 text-xs">No credit card required</div>
               </div>
-              <ArrowRight className="w-5 h-5 text-[#D4A017] group-hover:translate-x-1 transition-transform" />
+              <ArrowRight className="w-5 h-5 text-green-400 group-hover:translate-x-1 transition-transform" />
             </Link>
-            
-            {/* Industry Firsts */}
-            <div className="flex flex-wrap justify-center items-center gap-3 mb-5">
-              <span className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-500/10 border border-blue-500/30 rounded-full text-xs text-blue-400">
-                <Smartphone className="w-3.5 h-3.5" />
-                First-ever iOS & Android app
-              </span>
-              <span className="flex items-center gap-1.5 px-3 py-1.5 bg-green-500/10 border border-green-500/30 rounded-full text-xs text-green-400">
-                <Bell className="w-3.5 h-3.5" />
-                WhatsApp client alerts
-              </span>
-              <span className="flex items-center gap-1.5 px-3 py-1.5 bg-purple-500/10 border border-purple-500/30 rounded-full text-xs text-purple-400">
-                <Zap className="w-3.5 h-3.5" />
-                60-sec AI (vs 48hr industry)
-              </span>
-            </div>
             
             {/* Trust Signals */}
             <div className="flex flex-wrap justify-center items-center gap-5 text-xs">
               <span className="flex items-center gap-1.5 text-white/40">
                 <Check className="w-3.5 h-3.5 text-green-500" />
-                MLS-Ready
+                MLS Compliant
               </span>
               <span className="flex items-center gap-1.5 text-white/40">
                 <Check className="w-3.5 h-3.5 text-green-500" />
@@ -1294,182 +1273,6 @@ export default function HomePage() {
               See complete feature comparison & pricing calculator
               <ArrowRight className="w-4 h-4" />
             </Link>
-          </div>
-        </div>
-
-          {/* Premium Add-ons - Circular Layout */}
-          <div className="mb-8">
-            <div className="text-center mb-8">
-              <h3 className="text-xl font-bold">Premium Add-ons</h3>
-              <p className="text-sm text-white/50">Unlock advanced capabilities • Pay as you go</p>
-            </div>
-            
-            {/* Circular Grid */}
-            <div className="relative w-full max-w-3xl mx-auto h-[500px]">
-              
-              {/* Center - White Label */}
-              <div 
-                onClick={() => handleAddonPurchase('white_label')}
-                className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-44 h-44 group cursor-pointer z-10"
-              >
-                <div className="w-full h-full rounded-full bg-gradient-to-br from-[#D4A017]/20 via-[#1A1A1A] to-[#D4A017]/10 border-2 border-[#D4A017]/40 hover:border-[#D4A017] transition-all flex flex-col items-center justify-center text-center p-4 shadow-2xl shadow-[#D4A017]/10">
-                  <div className="w-12 h-12 rounded-full bg-[#D4A017]/20 border border-[#D4A017]/40 flex items-center justify-center mb-2">
-                    <svg className="w-6 h-6 text-[#D4A017]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M9.568 3H5.25A2.25 2.25 0 003 5.25v4.318c0 .597.237 1.17.659 1.591l9.581 9.581c.699.699 1.78.872 2.121.332a11.203 11.203 0 001.719-4.72l-3.75-3.75a3 3 0 00-4.243-4.243l-3.75-3.75z" />
-                    </svg>
-                  </div>
-                  <h4 className="font-bold text-white text-sm mb-1">White Label</h4>
-                  <p className="text-white/50 text-xs mb-2">Your brand everywhere</p>
-                  <span className="text-[#D4A017] font-bold">$99/mo</span>
-                </div>
-              </div>
-              
-              {/* Connecting lines (decorative) */}
-              <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-72 h-72 rounded-full border border-dashed border-white/10" />
-              
-              {/* Position 1: Virtual Tours (Top) */}
-              <div 
-                onClick={() => handleAddonPurchase('virtual_tour')}
-                className="absolute left-1/2 -translate-x-1/2 top-0 w-36 h-36 group cursor-pointer"
-              >
-                <div className="w-full h-full rounded-2xl bg-gradient-to-br from-blue-500/20 to-blue-600/5 border border-blue-400/30 hover:border-blue-400 transition-all flex flex-col items-center justify-center text-center p-3">
-                  <div className="w-10 h-10 rounded-xl bg-blue-500/20 border border-blue-400/30 flex items-center justify-center mb-2">
-                    <svg className="w-5 h-5 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" />
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                    </svg>
-                  </div>
-                  <h4 className="font-semibold text-white text-xs mb-0.5">Virtual Tours</h4>
-                  <p className="text-white/40 text-[10px] mb-1">360° walkthroughs</p>
-                  <span className="text-[#D4A017] text-xs font-semibold">From $50</span>
-                </div>
-              </div>
-              
-              {/* Position 2: Virtual Renovation (Top Right) */}
-              <div 
-                onClick={() => handleAddonPurchase('virtual_renovation')}
-                className="absolute right-8 top-16 w-36 h-36 group cursor-pointer"
-              >
-                <div className="w-full h-full rounded-2xl bg-gradient-to-br from-orange-500/20 to-orange-600/5 border border-orange-400/30 hover:border-orange-400 transition-all flex flex-col items-center justify-center text-center p-3">
-                  <div className="w-10 h-10 rounded-xl bg-orange-500/20 border border-orange-400/30 flex items-center justify-center mb-2">
-                    <svg className="w-5 h-5 text-orange-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M9.53 16.122a3 3 0 00-5.78 1.128 2.25 2.25 0 01-2.4 2.245 4.5 4.5 0 008.4-2.245c0-.399-.078-.78-.22-1.128zm0 0a15.998 15.998 0 003.388-1.62m-5.043-.025a15.994 15.994 0 011.622-3.395m3.42 3.42a15.995 15.995 0 004.764-4.648l3.876-5.814a1.151 1.151 0 00-1.597-1.597L14.146 6.32a15.996 15.996 0 00-4.649 4.763m3.42 3.42a6.776 6.776 0 00-3.42-3.42" />
-                    </svg>
-                  </div>
-                  <h4 className="font-semibold text-white text-xs mb-0.5">Renovation</h4>
-                  <p className="text-white/40 text-[10px] mb-1">Digital remodeling</p>
-                  <span className="text-[#D4A017] text-xs font-semibold">From $35</span>
-                </div>
-              </div>
-              
-              {/* Position 3: AI Voiceovers (Bottom Right) */}
-              <div 
-                onClick={() => handleAddonPurchase('ai_voiceover')}
-                className="absolute right-8 bottom-16 w-36 h-36 group cursor-pointer"
-              >
-                <div className="w-full h-full rounded-2xl bg-gradient-to-br from-green-500/20 to-green-600/5 border border-green-400/30 hover:border-green-400 transition-all flex flex-col items-center justify-center text-center p-3">
-                  <div className="w-10 h-10 rounded-xl bg-green-500/20 border border-green-400/30 flex items-center justify-center mb-2">
-                    <svg className="w-5 h-5 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 18.75a6 6 0 006-6v-1.5m-6 7.5a6 6 0 01-6-6v-1.5m6 7.5v3.75m-3.75 0h7.5M12 15.75a3 3 0 01-3-3V4.5a3 3 0 116 0v8.25a3 3 0 01-3 3z" />
-                    </svg>
-                  </div>
-                  <h4 className="font-semibold text-white text-xs mb-0.5">AI Voiceovers</h4>
-                  <p className="text-white/40 text-[10px] mb-1">Pro narration</p>
-                  <span className="text-[#D4A017] text-xs font-semibold">From $15</span>
-                </div>
-              </div>
-              
-              {/* Position 4: Human Editing (Bottom) */}
-              <div 
-                onClick={() => handleAddonPurchase('human_editing')}
-                className="absolute left-1/2 -translate-x-1/2 bottom-0 w-36 h-36 group cursor-pointer"
-              >
-                <div className="w-full h-full rounded-2xl bg-gradient-to-br from-cyan-500/20 to-cyan-600/5 border border-cyan-400/30 hover:border-cyan-400 transition-all flex flex-col items-center justify-center text-center p-3">
-                  <div className="w-10 h-10 rounded-xl bg-cyan-500/20 border border-cyan-400/30 flex items-center justify-center mb-2">
-                    <svg className="w-5 h-5 text-cyan-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z" />
-                    </svg>
-                  </div>
-                  <h4 className="font-semibold text-white text-xs mb-0.5">Human Editing</h4>
-                  <p className="text-white/40 text-[10px] mb-1">Pro retouching</p>
-                  <span className="text-[#D4A017] text-xs font-semibold">From $5/img</span>
-                </div>
-              </div>
-              
-              {/* Position 5: Auto Campaigns (Bottom Left) */}
-              <div 
-                onClick={() => handleAddonPurchase('auto_campaigns')}
-                className="absolute left-8 bottom-16 w-36 h-36 group cursor-pointer"
-              >
-                <div className="w-full h-full rounded-2xl bg-gradient-to-br from-yellow-500/20 to-yellow-600/5 border border-yellow-400/30 hover:border-yellow-400 transition-all flex flex-col items-center justify-center text-center p-3">
-                  <div className="w-10 h-10 rounded-xl bg-yellow-500/20 border border-yellow-400/30 flex items-center justify-center mb-2">
-                    <svg className="w-5 h-5 text-yellow-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z" />
-                    </svg>
-                  </div>
-                  <h4 className="font-semibold text-white text-xs mb-0.5">Auto Campaigns</h4>
-                  <p className="text-white/40 text-[10px] mb-1">Scheduled posts</p>
-                  <span className="text-[#D4A017] text-xs font-semibold">From $30</span>
-                </div>
-              </div>
-              
-              {/* Position 6: CMA Reports (Top Left) */}
-              <div 
-                onClick={() => handleAddonPurchase('cma_report')}
-                className="absolute left-8 top-16 w-36 h-36 group cursor-pointer"
-              >
-                <div className="w-full h-full rounded-2xl bg-gradient-to-br from-indigo-500/20 to-indigo-600/5 border border-indigo-400/30 hover:border-indigo-400 transition-all flex flex-col items-center justify-center text-center p-3">
-                  <div className="w-10 h-10 rounded-xl bg-indigo-500/20 border border-indigo-400/30 flex items-center justify-center mb-2">
-                    <svg className="w-5 h-5 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
-                    </svg>
-                  </div>
-                  <h4 className="font-semibold text-white text-xs mb-0.5">CMA Reports</h4>
-                  <p className="text-white/40 text-[10px] mb-1">Market analysis</p>
-                  <span className="text-[#D4A017] text-xs font-semibold">From $20</span>
-                </div>
-              </div>
-              
-            </div>
-          </div>
-
-          {/* Footer */}
-          <div className="flex items-center justify-between py-4 border-t border-white/10">
-            <div className="flex items-center gap-6 opacity-40">
-              {['RE/MAX', 'Keller Williams', 'Coldwell Banker', 'Century 21'].map((brand) => (
-                <span key={brand} className="text-sm font-medium">{brand}</span>
-              ))}
-            </div>
-            <div className="flex items-center gap-4">
-              <span className="text-sm text-white/50">Questions?</span>
-              <Link href="/contact" className="px-4 py-2 rounded-lg text-sm font-medium bg-white/5 border border-white/10">Contact sales</Link>
-            </div>
-          </div>
-      </section>
-
-      {/* Premium Add-ons */}
-      <section className="py-16 px-6 bg-[#0A0A0A]">
-        <div className="max-w-5xl mx-auto">
-          <div className="text-center mb-12">
-            <h2 className="text-2xl font-bold mb-2">Premium Add-ons</h2>
-            <p className="text-white/50">Unlock advanced capabilities • Pay as you go</p>
-          </div>
-          
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-            {[
-              { name: 'Virtual Tours', desc: '360° walkthroughs', price: 'From $50', color: 'blue' },
-              { name: 'Renovation', desc: 'Digital remodeling', price: 'From $35', color: 'orange' },
-              { name: 'AI Voiceovers', desc: 'Pro narration', price: 'From $15', color: 'green' },
-              { name: 'CMA Reports', desc: 'Market analysis', price: 'From $20', color: 'purple' },
-              { name: 'Human Editing', desc: 'Pro retouching', price: 'From $5/img', color: 'cyan' },
-              { name: 'White Label', desc: 'Your brand', price: '$99/mo', color: 'yellow' },
-            ].map((addon) => (
-              <div key={addon.name} className="p-4 rounded-xl bg-white/5 border border-white/10 hover:border-[#D4A017]/50 transition-all cursor-pointer text-center">
-                <h4 className="font-semibold text-sm mb-1">{addon.name}</h4>
-                <p className="text-white/40 text-xs mb-2">{addon.desc}</p>
-                <span className="text-[#D4A017] text-sm font-medium">{addon.price}</span>
-              </div>
-            ))}
           </div>
         </div>
       </section>

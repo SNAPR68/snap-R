@@ -8,7 +8,7 @@ import { MlsExportModal } from "./mls-export-modal";
 import { AdjustmentPanel } from "./adjustment-panel";
 import { StylePromptModal } from "./style-prompt-modal";
 import Link from 'next/link';
-import { ArrowLeft, Upload, Sun, Moon, Leaf, Trash2, Sofa, Sparkles, Wand2, Loader2, ChevronDown, ChevronUp, Check, X, Download, Share2, Copy, LogOut, FileArchive, UserCheck, Flame, Tv, Lightbulb, PanelTop, Waves, Move, Circle, Palette, Brain, Snowflake, Flower2, Eraser, Zap } from 'lucide-react';
+import { ArrowLeft, Upload, Sun, Moon, Leaf, Trash2, Sofa, Sparkles, Wand2, Loader2, ChevronDown, ChevronUp, Check, X, Download, Share2, Copy, LogOut, FileArchive, UserCheck, Flame, Tv, Lightbulb, PanelTop, Waves, Move, Circle, Palette, Brain, Snowflake, Flower2, Eraser, Zap, Rocket, CheckCircle, AlertCircle, Star, Eye, RefreshCw, History } from 'lucide-react';
 
 const AI_TOOLS = [
   { id: 'sky-replacement', name: 'Sky Replacement', icon: Sun, credits: 1, category: 'EXTERIOR', hasPresets: true },
@@ -142,6 +142,22 @@ export function StudioClient({ listingId, userRole, showMlsFeatures = false, cre
   const [showHumanEditModal, setShowHumanEditModal] = useState(false);
   const [showApprovalModal, setShowApprovalModal] = useState(false);
   const [showMlsExport, setShowMlsExport] = useState(false);
+  const [preparingListing, setPreparingListing] = useState(false);
+  const [listingStatus, setListingStatus] = useState<{ status: string; confidence: number; heroPhotoId: string | null } | null>(null);
+  const [prepareProgress, setPrepareProgress] = useState<{ phase: string; message: string } | null>(null);
+  const [showReviewPanel, setShowReviewPanel] = useState(false);
+  const [flaggedPhotos, setFlaggedPhotos] = useState<Array<{ id: string; url: string; reason: string; confidence: number }>>([]);
+  const [newPhotosAfterPrepare, setNewPhotosAfterPrepare] = useState(false);
+  const [showHistoryPanel, setShowHistoryPanel] = useState(false);
+  const [preparationHistory, setPreparationHistory] = useState<Array<{
+    id: string;
+    preparedAt: string;
+    confidence: number;
+    photosProcessed: number;
+    toolsUsed: Record<string, number>;
+    presets: { sky: string; twilight: string; staging: string };
+    status: string;
+  }>>([]);
   const [shareLink, setShareLink] = useState('');
   const [shareLoading, setShareLoading] = useState(false);
   const [shareOptions, setShareOptions] = useState({ allowDownload: true, showComparison: true });
@@ -192,6 +208,10 @@ export function StudioClient({ listingId, userRole, showMlsFeatures = false, cre
       setPhotos(photosWithUrls);
       setCompletedPhotos(photosWithUrls.filter(p => p.status === 'completed' && p.signedProcessedUrl));
       if (photosWithUrls.length && !selectedPhoto) setSelectedPhoto(photosWithUrls[0]);
+      // Track if new photos uploaded after preparation
+      if (listingStatus?.status === 'prepared') {
+        setNewPhotosAfterPrepare(true);
+      }
     }
   };
 
@@ -281,6 +301,97 @@ export function StudioClient({ listingId, userRole, showMlsFeatures = false, cre
   };
 
   const handleShare = () => { setShareLink(''); setShowShareModal(true); };
+
+  const handlePrepareListing = async () => {
+    if (preparingListing) return;
+    setPreparingListing(true);
+    setPrepareProgress({ phase: 'Starting', message: 'Initializing AI engine...' });
+    try {
+      const phases = [
+        { phase: 'Analyzing', message: 'AI is analyzing your photos...' },
+        { phase: 'Planning', message: 'Building enhancement strategy...' },
+        { phase: 'Enhancing', message: 'Applying premium enhancements...' },
+        { phase: 'Finalizing', message: 'Validating results...' },
+      ];
+      let phaseIndex = 0;
+      const progressInterval = setInterval(() => {
+        if (phaseIndex < phases.length) {
+          setPrepareProgress(phases[phaseIndex]);
+          phaseIndex++;
+        }
+      }, 8000);
+      const res = await fetch('/api/listing/prepare', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ listingId }),
+      });
+      clearInterval(progressInterval);
+      const data = await res.json();
+      if (data.success) {
+        setListingStatus({ status: data.status, confidence: data.stats?.overallConfidence || 0, heroPhotoId: data.heroPhotoId });
+        setPrepareProgress({ phase: 'Complete', message: 'Listing prepared successfully!' });
+        setNewPhotosAfterPrepare(false);
+        // Set flagged photos if any
+        if (data.stats?.flaggedPhotos) {
+          setFlaggedPhotos(data.stats.flaggedPhotos);
+        } else {
+          setFlaggedPhotos([]);
+        }
+        setTimeout(() => setPrepareProgress(null), 3000);
+        loadData();
+        // Trigger notification
+        sendPrepareNotification(data);
+      } else {
+        setPrepareProgress(null);
+        alert('Preparation failed: ' + (data.error || 'Unknown error'));
+      }
+    } catch (error: any) {
+      setPrepareProgress(null);
+      alert('Error: ' + error.message);
+    } finally {
+      setPreparingListing(false);
+    }
+  };
+
+  const fetchListingStatus = async () => {
+    try {
+      const res = await fetch('/api/listing/status?listingId=' + listingId);
+      const data = await res.json();
+      if (data.status && data.status !== 'pending') {
+        setListingStatus({ status: data.status, confidence: data.confidence || 0, heroPhotoId: data.heroPhotoId });
+        if (data.status === 'needs_review' && data.flaggedPhotos) {
+          setFlaggedPhotos(data.flaggedPhotos);
+        }
+        if (data.preparationHistory) {
+          setPreparationHistory(data.preparationHistory);
+        }
+      }
+    } catch (e) {}
+  };
+
+  useEffect(() => { fetchListingStatus(); }, [listingId]);
+
+  const sendPrepareNotification = async (prepareData: any) => {
+    try {
+      await fetch('/api/notify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          listingId,
+          type: 'listing_prepared',
+          channels: ['email', 'whatsapp'],
+          data: {
+            status: prepareData.status,
+            confidence: prepareData.stats?.overallConfidence,
+            photosProcessed: prepareData.stats?.totalPhotos,
+            heroPhotoId: prepareData.heroPhotoId,
+          }
+        }),
+      });
+    } catch (e) {
+      console.log('Notification send failed:', e);
+    }
+  };
 
   const copyLink = () => {
     if (!shareLink) return;
@@ -372,9 +483,42 @@ export function StudioClient({ listingId, userRole, showMlsFeatures = false, cre
           )}
         </div>
         <div className="flex items-center gap-2">
+          {listingStatus?.status === 'prepared' ? (
+            <>
+              <div className="flex items-center gap-2 px-3 py-2 bg-green-500/20 border border-green-500/40 rounded-lg text-sm text-green-300 cursor-pointer group relative">
+                <CheckCircle className="w-4 h-4" />
+                <span>Prepared</span>
+                <span className="text-xs opacity-70">{listingStatus.confidence}%</span>
+                <div className="absolute top-full left-0 mt-2 p-3 bg-[#1A1A1A] border border-white/10 rounded-lg shadow-xl opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50">
+                  <p className="text-xs text-white/60 mb-1">AI Confidence Score</p>
+                  <p className="text-sm font-bold text-green-400">{listingStatus.confidence}% Match</p>
+                  <p className="text-xs text-white/40 mt-1">MLS export enabled</p>
+                </div>
+              </div>
+              <button onClick={() => setShowHistoryPanel(true)} className="flex items-center gap-1 px-2 py-2 bg-white/10 hover:bg-white/20 rounded-lg text-sm text-white/60 hover:text-white" title="Preparation History">
+                <History className="w-4 h-4" />
+              </button>
+            </>
+          ) : listingStatus?.status === 'needs_review' ? (
+            <button onClick={() => setShowReviewPanel(true)} className="flex items-center gap-2 px-3 py-2 bg-yellow-500/20 border border-yellow-500/40 rounded-lg text-sm text-yellow-300 hover:bg-yellow-500/30 transition-colors">
+              <AlertCircle className="w-4 h-4" />
+              <span>Needs Review</span>
+              <Eye className="w-3 h-3 opacity-60" />
+            </button>
+          ) : (
+            <button onClick={handlePrepareListing} disabled={preparingListing || photos.length === 0} className="flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 rounded-lg text-sm text-white font-medium disabled:opacity-50 disabled:cursor-not-allowed">
+              {preparingListing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Rocket className="w-4 h-4" />}
+              {preparingListing ? 'Preparing...' : 'Prepare Listing'}
+            </button>
+          )}
           <a href={`/dashboard/listing-intelligence?listing=${listingId}`} className="flex items-center gap-2 px-3 py-2 bg-purple-500/20 border border-purple-500/40 rounded-lg text-sm text-purple-300"><Brain className="w-4 h-4" /> AI Analysis</a>
-          <button onClick={() => setShowMlsExport(true)} style={showMlsFeatures ? {} : {display: "none"}} disabled={completedPhotos.length === 0} className="flex items-center gap-2 px-3 py-2 bg-white/10 hover:bg-white/20 rounded-lg text-sm disabled:opacity-50"><FileArchive className="w-4 h-4" /> MLS Export</button>
+          <button onClick={() => setShowMlsExport(true)} style={showMlsFeatures ? {} : {display: "none"}} disabled={completedPhotos.length === 0 || (listingStatus?.status !== 'prepared' && listingStatus?.status !== 'needs_review')} className="flex items-center gap-2 px-3 py-2 bg-white/10 hover:bg-white/20 rounded-lg text-sm disabled:opacity-50" title={listingStatus?.status !== 'prepared' ? 'Prepare listing first' : ''}><FileArchive className="w-4 h-4" /> MLS Export</button>
           <button onClick={handleShare} disabled={shareLoading} className="flex items-center gap-2 px-3 py-2 bg-white/10 hover:bg-white/20 rounded-lg text-sm disabled:opacity-50">{shareLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Share2 className="w-4 h-4" />} Share Gallery</button>
+          {newPhotosAfterPrepare && listingStatus?.status === 'prepared' && (
+            <button onClick={handlePrepareListing} disabled={preparingListing} className="flex items-center gap-2 px-3 py-2 bg-orange-500/20 border border-orange-500/40 rounded-lg text-sm text-orange-300 hover:bg-orange-500/30">
+              <RefreshCw className="w-4 h-4" /> Re-prepare
+            </button>
+          )}
           <label className="flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-[#D4A017] to-[#B8860B] rounded-lg cursor-pointer text-black font-medium text-sm"><Upload className="w-4 h-4" /> Upload<input type="file" multiple accept="image/*" onChange={handleUpload} className="hidden" /></label>
         </div>
       </header>
@@ -451,7 +595,7 @@ export function StudioClient({ listingId, userRole, showMlsFeatures = false, cre
               <div className="flex gap-2 mt-3 overflow-x-auto py-1 flex-shrink-0">
                 {photos.map(photo => (
                   <div key={photo.id} className="relative flex-shrink-0 group">
-                    <button onClick={() => { setSelectedPhoto(photo); setPendingEnhancement(null); setAdjustments({ intensity: 100, brightness: 0, contrast: 0, saturation: 0, warmth: 0 }); }} className={`w-16 h-16 rounded-lg overflow-hidden border-2 ${selectedPhoto?.id === photo.id ? 'border-[#D4A017]' : 'border-transparent hover:border-white/30'}`}><img src={photo.signedRawUrl} alt="" className="w-full h-full object-cover" style={{ filter: getListingStyleFilter() }} /></button>
+                    <button onClick={() => { setSelectedPhoto(photo); setPendingEnhancement(null); setAdjustments({ intensity: 100, brightness: 0, contrast: 0, saturation: 0, warmth: 0 }); }} className={`w-16 h-16 rounded-lg overflow-hidden border-2 ${selectedPhoto?.id === photo.id ? 'border-[#D4A017]' : 'border-transparent hover:border-white/30'} relative`}><img src={photo.signedRawUrl} alt="" className="w-full h-full object-cover" style={{ filter: getListingStyleFilter() }} />{listingStatus?.heroPhotoId === photo.id && <div className="absolute -top-1 -left-1 w-5 h-5 bg-[#D4A017] rounded-full flex items-center justify-center" title="AI-selected hero photo"><Star className="w-3 h-3 text-black fill-black" /></div>}</button>
                     <button onClick={e => { e.stopPropagation(); handleDeletePhoto(photo.id, photo.raw_url); }} className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 rounded-full items-center justify-center text-white hidden group-hover:flex"><X className="w-3 h-3" /></button>
                   </div>
                 ))}

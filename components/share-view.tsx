@@ -61,7 +61,7 @@ export function ShareView({ listing, photos, settings, shareToken }: ShareViewPr
 
   const handleApproval = async (photoId: string, approved: boolean) => {
     console.log("handleApproval called:", { photoId, approved, shareToken });
-    if (!shareToken) return;
+    // Allow approval with or without shareToken
     setSaving(photoId);
     try {
       const response = await fetch('/api/approve-photo', {
@@ -86,7 +86,7 @@ export function ShareView({ listing, photos, settings, shareToken }: ShareViewPr
   };
 
   const handleSubmitReview = async () => {
-    if (!shareToken) return;
+    // Allow approval with or without shareToken
     setSubmitting(true);
     try {
       await fetch('/api/notify-approval', {
@@ -224,7 +224,7 @@ export function ShareView({ listing, photos, settings, shareToken }: ShareViewPr
             )}
           </div>
 
-          {shareToken && settings.allow_approval !== false && (
+          {settings.allow_approval !== false && (
             <div className="flex flex-col items-center gap-3 mt-4">
               <div className="flex items-center gap-3">
                 <button onClick={() => handleApproval(selectedPhoto.id, true)} disabled={saving === selectedPhoto.id} className={`flex items-center gap-2 px-6 py-3 rounded-xl font-medium transition-all ${approvalStatus[selectedPhoto.id] === 'approved' ? 'bg-emerald-500 text-white' : 'bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30 border border-emerald-500/50'}`}>

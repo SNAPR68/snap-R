@@ -23,7 +23,7 @@ export async function GET(req: NextRequest) {
 
     const [userId, platform] = state.includes('_') ? state.split('_') : [state, 'facebook'];
     
-    const clientId = process.env.FACEBOOK_APP_ID;
+    const clientId = process.env.NEXT_PUBLIC_FACEBOOK_APP_ID;
     const clientSecret = process.env.FACEBOOK_APP_SECRET;
     const redirectUri = `${process.env.NEXT_PUBLIC_APP_URL}/api/social/callback/facebook`;
 

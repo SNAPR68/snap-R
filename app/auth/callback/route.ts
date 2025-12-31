@@ -26,7 +26,7 @@ export async function GET(request: Request) {
           full_name: data.user.user_metadata?.full_name || data.user.user_metadata?.name || null,
           avatar_url: data.user.user_metadata?.avatar_url || data.user.user_metadata?.picture || null,
           subscription_tier: 'free',
-          credits: 25,
+          listings_limit: 3,
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
         });
