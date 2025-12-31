@@ -27,7 +27,6 @@ export default function NewListingPage() {
     
     setFiles(prev => [...prev, ...validFiles]);
     
-    // Create previews
     validFiles.forEach(file => {
       const reader = new FileReader();
       reader.onload = (e) => {
@@ -58,10 +57,12 @@ export default function NewListingPage() {
     setUploadProgress(0);
 
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const { data: { user }, error: authError } = await supabase.auth.getUser();
+      console.log('Auth check:', { user: user?.id, authError });
       if (!user) throw new Error('Not authenticated');
 
       // 1. Create listing first
+      console.log('Creating listing...');
       const { data: listing, error: listingError } = await supabase
         .from('listings')
         .insert({
@@ -74,13 +75,16 @@ export default function NewListingPage() {
         .select('id')
         .single();
 
-      if (listingError) throw listingError;
+      console.log('Listing result:', { listing, listingError });
+      if (listingError) throw new Error(`Listing error: ${listingError.message}`);
 
       // 2. Upload photos directly to Supabase Storage
       const uploadedPhotos = [];
       for (let i = 0; i < files.length; i++) {
         const file = files[i];
         const fileName = `${user.id}/${listing.id}/${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
+        
+        console.log(`Uploading file ${i + 1}/${files.length}: ${fileName}`);
         
         const { data: uploadData, error: uploadError } = await supabase.storage
           .from('raw-images')
@@ -89,12 +93,16 @@ export default function NewListingPage() {
             upsert: false,
           });
 
+        console.log('Upload result:', { uploadData, uploadError });
+        
         if (uploadError) {
-          console.error(`Failed to upload ${file.name}:`, uploadError);
+          console.error(`Storage upload failed:`, uploadError);
+          setError(`Storage error: ${uploadError.message}`);
           continue;
         }
 
         // 3. Create photo record
+        console.log('Creating photo record...');
         const { data: photo, error: photoError } = await supabase
           .from('photos')
           .insert({
@@ -109,22 +117,31 @@ export default function NewListingPage() {
           .select('id')
           .single();
 
-        if (!photoError && photo) {
+        console.log('Photo record result:', { photo, photoError });
+
+        if (photoError) {
+          console.error(`Photo record failed:`, photoError);
+          setError(`Photo record error: ${photoError.message}`);
+          continue;
+        }
+
+        if (photo) {
           uploadedPhotos.push(photo);
         }
 
         setUploadProgress(Math.round(((i + 1) / files.length) * 100));
       }
 
+      console.log('Total uploaded:', uploadedPhotos.length);
+
       if (uploadedPhotos.length === 0) {
         throw new Error('Failed to upload any photos');
       }
 
-      // 4. Redirect to studio
       router.push(`/dashboard/studio?id=${listing.id}`);
 
     } catch (err: any) {
-      console.error('Upload error:', err);
+      console.error('Full error:', err);
       setError(err.message || 'Failed to create listing');
       setUploading(false);
     }
