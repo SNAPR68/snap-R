@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 export const dynamic = "force-dynamic"
 import { createClient } from '@/lib/supabase/server'
 
-const FB_APP_ID = process.env.FACEBOOK_APP_ID
+const FB_APP_ID = process.env.NEXT_PUBLIC_FACEBOOK_APP_ID
 const FB_APP_SECRET = process.env.FACEBOOK_APP_SECRET
 const REDIRECT_URI = process.env.NEXT_PUBLIC_APP_URL + '/api/social/facebook/callback'
 

@@ -10,19 +10,36 @@ export async function POST(req: NextRequest) {
   try {
     const { photoId, shareToken, approved, feedback } = await req.json();
 
-    if (!photoId || !shareToken) {
-      return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
+    if (!photoId) {
+      return NextResponse.json({ error: 'Missing photo ID' }, { status: 400 });
     }
 
-    // Verify share token
-    const { data: share } = await supabase
-      .from('shares')
-      .select('listing_id')
-      .eq('token', shareToken)
-      .single();
+    let listingId: string | null = null;
 
-    if (!share) {
-      return NextResponse.json({ error: 'Invalid share token' }, { status: 403 });
+    // If shareToken provided, verify it
+    if (shareToken) {
+      const { data: share } = await supabase
+        .from('shares')
+        .select('listing_id')
+        .eq('token', shareToken)
+        .single();
+
+      if (!share) {
+        return NextResponse.json({ error: 'Invalid share token' }, { status: 403 });
+      }
+      listingId = share.listing_id;
+    } else {
+      // No shareToken - get listing from photo directly
+      const { data: photo } = await supabase
+        .from('photos')
+        .select('listing_id')
+        .eq('id', photoId)
+        .single();
+
+      if (!photo) {
+        return NextResponse.json({ error: 'Photo not found' }, { status: 404 });
+      }
+      listingId = photo.listing_id;
     }
 
     // Update photo approval
@@ -34,9 +51,10 @@ export async function POST(req: NextRequest) {
         approved_at: approved ? new Date().toISOString() : null
       })
       .eq('id', photoId)
-      .eq('listing_id', share.listing_id);
+      .eq('listing_id', listingId);
 
     if (error) {
+      console.error('Update error:', error);
       return NextResponse.json({ error: 'Failed to update approval' }, { status: 500 });
     }
 

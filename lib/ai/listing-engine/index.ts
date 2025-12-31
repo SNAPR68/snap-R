@@ -1,14 +1,14 @@
 /**
- * SnapR AI Engine V2 - Listing Engine
- * ====================================
+ * SnapR AI Engine V2 - Listing Engine (Premium)
+ * =============================================
  * Main orchestrator for listing-level photo preparation
  * 
- * This is the entry point that coordinates:
- * 1. Photo Intelligence (analysis)
- * 2. Strategy Building (decisions)
- * 3. Batch Processing (execution)
- * 4. Consistency Pass (normalization)
- * 5. Quality Validation (QC)
+ * PREMIUM FEATURES:
+ * - GPT-4 Vision scene analysis
+ * - Locked presets for consistency across listing
+ * - Multi-pass twilight with window glow
+ * - Window balancing for interiors
+ * - Quality validation
  */
 
 import { createClient } from '@/lib/supabase/server';
@@ -17,6 +17,7 @@ import { buildListingStrategy, getStrategySummary } from './strategy-builder';
 import { processListingBatch, orderByPriority } from './batch-processor';
 import { analyzeConsistency, getConsistencyReport } from './consistency';
 import { validateResults, getValidationReport, quickValidate } from './quality-validator';
+import { determineLockedPresets, LockedPresets } from './preset-locker';
 import {
   ListingProcessingResult,
   ProcessingProgress,
@@ -30,16 +31,9 @@ import {
 // ============================================
 
 const CONFIG = {
-  // Maximum photos per listing
   maxPhotos: 50,
-  
-  // Timeout for entire preparation (ms)
   totalTimeoutMs: 600000, // 10 minutes
-  
-  // Whether to run full validation (uses API credits)
-  enableFullValidation: false, // Start with quick validation
-  
-  // Whether to apply consistency pass
+  enableFullValidation: false,
   enableConsistencyPass: true,
 };
 
@@ -56,7 +50,7 @@ export async function prepareListing(
   const startTime = Date.now();
   
   console.log(`\n[ListingEngine] ========================================`);
-  console.log(`[ListingEngine] PREPARE LISTING: ${listingId}`);
+  console.log(`[ListingEngine] PREPARE LISTING (PREMIUM): ${listingId}`);
   console.log(`[ListingEngine] ========================================\n`);
   
   const supabase = await createClient();
@@ -84,9 +78,9 @@ export async function prepareListing(
     console.log(`[ListingEngine] Found ${photos.length} photos`);
     
     // ========================================
-    // PHASE 2: ANALYZE PHOTOS
+    // PHASE 2: ANALYZE PHOTOS (GPT-4 Vision)
     // ========================================
-    reportProgress(onProgress, listingId, 'analyzing', `Analyzing ${photos.length} photos...`, startTime);
+    reportProgress(onProgress, listingId, 'analyzing', `Analyzing ${photos.length} photos with AI vision...`, startTime);
     
     const analyses = await analyzePhotos(photos, {
       maxConcurrency: options.prioritizeSpeed ? 8 : 5,
@@ -95,7 +89,21 @@ export async function prepareListing(
     console.log(`[ListingEngine] Analysis complete`);
     
     // ========================================
-    // PHASE 3: BUILD STRATEGY
+    // PHASE 3: DETERMINE LOCKED PRESETS
+    // ========================================
+    reportProgress(onProgress, listingId, 'strategizing', 'Locking presets for consistency...', startTime);
+    
+    const lockedPresets = determineLockedPresets(analyses);
+    
+    console.log(`[ListingEngine] Presets locked:`, {
+      sky: lockedPresets.skyPreset,
+      twilight: lockedPresets.twilightPreset,
+      staging: lockedPresets.stagingStyle,
+      colorTemp: lockedPresets.colorTemp,
+    });
+    
+    // ========================================
+    // PHASE 4: BUILD STRATEGY
     // ========================================
     reportProgress(onProgress, listingId, 'strategizing', 'Building enhancement strategy...', startTime);
     
@@ -104,9 +112,9 @@ export async function prepareListing(
     console.log(`\n${getStrategySummary(strategy)}\n`);
     
     // ========================================
-    // PHASE 4: PROCESS PHOTOS
+    // PHASE 5: PROCESS PHOTOS (PREMIUM)
     // ========================================
-    reportProgress(onProgress, listingId, 'processing', 'Enhancing photos...', startTime);
+    reportProgress(onProgress, listingId, 'processing', 'Enhancing photos with premium engine...', startTime);
     
     // Order by priority (hero first, then critical, etc.)
     strategy.photoStrategies = orderByPriority(strategy.photoStrategies);
@@ -114,25 +122,24 @@ export async function prepareListing(
     const results = await processListingBatch(strategy, {
       listingId,
       userId,
+      lockedPresets, // Pass locked presets for consistency
       onProgress,
     });
     
     console.log(`[ListingEngine] Processing complete: ${results.filter(r => r.success).length}/${results.length} successful`);
     
     // ========================================
-    // PHASE 5: CONSISTENCY PASS
+    // PHASE 6: CONSISTENCY PASS
     // ========================================
     if (CONFIG.enableConsistencyPass) {
-      reportProgress(onProgress, listingId, 'consistency_pass', 'Checking consistency...', startTime);
+      reportProgress(onProgress, listingId, 'consistency_pass', 'Verifying consistency...', startTime);
       
       const consistency = await analyzeConsistency(results);
       console.log(`\n${getConsistencyReport(consistency.metrics, consistency.adjustments, consistency.consistencyScore)}\n`);
-      
-      // Note: Actual color grading would be applied here in future versions
     }
     
     // ========================================
-    // PHASE 6: VALIDATION
+    // PHASE 7: VALIDATION
     // ========================================
     reportProgress(onProgress, listingId, 'validating', 'Validating results...', startTime);
     
@@ -146,7 +153,7 @@ export async function prepareListing(
     console.log(`\n${getValidationReport(validations)}\n`);
     
     // ========================================
-    // PHASE 7: FINALIZE
+    // PHASE 8: FINALIZE
     // ========================================
     const successfulPhotos = results.filter(r => r.success).length;
     const failedPhotos = results.filter(r => !r.success).length;
@@ -170,6 +177,11 @@ export async function prepareListing(
       heroPhotoId: strategy.heroPhotoId,
       confidence: overallConfidence,
       toolsApplied: countToolsApplied(results),
+      lockedPresets: {
+        sky: lockedPresets.skyPreset,
+        twilight: lockedPresets.twilightPreset,
+        staging: lockedPresets.stagingStyle,
+      },
     });
     
     const totalTime = Date.now() - startTime;
@@ -179,6 +191,7 @@ export async function prepareListing(
     console.log(`[ListingEngine] Time: ${(totalTime / 1000).toFixed(1)}s`);
     console.log(`[ListingEngine] Success: ${successfulPhotos}/${results.length}`);
     console.log(`[ListingEngine] Confidence: ${overallConfidence}%`);
+    console.log(`[ListingEngine] Presets used: sky=${lockedPresets.skyPreset}, twilight=${lockedPresets.twilightPreset}`);
     console.log(`[ListingEngine] ========================================\n`);
     
     return {
@@ -199,7 +212,6 @@ export async function prepareListing(
   } catch (error: any) {
     console.error(`[ListingEngine] FAILED:`, error.message);
     
-    // Update listing status to failed
     await updateListingStatus(supabase, listingId, 'failed');
     
     return {
@@ -242,7 +254,6 @@ async function fetchListingPhotos(
     return [];
   }
   
-  // Get signed URLs for all photos
   const photosWithUrls: Array<{ id: string; url: string }> = [];
   
   for (const photo of photos) {
@@ -287,6 +298,7 @@ async function finalizeListing(
     heroPhotoId: string | null;
     confidence: number;
     toolsApplied: Record<string, number>;
+    lockedPresets: { sky: string; twilight: string; staging: string };
   }
 ): Promise<void> {
   const { error } = await supabase
@@ -298,8 +310,9 @@ async function finalizeListing(
       preparation_metadata: {
         confidence: data.confidence,
         toolsApplied: data.toolsApplied,
+        lockedPresets: data.lockedPresets,
         preparedAt: new Date().toISOString(),
-        engineVersion: '2.0.0',
+        engineVersion: '2.0.0-premium',
       },
       updated_at: new Date().toISOString(),
     })
@@ -368,7 +381,7 @@ export function buildPrepareResponse(
   let message: string;
   switch (result.status) {
     case 'completed':
-      message = `Successfully prepared ${result.successfulPhotos} photos`;
+      message = `Successfully prepared ${result.successfulPhotos} photos with premium engine`;
       break;
     case 'needs_review':
       message = `Preparation complete, ${result.photosNeedingReview} photos need review`;
@@ -394,3 +407,6 @@ export * from './types';
 export { analyzePhoto, analyzePhotos } from './photo-intelligence';
 export { buildListingStrategy, getStrategySummary } from './strategy-builder';
 export { validateResult, validateResults } from './quality-validator';
+export { determineLockedPresets } from './preset-locker';
+export { multiPassTwilight } from './multi-pass-twilight';
+export { balanceWindowExposure, detectWindows } from './window-masking';

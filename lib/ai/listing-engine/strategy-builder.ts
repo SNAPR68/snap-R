@@ -95,6 +95,34 @@ const CONFIG = {
 };
 
 // ============================================
+// PRESET LOCKING (Consistency)
+// ============================================
+
+function determineSkyPreset(analyses: PhotoAnalysis[]): string {
+  // Count sky quality across exteriors to pick best preset
+  const exteriorsWithSky = analyses.filter(a => 
+    a.photoType.startsWith('exterior') && a.hasSky && a.skyVisible >= 15
+  );
+  
+  const hasSunset = exteriorsWithSky.some(a => 
+    a.skyQuality === 'good' || a.heroScore > 80
+  );
+  
+  // Default to dramatic-clouds for consistency, sunset for hero-worthy listings
+  return hasSunset ? 'sunset' : 'dramatic-clouds';
+}
+
+function determineTwilightPreset(analyses: PhotoAnalysis[]): string {
+  // Pick twilight preset based on best candidate
+  const twilightCandidates = analyses.filter(a => 
+    a.twilightCandidate && a.twilightScore > 75
+  );
+  
+  // Blue hour is most universally appealing
+  return 'blue-hour';
+}
+
+// ============================================
 // MAIN STRATEGY BUILDER
 // ============================================
 
@@ -113,9 +141,17 @@ export function buildListingStrategy(
   // Step 3: Select twilight photos (max 2)
   const twilightPhotoIds = selectTwilightPhotos(analyses, listingDecisions);
   
-  // Step 4: Build individual photo strategies
+  // Step 4: Determine locked presets for consistency
+  const lockedPresets = {
+    skyPreset: determineSkyPreset(analyses),
+    twilightPreset: determineTwilightPreset(analyses),
+    lawnPreset: 'lush-green',
+    stagingStyle: 'modern',
+  };
+  
+  // Step 5: Build individual photo strategies with locked presets
   const photoStrategies = analyses.map(analysis => 
-    buildPhotoStrategy(analysis, listingDecisions, twilightPhotoIds)
+    buildPhotoStrategy(analysis, listingDecisions, twilightPhotoIds, lockedPresets)
   );
   
   // Step 5: Calculate totals
@@ -266,7 +302,8 @@ function selectTwilightPhotos(
 function buildPhotoStrategy(
   analysis: PhotoAnalysis,
   listingDecisions: ListingDecisions,
-  twilightPhotoIds: string[]
+  twilightPhotoIds: string[],
+  lockedPresets?: { skyPreset: string; twilightPreset: string; lawnPreset: string; stagingStyle: string }
 ): PhotoStrategy {
   const tools: ToolId[] = [];
   const isTwilightTarget = twilightPhotoIds.includes(analysis.photoId);

@@ -24,7 +24,7 @@ export async function GET(req: NextRequest) {
     }
 
     const userId = state;
-    const clientId = process.env.LINKEDIN_CLIENT_ID;
+    const clientId = process.env.NEXT_PUBLIC_LINKEDIN_CLIENT_ID;
     const clientSecret = process.env.LINKEDIN_CLIENT_SECRET;
     const redirectUri = `${baseUrl}/api/social/callback/linkedin`;
 

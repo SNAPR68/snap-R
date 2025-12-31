@@ -8,17 +8,15 @@ import { Testimonials } from '@/components/testimonials';
 import { AnimatedBackground } from '@/components/animated-background';
 import { trackEvent, SnapREvents } from '@/lib/analytics';
 
-// Pricing data - Listing-based model (25% below Fotello)
+// Pricing data
 const PRO_TIERS = [
-  { listings: 10, perListing: 9, perListingAnnual: 7 },
-  { listings: 20, perListing: 8.5, perListingAnnual: 6.75 },
-  { listings: 30, perListing: 8, perListingAnnual: 6.5 },
-  { listings: 50, perListing: 7.5, perListingAnnual: 6 },
-  { listings: 75, perListing: 7, perListingAnnual: 5.5 },
-  { listings: 100, perListing: null, perListingAnnual: null, enterprise: true },
+  { listings: 10, monthly: 25, annual: 20 },
+  { listings: 20, monthly: 22, annual: 18 },
+  { listings: 30, monthly: 19, annual: 15 },
+  { listings: 50, monthly: 17, annual: 13 },
+  { listings: '50+', monthly: null, annual: null, enterprise: true },
 ] as const;
-const AGENCY_PREMIUM = 2; // +$2/listing over Pro
-const FREE_LISTINGS = 3;
+
 const TEAM_OPTIONS = [
   { users: 5, monthly: 199, annual: 149 },
 ] as const;
@@ -107,26 +105,27 @@ export default function HomePage() {
 
   const currentTier = PRO_TIERS[sliderIndex];
   const isEnterprise = (currentTier as any).enterprise === true;
-  // Agency = Pro + $2/listing
+  const teamOption = TEAM_OPTIONS[teamSizeIndex];
+
   const proCalc = useMemo(() => {
-    if (isEnterprise) return { price: null, total: null, savings: 0, firstMonth: null };
-    const perListing = isAnnual ? (currentTier as any).perListingAnnual : (currentTier as any).perListing;
-    const listings = typeof currentTier.listings === "number" ? currentTier.listings : 0;
-    const total = perListing ? listings * perListing : 0;
-    const monthlyTotal = (currentTier as any).perListing ? listings * (currentTier as any).perListing : 0;
-    const savings = isAnnual ? monthlyTotal : 0;
-    const firstMonth = Math.round(total * 0.75);
-    return { price: perListing, total, savings, firstMonth };
+    if (isEnterprise) return { price: null, total: null, savings: 0 };
+    const price = isAnnual ? currentTier.annual : currentTier.monthly;
+    const listings = currentTier.listings as number;
+    const total = listings * (price as number);
+    const savings = isAnnual ? ((currentTier.monthly as number) - (currentTier.annual as number)) * listings * 12 : 0;
+    return { price, total, savings };
   }, [currentTier, isAnnual, isEnterprise]);
 
   const teamCalc = useMemo(() => {
-    if (isEnterprise) return { price: null, total: null };
-    const perListing = isAnnual ? (currentTier as any).perListingAnnual : (currentTier as any).perListing;
-    const agencyPerListing = perListing ? perListing + AGENCY_PREMIUM : null;
-    const listings = typeof currentTier.listings === "number" ? currentTier.listings : 0;
-    const total = agencyPerListing ? listings * agencyPerListing : 0;
-    return { price: agencyPerListing, total };
-  }, [currentTier, isAnnual, isEnterprise]);
+    if (isEnterprise) return { base: null, price: null, listingCost: null, total: null };
+    const base = isAnnual ? teamOption.annual : teamOption.monthly;
+    const price = isAnnual ? currentTier.annual : currentTier.monthly;
+    const listings = currentTier.listings as number;
+    const listingCost = listings * (price as number);
+    const total = base + listingCost;
+    return { base, price, listingCost, total };
+  }, [teamOption, currentTier, isAnnual, isEnterprise]);
+
   const handleCheckout = async () => {
     if (selectedPlan === 'free') {
       trackEvent(SnapREvents.CHECKOUT_STARTED, { plan: 'free' });
@@ -358,7 +357,7 @@ export default function HomePage() {
         
         <div className="max-w-6xl mx-auto relative z-10">
           
-          {/* Hero Text - Complete Marketing OS */}
+          {/* Hero Text - Centered & Compact */}
           <div className="text-center mb-10">
             {/* Category Badge */}
             <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-white/5 border border-white/10 rounded-full mb-5">
@@ -371,69 +370,48 @@ export default function HomePage() {
             </div>
             
             {/* Main Headline */}
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white leading-[1.1] mb-4">
-              The Complete <span className="text-[#D4A017]">Real Estate Marketing</span> OS
+            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white leading-[1.1] mb-3">
+              The <span className="text-[#D4A017]">Gold Standard</span> in Listing Visuals.
             </h1>
             
-            {/* Feature Stack */}
-            <p className="text-sm md:text-base text-white/50 mb-4 max-w-3xl mx-auto">
-              Photo enhancement • Content studio • Video + AI voiceovers • Virtual tours • CMA reports • Email marketing • Social publishing • Client approval
+            {/* Sub-headline */}
+            <p className="text-lg text-white/40 mb-4">
+              One Platform. Upload to Published.
             </p>
             
-            {/* Empowerment Hook */}
-            <p className="text-lg text-white/80 font-medium mb-2">
-              One upload. AI does everything. <span className="text-[#D4A017]">WhatsApp alerts you when clients engage.</span>
+            {/* Tagline */}
+            <p className="text-lg text-[#D4A017] font-semibold mb-6">
+              Shot at 2pm. Posted by 2:12.
             </p>
             
-            {/* Speed Line */}
-            <p className="text-base text-[#D4A017] font-semibold mb-6">
-              "Shot at 2pm. Listed, marketed & shared by 2:12."
-            </p>
-            
-            {/* FREE Plan CTA */}
+            {/* FREE Enhancement Badge - Main CTA */}
             <Link 
               href="/auth/signup" 
               onClick={() => trackEvent(SnapREvents.HOMEPAGE_CTA_CLICK)}
-              className="inline-flex items-center gap-4 px-6 py-3 bg-gradient-to-r from-[#D4A017]/20 to-[#D4A017]/10 border-2 border-[#D4A017]/50 rounded-full mb-6 hover:border-[#D4A017] hover:scale-105 transition-all cursor-pointer group"
+              className="inline-flex items-center gap-4 px-6 py-3 bg-gradient-to-r from-green-500/20 to-emerald-500/10 border-2 border-green-500/50 rounded-full mb-5 hover:border-green-400 hover:scale-105 transition-all cursor-pointer group"
             >
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-[#D4A017] flex items-center justify-center shadow-lg shadow-[#D4A017]/30 group-hover:scale-110 transition-transform">
-                  <Check className="w-6 h-6 text-black" />
+                <div className="w-10 h-10 rounded-full bg-green-500 flex items-center justify-center shadow-lg shadow-green-500/30 group-hover:scale-110 transition-transform">
+                  <Check className="w-6 h-6 text-white" />
                 </div>
                 <div className="text-left">
-                  <div className="text-[#D4A017] text-xs font-bold tracking-wide">FREE PLAN</div>
-                  <div className="text-white text-xl font-black">3 Listings/month</div>
+                  <div className="text-green-400 text-xs font-bold tracking-wide">ENHANCEMENT</div>
+                  <div className="text-white text-xl font-black">30 FREE/MONTH</div>
                 </div>
               </div>
               <div className="h-10 w-px bg-white/20"></div>
               <div className="text-left">
-                <div className="text-white/80 text-sm font-medium">All Features Included</div>
+                <div className="text-white/80 text-sm font-medium">All 15 AI tools</div>
                 <div className="text-white/50 text-xs">No credit card required</div>
               </div>
-              <ArrowRight className="w-5 h-5 text-[#D4A017] group-hover:translate-x-1 transition-transform" />
+              <ArrowRight className="w-5 h-5 text-green-400 group-hover:translate-x-1 transition-transform" />
             </Link>
-            
-            {/* Industry Firsts */}
-            <div className="flex flex-wrap justify-center items-center gap-3 mb-5">
-              <span className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-500/10 border border-blue-500/30 rounded-full text-xs text-blue-400">
-                <Smartphone className="w-3.5 h-3.5" />
-                First-ever iOS & Android app
-              </span>
-              <span className="flex items-center gap-1.5 px-3 py-1.5 bg-green-500/10 border border-green-500/30 rounded-full text-xs text-green-400">
-                <Bell className="w-3.5 h-3.5" />
-                WhatsApp client alerts
-              </span>
-              <span className="flex items-center gap-1.5 px-3 py-1.5 bg-purple-500/10 border border-purple-500/30 rounded-full text-xs text-purple-400">
-                <Zap className="w-3.5 h-3.5" />
-                60-sec AI (vs 48hr industry)
-              </span>
-            </div>
             
             {/* Trust Signals */}
             <div className="flex flex-wrap justify-center items-center gap-5 text-xs">
               <span className="flex items-center gap-1.5 text-white/40">
                 <Check className="w-3.5 h-3.5 text-green-500" />
-                MLS-Ready
+                MLS Compliant
               </span>
               <span className="flex items-center gap-1.5 text-white/40">
                 <Check className="w-3.5 h-3.5 text-green-500" />
@@ -1187,115 +1165,192 @@ export default function HomePage() {
         <Testimonials />
       </section>
 
-      {/* Pricing Section - Simplified with hook */}
-      <section id="pricing" className="py-20 px-6 bg-[#0F0F0F]">
-        <div className="max-w-5xl mx-auto">
-          {/* Hook */}
-          <div className="text-center mb-12">
-            <div className="inline-flex items-center gap-2 px-4 py-2 bg-red-500/10 border border-red-500/30 rounded-full text-red-400 text-sm mb-6">
-              <Zap className="w-4 h-4" />
-              Stop paying $1,000+/mo for 8 different tools
+      {/* Pricing Section */}
+      <section id="pricing" className="py-16 px-6 bg-[#0F0F0F]">
+        <style dangerouslySetInnerHTML={{ __html: `
+          .pricing-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: #D4A017;
+            cursor: pointer;
+            border: 2px solid #fff;
+            box-shadow: 0 0 10px rgba(212,160,23,0.5);
+          }
+          .pricing-slider::-moz-range-thumb {
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: #D4A017;
+            cursor: pointer;
+            border: 2px solid #fff;
+            box-shadow: 0 0 10px rgba(212,160,23,0.5);
+          }
+        `}} />
+        <div className="max-w-7xl mx-auto">
+          {/* Header */}
+          <div className="text-center mb-8">
+            <h2 className="text-3xl font-bold mb-1">Choose your plan</h2>
+            <p className="text-sm text-white/50">Simple, transparent pricing. No hidden fees.</p>
+          </div>
+
+          {/* Error Message - User Friendly */}
+          {error && (
+            <div className="mb-4 p-3 rounded-lg text-center text-sm bg-red-500/10 border border-red-500/30 text-red-400">
+              {error.includes('API key') || error.includes('authenticator') 
+                ? 'Payment system is being configured. Please try again later or contact support.'
+                : error}
             </div>
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">
-              The <span className="text-[#D4A017]">Complete</span> Real Estate Marketing OS
-            </h2>
-            <p className="text-white/60 max-w-2xl mx-auto mb-4">
-              Photo editing, content studio, video creator, virtual tours, email marketing, 
-              social publishing, WhatsApp alerts — <span className="text-white font-semibold">ALL IN ONE</span>
-            </p>
-            <p className="text-lg">
-              <span className="text-white/50">Fotello charges $12-14/listing for</span>{' '}
-              <span className="text-red-400 line-through">just editing</span>{' '}
-              <span className="text-white/50">→</span>{' '}
-              <span className="text-[#D4A017] font-bold">SnapR: EVERYTHING for $7-9/listing</span>
-            </p>
-          </div>
+          )}
 
-          {/* Feature Pills */}
-          <div className="flex flex-wrap justify-center gap-2 mb-12">
-            {['15 AI Tools', 'Content Studio', 'Video + Voiceovers', 'Virtual Tours', 'Email Marketing', 'Social Publishing', 'WhatsApp Alerts', 'Client Approval'].map((f) => (
-              <span key={f} className="px-3 py-1.5 bg-white/5 border border-white/10 rounded-full text-xs text-white/70">✓ {f}</span>
-            ))}
-          </div>
-
-          {/* Simple Toggle */}
-          <div className="flex justify-center mb-8">
-            <div className="flex items-center gap-1 p-1 bg-white/5 border border-white/10 rounded-full">
-              <button onClick={() => setIsAnnual(false)} className={`px-5 py-2 rounded-full text-sm font-medium transition-all ${!isAnnual ? 'bg-[#D4A017] text-black' : 'text-white/50'}`}>
-                Monthly <span className="text-xs opacity-70">(1 week free)</span>
+          {/* Controls Row */}
+          <div className="flex items-center justify-center gap-6 mb-8">
+            {/* Billing Toggle */}
+            <div className="inline-flex items-center p-1 rounded-full bg-white/5 border border-white/10">
+              <button onClick={() => setIsAnnual(false)} className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all ${!isAnnual ? 'bg-[#D4A017] text-black' : 'bg-transparent text-white/50'}`}>Monthly</button>
+              <button onClick={() => setIsAnnual(true)} className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all flex items-center gap-2 ${isAnnual ? 'bg-[#D4A017] text-black' : 'bg-transparent text-white/50'}`}>
+                Annual
+                <span className="text-xs px-1.5 py-0.5 rounded-full font-semibold bg-green-500 text-white">−20%</span>
               </button>
-              <button onClick={() => setIsAnnual(true)} className={`px-5 py-2 rounded-full text-sm font-medium transition-all ${isAnnual ? 'bg-[#D4A017] text-black' : 'text-white/50'}`}>
-                Annual <span className="text-xs opacity-70">(1 month free)</span>
-              </button>
-            </div>
-          </div>
-
-          {/* Simplified 3 Cards */}
-          <div className="grid md:grid-cols-3 gap-6 mb-10">
-            {/* Free */}
-            <div className="rounded-2xl p-6 bg-white/5 border border-white/10">
-              <h3 className="text-xl font-bold mb-1">Free</h3>
-              <p className="text-white/50 text-sm mb-4">Try everything risk-free</p>
-              <div className="text-4xl font-bold mb-4">$0</div>
-              <ul className="space-y-2 mb-6 text-sm text-white/70">
-                <li className="flex items-center gap-2"><Check className="w-4 h-4 text-green-400" /> 3 listings/month</li>
-                <li className="flex items-center gap-2"><Check className="w-4 h-4 text-green-400" /> All 15 AI tools</li>
-                <li className="flex items-center gap-2"><Check className="w-4 h-4 text-green-400" /> Content Studio (limited)</li>
-                <li className="flex items-center gap-2"><Check className="w-4 h-4 text-yellow-400" /> Watermarked exports</li>
-              </ul>
-              <Link href="/auth/signup" className="block w-full py-3 bg-white/10 hover:bg-white/20 rounded-xl font-semibold text-center transition-all">
-                Start Free
-              </Link>
             </div>
 
-            {/* Pro */}
-            <div className="rounded-2xl p-6 bg-gradient-to-b from-[#D4A017]/20 to-transparent border-2 border-[#D4A017] relative">
-              <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 bg-[#D4A017] text-black text-xs font-bold rounded-full">Most Popular</div>
-              <h3 className="text-xl font-bold mb-1">Pro</h3>
-              <p className="text-white/50 text-sm mb-4">For agents & photographers</p>
-              <div className="mb-4">
-                <span className="text-4xl font-bold text-[#D4A017]">${isAnnual ? '6.50' : '8'}</span>
-                <span className="text-white/50">/listing</span>
+            {/* Slider */}
+            <div className="flex items-center gap-4 px-5 py-2.5 rounded-full bg-white/5 border border-white/10">
+              <span className="text-sm font-medium text-[#D4A017]">Listings:</span>
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-medium text-white/80">10</span>
+                <input type="range" min="0" max="4" value={sliderIndex} onChange={(e) => {
+                  const newValue = parseInt(e.target.value);
+                  setSliderIndex(newValue);
+                  trackEvent(SnapREvents.PRICING_SLIDER_USED, { value: newValue });
+                }} className="pricing-slider" style={sliderStyles} />
+                <span className="text-xs font-medium text-white/80">50+</span>
               </div>
-              <ul className="space-y-2 mb-6 text-sm text-white/70">
-                <li className="flex items-center gap-2"><Check className="w-4 h-4 text-green-400" /> 10-75 listings/month</li>
-                <li className="flex items-center gap-2"><Check className="w-4 h-4 text-green-400" /> Priority processing (30 sec)</li>
-                <li className="flex items-center gap-2"><Check className="w-4 h-4 text-green-400" /> Full Content Studio</li>
-                <li className="flex items-center gap-2"><Check className="w-4 h-4 text-green-400" /> Clean HD exports</li>
-              </ul>
-              <Link href="/auth/signup?plan=pro" className="block w-full py-3 bg-[#D4A017] hover:bg-[#B8860B] rounded-xl font-semibold text-black text-center transition-all">
-                Start Pro Trial
-              </Link>
+              <span className="text-xl font-bold w-12 text-[#D4A017]">{currentTier.listings}</span>
             </div>
+          </div>
 
-            {/* Agency */}
-            <div className="rounded-2xl p-6 bg-white/5 border border-white/10">
-              <h3 className="text-xl font-bold mb-1">Agency</h3>
-              <p className="text-white/50 text-sm mb-4">For teams & brokerages</p>
-              <div className="mb-4">
-                <span className="text-4xl font-bold">${isAnnual ? '8.50' : '10'}</span>
-                <span className="text-white/50">/listing</span>
+          {/* Pricing Cards */}
+          <div className="grid lg:grid-cols-3 gap-5 mb-8">
+            {/* FREE */}
+            <div onClick={() => {
+              setSelectedPlan('free');
+              trackEvent(SnapREvents.PLAN_SELECTED, { plan: 'free' });
+            }} className="rounded-2xl p-5 relative cursor-pointer transition-all duration-300" style={getCardStyle('free')}>
+              {selectedPlan === 'free' && <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-0.5 rounded-full text-xs font-semibold bg-[#D4A017] text-black">Selected</div>}
+              <div style={{ height: '60px' }}><h3 className="text-xl font-bold">Free</h3><p className="text-sm text-white/50">Try SnapR risk-free</p></div>
+              <div style={{ height: '50px' }} className="flex items-baseline"><span className="text-4xl font-bold">$0</span></div>
+              <div style={{ height: '100px' }}>
+                <div className="p-3 rounded-xl h-full bg-white/5">
+                  <div className="flex justify-between text-sm mb-1.5"><span className="text-white/50">Enhancements</span><span className="font-semibold">30/month</span></div>
+                  <div className="flex justify-between text-sm mb-1.5"><span className="text-white/50">AI tools</span><span className="font-semibold">All 15</span></div>
+                  <div className="flex justify-between text-sm"><span className="text-white/50">Listings</span><span className="font-semibold">—</span></div>
+                </div>
               </div>
-              <ul className="space-y-2 mb-6 text-sm text-white/70">
-                <li className="flex items-center gap-2"><Check className="w-4 h-4 text-green-400" /> Unlimited listings</li>
-                <li className="flex items-center gap-2"><Check className="w-4 h-4 text-green-400" /> Instant processing</li>
-                <li className="flex items-center gap-2"><Check className="w-4 h-4 text-green-400" /> 5 team members</li>
-                <li className="flex items-center gap-2"><Check className="w-4 h-4 text-green-400" /> White-label option</li>
-              </ul>
-              <Link href="/auth/signup?plan=agency" className="block w-full py-3 bg-white/10 hover:bg-white/20 rounded-xl font-semibold text-center transition-all">
-                Start Agency Trial
-              </Link>
+              <div style={{ height: '50px' }} className="flex items-center">
+                <button onClick={(e) => { e.stopPropagation(); if (selectedPlan === 'free') handleCheckout(); }} disabled={loading} className="w-full py-3 rounded-xl text-sm font-semibold transition-all flex items-center justify-center gap-2" style={getCtaStyle('free')}>
+                  {loading && selectedPlan === 'free' ? <LoadingSpinner /> : (isEnterprise ? 'Contact Sales' : 'Get started free')}
+                </button>
+              </div>
+              <div className="pt-4 mt-4 border-t border-white/10">
+                <ul className="space-y-2">
+                  {['15 AI enhancement tools', 'Content Studio (limited)', 'Basic photo scoring', 'Watermarked exports'].map((f, i) => (
+                    <li key={i} className="flex items-center gap-2 text-sm text-white/70"><CheckIcon />{f}</li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+
+            {/* PRO */}
+            <div onClick={() => {
+              setSelectedPlan('pro');
+              trackEvent(SnapREvents.PLAN_SELECTED, { plan: 'pro' });
+            }} className="rounded-2xl p-5 relative cursor-pointer transition-all duration-300" style={getCardStyle('pro')}>
+              <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-0.5 rounded-full text-xs font-semibold bg-[#D4A017] text-black">{selectedPlan === 'pro' ? 'Selected' : 'Most Popular'}</div>
+              <div style={{ height: '60px' }}><h3 className="text-xl font-bold">Pro</h3><p className="text-sm text-white/50">For agents & photographers</p></div>
+              <div style={{ height: '50px' }} className="flex items-baseline">
+                <span className="text-4xl font-bold text-[#D4A017]">{isEnterprise ? 'Custom' : `$${proCalc.price}`}</span>
+                {!isEnterprise && <span className="text-base ml-1 text-white/50">/listing</span>}
+              </div>
+              <div style={{ height: '100px' }}>
+                <div className="p-3 rounded-xl h-full bg-black/20">
+                  {isEnterprise ? (
+                    <><div className="text-sm mb-1 text-white/50">High-volume pricing</div><div className="text-lg font-bold">Contact us</div></>
+                  ) : (
+                    <>
+                      <div className="flex justify-between items-center mb-1">
+                        <span className="text-sm text-white/50">{currentTier.listings} listings × ${proCalc.price}</span>
+                        <span className="text-lg font-bold">${proCalc.total}<span className="text-xs font-normal text-white/40">/mo</span></span>
+                      </div>
+                      {isAnnual && proCalc.savings > 0 && <div className="text-xs text-right text-green-400">Save ${proCalc.savings.toLocaleString()}/year</div>}
+                      <div className="text-xs mt-1 text-white/40">75 photos per listing included</div>
+                    </>
+                  )}
+                </div>
+              </div>
+              <div style={{ height: '50px' }} className="flex items-center">
+                <button onClick={(e) => { e.stopPropagation(); if (selectedPlan === 'pro') handleCheckout(); }} disabled={loading} className="w-full py-3 rounded-xl text-sm font-semibold flex items-center justify-center gap-2 transition-all" style={getCtaStyle('pro')}>
+                  {loading && selectedPlan === 'pro' ? <LoadingSpinner /> : ctaText}
+                  {!isEnterprise && !loading && <span className="text-xs px-1.5 py-0.5 rounded-full font-semibold" style={getBonusStyle('pro')}>{bonusText}</span>}
+                </button>
+              </div>
+              <div className="pt-4 mt-4 border-t border-white/10">
+                <ul className="space-y-2">
+                  {['Listing Intelligence AI', 'Photo Culling AI', 'Content Studio — 150+ templates', 'Video, Email, Property Sites'].map((f, i) => (
+                    <li key={i} className="flex items-center gap-2 text-sm text-white/70"><CheckIcon />{f}</li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+
+            {/* TEAM */}
+            <div onClick={() => {
+              setSelectedPlan('team');
+              trackEvent(SnapREvents.PLAN_SELECTED, { plan: 'team' });
+            }} className="rounded-2xl p-5 relative cursor-pointer transition-all duration-300" style={getCardStyle('team')}>
+              {selectedPlan === 'team' && <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-0.5 rounded-full text-xs font-semibold bg-[#D4A017] text-black">Selected</div>}
+              <div style={{ height: '60px' }}><h3 className="text-xl font-bold">Team</h3><p className="text-sm text-white/50">For brokerages & teams</p></div>
+              <div style={{ height: '50px' }} className="flex items-baseline">
+                <span className="text-4xl font-bold text-[#D4A017]">{isEnterprise ? 'Custom' : `$${teamCalc.price}`}</span>
+                {!isEnterprise && <span className="text-base ml-1 text-white/50">/listing + base</span>}
+              </div>
+              <div style={{ height: '100px' }}>
+                <div className="p-3 rounded-xl h-full bg-white/5">
+                  <div className="flex gap-1.5 mb-2">
+                    {TEAM_OPTIONS.map((opt, i) => (
+                      <button key={opt.users} onClick={(e) => { e.stopPropagation(); setTeamSizeIndex(i); }} className={`flex-1 py-1 rounded text-xs font-medium transition-all ${i === teamSizeIndex ? 'bg-[#D4A017] text-black' : 'bg-white/5 text-white/50'}`}>
+                        {i === 0 ? `${opt.users} users` : opt.users}
+                      </button>
+                    ))}
+                  </div>
+                  {isEnterprise ? (
+                    <><div className="text-xs text-white/40">High-volume pricing</div><div className="font-semibold">Contact us</div></>
+                  ) : (
+                    <div className="flex justify-between text-xs">
+                      <span className="text-white/40">${teamCalc.base} base + {currentTier.listings}×${teamCalc.price}</span>
+                      <span className="font-semibold">${teamCalc.total?.toLocaleString()}/mo</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+              <div style={{ height: '50px' }} className="flex items-center">
+                <button onClick={(e) => { e.stopPropagation(); if (selectedPlan === 'team') handleCheckout(); }} disabled={loading} className="w-full py-3 rounded-xl text-sm font-semibold flex items-center justify-center gap-2 transition-all" style={getCtaStyle('team')}>
+                  {loading && selectedPlan === 'team' ? <LoadingSpinner /> : ctaText}
+                  {!isEnterprise && !loading && <span className="text-xs px-1.5 py-0.5 rounded-full font-semibold" style={getBonusStyle('team')}>{bonusText}</span>}
+                </button>
+              </div>
+              <div className="pt-4 mt-4 border-t border-white/10">
+                <p className="text-xs mb-2 text-white/40">Everything in Pro, plus:</p>
+                <ul className="space-y-2">
+                  {['Up to 25 team members', 'Roles, permissions & analytics', 'Shared assets & brand enforcement', 'Dedicated account manager'].map((f, i) => (
+                    <li key={i} className="flex items-center gap-2 text-sm text-white/70"><CheckIcon />{f}</li>
+                  ))}
+                </ul>
+              </div>
             </div>
           </div>
-
-          {/* CTA to full pricing */}
-          <div className="text-center">
-            <Link href="/pricing" className="inline-flex items-center gap-2 text-[#D4A017] hover:text-[#B8860B] font-medium transition-colors">
-              See complete feature comparison & pricing calculator
-              <ArrowRight className="w-4 h-4" />
-            </Link>
-          </div>
-        </div>
 
           {/* Premium Add-ons - Circular Layout */}
           <div className="mb-8">
@@ -1444,32 +1499,6 @@ export default function HomePage() {
               <span className="text-sm text-white/50">Questions?</span>
               <Link href="/contact" className="px-4 py-2 rounded-lg text-sm font-medium bg-white/5 border border-white/10">Contact sales</Link>
             </div>
-          </div>
-      </section>
-
-      {/* Premium Add-ons */}
-      <section className="py-16 px-6 bg-[#0A0A0A]">
-        <div className="max-w-5xl mx-auto">
-          <div className="text-center mb-12">
-            <h2 className="text-2xl font-bold mb-2">Premium Add-ons</h2>
-            <p className="text-white/50">Unlock advanced capabilities • Pay as you go</p>
-          </div>
-          
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-            {[
-              { name: 'Virtual Tours', desc: '360° walkthroughs', price: 'From $50', color: 'blue' },
-              { name: 'Renovation', desc: 'Digital remodeling', price: 'From $35', color: 'orange' },
-              { name: 'AI Voiceovers', desc: 'Pro narration', price: 'From $15', color: 'green' },
-              { name: 'CMA Reports', desc: 'Market analysis', price: 'From $20', color: 'purple' },
-              { name: 'Human Editing', desc: 'Pro retouching', price: 'From $5/img', color: 'cyan' },
-              { name: 'White Label', desc: 'Your brand', price: '$99/mo', color: 'yellow' },
-            ].map((addon) => (
-              <div key={addon.name} className="p-4 rounded-xl bg-white/5 border border-white/10 hover:border-[#D4A017]/50 transition-all cursor-pointer text-center">
-                <h4 className="font-semibold text-sm mb-1">{addon.name}</h4>
-                <p className="text-white/40 text-xs mb-2">{addon.desc}</p>
-                <span className="text-[#D4A017] text-sm font-medium">{addon.price}</span>
-              </div>
-            ))}
           </div>
         </div>
       </section>

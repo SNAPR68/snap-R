@@ -1,7 +1,10 @@
 /**
- * SnapR AI Engine V2 - Batch Processor
- * =====================================
- * Executes enhancements in parallel with rate limiting
+ * SnapR AI Engine V2 - Batch Processor (Premium)
+ * ===============================================
+ * Executes enhancements with:
+ * - Locked presets for consistency
+ * - Multi-pass twilight for superior quality
+ * - Window balancing for interiors
  */
 
 import { 
@@ -11,6 +14,9 @@ import {
   ProcessingProgress 
 } from './types';
 import { ToolId, processEnhancement } from '../router';
+import { LockedPresets, getLockedPrompt } from './preset-locker';
+import { multiPassTwilight } from './multi-pass-twilight';
+import { balanceWindowExposure } from './window-masking';
 import { createClient } from '@/lib/supabase/server';
 
 // ============================================
@@ -18,21 +24,15 @@ import { createClient } from '@/lib/supabase/server';
 // ============================================
 
 const CONFIG = {
-  // Maximum concurrent photo processing
   maxConcurrency: 3,
-  
-  // Maximum concurrent tools per photo
-  maxToolsConcurrent: 1, // Sequential per photo for consistency
-  
-  // Retry configuration
   maxRetries: 2,
   retryDelayMs: 2000,
-  
-  // Timeout per tool
-  toolTimeoutMs: 120000, // 2 minutes
-  
-  // Delay between batches to avoid rate limits
+  toolTimeoutMs: 120000,
   batchDelayMs: 500,
+  
+  // Premium features
+  useMultiPassTwilight: true,
+  useWindowBalancing: true,
 };
 
 // ============================================
@@ -42,6 +42,7 @@ const CONFIG = {
 interface ProcessingContext {
   listingId: string;
   userId: string;
+  lockedPresets: LockedPresets;
   onProgress?: (progress: ProcessingProgress) => void;
 }
 
@@ -53,8 +54,15 @@ export async function processListingBatch(
   strategy: ListingStrategy,
   context: ProcessingContext
 ): Promise<PhotoProcessingResult[]> {
-  console.log(`[BatchProcessor] Starting batch for listing ${strategy.listingId}`);
+  console.log(`[BatchProcessor] Starting PREMIUM batch for listing ${strategy.listingId}`);
   console.log(`[BatchProcessor] ${strategy.photoStrategies.length} photos, concurrency: ${CONFIG.maxConcurrency}`);
+  console.log(`[BatchProcessor] Multi-pass twilight: ${CONFIG.useMultiPassTwilight}`);
+  console.log(`[BatchProcessor] Window balancing: ${CONFIG.useWindowBalancing}`);
+  console.log(`[BatchProcessor] Locked presets:`, {
+    sky: context.lockedPresets.skyPreset,
+    twilight: context.lockedPresets.twilightPreset,
+    staging: context.lockedPresets.stagingStyle,
+  });
   
   const startTime = Date.now();
   const results: PhotoProcessingResult[] = [];
@@ -84,7 +92,7 @@ export async function processListingBatch(
     
     // Process batch in parallel
     const batchPromises = batch.map(photo => 
-      processPhotoWithTools(photo, context, supabase)
+      processPhotoWithPresets(photo, context, supabase)
     );
     
     const batchResults = await Promise.all(batchPromises);
@@ -99,16 +107,16 @@ export async function processListingBatch(
   }
   
   const duration = Date.now() - startTime;
-  console.log(`[BatchProcessor] Complete: ${results.length} photos in ${(duration / 1000).toFixed(1)}s`);
+  console.log(`[BatchProcessor] Complete: ${results.filter(r => r.success).length}/${results.length} successful in ${(duration / 1000).toFixed(1)}s`);
   
   return results;
 }
 
 // ============================================
-// SINGLE PHOTO PROCESSOR
+// SINGLE PHOTO PROCESSOR (WITH PRESETS)
 // ============================================
 
-async function processPhotoWithTools(
+async function processPhotoWithPresets(
   photo: PhotoStrategy & { signedUrl: string },
   context: ProcessingContext,
   supabase: any
@@ -118,7 +126,9 @@ async function processPhotoWithTools(
   const appliedTools: ToolId[] = [];
   let lastError: string | undefined;
   
-  console.log(`[BatchProcessor] Processing photo ${photo.photoId} with tools:`, photo.toolOrder);
+  console.log(`[BatchProcessor] Processing photo ${photo.photoId}`);
+  console.log(`[BatchProcessor] Tools to apply:`, photo.toolOrder);
+  console.log(`[BatchProcessor] Is twilight target:`, photo.isTwilightTarget);
   
   // Process tools sequentially for this photo
   for (const tool of photo.toolOrder) {
@@ -140,8 +150,59 @@ async function processPhotoWithTools(
         });
       }
       
-      // Apply enhancement with retry
-      const result = await applyToolWithRetry(currentUrl, tool);
+      let result: { success: boolean; enhancedUrl?: string; error?: string };
+      
+      // ========================================
+      // SPECIAL HANDLING: Multi-Pass Twilight
+      // ========================================
+      if (tool === 'virtual-twilight' && CONFIG.useMultiPassTwilight && photo.isTwilightTarget) {
+        console.log(`[BatchProcessor] Using MULTI-PASS twilight for ${photo.photoId}`);
+        
+        try {
+          const twilightResult = await multiPassTwilight(currentUrl, {
+            preset: context.lockedPresets.twilightPreset,
+            enhanceWindowGlow: true,
+            glowIntensity: 'medium',
+          });
+          
+          result = {
+            success: twilightResult.success,
+            enhancedUrl: twilightResult.url,
+          };
+          
+          console.log(`[BatchProcessor] Multi-pass twilight complete (${twilightResult.passes} passes)`);
+        } catch (error: any) {
+          console.error(`[BatchProcessor] Multi-pass twilight failed, falling back to single pass`);
+          // Fallback to regular twilight
+          result = await applyToolWithPresets(currentUrl, tool, context.lockedPresets);
+        }
+      }
+      // ========================================
+      // SPECIAL HANDLING: Window Balancing
+      // ========================================
+      else if (tool === 'window-masking' && CONFIG.useWindowBalancing) {
+        console.log(`[BatchProcessor] Using window balancing for ${photo.photoId}`);
+        
+        try {
+          const balanceResult = await balanceWindowExposure(currentUrl, {
+            showOutdoorView: true,
+            viewType: 'sky',
+          });
+          
+          result = {
+            success: balanceResult.balanced,
+            enhancedUrl: balanceResult.url,
+          };
+        } catch (error: any) {
+          result = { success: false, error: error.message };
+        }
+      }
+      // ========================================
+      // STANDARD TOOLS WITH LOCKED PRESETS
+      // ========================================
+      else {
+        result = await applyToolWithPresets(currentUrl, tool, context.lockedPresets);
+      }
       
       if (result.success && result.enhancedUrl) {
         currentUrl = result.enhancedUrl;
@@ -150,12 +211,10 @@ async function processPhotoWithTools(
       } else {
         console.warn(`[BatchProcessor] ✗ ${tool} failed for ${photo.photoId}: ${result.error}`);
         lastError = result.error;
-        // Continue with other tools even if one fails
       }
     } catch (error: any) {
       console.error(`[BatchProcessor] Error applying ${tool}:`, error.message);
       lastError = error.message;
-      // Continue with other tools
     }
   }
   
@@ -175,7 +234,6 @@ async function processPhotoWithTools(
       );
     } catch (error: any) {
       console.error(`[BatchProcessor] Error saving enhanced photo:`, error.message);
-      // Use the direct URL if save fails
     }
   }
   
@@ -198,17 +256,23 @@ async function processPhotoWithTools(
 }
 
 // ============================================
-// TOOL APPLICATION WITH RETRY
+// APPLY TOOL WITH LOCKED PRESETS
 // ============================================
 
-async function applyToolWithRetry(
+async function applyToolWithPresets(
   imageUrl: string,
   tool: ToolId,
+  presets: LockedPresets,
   attempt = 1
 ): Promise<{ success: boolean; enhancedUrl?: string; error?: string }> {
   try {
+    // Get the locked prompt for this tool (ensures consistency)
+    const lockedPrompt = getLockedPrompt(tool, presets);
+    
+    console.log(`[BatchProcessor] Applying ${tool} with ${lockedPrompt ? 'LOCKED' : 'default'} preset`);
+    
     const result = await withTimeout(
-      processEnhancement(tool, imageUrl, {}),
+      processEnhancement(tool, imageUrl, { prompt: lockedPrompt }),
       CONFIG.toolTimeoutMs,
       `${tool} timeout`
     );
@@ -222,7 +286,7 @@ async function applyToolWithRetry(
     if (attempt < CONFIG.maxRetries) {
       console.log(`[BatchProcessor] Retrying ${tool} (attempt ${attempt + 1})`);
       await delay(CONFIG.retryDelayMs);
-      return applyToolWithRetry(imageUrl, tool, attempt + 1);
+      return applyToolWithPresets(imageUrl, tool, presets, attempt + 1);
     }
     
     return {
@@ -243,7 +307,6 @@ async function getSignedUrls(
   const results: (PhotoStrategy & { signedUrl: string })[] = [];
   
   for (const strategy of strategies) {
-    // The photoUrl should already be the storage path
     const { data } = await supabase.storage
       .from('raw-images')
       .createSignedUrl(strategy.photoUrl, 3600);
@@ -251,7 +314,6 @@ async function getSignedUrls(
     if (data?.signedUrl) {
       results.push({ ...strategy, signedUrl: data.signedUrl });
     } else {
-      // Try using photoUrl directly if it's already a full URL
       results.push({ ...strategy, signedUrl: strategy.photoUrl });
     }
   }
@@ -266,7 +328,6 @@ async function saveEnhancedPhoto(
   userId: string,
   supabase: any
 ): Promise<string> {
-  // Fetch the enhanced image
   const response = await fetch(enhancedUrl);
   if (!response.ok) {
     throw new Error('Failed to fetch enhanced image');
@@ -275,7 +336,6 @@ async function saveEnhancedPhoto(
   const buffer = await response.arrayBuffer();
   const storagePath = `enhanced/${userId}/${listingId}/${photoId}-prepared.jpg`;
   
-  // Upload to storage
   const { error: uploadError } = await supabase.storage
     .from('raw-images')
     .upload(storagePath, buffer, {
@@ -287,7 +347,6 @@ async function saveEnhancedPhoto(
     throw new Error(`Upload failed: ${uploadError.message}`);
   }
   
-  // Update photo record
   await supabase
     .from('photos')
     .update({
@@ -298,7 +357,6 @@ async function saveEnhancedPhoto(
     })
     .eq('id', photoId);
   
-  // Get signed URL for the saved photo
   const { data } = await supabase.storage
     .from('raw-images')
     .createSignedUrl(storagePath, 3600);
@@ -348,15 +406,12 @@ export function orderByPriority(strategies: PhotoStrategy[]): PhotoStrategy[] {
   const priorityOrder = { critical: 0, recommended: 1, optional: 2, none: 3 };
   
   return [...strategies].sort((a, b) => {
-    // Hero candidates first
     if (a.isHeroCandidate && !b.isHeroCandidate) return -1;
     if (!a.isHeroCandidate && b.isHeroCandidate) return 1;
     
-    // Then by priority
     const priorityDiff = priorityOrder[a.priority] - priorityOrder[b.priority];
     if (priorityDiff !== 0) return priorityDiff;
     
-    // Then by number of tools (more work = earlier)
     return b.tools.length - a.tools.length;
   });
 }

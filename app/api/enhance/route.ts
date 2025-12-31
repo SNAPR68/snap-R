@@ -1,8 +1,7 @@
 export const dynamic = 'force-dynamic';
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
-import { processEnhancement, ToolId, TOOL_CREDITS } from '@/lib/ai/router';
-import { Resend } from 'resend';
+import { processEnhancement, ToolId } from '@/lib/ai/router';
 import { logApiCost } from '@/lib/cost-logger';
 
 export const maxDuration = 120;
@@ -21,15 +20,10 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
     
-    const creditsRequired = TOOL_CREDITS[toolId as ToolId];
-    if (!creditsRequired) {
-      return NextResponse.json({ error: `Unknown tool: ${toolId}` }, { status: 400 });
-    }
-    
-    // Check user's credits
+    // Get user profile for subscription tier
     const { data: profile, error: profileError } = await supabase
       .from('profiles')
-      .select('credits')
+      .select('subscription_tier, listings_limit, listings_used_this_month')
       .eq('id', user.id)
       .single();
       
@@ -37,22 +31,23 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Could not fetch user profile' }, { status: 500 });
     }
     
-    if ((profile.credits || 0) < creditsRequired) {
-      return NextResponse.json({ 
-        error: 'Insufficient credits', 
-        creditsRequired,
-        creditsAvailable: profile.credits || 0
-      }, { status: 402 });
-    }
+    // NEW MODEL: AI enhancements are FREE for all tiers
+    // The limit is on LISTINGS per month, not enhancements
+    // Just verify user has access to the photo's listing
     
     const { data: photo, error: photoError } = await supabase
       .from('photos')
-      .select('*, listings(title)')
+      .select('*, listings(id, title, user_id)')
       .eq('id', imageId)
       .single();
       
     if (photoError || !photo) {
       return NextResponse.json({ error: 'Photo not found' }, { status: 404 });
+    }
+    
+    // Verify user owns this listing
+    if (photo.listings?.user_id !== user.id) {
+      return NextResponse.json({ error: 'Access denied' }, { status: 403 });
     }
     
     const { data: signedUrlData } = await supabase.storage
@@ -63,12 +58,12 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Could not get image URL' }, { status: 500 });
     }
     
-    console.log('[API] Processing...');
+    console.log('[API] Processing with tier:', profile.subscription_tier || 'free');
     const result = await processEnhancement(toolId as ToolId, signedUrlData.signedUrl, options);
     
     const processingTime = Date.now() - startTime;
     
-    // Log API cost with full details
+    // Log API cost for analytics (no credits charged in new model)
     await logApiCost({
       userId: user.id,
       provider: 'replicate',
@@ -76,110 +71,67 @@ export async function POST(request: NextRequest) {
       success: result.success || false,
       errorMessage: result.error,
       processingTimeMs: processingTime,
-      creditsCharged: creditsRequired,
+      creditsCharged: 0, // FREE in new model
       requestMetadata: {
         imageId,
         options,
         userEmail: user.email,
+        subscriptionTier: profile.subscription_tier || 'free',
       },
     });
-
+    
     if (!result.success || !result.enhancedUrl) {
       return NextResponse.json({ error: result.error || 'Enhancement failed' }, { status: 500 });
     }
     
-    // Deduct credits after successful enhancement
-    const { error: deductError } = await supabase
-      .from('profiles')
-      .update({ credits: (profile.credits || 0) - creditsRequired })
-      .eq('id', user.id);
+    // Upload enhanced image
+    const enhancedResponse = await fetch(result.enhancedUrl);
+    const enhancedBlob = await enhancedResponse.blob();
+    const enhancedPath = `${user.id}/${photo.listing_id}/${imageId}_${toolId}_${Date.now()}.jpg`;
+    
+    const { error: uploadError } = await supabase.storage
+      .from('raw-images')
+      .upload(enhancedPath, enhancedBlob, { contentType: 'image/jpeg', upsert: true });
       
-    if (deductError) {
-      console.error('[API] Credit deduction failed:', deductError);
+    if (uploadError) {
+      console.error('[API] Upload error:', uploadError);
+      return NextResponse.json({ error: 'Failed to save enhanced image' }, { status: 500 });
     }
     
-    let finalUrl = result.enhancedUrl;
-    let storagePath: string | null = null;
-    
-    try {
-      const enhancedResponse = await fetch(result.enhancedUrl);
-      if (enhancedResponse.ok) {
-        const enhancedBuffer = await enhancedResponse.arrayBuffer();
-        storagePath = `enhanced/${user.id}/${photo.listing_id}/${Date.now()}-${toolId}.jpg`;
-        
-        const { error: uploadError } = await supabase.storage
-          .from('raw-images')
-          .upload(storagePath, enhancedBuffer, {
-            contentType: 'image/jpeg',
-            upsert: true,
-          });
-          
-        if (!uploadError) {
-          const { data: enhancedSignedUrl } = await supabase.storage
-            .from('raw-images')
-            .createSignedUrl(storagePath, 3600);
-            
-          if (enhancedSignedUrl?.signedUrl) {
-            finalUrl = enhancedSignedUrl.signedUrl;
-          }
-          
-          await supabase
-            .from('photos')
-            .update({
-              processed_url: storagePath,
-              status: 'completed',
-              variant: toolId,
-              updated_at: new Date().toISOString(),
-            })
-            .eq('id', imageId);
-        }
-      }
-    } catch (saveError: any) {
-      console.warn('[API] Save error:', saveError.message);
+    // Update photo record
+    const { error: updateError } = await supabase
+      .from('photos')
+      .update({
+        processed_url: enhancedPath,
+        variant: toolId,
+        status: 'completed',
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', imageId);
+      
+    if (updateError) {
+      console.error('[API] Update error:', updateError);
     }
     
-    // Send processing complete email (non-blocking)
-    const listingTitle = (photo as any).listings?.title || 'Your property';
-    sendProcessingAlert(user.email || '', listingTitle).catch(() => {});
+    // Get signed URL for the enhanced image
+    const { data: enhancedSignedUrl } = await supabase.storage
+      .from('raw-images')
+      .createSignedUrl(enhancedPath, 3600);
     
-    const duration = Date.now() - startTime;
-    console.log('[API] ✅ Complete in', (duration / 1000).toFixed(1), 's');
+    console.log('[API] Enhancement complete in', processingTime, 'ms');
     
     return NextResponse.json({
       success: true,
-      enhancedUrl: finalUrl,
-      storagePath,
-      toolId,
-      creditsUsed: creditsRequired,
-      creditsRemaining: (profile.credits || 0) - creditsRequired,
-      processingTime: duration,
+      enhancedUrl: enhancedSignedUrl?.signedUrl || result.enhancedUrl,
+      processedPath: enhancedPath,
+      processingTime,
+      // No credits info in new model
     });
-  } catch (error: any) {
-    console.error('[API] Error:', error.message);
-    return NextResponse.json({ error: error.message }, { status: 500 });
-  }
-}
-
-async function sendProcessingAlert(userEmail: string, listingTitle: string) {
-  if (!userEmail || !process.env.RESEND_API_KEY) return;
-  
-  try {
-    const resend = new Resend(process.env.RESEND_API_KEY);
-    await resend.emails.send({
-      from: 'SnapR <onboarding@resend.dev>',
-      to: userEmail,
-      subject: '✨ Your photo enhancement is ready!',
-      html: `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-          <h2 style="color: #D4A017;">Your Photo is Ready!</h2>
-          <p>Great news! Your photo enhancement for <strong>${listingTitle}</strong> has been completed.</p>
-          <p><a href="https://snap-r.com/dashboard" style="display: inline-block; background: linear-gradient(to right, #D4A017, #B8860B); color: black; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: bold;">View Your Photos →</a></p>
-          <p style="color: #666; margin-top: 20px;">- The SnapR Team</p>
-        </div>
-      `,
-    });
-    console.log('[API] Processing alert sent to', userEmail);
-  } catch (e) {
-    console.error('[API] Processing alert email error:', e);
+    
+  } catch (error) {
+    console.error('[API] Enhancement error:', error);
+    return NextResponse.json({ 
+      error: error instanceof Error ? error.message : 'Enhancement failed' 
+    }, { status: 500 });
   }
 }
