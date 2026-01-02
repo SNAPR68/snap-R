@@ -256,7 +256,7 @@ export function DashboardClient({ user, listings }: { user: any; listings?: any[
       
       // Upload to Supabase storage
       const { error: uploadError } = await supabase.storage
-        .from('photos')
+        .from('raw-images')
         .upload(fileName, uploadBlob, {
           contentType: isHeic ? 'image/jpeg' : (file.type || 'image/jpeg'),
           upsert: false
@@ -268,15 +268,15 @@ export function DashboardClient({ user, listings }: { user: any; listings?: any[
 
       // Get public URL
       const { data: { publicUrl } } = supabase.storage
-        .from('photos')
+        .from('raw-images')
         .getPublicUrl(fileName);
 
       // Save photo record
-      const { error: photoError } = await supabase.from('photos').insert({
+      const { error: photoError } = await supabase.from('raw-images').insert({
         listing_id: newListing.id,
         user_id: user.id,
-        original_url: publicUrl,
-        storage_path: fileName,
+        raw_url: fileName,
+        
       });
 
       if (photoError) {

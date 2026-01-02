@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { BeforeAfterSlider } from './before-after-slider';
 import { createClient } from '@/lib/supabase/client';
 import ShareGalleryModal from "./ShareGalleryModal";
 import { HumanEditRequestModal } from "./human-edit-request";
@@ -586,6 +587,13 @@ export function StudioClient({ listingId, userRole, showMlsFeatures = false, cre
                     <div className="absolute top-4 left-4 px-3 py-1.5 bg-black/70 rounded-lg text-sm font-medium">Before</div>
                     <div className="absolute top-4 right-4 px-3 py-1.5 bg-black/70 rounded-lg text-sm font-medium">After</div>
                   </div>
+                ) : selectedPhoto.signedProcessedUrl ? (
+                  <BeforeAfterSlider
+                    beforeUrl={selectedPhoto.signedRawUrl || ''}
+                    afterUrl={selectedPhoto.signedProcessedUrl}
+                    toolsApplied={selectedPhoto.tools_applied || []}
+                    className="w-full h-full"
+                  />
                 ) : (
                   <img src={selectedPhoto.signedRawUrl} alt="Selected" className="max-w-full max-h-full object-contain" />
                 )}

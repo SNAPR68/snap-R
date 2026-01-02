@@ -20,16 +20,15 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
     
-    // Get user profile for subscription tier
-    const { data: profile, error: profileError } = await supabase
-      .from('profiles')
-      .select('subscription_tier, listings_limit, listings_used_this_month')
-      .eq('id', user.id)
+    // Get user profile for subscription tier (optional - proceed even if missing)
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("subscription_tier, listings_limit, listings_used_this_month")
+      .eq("id", user.id)
       .single();
-      
-    if (profileError || !profile) {
-      return NextResponse.json({ error: 'Could not fetch user profile' }, { status: 500 });
-    }
+    
+    // If no profile, use defaults (free tier behavior)
+    const userTier = profile?.subscription_tier || "free";
     
     // NEW MODEL: AI enhancements are FREE for all tiers
     // The limit is on LISTINGS per month, not enhancements
@@ -58,7 +57,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Could not get image URL' }, { status: 500 });
     }
     
-    console.log('[API] Processing with tier:', profile.subscription_tier || 'free');
+    console.log('[API] Processing with tier:', profile?.subscription_tier || 'free');
     const result = await processEnhancement(toolId as ToolId, signedUrlData.signedUrl, options);
     
     const processingTime = Date.now() - startTime;
@@ -76,7 +75,7 @@ export async function POST(request: NextRequest) {
         imageId,
         options,
         userEmail: user.email,
-        subscriptionTier: profile.subscription_tier || 'free',
+        subscriptionTier: profile?.subscription_tier || 'free',
       },
     });
     
