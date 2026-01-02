@@ -110,7 +110,7 @@ export function DashboardClient({ user, listings }: { user: any; listings?: any[
       );
       setNewListingTitle('');
       setShowNewListing(null);
-      router.push('/dashboard/studio?id=' + data.id);
+      // Stay on listings page
     }
   };
 
@@ -284,7 +284,7 @@ export function DashboardClient({ user, listings }: { user: any; listings?: any[
       }
 
       // Navigate to studio with this listing
-      router.push(`/dashboard/studio?id=${newListing.id}`);
+      fetchData(); // Refresh listings to show new one
       
     } catch (error: any) {
       console.error('Upload error:', error);
