@@ -79,7 +79,7 @@ export function DashboardClient({ user, listings }: { user: any; listings?: any[
 
     const { data } = await supabase
       .from('projects')
-      .insert({ user_id: user.id, title: newProjectTitle.trim() })
+      .insert({  title: newProjectTitle.trim() })
       .select()
       .single();
 
@@ -96,7 +96,7 @@ export function DashboardClient({ user, listings }: { user: any; listings?: any[
 
     const { data } = await supabase
       .from('listings')
-      .insert({ user_id: user.id, project_id: projectId, title: newListingTitle.trim() })
+      .insert({  project_id: projectId, title: newListingTitle.trim() })
       .select()
       .single();
 
@@ -203,7 +203,7 @@ export function DashboardClient({ user, listings }: { user: any; listings?: any[
         // Create a default project
         const { data: newProject, error: projectError } = await supabase
           .from('projects')
-          .insert({ user_id: user.id, title: 'Quick Captures' })
+          .insert({  title: 'Quick Captures' })
           .select()
           .single();
         
@@ -223,7 +223,7 @@ export function DashboardClient({ user, listings }: { user: any; listings?: any[
       const { data: newListing, error: listingError } = await supabase
         .from('listings')
         .insert({ 
-          user_id: user.id, 
+           
           project_id: projectId, 
           title: `Snap ${timestamp}` 
         })
@@ -272,9 +272,9 @@ export function DashboardClient({ user, listings }: { user: any; listings?: any[
         .getPublicUrl(fileName);
 
       // Save photo record
-      const { error: photoError } = await supabase.from('raw-images').insert({
+      const { error: photoError } = await supabase.from('photos').insert({
         listing_id: newListing.id,
-        user_id: user.id,
+        
         raw_url: fileName,
         
       });
