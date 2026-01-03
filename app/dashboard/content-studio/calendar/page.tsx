@@ -63,7 +63,7 @@ export default function ContentCalendar() {
       // Load listings
       const { data: listingsData } = await supabase
         .from('listings')
-        .select('id, title, address, photos(raw_url, processed_url, status)')
+        .select('id, title, address, photos!photos_listing_id_fkey(raw_url, processed_url, status)')
         .eq('user_id', user.id)
         .order('created_at', { ascending: false })
 

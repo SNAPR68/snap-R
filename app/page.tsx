@@ -1242,10 +1242,30 @@ export default function HomePage() {
             </div>
           </div>
 
+
+          {/* Pricing Slider */}
+          <div className="mb-8 p-4 bg-white/5 rounded-xl border border-white/10">
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+              <div>
+                <h3 className="font-semibold text-sm">How many listings per month?</h3>
+                <p className="text-white/40 text-xs">Drag to see your price</p>
+              </div>
+              <div className="flex-1 max-w-xs">
+                <div className="flex justify-between text-xs text-white/40 mb-1"><span>5</span><span>15</span><span>25</span><span>30</span></div>
+                <input type="range" min="5" max="30" step="1" value={listings} onChange={(e) => setListings(Number(e.target.value))} className="w-full h-2 bg-white/10 rounded-lg appearance-none cursor-pointer slider-gold" />
+                <div className="text-center mt-2 text-lg font-bold text-[#D4A017]">{listings} listings</div>
+              </div>
+              <div className="text-right">
+                <div className="text-2xl font-bold">${sliderPrice}<span className="text-sm text-white/50">/mo</span></div>
+                <div className="text-xs text-white/50">${sliderPerListing}/listing</div>
+                {savingsVsBase > 0 && <div className="text-green-400 text-xs">Save {savingsVsBase}%</div>}
+              </div>
+            </div>
+          </div>
           {/* Simplified 3 Cards */}
           <div className="grid md:grid-cols-3 gap-6 mb-10">
             {/* Free */}
-            <div className="rounded-2xl p-6 bg-white/5 border border-white/10">
+            <div onClick={() => setSelectedPlan('free')} className={`rounded-2xl p-6 cursor-pointer transition-all ${selectedPlan === 'free' ? 'bg-gradient-to-b from-[#D4A017]/20 to-transparent border-2 border-[#D4A017]' : 'bg-white/5 border border-white/10'}`}>
               <h3 className="text-xl font-bold mb-1">Free</h3>
               <p className="text-white/50 text-sm mb-4">Try everything risk-free</p>
               <div className="text-4xl font-bold mb-4">$0</div>
@@ -1261,12 +1281,12 @@ export default function HomePage() {
             </div>
 
             {/* Pro */}
-            <div className="rounded-2xl p-6 bg-gradient-to-b from-[#D4A017]/20 to-transparent border-2 border-[#D4A017] relative">
+            <div onClick={() => setSelectedPlan('pro')} className={`rounded-2xl p-6 cursor-pointer transition-all relative ${selectedPlan === 'pro' ? 'bg-gradient-to-b from-[#D4A017]/20 to-transparent border-2 border-[#D4A017]' : 'bg-white/5 border border-white/10'}`}>
               <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 bg-[#D4A017] text-black text-xs font-bold rounded-full">Most Popular</div>
               <h3 className="text-xl font-bold mb-1">Pro</h3>
               <p className="text-white/50 text-sm mb-4">For agents & photographers</p>
               <div className="mb-4">
-                <span className="text-4xl font-bold text-[#D4A017]">${isAnnual ? '6.50' : '8'}</span>
+                <span className="text-4xl font-bold text-[#D4A017]">${sliderPerListing}</span>
                 <span className="text-white/50">/listing</span>
               </div>
               <ul className="space-y-2 mb-6 text-sm text-white/70">
@@ -1281,7 +1301,7 @@ export default function HomePage() {
             </div>
 
             {/* Agency */}
-            <div className="rounded-2xl p-6 bg-white/5 border border-white/10">
+            <div onClick={() => setSelectedPlan('team')} className={`rounded-2xl p-6 cursor-pointer transition-all ${selectedPlan === 'team' ? 'bg-gradient-to-b from-[#D4A017]/20 to-transparent border-2 border-[#D4A017]' : 'bg-white/5 border border-white/10'}`}>
               <h3 className="text-xl font-bold mb-1">Agency</h3>
               <p className="text-white/50 text-sm mb-4">For teams & brokerages</p>
               <div className="mb-4">

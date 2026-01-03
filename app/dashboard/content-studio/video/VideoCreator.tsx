@@ -60,7 +60,7 @@ export default function VideoCreatorClient() {
   const loadPhotos = async (id: string) => {
     setLoading(true)
     const supabase = createClient()
-    const { data: listing } = await supabase.from('listings').select('*, photos(id, raw_url, processed_url, status, display_order)').eq('id', id).single()
+    const { data: listing } = await supabase.from('listings').select('*, photos!photos_listing_id_fkey(id, raw_url, processed_url, status, display_order)').eq('id', id).single()
     if (listing) {
       setListingTitle(listing.title || listing.address || 'Property')
       setListingPrice(listing.price)

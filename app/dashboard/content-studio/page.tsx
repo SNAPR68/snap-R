@@ -18,7 +18,7 @@ export default async function ContentStudio() {
 
   const { data: listings } = await supabase
     .from('listings')
-    .select('*, photos(id, raw_url, processed_url, status)')
+    .select('*, photos!photos_listing_id_fkey(id, raw_url, processed_url, status)')
     .eq('user_id', user.id)
     .order('created_at', { ascending: false })
     .limit(20)

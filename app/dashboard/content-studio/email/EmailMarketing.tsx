@@ -65,7 +65,7 @@ export default function EmailMarketingClient() {
         if (profile.email) setAgentEmail(profile.email)
         if (profile.phone) setAgentPhone(profile.phone)
       }
-      const { data: listingsData } = await supabase.from('listings').select('*, photos(id, raw_url, processed_url, status)').eq('user_id', user.id).order('created_at', { ascending: false })
+      const { data: listingsData } = await supabase.from('listings').select('*, photos!photos_listing_id_fkey(id, raw_url, processed_url, status)').eq('user_id', user.id).order('created_at', { ascending: false })
       if (listingsData) {
         const processed = await Promise.all(listingsData.map(async (listing: any) => {
           const photos = listing.photos || []

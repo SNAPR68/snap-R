@@ -167,7 +167,7 @@ function VoiceoverGenerator() {
 
     const { data } = await supabase
       .from('listings')
-      .select('*, photos(id, raw_url, processed_url)')
+      .select('*, photos!photos_listing_id_fkey(id, raw_url, processed_url)')
       .eq('user_id', user.id)
       .order('created_at', { ascending: false });
 
