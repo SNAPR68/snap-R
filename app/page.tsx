@@ -96,6 +96,18 @@ const LoadingSpinner = () => (
 export default function HomePage() {
   const [isAnnual, setIsAnnual] = useState(true);
   const [sliderIndex, setSliderIndex] = useState(4);
+  
+  // Listings slider for pricing
+  const [listings, setListings] = useState(30);
+  const calculatePrice = (listingCount: number, annual: boolean) => {
+    const basePrice = 49;
+    const pricePerExtra = 6;
+    const monthlyPrice = basePrice + (listingCount - 5) * pricePerExtra;
+    return annual ? Math.round(monthlyPrice * 0.75) : monthlyPrice;
+  };
+  const sliderPrice = calculatePrice(listings, isAnnual);
+  const sliderPerListing = (sliderPrice / listings).toFixed(2);
+  const savingsVsBase = Math.round((1 - (sliderPrice / listings) / 9.80) * 100);
   const [teamSizeIndex, setTeamSizeIndex] = useState(0);
   const [selectedPlan, setSelectedPlan] = useState<'free' | 'pro' | 'team'>('pro');
   const [loading, setLoading] = useState(false);

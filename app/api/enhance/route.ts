@@ -36,7 +36,7 @@ export async function POST(request: NextRequest) {
     
     const { data: photo, error: photoError } = await supabase
       .from('photos')
-      .select('*, listings(id, title, user_id)')
+      .select('*, listings!photos_listing_id_fkey(id, title, user_id)')
       .eq('id', imageId)
       .single();
       

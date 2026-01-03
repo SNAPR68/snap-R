@@ -105,7 +105,7 @@ export async function POST(request: NextRequest) {
     });
     
   } catch (error: any) {
-    console.error('[API] Error:', error.message);
+    console.error('[API] Error:', error.message, error.stack);
     
     return NextResponse.json(
       { 

@@ -26,15 +26,18 @@ export default function ListingsPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchListings = async () => { 
+    const fetchListings = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
         window.location.href = '/auth/login';
         return;
       }
 
+      const { data: listingsData } = await supabase
         .from('listings')
         .select('*, photos!photos_listing_id_fkey(id, raw_url, processed_url, status)')
         .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
 
       if (listingsData) {
         const withThumbnails = await Promise.all(listingsData.map(async (listing: any) => {
