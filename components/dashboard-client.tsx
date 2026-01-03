@@ -284,7 +284,7 @@ export function DashboardClient({ user, listings }: { user: any; listings?: any[
       }
 
       // Navigate to studio with this listing
-      fetchData(); // Refresh listings to show new one
+      fetchProjects(); // Refresh listings to show new one
       
     } catch (error: any) {
       console.error('Upload error:', error);
