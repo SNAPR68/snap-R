@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Check, X, Zap, ArrowRight, Camera, Building2, Loader2, Sparkles } from 'lucide-react';
+import { Check, X, ArrowRight, Camera, Building2, Loader2, Sparkles } from 'lucide-react';
 
 // Slider steps
 const LISTING_OPTIONS = [10, 15, 20, 25, 30, 40, 50];
@@ -19,77 +19,78 @@ const getVolumeDiscount = (listings: number): number => {
   return 0;
 };
 
-// Photographer tiers (Fotello comparison)
+// Photographer tiers - Fotello-competitive pricing ($12-$14)
 const PHOTOGRAPHER_TIERS = [
   {
-    id: 'essentials',
-    name: 'Essentials',
-    basePrice: 12,
+    id: 'free',
+    name: 'Free',
+    basePrice: 0,
     popular: false,
-    photos: 60,
+    photos: 30,
+    listings: 3,
+    isFree: true,
     features: [
-      { name: '60 photos per listing', included: true },
-      { name: 'Basic photo editing (8 tools)', included: true },
-      { name: '2 Twilight per listing', included: true },
-      { name: 'Unlimited human revision', included: true },
-      { name: 'Content Studio (150+ templates)', included: true, bonus: true },
-      { name: 'Email Marketing', included: true, bonus: true },
-      { name: 'Social Publishing', included: true, bonus: true },
-      { name: 'Property Sites', included: true, bonus: true },
-      { name: 'Client Approval', included: true, bonus: true },
-      { name: 'Virtual Staging', included: false },
-      { name: 'Virtual Tours', included: false },
-      { name: 'AI Voiceovers', included: false },
+      { name: '3 listings/month', included: true },
+      { name: '30 photos per listing', included: true },
+      { name: 'All 15 AI tools', included: true },
+      { name: 'Watermarked exports', included: true },
+      { name: 'HD exports', included: false },
+      { name: 'Human revision', included: false },
     ],
   },
   {
     id: 'ultimate',
     name: 'Ultimate',
-    basePrice: 14,
+    basePrice: 12, // Fotello-competitive
     popular: true,
     photos: 75,
     features: [
       { name: '75 photos per listing', included: true },
-      { name: 'ALL photo editing (15 tools)', included: true },
+      { name: 'All 15 AI tools', included: true },
       { name: 'Unlimited Twilight', included: true },
-      { name: '2 Virtual Staging per listing', included: true },
+      { name: '2 Virtual Staging/listing', included: true },
       { name: 'Unlimited human revision', included: true },
-      { name: 'Content Studio (150+ templates)', included: true, bonus: true },
-      { name: 'Email Marketing', included: true, bonus: true },
-      { name: 'Social Publishing', included: true, bonus: true },
-      { name: 'Property Sites', included: true, bonus: true },
-      { name: 'Client Approval', included: true, bonus: true },
-      { name: 'Virtual Tours', included: false },
-      { name: 'AI Voiceovers', included: false },
+      { name: 'HD exports (no watermark)', included: true },
+      { name: 'Client delivery portal', included: true },
     ],
   },
   {
     id: 'complete',
     name: 'Complete',
-    basePrice: 18,
+    basePrice: 14,
     popular: false,
     photos: 75,
     features: [
-      { name: '75 photos per listing', included: true },
-      { name: 'ALL photo editing (15 tools)', included: true },
-      { name: 'Unlimited Twilight', included: true },
-      { name: 'Unlimited Virtual Staging', included: true },
-      { name: 'Unlimited human revision', included: true },
-      { name: '1 Virtual Tour per listing', included: true },
-      { name: '1 AI Voiceover per listing', included: true },
-      { name: '1 Video per listing', included: true },
-      { name: 'CMA Reports', included: true },
+      { name: 'Everything in Ultimate', included: true },
       { name: 'Content Studio (150+ templates)', included: true },
       { name: 'Email Marketing', included: true },
       { name: 'Social Publishing', included: true },
       { name: 'Property Sites', included: true },
-      { name: 'Client Approval', included: true },
+      { name: 'Priority Support', included: true },
     ],
   },
 ];
 
 // Agent tiers (Complete solution)
 const AGENT_TIERS = [
+  {
+    id: 'free',
+    name: 'Free',
+    basePrice: 0,
+    popular: false,
+    photos: 30,
+    listings: 3,
+    isFree: true,
+    features: [
+      { name: '3 listings/month', included: true },
+      { name: '30 photos per listing', included: true },
+      { name: 'All 15 AI tools', included: true },
+      { name: 'Watermarked exports', included: true },
+      { name: 'Content Studio (limited)', included: true },
+      { name: 'HD exports', included: false },
+      { name: 'Human revision', included: false },
+    ],
+  },
   {
     id: 'starter',
     name: 'Starter',
@@ -98,18 +99,14 @@ const AGENT_TIERS = [
     photos: 60,
     features: [
       { name: '60 photos per listing', included: true },
-      { name: 'ALL photo editing (15 tools)', included: true },
+      { name: 'All 15 AI tools', included: true },
       { name: '2 Twilight per listing', included: true },
-      { name: '2 Virtual Staging per listing', included: true },
+      { name: '2 Virtual Staging/listing', included: true },
       { name: 'Unlimited human revision', included: true },
       { name: 'Content Studio (150+ templates)', included: true },
-      { name: 'Email Marketing (24 templates)', included: true },
-      { name: 'Social Publishing (5 platforms)', included: true },
-      { name: 'Property Sites (4 themes)', included: true },
-      { name: 'Client Approval', included: true },
+      { name: 'Email Marketing', included: true },
+      { name: 'Social Publishing', included: true },
       { name: 'Virtual Tours', included: false },
-      { name: 'AI Voiceovers', included: false },
-      { name: 'Video Creator', included: false },
     ],
   },
   {
@@ -120,19 +117,14 @@ const AGENT_TIERS = [
     photos: 75,
     features: [
       { name: '75 photos per listing', included: true },
-      { name: 'ALL photo editing (15 tools)', included: true },
-      { name: 'Unlimited Twilight', included: true },
-      { name: 'Unlimited Virtual Staging', included: true },
-      { name: 'Unlimited human revision', included: true },
-      { name: '1 Virtual Tour per listing', included: true },
-      { name: '1 AI Voiceover per listing', included: true },
-      { name: '1 Video per listing', included: true },
+      { name: 'All 15 AI tools', included: true },
+      { name: 'Unlimited everything', included: true },
+      { name: 'Virtual Tours included', included: true },
+      { name: 'AI Voiceovers included', included: true },
+      { name: 'Video Creator included', included: true },
       { name: 'CMA Reports', included: true },
-      { name: 'Content Studio (150+ templates)', included: true },
-      { name: 'Email Marketing (24 templates)', included: true },
-      { name: 'Social Publishing (5 platforms)', included: true },
-      { name: 'Property Sites (4 themes)', included: true },
-      { name: 'Client Approval', included: true },
+      { name: 'Full Marketing Suite', included: true },
+      { name: 'Priority Support', included: true },
     ],
   },
 ];
@@ -141,6 +133,7 @@ export default function PricingPage() {
   const router = useRouter();
   const [userType, setUserType] = useState<'photographer' | 'agent'>('photographer');
   const [sliderIndex, setSliderIndex] = useState(4); // Default to 30 listings
+  const [selectedPlan, setSelectedPlan] = useState<string>('ultimate');
   const [loading, setLoading] = useState<string | null>(null);
   const [annual, setAnnual] = useState(true);
 
@@ -151,13 +144,20 @@ export default function PricingPage() {
   const tiers = userType === 'photographer' ? PHOTOGRAPHER_TIERS : AGENT_TIERS;
 
   const calculatePrice = (basePrice: number) => {
+    if (basePrice === 0) return 0;
     const afterVolume = basePrice - discount;
     const afterAnnual = afterVolume * (1 - annualDiscount);
     return Math.max(afterAnnual, basePrice * 0.5); // Never go below 50% of base
   };
 
-  const handleSelectPlan = (planId: string, price: number) => {
+  const handleSelectPlan = (planId: string, price: number, isFree?: boolean) => {
     setLoading(planId);
+    
+    if (isFree) {
+      router.push('/auth/signup?plan=free');
+      return;
+    }
+    
     const totalMonthly = (price * listings).toFixed(0);
     router.push(`/auth/signup?role=${userType}&plan=${planId}&listings=${listings}&price=${price.toFixed(2)}&total=${totalMonthly}&billing=${annual ? 'annual' : 'monthly'}`);
   };
@@ -178,12 +178,12 @@ export default function PricingPage() {
         </div>
       </header>
 
-      <main className="max-w-6xl mx-auto px-6 py-12">
+      <main className="max-w-7xl mx-auto px-6 py-12">
         {/* Role Toggle */}
         <div className="flex justify-center mb-8">
           <div className="inline-flex p-1.5 bg-white/5 border border-white/10 rounded-full">
             <button
-              onClick={() => setUserType('photographer')}
+              onClick={() => { setUserType('photographer'); setSelectedPlan('ultimate'); }}
               className={`flex items-center gap-2 px-6 py-3 rounded-full font-medium transition-all ${
                 userType === 'photographer'
                   ? 'bg-[#D4A017] text-black'
@@ -194,7 +194,7 @@ export default function PricingPage() {
               I&apos;m a Photographer
             </button>
             <button
-              onClick={() => setUserType('agent')}
+              onClick={() => { setUserType('agent'); setSelectedPlan('complete'); }}
               className={`flex items-center gap-2 px-6 py-3 rounded-full font-medium transition-all ${
                 userType === 'agent'
                   ? 'bg-[#D4A017] text-black'
@@ -265,7 +265,7 @@ export default function PricingPage() {
           </div>
         </div>
 
-        {/* Listings Slider */}
+        {/* Listings Slider - Only for paid plans */}
         <div className="max-w-xl mx-auto mb-10 p-6 bg-white/5 border border-white/10 rounded-2xl">
           <div className="flex justify-between items-center mb-4">
             <div>
@@ -286,7 +286,10 @@ export default function PricingPage() {
               max={LISTING_OPTIONS.length - 1}
               value={sliderIndex}
               onChange={(e) => setSliderIndex(Number(e.target.value))}
-              className="w-full h-2 bg-white/10 rounded-lg appearance-none cursor-pointer slider-thumb"
+              className="w-full h-2 bg-white/10 rounded-lg appearance-none cursor-pointer"
+              style={{
+                background: `linear-gradient(to right, #D4A017 ${(sliderIndex / (LISTING_OPTIONS.length - 1)) * 100}%, rgba(255,255,255,0.1) ${(sliderIndex / (LISTING_OPTIONS.length - 1)) * 100}%)`
+              }}
             />
             <div className="flex justify-between mt-2">
               {LISTING_OPTIONS.map((opt, i) => (
@@ -307,20 +310,25 @@ export default function PricingPage() {
           )}
         </div>
 
-        {/* Pricing Cards */}
-        <div className={`grid gap-6 mb-12 ${tiers.length === 3 ? 'md:grid-cols-3' : 'md:grid-cols-2 max-w-4xl mx-auto'}`}>
+        {/* Pricing Cards - Always 3 columns */}
+        <div className="grid md:grid-cols-3 gap-6 mb-12">
           {tiers.map((tier) => {
             const price = calculatePrice(tier.basePrice);
-            const monthlyTotal = price * listings;
+            const monthlyTotal = tier.isFree ? 0 : price * listings;
             const isPopular = tier.popular;
+            const isSelected = selectedPlan === tier.id;
+            const isFree = tier.isFree;
 
             return (
               <div
                 key={tier.id}
-                className={`relative p-6 rounded-2xl transition-all ${
-                  isPopular
-                    ? 'border-2 border-[#D4A017] bg-gradient-to-b from-[#D4A017]/10 to-transparent'
-                    : 'border border-white/10 bg-white/5'
+                onClick={() => setSelectedPlan(tier.id)}
+                className={`relative p-6 rounded-2xl transition-all cursor-pointer ${
+                  isSelected
+                    ? 'border-2 border-[#D4A017] bg-gradient-to-b from-[#D4A017]/10 to-transparent shadow-lg shadow-[#D4A017]/20'
+                    : isPopular
+                    ? 'border-2 border-[#D4A017]/50 bg-[#D4A017]/5'
+                    : 'border border-white/10 bg-white/5 hover:border-white/30'
                 }`}
               >
                 {isPopular && (
@@ -329,47 +337,76 @@ export default function PricingPage() {
                   </div>
                 )}
 
+                {isSelected && !isPopular && (
+                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-4 py-1 bg-green-500 text-black text-sm font-bold rounded-full">
+                    SELECTED
+                  </div>
+                )}
+
                 <div className="mb-4">
                   <h3 className="text-xl font-bold">{tier.name}</h3>
-                  <p className="text-sm text-white/50">{tier.photos} photos per listing</p>
+                  <p className="text-sm text-white/50">
+                    {isFree ? '3 listings/month' : `${tier.photos} photos per listing`}
+                  </p>
                 </div>
 
                 <div className="mb-2">
-                  <span className={`text-4xl font-bold ${isPopular ? 'text-[#D4A017]' : ''}`}>
-                    ${price.toFixed(2)}
-                  </span>
-                  <span className="text-white/50">/listing</span>
+                  {isFree ? (
+                    <span className="text-4xl font-bold">$0</span>
+                  ) : (
+                    <>
+                      <span className={`text-4xl font-bold ${isSelected ? 'text-[#D4A017]' : ''}`}>
+                        ${price.toFixed(2)}
+                      </span>
+                      <span className="text-white/50">/listing</span>
+                    </>
+                  )}
                 </div>
 
-                {discount > 0 && (
+                {!isFree && discount > 0 && (
                   <p className="text-sm text-white/40 line-through mb-1">
                     ${tier.basePrice}/listing
                   </p>
                 )}
 
-                <div className="mb-6 p-3 bg-white/5 rounded-lg">
-                  <div className="flex justify-between items-center">
-                    <span className="text-white/60">{listings} listings × ${price.toFixed(2)}</span>
-                    <span className="font-bold">${monthlyTotal.toFixed(0)}<span className="text-xs text-white/40">/mo</span></span>
-                  </div>
-                  {annual && (
-                    <div className="text-xs text-green-400 text-right mt-1">
-                      Billed ${(monthlyTotal * 12).toFixed(0)}/year
+                {!isFree && (
+                  <div className="mb-6 p-3 bg-white/5 rounded-lg">
+                    <div className="flex justify-between items-center">
+                      <span className="text-white/60 text-sm">{listings} listings</span>
+                      <span className="font-bold">${monthlyTotal.toFixed(0)}<span className="text-xs text-white/40">/mo</span></span>
                     </div>
-                  )}
-                </div>
+                    {annual && (
+                      <div className="text-xs text-green-400 text-right mt-1">
+                        Billed ${(monthlyTotal * 12).toFixed(0)}/year
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {isFree && (
+                  <div className="mb-6 p-3 bg-white/5 rounded-lg">
+                    <div className="text-center">
+                      <span className="text-white/60 text-sm">Forever free</span>
+                    </div>
+                  </div>
+                )}
 
                 <button
-                  onClick={() => handleSelectPlan(tier.id, price)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleSelectPlan(tier.id, price, isFree);
+                  }}
                   disabled={loading === tier.id}
                   className={`w-full py-3 rounded-xl font-semibold transition-all mb-6 disabled:opacity-50 ${
-                    isPopular
+                    isSelected
                       ? 'bg-[#D4A017] text-black hover:bg-[#B8860B]'
                       : 'bg-white/10 text-white hover:bg-white/20 border border-white/20'
                   }`}
                 >
                   {loading === tier.id ? (
                     <Loader2 className="w-5 h-5 animate-spin mx-auto" />
+                  ) : isFree ? (
+                    'Start Free'
                   ) : (
                     `Start ${tier.name} Trial`
                   )}
@@ -384,13 +421,11 @@ export default function PricingPage() {
                       }`}
                     >
                       {feature.included ? (
-                        <Check className={`w-4 h-4 flex-shrink-0 ${'bonus' in feature && feature.bonus ? 'text-green-400' : 'text-[#D4A017]'}`} />
+                        <Check className="w-4 h-4 flex-shrink-0 text-green-400" />
                       ) : (
                         <X className="w-4 h-4 flex-shrink-0 text-white/20" />
                       )}
-                      <span>
-                        {feature.name}
-                      </span>
+                      <span>{feature.name}</span>
                     </li>
                   ))}
                 </ul>
@@ -462,7 +497,7 @@ export default function PricingPage() {
           /* Agent Cost Comparison */
           <div className="mb-12">
             <h2 className="text-2xl font-bold text-center mb-6">What You&apos;re Paying Now vs SnapR</h2>
-            <div className="grid md:grid-cols-2 gap-6">
+            <div className="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto">
               <div className="p-6 bg-red-500/5 border border-red-500/20 rounded-2xl">
                 <h3 className="text-lg font-semibold mb-4 text-red-400 flex items-center gap-2">
                   <X className="w-5 h-5" /> Separate Tools
@@ -515,47 +550,22 @@ export default function PricingPage() {
                   </li>
                 </ul>
                 <p className="text-center mt-4 text-green-400 font-bold">
-                  One platform. Everything included.
+                  Save $200+/month
                 </p>
               </div>
             </div>
           </div>
         )}
 
-        {/* Add-ons */}
-        <div className="mb-12">
-          <h2 className="text-2xl font-bold text-center mb-2">Need More?</h2>
-          <p className="text-white/60 text-center mb-6">Add these to any plan as needed</p>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {[
-              { name: 'Extra Photos', price: '$0.25/photo', desc: 'Over plan limit' },
-              { name: 'Extra Listings', price: '$15/listing', desc: 'Over plan limit' },
-              { name: 'Virtual Tour', price: '$15/tour', desc: 'If not in plan' },
-              { name: 'AI Voiceover', price: '$5/script', desc: 'If not in plan' },
-              { name: 'Video', price: '$10/video', desc: 'If not in plan' },
-              { name: 'Virtual Staging', price: '$5/image', desc: 'Over plan limit' },
-              { name: 'CMA Report', price: '$10/report', desc: 'If not in plan' },
-              { name: 'Rush Delivery', price: '2x price', desc: 'Priority processing' },
-            ].map((addon) => (
-              <div key={addon.name} className="p-4 bg-white/5 border border-white/10 rounded-xl">
-                <h4 className="font-semibold text-sm">{addon.name}</h4>
-                <p className="text-[#D4A017] font-bold">{addon.price}</p>
-                <p className="text-xs text-white/40">{addon.desc}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-
         {/* FAQ */}
         <div className="mb-12">
           <h2 className="text-2xl font-bold text-center mb-6">Frequently Asked Questions</h2>
           <div className="max-w-3xl mx-auto space-y-4">
             {[
-              ['How does listing-based pricing work?', 'You pay a fixed price per listing. Each listing includes up to 50-75 photos (depending on plan). All AI enhancements and human revisions on photos are included. No per-photo charges.'],
-              ['What does "unlimited human revision" mean?', 'If our AI doesn\'t get your photo edit perfect, our human editors will fix it at no extra charge. This applies to all photo editing tools (sky replacement, twilight, HDR, etc.). Unlimited revisions until you\'re satisfied.'],
-              ['What\'s the difference between Photographer and Agent plans?', 'Photographer plans are optimized for high-volume photo editing with delivery to clients. Agent plans include more marketing tools prominently (Content Studio, Email, Social) since agents market their own listings.'],
-              ['Can I change plans later?', 'Yes! Upgrade or downgrade anytime. Changes take effect on your next billing cycle.'],
-              ['What if I need more than 50 listings?', 'Contact our sales team for enterprise pricing. We offer volume discounts for high-volume users.'],
+              ['How does listing-based pricing work?', 'You pay a fixed price per listing. Each listing includes up to 30-75 photos depending on plan. All AI enhancements are included. No per-photo charges.'],
+              ['What does "unlimited human revision" mean?', 'If our AI doesn\'t get your photo edit perfect, our human editors will fix it at no extra charge. Unlimited revisions until you\'re satisfied.'],
+              ['Can I start free and upgrade later?', 'Yes! Start with 3 free listings/month. Upgrade anytime when you need more.'],
+              ['What if I need more than 50 listings?', 'Contact our sales team for enterprise pricing with volume discounts.'],
             ].map(([q, a], i) => (
               <details key={i} className="group bg-white/5 rounded-xl border border-white/10 overflow-hidden">
                 <summary className="p-5 cursor-pointer font-medium flex items-center justify-between">
@@ -571,13 +581,21 @@ export default function PricingPage() {
         {/* CTA */}
         <div className="text-center py-12">
           <h2 className="text-3xl font-bold mb-4">Ready to Get Started?</h2>
-          <p className="text-white/60 mb-6">Start your free trial today. No credit card required.</p>
-          <button
-            onClick={() => handleSelectPlan(tiers.find(t => t.popular)?.id || tiers[0].id, calculatePrice(tiers.find(t => t.popular)?.basePrice || tiers[0].basePrice))}
-            className="px-8 py-4 bg-gradient-to-r from-[#D4A017] to-[#B8860B] text-black font-bold rounded-xl text-lg inline-flex items-center gap-2 hover:opacity-90 transition"
-          >
-            Start Free Trial <ArrowRight className="w-5 h-5" />
-          </button>
+          <p className="text-white/60 mb-6">Start free with 3 listings/month. No credit card required.</p>
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+            <Link
+              href="/auth/signup?plan=free"
+              className="px-8 py-4 bg-white/10 hover:bg-white/20 text-white font-bold rounded-xl text-lg inline-flex items-center gap-2 transition border border-white/20"
+            >
+              Start Free
+            </Link>
+            <button
+              onClick={() => handleSelectPlan(selectedPlan, calculatePrice(tiers.find(t => t.id === selectedPlan)?.basePrice || 14))}
+              className="px-8 py-4 bg-gradient-to-r from-[#D4A017] to-[#B8860B] text-black font-bold rounded-xl text-lg inline-flex items-center gap-2 hover:opacity-90 transition"
+            >
+              Start {selectedPlan.charAt(0).toUpperCase() + selectedPlan.slice(1)} Trial <ArrowRight className="w-5 h-5" />
+            </button>
+          </div>
         </div>
       </main>
 
@@ -599,9 +617,6 @@ export default function PricingPage() {
 
       {/* Custom slider styles */}
       <style jsx>{`
-        input[type='range'] {
-          background: linear-gradient(to right, #D4A017 ${(sliderIndex / (LISTING_OPTIONS.length - 1)) * 100}%, rgba(255,255,255,0.1) ${(sliderIndex / (LISTING_OPTIONS.length - 1)) * 100}%);
-        }
         input[type='range']::-webkit-slider-thumb {
           -webkit-appearance: none;
           appearance: none;
