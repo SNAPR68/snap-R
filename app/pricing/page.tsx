@@ -384,13 +384,12 @@ export default function PricingPage() {
                       }`}
                     >
                       {feature.included ? (
-                        <Check className={`w-4 h-4 flex-shrink-0 ${feature.bonus ? 'text-green-400' : 'text-[#D4A017]'}`} />
+                        <Check className={`w-4 h-4 flex-shrink-0 ${'bonus' in feature && feature.bonus ? 'text-green-400' : 'text-[#D4A017]'}`} />
                       ) : (
                         <X className="w-4 h-4 flex-shrink-0 text-white/20" />
                       )}
                       <span>
                         {feature.name}
-                        {feature.bonus && <span className="text-green-400 text-xs ml-1">(Bonus)</span>}
                       </span>
                     </li>
                   ))}
