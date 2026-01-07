@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
-import { ArrowLeft, Mail, Sparkles, Download, Copy, Check, Home, Loader2, ChevronDown, Eye, Code, Send, Image, X } from 'lucide-react'
+import { ArrowLeft, Mail, Sparkles, Download, Copy, Check, Home, Loader2, ChevronDown, Eye, Code, Send, Image, X, ExternalLink } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 
 interface ListingPhoto {
@@ -29,6 +29,7 @@ interface Listing {
   features: string[] | null
   year_built: number | null
   lot_size: string | null
+  propertySiteSlug: string | null // Property site slug if exists
 }
 
 type EmailType = 'just-listed' | 'open-house' | 'price-reduced' | 'just-sold' | 'market-update' | 'follow-up'
@@ -60,8 +61,16 @@ export default function EmailMarketingClient() {
   const [companyName, setCompanyName] = useState('Premier Realty')
   const [openHouseDate, setOpenHouseDate] = useState('')
   const [openHouseTime, setOpenHouseTime] = useState('')
+  const [baseUrl, setBaseUrl] = useState('')
 
-  useEffect(() => { loadListings() }, [])
+  useEffect(() => { 
+    loadListings()
+    // Get base URL for property site links
+    if (typeof window !== 'undefined') {
+      setBaseUrl(window.location.origin)
+    }
+  }, [])
+  
   useEffect(() => { 
     if (listingId && listings.length > 0) { 
       const l = listings.find(x => x.id === listingId)
@@ -85,7 +94,28 @@ export default function EmailMarketingClient() {
         if (profile.email) setAgentEmail(profile.email)
         if (profile.phone) setAgentPhone(profile.phone)
       }
-      const { data: listingsData } = await supabase.from('listings').select('*, photos!photos_listing_id_fkey(id, raw_url, processed_url, status)').eq('user_id', user.id).order('created_at', { ascending: false })
+      
+      // Fetch listings with photos
+      const { data: listingsData } = await supabase
+        .from('listings')
+        .select('*, photos!photos_listing_id_fkey(id, raw_url, processed_url, status)')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+      
+      // Fetch property sites to get slugs
+      const { data: propertySites } = await supabase
+        .from('property_sites')
+        .select('listing_id, slug')
+        .eq('user_id', user.id)
+      
+      // Create a map of listing_id -> slug
+      const siteSlugMap: Record<string, string> = {}
+      if (propertySites) {
+        propertySites.forEach((site: any) => {
+          siteSlugMap[site.listing_id] = site.slug
+        })
+      }
+      
       if (listingsData) {
         const processed = await Promise.all(listingsData.map(async (listing: any) => {
           const photos = listing.photos || []
@@ -109,7 +139,8 @@ export default function EmailMarketingClient() {
           return { 
             ...listing, 
             thumbnail: photoUrls[0]?.url || null,
-            photos: photoUrls
+            photos: photoUrls,
+            propertySiteSlug: siteSlugMap[listing.id] || null
           }
         }))
         setListings(processed)
@@ -156,6 +187,12 @@ export default function EmailMarketingClient() {
       listing.year_built ? 'Built ' + listing.year_built : null,
       listing.lot_size ? listing.lot_size + ' Lot' : null
     ].filter(Boolean)
+
+    // Determine CTA URL - Property Site if exists, otherwise mailto
+    const hasPropertySite = listing.propertySiteSlug
+    const ctaUrl = hasPropertySite 
+      ? `${baseUrl}/p/${listing.propertySiteSlug}`
+      : `mailto:${agentEmail}?subject=Inquiry: ${encodeURIComponent(listing.title)}`
 
     const colorSchemes = {
       professional: { primary: '#1a365d', secondary: '#2b6cb0', accent: '#3182ce', bg: '#f7fafc' },
@@ -252,42 +289,43 @@ export default function EmailMarketingClient() {
       }
     }
 
+    // CTA text changes based on whether property site exists
     const ctas: Record<EmailType, Record<Tone, string>> = {
       'just-listed': {
-        professional: 'Schedule a Private Viewing',
-        friendly: 'Let\'s Go See It! 🏃',
-        luxury: 'Request a Private Showing',
-        urgent: 'Schedule NOW Before It\'s Gone!'
+        professional: hasPropertySite ? 'View Full Property Details' : 'Schedule a Private Viewing',
+        friendly: hasPropertySite ? 'See All Photos & Details! 📸' : 'Let\'s Go See It! 🏃',
+        luxury: hasPropertySite ? 'Explore This Residence' : 'Request a Private Showing',
+        urgent: hasPropertySite ? 'View Property NOW!' : 'Schedule NOW Before It\'s Gone!'
       },
       'open-house': {
-        professional: 'RSVP for Open House',
-        friendly: 'I\'ll Be There! 🙋',
-        luxury: 'Confirm Your Attendance',
-        urgent: 'Reserve Your Spot NOW!'
+        professional: hasPropertySite ? 'View Property & RSVP' : 'RSVP for Open House',
+        friendly: hasPropertySite ? 'Check It Out & Save the Date! 🗓️' : 'I\'ll Be There! 🙋',
+        luxury: hasPropertySite ? 'Preview Before Your Visit' : 'Confirm Your Attendance',
+        urgent: hasPropertySite ? 'See Details & Reserve Spot!' : 'Reserve Your Spot NOW!'
       },
       'price-reduced': {
-        professional: 'Schedule a Viewing',
-        friendly: 'Show Me This Deal! 💰',
-        luxury: 'Arrange a Private Tour',
-        urgent: 'Act Now - Contact Me Today!'
+        professional: hasPropertySite ? 'View Updated Listing' : 'Schedule a Viewing',
+        friendly: hasPropertySite ? 'See This Amazing Deal! 💰' : 'Show Me This Deal! 💰',
+        luxury: hasPropertySite ? 'Review Property Details' : 'Arrange a Private Tour',
+        urgent: hasPropertySite ? 'View Before It\'s Gone!' : 'Act Now - Contact Me Today!'
       },
       'just-sold': {
-        professional: 'Discuss Your Real Estate Goals',
-        friendly: 'Let\'s Find Your Home Too! 🏠',
-        luxury: 'Schedule a Consultation',
-        urgent: 'Find Your Home Before It\'s Gone!'
+        professional: hasPropertySite ? 'View Sale Details' : 'Discuss Your Real Estate Goals',
+        friendly: hasPropertySite ? 'See the Sold Property! 🎉' : 'Let\'s Find Your Home Too! 🏠',
+        luxury: hasPropertySite ? 'View Transaction Details' : 'Schedule a Consultation',
+        urgent: hasPropertySite ? 'See What Sold!' : 'Find Your Home Before It\'s Gone!'
       },
       'market-update': {
-        professional: 'Request a Personal Consultation',
-        friendly: 'Let\'s Chat About Your Options!',
-        luxury: 'Schedule a Strategy Session',
-        urgent: 'Call Me Today!'
+        professional: hasPropertySite ? 'View Featured Property' : 'Request a Personal Consultation',
+        friendly: hasPropertySite ? 'Check Out This Property!' : 'Let\'s Chat About Your Options!',
+        luxury: hasPropertySite ? 'View Market Highlight' : 'Schedule a Strategy Session',
+        urgent: hasPropertySite ? 'See Hot Listing!' : 'Call Me Today!'
       },
       'follow-up': {
-        professional: 'Continue the Conversation',
-        friendly: 'Let\'s Talk! 📞',
-        luxury: 'Schedule a Discussion',
-        urgent: 'Contact Me Before It\'s Too Late!'
+        professional: hasPropertySite ? 'Review Property Again' : 'Continue the Conversation',
+        friendly: hasPropertySite ? 'Take Another Look! 👀' : 'Let\'s Talk! 📞',
+        luxury: hasPropertySite ? 'Revisit This Residence' : 'Schedule a Discussion',
+        urgent: hasPropertySite ? 'View Before Someone Else Does!' : 'Contact Me Before It\'s Too Late!'
       }
     }
 
@@ -306,7 +344,7 @@ ${listing.description || ''}
 
 ${type === 'open-house' ? `Open House Details:\nDate: ${openHouseDate || 'This Weekend'}\nTime: ${openHouseTime || '1:00 PM - 4:00 PM'}\n` : ''}
 
-Ready to take the next step? Contact me today.
+${hasPropertySite ? `View the full property listing: ${baseUrl}/p/${listing.propertySiteSlug}` : 'Ready to take the next step? Contact me today.'}
 
 ${agentName}
 ${agentTitle}
@@ -332,7 +370,7 @@ ${agentEmail}
                   `).join('')}
                 </tr>
               </table>
-              <p style="margin:10px 0 0;font-size:12px;color:#888;text-align:center;">${photos.length} Photos • Click to view full gallery</p>
+              ${hasPropertySite ? `<p style="margin:10px 0 0;font-size:12px;color:#888;text-align:center;"><a href="${ctaUrl}" style="color:${colors.secondary};text-decoration:none;">${photos.length}+ Photos • Click to view full gallery →</a></p>` : `<p style="margin:10px 0 0;font-size:12px;color:#888;text-align:center;">${photos.length} Photos</p>`}
             </td>
           </tr>
     ` : ''
@@ -361,10 +399,13 @@ ${agentEmail}
           ${heroPhoto ? `
           <tr>
             <td style="position:relative;">
+              ${hasPropertySite ? `<a href="${ctaUrl}" style="display:block;">` : ''}
               <img src="${heroPhoto}" alt="${listing.title}" style="width:100%;height:320px;object-fit:cover;display:block;">
+              ${hasPropertySite ? '</a>' : ''}
               <div style="position:absolute;top:20px;left:20px;background:${colors.secondary};color:#ffffff;padding:10px 20px;font-weight:bold;font-size:14px;letter-spacing:1px;border-radius:6px;text-transform:uppercase;">
                 ${type.replace('-', ' ')}
               </div>
+              ${hasPropertySite ? `<div style="position:absolute;bottom:20px;right:20px;background:rgba(0,0,0,0.7);color:#ffffff;padding:8px 16px;font-size:12px;border-radius:6px;">📸 ${listing.photos.length}+ Photos</div>` : ''}
             </td>
           </tr>
           ` : ''}
@@ -403,6 +444,7 @@ ${agentEmail}
               <div style="margin-bottom:30px;padding:25px;background:#f8f9fa;border-radius:10px;border-left:4px solid ${colors.secondary};">
                 <h3 style="margin:0 0 12px;font-size:18px;color:${colors.primary};">Property Description</h3>
                 <p style="margin:0;font-size:15px;color:#555;line-height:1.7;">${listing.description.substring(0, 500)}${listing.description.length > 500 ? '...' : ''}</p>
+                ${hasPropertySite && listing.description.length > 500 ? `<p style="margin:15px 0 0;"><a href="${ctaUrl}" style="color:${colors.secondary};font-weight:600;text-decoration:none;">Read full description →</a></p>` : ''}
               </div>
               ` : ''}
               
@@ -419,12 +461,23 @@ ${agentEmail}
               <table width="100%" cellspacing="0" cellpadding="0">
                 <tr>
                   <td align="center" style="padding:10px 0 30px;">
-                    <a href="mailto:${agentEmail}?subject=Inquiry: ${listing.title}" style="display:inline-block;background:${colors.secondary};color:#ffffff;text-decoration:none;font-weight:700;font-size:18px;padding:18px 50px;border-radius:8px;box-shadow:0 4px 15px rgba(0,0,0,0.2);">
+                    <a href="${ctaUrl}" style="display:inline-block;background:${colors.secondary};color:#ffffff;text-decoration:none;font-weight:700;font-size:18px;padding:18px 50px;border-radius:8px;box-shadow:0 4px 15px rgba(0,0,0,0.2);">
                       ${ctas[type][t]}
                     </a>
                   </td>
                 </tr>
               </table>
+              
+              ${hasPropertySite ? `
+              <!-- Secondary CTA - Contact Agent -->
+              <table width="100%" cellspacing="0" cellpadding="0" style="margin-bottom:30px;">
+                <tr>
+                  <td align="center">
+                    <p style="margin:0;font-size:14px;color:#666;">Have questions? <a href="mailto:${agentEmail}?subject=Inquiry: ${encodeURIComponent(listing.title)}" style="color:${colors.secondary};font-weight:600;text-decoration:none;">Contact me directly →</a></p>
+                  </td>
+                </tr>
+              </table>
+              ` : ''}
               
               <!-- Agent Card -->
               <table width="100%" cellspacing="0" cellpadding="0" style="border-top:2px solid #e2e8f0;padding-top:30px;">
@@ -513,7 +566,10 @@ ${agentEmail}
                       {selectedListing.thumbnail ? <img src={selectedListing.thumbnail} alt="" className="w-10 h-10 rounded-lg object-cover" /> : <div className="w-10 h-10 rounded-lg bg-white/10 flex items-center justify-center"><Home className="w-5 h-5 text-white/30" /></div>}
                       <div className="text-left">
                         <p className="font-medium text-sm">{selectedListing.title}</p>
-                        <p className="text-xs text-white/40">{selectedListing.city}, {selectedListing.state}</p>
+                        <p className="text-xs text-white/40">
+                          {selectedListing.city}, {selectedListing.state}
+                          {selectedListing.propertySiteSlug && <span className="ml-2 text-green-400">• Has Property Site</span>}
+                        </p>
                       </div>
                     </div>
                   ) : <span className="text-white/50">Select a Listing</span>}
@@ -526,10 +582,13 @@ ${agentEmail}
                     : listings.map(l => (
                       <button key={l.id} onClick={() => handleSelectListing(l)} className={'w-full flex items-center gap-3 p-3 hover:bg-white/5 transition-colors ' + (selectedListing?.id === l.id ? 'bg-blue-500/10' : '')}>
                         {l.thumbnail ? <img src={l.thumbnail} alt="" className="w-10 h-10 rounded-lg object-cover" /> : <div className="w-10 h-10 rounded-lg bg-white/10 flex items-center justify-center"><Home className="w-5 h-5 text-white/30" /></div>}
-                        <div className="text-left">
+                        <div className="text-left flex-1">
                           <p className="font-medium text-sm">{l.title}</p>
                           <p className="text-xs text-white/40">{l.city}{l.city && l.state ? ', ' : ''}{l.state}</p>
                         </div>
+                        {l.propertySiteSlug && (
+                          <span className="text-xs bg-green-500/20 text-green-400 px-2 py-1 rounded">Site</span>
+                        )}
                       </button>
                     ))}
                   </div>
@@ -537,7 +596,44 @@ ${agentEmail}
               </div>
             </div>
 
-            {/* Photo Selector - NEW */}
+            {/* Property Site Status */}
+            {selectedListing && (
+              <div className={`p-3 rounded-xl border ${selectedListing.propertySiteSlug ? 'bg-green-500/10 border-green-500/30' : 'bg-amber-500/10 border-amber-500/30'}`}>
+                {selectedListing.propertySiteSlug ? (
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <ExternalLink className="w-4 h-4 text-green-400" />
+                      <span className="text-sm text-green-400">Property Site Active</span>
+                    </div>
+                    <a 
+                      href={`/p/${selectedListing.propertySiteSlug}`} 
+                      target="_blank"
+                      className="text-xs text-green-400 hover:underline"
+                    >
+                      Preview →
+                    </a>
+                  </div>
+                ) : (
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-amber-400">No Property Site</span>
+                    <Link 
+                      href="/dashboard/content-studio/property-sites"
+                      className="text-xs text-amber-400 hover:underline"
+                    >
+                      Create One →
+                    </Link>
+                  </div>
+                )}
+                <p className="text-xs text-white/50 mt-1">
+                  {selectedListing.propertySiteSlug 
+                    ? 'Email CTA will link to your property site for full gallery & contact form'
+                    : 'Email CTA will open mailto: link. Create a property site for better conversions!'
+                  }
+                </p>
+              </div>
+            )}
+
+            {/* Photo Selector */}
             {selectedListing && selectedListing.photos.length > 0 && (
               <div>
                 <div className="flex items-center justify-between mb-2">
@@ -705,6 +801,14 @@ ${agentEmail}
                 <p className="font-medium">{generatedEmail.subject}</p>
               </div>
 
+              {/* CTA Destination Info */}
+              <div className={`px-4 py-2 text-xs ${selectedListing?.propertySiteSlug ? 'bg-green-500/10 text-green-400' : 'bg-amber-500/10 text-amber-400'}`}>
+                {selectedListing?.propertySiteSlug 
+                  ? `✓ CTA links to Property Site: ${baseUrl}/p/${selectedListing.propertySiteSlug}`
+                  : '⚠ CTA links to mailto: (Create a Property Site for better conversions)'
+                }
+              </div>
+
               {/* Content */}
               <div className="flex-1 overflow-auto p-4">
                 {viewMode === 'preview' ? (
@@ -725,6 +829,7 @@ ${agentEmail}
               </div>
               <h3 className="text-lg font-medium mb-2">Create Professional Email</h3>
               <p className="text-white/40 max-w-sm">Select a listing, choose up to 5 photos, and generate a beautiful email template</p>
+              <p className="text-white/30 text-sm mt-4">💡 Tip: Create a Property Site first for clickable CTAs that lead to full listings</p>
             </div>
           )}
         </div>
