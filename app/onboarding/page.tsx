@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { Camera, Home, Building2, Users, Briefcase, Loader2, Globe, ChevronRight, ChevronLeft, Upload, Sparkles, CheckCircle, Share2, MessageCircle, Phone } from 'lucide-react';
 
@@ -31,9 +31,17 @@ const VOLUME_OPTIONS = [
   { id: '50+', label: '50+ listings', recommended: 'Agency' },
 ];
 
-export default function OnboardingPage() {
+function OnboardingContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const supabase = createClient();
+  
+  // Read URL params from pricing page
+  const roleFromUrl = searchParams.get('role');
+  const planFromUrl = searchParams.get('plan');
+  const listingsFromUrl = searchParams.get('listings');
+  const priceFromUrl = searchParams.get('price');
+  const billingFromUrl = searchParams.get('billing');
   
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
@@ -67,12 +75,26 @@ export default function OnboardingPage() {
     checkUser();
   }, [router, supabase]);
 
+  // Pre-fill from URL params (from pricing page)
+  useEffect(() => {
+    if (roleFromUrl && !selectedRole) {
+      setSelectedRole(roleFromUrl);
+    }
+    if (listingsFromUrl && !listingsPerMonth) {
+      const num = parseInt(listingsFromUrl);
+      if (num <= 5) setListingsPerMonth('1-5');
+      else if (num <= 20) setListingsPerMonth('6-20');
+      else if (num <= 50) setListingsPerMonth('21-50');
+      else setListingsPerMonth('50+');
+    }
+  }, [roleFromUrl, listingsFromUrl, selectedRole, listingsPerMonth]);
+
   const handleComplete = async () => {
     setLoading(true);
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
 
-    // Save profile
+    // Save profile with plan info from pricing page
     await supabase.from('profiles').upsert({
       id: user.id,
       full_name: name,
@@ -81,6 +103,10 @@ export default function OnboardingPage() {
       region: selectedRegion,
       listings_per_month: listingsPerMonth,
       phone: wantsWhatsApp ? phone : null,
+      plan: planFromUrl || 'free',
+      listings_limit: listingsFromUrl ? parseInt(listingsFromUrl) : 3,
+      price_per_listing: priceFromUrl ? parseFloat(priceFromUrl) : 0,
+      billing_cycle: billingFromUrl || 'monthly',
       notification_preferences: {
         email: true,
         whatsapp: wantsWhatsApp,
@@ -92,12 +118,12 @@ export default function OnboardingPage() {
       onboarded_at: new Date().toISOString(),
     });
 
-    // Update user metadata
     await supabase.auth.updateUser({
       data: {
         full_name: name,
         role: selectedRole,
         region: selectedRegion,
+        plan: planFromUrl || 'free',
         onboarded: true,
       }
     });
@@ -132,8 +158,19 @@ export default function OnboardingPage() {
               <div className="text-center mb-8">
                 <div className="w-16 h-16 rounded-2xl flex items-center justify-center text-black font-bold text-2xl bg-gradient-to-br from-[#D4A017] to-[#B8860B] shadow-lg shadow-[#D4A017]/30 mx-auto mb-4">S</div>
                 <h1 className="text-3xl font-bold mb-2">Welcome to SnapR</h1>
-                <p className="text-white/60">Let's set up your account</p>
+                <p className="text-white/60">Let&apos;s set up your account</p>
               </div>
+
+              {/* Show selected plan from pricing page */}
+              {planFromUrl && (
+                <div className="mb-6 p-4 bg-[#D4A017]/10 border border-[#D4A017]/30 rounded-xl">
+                  <p className="text-sm text-white/60">Your Selected Plan</p>
+                  <p className="font-bold text-[#D4A017] capitalize">
+                    {planFromUrl} — {listingsFromUrl} listings/mo @ ${priceFromUrl}/listing
+                  </p>
+                  <p className="text-xs text-white/40 capitalize">{billingFromUrl} billing</p>
+                </div>
+              )}
 
               <div className="space-y-4">
                 <div>
@@ -171,31 +208,8 @@ export default function OnboardingPage() {
                             : 'border-white/10 hover:border-white/30'
                         }`}
                       >
-                        <span className="text-2xl block mb-1">{region.flag}</span>
-                        <span className="text-xs text-white/60">{region.label}</span>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-sm text-white/60 mb-2">What describes you best?</label>
-                  <div className="space-y-2">
-                    {ROLES.map(role => (
-                      <button
-                        key={role.id}
-                        onClick={() => setSelectedRole(role.id)}
-                        className={`w-full flex items-center gap-4 p-4 rounded-xl border transition-all ${
-                          selectedRole === role.id 
-                            ? 'border-[#D4A017] bg-[#D4A017]/10' 
-                            : 'border-white/10 hover:border-white/30'
-                        }`}
-                      >
-                        <role.icon className={`w-6 h-6 ${selectedRole === role.id ? 'text-[#D4A017]' : 'text-white/40'}`} />
-                        <div className="text-left">
-                          <p className="font-medium">{role.label}</p>
-                          <p className="text-sm text-white/50">{role.description}</p>
-                        </div>
+                        <div className="text-2xl mb-1">{region.flag}</div>
+                        <div className="text-xs text-white/60 truncate">{region.label}</div>
                       </button>
                     ))}
                   </div>
@@ -204,7 +218,7 @@ export default function OnboardingPage() {
 
               <button
                 onClick={() => setStep(2)}
-                disabled={!name || !selectedRegion || !selectedRole}
+                disabled={!name || !selectedRegion}
                 className="w-full mt-6 py-4 bg-gradient-to-r from-[#D4A017] to-[#B8860B] rounded-xl text-black font-semibold disabled:opacity-50 flex items-center justify-center gap-2"
               >
                 Continue <ChevronRight className="w-5 h-5" />
@@ -212,35 +226,47 @@ export default function OnboardingPage() {
             </div>
           )}
 
-          {/* STEP 2: Volume */}
+          {/* STEP 2: Role Selection */}
           {step === 2 && (
             <div className="animate-fadeIn">
               <div className="text-center mb-8">
-                <h1 className="text-3xl font-bold mb-2">Your Volume</h1>
-                <p className="text-white/60">Help us recommend the right plan</p>
+                <h1 className="text-3xl font-bold mb-2">What describes you best?</h1>
+                <p className="text-white/60">This helps us customize your experience</p>
               </div>
 
               <div className="space-y-3">
-                {VOLUME_OPTIONS.map(option => (
-                  <button
-                    key={option.id}
-                    onClick={() => setListingsPerMonth(option.id)}
-                    className={`w-full flex items-center justify-between p-5 rounded-xl border transition-all ${
-                      listingsPerMonth === option.id 
-                        ? 'border-[#D4A017] bg-[#D4A017]/10' 
-                        : 'border-white/10 hover:border-white/30'
-                    }`}
-                  >
-                    <span className="text-lg">{option.label}</span>
-                    <span className={`text-sm px-3 py-1 rounded-full ${
-                      option.recommended === 'Free' ? 'bg-green-500/20 text-green-400' :
-                      option.recommended === 'Pro' ? 'bg-[#D4A017]/20 text-[#D4A017]' :
-                      'bg-purple-500/20 text-purple-400'
-                    }`}>
-                      {option.recommended} plan
-                    </span>
-                  </button>
-                ))}
+                {ROLES.map(role => {
+                  const Icon = role.icon;
+                  const isPreSelected = roleFromUrl === role.id;
+                  return (
+                    <button
+                      key={role.id}
+                      onClick={() => setSelectedRole(role.id)}
+                      className={`w-full p-4 rounded-xl border text-left transition-all flex items-center gap-4 ${
+                        selectedRole === role.id 
+                          ? 'border-[#D4A017] bg-[#D4A017]/10' 
+                          : 'border-white/10 hover:border-white/30'
+                      }`}
+                    >
+                      <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${
+                        selectedRole === role.id ? 'bg-[#D4A017] text-black' : 'bg-white/10'
+                      }`}>
+                        <Icon className="w-6 h-6" />
+                      </div>
+                      <div className="flex-1">
+                        <div className="font-semibold flex items-center gap-2">
+                          {role.label}
+                          {isPreSelected && selectedRole === role.id && (
+                            <span className="text-xs bg-green-500/20 text-green-400 px-2 py-0.5 rounded-full">
+                              From your selection
+                            </span>
+                          )}
+                        </div>
+                        <div className="text-sm text-white/50">{role.description}</div>
+                      </div>
+                    </button>
+                  );
+                })}
               </div>
 
               <div className="flex gap-3 mt-6">
@@ -249,7 +275,7 @@ export default function OnboardingPage() {
                 </button>
                 <button
                   onClick={() => setStep(3)}
-                  disabled={!listingsPerMonth}
+                  disabled={!selectedRole}
                   className="flex-1 py-4 bg-gradient-to-r from-[#D4A017] to-[#B8860B] rounded-xl text-black font-semibold disabled:opacity-50 flex items-center justify-center gap-2"
                 >
                   Continue <ChevronRight className="w-5 h-5" />
@@ -258,38 +284,35 @@ export default function OnboardingPage() {
             </div>
           )}
 
-          {/* STEP 3: How SnapR Works */}
+          {/* STEP 3: How It Works */}
           {step === 3 && (
             <div className="animate-fadeIn">
               <div className="text-center mb-8">
-                <h1 className="text-3xl font-bold mb-2">How SnapR Works</h1>
-                <p className="text-white/60">The listing OS that does it all</p>
+                <h1 className="text-3xl font-bold mb-2">Here&apos;s How SnapR Works</h1>
+                <p className="text-white/60">Prepare listings in seconds, not hours</p>
               </div>
 
               <div className="space-y-4">
-                {/* Step 1 */}
                 <div className="flex items-start gap-4 p-5 bg-white/5 rounded-xl border border-white/10">
                   <div className="w-12 h-12 bg-[#D4A017]/20 rounded-xl flex items-center justify-center flex-shrink-0">
                     <Upload className="w-6 h-6 text-[#D4A017]" />
                   </div>
                   <div>
                     <h3 className="font-semibold text-lg">1. Upload Your Photos</h3>
-                    <p className="text-white/60 text-sm">Drop all your listing photos at once. No sorting needed.</p>
+                    <p className="text-white/60 text-sm">Drop all your listing photos at once. No sorting needed—just upload everything.</p>
                   </div>
                 </div>
 
-                {/* Step 2 */}
                 <div className="flex items-start gap-4 p-5 bg-white/5 rounded-xl border border-white/10">
                   <div className="w-12 h-12 bg-purple-500/20 rounded-xl flex items-center justify-center flex-shrink-0">
                     <Sparkles className="w-6 h-6 text-purple-400" />
                   </div>
                   <div>
-                    <h3 className="font-semibold text-lg">2. Click "Prepare Listing"</h3>
+                    <h3 className="font-semibold text-lg">2. Click &quot;Prepare Listing&quot;</h3>
                     <p className="text-white/60 text-sm">AI analyzes every photo and applies the right enhancements automatically. Same sky, same style across all photos.</p>
                   </div>
                 </div>
 
-                {/* Step 3 */}
                 <div className="flex items-start gap-4 p-5 bg-white/5 rounded-xl border border-white/10">
                   <div className="w-12 h-12 bg-green-500/20 rounded-xl flex items-center justify-center flex-shrink-0">
                     <CheckCircle className="w-6 h-6 text-green-400" />
@@ -300,7 +323,6 @@ export default function OnboardingPage() {
                   </div>
                 </div>
 
-                {/* Step 4 */}
                 <div className="flex items-start gap-4 p-5 bg-white/5 rounded-xl border border-white/10">
                   <div className="w-12 h-12 bg-blue-500/20 rounded-xl flex items-center justify-center flex-shrink-0">
                     <Share2 className="w-6 h-6 text-blue-400" />
@@ -344,7 +366,7 @@ export default function OnboardingPage() {
 
               <div className="space-y-4">
                 <div className="p-5 bg-white/5 rounded-xl border border-white/10">
-                  <h3 className="font-medium mb-3">What you'll receive:</h3>
+                  <h3 className="font-medium mb-3">What you&apos;ll receive:</h3>
                   <ul className="space-y-2 text-sm text-white/70">
                     <li className="flex items-center gap-2"><CheckCircle className="w-4 h-4 text-green-400" /> Instant alert when clients view your listings</li>
                     <li className="flex items-center gap-2"><CheckCircle className="w-4 h-4 text-green-400" /> Notification when listings are prepared</li>
@@ -405,16 +427,33 @@ export default function OnboardingPage() {
                 <CheckCircle className="w-10 h-10 text-black" />
               </div>
               
-              <h1 className="text-3xl font-bold mb-2">You're All Set, {name.split(' ')[0]}!</h1>
-              <p className="text-white/60 mb-8">Let's prepare your first listing</p>
+              <h1 className="text-3xl font-bold mb-2">You&apos;re All Set, {name.split(' ')[0]}!</h1>
+              <p className="text-white/60 mb-8">Let&apos;s prepare your first listing</p>
 
               <div className="p-6 bg-white/5 rounded-2xl border border-white/10 mb-6">
-                <h3 className="font-semibold text-lg mb-4">Your Free Plan Includes:</h3>
+                <h3 className="font-semibold text-lg mb-4">
+                  {planFromUrl ? `Your ${planFromUrl.charAt(0).toUpperCase() + planFromUrl.slice(1)} Plan Includes:` : 'Your Free Plan Includes:'}
+                </h3>
                 <ul className="space-y-3 text-left">
-                  <li className="flex items-center gap-3"><CheckCircle className="w-5 h-5 text-green-400" /> <span>3 listings per month</span></li>
-                  <li className="flex items-center gap-3"><CheckCircle className="w-5 h-5 text-green-400" /> <span>Full AI preparation (all 15 tools)</span></li>
-                  <li className="flex items-center gap-3"><CheckCircle className="w-5 h-5 text-green-400" /> <span>Client approval workflow</span></li>
-                  <li className="flex items-center gap-3"><CheckCircle className="w-5 h-5 text-green-400" /> <span>5 social media posts</span></li>
+                  {planFromUrl ? (
+                    <>
+                      <li className="flex items-center gap-3"><CheckCircle className="w-5 h-5 text-green-400" /> <span>{listingsFromUrl} listings per month</span></li>
+                      <li className="flex items-center gap-3"><CheckCircle className="w-5 h-5 text-green-400" /> <span>Full AI preparation (all 15 tools)</span></li>
+                      <li className="flex items-center gap-3"><CheckCircle className="w-5 h-5 text-green-400" /> <span>Unlimited human revision on photos</span></li>
+                      <li className="flex items-center gap-3"><CheckCircle className="w-5 h-5 text-green-400" /> <span>Content Studio & Email Marketing</span></li>
+                      <li className="flex items-center gap-3"><CheckCircle className="w-5 h-5 text-green-400" /> <span>Social Publishing (5 platforms)</span></li>
+                      {(planFromUrl === 'complete' || planFromUrl === 'ultimate') && (
+                        <li className="flex items-center gap-3"><CheckCircle className="w-5 h-5 text-green-400" /> <span>Virtual Tours & AI Voiceovers</span></li>
+                      )}
+                    </>
+                  ) : (
+                    <>
+                      <li className="flex items-center gap-3"><CheckCircle className="w-5 h-5 text-green-400" /> <span>3 listings per month</span></li>
+                      <li className="flex items-center gap-3"><CheckCircle className="w-5 h-5 text-green-400" /> <span>Full AI preparation (all 15 tools)</span></li>
+                      <li className="flex items-center gap-3"><CheckCircle className="w-5 h-5 text-green-400" /> <span>Client approval workflow</span></li>
+                      <li className="flex items-center gap-3"><CheckCircle className="w-5 h-5 text-green-400" /> <span>5 social media posts</span></li>
+                    </>
+                  )}
                   {wantsWhatsApp && <li className="flex items-center gap-3"><CheckCircle className="w-5 h-5 text-green-400" /> <span>WhatsApp notifications</span></li>}
                 </ul>
               </div>
@@ -449,5 +488,18 @@ export default function OnboardingPage() {
         }
       `}</style>
     </div>
+  );
+}
+
+// Wrap in Suspense for useSearchParams
+export default function OnboardingPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-[#0A0A0A] flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-[#D4A017]" />
+      </div>
+    }>
+      <OnboardingContent />
+    </Suspense>
   );
 }
