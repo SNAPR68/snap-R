@@ -8,7 +8,7 @@ import {
   Plus, Trash2, GripVertical, Play, Pause, Settings, Globe,
   Link2, Copy, ExternalLink, RotateCcw, Compass, Music,
   Maximize2, ArrowUp, ArrowDown, ArrowLeft, ArrowRight,
-  Camera, Video, MapPin, Info, Edit, ChevronDown
+  Camera, Video, MapPin, Info, Edit, ChevronDown, Images
 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -44,6 +44,32 @@ interface Listing {
   photoCount: number;
 }
 
+// Download helper - downloads all tour photos
+async function downloadTourPhotos(tour: Tour) {
+  if (!tour.tour_scenes || tour.tour_scenes.length === 0) return;
+  
+  // Download each photo
+  for (let i = 0; i < tour.tour_scenes.length; i++) {
+    const scene = tour.tour_scenes[i];
+    try {
+      const response = await fetch(scene.image_url);
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${tour.name}-${scene.name || `photo-${i + 1}`}.jpg`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      // Small delay between downloads
+      await new Promise(r => setTimeout(r, 300));
+    } catch (e) {
+      console.error('Download failed for scene:', scene.name, e);
+    }
+  }
+}
+
 // Tour Card Component
 function TourCard({ tour, onView, onEdit, onDelete }: { 
   tour: Tour; 
@@ -52,12 +78,19 @@ function TourCard({ tour, onView, onEdit, onDelete }: {
   onDelete: () => void;
 }) {
   const [copied, setCopied] = useState(false);
+  const [downloading, setDownloading] = useState(false);
   const tourUrl = `${typeof window !== 'undefined' ? window.location.origin : ''}/tour/${tour.slug}`;
 
   const copyLink = () => {
     navigator.clipboard.writeText(tourUrl);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handleDownload = async () => {
+    setDownloading(true);
+    await downloadTourPhotos(tour);
+    setDownloading(false);
   };
 
   return (
@@ -87,7 +120,7 @@ function TourCard({ tour, onView, onEdit, onDelete }: {
 
         {/* Scene Count */}
         <div className="absolute top-3 right-3 px-2 py-1 bg-black/50 rounded text-xs">
-          {tour.tour_scenes?.length || 0} scenes
+          {tour.tour_scenes?.length || 0} photos
         </div>
 
         {/* Play Button Overlay */}
@@ -126,6 +159,14 @@ function TourCard({ tour, onView, onEdit, onDelete }: {
             {copied ? 'Copied!' : 'Copy Link'}
           </button>
           <button
+            onClick={handleDownload}
+            disabled={downloading}
+            className="p-2 bg-white/5 rounded-lg hover:bg-white/10 transition-colors"
+            title="Download Photos"
+          >
+            {downloading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
+          </button>
+          <button
             onClick={onEdit}
             className="p-2 bg-white/5 rounded-lg hover:bg-white/10 transition-colors"
           >
@@ -158,7 +199,7 @@ function TourCreator({
   onComplete: (tour: Tour) => void;
 }) {
   const [step, setStep] = useState(0);
-  const [tourName, setTourName] = useState(listingTitle || 'Virtual Tour');
+  const [tourName, setTourName] = useState(listingTitle || 'Property Gallery');
   const [tourType, setTourType] = useState<'regular' | '360'>('regular');
   const [selectedPhotos, setSelectedPhotos] = useState<{ url: string; id: string; name: string; file?: File }[]>([]);
   const [uploading, setUploading] = useState(false);
@@ -176,7 +217,7 @@ function TourCreator({
     if (exists) {
       setSelectedPhotos(selectedPhotos.filter(p => p.id !== photo.id));
     } else {
-      setSelectedPhotos([...selectedPhotos, { ...photo, name: `Scene ${selectedPhotos.length + 1}` }]);
+      setSelectedPhotos([...selectedPhotos, { ...photo, name: `Photo ${selectedPhotos.length + 1}` }]);
     }
   };
 
@@ -223,7 +264,7 @@ function TourCreator({
           uploadedUrls.push({
             url: urlData.signedUrl,
             id: `uploaded-${Date.now()}-${i}`,
-            name: `Scene ${selectedPhotos.length + uploadedUrls.length + 1}`,
+            name: `Photo ${selectedPhotos.length + uploadedUrls.length + 1}`,
             file,
           });
         }
@@ -295,7 +336,7 @@ function TourCreator({
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || 'Failed to create tour');
+        throw new Error(data.error || 'Failed to create gallery');
       }
 
       onComplete(data.tour);
@@ -313,11 +354,11 @@ function TourCreator({
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-3">
             <div className="p-3 bg-gradient-to-br from-purple-500/20 to-pink-500/20 rounded-xl">
-              <Camera className="w-8 h-8 text-purple-400" />
+              <Images className="w-8 h-8 text-purple-400" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold">Create Virtual Tour</h1>
-              <p className="text-white/50">{listingTitle || 'New Tour'}</p>
+              <h1 className="text-2xl font-bold">Create Property Gallery</h1>
+              <p className="text-white/50">{listingTitle || 'New Gallery'}</p>
             </div>
           </div>
           <button onClick={onBack} className="text-white/50 hover:text-white transition-colors">
@@ -346,8 +387,8 @@ function TourCreator({
         {/* Step 0: Tour Type Selection */}
         {step === 0 && (
           <div>
-            <h2 className="text-xl font-bold mb-2">Choose Tour Type</h2>
-            <p className="text-white/50 mb-6">Select the type of virtual tour you want to create</p>
+            <h2 className="text-xl font-bold mb-2">Choose Gallery Type</h2>
+            <p className="text-white/50 mb-6">Select the type of property gallery you want to create</p>
 
             <div className="grid md:grid-cols-2 gap-6 mb-6">
               <button
@@ -367,7 +408,7 @@ function TourCreator({
                   }`}>
                     <Image className="w-6 h-6" />
                   </div>
-                  <h3 className="text-lg font-bold">Regular Photo Tour</h3>
+                  <h3 className="text-lg font-bold">Photo Gallery</h3>
                 </div>
                 <p className="text-white/60 text-sm">Use your existing listing photos</p>
               </button>
@@ -389,9 +430,9 @@ function TourCreator({
                   }`}>
                     <Compass className="w-6 h-6" />
                   </div>
-                  <h3 className="text-lg font-bold">360° Panoramic Tour</h3>
+                  <h3 className="text-lg font-bold">360° Panoramic</h3>
                 </div>
-                <p className="text-white/60 text-sm">Upload panoramic photos from 360° camera (Ricoh Theta, Insta360, etc.)</p>
+                <p className="text-white/60 text-sm">Upload panoramic photos from 360° camera</p>
               </button>
             </div>
           </div>
@@ -560,8 +601,8 @@ function TourCreator({
           <div>
             <div className="flex items-center justify-between mb-6">
               <div>
-                <h2 className="text-xl font-bold mb-1">Step 2: Arrange Scenes</h2>
-                <p className="text-white/50">Name and order your tour scenes</p>
+                <h2 className="text-xl font-bold mb-1">Step 2: Arrange Photos</h2>
+                <p className="text-white/50">Name and order your gallery photos</p>
               </div>
               <button onClick={() => setStep(1)} className="text-purple-400 hover:underline text-sm">
                 Change photos
@@ -600,7 +641,7 @@ function TourCreator({
                       type="text"
                       value={photo.name}
                       onChange={(e) => updateSceneName(photo.id, e.target.value)}
-                      placeholder="Scene name"
+                      placeholder="Photo name"
                       className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white placeholder:text-white/30 focus:outline-none focus:border-purple-500/50"
                     />
                   </div>
@@ -608,7 +649,7 @@ function TourCreator({
                   <div className="flex items-center gap-2 text-sm text-white/50">
                     {index === 0 && (
                       <span className="px-2 py-1 bg-purple-500/20 text-purple-400 rounded text-xs">
-                        Start
+                        Cover
                       </span>
                     )}
                     <span>#{index + 1}</span>
@@ -631,27 +672,27 @@ function TourCreator({
           <div>
             <div className="flex items-center justify-between mb-6">
               <div>
-                <h2 className="text-xl font-bold mb-1">Step 3: Tour Settings</h2>
-                <p className="text-white/50">Configure your virtual tour</p>
+                <h2 className="text-xl font-bold mb-1">Step 3: Gallery Settings</h2>
+                <p className="text-white/50">Configure your property gallery</p>
               </div>
               <button onClick={() => setStep(2)} className="text-purple-400 hover:underline text-sm">
-                Edit scenes
+                Edit photos
               </button>
             </div>
 
             <div className="grid md:grid-cols-2 gap-6 mb-6">
               {/* Tour Info */}
               <div className="bg-white/5 border border-white/10 rounded-xl p-6">
-                <h3 className="font-bold mb-4">Tour Information</h3>
+                <h3 className="font-bold mb-4">Gallery Information</h3>
                 
                 <div className="space-y-4">
                   <div>
-                    <label className="block text-sm text-white/60 mb-2">Tour Name</label>
+                    <label className="block text-sm text-white/60 mb-2">Gallery Name</label>
                     <input
                       type="text"
                       value={tourName}
                       onChange={(e) => setTourName(e.target.value)}
-                      placeholder="My Virtual Tour"
+                      placeholder="My Property Gallery"
                       className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder:text-white/30 focus:outline-none focus:border-purple-500/50"
                     />
                   </div>
@@ -693,20 +734,20 @@ function TourCreator({
             </div>
 
             {/* Summary */}
-            <div className="bg-purple-500/10 border border-purple-500/30 rounded-xl p-6 mb-6">
-              <h3 className="font-bold mb-4">Tour Summary</h3>
+            <div className="bg-green-500/10 border border-green-500/30 rounded-xl p-6 mb-6">
+              <h3 className="font-bold mb-4">Gallery Summary</h3>
               <div className="grid grid-cols-3 gap-4 text-center">
                 <div>
-                  <div className="text-2xl font-bold text-purple-400">{selectedPhotos.length}</div>
-                  <div className="text-sm text-white/50">Scenes</div>
+                  <div className="text-2xl font-bold text-green-400">{selectedPhotos.length}</div>
+                  <div className="text-sm text-white/50">Photos</div>
                 </div>
                 <div>
-                  <div className="text-2xl font-bold text-purple-400">$25</div>
-                  <div className="text-sm text-white/50">Price</div>
+                  <div className="text-2xl font-bold text-green-400">FREE</div>
+                  <div className="text-sm text-white/50">Included</div>
                 </div>
                 <div>
-                  <div className="text-2xl font-bold text-purple-400">5</div>
-                  <div className="text-sm text-white/50">Credits</div>
+                  <div className="text-2xl font-bold text-green-400">∞</div>
+                  <div className="text-sm text-white/50">Views</div>
                 </div>
               </div>
             </div>
@@ -725,12 +766,12 @@ function TourCreator({
               {processing ? (
                 <>
                   <Loader2 className="w-5 h-5 animate-spin" />
-                  Creating Tour...
+                  Creating Gallery...
                 </>
               ) : (
                 <>
                   <Sparkles className="w-5 h-5" />
-                  Create Virtual Tour
+                  Create Property Gallery
                 </>
               )}
             </button>
@@ -744,6 +785,7 @@ function TourCreator({
 // Tour Success View
 function TourSuccess({ tour, onBack }: { tour: Tour; onBack: () => void }) {
   const [copied, setCopied] = useState(false);
+  const [downloading, setDownloading] = useState(false);
   const tourUrl = `${typeof window !== 'undefined' ? window.location.origin : ''}/tour/${tour.slug}`;
 
   const copyLink = () => {
@@ -765,6 +807,12 @@ function TourSuccess({ tour, onBack }: { tour: Tour; onBack: () => void }) {
     window.location.reload();
   };
 
+  const handleDownload = async () => {
+    setDownloading(true);
+    await downloadTourPhotos(tour);
+    setDownloading(false);
+  };
+
   return (
     <div className="min-h-screen bg-[#0F0F0F] text-white p-6">
       <div className="max-w-2xl mx-auto text-center">
@@ -772,8 +820,8 @@ function TourSuccess({ tour, onBack }: { tour: Tour; onBack: () => void }) {
           <Check className="w-10 h-10 text-green-400" />
         </div>
 
-        <h1 className="text-3xl font-bold mb-2">Tour Created!</h1>
-        <p className="text-white/50 mb-8">Your virtual tour is ready. Share it with the world!</p>
+        <h1 className="text-3xl font-bold mb-2">Gallery Created!</h1>
+        <p className="text-white/50 mb-8">Your property gallery is ready. Share it with the world!</p>
 
         {/* Preview */}
         <div className="bg-white/5 border border-white/10 rounded-2xl overflow-hidden mb-6">
@@ -786,13 +834,13 @@ function TourSuccess({ tour, onBack }: { tour: Tour; onBack: () => void }) {
           )}
           <div className="p-6">
             <h2 className="text-xl font-bold mb-2">{tour.name}</h2>
-            <p className="text-white/50">{tour.tour_scenes?.length || 0} scenes</p>
+            <p className="text-white/50">{tour.tour_scenes?.length || 0} photos</p>
           </div>
         </div>
 
         {/* Share Link */}
         <div className="bg-white/5 border border-white/10 rounded-xl p-4 mb-6">
-          <label className="block text-sm text-white/60 mb-2">Tour Link</label>
+          <label className="block text-sm text-white/60 mb-2">Gallery Link</label>
           <div className="flex gap-2">
             <input
               type="text"
@@ -811,7 +859,7 @@ function TourSuccess({ tour, onBack }: { tour: Tour; onBack: () => void }) {
         </div>
 
         {/* Actions */}
-        <div className="flex gap-4">
+        <div className="flex gap-4 mb-4">
           <button
             onClick={onBack}
             className="flex-1 py-3 bg-white/10 rounded-xl font-medium hover:bg-white/20 transition-colors"
@@ -824,9 +872,28 @@ function TourSuccess({ tour, onBack }: { tour: Tour; onBack: () => void }) {
             className="flex-1 py-3 bg-purple-500 text-white rounded-xl font-bold hover:bg-purple-400 transition-colors flex items-center justify-center gap-2"
           >
             <ExternalLink className="w-5 h-5" />
-            View Tour
+            View Gallery
           </Link>
         </div>
+
+        {/* Download Button */}
+        <button
+          onClick={handleDownload}
+          disabled={downloading}
+          className="w-full py-3 bg-white/10 rounded-xl font-medium hover:bg-white/20 transition-colors flex items-center justify-center gap-2"
+        >
+          {downloading ? (
+            <>
+              <Loader2 className="w-5 h-5 animate-spin" />
+              Downloading Photos...
+            </>
+          ) : (
+            <>
+              <Download className="w-5 h-5" />
+              Download All Photos
+            </>
+          )}
+        </button>
 
         {tour.status !== 'published' && (
           <button
@@ -834,7 +901,7 @@ function TourSuccess({ tour, onBack }: { tour: Tour; onBack: () => void }) {
             className="w-full mt-4 py-3 bg-green-500 text-white rounded-xl font-bold hover:bg-green-400 transition-colors flex items-center justify-center gap-2"
           >
             <Globe className="w-5 h-5" />
-            Publish Tour
+            Publish Gallery
           </button>
         )}
       </div>
@@ -924,11 +991,11 @@ function ListingSelector({
         {/* Header */}
         <div className="flex items-center gap-3 mb-4">
           <div className="p-3 bg-gradient-to-br from-purple-500/20 to-pink-500/20 rounded-xl">
-            <Camera className="w-8 h-8 text-purple-400" />
+            <Images className="w-8 h-8 text-purple-400" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold">360° Virtual Tours</h1>
-            <p className="text-white/50">Interactive property walkthroughs</p>
+            <h1 className="text-2xl font-bold">Property Gallery</h1>
+            <p className="text-white/50">Shareable photo galleries for your listings</p>
           </div>
         </div>
 
@@ -937,20 +1004,20 @@ function ListingSelector({
           <div className="flex items-start gap-3">
             <Lightbulb className="w-5 h-5 text-purple-400 mt-0.5 flex-shrink-0" />
             <div>
-              <h3 className="font-semibold text-purple-400 mb-1">What Virtual Tours do</h3>
+              <h3 className="font-semibold text-purple-400 mb-1">What Property Gallery does</h3>
               <p className="text-sm text-white/70">
-                Create immersive 360° walkthroughs of your properties. Buyers can explore every room 
-                from their phone or computer. Tours increase engagement by 40% and generate more inquiries.
+                Create beautiful, shareable photo galleries for your listings. Get a unique link to share 
+                with clients, embed on your website, or post on social media. Track views and engagement.
               </p>
             </div>
           </div>
         </div>
 
-        {/* Pricing Overview */}
+        {/* Pricing Overview - NOW FREE */}
         <div className="grid grid-cols-3 gap-4 mb-8">
-          <div className="bg-white/5 border border-white/10 rounded-xl p-4 text-center">
-            <div className="text-2xl font-bold text-purple-400">$25</div>
-            <div className="text-sm text-white/50">Per tour</div>
+          <div className="bg-green-500/10 border border-green-500/30 rounded-xl p-4 text-center">
+            <div className="text-2xl font-bold text-green-400">FREE</div>
+            <div className="text-sm text-white/50">Included in all plans</div>
           </div>
           <div className="bg-white/5 border border-white/10 rounded-xl p-4 text-center">
             <div className="text-2xl font-bold text-purple-400">Instant</div>
@@ -965,7 +1032,7 @@ function ListingSelector({
         {/* Existing Tours */}
         {existingTours.length > 0 && (
           <div className="mb-8">
-            <h2 className="text-lg font-bold mb-4">Your Tours</h2>
+            <h2 className="text-lg font-bold mb-4">Your Galleries</h2>
             <div className="grid md:grid-cols-3 gap-4">
               {existingTours.map((tour) => (
                 <TourCard
@@ -974,7 +1041,7 @@ function ListingSelector({
                   onView={() => window.open(`/tour/${tour.slug}`, '_blank')}
                   onEdit={() => {/* TODO: Edit mode */}}
                   onDelete={async () => {
-                    if (confirm('Delete this tour?')) {
+                    if (confirm('Delete this gallery?')) {
                       await fetch(`/api/virtual-tours?id=${tour.id}`, { method: 'DELETE' });
                       window.location.reload();
                     }
@@ -986,7 +1053,7 @@ function ListingSelector({
         )}
 
         {/* Create New Tour */}
-        <h2 className="text-lg font-bold mb-4">Create New Tour</h2>
+        <h2 className="text-lg font-bold mb-4">Create New Gallery</h2>
         
         <div className="grid md:grid-cols-2 gap-6">
           {/* From Listing */}
@@ -1020,14 +1087,14 @@ function ListingSelector({
 
           {/* Upload New */}
           <div className="bg-white/5 border border-white/10 rounded-xl p-4">
-            <h3 className="font-medium mb-3">Upload 360° Photos</h3>
+            <h3 className="font-medium mb-3">Upload Photos</h3>
             <button
               onClick={onUpload}
               className="w-full p-6 border-2 border-dashed border-white/20 rounded-xl hover:border-purple-500/50 hover:bg-purple-500/5 transition-all text-center"
             >
               <Upload className="w-10 h-10 text-white/30 mx-auto mb-3" />
               <div className="font-medium">Upload Photos</div>
-              <div className="text-sm text-white/40 mt-1">360° panoramas or regular photos</div>
+              <div className="text-sm text-white/40 mt-1">Regular photos or 360° panoramas</div>
             </button>
           </div>
         </div>

@@ -22,22 +22,22 @@ const ROOM_TYPES = {
   exterior: { id: 'exterior', label: 'Exterior', icon: Home, renovationTypes: ['full-remodel', 'siding', 'roof', 'landscaping', 'paint'] },
 };
 
-const RENOVATION_TYPES: Record<string, { id: string; label: string; description: string; price: number; priceDisplay: string }> = {
-  'full-remodel': { id: 'full-remodel', label: 'Full Remodel', description: 'Complete room transformation', price: 50, priceDisplay: '$50' },
-  cabinets: { id: 'cabinets', label: 'Cabinet Replacement', description: 'New cabinet style and color', price: 25, priceDisplay: '$25' },
-  counters: { id: 'counters', label: 'Countertop Change', description: 'New countertop material', price: 25, priceDisplay: '$25' },
-  backsplash: { id: 'backsplash', label: 'Backsplash Update', description: 'New backsplash style', price: 15, priceDisplay: '$15' },
-  flooring: { id: 'flooring', label: 'Flooring Change', description: 'New floor type and color', price: 25, priceDisplay: '$25' },
-  paint: { id: 'paint', label: 'Paint Color', description: 'Change wall colors', price: 15, priceDisplay: '$15' },
-  appliances: { id: 'appliances', label: 'Appliance Upgrade', description: 'Modern appliances', price: 15, priceDisplay: '$15' },
-  vanity: { id: 'vanity', label: 'Vanity Replacement', description: 'New bathroom vanity', price: 25, priceDisplay: '$25' },
-  shower: { id: 'shower', label: 'Shower Remodel', description: 'Modern shower design', price: 25, priceDisplay: '$25' },
-  fixtures: { id: 'fixtures', label: 'Fixture Update', description: 'New faucets and hardware', price: 15, priceDisplay: '$15' },
-  fireplace: { id: 'fireplace', label: 'Fireplace Remodel', description: 'Updated fireplace', price: 25, priceDisplay: '$25' },
-  lighting: { id: 'lighting', label: 'Lighting Update', description: 'New light fixtures', price: 15, priceDisplay: '$15' },
-  siding: { id: 'siding', label: 'Siding Change', description: 'New exterior siding', price: 25, priceDisplay: '$25' },
-  roof: { id: 'roof', label: 'Roof Replacement', description: 'New roof style', price: 25, priceDisplay: '$25' },
-  landscaping: { id: 'landscaping', label: 'Landscaping', description: 'Updated yard', price: 25, priceDisplay: '$25' },
+const RENOVATION_TYPES: Record<string, { id: string; label: string; description: string; credits: number; priceDisplay: string }> = {
+  'full-remodel': { id: 'full-remodel', label: 'Full Remodel', description: 'Complete room transformation', credits: 5, priceDisplay: '$49' },
+  cabinets: { id: 'cabinets', label: 'Cabinet Replacement', description: 'New cabinet style and color', credits: 3, priceDisplay: '$29' },
+  counters: { id: 'counters', label: 'Countertop Change', description: 'New countertop material', credits: 3, priceDisplay: '$29' },
+  backsplash: { id: 'backsplash', label: 'Backsplash Update', description: 'New backsplash style', credits: 2, priceDisplay: '$19' },
+  flooring: { id: 'flooring', label: 'Flooring Change', description: 'New floor type and color', credits: 3, priceDisplay: '$29' },
+  paint: { id: 'paint', label: 'Paint Color', description: 'Change wall colors', credits: 2, priceDisplay: '$19' },
+  appliances: { id: 'appliances', label: 'Appliance Upgrade', description: 'Modern appliances', credits: 2, priceDisplay: '$19' },
+  vanity: { id: 'vanity', label: 'Vanity Replacement', description: 'New bathroom vanity', credits: 3, priceDisplay: '$29' },
+  shower: { id: 'shower', label: 'Shower Remodel', description: 'Modern shower design', credits: 3, priceDisplay: '$29' },
+  fixtures: { id: 'fixtures', label: 'Fixture Update', description: 'New faucets and hardware', credits: 2, priceDisplay: '$19' },
+  fireplace: { id: 'fireplace', label: 'Fireplace Remodel', description: 'Updated fireplace', credits: 3, priceDisplay: '$29' },
+  lighting: { id: 'lighting', label: 'Lighting Update', description: 'New light fixtures', credits: 2, priceDisplay: '$19' },
+  siding: { id: 'siding', label: 'Siding Change', description: 'New exterior siding', credits: 3, priceDisplay: '$29' },
+  roof: { id: 'roof', label: 'Roof Replacement', description: 'New roof style', credits: 3, priceDisplay: '$29' },
+  landscaping: { id: 'landscaping', label: 'Landscaping', description: 'Updated yard', credits: 3, priceDisplay: '$29' },
 };
 
 const STYLES = [
@@ -198,26 +198,6 @@ function OptionButton({ label, selected, onClick }: { label: string; selected: b
   );
 }
 
-// Download helper function
-async function downloadImage(url: string, filename: string) {
-  try {
-    const response = await fetch(url);
-    const blob = await response.blob();
-    const blobUrl = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = blobUrl;
-    a.download = filename;
-    document.body.appendChild(a);
-    a.click();
-    window.URL.revokeObjectURL(blobUrl);
-    document.body.removeChild(a);
-  } catch (err) {
-    console.error('Download failed:', err);
-    // Fallback: open in new tab
-    window.open(url, '_blank');
-  }
-}
-
 // Main Renovation Interface
 function RenovationInterface({
   imageUrl,
@@ -236,7 +216,6 @@ function RenovationInterface({
   const [processing, setProcessing] = useState(false);
   const [result, setResult] = useState<{ url: string; processingTime: number } | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [downloading, setDownloading] = useState(false);
 
   const selectedRoom = ROOM_TYPES[roomType as keyof typeof ROOM_TYPES];
   const selectedRenovation = RENOVATION_TYPES[renovationType];
@@ -287,13 +266,6 @@ function RenovationInterface({
     setError(null);
   };
 
-  const handleDownload = async () => {
-    if (!result?.url) return;
-    setDownloading(true);
-    await downloadImage(result.url, `renovation-${roomType}-${renovationType}-${Date.now()}.png`);
-    setDownloading(false);
-  };
-
   // Result View
   if (result) {
     return (
@@ -319,18 +291,14 @@ function RenovationInterface({
                 <RotateCcw className="w-4 h-4" />
                 New Renovation
               </button>
-              <button
-                onClick={handleDownload}
-                disabled={downloading}
-                className="flex items-center gap-2 px-4 py-2 bg-amber-500 text-black rounded-lg font-semibold hover:bg-amber-400 transition-colors disabled:opacity-50"
+              <a
+                href={result.url}
+                download
+                className="flex items-center gap-2 px-4 py-2 bg-amber-500 text-black rounded-lg font-semibold hover:bg-amber-400 transition-colors"
               >
-                {downloading ? (
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                ) : (
-                  <Download className="w-4 h-4" />
-                )}
+                <Download className="w-4 h-4" />
                 Download
-              </button>
+              </a>
             </div>
           </div>
 
@@ -358,7 +326,7 @@ function RenovationInterface({
             </span>
             <span className="flex items-center gap-2">
               <DollarSign className="w-4 h-4" />
-              {selectedRenovation?.priceDisplay} charged
+              {selectedRenovation?.credits || 3} credits used
             </span>
           </div>
         </div>
@@ -470,7 +438,10 @@ function RenovationInterface({
                       >
                         <div className="font-medium mb-1">{type.label}</div>
                         <div className="text-xs text-white/50 mb-2">{type.description}</div>
-                        <span className="text-amber-400 font-bold">{type.priceDisplay}</span>
+                        <div className="flex items-center justify-between">
+                          <span className="text-amber-400 font-bold">{type.priceDisplay}</span>
+                          <span className="text-xs text-white/40">{type.credits} credits</span>
+                        </div>
                       </button>
                     );
                   })}
@@ -637,8 +608,8 @@ function RenovationInterface({
                 {/* Cost */}
                 <div className="p-4 bg-amber-500/10 border border-amber-500/30 rounded-xl mb-6">
                   <div className="flex items-center justify-between">
-                    <span className="text-white/70">Price</span>
-                    <span className="text-xl font-bold text-amber-400">{selectedRenovation?.priceDisplay}</span>
+                    <span className="text-white/70">Credits Required</span>
+                    <span className="text-xl font-bold text-amber-400">{selectedRenovation?.credits || 3} credits</span>
                   </div>
                 </div>
 
@@ -836,7 +807,7 @@ function PhotoSelector({ onSelect }: { onSelect: (url: string, listingId?: strin
         {/* Pricing Overview */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
           <div className="bg-white/5 border border-white/10 rounded-xl p-4 text-center">
-            <div className="text-2xl font-bold text-orange-400">$15-50</div>
+            <div className="text-2xl font-bold text-orange-400">$19-49</div>
             <div className="text-sm text-white/50">Per renovation</div>
           </div>
           <div className="bg-white/5 border border-white/10 rounded-xl p-4 text-center">

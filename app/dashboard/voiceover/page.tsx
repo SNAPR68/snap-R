@@ -26,11 +26,12 @@ const SCRIPT_STYLES = [
   { id: 'firstTimeBuyer', name: 'First-Time Buyer', description: 'Helpful, informative tone' },
 ];
 
+// Flat $2 price per voiceover - Complete plan gets 5 free/month
 const DURATION_OPTIONS = [
-  { value: 30, label: '30 seconds', price: 5, credits: 2 },
-  { value: 60, label: '60 seconds', price: 8, credits: 3 },
-  { value: 90, label: '90 seconds', price: 12, credits: 5 },
-  { value: 120, label: '2 minutes', price: 15, credits: 6 },
+  { value: 30, label: '30 seconds', price: 2 },
+  { value: 60, label: '60 seconds', price: 2 },
+  { value: 90, label: '90 seconds', price: 2 },
+  { value: 120, label: '2 minutes', price: 2 },
 ];
 
 interface Listing {
@@ -45,26 +46,43 @@ interface Listing {
   thumbnail?: string | null;
 }
 
-// Audio Player Component
+// Audio Player Component with better error handling
 function AudioPlayer({ audioUrl }: { audioUrl: string }) {
   const audioRef = useRef<HTMLAudioElement>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [progress, setProgress] = useState(0);
   const [duration, setDuration] = useState(0);
+  const [isLoaded, setIsLoaded] = useState(false);
+  const [error, setError] = useState(false);
 
-  const togglePlay = () => {
+  useEffect(() => {
+    // Reset state when audioUrl changes
+    setIsPlaying(false);
+    setProgress(0);
+    setError(false);
+    setIsLoaded(false);
+    setDuration(0);
+  }, [audioUrl]);
+
+  const togglePlay = async () => {
     if (audioRef.current) {
-      if (isPlaying) {
-        audioRef.current.pause();
-      } else {
-        audioRef.current.play();
+      try {
+        if (isPlaying) {
+          audioRef.current.pause();
+          setIsPlaying(false);
+        } else {
+          await audioRef.current.play();
+          setIsPlaying(true);
+        }
+      } catch (err) {
+        console.error('Playback error:', err);
+        setError(true);
       }
-      setIsPlaying(!isPlaying);
     }
   };
 
   const handleTimeUpdate = () => {
-    if (audioRef.current) {
+    if (audioRef.current && audioRef.current.duration) {
       setProgress((audioRef.current.currentTime / audioRef.current.duration) * 100);
     }
   };
@@ -72,7 +90,18 @@ function AudioPlayer({ audioUrl }: { audioUrl: string }) {
   const handleLoadedMetadata = () => {
     if (audioRef.current) {
       setDuration(audioRef.current.duration);
+      setIsLoaded(true);
     }
+  };
+
+  const handleCanPlay = () => {
+    setIsLoaded(true);
+    setError(false);
+  };
+
+  const handleError = (e: any) => {
+    console.error('Audio failed to load:', e);
+    setError(true);
   };
 
   const handleEnded = () => {
@@ -80,55 +109,134 @@ function AudioPlayer({ audioUrl }: { audioUrl: string }) {
     setProgress(0);
   };
 
+  const handleSeek = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (audioRef.current && duration) {
+      const rect = e.currentTarget.getBoundingClientRect();
+      const percent = (e.clientX - rect.left) / rect.width;
+      audioRef.current.currentTime = percent * duration;
+    }
+  };
+
   const formatTime = (seconds: number) => {
+    if (!seconds || isNaN(seconds)) return '0:00';
     const mins = Math.floor(seconds / 60);
     const secs = Math.floor(seconds % 60);
     return `${mins}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  // Convert base64 data URL to blob URL for better browser compatibility
+  const getAudioSrc = () => {
+    if (audioUrl.startsWith('data:audio')) {
+      try {
+        const base64 = audioUrl.split(',')[1];
+        const binary = atob(base64);
+        const bytes = new Uint8Array(binary.length);
+        for (let i = 0; i < binary.length; i++) {
+          bytes[i] = binary.charCodeAt(i);
+        }
+        const blob = new Blob([bytes], { type: 'audio/mpeg' });
+        return URL.createObjectURL(blob);
+      } catch (e) {
+        console.error('Failed to convert base64 to blob:', e);
+        return audioUrl;
+      }
+    }
+    return audioUrl;
+  };
+
+  const [blobUrl, setBlobUrl] = useState<string>('');
+  
+  useEffect(() => {
+    const url = getAudioSrc();
+    setBlobUrl(url);
+    
+    // Cleanup blob URL on unmount
+    return () => {
+      if (url.startsWith('blob:')) {
+        URL.revokeObjectURL(url);
+      }
+    };
+  }, [audioUrl]);
+
+  const handleDownload = () => {
+    try {
+      const a = document.createElement('a');
+      a.href = blobUrl || audioUrl;
+      a.download = 'voiceover.mp3';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    } catch (e) {
+      console.error('Download failed:', e);
+    }
   };
 
   return (
     <div className="bg-white/5 border border-white/10 rounded-xl p-4">
       <audio
         ref={audioRef}
-        src={audioUrl}
+        src={blobUrl}
+        preload="auto"
         onTimeUpdate={handleTimeUpdate}
         onLoadedMetadata={handleLoadedMetadata}
+        onCanPlay={handleCanPlay}
+        onError={handleError}
         onEnded={handleEnded}
       />
       
-      <div className="flex items-center gap-4">
-        <button
-          onClick={togglePlay}
-          className="w-12 h-12 rounded-full bg-gradient-to-r from-pink-500 to-purple-500 flex items-center justify-center hover:from-pink-400 hover:to-purple-400 transition-all"
-        >
-          {isPlaying ? (
-            <Pause className="w-5 h-5 text-white" />
-          ) : (
-            <Play className="w-5 h-5 text-white ml-1" />
-          )}
-        </button>
-        
-        <div className="flex-1">
-          <div className="h-2 bg-white/10 rounded-full overflow-hidden">
-            <div
-              className="h-full bg-gradient-to-r from-pink-500 to-purple-500 transition-all"
-              style={{ width: `${progress}%` }}
-            />
-          </div>
-          <div className="flex justify-between mt-1 text-xs text-white/50">
-            <span>{formatTime((progress / 100) * duration)}</span>
-            <span>{formatTime(duration)}</span>
-          </div>
+      {error ? (
+        <div className="text-center py-4">
+          <p className="text-red-400 text-sm mb-2">Audio failed to load</p>
+          <button 
+            onClick={handleDownload}
+            className="text-pink-400 hover:text-pink-300 text-sm underline"
+          >
+            Download audio file instead
+          </button>
         </div>
-        
-        <a
-          href={audioUrl}
-          download="voiceover.mp3"
-          className="p-3 bg-white/10 rounded-lg hover:bg-white/20 transition-colors"
-        >
-          <Download className="w-5 h-5" />
-        </a>
-      </div>
+      ) : (
+        <div className="flex items-center gap-4">
+          <button
+            onClick={togglePlay}
+            disabled={!isLoaded}
+            className={`w-12 h-12 rounded-full bg-gradient-to-r from-pink-500 to-purple-500 flex items-center justify-center transition-all ${
+              isLoaded ? 'hover:from-pink-400 hover:to-purple-400' : 'opacity-50 cursor-not-allowed'
+            }`}
+          >
+            {!isLoaded ? (
+              <Loader2 className="w-5 h-5 text-white animate-spin" />
+            ) : isPlaying ? (
+              <Pause className="w-5 h-5 text-white" />
+            ) : (
+              <Play className="w-5 h-5 text-white ml-1" />
+            )}
+          </button>
+          
+          <div className="flex-1">
+            <div 
+              className="h-2 bg-white/10 rounded-full overflow-hidden cursor-pointer"
+              onClick={handleSeek}
+            >
+              <div
+                className="h-full bg-gradient-to-r from-pink-500 to-purple-500 transition-all"
+                style={{ width: `${progress}%` }}
+              />
+            </div>
+            <div className="flex justify-between mt-1 text-xs text-white/50">
+              <span>{formatTime((progress / 100) * duration)}</span>
+              <span>{formatTime(duration)}</span>
+            </div>
+          </div>
+          
+          <button
+            onClick={handleDownload}
+            className="p-3 bg-white/10 rounded-lg hover:bg-white/20 transition-colors"
+            title="Download"
+          >
+            <Download className="w-5 h-5" />
+          </button>
+        </div>
+      )}
     </div>
   );
 }
@@ -326,13 +434,15 @@ function VoiceoverGenerator() {
             </div>
           </div>
 
-          <div className="grid grid-cols-4 gap-4 mb-8">
-            {DURATION_OPTIONS.map((opt) => (
-              <div key={opt.value} className="bg-white/5 border border-white/10 rounded-xl p-4 text-center">
-                <div className="text-2xl font-bold text-pink-400">${opt.price}</div>
-                <div className="text-sm text-white/50">{opt.label}</div>
+          {/* Pricing Info */}
+          <div className="bg-green-500/10 border border-green-500/30 rounded-xl p-4 mb-8">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="font-semibold text-green-400">Pricing</h3>
+                <p className="text-sm text-white/70">Complete plan: 5 FREE/month • Extra: $2 each</p>
               </div>
-            ))}
+              <div className="text-2xl font-bold text-green-400">$2</div>
+            </div>
           </div>
 
           <h2 className="text-lg font-bold mb-4">Select a Listing</h2>
@@ -460,7 +570,6 @@ function VoiceoverGenerator() {
                       }`}
                     >
                       <div className="font-medium">{opt.label}</div>
-                      <div className="text-xs text-pink-400">${opt.price}</div>
                     </button>
                   ))}
                 </div>
@@ -578,8 +687,8 @@ function VoiceoverGenerator() {
                 </div>
               </div>
               <div className="text-right">
-                <span className="text-3xl font-bold text-pink-400">${selectedDuration.price}</span>
-                <div className="text-sm text-white/40">{selectedDuration.credits} credits</div>
+                <span className="text-3xl font-bold text-pink-400">$2</span>
+                <div className="text-sm text-white/40">or FREE with Complete plan</div>
               </div>
             </div>
             
@@ -650,14 +759,45 @@ function VoiceoverGenerator() {
           >
             Create Another
           </button>
-          <a
-            href={audioUrl}
-            download="voiceover.mp3"
+          <button
+            onClick={() => {
+              if (audioUrl) {
+                // Convert base64 to blob for download
+                if (audioUrl.startsWith('data:audio')) {
+                  try {
+                    const base64 = audioUrl.split(',')[1];
+                    const binary = atob(base64);
+                    const bytes = new Uint8Array(binary.length);
+                    for (let i = 0; i < binary.length; i++) {
+                      bytes[i] = binary.charCodeAt(i);
+                    }
+                    const blob = new Blob([bytes], { type: 'audio/mpeg' });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = 'voiceover.mp3';
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(url);
+                  } catch (e) {
+                    console.error('Download failed:', e);
+                  }
+                } else {
+                  const a = document.createElement('a');
+                  a.href = audioUrl;
+                  a.download = 'voiceover.mp3';
+                  document.body.appendChild(a);
+                  a.click();
+                  document.body.removeChild(a);
+                }
+              }
+            }}
             className="flex-1 py-3 bg-gradient-to-r from-pink-500 to-purple-500 text-white rounded-xl font-bold text-center hover:from-pink-400 hover:to-purple-400 transition-all flex items-center justify-center gap-2"
           >
             <Download className="w-5 h-5" />
             Download MP3
-          </a>
+          </button>
         </div>
       </div>
     </div>

@@ -3,8 +3,14 @@
 import { useState, useEffect } from 'react'
 import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
-import { ArrowLeft, Mail, Sparkles, Download, Copy, Check, Home, Loader2, ChevronDown, Eye, Code, Send } from 'lucide-react'
+import { ArrowLeft, Mail, Sparkles, Download, Copy, Check, Home, Loader2, ChevronDown, Eye, Code, Send, Image, X } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
+
+interface ListingPhoto {
+  id: string
+  url: string
+  selected: boolean
+}
 
 interface Listing {
   id: string
@@ -19,6 +25,7 @@ interface Listing {
   square_feet: number | null
   description: string | null
   thumbnail: string | null
+  photos: ListingPhoto[]
   features: string[] | null
   year_built: number | null
   lot_size: string | null
@@ -28,11 +35,14 @@ type EmailType = 'just-listed' | 'open-house' | 'price-reduced' | 'just-sold' | 
 type Tone = 'professional' | 'friendly' | 'luxury' | 'urgent'
 type ViewMode = 'preview' | 'html' | 'text'
 
+const MAX_PHOTOS = 5
+
 export default function EmailMarketingClient() {
   const searchParams = useSearchParams()
   const listingId = searchParams.get('listing')
   const [listings, setListings] = useState<Listing[]>([])
   const [selectedListing, setSelectedListing] = useState<Listing | null>(null)
+  const [selectedPhotos, setSelectedPhotos] = useState<string[]>([])
   const [emailType, setEmailType] = useState<EmailType>('just-listed')
   const [tone, setTone] = useState<Tone>('professional')
   const [loading, setLoading] = useState(true)
@@ -40,6 +50,7 @@ export default function EmailMarketingClient() {
   const [generatedEmail, setGeneratedEmail] = useState<{ subject: string; html: string; text: string } | null>(null)
   const [copied, setCopied] = useState(false)
   const [showDropdown, setShowDropdown] = useState(false)
+  const [showPhotoSelector, setShowPhotoSelector] = useState(false)
   const [viewMode, setViewMode] = useState<ViewMode>('preview')
   const [agentName, setAgentName] = useState('Your Name')
   const [agentTitle, setAgentTitle] = useState('Real Estate Professional')
@@ -51,7 +62,16 @@ export default function EmailMarketingClient() {
   const [openHouseTime, setOpenHouseTime] = useState('')
 
   useEffect(() => { loadListings() }, [])
-  useEffect(() => { if (listingId && listings.length > 0) { const l = listings.find(x => x.id === listingId); if (l) setSelectedListing(l) } }, [listingId, listings])
+  useEffect(() => { 
+    if (listingId && listings.length > 0) { 
+      const l = listings.find(x => x.id === listingId)
+      if (l) {
+        setSelectedListing(l)
+        // Auto-select first 5 photos
+        setSelectedPhotos(l.photos.slice(0, MAX_PHOTOS).map(p => p.url))
+      }
+    } 
+  }, [listingId, listings])
 
   const loadListings = async () => {
     setLoading(true)
@@ -69,14 +89,28 @@ export default function EmailMarketingClient() {
       if (listingsData) {
         const processed = await Promise.all(listingsData.map(async (listing: any) => {
           const photos = listing.photos || []
-          const firstPhoto = photos.find((p: any) => p.processed_url) || photos[0]
-          let thumbnail = null
-          if (firstPhoto) {
-            const path = firstPhoto.processed_url || firstPhoto.raw_url
-            if (path && !path.startsWith('http')) { const { data } = await supabase.storage.from('raw-images').createSignedUrl(path, 86400); thumbnail = data?.signedUrl }
-            else thumbnail = path
+          
+          // Load ALL photos (up to 10 for selection, display up to 5)
+          const photoUrls: ListingPhoto[] = []
+          for (const photo of photos.slice(0, 10)) {
+            const path = photo.processed_url || photo.raw_url
+            if (path) {
+              let url = path
+              if (!path.startsWith('http')) {
+                const { data } = await supabase.storage.from('raw-images').createSignedUrl(path, 86400)
+                url = data?.signedUrl || ''
+              }
+              if (url) {
+                photoUrls.push({ id: photo.id, url, selected: photoUrls.length < MAX_PHOTOS })
+              }
+            }
           }
-          return { ...listing, thumbnail }
+          
+          return { 
+            ...listing, 
+            thumbnail: photoUrls[0]?.url || null,
+            photos: photoUrls
+          }
         }))
         setListings(processed)
       }
@@ -84,17 +118,34 @@ export default function EmailMarketingClient() {
     setLoading(false)
   }
 
+  const handleSelectListing = (listing: Listing) => {
+    setSelectedListing(listing)
+    // Auto-select first 5 photos
+    setSelectedPhotos(listing.photos.slice(0, MAX_PHOTOS).map(p => p.url))
+    setShowDropdown(false)
+    setGeneratedEmail(null)
+  }
+
+  const togglePhotoSelection = (url: string) => {
+    if (selectedPhotos.includes(url)) {
+      setSelectedPhotos(selectedPhotos.filter(p => p !== url))
+    } else if (selectedPhotos.length < MAX_PHOTOS) {
+      setSelectedPhotos([...selectedPhotos, url])
+    }
+    setGeneratedEmail(null)
+  }
+
   const generateEmail = async () => {
     if (!selectedListing) return
     setGenerating(true)
     setGeneratedEmail(null)
     await new Promise(r => setTimeout(r, 800))
-    const email = createProfessionalEmail(selectedListing, emailType, tone)
+    const email = createProfessionalEmail(selectedListing, emailType, tone, selectedPhotos)
     setGeneratedEmail(email)
     setGenerating(false)
   }
 
-  const createProfessionalEmail = (listing: Listing, type: EmailType, t: Tone) => {
+  const createProfessionalEmail = (listing: Listing, type: EmailType, t: Tone, photos: string[]) => {
     const priceStr = listing.price ? '$' + listing.price.toLocaleString() : 'Contact for Price'
     const location = [listing.city, listing.state].filter(Boolean).join(', ')
     const fullAddress = [listing.address, listing.city, listing.state, listing.postal_code].filter(Boolean).join(', ')
@@ -116,7 +167,7 @@ export default function EmailMarketingClient() {
 
     const subjects: Record<EmailType, string> = {
       'just-listed': `🏠 New Listing: ${listing.title} | ${priceStr} in ${location}`,
-      'open-house': `�� Open House Invitation: ${listing.title} | ${openHouseDate || 'This Weekend'}`,
+      'open-house': `🚪 Open House Invitation: ${listing.title} | ${openHouseDate || 'This Weekend'}`,
       'price-reduced': `💰 Price Reduced! ${listing.title} Now ${priceStr}`,
       'just-sold': `🎉 Just Sold: ${listing.title} in ${location}`,
       'market-update': `📊 Market Update: Your ${location} Real Estate Report`,
@@ -264,6 +315,28 @@ ${agentPhone}
 ${agentEmail}
     `.trim()
 
+    // Build photo gallery HTML
+    const heroPhoto = photos[0]
+    const galleryPhotos = photos.slice(1, 5)
+    
+    const photoGalleryHtml = galleryPhotos.length > 0 ? `
+          <!-- Photo Gallery -->
+          <tr>
+            <td style="padding:0 40px 30px;">
+              <table width="100%" cellspacing="0" cellpadding="0">
+                <tr>
+                  ${galleryPhotos.map((photo, i) => `
+                    <td style="width:${100 / galleryPhotos.length}%;padding:${i > 0 ? '0 0 0 8px' : '0'};">
+                      <img src="${photo}" alt="Property Photo ${i + 2}" style="width:100%;height:120px;object-fit:cover;border-radius:8px;display:block;">
+                    </td>
+                  `).join('')}
+                </tr>
+              </table>
+              <p style="margin:10px 0 0;font-size:12px;color:#888;text-align:center;">${photos.length} Photos • Click to view full gallery</p>
+            </td>
+          </tr>
+    ` : ''
+
     const htmlBody = `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -285,16 +358,18 @@ ${agentEmail}
           </tr>
           
           <!-- Hero Image -->
-          ${listing.thumbnail ? `
+          ${heroPhoto ? `
           <tr>
             <td style="position:relative;">
-              <img src="${listing.thumbnail}" alt="${listing.title}" style="width:100%;height:320px;object-fit:cover;display:block;">
+              <img src="${heroPhoto}" alt="${listing.title}" style="width:100%;height:320px;object-fit:cover;display:block;">
               <div style="position:absolute;top:20px;left:20px;background:${colors.secondary};color:#ffffff;padding:10px 20px;font-weight:bold;font-size:14px;letter-spacing:1px;border-radius:6px;text-transform:uppercase;">
                 ${type.replace('-', ' ')}
               </div>
             </td>
           </tr>
           ` : ''}
+          
+          ${photoGalleryHtml}
           
           <!-- Property Info -->
           <tr>
@@ -449,7 +524,7 @@ ${agentEmail}
                     {loading ? <div className="p-4 text-center"><Loader2 className="w-5 h-5 animate-spin mx-auto text-blue-500" /></div>
                     : listings.length === 0 ? <div className="p-4 text-center text-white/40 text-sm">No listings found</div>
                     : listings.map(l => (
-                      <button key={l.id} onClick={() => { setSelectedListing(l); setShowDropdown(false); setGeneratedEmail(null) }} className={'w-full flex items-center gap-3 p-3 hover:bg-white/5 transition-colors ' + (selectedListing?.id === l.id ? 'bg-blue-500/10' : '')}>
+                      <button key={l.id} onClick={() => handleSelectListing(l)} className={'w-full flex items-center gap-3 p-3 hover:bg-white/5 transition-colors ' + (selectedListing?.id === l.id ? 'bg-blue-500/10' : '')}>
                         {l.thumbnail ? <img src={l.thumbnail} alt="" className="w-10 h-10 rounded-lg object-cover" /> : <div className="w-10 h-10 rounded-lg bg-white/10 flex items-center justify-center"><Home className="w-5 h-5 text-white/30" /></div>}
                         <div className="text-left">
                           <p className="font-medium text-sm">{l.title}</p>
@@ -461,6 +536,68 @@ ${agentEmail}
                 )}
               </div>
             </div>
+
+            {/* Photo Selector - NEW */}
+            {selectedListing && selectedListing.photos.length > 0 && (
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <label className="text-sm text-white/50">Photos ({selectedPhotos.length}/{MAX_PHOTOS} selected)</label>
+                  <button 
+                    onClick={() => setShowPhotoSelector(!showPhotoSelector)}
+                    className="text-xs text-blue-400 hover:text-blue-300"
+                  >
+                    {showPhotoSelector ? 'Hide' : 'Edit Selection'}
+                  </button>
+                </div>
+                
+                {/* Selected Photos Preview */}
+                <div className="flex gap-2 flex-wrap mb-2">
+                  {selectedPhotos.slice(0, 5).map((url, i) => (
+                    <div key={i} className="relative w-16 h-16 rounded-lg overflow-hidden border-2 border-blue-500">
+                      <img src={url} alt="" className="w-full h-full object-cover" />
+                      {i === 0 && (
+                        <div className="absolute bottom-0 left-0 right-0 bg-blue-500 text-[10px] text-center py-0.5">Hero</div>
+                      )}
+                    </div>
+                  ))}
+                  {selectedPhotos.length === 0 && (
+                    <p className="text-white/40 text-sm">No photos selected</p>
+                  )}
+                </div>
+
+                {/* Photo Selection Grid */}
+                {showPhotoSelector && (
+                  <div className="bg-white/5 border border-white/10 rounded-xl p-3 space-y-2">
+                    <p className="text-xs text-white/50">Click to select up to {MAX_PHOTOS} photos. First selected = Hero image.</p>
+                    <div className="grid grid-cols-4 gap-2">
+                      {selectedListing.photos.map((photo, i) => {
+                        const isSelected = selectedPhotos.includes(photo.url)
+                        const selectionIndex = selectedPhotos.indexOf(photo.url)
+                        return (
+                          <button
+                            key={photo.id}
+                            onClick={() => togglePhotoSelection(photo.url)}
+                            className={`relative aspect-square rounded-lg overflow-hidden border-2 transition-all ${
+                              isSelected ? 'border-blue-500 ring-2 ring-blue-500/30' : 'border-transparent hover:border-white/30'
+                            } ${!isSelected && selectedPhotos.length >= MAX_PHOTOS ? 'opacity-40 cursor-not-allowed' : ''}`}
+                            disabled={!isSelected && selectedPhotos.length >= MAX_PHOTOS}
+                          >
+                            <img src={photo.url} alt="" className="w-full h-full object-cover" />
+                            {isSelected && (
+                              <div className="absolute inset-0 bg-blue-500/30 flex items-center justify-center">
+                                <div className="w-6 h-6 rounded-full bg-blue-500 text-white text-xs font-bold flex items-center justify-center">
+                                  {selectionIndex + 1}
+                                </div>
+                              </div>
+                            )}
+                          </button>
+                        )
+                      })}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
 
             {/* Email Type */}
             <div>
@@ -527,9 +664,9 @@ ${agentEmail}
 
           {/* Generate Button */}
           <div className="p-4 mt-auto border-t border-white/5">
-            <button onClick={generateEmail} disabled={!selectedListing || generating} className="w-full py-3 bg-blue-500 text-white rounded-xl font-semibold flex items-center justify-center gap-2 hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed">
+            <button onClick={generateEmail} disabled={!selectedListing || generating || selectedPhotos.length === 0} className="w-full py-3 bg-blue-500 text-white rounded-xl font-semibold flex items-center justify-center gap-2 hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed">
               {generating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
-              {generating ? 'Generating...' : 'Generate Email'}
+              {generating ? 'Generating...' : `Generate Email (${selectedPhotos.length} photos)`}
             </button>
           </div>
         </aside>
@@ -587,7 +724,7 @@ ${agentEmail}
                 <Mail className="w-10 h-10 text-white/20" />
               </div>
               <h3 className="text-lg font-medium mb-2">Create Professional Email</h3>
-              <p className="text-white/40 max-w-sm">Select a listing and choose your email type to generate a beautiful, professional email template</p>
+              <p className="text-white/40 max-w-sm">Select a listing, choose up to 5 photos, and generate a beautiful email template</p>
             </div>
           )}
         </div>
