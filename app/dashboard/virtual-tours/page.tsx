@@ -793,7 +793,7 @@ function VirtualToursContent() {
                   >
                     {listing.photos?.[0] ? (
                       <img 
-                        src={listing.photos[0].enhanced_url || listing.photos[0].url} 
+                        src={listing.photos[0].processed_url || listing.photos[0].raw_url} 
                         alt="" 
                         className="w-12 h-12 rounded-lg object-cover"
                       />

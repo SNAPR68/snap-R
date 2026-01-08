@@ -26,7 +26,7 @@ export default async function ContentStudio() {
   const listingsWithPhotos = await Promise.all(
     (listings || []).map(async (listing: any) => {
       const photos = listing.photos || []
-      const enhancedPhotos = photos.filter((p: any) => p.status === 'completed' && p.processed_url)
+      const enhancedPhotos = photos.filter((p: any) => p.processed_url || p.raw_url)
       
       let thumbnailUrl = null
       const firstPhoto = enhancedPhotos[0] || photos[0]

@@ -369,8 +369,8 @@ export default function CampaignsPage() {
                     <div className="w-16 h-16 rounded-lg overflow-hidden flex-shrink-0">
                       <img
                         src={
-                          campaign.listings.photos[0].enhanced_url ||
-                          campaign.listings.photos[0].url
+                          campaign.listings.photos[0].processed_url ||
+                          campaign.listings.photos[0].raw_url
                         }
                         alt="Listing"
                         className="w-full h-full object-cover"
