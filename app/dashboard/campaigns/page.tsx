@@ -56,7 +56,7 @@ interface Campaign {
     address: string;
     city: string;
     state: string;
-    photos: { url: string; enhanced_url?: string }[];
+    photos: { raw_url: string; processed_url?: string }[];
   };
   campaign_templates?: { name: string };
 }
