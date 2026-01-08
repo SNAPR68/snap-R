@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from 'react';
 import Link from 'next/link';
-import { Sparkles, Zap, Check, ArrowRight, Smartphone, Camera, Shield, Mail, Globe, Share2, Wand2, Send, Bell } from 'lucide-react';
+import { Sparkles, Zap, Check, ArrowRight, Smartphone, Camera, Shield, Mail, Globe, Share2, Wand2, Send, Bell, Upload } from 'lucide-react';
 import { LandingGallery } from '@/components/landing-gallery';
 import { Testimonials } from '@/components/testimonials';
 import { trackEvent, SnapREvents } from '@/lib/analytics';
@@ -22,12 +22,12 @@ const TEAM_OPTIONS = [
   { users: 5, monthly: 199, annual: 149 },
 ] as const;
 
+// UPDATED: Corrected pricing - Property Gallery FREE, Virtual Renovation $15/$25/$50, AI Voiceover $2, removed Auto Campaigns
 const ADDONS = [
-  { id: 'virtual_tour', name: 'Virtual Tours', price: 'From $50', icon: 'eye', tooltip: 'Interactive 360° walkthrough tours that let buyers explore properties remotely' },
-  { id: 'virtual_renovation', name: 'Virtual Renovation', price: 'From $35', icon: 'brush', tooltip: 'Digitally remodel kitchens, bathrooms, flooring & more to show potential' },
-  { id: 'ai_voiceover', name: 'AI Voiceovers', price: 'From $15', icon: 'mic', tooltip: 'Professional AI-generated narration for property videos in multiple voices' },
+  { id: 'property_gallery', name: 'Property Gallery', price: 'FREE', icon: 'eye', tooltip: 'Shareable photo galleries with contact form for every listing - included free' },
+  { id: 'virtual_renovation', name: 'Virtual Renovation', price: '$15 / $25 / $50', icon: 'brush', tooltip: 'Digitally remodel kitchens, bathrooms, flooring & more to show potential' },
+  { id: 'ai_voiceover', name: 'AI Voiceovers', price: '$2 flat', icon: 'mic', tooltip: 'Professional AI-generated narration for property videos - flat rate regardless of length' },
   { id: 'cma_report', name: 'CMA Reports', price: 'From $20', icon: 'file', tooltip: 'Comparative Market Analysis reports with your photos & branding' },
-  { id: 'auto_campaigns', name: 'Auto Campaigns', price: 'From $30', icon: 'zap', tooltip: 'Automated social media posting schedules & email drip campaigns' },
   { id: 'white_label', name: 'White Label', price: '$99/mo', icon: 'tag', tooltip: 'Remove SnapR branding & use your own logo for client-facing deliverables' },
   { id: 'human_editing', name: 'Human Editing', price: 'From $5/image', icon: 'user', tooltip: 'Complex edits by professionals: object removal, compositing, retouching' },
 ] as const;
@@ -140,7 +140,7 @@ export default function HomePage() {
   }, [currentTier, isAnnual, isEnterprise]);
   const handleCheckout = async () => {
     if (selectedPlan === 'free') {
-      trackEvent(SnapREvents.CHECKOUT_STARTED, { plan: 'free' });
+      trackEvent(SnapREvents.HOMEPAGE_CTA_CLICK, { plan: 'free' });
       window.location.href = '/auth/signup';
       return;
     }
@@ -368,7 +368,7 @@ export default function HomePage() {
         
         <div className="max-w-6xl mx-auto relative z-10">
           
-          {/* Hero Text - Complete Marketing OS */}
+          {/* Hero Text - AI Listing OS */}
           <div className="text-center mb-10">
             {/* Category Badge */}
             <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-white/5 border border-white/10 rounded-full mb-5">
@@ -380,14 +380,14 @@ export default function HomePage() {
               <span className="text-white text-xs font-medium">Brokers</span>
             </div>
             
-            {/* Main Headline */}
+            {/* Main Headline - UPDATED to AI Listing OS */}
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white leading-[1.1] mb-4">
-              The Complete <span className="text-[#D4A017]">Real Estate Marketing</span> OS
+              The Complete <span className="text-[#D4A017]">AI Listing</span> OS
             </h1>
             
-            {/* Feature Stack */}
+            {/* Feature Stack - UPDATED: Property galleries instead of virtual tours, upload to social instead of social publishing */}
             <p className="text-sm md:text-base text-white/50 mb-4 max-w-3xl mx-auto">
-              Photo enhancement • Content studio • Video + AI voiceovers • Virtual tours • CMA reports • Email marketing • Social publishing • Client approval
+              Photo enhancement • Content studio • Video + AI voiceovers • Property galleries • CMA reports • Email marketing • Upload to social • Client approval
             </p>
             
             {/* Empowerment Hook */}
@@ -517,41 +517,40 @@ export default function HomePage() {
               <p className="text-white/60 text-sm">Shoot 100 photos, hope some turn out okay. No guidance, no scoring, just guessing.</p>
             </div>
             
-            {/* Pain 5: Social Media Guilt */}
+            {/* Pain 5: Content Creation */}
             <div className="bg-red-500/5 border border-red-500/20 rounded-2xl p-6 hover:border-red-500/40 transition-all">
               <div className="w-12 h-12 rounded-xl bg-red-500/10 flex items-center justify-center mb-4">
                 <svg className="w-6 h-6 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5" />
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
                 </svg>
               </div>
-              <h3 className="text-lg font-bold text-red-400 mb-2">Social Media Guilt</h3>
-              <p className="text-white/60 text-sm">Know you should post daily, actually post monthly. The content creation struggle is real.</p>
+              <h3 className="text-lg font-bold text-red-400 mb-2">Hours on Social Posts</h3>
+              <p className="text-white/60 text-sm">Every listing needs posts for 5 platforms. You spend hours on Canva instead of selling.</p>
             </div>
             
-            {/* Pain 6: Email Approval Chains */}
+            {/* Pain 6: Client Chaos */}
             <div className="bg-red-500/5 border border-red-500/20 rounded-2xl p-6 hover:border-red-500/40 transition-all">
               <div className="w-12 h-12 rounded-xl bg-red-500/10 flex items-center justify-center mb-4">
                 <svg className="w-6 h-6 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75" />
                 </svg>
               </div>
-              <h3 className="text-lg font-bold text-red-400 mb-2">Endless Email Approval Chains</h3>
-              <p className="text-white/60 text-sm">"Can you resend photo #7?" "Which one did you approve?" Back and forth forever.</p>
+              <h3 className="text-lg font-bold text-red-400 mb-2">Photo Approval Nightmare</h3>
+              <p className="text-white/60 text-sm">Endless email chains, lost files, missed feedback. Client communication is chaos.</p>
             </div>
             
           </div>
-
-          {/* Solutions Section Header */}
-          <p className="text-center text-[#D4A017] text-sm font-semibold tracking-wider mb-3">THE SNAPR SOLUTION</p>
-          <h2 className="text-3xl md:text-4xl font-bold text-white text-center mb-4">
-            SnapR Fixes Everything
-          </h2>
-          <p className="text-lg text-white/60 text-center mb-12 max-w-2xl mx-auto">
-            One platform. Every problem solved. Here's how we do it differently.
-          </p>
-
+          
+          {/* Solution intro */}
+          <div className="text-center mb-12">
+            <p className="text-[#D4A017] text-sm font-semibold tracking-wider mb-3">THE SOLUTION</p>
+            <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
+              SnapR Fixes Everything
+            </h2>
+          </div>
+          
           {/* 6 Solution Cards */}
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-16">
             
             {/* Solution 1: Speed */}
             <div className="bg-green-500/5 border border-green-500/20 rounded-2xl p-6 hover:border-green-500/40 transition-all">
@@ -560,19 +559,19 @@ export default function HomePage() {
                   <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z" />
                 </svg>
               </div>
-              <h3 className="text-lg font-bold text-green-400 mb-2">30-Second Enhancement</h3>
-              <p className="text-white/60 text-sm">AI processes your photos instantly. No waiting, no delays, no excuses.</p>
+              <h3 className="text-lg font-bold text-green-400 mb-2">30-60 Second AI Processing</h3>
+              <p className="text-white/60 text-sm">Photos enhanced before you finish your coffee. List immediately with stunning visuals.</p>
             </div>
             
-            {/* Solution 2: Free Enhancement */}
+            {/* Solution 2: Cost */}
             <div className="bg-green-500/5 border border-green-500/20 rounded-2xl p-6 hover:border-green-500/40 transition-all">
               <div className="w-12 h-12 rounded-xl bg-green-500/10 flex items-center justify-center mb-4">
                 <svg className="w-6 h-6 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 18.75a60.07 60.07 0 0115.797 2.101c.727.198 1.453-.342 1.453-1.096V18.75M3.75 4.5v.75A.75.75 0 013 6h-.75m0 0v-.375c0-.621.504-1.125 1.125-1.125H20.25M2.25 6v9m18-10.5v.75c0 .414.336.75.75.75h.75m-1.5-1.5h.375c.621 0 1.125.504 1.125 1.125v9.75c0 .621-.504 1.125-1.125 1.125h-.375m1.5-1.5H21a.75.75 0 00-.75.75v.75m0 0H3.75m0 0h-.375a1.125 1.125 0 01-1.125-1.125V15m1.5 1.5v-.75A.75.75 0 003 15h-.75M15 10.5a3 3 0 11-6 0 3 3 0 016 0zm3 0h.008v.008H18V10.5zm-12 0h.008v.008H6V10.5z" />
                 </svg>
               </div>
-              <h3 className="text-lg font-bold text-green-400 mb-2">30 Free Enhancements/Month</h3>
-              <p className="text-white/60 text-sm">All 15 AI enhancement tools included free. Upgrade for unlimited + listings.</p>
+              <h3 className="text-lg font-bold text-green-400 mb-2">96% Cost Reduction</h3>
+              <p className="text-white/60 text-sm">From $400/month to under $20. Unlimited enhancements included in your plan.</p>
             </div>
             
             {/* Solution 3: All-in-One */}
@@ -605,7 +604,7 @@ export default function HomePage() {
                 </svg>
               </div>
               <h3 className="text-lg font-bold text-green-400 mb-2">150+ Ready Templates</h3>
-              <p className="text-white/60 text-sm">Social posts, videos, emails — all auto-generated and ready to publish in seconds.</p>
+              <p className="text-white/60 text-sm">Social posts, videos, emails — all auto-generated and ready to upload in seconds.</p>
             </div>
             
             {/* Solution 6: Client Approval */}
@@ -639,7 +638,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* How It Works - 4 Step Workflow */}
+      {/* How It Works - 4 Step Workflow - UPDATED: "Upload" instead of "Publish" */}
       <section className="py-16 px-6 bg-gradient-to-b from-[#0F0F0F] to-[#1A1A1A]">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-10">
@@ -648,7 +647,7 @@ export default function HomePage() {
               Four Steps to Listing Gold
             </h2>
             <p className="text-lg text-white/60 max-w-2xl mx-auto">
-              From raw photos to published everywhere in under 12 minutes.
+              From raw photos to uploaded everywhere in under 12 minutes.
             </p>
           </div>
           
@@ -781,15 +780,15 @@ export default function HomePage() {
               </div>
             </div>
             
-            {/* Panel 4: PUBLISH */}
+            {/* Panel 4: UPLOAD TO - UPDATED from "PUBLISH" */}
             <div className="group">
               <div className="gold-border-animate mb-2">
                 <div className="aspect-[4/3] relative p-1.5">
                   <div className="w-full h-full bg-[#0A0A0A] rounded-lg overflow-hidden p-2 flex flex-col">
                     
-                    {/* Header */}
+                    {/* Header - UPDATED */}
                     <div className="text-center mb-2">
-                      <span className="text-green-400 text-[10px] font-bold uppercase tracking-wider">All Platforms</span>
+                      <span className="text-green-400 text-[10px] font-bold uppercase tracking-wider">Upload to All</span>
                     </div>
                     
                     {/* Platform Icons - Single Row with green checks */}
@@ -801,7 +800,7 @@ export default function HomePage() {
                             <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>
                           </div>
                           <div className="absolute -top-0.5 -right-0.5 w-3 h-3 rounded-full bg-green-500 flex items-center justify-center">
-                            <svg className="w-2 h-2 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7"/></svg>
+                            <Check className="w-2 h-2 text-white" />
                           </div>
                         </div>
                         {/* Facebook */}
@@ -810,7 +809,7 @@ export default function HomePage() {
                             <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
                           </div>
                           <div className="absolute -top-0.5 -right-0.5 w-3 h-3 rounded-full bg-green-500 flex items-center justify-center">
-                            <svg className="w-2 h-2 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7"/></svg>
+                            <Check className="w-2 h-2 text-white" />
                           </div>
                         </div>
                         {/* LinkedIn */}
@@ -819,357 +818,35 @@ export default function HomePage() {
                             <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
                           </div>
                           <div className="absolute -top-0.5 -right-0.5 w-3 h-3 rounded-full bg-green-500 flex items-center justify-center">
-                            <svg className="w-2 h-2 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7"/></svg>
+                            <Check className="w-2 h-2 text-white" />
                           </div>
                         </div>
-                        {/* TikTok */}
+                        {/* WhatsApp */}
                         <div className="relative">
-                          <div className="w-8 h-8 rounded-lg bg-black border border-white/20 flex items-center justify-center">
-                            <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1-.1z"/></svg>
+                          <div className="w-8 h-8 rounded-lg bg-[#25D366] flex items-center justify-center">
+                            <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
                           </div>
                           <div className="absolute -top-0.5 -right-0.5 w-3 h-3 rounded-full bg-green-500 flex items-center justify-center">
-                            <svg className="w-2 h-2 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7"/></svg>
+                            <Check className="w-2 h-2 text-white" />
                           </div>
                         </div>
                       </div>
                     </div>
                     
-                    {/* Published Band */}
+                    {/* Success Band - UPDATED */}
                     <div className="py-1.5 bg-green-500/10 border border-green-500/20 rounded text-center">
-                      <span className="text-green-400 text-[7px] font-medium">✓ Published • MLS Compliant</span>
+                      <span className="text-green-400 text-[7px] font-medium">✓ Download • Copy Caption • Upload</span>
                     </div>
                   </div>
                 </div>
               </div>
               
-              {/* Gold Button */}
+              {/* Gold Button - UPDATED */}
               <div className="flex items-center justify-center gap-1.5 py-2.5 bg-gradient-to-r from-[#D4A017] to-[#B8860B] rounded-lg">
-                <Send className="w-4 h-4 text-black" />
-                <span className="text-black font-semibold text-sm">Publish</span>
-              </div>
-            </div>
-          </div>
-          
-        </div>
-      </section>
-
-      {/* Industry First - Mobile PWA Feature */}
-      <section id="how-it-works" className="py-12 px-6 bg-gradient-to-b from-[#0F0F0F] to-[#1A1A1A]/50">
-        <div className="max-w-5xl mx-auto">
-          <div className="text-center mb-10">
-            {/* Clean Industry First Badge */}
-            <div className="inline-block relative mb-8">
-              <div className="absolute -inset-4 rounded-3xl bg-[#D4A017]/10 blur-2xl animate-pulse" />
-              
-              <div className="relative flex items-center gap-4 px-8 py-4 rounded-2xl bg-[#1A1A1A] border border-[#D4A017]/40 overflow-hidden">
-                <div className="absolute inset-0 bg-gradient-to-br from-white/5 via-transparent to-transparent" />
-                
-                <div className="relative">
-                  <div className="absolute inset-0 bg-[#D4A017] rounded-xl blur-md opacity-30" />
-                  <div 
-                    className="relative w-12 h-16 rounded-xl bg-gradient-to-br from-[#2A2A2A] to-[#1A1A1A] border-2 border-[#D4A017]/60 flex items-center justify-center overflow-hidden"
-                    style={{ boxShadow: '0 0 20px rgba(212,160,23,0.2)' }}
-                  >
-                    <div className="w-8 h-10 rounded-md bg-gradient-to-b from-[#D4A017]/20 to-[#D4A017]/5 flex items-center justify-center">
-                      <div className="text-[#D4A017] font-bold text-[10px]">
-                        <span className="text-white">S</span>R
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                
-                <div className="relative text-left">
-                  <div className="flex items-center gap-2 mb-1">
-                    <span 
-                      className="text-lg font-black tracking-wider"
-                      style={{
-                        background: 'linear-gradient(135deg, #FFD700 0%, #D4A017 50%, #B8860B 100%)',
-                        WebkitBackgroundClip: 'text',
-                        WebkitTextFillColor: 'transparent',
-                        backgroundClip: 'text',
-                      }}
-                    >
-                      INDUSTRY FIRST
-                    </span>
-                    <span className="px-2 py-0.5 text-[10px] font-bold bg-[#D4A017] text-black rounded-full">
-                      NEW
-                    </span>
-                  </div>
-                  <p className="text-white/70 text-sm">Edit real estate photos from any device</p>
-                  <p className="text-[#D4A017]/80 text-xs font-medium mt-1">✓ iOS App Soon &nbsp; ✓ Android App Soon &nbsp; ✓ Web App Now</p>
-                </div>
-              </div>
-            </div>
-            
-            <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
-              Your Phone Is Now a <span className="text-[#D4A017]">Pro Editing Studio</span>
-            </h2>
-            <p className="text-xl md:text-2xl font-semibold mb-2">
-              <span className="text-white">Upload Raw.</span>
-              <span className="text-white font-bold ml-2">Snap</span><span className="text-[#D4A017] font-bold">R</span>
-              <span className="text-white ml-2">It.</span>
-              <span className="text-[#D4A017] font-bold ml-2">Download Gold.</span>
-            </p>
-            <p className="text-white/50 max-w-2xl mx-auto mb-6">
-              iOS app launching soon in the App Store. Web app available now — add to home screen and start editing.
-            </p>
-            
-          </div>
-          
-          {/* iOS + Android + Web App Cards */}
-          <div className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto">
-            
-            {/* iOS App Card */}
-            <div className="relative bg-[#1A1A1A] border border-white/10 rounded-2xl p-6 overflow-hidden">
-              {/* Coming Soon Banner */}
-              <div className="absolute top-4 right-4 px-3 py-1 bg-[#D4A017]/20 border border-[#D4A017]/40 rounded-full">
-                <span className="text-[#D4A017] text-xs font-semibold">COMING SOON</span>
-              </div>
-              
-              {/* Phone Mockup */}
-              <div className="flex justify-center mb-6 mt-4">
-                <div className="relative">
-                  <div className="w-32 h-56 bg-gradient-to-b from-[#2A2A2A] to-[#1A1A1A] rounded-[2rem] border-4 border-[#3A3A3A] p-2 shadow-2xl">
-                    <div className="w-full h-full bg-[#0A0A0A] rounded-[1.5rem] flex flex-col items-center justify-center relative overflow-hidden">
-                      {/* Notch */}
-                      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-16 h-5 bg-[#2A2A2A] rounded-b-xl"></div>
-                      {/* App Screen */}
-                      <div className="flex flex-col items-center">
-                        <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#D4A017] to-[#B8860B] flex items-center justify-center mb-2">
-                          <Camera className="w-6 h-6 text-black" />
-                        </div>
-                        <span className="text-white text-[10px] font-semibold">SnapR</span>
-                        <span className="text-white/40 text-[8px]">AI Director</span>
-                      </div>
-                    </div>
-                  </div>
-                  {/* Glow */}
-                  <div className="absolute -inset-4 bg-[#D4A017]/10 rounded-full blur-2xl -z-10"></div>
-                </div>
-              </div>
-              
-              {/* Content */}
-              <div className="text-center">
-                <div className="flex items-center justify-center gap-2 mb-2">
-                  <svg className="w-6 h-6 text-white" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/>
-                  </svg>
-                  <h3 className="text-xl font-bold text-white">iOS App</h3>
-                </div>
-                <p className="text-[#D4A017] font-semibold mb-4">SnapR Camera with AI Director</p>
-                
-                {/* Features */}
-                <ul className="space-y-2 text-left mb-6">
-                  <li className="flex items-center gap-2 text-white/70 text-sm">
-                    <Check className="w-4 h-4 text-[#D4A017]" />
-                    AI guides you before the shot
-                  </li>
-                  <li className="flex items-center gap-2 text-white/70 text-sm">
-                    <Check className="w-4 h-4 text-[#D4A017]" />
-                    Real-time composition tips
-                  </li>
-                  <li className="flex items-center gap-2 text-white/70 text-sm">
-                    <Check className="w-4 h-4 text-[#D4A017]" />
-                    MLS compliance built-in
-                  </li>
-                  <li className="flex items-center gap-2 text-white/70 text-sm">
-                    <Check className="w-4 h-4 text-[#D4A017]" />
-                    All 15 AI enhancement tools
-                  </li>
-                </ul>
-                
-                {/* Notify Button */}
-                <button 
-                  onClick={() => setShowIOSNotifyModal(true)}
-                  className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-white/5 border border-white/20 text-white font-semibold rounded-xl hover:bg-white/10 transition-colors"
-                >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-                  </svg>
-                  Notify Me When Available
-                </button>
-                <p className="text-white/30 text-xs mt-2">Launching in App Store soon</p>
-              </div>
-            </div>
-            
-            {/* Android App Card */}
-            <div className="relative bg-[#1A1A1A] border border-white/10 rounded-2xl p-6 overflow-hidden">
-              {/* Coming Soon Banner */}
-              <div className="absolute top-4 right-4 px-3 py-1 bg-[#D4A017]/20 border border-[#D4A017]/40 rounded-full">
-                <span className="text-[#D4A017] text-xs font-semibold">COMING SOON</span>
-              </div>
-              
-              {/* Phone Mockup - Android style */}
-              <div className="flex justify-center mb-6 mt-4">
-                <div className="relative">
-                  <div className="w-32 h-56 bg-gradient-to-b from-[#2A2A2A] to-[#1A1A1A] rounded-[1.5rem] border-4 border-[#3A3A3A] p-2 shadow-2xl">
-                    <div className="w-full h-full bg-[#0A0A0A] rounded-[1rem] flex flex-col items-center justify-center relative overflow-hidden">
-                      {/* Camera punch hole */}
-                      <div className="absolute top-2 left-1/2 -translate-x-1/2 w-2 h-2 bg-[#2A2A2A] rounded-full"></div>
-                      {/* App Screen */}
-                      <div className="flex flex-col items-center">
-                        <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#D4A017] to-[#B8860B] flex items-center justify-center mb-2">
-                          <Camera className="w-6 h-6 text-black" />
-                        </div>
-                        <span className="text-white text-[10px] font-semibold">SnapR</span>
-                        <span className="text-white/40 text-[8px]">AI Director</span>
-                      </div>
-                      {/* Android nav bar */}
-                      <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-4">
-                        <div className="w-3 h-3 border border-white/30 rounded-sm"></div>
-                        <div className="w-3 h-3 border border-white/30 rounded-full"></div>
-                        <div className="w-3 h-3 border-l-2 border-white/30"></div>
-                      </div>
-                    </div>
-                  </div>
-                  {/* Glow */}
-                  <div className="absolute -inset-4 bg-[#3DDC84]/10 rounded-full blur-2xl -z-10"></div>
-                </div>
-              </div>
-              
-              {/* Content */}
-              <div className="text-center">
-                <div className="flex items-center justify-center gap-2 mb-2">
-                  {/* Android Icon */}
-                  <svg className="w-6 h-6 text-[#3DDC84]" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M17.6 9.48l1.84-3.18c.16-.31.04-.69-.26-.85-.29-.15-.65-.06-.83.22l-1.88 3.24c-1.42-.59-3.02-.59-4.48 0L10.1 5.67c-.18-.28-.54-.37-.83-.22-.3.16-.42.54-.26.85L10.85 9.48C7.58 11.05 5.45 14.27 5 18h14c-.45-3.73-2.58-6.95-5.85-8.52zM10 15c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1zm4 0c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1z"/>
-                  </svg>
-                  <h3 className="text-xl font-bold text-white">Android App</h3>
-                </div>
-                <p className="text-[#3DDC84] font-semibold mb-4">SnapR Camera with AI Director</p>
-                
-                {/* Features */}
-                <ul className="space-y-2 text-left mb-6">
-                  <li className="flex items-center gap-2 text-white/70 text-sm">
-                    <Check className="w-4 h-4 text-[#3DDC84]" />
-                    AI guides you before the shot
-                  </li>
-                  <li className="flex items-center gap-2 text-white/70 text-sm">
-                    <Check className="w-4 h-4 text-[#3DDC84]" />
-                    Real-time composition tips
-                  </li>
-                  <li className="flex items-center gap-2 text-white/70 text-sm">
-                    <Check className="w-4 h-4 text-[#3DDC84]" />
-                    MLS compliance built-in
-                  </li>
-                  <li className="flex items-center gap-2 text-white/70 text-sm">
-                    <Check className="w-4 h-4 text-[#3DDC84]" />
-                    All 15 AI enhancement tools
-                  </li>
-                </ul>
-                
-                {/* Notify Button */}
-                <button 
-                  onClick={() => setShowIOSNotifyModal(true)}
-                  className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-white/5 border border-white/20 text-white font-semibold rounded-xl hover:bg-white/10 transition-colors"
-                >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-                  </svg>
-                  Notify Me When Available
-                </button>
-                <p className="text-white/30 text-xs mt-2">Launching in Play Store soon</p>
-              </div>
-            </div>
-            
-            {/* Web App Card */}
-            <div className="relative bg-gradient-to-br from-[#D4A017]/10 to-transparent border border-[#D4A017]/30 rounded-2xl p-6 overflow-hidden">
-              {/* Available Now Banner */}
-              <div className="absolute top-4 right-4 px-3 py-1 bg-green-500/20 border border-green-500/40 rounded-full">
-                <span className="text-green-400 text-xs font-semibold flex items-center gap-1">
-                  <span className="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse"></span>
-                  AVAILABLE NOW
-                </span>
-              </div>
-              
-              {/* Browser Mockup */}
-              <div className="flex justify-center mb-6 mt-4">
-                <div className="relative">
-                  <div className="w-44 h-56 bg-[#1A1A1A] rounded-xl border border-[#D4A017]/30 overflow-hidden shadow-2xl">
-                    {/* Browser Bar */}
-                    <div className="h-6 bg-[#2A2A2A] flex items-center px-2 gap-1.5">
-                      <div className="w-2 h-2 rounded-full bg-red-500"></div>
-                      <div className="w-2 h-2 rounded-full bg-yellow-500"></div>
-                      <div className="w-2 h-2 rounded-full bg-green-500"></div>
-                      <div className="flex-1 mx-2 h-3 bg-[#1A1A1A] rounded text-[6px] text-white/40 flex items-center justify-center">snap-r.com</div>
-                    </div>
-                    {/* Content */}
-                    <div className="p-3 flex flex-col items-center justify-center h-[calc(100%-1.5rem)]">
-                      <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#D4A017] to-[#B8860B] flex items-center justify-center mb-2">
-                        <Camera className="w-5 h-5 text-black" />
-                      </div>
-                      <span className="text-white text-[10px] font-semibold">Snap & Enhance</span>
-                      <span className="text-white/40 text-[8px] mb-2">Browser-Based</span>
-                      <div className="w-full h-16 bg-[#0A0A0A] rounded mt-1 flex items-center justify-center">
-                        <Sparkles className="w-6 h-6 text-[#D4A017]/50" />
-                      </div>
-                    </div>
-                  </div>
-                  {/* Glow */}
-                  <div className="absolute -inset-4 bg-[#D4A017]/10 rounded-full blur-2xl -z-10"></div>
-                </div>
-              </div>
-              
-              {/* Content */}
-              <div className="text-center">
-                <div className="flex items-center justify-center gap-2 mb-2">
-                  <Globe className="w-6 h-6 text-[#D4A017]" />
-                  <h3 className="text-xl font-bold text-white">Web App</h3>
-                </div>
-                <p className="text-[#D4A017] font-semibold mb-4">Snap & Enhance in Your Browser</p>
-                
-                {/* Features */}
-                <ul className="space-y-2 text-left mb-6">
-                  <li className="flex items-center gap-2 text-white/70 text-sm">
-                    <Check className="w-4 h-4 text-green-400" />
-                    No download required
-                  </li>
-                  <li className="flex items-center gap-2 text-white/70 text-sm">
-                    <Check className="w-4 h-4 text-green-400" />
-                    Add to home screen (PWA)
-                  </li>
-                  <li className="flex items-center gap-2 text-white/70 text-sm">
-                    <Check className="w-4 h-4 text-green-400" />
-                    Same AI tools as iOS app
-                  </li>
-                  <li className="flex items-center gap-2 text-white/70 text-sm">
-                    <Check className="w-4 h-4 text-green-400" />
-                    Works on any device
-                  </li>
-                </ul>
-                
-                {/* Open Web App Button */}
-                <Link 
-                  href="/auth/signup"
-                  className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-[#D4A017] to-[#B8860B] text-black font-bold rounded-xl hover:opacity-90 transition-all"
-                >
-                  Open Web App
-                  <ArrowRight className="w-4 h-4" />
-                </Link>
-                <p className="text-white/30 text-xs mt-2">30 free enhancements/month • No credit card</p>
-              </div>
-            </div>
-            
-          </div>
-          
-          {/* How to Use Web App - 3 Steps */}
-          <div className="mt-10 max-w-4xl mx-auto">
-            <h3 className="text-center text-white/50 text-sm uppercase tracking-wider mb-6">How to use on your phone</h3>
-            <div className="grid md:grid-cols-3 gap-6">
-              <div className="text-center">
-                <div className="w-12 h-12 mx-auto mb-3 rounded-xl bg-gradient-to-br from-[#D4A017] to-[#B8860B] flex items-center justify-center text-lg font-bold text-black">1</div>
-                <h4 className="text-white font-semibold mb-1">Add to Home Screen</h4>
-                <p className="text-white/40 text-sm">Open <span className="text-[#D4A017]">snap-r.com</span> → Tap Share → "Add to Home Screen"</p>
-              </div>
-              <div className="text-center">
-                <div className="w-12 h-12 mx-auto mb-3 rounded-xl bg-gradient-to-br from-[#D4A017] to-[#B8860B] flex items-center justify-center text-lg font-bold text-black">2</div>
-                <h4 className="text-white font-semibold mb-1">Snap & Upload</h4>
-                <p className="text-white/40 text-sm">Take photos directly or upload from your gallery</p>
-              </div>
-              <div className="text-center">
-                <div className="w-12 h-12 mx-auto mb-3 rounded-xl bg-gradient-to-br from-[#D4A017] to-[#B8860B] flex items-center justify-center text-lg font-bold text-black">3</div>
-                <h4 className="text-white font-semibold mb-1">AI Does the Rest</h4>
-                <p className="text-white/40 text-sm">30-second processing. Download & share instantly.</p>
+                <svg className="w-4 h-4 text-black" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                </svg>
+                <span className="text-black font-semibold text-sm">Upload</span>
               </div>
             </div>
           </div>
@@ -1217,7 +894,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Premium Add-ons */}
+      {/* Premium Add-ons - UPDATED with correct pricing */}
       <section className="py-16 px-6 bg-[#0A0A0A]">
         <div className="max-w-5xl mx-auto">
           <div className="text-center mb-12">
@@ -1227,9 +904,9 @@ export default function HomePage() {
           
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
             {[
-              { name: 'Virtual Tours', desc: '360° walkthroughs', price: 'From $50', color: 'blue' },
-              { name: 'Renovation', desc: 'Digital remodeling', price: 'From $35', color: 'orange' },
-              { name: 'AI Voiceovers', desc: 'Pro narration', price: 'From $15', color: 'green' },
+              { name: 'Property Gallery', desc: 'Shareable galleries', price: 'FREE', color: 'green' },
+              { name: 'Renovation', desc: 'Digital remodeling', price: '$15 / $25 / $50', color: 'orange' },
+              { name: 'AI Voiceovers', desc: 'Pro narration', price: '$2 flat', color: 'blue' },
               { name: 'CMA Reports', desc: 'Market analysis', price: 'From $20', color: 'purple' },
               { name: 'Human Editing', desc: 'Pro retouching', price: 'From $5/img', color: 'cyan' },
               { name: 'White Label', desc: 'Your brand', price: '$99/mo', color: 'yellow' },
@@ -1237,7 +914,7 @@ export default function HomePage() {
               <div key={addon.name} className="p-4 rounded-xl bg-white/5 border border-white/10 hover:border-[#D4A017]/50 transition-all cursor-pointer text-center">
                 <h4 className="font-semibold text-sm mb-1">{addon.name}</h4>
                 <p className="text-white/40 text-xs mb-2">{addon.desc}</p>
-                <span className="text-[#D4A017] text-sm font-medium">{addon.price}</span>
+                <span className={`text-sm font-medium ${addon.price === 'FREE' ? 'text-green-400' : 'text-[#D4A017]'}`}>{addon.price}</span>
               </div>
             ))}
           </div>

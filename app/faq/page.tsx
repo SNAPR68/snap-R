@@ -4,7 +4,7 @@ import { Instagram, Linkedin, Youtube } from 'lucide-react';
 const faqs = [
   { 
     q: 'What is SnapR?', 
-    a: 'SnapR is the complete real estate marketing OS. We help you transform property photos, create marketing content, generate videos, build property sites, manage client approvals, and publish to social media — all from one platform.' 
+    a: 'SnapR is the complete AI Listing OS for real estate. We help you transform property photos, create marketing content, generate videos, build property galleries, manage client approvals, and share to social media — all from one platform.' 
   },
   { 
     q: 'How does the pricing work?', 
@@ -28,11 +28,23 @@ const faqs = [
   },
   { 
     q: 'What else is included besides photo editing?', 
-    a: 'SnapR includes: Content Studio (150+ templates), Video Creator with AI voiceovers, Email Marketing (24 templates), Property Landing Pages, 360° Virtual Tours, CMA Reports, Client Approval Workflow, Social Publishing to 5 platforms, and WhatsApp notifications.' 
+    a: 'SnapR includes: Content Studio (150+ templates), Video Creator with AI voiceovers, Email Marketing (24 templates), Property Landing Pages, FREE Property Galleries, CMA Reports, Client Approval Workflow, and upload to Instagram, Facebook, LinkedIn, TikTok & WhatsApp.' 
   },
   { 
-    q: 'Can I publish directly to social media?', 
-    a: 'Yes! Connect your Facebook, Instagram, LinkedIn, and TikTok accounts to publish content directly from SnapR. Schedule posts or publish immediately.' 
+    q: 'How do I share content to Instagram/Facebook?', 
+    a: 'Click "Upload to Instagram" or any platform button. On mobile, it opens the app directly with your image and caption ready to post. On desktop, the image downloads and caption copies to your clipboard, then the platform opens — just upload and paste!' 
+  },
+  { 
+    q: 'Is the Property Gallery really free?', 
+    a: 'Yes! Every listing gets a FREE shareable Property Gallery page with all your photos, property details, and a contact form. Share the link with clients or embed it on your website.' 
+  },
+  { 
+    q: 'How much does Virtual Renovation cost?', 
+    a: 'Virtual Renovation pricing: $15 for flooring changes, $25 for kitchen or bathroom updates, $50 for full room transformations. AI-powered results in under 2 minutes.' 
+  },
+  { 
+    q: 'How much does AI Voiceover cost?', 
+    a: '$2 flat rate per voiceover, regardless of length. Choose from multiple voice styles and get professional narration for your property videos instantly.' 
   },
   { 
     q: 'What image formats do you support?', 
@@ -72,7 +84,7 @@ export default function FAQPage() {
       
       <main className="flex-1 max-w-4xl mx-auto px-6 py-12">
         <h1 className="text-4xl font-bold text-white mb-4">Frequently Asked Questions</h1>
-        <p className="text-white/60 mb-12">Everything you need to know about SnapR, the complete real estate marketing OS.</p>
+        <p className="text-white/60 mb-12">Everything you need to know about SnapR, the AI Listing OS for real estate.</p>
         
         <div className="space-y-6">
           {faqs.map((faq, i) => (
@@ -100,7 +112,7 @@ export default function FAQPage() {
                 <img src="/snapr-logo.png" alt="SnapR" className="w-12 h-12" />
                 <span className="text-xl font-bold text-white">Snap<span className="text-[#D4A017]">R</span></span>
               </div>
-              <p className="text-white/60 text-sm leading-relaxed">The complete real estate marketing OS. From photo to published in under 2 minutes.</p>
+              <p className="text-white/60 text-sm leading-relaxed">The AI Listing OS. From photo to posted in under 2 minutes.</p>
             </div>
             <div>
               <h4 className="text-white font-semibold mb-4 text-sm uppercase tracking-wider">Company</h4>

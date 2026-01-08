@@ -1,57 +1,87 @@
 'use client';
 
 import React, { Suspense, useEffect, useState, useCallback, useRef } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
-import {
+import JSZip from 'jszip';
+import { 
   Loader2, Home, ChevronRight, Upload, Sparkles, Download,
-  Check, X, Image, Eye, Clock, DollarSign, Share2, Lightbulb,
-  Plus, Trash2, GripVertical, Play, Pause, Settings, Globe,
-  Link2, Copy, ExternalLink, RotateCcw, Compass, Music,
-  Maximize2, ArrowUp, ArrowDown, ArrowLeft, ArrowRight,
-  Camera, Video, MapPin, Info, Edit, ChevronDown, Images
+  Eye, Link2, Trash2, Edit3, Plus, Image, ExternalLink, Copy, Check,
+  Camera, X, GripVertical, Play, Pause, ChevronLeft, RotateCcw,
+  Share2, Globe, Lock, Users, Settings, Grid, List, Calendar,
+  CheckCircle, AlertCircle, Info, Package
 } from 'lucide-react';
 import Link from 'next/link';
+
+interface TourScene {
+  id: string;
+  name: string;
+  image_url: string;
+  order_index: number;
+}
 
 interface Tour {
   id: string;
   name: string;
-  description?: string;
   slug: string;
-  status: string;
-  is_public: boolean;
-  view_count: number;
+  description?: string;
   cover_image_url?: string;
+  is_published: boolean;
+  view_count: number;
   created_at: string;
-  tour_scenes?: Scene[];
+  updated_at: string;
+  listing_id?: string;
+  tour_scenes?: TourScene[];
 }
 
-interface Scene {
-  id: string;
-  name: string;
-  image_url: string;
-  thumbnail_url?: string;
-  is_360: boolean;
-  sort_order: number;
-  is_start_scene: boolean;
-  floor_name?: string;
-}
-
-interface Listing {
-  id: string;
-  title: string;
-  address?: string;
-  thumbnail?: string | null;
-  photoCount: number;
-}
-
-// Download helper - downloads all tour photos
-async function downloadTourPhotos(tour: Tour) {
+// Download helper - downloads all tour photos as ZIP
+async function downloadTourPhotosAsZip(tour: Tour) {
   if (!tour.tour_scenes || tour.tour_scenes.length === 0) return;
   
-  // Download each photo
+  const zip = new JSZip();
+  const folder = zip.folder(tour.name || 'gallery');
+  
+  // Download each photo and add to ZIP
   for (let i = 0; i < tour.tour_scenes.length; i++) {
     const scene = tour.tour_scenes[i];
     try {
+      const response = await fetch(scene.image_url);
+      if (!response.ok) throw new Error('Failed to fetch');
+      const blob = await response.blob();
+      const fileName = `${scene.name || `photo-${i + 1}`}.jpg`;
+      folder?.file(fileName, blob);
+    } catch (e) {
+      console.error('Failed to add to ZIP:', scene.name, e);
+      // Try alternate method - download via canvas if image is already loaded
+    }
+  }
+  
+  // Generate and download ZIP
+  try {
+    const zipBlob = await zip.generateAsync({ type: 'blob' });
+    const url = window.URL.createObjectURL(zipBlob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${tour.name || 'gallery'}-photos.zip`;
+    document.body.appendChild(a);
+    a.click();
+    window.URL.revokeObjectURL(url);
+    document.body.removeChild(a);
+  } catch (e) {
+    console.error('ZIP generation failed:', e);
+    // Fallback: download individually
+    await downloadTourPhotosIndividually(tour);
+  }
+}
+
+// Fallback: Download photos individually
+async function downloadTourPhotosIndividually(tour: Tour) {
+  if (!tour.tour_scenes || tour.tour_scenes.length === 0) return;
+  
+  for (let i = 0; i < tour.tour_scenes.length; i++) {
+    const scene = tour.tour_scenes[i];
+    try {
+      // Try fetch first
       const response = await fetch(scene.image_url);
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
@@ -62,10 +92,10 @@ async function downloadTourPhotos(tour: Tour) {
       a.click();
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
-      // Small delay between downloads
       await new Promise(r => setTimeout(r, 300));
     } catch (e) {
-      console.error('Download failed for scene:', scene.name, e);
+      // Fallback: open image in new tab
+      window.open(scene.image_url, '_blank');
     }
   }
 }
@@ -89,7 +119,7 @@ function TourCard({ tour, onView, onEdit, onDelete }: {
 
   const handleDownload = async () => {
     setDownloading(true);
-    await downloadTourPhotos(tour);
+    await downloadTourPhotosAsZip(tour);
     setDownloading(false);
   };
 
@@ -98,62 +128,55 @@ function TourCard({ tour, onView, onEdit, onDelete }: {
       {/* Cover Image */}
       <div className="aspect-video bg-white/5 relative">
         {tour.cover_image_url || tour.tour_scenes?.[0]?.image_url ? (
-          <img
-            src={tour.cover_image_url || tour.tour_scenes?.[0]?.image_url}
+          <img 
+            src={tour.cover_image_url || tour.tour_scenes?.[0]?.image_url} 
             alt={tour.name}
             className="w-full h-full object-cover"
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center">
-            <Camera className="w-12 h-12 text-white/20" />
+            <Image className="w-12 h-12 text-white/20" />
           </div>
         )}
         
         {/* Status Badge */}
-        <div className={`absolute top-3 left-3 px-2 py-1 rounded text-xs font-medium ${
-          tour.status === 'published' && tour.is_public
-            ? 'bg-green-500/20 text-green-400'
-            : 'bg-amber-500/20 text-amber-400'
-        }`}>
-          {tour.status === 'published' && tour.is_public ? 'Live' : 'Draft'}
+        <div className="absolute top-3 left-3">
+          {tour.is_published ? (
+            <span className="px-2 py-1 bg-green-500 text-white text-xs font-medium rounded-full">
+              Live
+            </span>
+          ) : (
+            <span className="px-2 py-1 bg-white/20 text-white text-xs font-medium rounded-full">
+              Draft
+            </span>
+          )}
         </div>
-
-        {/* Scene Count */}
-        <div className="absolute top-3 right-3 px-2 py-1 bg-black/50 rounded text-xs">
+        
+        {/* Photo Count */}
+        <div className="absolute top-3 right-3 px-2 py-1 bg-black/60 text-white text-xs rounded-full">
           {tour.tour_scenes?.length || 0} photos
         </div>
-
-        {/* Play Button Overlay */}
-        <button
-          onClick={onView}
-          className="absolute inset-0 flex items-center justify-center bg-black/30 opacity-0 hover:opacity-100 transition-opacity"
-        >
-          <div className="w-16 h-16 rounded-full bg-white/20 backdrop-blur flex items-center justify-center">
-            <Play className="w-8 h-8 text-white ml-1" />
-          </div>
-        </button>
       </div>
-
-      {/* Content */}
+      
+      {/* Info */}
       <div className="p-4">
-        <h3 className="font-medium truncate mb-1">{tour.name}</h3>
-        
-        <div className="flex items-center gap-4 text-sm text-white/50 mb-4">
+        <h3 className="font-semibold text-white mb-1 truncate">{tour.name}</h3>
+        <div className="flex items-center gap-3 text-xs text-white/50 mb-3">
           <span className="flex items-center gap-1">
-            <Eye className="w-4 h-4" />
-            {tour.view_count}
+            <Eye className="w-3 h-3" />
+            {tour.view_count || 0}
           </span>
           <span className="flex items-center gap-1">
-            <Clock className="w-4 h-4" />
-            {new Date(tour.created_at).toLocaleDateString()}
+            <Calendar className="w-3 h-3" />
+            {new Date(tour.updated_at || tour.created_at).toLocaleDateString()}
           </span>
         </div>
-
+        
         {/* Actions */}
         <div className="flex items-center gap-2">
           <button
             onClick={copyLink}
-            className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-white/5 rounded-lg hover:bg-white/10 transition-colors text-sm"
+            className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-white/10 rounded-lg text-sm hover:bg-white/20 transition-colors"
           >
             {copied ? <Check className="w-4 h-4 text-green-400" /> : <Link2 className="w-4 h-4" />}
             {copied ? 'Copied!' : 'Copy Link'}
@@ -161,20 +184,22 @@ function TourCard({ tour, onView, onEdit, onDelete }: {
           <button
             onClick={handleDownload}
             disabled={downloading}
-            className="p-2 bg-white/5 rounded-lg hover:bg-white/10 transition-colors"
-            title="Download Photos"
+            className="p-2 bg-white/10 rounded-lg hover:bg-white/20 transition-colors"
+            title="Download as ZIP"
           >
             {downloading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
           </button>
           <button
             onClick={onEdit}
-            className="p-2 bg-white/5 rounded-lg hover:bg-white/10 transition-colors"
+            className="p-2 bg-white/10 rounded-lg hover:bg-white/20 transition-colors"
+            title="Edit"
           >
-            <Edit className="w-4 h-4" />
+            <Edit3 className="w-4 h-4" />
           </button>
           <button
             onClick={onDelete}
-            className="p-2 bg-white/5 rounded-lg hover:bg-red-500/20 hover:text-red-400 transition-colors"
+            className="p-2 bg-red-500/20 text-red-400 rounded-lg hover:bg-red-500/30 transition-colors"
+            title="Delete"
           >
             <Trash2 className="w-4 h-4" />
           </button>
@@ -184,708 +209,338 @@ function TourCard({ tour, onView, onEdit, onDelete }: {
   );
 }
 
-// Tour Creator Component
-function TourCreator({
+// Create/Edit Tour Modal
+function TourModal({ 
+  tour, 
   listingId,
-  listingTitle,
-  photoUrls,
-  onBack,
-  onComplete,
-}: {
+  onClose, 
+  onSave 
+}: { 
+  tour?: Tour;
   listingId?: string;
-  listingTitle?: string;
-  photoUrls: { url: string; id: string }[];
-  onBack: () => void;
-  onComplete: (tour: Tour) => void;
+  onClose: () => void;
+  onSave: (tour: Tour) => void;
 }) {
-  const [step, setStep] = useState(0);
-  const [tourName, setTourName] = useState(listingTitle || 'Property Gallery');
-  const [tourType, setTourType] = useState<'regular' | '360'>('regular');
-  const [selectedPhotos, setSelectedPhotos] = useState<{ url: string; id: string; name: string; file?: File }[]>([]);
+  const supabase = createClient();
+  const [name, setName] = useState(tour?.name || '');
+  const [description, setDescription] = useState(tour?.description || '');
+  const [scenes, setScenes] = useState<TourScene[]>(tour?.tour_scenes || []);
   const [uploading, setUploading] = useState(false);
-  const [uploadProgress, setUploadProgress] = useState(0);
-  const [settings, setSettings] = useState({
-    autoRotate: true,
-    showCompass: true,
-  });
-  const [processing, setProcessing] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const togglePhoto = (photo: { url: string; id: string }) => {
-    const exists = selectedPhotos.find(p => p.id === photo.id);
-    if (exists) {
-      setSelectedPhotos(selectedPhotos.filter(p => p.id !== photo.id));
-    } else {
-      setSelectedPhotos([...selectedPhotos, { ...photo, name: `Photo ${selectedPhotos.length + 1}` }]);
-    }
-  };
-
-  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
 
     setUploading(true);
-    setUploadProgress(0);
-    setError(null);
+    const newScenes: TourScene[] = [];
 
-    try {
-      const supabase = createClient();
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('Not authenticated');
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+      const fileName = `tour-${Date.now()}-${i}.${file.name.split('.').pop()}`;
+      
+      try {
+        const { data, error } = await supabase.storage
+          .from('tour-images')
+          .upload(fileName, file);
 
-      const uploadedUrls: { url: string; id: string; name: string; file: File }[] = [];
-      const totalFiles = files.length;
+        if (error) throw error;
 
-      for (let i = 0; i < files.length; i++) {
-        const file = files[i];
-        setUploadProgress(Math.round(((i + 1) / totalFiles) * 100));
+        const { data: urlData } = supabase.storage
+          .from('tour-images')
+          .getPublicUrl(fileName);
 
-        // Upload to Supabase storage
-        const fileName = `tour-photos/${user.id}/${Date.now()}-${file.name}`;
-        const { data: uploadData, error: uploadError } = await supabase.storage
-          .from('tour-photos')
-          .upload(fileName, file, {
-            contentType: file.type,
-            upsert: false,
-          });
-
-        if (uploadError) {
-          console.error('Upload error:', uploadError);
-          continue;
-        }
-
-        // Get signed URL
-        const { data: urlData } = await supabase.storage
-          .from('tour-photos')
-          .createSignedUrl(fileName, 3600 * 24 * 365); // 1 year expiry
-
-        if (urlData?.signedUrl) {
-          uploadedUrls.push({
-            url: urlData.signedUrl,
-            id: `uploaded-${Date.now()}-${i}`,
-            name: `Photo ${selectedPhotos.length + uploadedUrls.length + 1}`,
-            file,
-          });
-        }
-      }
-
-      setSelectedPhotos([...selectedPhotos, ...uploadedUrls]);
-      setUploadProgress(0);
-    } catch (err: any) {
-      setError(err.message || 'Failed to upload photos');
-    } finally {
-      setUploading(false);
-      if (fileInputRef.current) {
-        fileInputRef.current.value = '';
+        newScenes.push({
+          id: `temp-${Date.now()}-${i}`,
+          name: file.name.replace(/\.[^/.]+$/, ''),
+          image_url: urlData.publicUrl,
+          order_index: scenes.length + i
+        });
+      } catch (err) {
+        console.error('Upload error:', err);
       }
     }
+
+    setScenes([...scenes, ...newScenes]);
+    setUploading(false);
+    if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
-  const removePhoto = (id: string) => {
-    setSelectedPhotos(selectedPhotos.filter(p => p.id !== id));
-  };
-
-  const handleSelectFromListing = () => {
-    // This will show the photo selection grid
-    setStep(1);
-  };
-
-  const updateSceneName = (id: string, name: string) => {
-    setSelectedPhotos(selectedPhotos.map(p => p.id === id ? { ...p, name } : p));
+  const removeScene = (id: string) => {
+    setScenes(scenes.filter(s => s.id !== id));
   };
 
   const moveScene = (index: number, direction: 'up' | 'down') => {
-    const newPhotos = [...selectedPhotos];
-    const newIndex = direction === 'up' ? index - 1 : index + 1;
-    if (newIndex < 0 || newIndex >= newPhotos.length) return;
-    [newPhotos[index], newPhotos[newIndex]] = [newPhotos[newIndex], newPhotos[index]];
-    setSelectedPhotos(newPhotos);
+    if (direction === 'up' && index === 0) return;
+    if (direction === 'down' && index === scenes.length - 1) return;
+
+    const newScenes = [...scenes];
+    const targetIndex = direction === 'up' ? index - 1 : index + 1;
+    [newScenes[index], newScenes[targetIndex]] = [newScenes[targetIndex], newScenes[index]];
+    newScenes.forEach((s, i) => s.order_index = i);
+    setScenes(newScenes);
   };
 
-  const handleCreate = async () => {
-    if (selectedPhotos.length === 0) {
-      setError('Please select at least one photo');
-      return;
-    }
-
-    setProcessing(true);
-    setError(null);
+  const handleSave = async () => {
+    if (!name.trim()) return;
+    setSaving(true);
 
     try {
-      const response = await fetch('/api/virtual-tours', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-          listingId,
-          name: tourName,
-          tourType: tourType === '360' ? '360' : 'regular',
-          settings: {
-            autoRotate: settings.autoRotate,
-            showCompass: settings.showCompass,
-          },
-          scenes: selectedPhotos.map((photo, index) => ({
-            name: photo.name,
-            imageUrl: photo.url,
-            is360: tourType === '360',
-            sortOrder: index,
-          })),
-        }),
-      });
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
 
-      const data = await response.json();
+      const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') + '-' + Date.now().toString(36);
 
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to create gallery');
+      if (tour) {
+        // Update existing tour
+        const { data: updatedTour, error } = await supabase
+          .from('virtual_tours')
+          .update({
+            name,
+            description,
+            cover_image_url: scenes[0]?.image_url,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', tour.id)
+          .select()
+          .single();
+
+        if (error) throw error;
+
+        // Update scenes
+        await supabase.from('tour_scenes').delete().eq('tour_id', tour.id);
+        
+        if (scenes.length > 0) {
+          const { error: scenesError } = await supabase
+            .from('tour_scenes')
+            .insert(scenes.map((s, i) => ({
+              tour_id: tour.id,
+              name: s.name,
+              image_url: s.image_url,
+              order_index: i
+            })));
+
+          if (scenesError) throw scenesError;
+        }
+
+        onSave({ ...updatedTour, tour_scenes: scenes });
+      } else {
+        // Create new tour
+        const { data: newTour, error } = await supabase
+          .from('virtual_tours')
+          .insert({
+            user_id: user.id,
+            listing_id: listingId || null,
+            name,
+            slug,
+            description,
+            cover_image_url: scenes[0]?.image_url,
+            is_published: true
+          })
+          .select()
+          .single();
+
+        if (error) throw error;
+
+        // Add scenes
+        if (scenes.length > 0) {
+          const { error: scenesError } = await supabase
+            .from('tour_scenes')
+            .insert(scenes.map((s, i) => ({
+              tour_id: newTour.id,
+              name: s.name,
+              image_url: s.image_url,
+              order_index: i
+            })));
+
+          if (scenesError) throw scenesError;
+        }
+
+        onSave({ ...newTour, tour_scenes: scenes });
       }
 
-      onComplete(data.tour);
-    } catch (err: any) {
-      setError(err.message);
+      onClose();
+    } catch (err) {
+      console.error('Save error:', err);
     } finally {
-      setProcessing(false);
+      setSaving(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-[#0F0F0F] text-white p-6">
-      <div className="max-w-5xl mx-auto">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+      <div className="bg-[#1A1A1A] rounded-2xl border border-white/10 w-full max-w-3xl max-h-[90vh] overflow-hidden flex flex-col">
         {/* Header */}
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-3">
-            <div className="p-3 bg-gradient-to-br from-purple-500/20 to-pink-500/20 rounded-xl">
-              <Images className="w-8 h-8 text-purple-400" />
-            </div>
-            <div>
-              <h1 className="text-2xl font-bold">Create Property Gallery</h1>
-              <p className="text-white/50">{listingTitle || 'New Gallery'}</p>
-            </div>
-          </div>
-          <button onClick={onBack} className="text-white/50 hover:text-white transition-colors">
-            ← Back
+        <div className="p-4 border-b border-white/10 flex items-center justify-between">
+          <h2 className="text-xl font-bold">{tour ? 'Edit Gallery' : 'Create Gallery'}</h2>
+          <button onClick={onClose} className="p-2 hover:bg-white/10 rounded-lg transition-colors">
+            <X className="w-5 h-5" />
           </button>
         </div>
 
-        {/* Progress Steps */}
-        <div className="flex items-center justify-center gap-4 mb-8">
-          {[0, 1, 2, 3].map((s) => (
-            <React.Fragment key={s}>
-              <div
-                className={`w-10 h-10 rounded-full flex items-center justify-center font-bold transition-all ${
-                  step >= s ? 'bg-purple-500 text-white' : 'bg-white/10 text-white/40'
-                }`}
-              >
-                {s === 0 ? 'Type' : s}
-              </div>
-              {s < 3 && (
-                <div className={`w-16 h-1 rounded ${step > s ? 'bg-purple-500' : 'bg-white/10'}`} />
-              )}
-            </React.Fragment>
-          ))}
-        </div>
-
-        {/* Step 0: Tour Type Selection */}
-        {step === 0 && (
+        {/* Content */}
+        <div className="flex-1 overflow-y-auto p-4 space-y-4">
+          {/* Name & Description */}
           <div>
-            <h2 className="text-xl font-bold mb-2">Choose Gallery Type</h2>
-            <p className="text-white/50 mb-6">Select the type of property gallery you want to create</p>
-
-            <div className="grid md:grid-cols-2 gap-6 mb-6">
-              <button
-                onClick={() => {
-                  setTourType('regular');
-                  setStep(1);
-                }}
-                className={`p-6 border-2 rounded-xl transition-all text-left ${
-                  tourType === 'regular'
-                    ? 'border-purple-500 bg-purple-500/10'
-                    : 'border-white/10 hover:border-white/30'
-                }`}
-              >
-                <div className="flex items-center gap-3 mb-3">
-                  <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${
-                    tourType === 'regular' ? 'bg-purple-500' : 'bg-white/10'
-                  }`}>
-                    <Image className="w-6 h-6" />
-                  </div>
-                  <h3 className="text-lg font-bold">Photo Gallery</h3>
-                </div>
-                <p className="text-white/60 text-sm">Use your existing listing photos</p>
-              </button>
-
-              <button
-                onClick={() => {
-                  setTourType('360');
-                  setStep(1);
-                }}
-                className={`p-6 border-2 rounded-xl transition-all text-left ${
-                  tourType === '360'
-                    ? 'border-purple-500 bg-purple-500/10'
-                    : 'border-white/10 hover:border-white/30'
-                }`}
-              >
-                <div className="flex items-center gap-3 mb-3">
-                  <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${
-                    tourType === '360' ? 'bg-purple-500' : 'bg-white/10'
-                  }`}>
-                    <Compass className="w-6 h-6" />
-                  </div>
-                  <h3 className="text-lg font-bold">360° Panoramic</h3>
-                </div>
-                <p className="text-white/60 text-sm">Upload panoramic photos from 360° camera</p>
-              </button>
-            </div>
+            <label className="block text-sm text-white/60 mb-1">Gallery Name</label>
+            <input
+              type="text"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="e.g., 123 Main Street Photos"
+              className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:border-amber-500/50 focus:outline-none"
+            />
           </div>
-        )}
 
-        {/* Step 1: Select Photos */}
-        {step === 1 && (
           <div>
-            <div className="flex items-center justify-between mb-6">
-              <div>
-                <h2 className="text-xl font-bold mb-2">Step 1: Select Photos</h2>
-                <p className="text-white/50">
-                  {tourType === 'regular' 
-                    ? 'Choose photos from your listing or upload new ones'
-                    : 'Upload 360° panoramic photos'}
-                </p>
-              </div>
-              <button onClick={() => setStep(0)} className="text-purple-400 hover:underline text-sm">
-                Change type
-              </button>
-            </div>
+            <label className="block text-sm text-white/60 mb-1">Description (optional)</label>
+            <textarea
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="Describe the property..."
+              rows={2}
+              className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:border-amber-500/50 focus:outline-none resize-none"
+            />
+          </div>
 
-            {/* Photo Selection Options */}
-            <div className="mb-6 space-y-4">
-              {tourType === 'regular' ? (
-                <div className="grid md:grid-cols-2 gap-4">
-                  {photoUrls.length > 0 && (
-                    <button
-                      onClick={handleSelectFromListing}
-                      className="p-6 border-2 border-dashed border-white/20 rounded-xl hover:border-purple-500/50 hover:bg-purple-500/5 transition-all text-center"
-                    >
-                      <Image className="w-10 h-10 text-white/30 mx-auto mb-3" />
-                      <div className="font-medium">Select from Listing</div>
-                      <div className="text-sm text-white/40 mt-1">{photoUrls.length} photos available</div>
-                    </button>
-                  )}
-                  <label className="p-6 border-2 border-dashed border-white/20 rounded-xl hover:border-purple-500/50 hover:bg-purple-500/5 transition-all text-center cursor-pointer">
-                    <Upload className="w-10 h-10 text-white/30 mx-auto mb-3" />
-                    <div className="font-medium">Upload New Photos</div>
-                    <div className="text-sm text-white/40 mt-1">Select multiple images</div>
-                    <input
-                      ref={fileInputRef}
-                      type="file"
-                      multiple
-                      accept="image/*"
-                      onChange={handleFileSelect}
-                      className="hidden"
-                    />
-                  </label>
-                </div>
-              ) : (
-                <label className="block p-6 border-2 border-dashed border-white/20 rounded-xl hover:border-purple-500/50 hover:bg-purple-500/5 transition-all text-center cursor-pointer">
-                  <Upload className="w-10 h-10 text-white/30 mx-auto mb-3" />
-                  <div className="font-medium">Upload 360° Photos</div>
-                  <div className="text-sm text-white/40 mt-1">Select panoramic images from your 360° camera</div>
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    multiple
-                    accept="image/*"
-                    onChange={handleFileSelect}
-                    className="hidden"
-                  />
-                </label>
-              )}
-
-              {/* Upload Progress */}
-              {uploading && (
-                <div className="bg-white/5 rounded-xl p-4">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm text-white/70">Uploading photos...</span>
-                    <span className="text-sm text-purple-400">{uploadProgress}%</span>
-                  </div>
-                  <div className="w-full bg-white/10 rounded-full h-2">
-                    <div
-                      className="bg-purple-500 h-2 rounded-full transition-all"
-                      style={{ width: `${uploadProgress}%` }}
-                    />
-                  </div>
-                </div>
-              )}
-
-              {/* Selected Photos Grid */}
-              {selectedPhotos.length > 0 && (
-                <div>
-                  <h3 className="text-sm font-medium mb-3 text-white/70">Selected Photos ({selectedPhotos.length})</h3>
-                  <div className="grid grid-cols-4 md:grid-cols-6 gap-3">
-                    {selectedPhotos.map((photo, index) => (
-                      <div key={photo.id} className="relative aspect-square rounded-lg overflow-hidden border-2 border-purple-500 ring-2 ring-purple-500/50">
-                        <img
-                          src={photo.url}
-                          alt={photo.name}
-                          className="w-full h-full object-cover"
-                        />
-                        <div className="absolute inset-0 bg-purple-500/20 flex items-center justify-center">
-                          <div className="w-8 h-8 rounded-full bg-purple-500 flex items-center justify-center font-bold">
-                            {index + 1}
-                          </div>
-                        </div>
-                        <button
-                          onClick={() => removePhoto(photo.id)}
-                          className="absolute top-1 right-1 p-1 bg-red-500 rounded-full hover:bg-red-600 transition-colors"
-                        >
-                          <X className="w-4 h-4 text-white" />
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Listing Photos Grid (only show if regular type and photos available) */}
-              {tourType === 'regular' && photoUrls.length > 0 && (
-                <div>
-                  <h3 className="text-sm font-medium mb-3 text-white/70">Listing Photos</h3>
-                  <div className="grid grid-cols-4 md:grid-cols-6 gap-3">
-                    {photoUrls.map((photo, index) => {
-                      const isSelected = selectedPhotos.find(p => p.id === photo.id);
-                      const selectionIndex = selectedPhotos.findIndex(p => p.id === photo.id);
-                      
-                      return (
-                        <button
-                          key={photo.id}
-                          onClick={() => togglePhoto(photo)}
-                          className={`relative aspect-square rounded-lg overflow-hidden border-2 transition-all ${
-                            isSelected
-                              ? 'border-purple-500 ring-2 ring-purple-500/50'
-                              : 'border-transparent hover:border-white/30'
-                          }`}
-                        >
-                          <img
-                            src={photo.url}
-                            alt={`Photo ${index + 1}`}
-                            className="w-full h-full object-cover"
-                          />
-                          {isSelected && (
-                            <div className="absolute inset-0 bg-purple-500/20 flex items-center justify-center">
-                              <div className="w-8 h-8 rounded-full bg-purple-500 flex items-center justify-center font-bold">
-                                {selectionIndex + 1}
-                              </div>
-                            </div>
-                          )}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
-            </div>
-
-            <div className="flex items-center justify-between">
-              <span className="text-white/50">{selectedPhotos.length} photos selected</span>
+          {/* Photos */}
+          <div>
+            <div className="flex items-center justify-between mb-2">
+              <label className="block text-sm text-white/60">Photos ({scenes.length})</label>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                multiple
+                onChange={handleUpload}
+                className="hidden"
+              />
               <button
-                onClick={() => setStep(2)}
-                disabled={selectedPhotos.length === 0 || uploading}
-                className="px-6 py-3 bg-purple-500 text-white font-bold rounded-xl hover:bg-purple-400 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={uploading}
+                className="flex items-center gap-2 px-3 py-1.5 bg-amber-500/20 text-amber-400 rounded-lg text-sm hover:bg-amber-500/30 transition-colors disabled:opacity-50"
               >
-                Continue
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* Step 2: Arrange Scenes */}
-        {step === 2 && (
-          <div>
-            <div className="flex items-center justify-between mb-6">
-              <div>
-                <h2 className="text-xl font-bold mb-1">Step 2: Arrange Photos</h2>
-                <p className="text-white/50">Name and order your gallery photos</p>
-              </div>
-              <button onClick={() => setStep(1)} className="text-purple-400 hover:underline text-sm">
-                Change photos
+                {uploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
+                Add Photos
               </button>
             </div>
 
-            <div className="space-y-3 mb-6">
-              {selectedPhotos.map((photo, index) => (
-                <div
-                  key={photo.id}
-                  className="flex items-center gap-4 p-4 bg-white/5 border border-white/10 rounded-xl"
-                >
-                  <div className="flex flex-col gap-1">
-                    <button
-                      onClick={() => moveScene(index, 'up')}
-                      disabled={index === 0}
-                      className="p-1 hover:bg-white/10 rounded disabled:opacity-30"
-                    >
-                      <ArrowUp className="w-4 h-4" />
-                    </button>
-                    <button
-                      onClick={() => moveScene(index, 'down')}
-                      disabled={index === selectedPhotos.length - 1}
-                      className="p-1 hover:bg-white/10 rounded disabled:opacity-30"
-                    >
-                      <ArrowDown className="w-4 h-4" />
-                    </button>
-                  </div>
-
-                  <div className="w-20 h-14 rounded-lg overflow-hidden bg-white/10">
-                    <img src={photo.url} alt="" className="w-full h-full object-cover" />
-                  </div>
-
-                  <div className="flex-1">
-                    <input
-                      type="text"
-                      value={photo.name}
-                      onChange={(e) => updateSceneName(photo.id, e.target.value)}
-                      placeholder="Photo name"
-                      className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white placeholder:text-white/30 focus:outline-none focus:border-purple-500/50"
-                    />
-                  </div>
-
-                  <div className="flex items-center gap-2 text-sm text-white/50">
-                    {index === 0 && (
-                      <span className="px-2 py-1 bg-purple-500/20 text-purple-400 rounded text-xs">
-                        Cover
-                      </span>
-                    )}
-                    <span>#{index + 1}</span>
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            <button
-              onClick={() => setStep(3)}
-              className="w-full py-4 bg-purple-500 text-white font-bold rounded-xl hover:bg-purple-400 transition-colors"
-            >
-              Continue
-            </button>
-          </div>
-        )}
-
-        {/* Step 3: Settings & Create */}
-        {step === 3 && (
-          <div>
-            <div className="flex items-center justify-between mb-6">
-              <div>
-                <h2 className="text-xl font-bold mb-1">Step 3: Gallery Settings</h2>
-                <p className="text-white/50">Configure your property gallery</p>
+            {scenes.length === 0 ? (
+              <div 
+                onClick={() => fileInputRef.current?.click()}
+                className="border-2 border-dashed border-white/20 rounded-xl p-8 text-center cursor-pointer hover:border-amber-500/50 transition-colors"
+              >
+                <Upload className="w-10 h-10 mx-auto mb-3 text-white/30" />
+                <p className="text-white/50 text-sm">Click to upload photos</p>
+                <p className="text-white/30 text-xs mt-1">JPG, PNG, WebP accepted</p>
               </div>
-              <button onClick={() => setStep(2)} className="text-purple-400 hover:underline text-sm">
-                Edit photos
-              </button>
-            </div>
-
-            <div className="grid md:grid-cols-2 gap-6 mb-6">
-              {/* Tour Info */}
-              <div className="bg-white/5 border border-white/10 rounded-xl p-6">
-                <h3 className="font-bold mb-4">Gallery Information</h3>
-                
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-sm text-white/60 mb-2">Gallery Name</label>
-                    <input
-                      type="text"
-                      value={tourName}
-                      onChange={(e) => setTourName(e.target.value)}
-                      placeholder="My Property Gallery"
-                      className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder:text-white/30 focus:outline-none focus:border-purple-500/50"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              {/* Settings */}
-              <div className="bg-white/5 border border-white/10 rounded-xl p-6">
-                <h3 className="font-bold mb-4">Viewer Settings</h3>
-                
-                <div className="space-y-4">
-                  <label className="flex items-center justify-between cursor-pointer">
-                    <div className="flex items-center gap-3">
-                      <RotateCcw className="w-5 h-5 text-white/50" />
-                      <span>Auto-rotate</span>
+            ) : (
+              <div className="grid grid-cols-4 gap-3">
+                {scenes.map((scene, index) => (
+                  <div key={scene.id} className="relative group aspect-square rounded-lg overflow-hidden bg-white/5">
+                    <img src={scene.image_url} alt={scene.name} className="w-full h-full object-cover" />
+                    <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                      <button
+                        onClick={() => moveScene(index, 'up')}
+                        disabled={index === 0}
+                        className="p-1.5 bg-white/20 rounded hover:bg-white/30 disabled:opacity-30"
+                      >
+                        <ChevronLeft className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={() => removeScene(scene.id)}
+                        className="p-1.5 bg-red-500/50 rounded hover:bg-red-500/70"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={() => moveScene(index, 'down')}
+                        disabled={index === scenes.length - 1}
+                        className="p-1.5 bg-white/20 rounded hover:bg-white/30 disabled:opacity-30"
+                      >
+                        <ChevronRight className="w-4 h-4" />
+                      </button>
                     </div>
-                    <input
-                      type="checkbox"
-                      checked={settings.autoRotate}
-                      onChange={(e) => setSettings({ ...settings, autoRotate: e.target.checked })}
-                      className="w-5 h-5 rounded border-white/20 bg-white/5 text-purple-500 focus:ring-purple-500"
-                    />
-                  </label>
-
-                  <label className="flex items-center justify-between cursor-pointer">
-                    <div className="flex items-center gap-3">
-                      <Compass className="w-5 h-5 text-white/50" />
-                      <span>Show compass</span>
+                    <div className="absolute bottom-0 left-0 right-0 p-1 bg-gradient-to-t from-black/80 to-transparent">
+                      <span className="text-[10px] text-white/80">{index + 1}</span>
                     </div>
-                    <input
-                      type="checkbox"
-                      checked={settings.showCompass}
-                      onChange={(e) => setSettings({ ...settings, showCompass: e.target.checked })}
-                      className="w-5 h-5 rounded border-white/20 bg-white/5 text-purple-500 focus:ring-purple-500"
-                    />
-                  </label>
-                </div>
-              </div>
-            </div>
-
-            {/* Summary */}
-            <div className="bg-green-500/10 border border-green-500/30 rounded-xl p-6 mb-6">
-              <h3 className="font-bold mb-4">Gallery Summary</h3>
-              <div className="grid grid-cols-3 gap-4 text-center">
-                <div>
-                  <div className="text-2xl font-bold text-green-400">{selectedPhotos.length}</div>
-                  <div className="text-sm text-white/50">Photos</div>
-                </div>
-                <div>
-                  <div className="text-2xl font-bold text-green-400">FREE</div>
-                  <div className="text-sm text-white/50">Included</div>
-                </div>
-                <div>
-                  <div className="text-2xl font-bold text-green-400">∞</div>
-                  <div className="text-sm text-white/50">Views</div>
-                </div>
-              </div>
-            </div>
-
-            {error && (
-              <div className="p-4 bg-red-500/10 border border-red-500/30 rounded-xl mb-6 text-red-400">
-                {error}
+                  </div>
+                ))}
               </div>
             )}
-
-            <button
-              onClick={handleCreate}
-              disabled={processing}
-              className="w-full py-4 bg-gradient-to-r from-purple-500 to-pink-500 text-white font-bold rounded-xl hover:from-purple-400 hover:to-pink-400 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-            >
-              {processing ? (
-                <>
-                  <Loader2 className="w-5 h-5 animate-spin" />
-                  Creating Gallery...
-                </>
-              ) : (
-                <>
-                  <Sparkles className="w-5 h-5" />
-                  Create Property Gallery
-                </>
-              )}
-            </button>
           </div>
-        )}
+        </div>
+
+        {/* Footer */}
+        <div className="p-4 border-t border-white/10 flex items-center justify-end gap-3">
+          <button
+            onClick={onClose}
+            className="px-4 py-2 text-white/60 hover:text-white transition-colors"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={handleSave}
+            disabled={!name.trim() || scenes.length === 0 || saving}
+            className="flex items-center gap-2 px-6 py-2 bg-gradient-to-r from-amber-500 to-orange-500 text-black font-semibold rounded-lg hover:opacity-90 transition-opacity disabled:opacity-50"
+          >
+            {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
+            {tour ? 'Save Changes' : 'Create Gallery'}
+          </button>
+        </div>
       </div>
     </div>
   );
 }
 
-// Tour Success View
-function TourSuccess({ tour, onBack }: { tour: Tour; onBack: () => void }) {
-  const [copied, setCopied] = useState(false);
+// Tour Viewer Component
+function TourViewer({ tour, onClose }: { tour: Tour; onClose: () => void }) {
+  const [currentIndex, setCurrentIndex] = useState(0);
   const [downloading, setDownloading] = useState(false);
-  const tourUrl = `${typeof window !== 'undefined' ? window.location.origin : ''}/tour/${tour.slug}`;
-
-  const copyLink = () => {
-    navigator.clipboard.writeText(tourUrl);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
-
-  const publishTour = async () => {
-    await fetch('/api/virtual-tours', {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        id: tour.id,
-        status: 'published',
-        isPublic: true,
-      }),
-    });
-    window.location.reload();
-  };
+  const scenes = tour.tour_scenes || [];
 
   const handleDownload = async () => {
     setDownloading(true);
-    await downloadTourPhotos(tour);
+    await downloadTourPhotosAsZip(tour);
     setDownloading(false);
   };
 
+  if (scenes.length === 0) {
+    return (
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black">
+        <div className="text-center">
+          <p className="text-white/50">No photos in this gallery</p>
+          <button onClick={onClose} className="mt-4 px-4 py-2 bg-white/10 rounded-lg">Close</button>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="min-h-screen bg-[#0F0F0F] text-white p-6">
-      <div className="max-w-2xl mx-auto text-center">
-        <div className="p-4 bg-gradient-to-br from-green-500/20 to-emerald-500/20 rounded-full w-20 h-20 mx-auto mb-6 flex items-center justify-center">
-          <Check className="w-10 h-10 text-green-400" />
-        </div>
-
-        <h1 className="text-3xl font-bold mb-2">Gallery Created!</h1>
-        <p className="text-white/50 mb-8">Your property gallery is ready. Share it with the world!</p>
-
-        {/* Preview */}
-        <div className="bg-white/5 border border-white/10 rounded-2xl overflow-hidden mb-6">
-          {tour.tour_scenes?.[0]?.image_url && (
-            <img
-              src={tour.tour_scenes[0].image_url}
-              alt={tour.name}
-              className="w-full aspect-video object-cover"
-            />
-          )}
-          <div className="p-6">
-            <h2 className="text-xl font-bold mb-2">{tour.name}</h2>
-            <p className="text-white/50">{tour.tour_scenes?.length || 0} photos</p>
-          </div>
-        </div>
-
-        {/* Share Link */}
-        <div className="bg-white/5 border border-white/10 rounded-xl p-4 mb-6">
-          <label className="block text-sm text-white/60 mb-2">Gallery Link</label>
-          <div className="flex gap-2">
-            <input
-              type="text"
-              value={tourUrl}
-              readOnly
-              className="flex-1 px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white"
-            />
-            <button
-              onClick={copyLink}
-              className="px-4 py-3 bg-purple-500 text-white rounded-lg hover:bg-purple-400 transition-colors flex items-center gap-2"
-            >
-              {copied ? <Check className="w-5 h-5" /> : <Copy className="w-5 h-5" />}
-              {copied ? 'Copied!' : 'Copy'}
-            </button>
-          </div>
-        </div>
-
-        {/* Actions */}
-        <div className="flex gap-4 mb-4">
-          <button
-            onClick={onBack}
-            className="flex-1 py-3 bg-white/10 rounded-xl font-medium hover:bg-white/20 transition-colors"
-          >
-            Create Another
+    <div className="fixed inset-0 z-50 bg-black flex flex-col">
+      {/* Header */}
+      <div className="flex-shrink-0 p-4 flex items-center justify-between bg-black/80 backdrop-blur-sm">
+        <div className="flex items-center gap-4">
+          <button onClick={onClose} className="p-2 hover:bg-white/10 rounded-lg transition-colors">
+            <X className="w-6 h-6" />
           </button>
-          <Link
-            href={`/tour/${tour.slug}`}
-            target="_blank"
-            className="flex-1 py-3 bg-purple-500 text-white rounded-xl font-bold hover:bg-purple-400 transition-colors flex items-center justify-center gap-2"
-          >
-            <ExternalLink className="w-5 h-5" />
-            View Gallery
-          </Link>
+          <div>
+            <h2 className="font-semibold">{tour.name}</h2>
+            <p className="text-sm text-white/50">{currentIndex + 1} / {scenes.length}</p>
+          </div>
         </div>
-
+        
         {/* Download Button */}
         <button
           onClick={handleDownload}
           disabled={downloading}
-          className="w-full py-3 bg-white/10 rounded-xl font-medium hover:bg-white/20 transition-colors flex items-center justify-center gap-2"
+          className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-amber-500 to-orange-500 text-black font-semibold rounded-lg hover:opacity-90 transition-opacity disabled:opacity-50"
         >
           {downloading ? (
             <>
               <Loader2 className="w-5 h-5 animate-spin" />
-              Downloading Photos...
+              Downloading...
             </>
           ) : (
             <>
@@ -894,296 +549,311 @@ function TourSuccess({ tour, onBack }: { tour: Tour; onBack: () => void }) {
             </>
           )}
         </button>
+      </div>
 
-        {tour.status !== 'published' && (
-          <button
-            onClick={publishTour}
-            className="w-full mt-4 py-3 bg-green-500 text-white rounded-xl font-bold hover:bg-green-400 transition-colors flex items-center justify-center gap-2"
-          >
-            <Globe className="w-5 h-5" />
-            Publish Gallery
-          </button>
+      {/* Main Image */}
+      <div className="flex-1 relative flex items-center justify-center p-4 overflow-hidden">
+        <img
+          src={scenes[currentIndex].image_url}
+          alt={scenes[currentIndex].name}
+          className="max-w-full max-h-full object-contain"
+        />
+
+        {/* Navigation */}
+        {scenes.length > 1 && (
+          <>
+            <button
+              onClick={() => setCurrentIndex(i => Math.max(0, i - 1))}
+              disabled={currentIndex === 0}
+              className="absolute left-4 p-3 bg-black/60 rounded-full hover:bg-black/80 transition-colors disabled:opacity-30"
+            >
+              <ChevronLeft className="w-6 h-6" />
+            </button>
+            <button
+              onClick={() => setCurrentIndex(i => Math.min(scenes.length - 1, i + 1))}
+              disabled={currentIndex === scenes.length - 1}
+              className="absolute right-4 p-3 bg-black/60 rounded-full hover:bg-black/80 transition-colors disabled:opacity-30"
+            >
+              <ChevronRight className="w-6 h-6" />
+            </button>
+          </>
         )}
+      </div>
+
+      {/* Thumbnails */}
+      <div className="flex-shrink-0 p-4 bg-black/80 backdrop-blur-sm">
+        <div className="flex gap-2 overflow-x-auto justify-center">
+          {scenes.map((scene, index) => (
+            <button
+              key={scene.id}
+              onClick={() => setCurrentIndex(index)}
+              className={`flex-shrink-0 w-16 h-16 rounded-lg overflow-hidden border-2 transition-all ${
+                index === currentIndex ? 'border-amber-500' : 'border-transparent hover:border-white/30'
+              }`}
+            >
+              <img src={scene.image_url} alt={scene.name} className="w-full h-full object-cover" />
+            </button>
+          ))}
+        </div>
       </div>
     </div>
   );
 }
 
-// Listing Selector
-function ListingSelector({ 
-  onSelect, 
-  onUpload,
-  existingTours,
-}: { 
-  onSelect: (listing: any, photos: { url: string; id: string }[]) => void; 
-  onUpload: () => void;
-  existingTours: Tour[];
-}) {
-  const [listings, setListings] = useState<Listing[]>([]);
+// Main Content
+function VirtualToursContent() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const supabase = createClient();
+  
+  const [tours, setTours] = useState<Tour[]>([]);
+  const [listings, setListings] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showModal, setShowModal] = useState(false);
+  const [editTour, setEditTour] = useState<Tour | undefined>();
+  const [viewTour, setViewTour] = useState<Tour | undefined>();
+  const [selectedListingId, setSelectedListingId] = useState<string | undefined>();
+
+  const loadData = useCallback(async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        router.push('/auth/login');
+        return;
+      }
+
+      // Load tours with scenes
+      const { data: toursData, error: toursError } = await supabase
+        .from('virtual_tours')
+        .select(`
+          *,
+          tour_scenes (*)
+        `)
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
+
+      if (toursError) throw toursError;
+
+      // Sort scenes by order_index
+      const sortedTours = (toursData || []).map(tour => ({
+        ...tour,
+        tour_scenes: (tour.tour_scenes || []).sort((a: TourScene, b: TourScene) => a.order_index - b.order_index)
+      }));
+
+      setTours(sortedTours);
+
+      // Load listings for "Create from Listing"
+      const { data: listingsData } = await supabase
+        .from('listings')
+        .select('id, title, address, photos:listing_photos(url, enhanced_url)')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
+
+      setListings(listingsData || []);
+    } catch (err) {
+      console.error('Load error:', err);
+    } finally {
+      setLoading(false);
+    }
+  }, [supabase, router]);
 
   useEffect(() => {
-    loadListings();
-  }, []);
+    loadData();
+  }, [loadData]);
 
-  const loadListings = async () => {
-    const supabase = createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
+  const handleCreateFromListing = async (listing: any) => {
+    // Pre-fill photos from listing
+    const photos = listing.photos?.map((p: any, i: number) => ({
+      id: `listing-${i}`,
+      name: `Photo ${i + 1}`,
+      image_url: p.enhanced_url || p.url,
+      order_index: i
+    })) || [];
 
-    const { data } = await supabase
-      .from('listings')
-      .select('*, photos!photos_listing_id_fkey(id, raw_url, processed_url)')
-      .eq('user_id', user.id)
-      .order('created_at', { ascending: false });
-
-    if (data) {
-      const withThumbnails = await Promise.all(
-        data.map(async (listing: any) => {
-          const photos = listing.photos || [];
-          const firstPhoto = photos[0];
-          let thumbnail = null;
-          if (firstPhoto) {
-            const path = firstPhoto.processed_url || firstPhoto.raw_url;
-            if (path && !path.startsWith('http')) {
-              const { data: urlData } = await supabase.storage.from('raw-images').createSignedUrl(path, 3600);
-              thumbnail = urlData?.signedUrl;
-            }
-          }
-          return { id: listing.id, title: listing.title, address: listing.address, thumbnail, photoCount: photos.length };
-        })
-      );
-      setListings(withThumbnails);
-    }
-    setLoading(false);
+    setSelectedListingId(listing.id);
+    setEditTour({
+      id: '',
+      name: listing.title || listing.address || 'Property Gallery',
+      slug: '',
+      is_published: true,
+      view_count: 0,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+      listing_id: listing.id,
+      tour_scenes: photos
+    } as any);
+    setShowModal(true);
   };
 
-  const handleSelectListing = async (listing: Listing) => {
-    const supabase = createClient();
-    const { data: photos } = await supabase
-      .from('photos')
-      .select('*')
-      .eq('listing_id', listing.id)
-      .order('created_at', { ascending: true });
+  const handleDelete = async (tour: Tour) => {
+    if (!confirm('Delete this gallery? This cannot be undone.')) return;
 
-    const urls = await Promise.all(
-      (photos || []).map(async (photo) => {
-        const path = photo.processed_url || photo.raw_url;
-        const { data } = await supabase.storage.from('raw-images').createSignedUrl(path, 3600);
-        return { url: data?.signedUrl || '', id: photo.id };
-      })
-    );
+    try {
+      await supabase.from('tour_scenes').delete().eq('tour_id', tour.id);
+      await supabase.from('virtual_tours').delete().eq('id', tour.id);
+      setTours(tours.filter(t => t.id !== tour.id));
+    } catch (err) {
+      console.error('Delete error:', err);
+    }
+  };
 
-    onSelect(listing, urls.filter(u => u.url));
+  const handleSave = (saved: Tour) => {
+    if (editTour?.id) {
+      setTours(tours.map(t => t.id === saved.id ? saved : t));
+    } else {
+      setTours([saved, ...tours]);
+    }
+    setShowModal(false);
+    setEditTour(undefined);
+    setSelectedListingId(undefined);
   };
 
   if (loading) {
     return (
       <div className="min-h-screen bg-[#0F0F0F] flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-purple-400" />
+        <Loader2 className="w-8 h-8 animate-spin text-amber-500" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#0F0F0F] text-white p-6">
-      <div className="max-w-5xl mx-auto">
-        {/* Header */}
-        <div className="flex items-center gap-3 mb-4">
-          <div className="p-3 bg-gradient-to-br from-purple-500/20 to-pink-500/20 rounded-xl">
-            <Images className="w-8 h-8 text-purple-400" />
-          </div>
-          <div>
-            <h1 className="text-2xl font-bold">Property Gallery</h1>
-            <p className="text-white/50">Shareable photo galleries for your listings</p>
-          </div>
-        </div>
-
-        {/* What this does */}
-        <div className="bg-purple-500/10 border border-purple-500/30 rounded-xl p-4 mb-8">
-          <div className="flex items-start gap-3">
-            <Lightbulb className="w-5 h-5 text-purple-400 mt-0.5 flex-shrink-0" />
+    <div className="min-h-screen bg-[#0F0F0F] text-white">
+      {/* Header */}
+      <div className="border-b border-white/10 bg-[#0F0F0F]/80 backdrop-blur-sm sticky top-0 z-10">
+        <div className="max-w-7xl mx-auto px-6 py-4">
+          <div className="flex items-center justify-between">
             <div>
-              <h3 className="font-semibold text-purple-400 mb-1">What Property Gallery does</h3>
-              <p className="text-sm text-white/70">
-                Create beautiful, shareable photo galleries for your listings. Get a unique link to share 
-                with clients, embed on your website, or post on social media. Track views and engagement.
+              <h1 className="text-2xl font-bold">Property Gallery</h1>
+              <p className="text-white/50 text-sm mt-1">
+                Create beautiful, shareable photo galleries for your listings. Get a unique link to share with clients, embed on your website, or post on social media. Track views and engagement.
               </p>
             </div>
           </div>
-        </div>
 
-        {/* Pricing Overview - NOW FREE */}
-        <div className="grid grid-cols-3 gap-4 mb-8">
-          <div className="bg-green-500/10 border border-green-500/30 rounded-xl p-4 text-center">
-            <div className="text-2xl font-bold text-green-400">FREE</div>
-            <div className="text-sm text-white/50">Included in all plans</div>
-          </div>
-          <div className="bg-white/5 border border-white/10 rounded-xl p-4 text-center">
-            <div className="text-2xl font-bold text-purple-400">Instant</div>
-            <div className="text-sm text-white/50">Creation</div>
-          </div>
-          <div className="bg-white/5 border border-white/10 rounded-xl p-4 text-center">
-            <div className="text-2xl font-bold text-purple-400">Unlimited</div>
-            <div className="text-sm text-white/50">Views</div>
+          {/* Value Props */}
+          <div className="grid grid-cols-3 gap-4 mt-6">
+            <div className="bg-gradient-to-br from-green-500/10 to-green-500/5 border border-green-500/20 rounded-xl p-4 text-center">
+              <span className="text-2xl font-bold text-green-400">FREE</span>
+              <p className="text-sm text-white/50 mt-1">Included in all plans</p>
+            </div>
+            <div className="bg-white/5 border border-white/10 rounded-xl p-4 text-center">
+              <span className="text-2xl font-bold text-amber-400">Instant</span>
+              <p className="text-sm text-white/50 mt-1">Creation</p>
+            </div>
+            <div className="bg-white/5 border border-white/10 rounded-xl p-4 text-center">
+              <span className="text-2xl font-bold text-blue-400">Unlimited</span>
+              <p className="text-sm text-white/50 mt-1">Views</p>
+            </div>
           </div>
         </div>
+      </div>
 
-        {/* Existing Tours */}
-        {existingTours.length > 0 && (
-          <div className="mb-8">
-            <h2 className="text-lg font-bold mb-4">Your Galleries</h2>
-            <div className="grid md:grid-cols-3 gap-4">
-              {existingTours.map((tour) => (
+      {/* Content */}
+      <div className="max-w-7xl mx-auto px-6 py-8">
+        {/* Your Galleries */}
+        {tours.length > 0 && (
+          <div className="mb-12">
+            <h2 className="text-xl font-bold mb-4">Your Galleries</h2>
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {tours.map(tour => (
                 <TourCard
                   key={tour.id}
                   tour={tour}
-                  onView={() => window.open(`/tour/${tour.slug}`, '_blank')}
-                  onEdit={() => {/* TODO: Edit mode */}}
-                  onDelete={async () => {
-                    if (confirm('Delete this gallery?')) {
-                      await fetch(`/api/virtual-tours?id=${tour.id}`, { method: 'DELETE' });
-                      window.location.reload();
-                    }
+                  onView={() => setViewTour(tour)}
+                  onEdit={() => {
+                    setEditTour(tour);
+                    setShowModal(true);
                   }}
+                  onDelete={() => handleDelete(tour)}
                 />
               ))}
             </div>
           </div>
         )}
 
-        {/* Create New Tour */}
-        <h2 className="text-lg font-bold mb-4">Create New Gallery</h2>
-        
+        {/* Create New */}
+        <h2 className="text-xl font-bold mb-4">Create New Gallery</h2>
         <div className="grid md:grid-cols-2 gap-6">
           {/* From Listing */}
-          <div className="bg-white/5 border border-white/10 rounded-xl p-4">
-            <h3 className="font-medium mb-3">From Existing Listing</h3>
-            <div className="space-y-2 max-h-64 overflow-y-auto">
-              {listings.filter(l => l.photoCount > 0).map(listing => (
-                <button
-                  key={listing.id}
-                  onClick={() => handleSelectListing(listing)}
-                  className="w-full flex items-center gap-3 p-3 bg-white/5 rounded-lg hover:bg-white/10 transition-colors text-left"
-                >
-                  <div className="w-12 h-8 rounded overflow-hidden bg-white/10">
-                    {listing.thumbnail ? (
-                      <img src={listing.thumbnail} alt="" className="w-full h-full object-cover" />
+          <div className="bg-white/5 border border-white/10 rounded-xl p-6">
+            <h3 className="font-semibold mb-4 flex items-center gap-2">
+              <Home className="w-5 h-5 text-amber-400" />
+              From Existing Listing
+            </h3>
+            
+            {listings.length === 0 ? (
+              <p className="text-white/50 text-sm">No listings yet. Create a listing first to use its photos.</p>
+            ) : (
+              <div className="space-y-3 max-h-60 overflow-y-auto">
+                {listings.map(listing => (
+                  <button
+                    key={listing.id}
+                    onClick={() => handleCreateFromListing(listing)}
+                    className="w-full flex items-center gap-3 p-3 bg-white/5 rounded-lg hover:bg-white/10 transition-colors text-left"
+                  >
+                    {listing.photos?.[0] ? (
+                      <img 
+                        src={listing.photos[0].enhanced_url || listing.photos[0].url} 
+                        alt="" 
+                        className="w-12 h-12 rounded-lg object-cover"
+                      />
                     ) : (
-                      <div className="w-full h-full flex items-center justify-center">
-                        <Home className="w-4 h-4 text-white/20" />
+                      <div className="w-12 h-12 rounded-lg bg-white/10 flex items-center justify-center">
+                        <Image className="w-6 h-6 text-white/30" />
                       </div>
                     )}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="font-medium truncate">{listing.title || 'Untitled'}</div>
-                    <div className="text-xs text-white/40">{listing.photoCount} photos</div>
-                  </div>
-                  <ChevronRight className="w-4 h-4 text-white/30" />
-                </button>
-              ))}
-            </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium truncate">{listing.title || listing.address}</p>
+                      <p className="text-xs text-white/50">{listing.photos?.length || 0} photos</p>
+                    </div>
+                    <ChevronRight className="w-5 h-5 text-white/30" />
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Upload New */}
-          <div className="bg-white/5 border border-white/10 rounded-xl p-4">
-            <h3 className="font-medium mb-3">Upload Photos</h3>
-            <button
-              onClick={onUpload}
-              className="w-full p-6 border-2 border-dashed border-white/20 rounded-xl hover:border-purple-500/50 hover:bg-purple-500/5 transition-all text-center"
-            >
-              <Upload className="w-10 h-10 text-white/30 mx-auto mb-3" />
-              <div className="font-medium">Upload Photos</div>
-              <div className="text-sm text-white/40 mt-1">Regular photos or 360° panoramas</div>
-            </button>
+          <div 
+            onClick={() => {
+              setEditTour(undefined);
+              setSelectedListingId(undefined);
+              setShowModal(true);
+            }}
+            className="bg-white/5 border border-white/10 border-dashed rounded-xl p-6 flex flex-col items-center justify-center cursor-pointer hover:border-amber-500/50 hover:bg-amber-500/5 transition-all min-h-[200px]"
+          >
+            <div className="w-16 h-16 rounded-full bg-amber-500/20 flex items-center justify-center mb-4">
+              <Upload className="w-8 h-8 text-amber-400" />
+            </div>
+            <h3 className="font-semibold mb-1">Upload Photos</h3>
+            <p className="text-white/50 text-sm text-center">
+              Regular photos or 360° panoramas
+            </p>
           </div>
         </div>
       </div>
+
+      {/* Modals */}
+      {showModal && (
+        <TourModal
+          tour={editTour?.id ? editTour : undefined}
+          listingId={selectedListingId}
+          onClose={() => {
+            setShowModal(false);
+            setEditTour(undefined);
+            setSelectedListingId(undefined);
+          }}
+          onSave={handleSave}
+        />
+      )}
+
+      {viewTour && (
+        <TourViewer
+          tour={viewTour}
+          onClose={() => setViewTour(undefined)}
+        />
+      )}
     </div>
-  );
-}
-
-// Main Page Component
-function VirtualToursContent() {
-  const [existingTours, setExistingTours] = useState<Tour[]>([]);
-  const [selectedListing, setSelectedListing] = useState<any>(null);
-  const [photoUrls, setPhotoUrls] = useState<{ url: string; id: string }[]>([]);
-  const [showCreator, setShowCreator] = useState(false);
-  const [completedTour, setCompletedTour] = useState<Tour | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    loadTours();
-  }, []);
-
-  const loadTours = async () => {
-    try {
-      const response = await fetch('/api/virtual-tours?includeScenes=true');
-      if (response.ok) {
-        const tours = await response.json();
-        setExistingTours(tours);
-      }
-    } catch (error) {
-      console.error('Load tours error:', error);
-    }
-    setLoading(false);
-  };
-
-  const handleSelectListing = (listing: any, photos: { url: string; id: string }[]) => {
-    setSelectedListing(listing);
-    setPhotoUrls(photos);
-    setShowCreator(true);
-  };
-
-  const handleUpload = () => {
-    // For now, just show creator without listing
-    setSelectedListing(null);
-    setPhotoUrls([]);
-    setShowCreator(true);
-  };
-
-  const handleBack = () => {
-    setShowCreator(false);
-    setCompletedTour(null);
-    setSelectedListing(null);
-    setPhotoUrls([]);
-  };
-
-  const handleComplete = (tour: Tour) => {
-    setCompletedTour(tour);
-    setShowCreator(false);
-  };
-
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-[#0F0F0F] flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-purple-400" />
-      </div>
-    );
-  }
-
-  if (completedTour) {
-    return <TourSuccess tour={completedTour} onBack={handleBack} />;
-  }
-
-  if (showCreator) {
-    return (
-      <TourCreator
-        listingId={selectedListing?.id}
-        listingTitle={selectedListing?.title}
-        photoUrls={photoUrls}
-        onBack={handleBack}
-        onComplete={handleComplete}
-      />
-    );
-  }
-
-  return (
-    <ListingSelector
-      onSelect={handleSelectListing}
-      onUpload={handleUpload}
-      existingTours={existingTours}
-    />
   );
 }
 
@@ -1191,7 +861,7 @@ export default function VirtualToursPage() {
   return (
     <Suspense fallback={
       <div className="min-h-screen bg-[#0F0F0F] flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-purple-400" />
+        <Loader2 className="w-8 h-8 animate-spin text-amber-500" />
       </div>
     }>
       <VirtualToursContent />

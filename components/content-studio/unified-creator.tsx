@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useSearchParams } from 'next/navigation'
 import html2canvas from 'html2canvas'
 import JSZip from 'jszip'
-import { ArrowLeft, Download, Loader2, Check, Sparkles, Instagram, Facebook, Linkedin, Video, Image, Copy, Hash, ClipboardCopy, Package, MessageCircle, Images, ImageIcon, Share2, CheckCircle, Upload, ExternalLink } from 'lucide-react'
+import { ArrowLeft, Download, Loader2, Check, Sparkles, Instagram, Facebook, Linkedin, Video, Image, Copy, Hash, ClipboardCopy, Package, MessageCircle, Images, ImageIcon, Share2, CheckCircle, Upload, ExternalLink, AlertCircle } from 'lucide-react'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -90,6 +90,7 @@ export function UnifiedCreator() {
   const [genHashtags, setGenHashtags] = useState(false)
   const [copied, setCopied] = useState<string | null>(null)
   const [uploadSuccess, setUploadSuccess] = useState<string | null>(null)
+  const [uploadError, setUploadError] = useState<string | null>(null)
 
   const [property, setProperty] = useState({ address: '', city: '', state: '', price: '' as any, bedrooms: '' as any, bathrooms: '' as any, squareFeet: '' as any })
   const [brand, setBrand] = useState({ business_name: '', logo_url: '', primary_color: '#D4AF37', secondary_color: '#1A1A1A', phone: '', tagline: '' })
@@ -98,44 +99,76 @@ export function UnifiedCreator() {
     async function load() {
       try {
         const [brandRes, listingRes] = await Promise.all([
-          fetch('/api/brand'),
-          listingId ? fetch(`/api/listings?id=${listingId}`) : Promise.resolve(null)
+          fetch('/api/brand').then(r => r.ok ? r.json() : null),
+          listingId ? fetch(`/api/listings/${listingId}`).then(r => r.ok ? r.json() : null) : Promise.resolve(null)
         ])
-        const brandData = await brandRes.json()
-        if (brandData.brandProfile) setBrand({ business_name: brandData.brandProfile.business_name || '', logo_url: brandData.brandProfile.logo_url || '', primary_color: brandData.brandProfile.primary_color || '#D4AF37', secondary_color: brandData.brandProfile.secondary_color || '#1A1A1A', phone: brandData.brandProfile.phone || '', tagline: brandData.brandProfile.tagline || '' })
+        if (brandRes) setBrand(brandRes)
         if (listingRes) {
-          const data = await listingRes.json()
-          if (data.listing) { setListingTitle(data.listing.title || data.listing.address || 'Listing'); setProperty({ address: data.listing.address || '', city: data.listing.city || '', state: data.listing.state || '', price: data.listing.price || '', bedrooms: data.listing.bedrooms || '', bathrooms: data.listing.bathrooms || '', squareFeet: data.listing.square_feet || '' }) }
-          if (data.photos?.length > 0) { const urls = data.photos.filter((p: any) => p.signedProcessedUrl).map((p: any) => p.signedProcessedUrl); if (urls.length > 0) { setPhotos(urls); setPhotoUrl(urls[0]) } }
+          setListingTitle(listingRes.title || listingRes.address || '')
+          setProperty({ address: listingRes.address || '', city: listingRes.city || '', state: listingRes.state || '', price: listingRes.price || '', bedrooms: listingRes.bedrooms || '', bathrooms: listingRes.bathrooms || '', squareFeet: listingRes.square_feet || '' })
+          if (listingRes.photos?.length) {
+            const urls = listingRes.photos.map((p: any) => p.enhanced_url || p.url).filter(Boolean)
+            setPhotos(urls)
+            if (urls[0]) setPhotoUrl(urls[0])
+          }
         }
       } catch (e) { console.error(e) }
-      finally { setLoading(false) }
+      setLoading(false)
     }
     load()
   }, [listingId])
 
-  useEffect(() => { setHeadline({ 'just-listed': 'JUST LISTED', 'open-house': 'OPEN HOUSE', 'price-reduced': 'PRICE REDUCED', 'just-sold': 'JUST SOLD' }[category] || 'JUST LISTED') }, [category])
+  const selectPhoto = (url: string) => {
+    if (postMode === 'carousel') {
+      setSelectedPhotos(prev => prev.includes(url) ? prev.filter(u => u !== url) : prev.length < 10 ? [...prev, url] : prev)
+    } else {
+      setPhotoUrl(url)
+    }
+  }
 
-  const selectPhoto = (url: string) => { if (postMode === 'single') { setPhotoUrl(url); return }; setSelectedPhotos(prev => prev.includes(url) ? prev.filter(p => p !== url) : prev.length >= 10 ? prev : [...prev, url]) }
-
-  // Generate image blob from canvas
+  // Generate image blob from canvas - with better error handling
   const generateImageBlob = async (): Promise<Blob | null> => {
-    if (!downloadRef.current) return null
-    const { w, h } = getDims(platform)
-    await new Promise(r => setTimeout(r, 100))
-    const canvas = await html2canvas(downloadRef.current, { 
-      scale: 1, 
-      useCORS: true, 
-      allowTaint: true, 
-      backgroundColor: null, 
-      width: w, 
-      height: h, 
-      windowWidth: w, 
-      windowHeight: h 
-    })
-    return new Promise((resolve) => {
-      canvas.toBlob((blob) => resolve(blob), 'image/png', 1.0)
-    })
+    if (!downloadRef.current) {
+      console.error('Download ref not found')
+      return null
+    }
+    
+    try {
+      const { w, h } = getDims(platform)
+      // Wait for images to load
+      await new Promise(r => setTimeout(r, 300))
+      
+      const canvas = await html2canvas(downloadRef.current, { 
+        scale: 1, 
+        useCORS: true, 
+        allowTaint: true, 
+        backgroundColor: '#000000', 
+        width: w, 
+        height: h, 
+        windowWidth: w, 
+        windowHeight: h,
+        logging: false,
+        onclone: (clonedDoc) => {
+          // Ensure images are loaded in cloned document
+          const images = clonedDoc.querySelectorAll('img')
+          images.forEach(img => {
+            img.crossOrigin = 'anonymous'
+          })
+        }
+      })
+      
+      return new Promise((resolve) => {
+        canvas.toBlob((blob) => {
+          if (!blob) {
+            console.error('Failed to create blob from canvas')
+          }
+          resolve(blob)
+        }, 'image/png', 1.0)
+      })
+    } catch (error) {
+      console.error('html2canvas error:', error)
+      return null
+    }
   }
 
   // Get full caption text
@@ -147,10 +180,22 @@ export function UnifiedCreator() {
   const uploadToPlatform = async (targetPlatform: string) => {
     setUploading(targetPlatform)
     setUploadSuccess(null)
+    setUploadError(null)
 
     try {
       const imageBlob = await generateImageBlob()
-      if (!imageBlob) throw new Error('Failed to generate image')
+      
+      if (!imageBlob) {
+        // Fallback: If image generation fails, just copy caption and open platform
+        const fullCaption = getFullCaption()
+        if (fullCaption) {
+          await navigator.clipboard.writeText(fullCaption)
+        }
+        window.open(PLATFORM_URLS[targetPlatform] || PLATFORM_URLS[platform], '_blank')
+        setUploadError('Could not generate image. Caption copied, platform opened.')
+        setUploading(null)
+        return
+      }
 
       const fullCaption = getFullCaption()
       const fileName = `${targetPlatform}-post-${Date.now()}.png`
@@ -172,10 +217,15 @@ export function UnifiedCreator() {
         const link = document.createElement('a')
         link.href = URL.createObjectURL(imageBlob)
         link.download = fileName
+        document.body.appendChild(link)
         link.click()
+        document.body.removeChild(link)
+        URL.revokeObjectURL(link.href)
 
         // 2. Copy caption to clipboard
-        await navigator.clipboard.writeText(fullCaption)
+        if (fullCaption) {
+          await navigator.clipboard.writeText(fullCaption)
+        }
 
         // 3. Open the platform in new tab
         const platformUrl = PLATFORM_URLS[targetPlatform] || PLATFORM_URLS[platform]
@@ -187,23 +237,34 @@ export function UnifiedCreator() {
       // User cancelled share or error
       if (e.name !== 'AbortError') {
         console.error('Upload error:', e)
+        setUploadError('Failed to process. Try "Download Only" button instead.')
       }
     } finally {
       setUploading(null)
-      if (uploadSuccess) {
-        setTimeout(() => setUploadSuccess(null), 5000)
-      }
+      setTimeout(() => {
+        setUploadSuccess(null)
+        setUploadError(null)
+      }, 5000)
     }
   }
 
   // Share to WhatsApp
   const shareToWhatsApp = async () => {
     setUploading('whatsapp')
+    setUploadError(null)
     try {
       const imageBlob = await generateImageBlob()
-      if (!imageBlob) throw new Error('Failed to generate image')
-
       const fullCaption = getFullCaption()
+      
+      if (!imageBlob) {
+        // Fallback: just open WhatsApp with text
+        const encodedText = encodeURIComponent(fullCaption)
+        window.open(`https://wa.me/?text=${encodedText}`, '_blank')
+        setUploadSuccess('whatsapp')
+        setUploading(null)
+        return
+      }
+
       const fileName = `property-post-${Date.now()}.png`
       const file = new File([imageBlob], fileName, { type: 'image/png' })
 
@@ -218,7 +279,9 @@ export function UnifiedCreator() {
         const link = document.createElement('a')
         link.href = URL.createObjectURL(imageBlob)
         link.download = fileName
+        document.body.appendChild(link)
         link.click()
+        document.body.removeChild(link)
 
         // Open WhatsApp with caption
         const encodedText = encodeURIComponent(fullCaption)
@@ -228,6 +291,7 @@ export function UnifiedCreator() {
     } catch (e: any) {
       if (e.name !== 'AbortError') {
         console.error('WhatsApp share error:', e)
+        setUploadError('Failed to share. Try downloading manually.')
       }
     } finally {
       setUploading(null)
@@ -237,18 +301,27 @@ export function UnifiedCreator() {
   // Download only (for users who prefer manual)
   const downloadOnly = async () => {
     setUploading('download')
+    setUploadError(null)
     try {
       const imageBlob = await generateImageBlob()
-      if (!imageBlob) throw new Error('Failed to generate image')
+      if (!imageBlob) {
+        setUploadError('Failed to generate image. Please try again.')
+        setUploading(null)
+        return
+      }
 
       const link = document.createElement('a')
       link.href = URL.createObjectURL(imageBlob)
       link.download = `${platform}-post-${Date.now()}.png`
+      document.body.appendChild(link)
       link.click()
+      document.body.removeChild(link)
+      URL.revokeObjectURL(link.href)
 
       setUploadSuccess('download')
     } catch (e) {
       console.error('Download error:', e)
+      setUploadError('Download failed. Please try again.')
     } finally {
       setUploading(null)
     }
@@ -270,9 +343,20 @@ export function UnifiedCreator() {
       const link = document.createElement('a')
       link.href = URL.createObjectURL(blob)
       link.download = `carousel-${selectedPhotos.length}-slides.zip`
+      document.body.appendChild(link)
       link.click()
+      document.body.removeChild(link)
       setUploadSuccess('carousel')
     } catch (e) { console.error(e) } finally { setUploading(null) }
+  }
+
+  // Copy caption to clipboard
+  const copyCaption = async () => {
+    const text = getFullCaption()
+    if (!text) return
+    await navigator.clipboard.writeText(text)
+    setCopied('caption')
+    setTimeout(() => setCopied(null), 2000)
   }
 
   const generateCaption = async () => { 
@@ -321,21 +405,23 @@ export function UnifiedCreator() {
     } finally { setGenHashtags(false) } 
   }
 
-  const copyCaption = () => { 
-    navigator.clipboard.writeText(getFullCaption())
-    setCopied('caption')
-    setTimeout(() => setCopied(null), 2000) 
-  }
-
   const generateFallbackCaption = () => {
-    const emoji = tone === 'luxury' ? '✨' : tone === 'excited' ? '🎉' : tone === 'casual' ? '🏠' : '🏢'
+    const price = property.price ? `$${Number(property.price).toLocaleString()}` : ''
     const beds = property.bedrooms ? `${property.bedrooms} bed` : ''
     const baths = property.bathrooms ? `${property.bathrooms} bath` : ''
     const sqft = property.squareFeet ? `${Number(property.squareFeet).toLocaleString()} sq ft` : ''
-    const details = [beds, baths, sqft].filter(Boolean).join(' • ')
-    const price = property.price ? `$${Number(property.price).toLocaleString()}` : ''
+    const location = [property.city, property.state].filter(Boolean).join(', ')
     
-    setCaption(`${emoji} ${headline}\n\n📍 ${property.address || 'Beautiful Home'}${property.city ? `, ${property.city}` : ''}${property.state ? ` ${property.state}` : ''}\n${price ? `💰 ${price}\n` : ''}${details ? `${details}\n` : ''}\n📲 Contact us today for a private showing!`)
+    const details = [beds, baths, sqft].filter(Boolean).join(' | ')
+    
+    let text = `✨ ${headline}\n\n`
+    if (property.address) text += `📍 ${property.address}\n`
+    if (location) text += `🏙️ ${location}\n`
+    if (price) text += `💰 ${price}\n`
+    if (details) text += `🏠 ${details}\n`
+    text += `\n📞 Contact me for more information!`
+    
+    setCaption(text)
   }
 
   const generateFallbackHashtags = () => {
@@ -394,9 +480,9 @@ export function UnifiedCreator() {
       </div>
 
       {/* Main Grid */}
-      <div className="flex-1 grid grid-cols-12 gap-4 p-4 min-h-0">
+      <div className="flex-1 grid grid-cols-12 gap-4 p-4 min-h-0 overflow-hidden">
         {/* LEFT - Compact Controls + Templates */}
-        <div className="col-span-3 flex flex-col gap-3 overflow-y-auto ">
+        <div className="col-span-3 flex flex-col gap-3 overflow-y-auto">
           {/* Mode & Type - Compact */}
           <div className="bg-white/5 rounded-xl p-3 border border-white/10">
             {currentPlatform.supportsCarousel && (
@@ -437,12 +523,13 @@ export function UnifiedCreator() {
           </div>
         </div>
 
-        {/* CENTER - Preview */}
-        <div className="col-span-6 flex flex-col gap-3">
-          <div className={`flex-1 flex items-center justify-center ${isVertical ? 'py-2' : ''}`}>
-            <div className={`${isVertical ? 'h-full aspect-[9/16]' : platform === 'instagram' ? 'w-full max-w-[400px] aspect-square' : 'w-full aspect-video'} max-h-full rounded-2xl overflow-hidden shadow-2xl ring-1 ring-white/20 relative`}>
+        {/* CENTER - Preview + Upload + AI Copy (scrollable) */}
+        <div className="col-span-6 flex flex-col gap-3 overflow-y-auto pr-2">
+          {/* Preview */}
+          <div className={`flex items-center justify-center ${isVertical ? 'py-2' : ''}`}>
+            <div className={`${isVertical ? 'h-[280px] aspect-[9/16]' : platform === 'instagram' ? 'w-full max-w-[320px] aspect-square' : 'w-full aspect-video'} max-h-full rounded-2xl overflow-hidden shadow-2xl ring-1 ring-white/20 relative`}>
               <div className="absolute inset-0 origin-top-left" style={{
-                transform: platform === 'instagram' ? 'scale(0.37)' : isVertical ? 'scale(0.25)' : 'scale(0.33)',
+                transform: platform === 'instagram' ? 'scale(0.30)' : isVertical ? 'scale(0.15)' : 'scale(0.27)',
                 width: platform === 'instagram' ? '1080px' : isVertical ? '1080px' : '1200px',
                 height: platform === 'instagram' ? '1080px' : isVertical ? '1920px' : platform === 'facebook' ? '630px' : '627px'
               }}>
@@ -472,6 +559,15 @@ export function UnifiedCreator() {
                 </p>
               </div>
               <button onClick={() => setUploadSuccess(null)} className="text-green-400/50 hover:text-green-400">×</button>
+            </div>
+          )}
+
+          {/* Error Banner */}
+          {uploadError && (
+            <div className="bg-red-500/20 border border-red-500/30 rounded-xl p-3 flex items-center gap-3">
+              <AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0" />
+              <p className="text-sm text-red-400 flex-1">{uploadError}</p>
+              <button onClick={() => setUploadError(null)} className="text-red-400/50 hover:text-red-400">×</button>
             </div>
           )}
 
@@ -537,7 +633,7 @@ export function UnifiedCreator() {
             </Button>
           </div>
 
-          {/* AI Caption */}
+          {/* AI Caption - FIXED: Now visible with proper spacing */}
           <div className="bg-white/5 rounded-xl p-4 border border-white/10">
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-2">
@@ -568,7 +664,7 @@ export function UnifiedCreator() {
         </div>
 
         {/* RIGHT - Property Details */}
-        <div className="col-span-3 flex flex-col gap-3 overflow-y-auto ">
+        <div className="col-span-3 flex flex-col gap-3 overflow-y-auto">
           {/* Headline */}
           <div className="bg-white/5 rounded-xl p-3 border border-white/10">
             <Label className="text-[10px] text-white/40 uppercase mb-2 block">Headline</Label>
@@ -638,8 +734,8 @@ export function UnifiedCreator() {
         </div>
       </div>
 
-      {/* BOTTOM - Photos Filmstrip */}
-      <div className="flex-shrink-0 h-24 border-t border-white/10 bg-black/60 px-6 flex items-center gap-4">
+      {/* BOTTOM - Photos Filmstrip - FIXED: Higher z-index, proper containment */}
+      <div className="flex-shrink-0 h-24 border-t border-white/10 bg-black/80 px-6 flex items-center gap-4 relative z-10">
         <div className="flex items-center gap-3 flex-shrink-0">
           <span className="text-xs text-white/50 uppercase font-medium">Photos</span>
           <span className="text-xs bg-white/10 px-2 py-0.5 rounded-full">{photos.length}</span>

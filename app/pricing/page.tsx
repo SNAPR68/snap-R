@@ -64,7 +64,7 @@ const PHOTOGRAPHER_TIERS = [
       { name: 'Everything in Ultimate', included: true },
       { name: 'Content Studio (150+ templates)', included: true },
       { name: 'Email Marketing', included: true },
-      { name: 'Social Publishing', included: true },
+      { name: 'Upload to Social Media', included: true },
       { name: 'Property Sites', included: true },
       { name: 'Priority Support', included: true },
     ],
@@ -105,8 +105,8 @@ const AGENT_TIERS = [
       { name: 'Unlimited human revision', included: true },
       { name: 'Content Studio (150+ templates)', included: true },
       { name: 'Email Marketing', included: true },
-      { name: 'Social Publishing', included: true },
-      { name: 'Virtual Tours', included: false },
+      { name: 'Upload to Social Media', included: true },
+      { name: 'Property Gallery (FREE)', included: true },
     ],
   },
   {
@@ -119,8 +119,8 @@ const AGENT_TIERS = [
       { name: '75 photos per listing', included: true },
       { name: 'All 15 AI tools', included: true },
       { name: 'Unlimited everything', included: true },
-      { name: 'Virtual Tours included', included: true },
-      { name: 'AI Voiceovers included', included: true },
+      { name: 'Property Gallery (FREE)', included: true },
+      { name: 'AI Voiceovers ($2/each)', included: true },
       { name: 'Video Creator included', included: true },
       { name: 'CMA Reports', included: true },
       { name: 'Full Marketing Suite', included: true },
@@ -220,7 +220,7 @@ export default function PricingPage() {
               </h1>
               <p className="text-xl text-white/60 max-w-2xl mx-auto">
                 Same $12/listing starting price. But you get 60 photos (not 50), 2 free twilights, 
-                plus Content Studio, Email Marketing, and Social Publishing included.
+                plus Content Studio, Email Marketing, and upload to social media included.
               </p>
             </>
           ) : (
@@ -233,8 +233,8 @@ export default function PricingPage() {
                 One Platform. <span className="text-[#D4A017]">Everything Included.</span>
               </h1>
               <p className="text-xl text-white/60 max-w-2xl mx-auto">
-                Photo editing, virtual tours, AI voiceovers, video creation, CMA reports, 
-                email marketing, social publishing — all in one place.
+                Photo editing, property galleries, AI voiceovers, video creation, CMA reports, 
+                email marketing, upload to social media — all in one place.
               </p>
             </>
           )}
@@ -467,7 +467,7 @@ export default function PricingPage() {
                     ['Human revision', '✓ Unlimited', '✓ Unlimited'],
                     ['Content Studio', '✗', '✓ 150+ templates'],
                     ['Email Marketing', '✗', '✓ 24 templates'],
-                    ['Social Publishing', '✗', '✓ 5 platforms'],
+                    ['Upload to Social', '✗', '✓ 5 platforms'],
                     ['Property Sites', '✗', '✓ 4 themes'],
                     ['Client Approval', '✗', '✓ Included'],
                   ].map(([feature, fotello, snapr], i) => (
@@ -508,7 +508,7 @@ export default function PricingPage() {
                     ['Canva Pro', '$13/mo'],
                     ['Animoto (videos)', '$33/mo'],
                     ['ElevenLabs (voiceover)', '$22/mo'],
-                    ['Matterport (tours)', '$69/mo'],
+                    ['CloudPano (galleries)', '$49/mo'],
                     ['Mailchimp (email)', '$20/mo'],
                     ['Later (social)', '$25/mo'],
                     ['Squarespace (sites)', '$30/mo'],
@@ -520,7 +520,7 @@ export default function PricingPage() {
                   ))}
                   <li className="flex justify-between border-t border-white/10 pt-3 font-bold">
                     <span>Total</span>
-                    <span className="text-red-400">$360-510/mo</span>
+                    <span className="text-red-400">$340-490/mo</span>
                   </li>
                 </ul>
               </div>
@@ -531,13 +531,13 @@ export default function PricingPage() {
                 <ul className="space-y-3">
                   {[
                     'ALL photo editing (15 tools)',
-                    'Virtual Tours',
-                    'AI Voiceovers',
+                    'Property Gallery (FREE)',
+                    'AI Voiceovers ($2/each)',
                     'Video Creator',
                     'CMA Reports',
                     'Content Studio (150+ templates)',
                     'Email Marketing',
-                    'Social Publishing',
+                    'Upload to Social Media',
                   ].map((f) => (
                     <li key={f} className="flex justify-between text-sm">
                       <span className="text-white/60">{f}</span>
@@ -564,6 +564,8 @@ export default function PricingPage() {
             {[
               ['How does listing-based pricing work?', 'You pay a fixed price per listing. Each listing includes up to 30-75 photos depending on plan. All AI enhancements are included. No per-photo charges.'],
               ['What does "unlimited human revision" mean?', 'If our AI doesn\'t get your photo edit perfect, our human editors will fix it at no extra charge. Unlimited revisions until you\'re satisfied.'],
+              ['Is the Property Gallery really free?', 'Yes! Every listing gets a FREE shareable Property Gallery page with all photos, property details, and contact form. No limits.'],
+              ['How do I upload to Instagram/Facebook?', 'Click "Upload to Instagram" and on mobile it opens the app directly with your image ready. On desktop, the image downloads and caption copies automatically, then the platform opens.'],
               ['Can I start free and upgrade later?', 'Yes! Start with 3 free listings/month. Upgrade anytime when you need more.'],
               ['What if I need more than 50 listings?', 'Contact our sales team for enterprise pricing with volume discounts.'],
             ].map(([q, a], i) => (

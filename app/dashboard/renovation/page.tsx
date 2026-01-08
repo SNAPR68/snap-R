@@ -98,124 +98,133 @@ const RENOVATION_OPTIONS = {
       { id: 'stone', label: 'Natural Stone' },
     ],
     colors: [
-      { id: 'light-oak', label: 'Light Oak', hex: '#C4A35A' },
-      { id: 'natural-oak', label: 'Natural Oak', hex: '#B8860B' },
-      { id: 'dark-walnut', label: 'Dark Walnut', hex: '#5C4033' },
-      { id: 'gray-wash', label: 'Gray Wash', hex: '#A9A9A9' },
-      { id: 'espresso', label: 'Espresso', hex: '#3C2415' },
-      { id: 'white-tile', label: 'White Tile', hex: '#FFFFFF' },
+      { id: 'light-oak', label: 'Light Oak', hex: '#D4B896' },
+      { id: 'medium-brown', label: 'Medium Brown', hex: '#8B4513' },
+      { id: 'dark-walnut', label: 'Dark Walnut', hex: '#3D2314' },
+      { id: 'gray-wash', label: 'Gray Wash', hex: '#9E9E9E' },
+      { id: 'white-oak', label: 'White Oak', hex: '#E8DCC4' },
     ],
   },
   paint: {
     colors: [
-      { id: 'white', label: 'Pure White', hex: '#FFFFFF' },
-      { id: 'warm-white', label: 'Warm White', hex: '#FAF9F6' },
+      { id: 'white', label: 'Bright White', hex: '#FFFFFF' },
+      { id: 'off-white', label: 'Off White', hex: '#FAF9F6' },
       { id: 'light-gray', label: 'Light Gray', hex: '#D3D3D3' },
-      { id: 'gray', label: 'Medium Gray', hex: '#808080' },
-      { id: 'greige', label: 'Greige', hex: '#C0B9A8' },
-      { id: 'beige', label: 'Beige', hex: '#F5F5DC' },
-      { id: 'navy', label: 'Navy Blue', hex: '#000080' },
+      { id: 'warm-gray', label: 'Warm Gray', hex: '#A8A29E' },
+      { id: 'navy', label: 'Navy Blue', hex: '#1e3a5f' },
       { id: 'sage', label: 'Sage Green', hex: '#9DC183' },
-      { id: 'charcoal', label: 'Charcoal', hex: '#36454F' },
-    ],
-  },
-  siding: {
-    types: [
-      { id: 'vinyl', label: 'Vinyl Siding' },
-      { id: 'wood', label: 'Wood Siding' },
-      { id: 'fiber-cement', label: 'Fiber Cement' },
-      { id: 'brick', label: 'Brick' },
-      { id: 'stone', label: 'Stone Veneer' },
-      { id: 'stucco', label: 'Stucco' },
-    ],
-    colors: [
-      { id: 'white', label: 'White', hex: '#FFFFFF' },
-      { id: 'gray', label: 'Gray', hex: '#808080' },
-      { id: 'blue', label: 'Blue', hex: '#4682B4' },
       { id: 'beige', label: 'Beige', hex: '#F5F5DC' },
-      { id: 'brown', label: 'Brown', hex: '#8B4513' },
+      { id: 'charcoal', label: 'Charcoal', hex: '#36454F' },
     ],
   },
 };
 
-interface Listing {
-  id: string;
-  title: string;
-  address?: string;
-  thumbnail?: string | null;
-  photoCount: number;
-}
-
-interface RenovationHistory {
-  id: string;
-  original_url: string;
-  result_url: string;
-  room_type: string;
-  renovation_type: string;
-  style: string;
-  created_at: string;
-  status: string;
-}
-
-// Color Swatch Component
-function ColorSwatch({ color, selected, onClick }: { color: { id: string; label: string; hex: string }; selected: boolean; onClick: () => void }) {
-  return (
-    <button
-      onClick={onClick}
-      className={`relative group flex flex-col items-center gap-1 p-2 rounded-lg transition-all ${
-        selected ? 'bg-amber-500/20 ring-2 ring-amber-500' : 'hover:bg-white/5'
-      }`}
-    >
-      <div
-        className={`w-10 h-10 rounded-full border-2 transition-all ${
-          selected ? 'border-amber-500 scale-110' : 'border-white/20 group-hover:border-white/40'
-        }`}
-        style={{ backgroundColor: color.hex }}
-      />
-      <span className="text-xs text-white/60">{color.label}</span>
-      {selected && (
-        <div className="absolute -top-1 -right-1 w-4 h-4 bg-amber-500 rounded-full flex items-center justify-center">
-          <Check className="w-3 h-3 text-black" />
-        </div>
-      )}
-    </button>
-  );
-}
-
-// Option Button Component
-function OptionButton({ label, selected, onClick }: { label: string; selected: boolean; onClick: () => void }) {
-  return (
-    <button
-      onClick={onClick}
-      className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-        selected
-          ? 'bg-amber-500 text-black'
-          : 'bg-white/5 text-white/70 hover:bg-white/10'
-      }`}
-    >
-      {label}
-    </button>
-  );
-}
-
-// Download helper function
-async function downloadImage(url: string, filename: string) {
+// FIXED: Download helper function with better CORS handling
+async function downloadImage(url: string, filename: string): Promise<boolean> {
   try {
-    const response = await fetch(url);
-    const blob = await response.blob();
-    const blobUrl = window.URL.createObjectURL(blob);
+    // Method 1: Try direct fetch (works for same-origin or CORS-enabled URLs)
+    const response = await fetch(url, { mode: 'cors' });
+    if (response.ok) {
+      const blob = await response.blob();
+      const blobUrl = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = blobUrl;
+      a.download = filename;
+      a.style.display = 'none';
+      document.body.appendChild(a);
+      a.click();
+      
+      // Cleanup
+      setTimeout(() => {
+        window.URL.revokeObjectURL(blobUrl);
+        document.body.removeChild(a);
+      }, 100);
+      
+      return true;
+    }
+  } catch (err) {
+    console.log('Direct fetch failed, trying canvas method...');
+  }
+
+  // Method 2: Use canvas to download (works for images that can be displayed)
+  try {
+    return await downloadViaCanvas(url, filename);
+  } catch (err) {
+    console.log('Canvas method failed, trying link method...');
+  }
+
+  // Method 3: Create link with download attribute (may open in new tab on some browsers)
+  try {
     const a = document.createElement('a');
-    a.href = blobUrl;
+    a.href = url;
     a.download = filename;
+    a.target = '_blank';
+    a.rel = 'noopener noreferrer';
     document.body.appendChild(a);
     a.click();
-    window.URL.revokeObjectURL(blobUrl);
     document.body.removeChild(a);
+    return true;
   } catch (err) {
-    console.error('Download failed:', err);
-    // Fallback: open in new tab
+    console.error('All download methods failed:', err);
+    // Last resort: open in new tab
     window.open(url, '_blank');
+    return false;
   }
+}
+
+// Helper: Download image via canvas (bypasses some CORS issues)
+function downloadViaCanvas(url: string, filename: string): Promise<boolean> {
+  return new Promise((resolve, reject) => {
+    const img = document.createElement('img');
+    img.crossOrigin = 'anonymous';
+    
+    img.onload = () => {
+      try {
+        const canvas = document.createElement('canvas');
+        canvas.width = img.naturalWidth;
+        canvas.height = img.naturalHeight;
+        
+        const ctx = canvas.getContext('2d');
+        if (!ctx) {
+          reject(new Error('Could not get canvas context'));
+          return;
+        }
+        
+        ctx.drawImage(img, 0, 0);
+        
+        canvas.toBlob((blob) => {
+          if (!blob) {
+            reject(new Error('Could not create blob'));
+            return;
+          }
+          
+          const blobUrl = window.URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = blobUrl;
+          a.download = filename;
+          a.style.display = 'none';
+          document.body.appendChild(a);
+          a.click();
+          
+          setTimeout(() => {
+            window.URL.revokeObjectURL(blobUrl);
+            document.body.removeChild(a);
+          }, 100);
+          
+          resolve(true);
+        }, 'image/png', 1.0);
+      } catch (err) {
+        reject(err);
+      }
+    };
+    
+    img.onerror = () => {
+      reject(new Error('Image failed to load'));
+    };
+    
+    // Add timestamp to bypass cache
+    img.src = url + (url.includes('?') ? '&' : '?') + 't=' + Date.now();
+  });
 }
 
 // Main Renovation Interface
@@ -237,6 +246,7 @@ function RenovationInterface({
   const [result, setResult] = useState<{ url: string; processingTime: number } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [downloading, setDownloading] = useState(false);
+  const [downloadSuccess, setDownloadSuccess] = useState(false);
 
   const selectedRoom = ROOM_TYPES[roomType as keyof typeof ROOM_TYPES];
   const selectedRenovation = RENOVATION_TYPES[renovationType];
@@ -251,24 +261,24 @@ function RenovationInterface({
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          listingId,
           imageUrl,
           roomType,
           renovationType,
           style,
           options,
+          listingId,
         }),
       });
 
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || 'Renovation failed');
+        throw new Error(data.error || 'Processing failed');
       }
 
       setResult({
         url: data.resultUrl,
-        processingTime: data.processingTime,
+        processingTime: data.processingTime || 0,
       });
     } catch (err: any) {
       setError(err.message);
@@ -285,13 +295,21 @@ function RenovationInterface({
     setOptions({});
     setResult(null);
     setError(null);
+    setDownloadSuccess(false);
   };
 
   const handleDownload = async () => {
     if (!result?.url) return;
     setDownloading(true);
-    await downloadImage(result.url, `renovation-${roomType}-${renovationType}-${Date.now()}.png`);
+    setDownloadSuccess(false);
+    
+    const success = await downloadImage(result.url, `renovation-${roomType}-${renovationType}-${Date.now()}.png`);
+    
     setDownloading(false);
+    if (success) {
+      setDownloadSuccess(true);
+      setTimeout(() => setDownloadSuccess(false), 3000);
+    }
   };
 
   // Result View
@@ -322,14 +340,20 @@ function RenovationInterface({
               <button
                 onClick={handleDownload}
                 disabled={downloading}
-                className="flex items-center gap-2 px-4 py-2 bg-amber-500 text-black rounded-lg font-semibold hover:bg-amber-400 transition-colors disabled:opacity-50"
+                className={`flex items-center gap-2 px-4 py-2 rounded-lg font-semibold transition-colors disabled:opacity-50 ${
+                  downloadSuccess 
+                    ? 'bg-green-500 text-white' 
+                    : 'bg-amber-500 text-black hover:bg-amber-400'
+                }`}
               >
                 {downloading ? (
                   <Loader2 className="w-4 h-4 animate-spin" />
+                ) : downloadSuccess ? (
+                  <Check className="w-4 h-4" />
                 ) : (
                   <Download className="w-4 h-4" />
                 )}
-                Download
+                {downloadSuccess ? 'Downloaded!' : 'Download'}
               </button>
             </div>
           </div>
@@ -350,70 +374,85 @@ function RenovationInterface({
             </div>
           </div>
 
-          {/* Stats */}
-          <div className="mt-6 flex items-center justify-center gap-8 text-sm text-white/50">
-            <span className="flex items-center gap-2">
-              <Clock className="w-4 h-4" />
-              {(result.processingTime / 1000).toFixed(1)}s processing
-            </span>
-            <span className="flex items-center gap-2">
-              <DollarSign className="w-4 h-4" />
-              {selectedRenovation?.priceDisplay} charged
-            </span>
+          {/* Actions */}
+          <div className="mt-6 flex items-center justify-center gap-4">
+            <button
+              onClick={onBack}
+              className="flex items-center gap-2 px-6 py-3 bg-white/10 rounded-xl hover:bg-white/20 transition-colors"
+            >
+              <ArrowRight className="w-5 h-5 rotate-180" />
+              Choose Different Photo
+            </button>
+            <Link
+              href={listingId ? `/dashboard/content-studio/create-all?listing=${listingId}` : '/dashboard/content-studio'}
+              className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-amber-500 to-orange-500 text-black font-semibold rounded-xl hover:opacity-90 transition-opacity"
+            >
+              <Sparkles className="w-5 h-5" />
+              Create Marketing Content
+            </Link>
           </div>
         </div>
       </div>
     );
   }
 
+  // Step-by-step wizard
   return (
     <div className="min-h-screen bg-[#0F0F0F] text-white p-6">
       <div className="max-w-6xl mx-auto">
         {/* Header */}
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-3">
-            <div className="p-3 bg-gradient-to-br from-orange-500/20 to-red-500/20 rounded-xl">
-              <Hammer className="w-8 h-8 text-orange-400" />
-            </div>
+        <div className="flex items-center justify-between mb-8">
+          <div className="flex items-center gap-4">
+            <button
+              onClick={onBack}
+              className="p-2 hover:bg-white/10 rounded-lg transition-colors"
+            >
+              <ArrowRight className="w-6 h-6 rotate-180" />
+            </button>
             <div>
               <h1 className="text-2xl font-bold">Virtual Renovation</h1>
-              <p className="text-white/50">Transform any room with AI</p>
+              <p className="text-white/50">Transform your space with AI</p>
             </div>
           </div>
-          <button onClick={onBack} className="text-white/50 hover:text-white transition-colors">
-            ← Back
-          </button>
-        </div>
-
-        {/* Progress Steps */}
-        <div className="flex items-center justify-center gap-4 mb-8">
-          {[1, 2, 3, 4].map((s) => (
-            <React.Fragment key={s}>
+          
+          {/* Progress */}
+          <div className="flex items-center gap-2">
+            {[1, 2, 3].map((s) => (
               <div
+                key={s}
                 className={`w-10 h-10 rounded-full flex items-center justify-center font-bold transition-all ${
-                  step >= s
+                  step === s
                     ? 'bg-amber-500 text-black'
-                    : 'bg-white/10 text-white/40'
+                    : step > s
+                    ? 'bg-green-500 text-white'
+                    : 'bg-white/10 text-white/50'
                 }`}
               >
-                {s}
+                {step > s ? <Check className="w-5 h-5" /> : s}
               </div>
-              {s < 4 && (
-                <div className={`w-16 h-1 rounded ${step > s ? 'bg-amber-500' : 'bg-white/10'}`} />
-              )}
-            </React.Fragment>
-          ))}
+            ))}
+          </div>
         </div>
 
-        <div className="grid lg:grid-cols-[1fr,400px] gap-6">
-          {/* Main Content */}
+        <div className="grid md:grid-cols-2 gap-8">
+          {/* Left: Preview */}
+          <div className="bg-white/5 rounded-2xl overflow-hidden">
+            <div className="p-3 border-b border-white/10 text-center">
+              <span className="text-sm font-medium text-white/60">ORIGINAL PHOTO</span>
+            </div>
+            <img src={imageUrl} alt="Original" className="w-full aspect-[4/3] object-cover" />
+          </div>
+
+          {/* Right: Controls */}
           <div className="space-y-6">
             {/* Step 1: Room Type */}
             {step === 1 && (
-              <div className="bg-white/5 border border-white/10 rounded-2xl p-6">
-                <h2 className="text-xl font-bold mb-2">Step 1: Select Room Type</h2>
-                <p className="text-white/50 mb-6">What type of room is this?</p>
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+              <div className="bg-white/5 rounded-2xl p-6 border border-white/10">
+                <h2 className="text-lg font-bold mb-4 flex items-center gap-2">
+                  <Home className="w-5 h-5 text-amber-400" />
+                  Select Room Type
+                </h2>
+                <div className="grid grid-cols-2 gap-3">
                   {Object.values(ROOM_TYPES).map((room) => {
                     const Icon = room.icon;
                     return (
@@ -421,16 +460,15 @@ function RenovationInterface({
                         key={room.id}
                         onClick={() => {
                           setRoomType(room.id);
-                          setRenovationType('');
                           setStep(2);
                         }}
-                        className={`p-6 rounded-xl border text-center transition-all hover:scale-105 ${
+                        className={`p-4 rounded-xl border-2 transition-all text-left hover:border-amber-500/50 ${
                           roomType === room.id
-                            ? 'bg-amber-500/20 border-amber-500/50'
-                            : 'bg-white/5 border-white/10 hover:border-white/30'
+                            ? 'border-amber-500 bg-amber-500/10'
+                            : 'border-white/10 hover:bg-white/5'
                         }`}
                       >
-                        <Icon className={`w-10 h-10 mx-auto mb-3 ${roomType === room.id ? 'text-amber-400' : 'text-white/50'}`} />
+                        <Icon className="w-6 h-6 text-amber-400 mb-2" />
                         <span className="font-medium">{room.label}</span>
                       </button>
                     );
@@ -441,36 +479,42 @@ function RenovationInterface({
 
             {/* Step 2: Renovation Type */}
             {step === 2 && selectedRoom && (
-              <div className="bg-white/5 border border-white/10 rounded-2xl p-6">
-                <div className="flex items-center justify-between mb-6">
-                  <div>
-                    <h2 className="text-xl font-bold mb-1">Step 2: What to Renovate?</h2>
-                    <p className="text-white/50">Select what you want to change in the {selectedRoom.label.toLowerCase()}</p>
-                  </div>
-                  <button onClick={() => setStep(1)} className="text-amber-400 hover:underline text-sm">
-                    Change room
+              <div className="bg-white/5 rounded-2xl p-6 border border-white/10">
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-lg font-bold flex items-center gap-2">
+                    <Hammer className="w-5 h-5 text-amber-400" />
+                    Select Renovation Type
+                  </h2>
+                  <button
+                    onClick={() => setStep(1)}
+                    className="text-sm text-white/50 hover:text-white"
+                  >
+                    Back
                   </button>
                 </div>
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                  {selectedRoom.renovationTypes.map((typeId) => {
-                    const type = RENOVATION_TYPES[typeId];
-                    if (!type) return null;
+                <div className="space-y-2">
+                  {selectedRoom.renovationTypes.map((type) => {
+                    const reno = RENOVATION_TYPES[type];
                     return (
                       <button
-                        key={type.id}
+                        key={type}
                         onClick={() => {
-                          setRenovationType(type.id);
+                          setRenovationType(type);
                           setStep(3);
                         }}
-                        className={`p-4 rounded-xl border text-left transition-all ${
-                          renovationType === type.id
-                            ? 'bg-amber-500/20 border-amber-500/50'
-                            : 'bg-white/5 border-white/10 hover:border-white/30'
+                        className={`w-full p-4 rounded-xl border-2 transition-all text-left hover:border-amber-500/50 ${
+                          renovationType === type
+                            ? 'border-amber-500 bg-amber-500/10'
+                            : 'border-white/10 hover:bg-white/5'
                         }`}
                       >
-                        <div className="font-medium mb-1">{type.label}</div>
-                        <div className="text-xs text-white/50 mb-2">{type.description}</div>
-                        <span className="text-amber-400 font-bold">{type.priceDisplay}</span>
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <span className="font-medium">{reno.label}</span>
+                            <p className="text-sm text-white/50">{reno.description}</p>
+                          </div>
+                          <span className="text-amber-400 font-bold">{reno.priceDisplay}</span>
+                        </div>
                       </button>
                     );
                   })}
@@ -479,246 +523,82 @@ function RenovationInterface({
             )}
 
             {/* Step 3: Style & Options */}
-            {step === 3 && (
-              <div className="space-y-6">
-                {/* Style Selection */}
-                <div className="bg-white/5 border border-white/10 rounded-2xl p-6">
-                  <div className="flex items-center justify-between mb-6">
-                    <div>
-                      <h2 className="text-xl font-bold mb-1">Step 3: Choose Style</h2>
-                      <p className="text-white/50">Select the design style for your renovation</p>
-                    </div>
-                    <button onClick={() => setStep(2)} className="text-amber-400 hover:underline text-sm">
-                      Change renovation
+            {step === 3 && selectedRenovation && (
+              <div className="space-y-4">
+                <div className="bg-white/5 rounded-2xl p-6 border border-white/10">
+                  <div className="flex items-center justify-between mb-4">
+                    <h2 className="text-lg font-bold flex items-center gap-2">
+                      <Palette className="w-5 h-5 text-amber-400" />
+                      Select Style
+                    </h2>
+                    <button
+                      onClick={() => setStep(2)}
+                      className="text-sm text-white/50 hover:text-white"
+                    >
+                      Back
                     </button>
                   </div>
-                  <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+                  <div className="grid grid-cols-2 gap-2">
                     {STYLES.map((s) => (
                       <button
                         key={s.id}
                         onClick={() => setStyle(s.id)}
-                        className={`p-3 rounded-xl border text-center transition-all ${
+                        className={`p-3 rounded-lg border-2 transition-all text-left ${
                           style === s.id
-                            ? 'bg-amber-500/20 border-amber-500/50'
-                            : 'bg-white/5 border-white/10 hover:border-white/30'
+                            ? 'border-amber-500 bg-amber-500/10'
+                            : 'border-white/10 hover:border-white/30'
                         }`}
                       >
-                        <div className={`font-medium text-sm ${style === s.id ? 'text-amber-400' : ''}`}>
-                          {s.label}
-                        </div>
-                        <div className="text-xs text-white/40 mt-1">{s.description}</div>
+                        <span className="font-medium text-sm">{s.label}</span>
+                        <p className="text-xs text-white/40">{s.description}</p>
                       </button>
                     ))}
                   </div>
                 </div>
 
-                {/* Specific Options */}
-                {availableOptions && (
-                  <div className="bg-white/5 border border-white/10 rounded-2xl p-6">
-                    <h3 className="text-lg font-bold mb-4">Customize Options</h3>
-                    
-                    {/* Colors */}
-                    {'colors' in availableOptions && (
-                      <div className="mb-6">
-                        <label className="block text-sm text-white/60 mb-3">Color</label>
-                        <div className="flex flex-wrap gap-2">
-                          {(availableOptions.colors as { id: string; label: string; hex: string }[]).map((color) => (
-                            <ColorSwatch
-                              key={color.id}
-                              color={color}
-                              selected={options[`${renovationType}_color`] === color.id}
-                              onClick={() => setOptions({ ...options, [`${renovationType}_color`]: color.id })}
-                            />
-                          ))}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Materials/Types */}
-                    {'materials' in availableOptions && (
-                      <div className="mb-6">
-                        <label className="block text-sm text-white/60 mb-3">Material</label>
-                        <div className="flex flex-wrap gap-2">
-                          {(availableOptions.materials as { id: string; label: string }[]).map((mat) => (
-                            <OptionButton
-                              key={mat.id}
-                              label={mat.label}
-                              selected={options.counter_material === mat.id}
-                              onClick={() => setOptions({ ...options, counter_material: mat.id })}
-                            />
-                          ))}
-                        </div>
-                      </div>
-                    )}
-
-                    {'types' in availableOptions && (
-                      <div className="mb-6">
-                        <label className="block text-sm text-white/60 mb-3">Type</label>
-                        <div className="flex flex-wrap gap-2">
-                          {(availableOptions.types as { id: string; label: string }[]).map((type) => (
-                            <OptionButton
-                              key={type.id}
-                              label={type.label}
-                              selected={options[`${renovationType}_type`] === type.id}
-                              onClick={() => setOptions({ ...options, [`${renovationType}_type`]: type.id })}
-                            />
-                          ))}
-                        </div>
-                      </div>
-                    )}
-
-                    {'styles' in availableOptions && (
-                      <div className="mb-6">
-                        <label className="block text-sm text-white/60 mb-3">Style</label>
-                        <div className="flex flex-wrap gap-2">
-                          {(availableOptions.styles as { id: string; label: string }[]).map((s) => (
-                            <OptionButton
-                              key={s.id}
-                              label={s.label}
-                              selected={options.cabinet_style === s.id}
-                              onClick={() => setOptions({ ...options, cabinet_style: s.id })}
-                            />
-                          ))}
-                        </div>
-                      </div>
-                    )}
+                {/* Price Summary */}
+                <div className="bg-gradient-to-br from-amber-500/20 to-orange-500/20 rounded-2xl p-6 border border-amber-500/30">
+                  <div className="flex items-center justify-between mb-4">
+                    <span className="text-white/60">Selected:</span>
+                    <span className="font-bold">{selectedRenovation.label}</span>
                   </div>
-                )}
-
-                <button
-                  onClick={() => setStep(4)}
-                  className="w-full py-4 bg-amber-500 text-black font-bold rounded-xl hover:bg-amber-400 transition-colors"
-                >
-                  Continue to Preview
-                </button>
-              </div>
-            )}
-
-            {/* Step 4: Preview & Process */}
-            {step === 4 && (
-              <div className="bg-white/5 border border-white/10 rounded-2xl p-6">
-                <div className="flex items-center justify-between mb-6">
-                  <h2 className="text-xl font-bold">Step 4: Review & Generate</h2>
-                  <button onClick={() => setStep(3)} className="text-amber-400 hover:underline text-sm">
-                    Change options
-                  </button>
-                </div>
-
-                {/* Summary */}
-                <div className="grid grid-cols-3 gap-4 mb-6">
-                  <div className="p-4 bg-white/5 rounded-xl">
-                    <div className="text-xs text-white/40 mb-1">Room</div>
-                    <div className="font-medium">{selectedRoom?.label}</div>
+                  <div className="flex items-center justify-between mb-4">
+                    <span className="text-white/60">Style:</span>
+                    <span className="font-bold">{STYLES.find(s => s.id === style)?.label}</span>
                   </div>
-                  <div className="p-4 bg-white/5 rounded-xl">
-                    <div className="text-xs text-white/40 mb-1">Renovation</div>
-                    <div className="font-medium">{selectedRenovation?.label}</div>
-                  </div>
-                  <div className="p-4 bg-white/5 rounded-xl">
-                    <div className="text-xs text-white/40 mb-1">Style</div>
-                    <div className="font-medium">{STYLES.find(s => s.id === style)?.label}</div>
+                  <div className="border-t border-white/20 pt-4 flex items-center justify-between">
+                    <span className="text-lg font-bold">Total:</span>
+                    <span className="text-2xl font-bold text-amber-400">{selectedRenovation.priceDisplay}</span>
                   </div>
                 </div>
 
-                {/* Selected Options */}
-                {Object.keys(options).length > 0 && (
-                  <div className="mb-6 p-4 bg-white/5 rounded-xl">
-                    <div className="text-xs text-white/40 mb-2">Selected Options</div>
-                    <div className="flex flex-wrap gap-2">
-                      {Object.entries(options).map(([key, value]) => (
-                        <span key={key} className="px-3 py-1 bg-amber-500/20 text-amber-400 rounded text-sm">
-                          {value}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* Cost */}
-                <div className="p-4 bg-amber-500/10 border border-amber-500/30 rounded-xl mb-6">
-                  <div className="flex items-center justify-between">
-                    <span className="text-white/70">Price</span>
-                    <span className="text-xl font-bold text-amber-400">{selectedRenovation?.priceDisplay}</span>
-                  </div>
-                </div>
-
-                {error && (
-                  <div className="p-4 bg-red-500/10 border border-red-500/30 rounded-xl mb-6 flex items-start gap-3 text-red-400">
-                    <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5" />
-                    {error}
-                  </div>
-                )}
-
+                {/* Process Button */}
                 <button
                   onClick={handleProcess}
                   disabled={processing}
-                  className="w-full py-4 bg-gradient-to-r from-orange-500 to-red-500 text-white font-bold rounded-xl hover:from-orange-400 hover:to-red-400 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                  className="w-full py-4 bg-gradient-to-r from-amber-500 to-orange-500 text-black font-bold rounded-xl text-lg hover:opacity-90 transition-opacity disabled:opacity-50 flex items-center justify-center gap-3"
                 >
                   {processing ? (
                     <>
-                      <Loader2 className="w-5 h-5 animate-spin" />
-                      Processing Renovation... (30-60 sec)
+                      <Loader2 className="w-6 h-6 animate-spin" />
+                      Processing... (30-60 seconds)
                     </>
                   ) : (
                     <>
-                      <Sparkles className="w-5 h-5" />
+                      <Wand2 className="w-6 h-6" />
                       Generate Renovation
                     </>
                   )}
                 </button>
+
+                {error && (
+                  <div className="p-4 bg-red-500/20 border border-red-500/30 rounded-xl flex items-center gap-3">
+                    <AlertCircle className="w-5 h-5 text-red-400" />
+                    <span className="text-red-400">{error}</span>
+                  </div>
+                )}
               </div>
             )}
-          </div>
-
-          {/* Preview Panel */}
-          <div className="lg:sticky lg:top-6 lg:self-start space-y-4">
-            {/* Original Image */}
-            <div className="bg-white/5 border border-white/10 rounded-2xl overflow-hidden">
-              <div className="p-3 border-b border-white/10 text-center">
-                <span className="text-sm font-medium text-white/60">ORIGINAL PHOTO</span>
-              </div>
-              <img src={imageUrl} alt="Original" className="w-full aspect-[4/3] object-cover" />
-            </div>
-
-            {/* What You're Creating */}
-            {(roomType || renovationType) && (
-              <div className="bg-white/5 border border-white/10 rounded-xl p-4">
-                <h3 className="font-medium mb-3 text-white/80">Your Renovation</h3>
-                <div className="space-y-2 text-sm">
-                  {roomType && (
-                    <div className="flex items-center gap-2">
-                      <Check className="w-4 h-4 text-green-400" />
-                      <span>{selectedRoom?.label}</span>
-                    </div>
-                  )}
-                  {renovationType && (
-                    <div className="flex items-center gap-2">
-                      <Check className="w-4 h-4 text-green-400" />
-                      <span>{selectedRenovation?.label}</span>
-                    </div>
-                  )}
-                  {style && step >= 3 && (
-                    <div className="flex items-center gap-2">
-                      <Check className="w-4 h-4 text-green-400" />
-                      <span>{STYLES.find(s => s.id === style)?.label} Style</span>
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
-
-            {/* Info Box */}
-            <div className="bg-orange-500/10 border border-orange-500/30 rounded-xl p-4">
-              <div className="flex items-start gap-3">
-                <Lightbulb className="w-5 h-5 text-orange-400 mt-0.5 flex-shrink-0" />
-                <div>
-                  <h3 className="font-medium text-orange-400 mb-1">Pro Tip</h3>
-                  <p className="text-sm text-white/60">
-                    For best results, use high-quality photos with good lighting. The AI preserves room structure while transforming finishes.
-                  </p>
-                </div>
-              </div>
-            </div>
           </div>
         </div>
       </div>
@@ -726,239 +606,237 @@ function RenovationInterface({
   );
 }
 
-// Photo Selector
-function PhotoSelector({ onSelect }: { onSelect: (url: string, listingId?: string) => void }) {
-  const [listings, setListings] = useState<Listing[]>([]);
-  const [selectedListing, setSelectedListing] = useState<string | null>(null);
-  const [photos, setPhotos] = useState<{ url: string; id: string }[]>([]);
+// Photo Selection Page
+function PhotoSelection() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const supabase = createClient();
+  
+  const [listings, setListings] = useState<any[]>([]);
+  const [selectedListing, setSelectedListing] = useState<any>(null);
+  const [selectedPhoto, setSelectedPhoto] = useState<string | null>(null);
+  const [uploadedImage, setUploadedImage] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
-  const [uploadUrl, setUploadUrl] = useState('');
+  const [uploading, setUploading] = useState(false);
 
   useEffect(() => {
+    async function loadListings() {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) {
+          router.push('/auth/login');
+          return;
+        }
+
+        const { data: listingsData } = await supabase
+          .from('listings')
+          .select(`
+            id,
+            title,
+            address,
+            photos:listing_photos(id, url, enhanced_url)
+          `)
+          .eq('user_id', user.id)
+          .order('created_at', { ascending: false });
+
+        setListings(listingsData || []);
+
+        // Check for pre-selected listing
+        const listingId = searchParams.get('listing');
+        if (listingId && listingsData) {
+          const listing = listingsData.find(l => l.id === listingId);
+          if (listing) setSelectedListing(listing);
+        }
+      } catch (err) {
+        console.error('Error loading listings:', err);
+      } finally {
+        setLoading(false);
+      }
+    }
+
     loadListings();
-  }, []);
+  }, [supabase, router, searchParams]);
 
-  const loadListings = async () => {
-    const supabase = createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
+  const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
 
-    const { data } = await supabase
-      .from('listings')
-      .select('*, photos!photos_listing_id_fkey(id, raw_url, processed_url)')
-      .eq('user_id', user.id)
-      .order('created_at', { ascending: false });
-
-    if (data) {
-      const withThumbnails = await Promise.all(
-        data.filter((l: any) => (l.photos || []).length > 0).map(async (listing: any) => {
-          const photos = listing.photos || [];
-          const firstPhoto = photos[0];
-          let thumbnail = null;
-          if (firstPhoto) {
-            const path = firstPhoto.processed_url || firstPhoto.raw_url;
-            if (path && !path.startsWith('http')) {
-              const { data: urlData } = await supabase.storage.from('raw-images').createSignedUrl(path, 3600);
-              thumbnail = urlData?.signedUrl;
-            }
-          }
-          return { id: listing.id, title: listing.title, address: listing.address, thumbnail, photoCount: photos.length };
-        })
-      );
-      setListings(withThumbnails);
-    }
-    setLoading(false);
-  };
-
-  const loadPhotos = async (listingId: string) => {
-    const supabase = createClient();
-    const { data } = await supabase
-      .from('photos')
-      .select('*')
-      .eq('listing_id', listingId)
-      .order('created_at', { ascending: true });
-
-    if (data) {
-      const urls = await Promise.all(
-        data.map(async (photo) => {
-          const path = photo.processed_url || photo.raw_url;
-          const { data: urlData } = await supabase.storage.from('raw-images').createSignedUrl(path, 3600);
-          return { url: urlData?.signedUrl || '', id: photo.id };
-        })
-      );
-      setPhotos(urls.filter(p => p.url));
+    setUploading(true);
+    try {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        setUploadedImage(event.target?.result as string);
+        setSelectedPhoto(null);
+        setSelectedListing(null);
+      };
+      reader.readAsDataURL(file);
+    } catch (err) {
+      console.error('Upload error:', err);
+    } finally {
+      setUploading(false);
     }
   };
-
-  useEffect(() => {
-    if (selectedListing) {
-      loadPhotos(selectedListing);
-    }
-  }, [selectedListing]);
 
   if (loading) {
     return (
       <div className="min-h-screen bg-[#0F0F0F] flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-orange-400" />
+        <Loader2 className="w-8 h-8 animate-spin text-amber-500" />
       </div>
     );
   }
 
-  return (
-    <div className="min-h-screen bg-[#0F0F0F] text-white p-6">
-      <div className="max-w-5xl mx-auto">
-        {/* Header */}
-        <div className="flex items-center gap-3 mb-4">
-          <div className="p-3 bg-gradient-to-br from-orange-500/20 to-red-500/20 rounded-xl">
-            <Hammer className="w-8 h-8 text-orange-400" />
-          </div>
-          <div>
-            <h1 className="text-2xl font-bold">Virtual Renovation</h1>
-            <p className="text-white/50">Transform kitchens, bathrooms, and more with AI</p>
-          </div>
-        </div>
-
-        {/* What this does */}
-        <div className="bg-orange-500/10 border border-orange-500/30 rounded-xl p-4 mb-8">
-          <div className="flex items-start gap-3">
-            <Lightbulb className="w-5 h-5 text-orange-400 mt-0.5 flex-shrink-0" />
-            <div>
-              <h3 className="font-semibold text-orange-400 mb-1">What Virtual Renovation does</h3>
-              <p className="text-sm text-white/70">
-                Show buyers the potential! Replace cabinets, countertops, flooring, paint colors, and more. 
-                Help sellers visualize updates and help buyers see possibilities. BoxBrownie charges $24-$176 per room - 
-                we do it with AI for a fraction of the cost.
-              </p>
-            </div>
-          </div>
-        </div>
-
-        {/* Pricing Overview */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-          <div className="bg-white/5 border border-white/10 rounded-xl p-4 text-center">
-            <div className="text-2xl font-bold text-orange-400">$15-50</div>
-            <div className="text-sm text-white/50">Per renovation</div>
-          </div>
-          <div className="bg-white/5 border border-white/10 rounded-xl p-4 text-center">
-            <div className="text-2xl font-bold text-orange-400">30-60s</div>
-            <div className="text-sm text-white/50">Processing time</div>
-          </div>
-          <div className="bg-white/5 border border-white/10 rounded-xl p-4 text-center">
-            <div className="text-2xl font-bold text-orange-400">10+</div>
-            <div className="text-sm text-white/50">Design styles</div>
-          </div>
-          <div className="bg-white/5 border border-white/10 rounded-xl p-4 text-center">
-            <div className="text-2xl font-bold text-orange-400">15+</div>
-            <div className="text-sm text-white/50">Renovation types</div>
-          </div>
-        </div>
-
-        {/* URL Input */}
-        <div className="bg-white/5 border border-white/10 rounded-xl p-4 mb-6">
-          <h3 className="font-medium mb-3">Option 1: Paste Image URL</h3>
-          <div className="flex gap-3">
-            <input
-              type="url"
-              value={uploadUrl}
-              onChange={(e) => setUploadUrl(e.target.value)}
-              placeholder="https://example.com/photo.jpg"
-              className="flex-1 px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder:text-white/30 focus:outline-none focus:border-orange-500/50"
-            />
-            <button
-              onClick={() => uploadUrl && onSelect(uploadUrl)}
-              disabled={!uploadUrl}
-              className="px-6 py-3 bg-orange-500 text-black font-semibold rounded-xl hover:bg-orange-400 transition-colors disabled:opacity-50"
-            >
-              Use This Photo
-            </button>
-          </div>
-        </div>
-
-        {/* Listing Selection */}
-        <div className="bg-white/5 border border-white/10 rounded-xl p-4">
-          <h3 className="font-medium mb-3">Option 2: Select from Listings</h3>
-          
-          {!selectedListing ? (
-            <div className="grid md:grid-cols-2 gap-4">
-              {listings.map(listing => (
-                <button
-                  key={listing.id}
-                  onClick={() => setSelectedListing(listing.id)}
-                  className="flex items-center gap-4 p-4 bg-white/5 border border-white/10 rounded-xl hover:border-orange-500/50 transition-all text-left"
-                >
-                  <div className="w-16 h-12 rounded-lg overflow-hidden bg-white/10">
-                    {listing.thumbnail ? (
-                      <img src={listing.thumbnail} alt="" className="w-full h-full object-cover" />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center">
-                        <Home className="w-5 h-5 text-white/20" />
-                      </div>
-                    )}
-                  </div>
-                  <div className="flex-1">
-                    <div className="font-medium">{listing.title || 'Untitled'}</div>
-                    <div className="text-sm text-white/50">{listing.photoCount} photos</div>
-                  </div>
-                  <ChevronRight className="w-5 h-5 text-white/30" />
-                </button>
-              ))}
-            </div>
-          ) : (
-            <div>
-              <button
-                onClick={() => { setSelectedListing(null); setPhotos([]); }}
-                className="text-orange-400 hover:underline text-sm mb-4"
-              >
-                ← Back to listings
-              </button>
-              <div className="grid grid-cols-4 md:grid-cols-6 gap-3">
-                {photos.map((photo, i) => (
-                  <button
-                    key={photo.id}
-                    onClick={() => onSelect(photo.url, selectedListing)}
-                    className="aspect-square rounded-lg overflow-hidden border-2 border-transparent hover:border-orange-500 transition-all"
-                  >
-                    <img src={photo.url} alt={`Photo ${i + 1}`} className="w-full h-full object-cover" />
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// Main Page Component
-function VirtualRenovationContent() {
-  const [selectedImage, setSelectedImage] = useState<{ url: string; listingId?: string } | null>(null);
-
-  if (selectedImage) {
+  // If photo is selected, show renovation interface
+  if (selectedPhoto || uploadedImage) {
     return (
       <RenovationInterface
-        imageUrl={selectedImage.url}
-        listingId={selectedImage.listingId}
-        onBack={() => setSelectedImage(null)}
+        imageUrl={selectedPhoto || uploadedImage!}
+        listingId={selectedListing?.id}
+        onBack={() => {
+          setSelectedPhoto(null);
+          setUploadedImage(null);
+        }}
       />
     );
   }
 
   return (
-    <PhotoSelector
-      onSelect={(url, listingId) => setSelectedImage({ url, listingId })}
-    />
+    <div className="min-h-screen bg-[#0F0F0F] text-white p-6">
+      <div className="max-w-6xl mx-auto">
+        {/* Header */}
+        <div className="mb-8">
+          <div className="flex items-center gap-2 text-white/50 text-sm mb-2">
+            <Link href="/dashboard" className="hover:text-white">Dashboard</Link>
+            <ChevronRight className="w-4 h-4" />
+            <span className="text-white">Virtual Renovation</span>
+          </div>
+          <h1 className="text-3xl font-bold mb-2">Virtual Renovation</h1>
+          <p className="text-white/60">
+            Transform any room with AI-powered virtual staging and renovation
+          </p>
+        </div>
+
+        {/* Pricing Banner */}
+        <div className="bg-gradient-to-r from-amber-500/20 to-orange-500/20 border border-amber-500/30 rounded-2xl p-6 mb-8">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-xl font-bold text-amber-400 mb-1">Pay Per Renovation</h2>
+              <p className="text-white/60">High-quality AI renovations at transparent prices</p>
+            </div>
+            <div className="text-right">
+              <div className="flex items-baseline gap-2">
+                <span className="text-3xl font-bold text-white">$15</span>
+                <span className="text-white/50">- $50</span>
+              </div>
+              <p className="text-sm text-white/50">per renovation</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="grid md:grid-cols-2 gap-8">
+          {/* Upload New Photo */}
+          <div className="bg-white/5 rounded-2xl p-6 border border-white/10">
+            <h2 className="text-lg font-bold mb-4 flex items-center gap-2">
+              <Upload className="w-5 h-5 text-amber-400" />
+              Upload Photo
+            </h2>
+            <label className="block">
+              <div className="border-2 border-dashed border-white/20 rounded-xl p-8 text-center cursor-pointer hover:border-amber-500/50 transition-colors">
+                {uploading ? (
+                  <Loader2 className="w-10 h-10 mx-auto mb-3 animate-spin text-amber-500" />
+                ) : (
+                  <Upload className="w-10 h-10 mx-auto mb-3 text-white/30" />
+                )}
+                <p className="text-white/50">Click to upload a photo</p>
+                <p className="text-xs text-white/30 mt-1">JPG, PNG, WebP accepted</p>
+              </div>
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleUpload}
+                className="hidden"
+              />
+            </label>
+          </div>
+
+          {/* Select from Listings */}
+          <div className="bg-white/5 rounded-2xl p-6 border border-white/10">
+            <h2 className="text-lg font-bold mb-4 flex items-center gap-2">
+              <Home className="w-5 h-5 text-amber-400" />
+              From Your Listings
+            </h2>
+            {listings.length === 0 ? (
+              <p className="text-white/50 text-center py-8">
+                No listings yet. Upload a photo or create a listing first.
+              </p>
+            ) : (
+              <div className="space-y-3 max-h-[400px] overflow-y-auto">
+                {listings.map((listing) => (
+                  <button
+                    key={listing.id}
+                    onClick={() => setSelectedListing(listing)}
+                    className={`w-full flex items-center gap-3 p-3 rounded-xl border-2 transition-all text-left ${
+                      selectedListing?.id === listing.id
+                        ? 'border-amber-500 bg-amber-500/10'
+                        : 'border-white/10 hover:border-white/30'
+                    }`}
+                  >
+                    {listing.photos?.[0] ? (
+                      <img
+                        src={listing.photos[0].enhanced_url || listing.photos[0].url}
+                        alt=""
+                        className="w-16 h-16 rounded-lg object-cover"
+                      />
+                    ) : (
+                      <div className="w-16 h-16 rounded-lg bg-white/10 flex items-center justify-center">
+                        <Image className="w-6 h-6 text-white/30" />
+                      </div>
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium truncate">{listing.title || listing.address}</p>
+                      <p className="text-sm text-white/50">{listing.photos?.length || 0} photos</p>
+                    </div>
+                    <ChevronRight className="w-5 h-5 text-white/30" />
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Photo Grid for Selected Listing */}
+        {selectedListing && selectedListing.photos?.length > 0 && (
+          <div className="mt-8">
+            <h3 className="text-lg font-bold mb-4">Select a photo from {selectedListing.title || selectedListing.address}</h3>
+            <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+              {selectedListing.photos.map((photo: any) => (
+                <button
+                  key={photo.id}
+                  onClick={() => setSelectedPhoto(photo.enhanced_url || photo.url)}
+                  className="aspect-square rounded-xl overflow-hidden border-2 border-white/10 hover:border-amber-500/50 transition-all"
+                >
+                  <img
+                    src={photo.enhanced_url || photo.url}
+                    alt=""
+                    className="w-full h-full object-cover"
+                  />
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
   );
 }
 
-export default function VirtualRenovationPage() {
+export default function RenovationPage() {
   return (
     <Suspense fallback={
       <div className="min-h-screen bg-[#0F0F0F] flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-orange-400" />
+        <Loader2 className="w-8 h-8 animate-spin text-amber-500" />
       </div>
     }>
-      <VirtualRenovationContent />
+      <PhotoSelection />
     </Suspense>
   );
 }
