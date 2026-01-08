@@ -7,7 +7,7 @@ import {
   ArrowLeft, Image, Video, Calendar, FolderOpen, Settings,
   Instagram, Facebook, Linkedin, Sparkles, Mail, Globe,
   Home, Coins, ChevronRight, Hash, Palette, Zap,
-  BarChart3, ArrowRight, Loader2
+  BarChart3, ArrowRight, Loader2, Download
 } from 'lucide-react'
 import { trackEvent, SnapREvents } from '@/lib/analytics'
 
@@ -169,21 +169,13 @@ export default function ContentStudioClient({
             </div>
           </div>
 
-          {/* Manage */}
+          {/* Manage - Simplified */}
           <div className="p-3 border-b border-white/5">
             <h3 className="text-[10px] font-semibold text-white/40 uppercase tracking-wider mb-2">Manage</h3>
             <div className="space-y-0.5">
-              <Link href="/dashboard/content-studio/calendar" className="flex items-center gap-2.5 p-2 rounded-lg hover:bg-white/5 transition-all">
-                <Calendar className="w-4 h-4 text-blue-400" />
-                <span className="text-sm">Content Calendar</span>
-              </Link>
               <Link href="/dashboard/content-studio/library" className="flex items-center gap-2.5 p-2 rounded-lg hover:bg-white/5 transition-all">
                 <FolderOpen className="w-4 h-4 text-green-400" />
                 <span className="text-sm">Content Library</span>
-              </Link>
-              <Link href="/dashboard/content-studio/analytics" className="flex items-center gap-2.5 p-2 rounded-lg hover:bg-white/5 transition-all">
-                <BarChart3 className="w-4 h-4 text-orange-400" />
-                <span className="text-sm">Post Analytics</span>
               </Link>
               <Link href="/dashboard/content-studio/sites" className="flex items-center gap-2.5 p-2 rounded-lg hover:bg-white/5 transition-all">
                 <Globe className="w-4 h-4 text-cyan-400" />
@@ -203,10 +195,6 @@ export default function ContentStudioClient({
               <Link href="/dashboard/settings/watermark" className="flex items-center gap-2.5 p-2 rounded-lg hover:bg-white/5 transition-all">
                 <Image className="w-4 h-4 text-teal-400" />
                 <span className="text-sm">Watermark Settings</span>
-              </Link>
-              <Link href="/dashboard/content-studio/auto-post" className="flex items-center gap-2.5 p-2 rounded-lg hover:bg-white/5 transition-all">
-                <Zap className="w-4 h-4 text-yellow-400" />
-                <span className="text-sm">Auto-Post Rules</span>
               </Link>
             </div>
           </div>
@@ -309,8 +297,8 @@ export default function ContentStudioClient({
                 </div>
                 <div className="h-4 w-px bg-white/10" />
                 <div className="flex items-center gap-1.5 text-sm">
-                  <Sparkles className="w-3.5 h-3.5 text-[#D4AF37]" />
-                  <span className="text-white/50">AI Captions & Hashtags</span>
+                  <Download className="w-3.5 h-3.5 text-[#D4AF37]" />
+                  <span className="text-white/50">Download & Share Anywhere</span>
                 </div>
               </div>
               {listings.length > 0 && (
