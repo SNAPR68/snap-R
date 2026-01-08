@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useSearchParams } from 'next/navigation'
 import html2canvas from 'html2canvas'
 import JSZip from 'jszip'
-import { ArrowLeft, Download, Loader2, Check, Sparkles, Instagram, Facebook, Linkedin, Video, Image, Copy, Hash, ClipboardCopy, Package, MessageCircle, Images, ImageIcon, Share2, CheckCircle } from 'lucide-react'
+import { ArrowLeft, Download, Loader2, Check, Sparkles, Instagram, Facebook, Linkedin, Video, Image, Copy, Hash, ClipboardCopy, Package, MessageCircle, Images, ImageIcon, Share2, CheckCircle, Upload, ExternalLink } from 'lucide-react'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -52,6 +52,15 @@ const getDims = (p: Platform) => {
 
 const DEFAULT_PHOTO = 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&h=600&fit=crop'
 
+// Platform URLs
+const PLATFORM_URLS: Record<string, string> = {
+  instagram: 'https://www.instagram.com/',
+  facebook: 'https://www.facebook.com/',
+  linkedin: 'https://www.linkedin.com/feed/',
+  tiktok: 'https://www.tiktok.com/upload',
+  story: 'https://www.instagram.com/',
+}
+
 export function UnifiedCreator() {
   const searchParams = useSearchParams()
   const listingId = searchParams.get('listing')
@@ -72,7 +81,7 @@ export function UnifiedCreator() {
   const [photos, setPhotos] = useState<string[]>([])
   const [selectedPhotos, setSelectedPhotos] = useState<string[]>([])
   const [loading, setLoading] = useState(true)
-  const [downloading, setDownloading] = useState<string | null>(null)
+  const [uploading, setUploading] = useState<string | null>(null)
   const [listingTitle, setListingTitle] = useState('')
   const [tone, setTone] = useState<Tone>('professional')
   const [caption, setCaption] = useState('')
@@ -80,7 +89,7 @@ export function UnifiedCreator() {
   const [genCaption, setGenCaption] = useState(false)
   const [genHashtags, setGenHashtags] = useState(false)
   const [copied, setCopied] = useState<string | null>(null)
-  const [downloadSuccess, setDownloadSuccess] = useState(false)
+  const [uploadSuccess, setUploadSuccess] = useState<string | null>(null)
 
   const [property, setProperty] = useState({ address: '', city: '', state: '', price: '' as any, bedrooms: '' as any, bathrooms: '' as any, squareFeet: '' as any })
   const [brand, setBrand] = useState({ business_name: '', logo_url: '', primary_color: '#D4AF37', secondary_color: '#1A1A1A', phone: '', tagline: '' })
@@ -109,23 +118,146 @@ export function UnifiedCreator() {
 
   const selectPhoto = (url: string) => { if (postMode === 'single') { setPhotoUrl(url); return }; setSelectedPhotos(prev => prev.includes(url) ? prev.filter(p => p !== url) : prev.length >= 10 ? prev : [...prev, url]) }
 
-  const download = async (p: Platform) => {
-    if (!downloadRef.current) return; setDownloading(p)
-    try { 
-      const { w, h } = getDims(p)
-      await new Promise(r => setTimeout(r, 100))
-      const canvas = await html2canvas(downloadRef.current, { scale: 1, useCORS: true, allowTaint: true, backgroundColor: null, width: w, height: h, windowWidth: w, windowHeight: h })
-      const link = document.createElement('a')
-      link.download = `${p}-post-${Date.now()}.png`
-      link.href = canvas.toDataURL('image/png', 1.0)
-      link.click()
-      setDownloadSuccess(true)
-      setTimeout(() => setDownloadSuccess(false), 3000)
-    } catch (e) { console.error(e) } finally { setDownloading(null) }
+  // Generate image blob from canvas
+  const generateImageBlob = async (): Promise<Blob | null> => {
+    if (!downloadRef.current) return null
+    const { w, h } = getDims(platform)
+    await new Promise(r => setTimeout(r, 100))
+    const canvas = await html2canvas(downloadRef.current, { 
+      scale: 1, 
+      useCORS: true, 
+      allowTaint: true, 
+      backgroundColor: null, 
+      width: w, 
+      height: h, 
+      windowWidth: w, 
+      windowHeight: h 
+    })
+    return new Promise((resolve) => {
+      canvas.toBlob((blob) => resolve(blob), 'image/png', 1.0)
+    })
   }
 
+  // Get full caption text
+  const getFullCaption = () => {
+    return `${caption}\n\n${hashtags}`.trim()
+  }
+
+  // Upload to platform - uses Web Share API on mobile, fallback on desktop
+  const uploadToPlatform = async (targetPlatform: string) => {
+    setUploading(targetPlatform)
+    setUploadSuccess(null)
+
+    try {
+      const imageBlob = await generateImageBlob()
+      if (!imageBlob) throw new Error('Failed to generate image')
+
+      const fullCaption = getFullCaption()
+      const fileName = `${targetPlatform}-post-${Date.now()}.png`
+      const file = new File([imageBlob], fileName, { type: 'image/png' })
+
+      // Check if Web Share API is available with file sharing (mainly mobile)
+      if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+        // Mobile: Use Web Share API - opens native share sheet
+        await navigator.share({
+          files: [file],
+          title: listingTitle || 'Property Post',
+          text: fullCaption,
+        })
+        setUploadSuccess(targetPlatform)
+      } else {
+        // Desktop fallback: Download image, copy caption, open platform
+        
+        // 1. Download the image
+        const link = document.createElement('a')
+        link.href = URL.createObjectURL(imageBlob)
+        link.download = fileName
+        link.click()
+
+        // 2. Copy caption to clipboard
+        await navigator.clipboard.writeText(fullCaption)
+
+        // 3. Open the platform in new tab
+        const platformUrl = PLATFORM_URLS[targetPlatform] || PLATFORM_URLS[platform]
+        window.open(platformUrl, '_blank')
+
+        setUploadSuccess(targetPlatform)
+      }
+    } catch (e: any) {
+      // User cancelled share or error
+      if (e.name !== 'AbortError') {
+        console.error('Upload error:', e)
+      }
+    } finally {
+      setUploading(null)
+      if (uploadSuccess) {
+        setTimeout(() => setUploadSuccess(null), 5000)
+      }
+    }
+  }
+
+  // Share to WhatsApp
+  const shareToWhatsApp = async () => {
+    setUploading('whatsapp')
+    try {
+      const imageBlob = await generateImageBlob()
+      if (!imageBlob) throw new Error('Failed to generate image')
+
+      const fullCaption = getFullCaption()
+      const fileName = `property-post-${Date.now()}.png`
+      const file = new File([imageBlob], fileName, { type: 'image/png' })
+
+      // Check if Web Share API supports files
+      if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+        await navigator.share({
+          files: [file],
+          text: fullCaption,
+        })
+      } else {
+        // Fallback: Download image and open WhatsApp with text
+        const link = document.createElement('a')
+        link.href = URL.createObjectURL(imageBlob)
+        link.download = fileName
+        link.click()
+
+        // Open WhatsApp with caption
+        const encodedText = encodeURIComponent(fullCaption)
+        window.open(`https://wa.me/?text=${encodedText}`, '_blank')
+      }
+      setUploadSuccess('whatsapp')
+    } catch (e: any) {
+      if (e.name !== 'AbortError') {
+        console.error('WhatsApp share error:', e)
+      }
+    } finally {
+      setUploading(null)
+    }
+  }
+
+  // Download only (for users who prefer manual)
+  const downloadOnly = async () => {
+    setUploading('download')
+    try {
+      const imageBlob = await generateImageBlob()
+      if (!imageBlob) throw new Error('Failed to generate image')
+
+      const link = document.createElement('a')
+      link.href = URL.createObjectURL(imageBlob)
+      link.download = `${platform}-post-${Date.now()}.png`
+      link.click()
+
+      setUploadSuccess('download')
+    } catch (e) {
+      console.error('Download error:', e)
+    } finally {
+      setUploading(null)
+    }
+  }
+
+  // Download carousel as ZIP
   const downloadCarousel = async () => {
-    if (selectedPhotos.length < 2) return; setDownloading('carousel')
+    if (selectedPhotos.length < 2) return
+    setUploading('carousel')
     try { 
       const zip = new JSZip()
       for (let i = 0; i < selectedPhotos.length; i++) { 
@@ -133,29 +265,14 @@ export function UnifiedCreator() {
         const blob = await res.blob()
         zip.file(`slide-${String(i+1).padStart(2,'0')}.jpg`, blob) 
       }
-      if (caption || hashtags) zip.file('caption.txt', `${caption}\n\n${hashtags}`.trim())
+      if (caption || hashtags) zip.file('caption.txt', getFullCaption())
       const blob = await zip.generateAsync({ type: 'blob' })
       const link = document.createElement('a')
       link.href = URL.createObjectURL(blob)
       link.download = `carousel-${selectedPhotos.length}-slides.zip`
       link.click()
-      setDownloadSuccess(true)
-      setTimeout(() => setDownloadSuccess(false), 3000)
-    } catch (e) { console.error(e) } finally { setDownloading(null) }
-  }
-
-  const downloadAllPlatforms = async () => {
-    setDownloading('all')
-    try {
-      for (let i = 0; i < PLATFORMS.length; i++) {
-        setPlatform(PLATFORMS[i].id)
-        await new Promise(r => setTimeout(r, 400))
-        await download(PLATFORMS[i].id)
-        await new Promise(r => setTimeout(r, 200))
-      }
-      setDownloadSuccess(true)
-      setTimeout(() => setDownloadSuccess(false), 3000)
-    } catch (e) { console.error(e) } finally { setDownloading(null) }
+      setUploadSuccess('carousel')
+    } catch (e) { console.error(e) } finally { setUploading(null) }
   }
 
   const generateCaption = async () => { 
@@ -204,19 +321,10 @@ export function UnifiedCreator() {
     } finally { setGenHashtags(false) } 
   }
 
-  const copy = (text: string, type: string) => { navigator.clipboard.writeText(text); setCopied(type); setTimeout(() => setCopied(null), 2000) }
-
-  const copyAll = () => {
-    const fullText = `${caption}\n\n${hashtags}`.trim()
-    navigator.clipboard.writeText(fullText)
-    setCopied('all')
-    setTimeout(() => setCopied(null), 2000)
-  }
-
-  const shareToWhatsApp = () => {
-    const text = `${caption}\n\n${hashtags}`.trim()
-    const encodedText = encodeURIComponent(text)
-    window.open(`https://wa.me/?text=${encodedText}`, '_blank')
+  const copyCaption = () => { 
+    navigator.clipboard.writeText(getFullCaption())
+    setCopied('caption')
+    setTimeout(() => setCopied(null), 2000) 
   }
 
   const generateFallbackCaption = () => {
@@ -240,7 +348,7 @@ export function UnifiedCreator() {
   }
 
   const prop = { address: property.address || '123 Main Street', city: property.city || 'Los Angeles', state: property.state || 'CA', price: property.price || undefined, bedrooms: property.bedrooms || undefined, bathrooms: property.bathrooms || undefined, squareFeet: property.squareFeet || undefined }
-  const currentTemplates = getTemplates(platform).filter(t => t.category === category).filter(t => t.category === category)
+  const currentTemplates = getTemplates(platform).filter(t => t.category === category)
   const dims = getDims(platform)
   const currentPlatform = PLATFORMS.find(p => p.id === platform)!
   const isVertical = platform === 'story' || platform === 'tiktok'
@@ -266,12 +374,12 @@ export function UnifiedCreator() {
         </div>
         <Button 
           size="sm" 
-          onClick={downloadAllPlatforms}
-          disabled={downloading !== null}
-          className="bg-gradient-to-r from-purple-600 to-pink-600 text-white text-xs h-8 px-4"
+          onClick={downloadOnly}
+          disabled={uploading !== null}
+          className="bg-white/10 hover:bg-white/20 text-white text-xs h-8 px-4"
         >
-          {downloading === 'all' ? <Loader2 className="w-3 h-3 animate-spin mr-1" /> : <Download className="w-3 h-3 mr-1" />}
-          Download All Platforms
+          <Download className="w-3 h-3 mr-1" />
+          Download Only
         </Button>
       </header>
 
@@ -345,47 +453,87 @@ export function UnifiedCreator() {
             </div>
           </div>
 
-          {/* Download Success Banner */}
-          {downloadSuccess && (
+          {/* Success Banner */}
+          {uploadSuccess && (
             <div className="bg-green-500/20 border border-green-500/30 rounded-xl p-3 flex items-center gap-3 animate-in fade-in slide-in-from-top-2">
-              <CheckCircle className="w-5 h-5 text-green-400" />
+              <CheckCircle className="w-5 h-5 text-green-400 flex-shrink-0" />
               <div className="flex-1">
-                <p className="text-sm font-medium text-green-400">Downloaded! Ready to post</p>
-                <p className="text-xs text-green-400/70">Open Instagram/Facebook and upload your image</p>
+                <p className="text-sm font-medium text-green-400">
+                  {uploadSuccess === 'download' ? 'Downloaded!' : 
+                   uploadSuccess === 'carousel' ? 'Carousel downloaded!' :
+                   uploadSuccess === 'whatsapp' ? 'Shared to WhatsApp!' :
+                   `Ready to upload to ${uploadSuccess}!`}
+                </p>
+                <p className="text-xs text-green-400/70">
+                  {uploadSuccess === 'download' ? 'Image saved to your device' :
+                   uploadSuccess === 'carousel' ? 'ZIP file saved with all slides' :
+                   uploadSuccess === 'whatsapp' ? 'Image shared successfully' :
+                   'Caption copied • Platform opened • Just upload the image!'}
+                </p>
               </div>
+              <button onClick={() => setUploadSuccess(null)} className="text-green-400/50 hover:text-green-400">×</button>
             </div>
           )}
 
-          {/* Primary Actions - Download Focused */}
-          <div className="flex gap-3">
+          {/* Upload to Platform Buttons */}
+          <div className="bg-white/5 rounded-xl p-4 border border-white/10">
+            <Label className="text-[10px] text-white/40 uppercase mb-3 block">Upload To</Label>
+            
             {postMode === 'carousel' ? (
-              <Button onClick={downloadCarousel} disabled={downloading !== null || selectedPhotos.length < 2} className="flex-1 bg-gradient-to-r from-[#D4AF37] to-[#B8960C] text-black font-bold h-12 text-sm">
-                {downloading === 'carousel' ? <Loader2 className="w-5 h-5 animate-spin" /> : <><Package className="w-5 h-5 mr-2" />Download ZIP ({selectedPhotos.length} slides)</>}
+              <Button 
+                onClick={downloadCarousel} 
+                disabled={uploading !== null || selectedPhotos.length < 2} 
+                className="w-full bg-gradient-to-r from-[#D4AF37] to-[#B8960C] text-black font-bold h-12 text-sm mb-3"
+              >
+                {uploading === 'carousel' ? <Loader2 className="w-5 h-5 animate-spin" /> : <><Package className="w-5 h-5 mr-2" />Download Carousel ({selectedPhotos.length} slides)</>}
               </Button>
             ) : (
-              <Button onClick={() => download(platform)} disabled={downloading !== null} className="flex-1 bg-gradient-to-r from-[#D4AF37] to-[#B8960C] text-black font-bold h-12 text-sm">
-                {downloading === platform ? <Loader2 className="w-5 h-5 animate-spin" /> : <><Download className="w-5 h-5 mr-2" />Download for {currentPlatform.name}</>}
-              </Button>
-            )}
-          </div>
+              <div className="grid grid-cols-2 gap-2 mb-3">
+                {/* Instagram */}
+                <Button 
+                  onClick={() => uploadToPlatform('instagram')}
+                  disabled={uploading !== null}
+                  className="h-11 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white font-semibold"
+                >
+                  {uploading === 'instagram' ? <Loader2 className="w-4 h-4 animate-spin" /> : <><Instagram className="w-4 h-4 mr-2" />Instagram</>}
+                </Button>
 
-          {/* Secondary Actions - Copy & Share */}
-          <div className="flex gap-2">
+                {/* Facebook */}
+                <Button 
+                  onClick={() => uploadToPlatform('facebook')}
+                  disabled={uploading !== null}
+                  className="h-11 bg-gradient-to-r from-blue-600 to-blue-400 hover:from-blue-700 hover:to-blue-500 text-white font-semibold"
+                >
+                  {uploading === 'facebook' ? <Loader2 className="w-4 h-4 animate-spin" /> : <><Facebook className="w-4 h-4 mr-2" />Facebook</>}
+                </Button>
+
+                {/* LinkedIn */}
+                <Button 
+                  onClick={() => uploadToPlatform('linkedin')}
+                  disabled={uploading !== null}
+                  className="h-11 bg-gradient-to-r from-blue-700 to-blue-500 hover:from-blue-800 hover:to-blue-600 text-white font-semibold"
+                >
+                  {uploading === 'linkedin' ? <Loader2 className="w-4 h-4 animate-spin" /> : <><Linkedin className="w-4 h-4 mr-2" />LinkedIn</>}
+                </Button>
+
+                {/* WhatsApp */}
+                <Button 
+                  onClick={shareToWhatsApp}
+                  disabled={uploading !== null}
+                  className="h-11 bg-gradient-to-r from-green-600 to-green-500 hover:from-green-700 hover:to-green-600 text-white font-semibold"
+                >
+                  {uploading === 'whatsapp' ? <Loader2 className="w-4 h-4 animate-spin" /> : <><MessageCircle className="w-4 h-4 mr-2" />WhatsApp</>}
+                </Button>
+              </div>
+            )}
+
+            {/* Copy Caption */}
             <Button 
-              onClick={copyAll} 
+              onClick={copyCaption}
               disabled={!caption && !hashtags}
-              className="flex-1 bg-white/10 hover:bg-white/20 text-white h-10 text-sm font-medium"
+              className="w-full h-10 bg-white/10 hover:bg-white/20 text-white font-medium"
             >
-              {copied === 'all' ? <Check className="w-4 h-4 mr-2 text-green-400" /> : <ClipboardCopy className="w-4 h-4 mr-2" />}
-              {copied === 'all' ? 'Copied!' : 'Copy Caption'}
-            </Button>
-            <Button 
-              onClick={shareToWhatsApp}
-              disabled={!caption && !hashtags}
-              className="flex-1 bg-green-600 hover:bg-green-700 text-white h-10 text-sm font-medium"
-            >
-              <MessageCircle className="w-4 h-4 mr-2" />
-              Share via WhatsApp
+              {copied === 'caption' ? <><Check className="w-4 h-4 mr-2 text-green-400" />Copied!</> : <><ClipboardCopy className="w-4 h-4 mr-2" />Copy Caption & Hashtags</>}
             </Button>
           </div>
 
@@ -404,10 +552,10 @@ export function UnifiedCreator() {
             </div>
             <div className="flex gap-2">
               <Button onClick={generateCaption} disabled={genCaption} className="flex-1 bg-purple-500 hover:bg-purple-600 text-white h-10 text-sm font-medium">
-                {genCaption ? <Loader2 className="w-4 h-4 animate-spin" /> : <><Sparkles className="w-4 h-4 mr-2" />Generate Caption</>}
+                {genCaption ? <Loader2 className="w-4 h-4 animate-spin" /> : <><Sparkles className="w-4 h-4 mr-2" />Caption</>}
               </Button>
               <Button onClick={generateHashtags} disabled={genHashtags} className="flex-1 bg-pink-500 hover:bg-pink-600 text-white h-10 text-sm font-medium">
-                {genHashtags ? <Loader2 className="w-4 h-4 animate-spin" /> : <><Hash className="w-4 h-4 mr-2" />Generate Hashtags</>}
+                {genHashtags ? <Loader2 className="w-4 h-4 animate-spin" /> : <><Hash className="w-4 h-4 mr-2" />Hashtags</>}
               </Button>
             </div>
             {(caption || hashtags) && (
@@ -479,15 +627,12 @@ export function UnifiedCreator() {
             </div>
           </div>
 
-          {/* Quick Tips */}
-          <div className="bg-gradient-to-br from-purple-500/10 to-pink-500/10 rounded-xl p-3 border border-purple-500/20">
-            <p className="text-[10px] text-purple-300 font-medium mb-2">💡 Quick Posting Tips</p>
+          {/* How It Works */}
+          <div className="bg-gradient-to-br from-[#D4AF37]/10 to-[#B8960C]/10 rounded-xl p-3 border border-[#D4AF37]/20">
+            <p className="text-[10px] text-[#D4AF37] font-medium mb-2">📱 How Upload Works</p>
             <ol className="text-[10px] text-white/50 space-y-1">
-              <li>1. Download your post image</li>
-              <li>2. Copy the caption & hashtags</li>
-              <li>3. Open Instagram/Facebook app</li>
-              <li>4. Upload image & paste caption</li>
-              <li>5. Post! 🎉</li>
+              <li><span className="text-[#D4AF37]">Mobile:</span> Opens share sheet → Select app → Post!</li>
+              <li><span className="text-[#D4AF37]">Desktop:</span> Downloads image → Opens platform → Upload & paste caption</li>
             </ol>
           </div>
         </div>
