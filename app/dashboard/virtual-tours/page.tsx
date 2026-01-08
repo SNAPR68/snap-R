@@ -645,7 +645,7 @@ function VirtualToursContent() {
       // Load listings for "Create from Listing"
       const { data: listingsData } = await supabase
         .from('listings')
-        .select('id, title, address, photos:listing_photos(url, enhanced_url)')
+        .select('id, title, address, photos(id, raw_url, processed_url, status)')
         .eq('user_id', user.id)
         .order('created_at', { ascending: false });
 
@@ -666,7 +666,7 @@ function VirtualToursContent() {
     const photos = listing.photos?.map((p: any, i: number) => ({
       id: `listing-${i}`,
       name: `Photo ${i + 1}`,
-      image_url: p.enhanced_url || p.url,
+      image_url: p.processed_url || p.raw_url,
       order_index: i
     })) || [];
 

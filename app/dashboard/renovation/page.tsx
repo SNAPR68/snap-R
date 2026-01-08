@@ -634,7 +634,7 @@ function PhotoSelection() {
             id,
             title,
             address,
-            photos:listing_photos(id, url, enhanced_url)
+            photos(id, raw_url, processed_url, status)
           `)
           .eq('user_id', user.id)
           .order('created_at', { ascending: false });
@@ -811,11 +811,11 @@ function PhotoSelection() {
               {selectedListing.photos.map((photo: any) => (
                 <button
                   key={photo.id}
-                  onClick={() => setSelectedPhoto(photo.enhanced_url || photo.url)}
+                  onClick={() => setSelectedPhoto(photo.processed_url || photo.raw_url)}
                   className="aspect-square rounded-xl overflow-hidden border-2 border-white/10 hover:border-amber-500/50 transition-all"
                 >
                   <img
-                    src={photo.enhanced_url || photo.url}
+                    src={photo.processed_url || photo.raw_url}
                     alt=""
                     className="w-full h-full object-cover"
                   />
