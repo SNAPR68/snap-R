@@ -107,7 +107,7 @@ export function UnifiedCreator() {
           setListingTitle(listingRes.title || listingRes.address || '')
           setProperty({ address: listingRes.address || '', city: listingRes.city || '', state: listingRes.state || '', price: listingRes.price || '', bedrooms: listingRes.bedrooms || '', bathrooms: listingRes.bathrooms || '', squareFeet: listingRes.square_feet || '' })
           if (listingRes.photos?.length) {
-            const urls = listingRes.photos.map((p: any) => p.enhanced_url || p.url).filter(Boolean)
+            const urls = listingRes.photos.map((p: any) => p.signedProcessedUrl || p.enhanced_url || p.url).filter(Boolean)
             setPhotos(urls)
             if (urls[0]) setPhotoUrl(urls[0])
           }
@@ -202,7 +202,8 @@ export function UnifiedCreator() {
       const file = new File([imageBlob], fileName, { type: 'image/png' })
 
       // Check if Web Share API is available with file sharing (mainly mobile)
-      if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+      const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent)
+      if (isMobile && navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
         // Mobile: Use Web Share API - opens native share sheet
         await navigator.share({
           files: [file],
@@ -269,7 +270,8 @@ export function UnifiedCreator() {
       const file = new File([imageBlob], fileName, { type: 'image/png' })
 
       // Check if Web Share API supports files
-      if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+      const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent)
+      if (isMobile && navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
         await navigator.share({
           files: [file],
           text: fullCaption,

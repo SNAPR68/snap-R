@@ -634,12 +634,30 @@ function PhotoSelection() {
             id,
             title,
             address,
-            photos(id, raw_url, processed_url, status)
+            photos!photos_listing_id_fkey(id, raw_url, processed_url, status)
           `)
           .eq('user_id', user.id)
           .order('created_at', { ascending: false });
 
-        setListings(listingsData || []);
+        const listingsWithSignedUrls = await Promise.all(
+          (listingsData || []).map(async (listing: any) => {
+            const photosWithUrls = await Promise.all(
+              (listing.photos || []).map(async (photo: any) => {
+                let signedUrl = null;
+                const urlToSign = photo.processed_url || photo.raw_url;
+                if (urlToSign && !urlToSign.startsWith("http")) {
+                  const { data } = await supabase.storage.from("raw-images").createSignedUrl(urlToSign, 3600);
+                  signedUrl = data?.signedUrl;
+                } else {
+                  signedUrl = urlToSign;
+                }
+                return { ...photo, signedUrl };
+              })
+            );
+            return { ...listing, photos: photosWithUrls };
+          })
+        );
+        setListings(listingsWithSignedUrls);
 
         // Check for pre-selected listing
         const listingId = searchParams.get('listing');
@@ -811,11 +829,11 @@ function PhotoSelection() {
               {selectedListing.photos.map((photo: any) => (
                 <button
                   key={photo.id}
-                  onClick={() => setSelectedPhoto(photo.processed_url || photo.raw_url)}
+                  onClick={() => setSelectedPhoto(photo.signedUrl || photo.processed_url || photo.raw_url)}
                   className="aspect-square rounded-xl overflow-hidden border-2 border-white/10 hover:border-amber-500/50 transition-all"
                 >
                   <img
-                    src={photo.processed_url || photo.raw_url}
+                    src={photo.signedUrl || photo.processed_url || photo.raw_url}
                     alt=""
                     className="w-full h-full object-cover"
                   />

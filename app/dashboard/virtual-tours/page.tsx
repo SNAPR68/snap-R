@@ -242,13 +242,13 @@ function TourModal({
       
       try {
         const { data, error } = await supabase.storage
-          .from('tour-images')
+          .from('raw-images')
           .upload(fileName, file);
 
         if (error) throw error;
 
         const { data: urlData } = supabase.storage
-          .from('tour-images')
+          .from('raw-images')
           .getPublicUrl(fileName);
 
         newScenes.push({
@@ -292,7 +292,7 @@ function TourModal({
 
       const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') + '-' + Date.now().toString(36);
 
-      if (tour) {
+      if (tour?.id) {
         // Update existing tour
         const { data: updatedTour, error } = await supabase
           .from('virtual_tours')
@@ -317,8 +317,8 @@ function TourModal({
             .insert(scenes.map((s, i) => ({
               tour_id: tour.id,
               name: s.name,
-              image_url: s.image_url,
-              order_index: i
+              image_url: s.image_url
+              
             })));
 
           if (scenesError) throw scenesError;
@@ -336,7 +336,6 @@ function TourModal({
             slug,
             description,
             cover_image_url: scenes[0]?.image_url,
-            is_published: true
           })
           .select()
           .single();
@@ -350,8 +349,8 @@ function TourModal({
             .insert(scenes.map((s, i) => ({
               tour_id: newTour.id,
               name: s.name,
-              image_url: s.image_url,
-              order_index: i
+              image_url: s.image_url
+              
             })));
 
           if (scenesError) throw scenesError;
@@ -645,11 +644,29 @@ function VirtualToursContent() {
       // Load listings for "Create from Listing"
       const { data: listingsData } = await supabase
         .from('listings')
-        .select('id, title, address, photos(id, raw_url, processed_url, status)')
+        .select('id, title, address, photos!photos_listing_id_fkey(id, raw_url, processed_url, status)')
         .eq('user_id', user.id)
         .order('created_at', { ascending: false });
 
-      setListings(listingsData || []);
+      const listingsWithSignedUrls = await Promise.all(
+          (listingsData || []).map(async (listing: any) => {
+            const photosWithUrls = await Promise.all(
+              (listing.photos || []).map(async (photo: any) => {
+                let signedUrl = null;
+                const urlToSign = photo.processed_url || photo.raw_url;
+                if (urlToSign && !urlToSign.startsWith("http")) {
+                  const { data } = await supabase.storage.from("raw-images").createSignedUrl(urlToSign, 3600);
+                  signedUrl = data?.signedUrl;
+                } else {
+                  signedUrl = urlToSign;
+                }
+                return { ...photo, signedUrl };
+              })
+            );
+            return { ...listing, photos: photosWithUrls };
+          })
+        );
+        setListings(listingsWithSignedUrls);
     } catch (err) {
       console.error('Load error:', err);
     } finally {
@@ -666,8 +683,8 @@ function VirtualToursContent() {
     const photos = listing.photos?.map((p: any, i: number) => ({
       id: `listing-${i}`,
       name: `Photo ${i + 1}`,
-      image_url: p.processed_url || p.raw_url,
-      order_index: i
+      image_url: p.signedUrl || p.processed_url || p.raw_url,
+      
     })) || [];
 
     setSelectedListingId(listing.id);
@@ -675,7 +692,6 @@ function VirtualToursContent() {
       id: '',
       name: listing.title || listing.address || 'Property Gallery',
       slug: '',
-      is_published: true,
       view_count: 0,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
@@ -793,7 +809,7 @@ function VirtualToursContent() {
                   >
                     {listing.photos?.[0] ? (
                       <img 
-                        src={listing.photos[0].processed_url || listing.photos[0].raw_url} 
+                        src={listing.photos[0].signedUrl || listing.photos[0].processed_url || listing.photos[0].raw_url} 
                         alt="" 
                         className="w-12 h-12 rounded-lg object-cover"
                       />
@@ -836,7 +852,7 @@ function VirtualToursContent() {
       {/* Modals */}
       {showModal && (
         <TourModal
-          tour={editTour?.id ? editTour : undefined}
+          tour={editTour}
           listingId={selectedListingId}
           onClose={() => {
             setShowModal(false);

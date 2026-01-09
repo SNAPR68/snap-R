@@ -11,71 +11,111 @@ function sanitize(value?: string | null) {
 export async function GET(request: Request) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
+
   if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const url = new URL(request.url);
-  const listingId = url.searchParams.get("id");
-  const withPhotos = url.searchParams.get("withPhotos") === "true";
+  const { searchParams } = new URL(request.url);
+  const withPhotos = searchParams.get("photos") === "true";
+  const listingId = searchParams.get("id");
 
-  // Single listing fetch with photos and signed URLs
+  // ============================================
+  // SINGLE LISTING FETCH (for Content Studio)
+  // ============================================
   if (listingId) {
-    console.log("[API] Fetching single listing:", listingId, "for user:", user.id);
+    console.log(`[Listings API] Fetching single listing: ${listingId}`);
     
-    const { data: listing, error } = await supabase
+    // NOTE: Only select columns that EXIST in your listings table
+    const { data: listing, error: listingError } = await supabase
       .from("listings")
-      .select('id,title,address,city,state,postal_code,description,status,created_at,photos!photos_listing_id_fkey(id,raw_url,processed_url,variant,status,created_at)')
+      .select("id, title, address, city, state, postal_code, description, status, created_at")
       .eq("id", listingId)
+      .eq("user_id", user.id)
       .single();
 
-    if (error) {
-      console.error("[API] Listing fetch error:", error);
-      return NextResponse.json({ error: "Listing not found", details: error.message }, { status: 404 });
-    }
-
-    if (!listing) {
+    if (listingError || !listing) {
+      console.error("[Listings API] Listing not found:", listingError);
       return NextResponse.json({ error: "Listing not found" }, { status: 404 });
     }
 
-    console.log("[API] Found listing:", listing.title, "with", listing.photos?.length || 0, "photos");
+    // Fetch all photos for this listing
+    const { data: photos, error: photosError } = await supabase
+      .from("photos")
+      .select("id, raw_url, processed_url, variant, status, created_at")
+      .eq("listing_id", listingId)
+      .order("created_at", { ascending: true });
 
-    // Create signed URLs for photos
-    const photos = Array.isArray(listing.photos) ? listing.photos : [];
-    const photosWithSignedUrls = await Promise.all(photos.map(async (photo: any) => {
-      let signedOriginalUrl = null;
-      let signedProcessedUrl = null;
+    if (photosError) {
+      console.error("[Listings API] Photos fetch error:", photosError);
+    }
 
-      if (photo.raw_url) {
-        const { data } = await supabase.storage.from('raw-images').createSignedUrl(photo.raw_url, 3600);
-        signedOriginalUrl = data?.signedUrl;
-      }
+    console.log(`[Listings API] Found ${photos?.length || 0} photos`);
 
-      if (photo.processed_url) {
-        const { data } = await supabase.storage.from('raw-images').createSignedUrl(photo.processed_url, 3600);
-        signedProcessedUrl = data?.signedUrl;
-        console.log("[API] Created signed URL for processed photo:", photo.id, "->", signedProcessedUrl ? "OK" : "FAILED");
-      }
+    // Create signed URLs for each photo
+    const photosWithSignedUrls = await Promise.all(
+      (photos || []).map(async (photo: any) => {
+        let signedOriginalUrl: string | null = null;
+        let signedProcessedUrl: string | null = null;
 
-      return {
-        ...photo,
-        signedOriginalUrl,
-        signedProcessedUrl,
-      };
-    }));
+        // Sign original/raw URL
+        if (photo.raw_url) {
+          if (photo.raw_url.startsWith('http')) {
+            signedOriginalUrl = photo.raw_url;
+          } else {
+            const { data } = await supabase.storage
+              .from('raw-images')
+              .createSignedUrl(photo.raw_url, 3600);
+            signedOriginalUrl = data?.signedUrl || null;
+          }
+        }
+
+        // Sign processed/enhanced URL - THE KEY FIX
+        if (photo.processed_url) {
+          if (photo.processed_url.startsWith('http')) {
+            // Already a full URL (from Cloudinary/Runware/etc)
+            signedProcessedUrl = photo.processed_url;
+          } else {
+            // Storage path - create signed URL
+            const { data, error } = await supabase.storage
+              .from('raw-images')
+              .createSignedUrl(photo.processed_url, 3600);
+            
+            if (data?.signedUrl) {
+              signedProcessedUrl = data.signedUrl;
+            } else {
+              console.error(`[Listings API] Failed to sign: ${photo.processed_url}`, error?.message);
+            }
+          }
+        }
+
+        console.log(`[Listings API] Photo ${photo.id}: processed_url=${photo.processed_url ? 'YES' : 'NO'}, signed=${signedProcessedUrl ? 'YES' : 'NO'}`);
+
+        return {
+          ...photo,
+          signedOriginalUrl,
+          signedProcessedUrl
+        };
+      })
+    );
+
+    const enhancedCount = photosWithSignedUrls.filter(p => p.signedProcessedUrl).length;
+    console.log(`[Listings API] Returning ${photosWithSignedUrls.length} photos, ${enhancedCount} with signed enhanced URLs`);
 
     return NextResponse.json({
-      listing: { ...listing, photos: undefined },
-      photos: photosWithSignedUrls,
+      listing,
+      photos: photosWithSignedUrls
     });
   }
 
-  // List all listings
+  // ============================================
+  // LIST ALL LISTINGS (existing functionality)
+  // ============================================
   const query = supabase
     .from("listings")
     .select(
       withPhotos
-        ? `id,title,address,city,state,postal_code,description,status,created_at,photos!photos_listing_id_fkey(id,raw_url,processed_url,variant,status,created_at)`
+        ? `id,title,address,city,state,postal_code,description,status,created_at,photos(id,raw_url,processed_url,variant,status,created_at)`
         : "id,title,address,city,state,postal_code,description,status,created_at,photos(count)"
     )
     .eq("user_id", user.id)
@@ -109,36 +149,97 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  let payload: any;
-  try {
-    payload = await request.json();
-  } catch (err) {
-    return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
-  }
-
-  const title = sanitize(payload?.title);
-  if (!title) {
-    return NextResponse.json({ error: "Title is required" }, { status: 400 });
-  }
+  const body = await request.json();
+  const { title, address, city, state, postal_code, description } = body;
 
   const { data, error } = await supabase
     .from("listings")
     .insert({
       user_id: user.id,
-      title,
-      address: sanitize(payload?.address),
-      city: sanitize(payload?.city),
-      state: sanitize(payload?.state),
-      postal_code: sanitize(payload?.postal_code),
-      description: sanitize(payload?.description),
+      title: sanitize(title),
+      address: sanitize(address),
+      city: sanitize(city),
+      state: sanitize(state),
+      postal_code: sanitize(postal_code),
+      description: sanitize(description),
+      status: "draft"
     })
-    .select("id,title,address,city,state,postal_code,description,status,created_at")
+    .select()
     .single();
 
   if (error) {
-    console.error("Listing create error", error);
-    return NextResponse.json({ error: "Failed to create listing", details: error.message, code: error.code }, { status: 500 });
+    console.error("Listing creation error", error);
+    return NextResponse.json({ error: "Failed to create listing" }, { status: 500 });
   }
 
   return NextResponse.json(data, { status: 201 });
+}
+
+export async function PUT(request: Request) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+
+  if (!user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const body = await request.json();
+  const { id, title, address, city, state, postal_code, description, status } = body;
+
+  if (!id) {
+    return NextResponse.json({ error: "Listing ID required" }, { status: 400 });
+  }
+
+  const updates: Record<string, any> = {};
+  if (title !== undefined) updates.title = sanitize(title);
+  if (address !== undefined) updates.address = sanitize(address);
+  if (city !== undefined) updates.city = sanitize(city);
+  if (state !== undefined) updates.state = sanitize(state);
+  if (postal_code !== undefined) updates.postal_code = sanitize(postal_code);
+  if (description !== undefined) updates.description = sanitize(description);
+  if (status !== undefined) updates.status = status;
+
+  const { data, error } = await supabase
+    .from("listings")
+    .update(updates)
+    .eq("id", id)
+    .eq("user_id", user.id)
+    .select()
+    .single();
+
+  if (error) {
+    console.error("Listing update error", error);
+    return NextResponse.json({ error: "Failed to update listing" }, { status: 500 });
+  }
+
+  return NextResponse.json(data);
+}
+
+export async function DELETE(request: Request) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+
+  if (!user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const { searchParams } = new URL(request.url);
+  const id = searchParams.get("id");
+
+  if (!id) {
+    return NextResponse.json({ error: "Listing ID required" }, { status: 400 });
+  }
+
+  const { error } = await supabase
+    .from("listings")
+    .delete()
+    .eq("id", id)
+    .eq("user_id", user.id);
+
+  if (error) {
+    console.error("Listing delete error", error);
+    return NextResponse.json({ error: "Failed to delete listing" }, { status: 500 });
+  }
+
+  return NextResponse.json({ success: true });
 }

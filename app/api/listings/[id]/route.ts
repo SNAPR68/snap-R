@@ -8,31 +8,92 @@ export async function GET(
 ) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
-  
+
   if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const { data: listing, error } = await supabase
+  const listingId = params.id;
+  console.log(`[Listings API] Fetching single listing: ${listingId}`);
+
+  // Fetch the listing
+  const { data: listing, error: listingError } = await supabase
     .from("listings")
-    .select('id,title,address,city,state,postal_code,description,status,created_at,photos(id,raw_url,processed_url,variant,status,created_at)')
-    .eq("id", params.id)
+    .select("id, title, address, city, state, postal_code, description, status, created_at")
+    .eq("id", listingId)
+    .eq("user_id", user.id)
     .single();
 
-  if (error || !listing) {
+  if (listingError || !listing) {
+    console.error("[Listings API] Listing not found:", listingError);
     return NextResponse.json({ error: "Listing not found" }, { status: 404 });
   }
 
-  const photos = listing.photos || [];
-  const photosWithUrls = await Promise.all(photos.map(async (photo: any) => {
-    let signedUrl = null;
-    const path = photo.processed_url || photo.raw_url;
-    if (path) {
-      const { data } = await supabase.storage.from('raw-images').createSignedUrl(path, 3600);
-      signedUrl = data?.signedUrl || null;
-    }
-    return { ...photo, url: signedUrl, signedUrl };
-  }));
+  // Fetch all photos for this listing
+  const { data: photos, error: photosError } = await supabase
+    .from("photos")
+    .select("id, raw_url, processed_url, variant, status, created_at")
+    .eq("listing_id", listingId)
+    .order("created_at", { ascending: true });
 
-  return NextResponse.json({ ...listing, photos: photosWithUrls });
+  if (photosError) {
+    console.error("[Listings API] Photos fetch error:", photosError);
+  }
+
+  console.log(`[Listings API] Found ${photos?.length || 0} photos`);
+
+  // Create signed URLs for each photo
+  const photosWithSignedUrls = await Promise.all(
+    (photos || []).map(async (photo: any) => {
+      let signedOriginalUrl: string | null = null;
+      let signedProcessedUrl: string | null = null;
+
+      // Sign original/raw URL
+      if (photo.raw_url) {
+        if (photo.raw_url.startsWith('http')) {
+          signedOriginalUrl = photo.raw_url;
+        } else {
+          const { data } = await supabase.storage
+            .from('raw-images')
+            .createSignedUrl(photo.raw_url, 3600);
+          signedOriginalUrl = data?.signedUrl || null;
+        }
+      }
+
+      // Sign processed/enhanced URL - THE KEY FIX
+      if (photo.processed_url) {
+        if (photo.processed_url.startsWith('http')) {
+          // Already a full URL (from Cloudinary/Runware/etc)
+          signedProcessedUrl = photo.processed_url;
+        } else {
+          // Storage path - create signed URL
+          const { data, error } = await supabase.storage
+            .from('raw-images')
+            .createSignedUrl(photo.processed_url, 3600);
+          
+          if (data?.signedUrl) {
+            signedProcessedUrl = data.signedUrl;
+          } else {
+            console.error(`[Listings API] Failed to sign: ${photo.processed_url}`, error?.message);
+          }
+        }
+      }
+
+      console.log(`[Listings API] Photo ${photo.id}: processed_url=${photo.processed_url ? 'YES' : 'NO'}, signed=${signedProcessedUrl ? 'YES' : 'NO'}`);
+
+      return {
+        ...photo,
+        signedOriginalUrl,
+        signedProcessedUrl
+      };
+    })
+  );
+
+  const enhancedCount = photosWithSignedUrls.filter(p => p.signedProcessedUrl).length;
+  console.log(`[Listings API] Returning ${photosWithSignedUrls.length} photos, ${enhancedCount} with signed enhanced URLs`);
+
+  return NextResponse.json({
+    listing,
+    photos: photosWithSignedUrls
+  });
 }
