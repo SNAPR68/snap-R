@@ -78,7 +78,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
           <NavLink href="/dashboard/ai-descriptions" icon={FileText}>AI Descriptions</NavLink>
           <NavLink href="/dashboard/photo-culling" icon={Image}>Photo Culling</NavLink>
           <NavLink href="/dashboard/portfolio" icon={Palette}>Portfolios</NavLink>
-          <NavLink href="/dashboard/renovation" icon={Hammer}>Virtual Renovation</NavLink>
+          {/* <NavLink href="/dashboard/renovation" icon={Hammer}>Virtual Renovation</NavLink> */}
           <NavLink href="/dashboard/virtual-tours" icon={Images}>Property Gallery</NavLink>
           <NavLink href="/dashboard/voiceover" icon={Mic}>AI Voiceover</NavLink>
           <NavLink href="/dashboard/cma" icon={FileText}>CMA Reports</NavLink>
