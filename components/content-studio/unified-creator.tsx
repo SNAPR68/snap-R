@@ -384,6 +384,9 @@ export function UnifiedCreator() {
   const generateCaption = async () => { 
     setGenCaption(true)
     try { 
+      // Convert category from dash format (just-listed) to underscore format (just_listed) for API
+      const contentType = category.replace(/-/g, '_')
+      
       const res = await fetch('/api/copy/caption', { 
         method: 'POST', 
         headers: { 'Content-Type': 'application/json' }, 
@@ -391,7 +394,8 @@ export function UnifiedCreator() {
           platform: platform === 'story' ? 'instagram' : platform, 
           tone, 
           includeEmojis: true, 
-          includeCallToAction: true, 
+          includeCallToAction: true,
+          contentType: contentType,
           property: { ...property, propertyType: 'House', features: [] }
         }) 
       })
