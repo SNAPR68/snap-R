@@ -12,12 +12,21 @@ export default async function DashboardLayout({ children }: { children: React.Re
   // Fetch profile for usage info
   const { data: profile } = await supabase
     .from('profiles')
-    .select('subscription_tier, listings_limit, listings_used_this_month')
+    .select('subscription_tier, listings_limit')
     .eq('id', user.id)
     .single()
   
+  // Count actual listings created this month
+  const now = new Date()
+  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString()
+  const { count: listingsCount } = await supabase
+    .from('listings')
+    .select('*', { count: 'exact', head: true })
+    .eq('user_id', user.id)
+    .gte('created_at', monthStart)
+  
   const tier = profile?.subscription_tier || 'free'
-  const listingsUsed = profile?.listings_used_this_month || 0
+  const listingsUsed = listingsCount || 0
   const listingsLimit = profile?.listings_limit || 3
   const usagePercent = Math.min((listingsUsed / listingsLimit) * 100, 100)
   
