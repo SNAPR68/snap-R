@@ -115,8 +115,8 @@ export async function GET(request: Request) {
     .from("listings")
     .select(
       withPhotos
-        ? `id,title,address,city,state,postal_code,description,status,created_at,photos(id,raw_url,processed_url,variant,status,created_at)`
-        : "id,title,address,city,state,postal_code,description,status,created_at,photos(count)"
+        ? `id,title,address,city,state,postal_code,description,status,created_at,photos!photos_listing_id_fkey(id,raw_url,processed_url,variant,status,created_at)`
+        : "id,title,address,city,state,postal_code,description,status,created_at,photos!photos_listing_id_fkey(count)"
     )
     .eq("user_id", user.id)
     .order("created_at", { ascending: false });

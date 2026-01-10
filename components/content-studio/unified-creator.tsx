@@ -64,6 +64,7 @@ const PLATFORM_URLS: Record<string, string> = {
 export function UnifiedCreator() {
   const searchParams = useSearchParams()
   const listingId = searchParams.get('listing')
+  const renovatedImageUrl = searchParams.get('renovatedImage') // NEW: Get renovated image from URL
   const downloadRef = useRef<HTMLDivElement>(null)
 
   const [platform, setPlatform] = useState<Platform>('instagram')
@@ -108,15 +109,34 @@ export function UnifiedCreator() {
           setProperty({ address: listingRes.address || '', city: listingRes.city || '', state: listingRes.state || '', price: listingRes.price || '', bedrooms: listingRes.bedrooms || '', bathrooms: listingRes.bathrooms || '', squareFeet: listingRes.square_feet || '' })
           if (listingRes.photos?.length) {
             const urls = listingRes.photos.map((p: any) => p.signedProcessedUrl || p.enhanced_url || p.url).filter(Boolean)
+            
+            // NEW: If we have a renovated image, add it first
+            if (renovatedImageUrl) {
+              const decodedRenovatedUrl = decodeURIComponent(renovatedImageUrl)
+              urls.unshift(decodedRenovatedUrl)
+              setPhotoUrl(decodedRenovatedUrl) // Set as default selected
+            } else if (urls[0]) {
+              setPhotoUrl(urls[0])
+            }
+            
             setPhotos(urls)
-            if (urls[0]) setPhotoUrl(urls[0])
+          } else if (renovatedImageUrl) {
+            // NEW: No listing photos but have renovated image
+            const decodedRenovatedUrl = decodeURIComponent(renovatedImageUrl)
+            setPhotos([decodedRenovatedUrl])
+            setPhotoUrl(decodedRenovatedUrl)
           }
+        } else if (renovatedImageUrl) {
+          // NEW: No listing but have renovated image
+          const decodedRenovatedUrl = decodeURIComponent(renovatedImageUrl)
+          setPhotos([decodedRenovatedUrl])
+          setPhotoUrl(decodedRenovatedUrl)
         }
       } catch (e) { console.error(e) }
       setLoading(false)
     }
     load()
-  }, [listingId])
+  }, [listingId, renovatedImageUrl])
 
   const selectPhoto = (url: string) => {
     if (postMode === 'carousel') {
@@ -459,6 +479,7 @@ export function UnifiedCreator() {
         <div className="flex items-center gap-3">
           <Link href="/dashboard/content-studio" className="text-white/50 hover:text-white"><ArrowLeft className="w-4 h-4" /></Link>
           <h1 className="text-sm font-semibold">{listingTitle || 'Create Content'}</h1>
+          {renovatedImageUrl && <span className="text-xs bg-green-500/20 text-green-400 px-2 py-0.5 rounded-full">Renovated</span>}
         </div>
         <Button 
           size="sm" 
@@ -747,10 +768,12 @@ export function UnifiedCreator() {
           <div className="flex-1 flex gap-3 overflow-x-auto py-2">
             {photos.map((url, i) => {
               const selected = postMode === 'carousel' ? selectedPhotos.includes(url) : photoUrl === url
+              const isRenovated = renovatedImageUrl && url === decodeURIComponent(renovatedImageUrl)
               return (
                 <button key={i} onClick={() => selectPhoto(url)} className={`relative flex-shrink-0 w-16 h-16 rounded-xl overflow-hidden border-2 transition-all ${selected ? 'border-[#D4AF37] ring-2 ring-[#D4AF37]/50 scale-105' : 'border-white/20 hover:border-white/40'}`}>
                   <img src={url} alt="" className="w-full h-full object-cover" />
                   {postMode === 'carousel' && selected && <div className="absolute top-0 left-0 w-5 h-5 bg-[#D4AF37] rounded-br-lg text-[10px] font-bold text-black flex items-center justify-center">{selectedPhotos.indexOf(url) + 1}</div>}
+                  {isRenovated && <div className="absolute bottom-0 inset-x-0 bg-green-500/90 text-[8px] text-white text-center py-0.5">Renovated</div>}
                 </button>
               )
             })}

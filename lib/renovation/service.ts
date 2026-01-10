@@ -1,17 +1,19 @@
-// Virtual Renovation Service
-// Handles AI-powered room transformations using image-to-image models
-
-import { buildRenovationPrompt, RENOVATION_TYPES } from './config';
+// Virtual Renovation Service - Best-in-Class AI + Human Revision
+// Multi-model pipeline for surgical precision
 
 const REPLICATE_API_TOKEN = process.env.REPLICATE_API_TOKEN;
-const RUNWARE_API_KEY = process.env.RUNWARE_API_KEY;
 
 interface RenovationRequest {
   imageUrl: string;
   roomType: string;
   renovationType: string;
   style: string;
-  options: Record<string, string>;
+  options: {
+    selectedRenovations?: string[];
+    detailedOptions?: Record<string, Record<string, string>>;
+    customPrompt?: string;
+    maskMode?: 'auto' | 'manual';
+  };
 }
 
 interface RenovationResult {
@@ -22,17 +24,291 @@ interface RenovationResult {
   model?: string;
   processingTime?: number;
   prompt?: string;
+  segmentationData?: any;
 }
 
-// Primary: Instruct-Pix2Pix - Best for instruction-based image editing
-async function runInstructPix2Pix(
-  imageUrl: string,
-  prompt: string
-): Promise<{ url: string; model: string } | null> {
-  if (!REPLICATE_API_TOKEN) return null;
+// ============================================
+// HELPER FUNCTIONS
+// ============================================
 
+async function pollPrediction(predictionUrl: string, maxAttempts: number = 120): Promise<any> {
+  let attempts = 0;
+  
+  while (attempts < maxAttempts) {
+    const response = await fetch(predictionUrl, {
+      headers: { 'Authorization': `Token ${REPLICATE_API_TOKEN}` },
+    });
+    const result = await response.json();
+    
+    if (result.status === 'succeeded') {
+      return result;
+    }
+    if (result.status === 'failed') {
+      throw new Error(result.error || 'Prediction failed');
+    }
+    
+    await new Promise(resolve => setTimeout(resolve, 2000));
+    attempts++;
+    
+    if (attempts % 15 === 0) {
+      console.log(`Still processing... (${attempts * 2}s)`);
+    }
+  }
+  
+  throw new Error('Prediction timed out');
+}
+
+// ============================================
+// MODEL 1: SEGMENT ANYTHING (SAM)
+// Identify distinct areas in the image
+// ============================================
+
+async function segmentImage(imageUrl: string): Promise<{ masks: string[]; labels: string[] } | null> {
+  if (!REPLICATE_API_TOKEN) return null;
+  
   try {
-    console.log('Trying Instruct-Pix2Pix...');
+    console.log('[Segment] Running Segment Anything...');
+    
+    const response = await fetch('https://api.replicate.com/v1/predictions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Token ${REPLICATE_API_TOKEN}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        version: 'meta/sam-2:fe97b453f6455861e3bac769b441ca1f1086110da7466dbb65cf1eecfd60dc83',
+        input: {
+          image: imageUrl,
+          points_per_side: 32,
+          pred_iou_thresh: 0.88,
+          stability_score_thresh: 0.95,
+        },
+      }),
+    });
+
+    if (!response.ok) return null;
+
+    const prediction = await response.json();
+    const result = await pollPrediction(prediction.urls.get, 60);
+    
+    console.log('[Segment] Segmentation complete');
+    return result.output;
+  } catch (error) {
+    console.error('[Segment] Error:', error);
+    return null;
+  }
+}
+
+// ============================================
+// MODEL 2: GROUNDED SAM
+// Find specific elements by text description
+// ============================================
+
+async function findElementByText(
+  imageUrl: string, 
+  searchTerms: string[]
+): Promise<string | null> {
+  if (!REPLICATE_API_TOKEN) return null;
+  
+  try {
+    console.log('[GroundedSAM] Searching for:', searchTerms);
+    
+    const response = await fetch('https://api.replicate.com/v1/predictions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Token ${REPLICATE_API_TOKEN}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        version: 'schananas/grounded_sam:ee871c19efb1941f55f66a3d7d960428c8a5afcb77449547fe8e5a3ab9ebc21c',
+        input: {
+          image: imageUrl,
+          detection_prompt: searchTerms.join('. '),
+          segmentation_prompt: searchTerms.join('. '),
+        },
+      }),
+    });
+
+    if (!response.ok) {
+      console.error('[GroundedSAM] API error');
+      return null;
+    }
+
+    const prediction = await response.json();
+    const result = await pollPrediction(prediction.urls.get, 90);
+    
+    if (result.output) {
+      const outputs = Array.isArray(result.output) ? result.output : [result.output];
+      // Return the mask URL
+      const maskUrl = outputs.find((url: string) => url && typeof url === 'string');
+      console.log('[GroundedSAM] Found mask');
+      return maskUrl || null;
+    }
+    
+    return null;
+  } catch (error) {
+    console.error('[GroundedSAM] Error:', error);
+    return null;
+  }
+}
+
+// ============================================
+// MODEL 3: DEPTH ESTIMATION
+// Understand 3D structure
+// ============================================
+
+async function getDepthMap(imageUrl: string): Promise<string | null> {
+  if (!REPLICATE_API_TOKEN) return null;
+  
+  try {
+    console.log('[Depth] Generating depth map...');
+    
+    const response = await fetch('https://api.replicate.com/v1/predictions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Token ${REPLICATE_API_TOKEN}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        version: 'cjwbw/midas:a2cc01df-a3af-478b-af8d-8527a0b7c5ad',
+        input: {
+          image: imageUrl,
+          model_type: 'dpt_beit_large_512',
+        },
+      }),
+    });
+
+    if (!response.ok) return null;
+
+    const prediction = await response.json();
+    const result = await pollPrediction(prediction.urls.get, 60);
+    
+    if (result.output) {
+      console.log('[Depth] Depth map generated');
+      return Array.isArray(result.output) ? result.output[0] : result.output;
+    }
+    
+    return null;
+  } catch (error) {
+    console.error('[Depth] Error:', error);
+    return null;
+  }
+}
+
+// ============================================
+// MODEL 4: SDXL INPAINTING
+// Change only masked areas
+// ============================================
+
+async function inpaintArea(
+  imageUrl: string,
+  maskUrl: string,
+  prompt: string
+): Promise<string | null> {
+  if (!REPLICATE_API_TOKEN) return null;
+  
+  try {
+    console.log('[Inpaint] Inpainting with prompt:', prompt.substring(0, 50) + '...');
+    
+    const response = await fetch('https://api.replicate.com/v1/predictions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Token ${REPLICATE_API_TOKEN}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        version: 'stability-ai/stable-diffusion-inpainting:95b7223104132402a9ae91cc677285bc5eb997834bd2349fa486f53910fd68b3',
+        input: {
+          image: imageUrl,
+          mask: maskUrl,
+          prompt: `${prompt}, photorealistic, professional photography, high quality, detailed`,
+          negative_prompt: 'blurry, distorted, cartoon, drawing, painting, low quality, watermark, ugly',
+          num_inference_steps: 30,
+          guidance_scale: 7.5,
+        },
+      }),
+    });
+
+    if (!response.ok) return null;
+
+    const prediction = await response.json();
+    const result = await pollPrediction(prediction.urls.get, 90);
+    
+    if (result.output) {
+      console.log('[Inpaint] Inpainting complete');
+      return Array.isArray(result.output) ? result.output[0] : result.output;
+    }
+    
+    return null;
+  } catch (error) {
+    console.error('[Inpaint] Error:', error);
+    return null;
+  }
+}
+
+// ============================================
+// MODEL 5: CONTROLNET DEPTH
+// Preserve structure while changing appearance
+// ============================================
+
+async function controlNetDepth(
+  imageUrl: string,
+  depthMapUrl: string,
+  prompt: string
+): Promise<string | null> {
+  if (!REPLICATE_API_TOKEN) return null;
+  
+  try {
+    console.log('[ControlNet-Depth] Processing...');
+    
+    const response = await fetch('https://api.replicate.com/v1/predictions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Token ${REPLICATE_API_TOKEN}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        version: 'jagilley/controlnet-depth:922c7bb67b87ec32cbc2fd11b1d5f94f0ba4f5519c4dbd02856376444127cc60',
+        input: {
+          image: depthMapUrl,
+          prompt: `${prompt}, professional real estate photography, high quality, photorealistic`,
+          negative_prompt: 'blurry, distorted, low quality, cartoon, drawing',
+          num_inference_steps: 30,
+          guidance_scale: 9,
+        },
+      }),
+    });
+
+    if (!response.ok) return null;
+
+    const prediction = await response.json();
+    const result = await pollPrediction(prediction.urls.get, 90);
+    
+    if (result.output) {
+      console.log('[ControlNet-Depth] Complete');
+      return Array.isArray(result.output) ? result.output[0] : result.output;
+    }
+    
+    return null;
+  } catch (error) {
+    console.error('[ControlNet-Depth] Error:', error);
+    return null;
+  }
+}
+
+// ============================================
+// MODEL 6: INSTRUCT-PIX2PIX
+// Best for instruction-based editing
+// ============================================
+
+async function instructPix2Pix(
+  imageUrl: string,
+  instruction: string
+): Promise<string | null> {
+  if (!REPLICATE_API_TOKEN) return null;
+  
+  try {
+    console.log('[InstructPix2Pix] Instruction:', instruction.substring(0, 50) + '...');
     
     const response = await fetch('https://api.replicate.com/v1/predictions', {
       method: 'POST',
@@ -44,65 +320,45 @@ async function runInstructPix2Pix(
         version: 'timothybrooks/instruct-pix2pix:30c1d0b916a6f8efce20493f5d61ee27491ab2a60437c13c588468b9810ec23f',
         input: {
           image: imageUrl,
-          prompt: prompt,
+          prompt: instruction,
           num_inference_steps: 50,
-          image_guidance_scale: 1.5, // How much to follow original image (higher = more faithful)
+          image_guidance_scale: 1.8, // Higher = more faithful to original
           guidance_scale: 7.5,
           scheduler: 'K_EULER_ANCESTRAL',
         },
       }),
     });
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('Instruct-Pix2Pix API error:', errorText);
-      return null;
-    }
+    if (!response.ok) return null;
 
     const prediction = await response.json();
+    const result = await pollPrediction(prediction.urls.get, 90);
     
-    // Poll for completion
-    let result = prediction;
-    let attempts = 0;
-    const maxAttempts = 90; // 3 minutes max
+    if (result.output) {
+      console.log('[InstructPix2Pix] Complete');
+      return Array.isArray(result.output) ? result.output[0] : result.output;
+    }
     
-    while (result.status !== 'succeeded' && result.status !== 'failed' && attempts < maxAttempts) {
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      const pollResponse = await fetch(result.urls.get, {
-        headers: { 'Authorization': `Token ${REPLICATE_API_TOKEN}` },
-      });
-      result = await pollResponse.json();
-      attempts++;
-      
-      if (attempts % 10 === 0) {
-        console.log(`Instruct-Pix2Pix status: ${result.status}, attempt ${attempts}`);
-      }
-    }
-
-    if (result.status === 'succeeded' && result.output) {
-      const outputUrl = Array.isArray(result.output) ? result.output[0] : result.output;
-      console.log('Instruct-Pix2Pix succeeded!');
-      return { url: outputUrl, model: 'instruct-pix2pix' };
-    }
-
-    console.error('Instruct-Pix2Pix failed:', result.error || result.status);
     return null;
   } catch (error) {
-    console.error('Instruct-Pix2Pix error:', error);
+    console.error('[InstructPix2Pix] Error:', error);
     return null;
   }
 }
 
-// Secondary: SDXL img2img - Good quality, maintains structure
-async function runSDXLImg2Img(
-  imageUrl: string,
-  prompt: string
-): Promise<{ url: string; model: string } | null> {
-  if (!REPLICATE_API_TOKEN) return null;
+// ============================================
+// MODEL 7: FLUX for High Quality
+// ============================================
 
+async function fluxInpaint(
+  imageUrl: string,
+  maskUrl: string,
+  prompt: string
+): Promise<string | null> {
+  if (!REPLICATE_API_TOKEN) return null;
+  
   try {
-    console.log('Trying SDXL img2img...');
+    console.log('[Flux] High quality inpainting...');
     
     const response = await fetch('https://api.replicate.com/v1/predictions', {
       method: 'POST',
@@ -111,286 +367,242 @@ async function runSDXLImg2Img(
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        version: 'stability-ai/sdxl:39ed52f2a78e934b3ba6e2a89f5b1c712de7dfea535525255b1aa35c5565e08b',
+        version: 'black-forest-labs/flux-fill-pro',
         input: {
           image: imageUrl,
-          prompt: `Interior design photography, ${prompt}, professional real estate photo, high quality, photorealistic, detailed, well-lit`,
-          negative_prompt: 'blurry, distorted, unrealistic, cartoon, drawing, painting, low quality, watermark, text, logo, deformed',
-          prompt_strength: 0.7, // 0.7 = 70% new, 30% original structure
-          num_inference_steps: 40,
-          guidance_scale: 7.5,
-          scheduler: 'K_EULER',
-          refine: 'expert_ensemble_refiner',
-          high_noise_frac: 0.8,
-        },
-      }),
-    });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('SDXL API error:', errorText);
-      return null;
-    }
-
-    const prediction = await response.json();
-    
-    // Poll for completion
-    let result = prediction;
-    let attempts = 0;
-    const maxAttempts = 90;
-    
-    while (result.status !== 'succeeded' && result.status !== 'failed' && attempts < maxAttempts) {
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      const pollResponse = await fetch(result.urls.get, {
-        headers: { 'Authorization': `Token ${REPLICATE_API_TOKEN}` },
-      });
-      result = await pollResponse.json();
-      attempts++;
-    }
-
-    if (result.status === 'succeeded' && result.output) {
-      const outputUrl = Array.isArray(result.output) ? result.output[0] : result.output;
-      console.log('SDXL img2img succeeded!');
-      return { url: outputUrl, model: 'sdxl-img2img' };
-    }
-
-    console.error('SDXL failed:', result.error || result.status);
-    return null;
-  } catch (error) {
-    console.error('SDXL img2img error:', error);
-    return null;
-  }
-}
-
-// Tertiary: Runware with proper img2img
-async function runRunwareImg2Img(
-  imageUrl: string,
-  prompt: string
-): Promise<{ url: string; model: string } | null> {
-  if (!RUNWARE_API_KEY) return null;
-
-  try {
-    console.log('Trying Runware img2img...');
-    
-    const response = await fetch('https://api.runware.ai/v1', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${RUNWARE_API_KEY}`,
-      },
-      body: JSON.stringify([
-        {
-          taskType: 'imageInference',
-          taskUUID: crypto.randomUUID(),
-          inputImage: imageUrl,
-          positivePrompt: `Interior design photography, ${prompt}, professional real estate photo, high quality, photorealistic`,
-          negativePrompt: 'blurry, distorted, unrealistic, cartoon, drawing, painting, low quality, watermark, deformed, ugly',
-          model: 'civitai:101055@128078', // RealisticVision V5.1 - good for interiors
-          width: 1024,
-          height: 768,
-          strength: 0.65, // Keep 35% of original structure
-          steps: 30,
-          CFGScale: 7,
-          scheduler: 'DPM++ 2M Karras',
-          seedImage: imageUrl,
-        },
-      ]),
-    });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('Runware API error:', errorText);
-      return null;
-    }
-
-    const data = await response.json();
-    
-    if (data.data && data.data[0] && data.data[0].imageURL) {
-      console.log('Runware img2img succeeded!');
-      return { url: data.data[0].imageURL, model: 'runware-realistic-vision' };
-    }
-
-    console.error('Runware response missing imageURL:', data);
-    return null;
-  } catch (error) {
-    console.error('Runware img2img error:', error);
-    return null;
-  }
-}
-
-// Interior design specialized model
-async function runInteriorDesignModel(
-  imageUrl: string,
-  prompt: string
-): Promise<{ url: string; model: string } | null> {
-  if (!REPLICATE_API_TOKEN) return null;
-
-  try {
-    console.log('Trying Interior Design model...');
-    
-    // Use adirik/interior-design model specifically trained for room transformations
-    const response = await fetch('https://api.replicate.com/v1/predictions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Token ${REPLICATE_API_TOKEN}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        version: 'adirik/interior-design:76604baddc85b1b4616e1c6475eca080da339c8875bd4996705440484a6eac38',
-        input: {
-          image: imageUrl,
+          mask: maskUrl,
           prompt: prompt,
-          guidance_scale: 15,
-          negative_prompt: 'lowres, watermark, banner, logo, contactinfo, text, deformed, blurry, blur, out of focus, out of frame, surreal, ugly',
-          prompt_strength: 0.8,
-          num_inference_steps: 50,
+          steps: 50,
+          guidance: 30,
+          output_format: 'png',
         },
       }),
     });
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('Interior Design model API error:', errorText);
-      return null;
-    }
+    if (!response.ok) return null;
 
     const prediction = await response.json();
+    const result = await pollPrediction(prediction.urls.get, 120);
     
-    // Poll for completion
-    let result = prediction;
-    let attempts = 0;
-    const maxAttempts = 90;
+    if (result.output) {
+      console.log('[Flux] Complete');
+      return Array.isArray(result.output) ? result.output[0] : result.output;
+    }
     
-    while (result.status !== 'succeeded' && result.status !== 'failed' && attempts < maxAttempts) {
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      const pollResponse = await fetch(result.urls.get, {
-        headers: { 'Authorization': `Token ${REPLICATE_API_TOKEN}` },
-      });
-      result = await pollResponse.json();
-      attempts++;
-    }
-
-    if (result.status === 'succeeded' && result.output) {
-      const outputUrl = Array.isArray(result.output) ? result.output[0] : result.output;
-      console.log('Interior Design model succeeded!');
-      return { url: outputUrl, model: 'interior-design' };
-    }
-
     return null;
   } catch (error) {
-    console.error('Interior Design model error:', error);
+    console.error('[Flux] Error:', error);
     return null;
   }
 }
 
-// Main renovation function with proper fallback chain
+// ============================================
+// ELEMENT MAPPING
+// Map renovation types to search terms
+// ============================================
+
+const ELEMENT_SEARCH_TERMS: Record<string, string[]> = {
+  flooring: ['floor', 'flooring', 'ground surface', 'carpet', 'hardwood floor', 'tile floor'],
+  paint: ['wall', 'walls', 'interior wall', 'painted wall'],
+  cabinets: ['cabinet', 'cabinets', 'kitchen cabinet', 'cupboard', 'kitchen cupboard'],
+  counters: ['countertop', 'counter', 'kitchen counter', 'countertops'],
+  backsplash: ['backsplash', 'kitchen backsplash', 'tile backsplash'],
+  vanity: ['vanity', 'bathroom vanity', 'sink cabinet', 'bathroom cabinet'],
+  shower: ['shower', 'bathtub', 'tub', 'shower enclosure'],
+  fireplace: ['fireplace', 'mantle', 'hearth', 'fireplace surround'],
+  siding: ['siding', 'house siding', 'exterior wall', 'exterior siding'],
+  roof: ['roof', 'rooftop', 'shingles', 'roofing'],
+  landscaping: ['lawn', 'grass', 'landscaping', 'yard', 'garden'],
+};
+
+// ============================================
+// BUILD DETAILED PROMPT
+// ============================================
+
+function buildDetailedPrompt(
+  renovationType: string,
+  options: Record<string, string>,
+  style: string
+): string {
+  const prompts: Record<string, (opts: Record<string, string>, s: string) => string> = {
+    flooring: (opts, s) => `${opts.color || 'light oak'} ${opts.type || 'hardwood'} flooring, ${s} style`,
+    paint: (opts, s) => `${opts.color || 'white'} painted walls, ${s} interior design`,
+    cabinets: (opts, s) => `${opts.color || 'white'} ${opts.style || 'shaker'} style kitchen cabinets, ${s} design`,
+    counters: (opts, s) => `${opts.color || 'white'} ${opts.material || 'quartz'} countertops, ${s} kitchen`,
+    backsplash: (opts, s) => `${opts.color || 'white'} ${opts.type || 'subway tile'} backsplash, ${s} kitchen`,
+    vanity: (opts, s) => `${opts.color || 'white'} ${opts.style || 'modern'} bathroom vanity, ${s} design`,
+    shower: (opts, s) => `${opts.type || 'glass enclosed'} shower with ${opts.tile || 'marble'} tile, ${s} bathroom`,
+    fireplace: (opts, s) => `${s} style fireplace with stone surround`,
+    siding: (opts, s) => `${opts.color || 'gray'} ${opts.type || 'fiber cement'} house siding, ${s} exterior`,
+    roof: (opts, s) => `${opts.color || 'charcoal'} ${opts.type || 'asphalt shingle'} roof, ${s} home`,
+    landscaping: (opts, s) => `beautiful ${s} landscaping with manicured lawn and plants`,
+  };
+  
+  const promptFn = prompts[renovationType];
+  return promptFn ? promptFn(options, style) : `${style} style ${renovationType}`;
+}
+
+// ============================================
+// MAIN PROCESSING PIPELINE
+// ============================================
+
 export async function processRenovation(request: RenovationRequest): Promise<RenovationResult> {
   const startTime = Date.now();
+  const selectedRenovations = request.options?.selectedRenovations || [request.renovationType];
+  const detailedOptions = request.options?.detailedOptions || {};
   
-  // Build the prompt
-  const prompt = buildRenovationPrompt(
-    request.roomType,
-    request.renovationType,
-    request.style,
-    request.options
-  );
-
-  console.log('Processing renovation with prompt:', prompt);
-
-  let result: { url: string; model: string } | null = null;
-
-  // Try specialized interior design model first (best for room renovations)
-  result = await runInteriorDesignModel(request.imageUrl, prompt);
+  console.log('============================================');
+  console.log('VIRTUAL RENOVATION - MULTI-MODEL PIPELINE');
+  console.log('============================================');
+  console.log('Room type:', request.roomType);
+  console.log('Style:', request.style);
+  console.log('Selected renovations:', selectedRenovations);
   
-  // Fallback to Instruct-Pix2Pix (good for instruction-based editing)
-  if (!result) {
-    console.log('Interior model failed, trying Instruct-Pix2Pix...');
-    result = await runInstructPix2Pix(request.imageUrl, prompt);
+  let resultUrl: string | null = null;
+  let currentImage = request.imageUrl;
+  let modelUsed = 'pipeline';
+  
+  // APPROACH 1: Sequential element-by-element processing
+  // Process each renovation type separately using inpainting
+  console.log('\n--- APPROACH 1: Element-by-Element Inpainting ---');
+  
+  for (const renoType of selectedRenovations) {
+    const searchTerms = ELEMENT_SEARCH_TERMS[renoType];
+    if (!searchTerms) {
+      console.log(`[Skip] No search terms for: ${renoType}`);
+      continue;
+    }
+    
+    console.log(`\n[Processing] ${renoType}...`);
+    
+    // Find the element mask
+    const maskUrl = await findElementByText(currentImage, searchTerms);
+    
+    if (maskUrl) {
+      // Build prompt for this specific element
+      const elementPrompt = buildDetailedPrompt(
+        renoType,
+        detailedOptions[renoType] || {},
+        request.style
+      );
+      
+      // Try Flux inpainting first (highest quality)
+      let newImage = await fluxInpaint(currentImage, maskUrl, elementPrompt);
+      
+      // Fallback to SDXL inpainting
+      if (!newImage) {
+        newImage = await inpaintArea(currentImage, maskUrl, elementPrompt);
+      }
+      
+      if (newImage) {
+        currentImage = newImage;
+        console.log(`[Success] ${renoType} updated`);
+      } else {
+        console.log(`[Failed] Could not update ${renoType}`);
+      }
+    } else {
+      console.log(`[Skip] Could not find ${renoType} in image`);
+    }
   }
   
-  // Fallback to SDXL img2img
-  if (!result) {
-    console.log('Instruct-Pix2Pix failed, trying SDXL img2img...');
-    result = await runSDXLImg2Img(request.imageUrl, prompt);
+  // Check if we made any changes
+  if (currentImage !== request.imageUrl) {
+    resultUrl = currentImage;
+    modelUsed = 'element-by-element-inpainting';
   }
-
-  // Final fallback to Runware
-  if (!result) {
-    console.log('SDXL failed, trying Runware...');
-    result = await runRunwareImg2Img(request.imageUrl, prompt);
+  
+  // APPROACH 2: If element-by-element failed, try Instruct-Pix2Pix
+  if (!resultUrl) {
+    console.log('\n--- APPROACH 2: Instruct-Pix2Pix ---');
+    
+    // Build instruction prompt
+    let instruction = `Transform this ${request.roomType}: `;
+    selectedRenovations.forEach(renoType => {
+      const opts = detailedOptions[renoType] || {};
+      instruction += buildDetailedPrompt(renoType, opts, request.style) + '. ';
+    });
+    instruction += 'Keep the same room layout, furniture, and structure.';
+    
+    resultUrl = await instructPix2Pix(request.imageUrl, instruction);
+    if (resultUrl) {
+      modelUsed = 'instruct-pix2pix';
+    }
   }
-
+  
+  // APPROACH 3: If still no result, try ControlNet with depth
+  if (!resultUrl) {
+    console.log('\n--- APPROACH 3: ControlNet Depth ---');
+    
+    const depthMap = await getDepthMap(request.imageUrl);
+    if (depthMap) {
+      const prompt = request.options?.customPrompt || 
+        `${request.style} style ${request.roomType} with updated finishes`;
+      resultUrl = await controlNetDepth(request.imageUrl, depthMap, prompt);
+      if (resultUrl) {
+        modelUsed = 'controlnet-depth';
+      }
+    }
+  }
+  
   const processingTime = Date.now() - startTime;
-
-  if (result) {
+  
+  console.log('\n============================================');
+  console.log('RESULT:', resultUrl ? 'SUCCESS' : 'FAILED');
+  console.log('Model:', modelUsed);
+  console.log('Time:', processingTime, 'ms');
+  console.log('============================================');
+  
+  if (resultUrl) {
     return {
       success: true,
-      resultUrl: result.url,
-      model: result.model,
+      resultUrl,
+      model: modelUsed,
       processingTime,
-      prompt,
+      prompt: request.options?.customPrompt,
     };
   }
-
+  
   return {
     success: false,
-    error: 'All renovation providers failed. Please try again later.',
+    error: 'All AI methods failed. You can request a FREE human revision.',
     processingTime,
-    prompt,
+    prompt: request.options?.customPrompt,
   };
 }
 
-// Generate multiple variations
-export async function processRenovationWithVariations(
-  request: RenovationRequest,
-  variationCount: number = 3
-): Promise<RenovationResult> {
-  const startTime = Date.now();
-  const prompt = buildRenovationPrompt(
-    request.roomType,
-    request.renovationType,
-    request.style,
-    request.options
-  );
+// ============================================
+// CREDITS & PRICING
+// ============================================
 
-  const results: string[] = [];
-  
-  // Generate multiple variations using interior design model
-  for (let i = 0; i < variationCount; i++) {
-    const result = await runInteriorDesignModel(request.imageUrl, prompt);
-    if (result?.url) {
-      results.push(result.url);
-    }
-  }
-
-  const processingTime = Date.now() - startTime;
-
-  if (results.length > 0) {
-    return {
-      success: true,
-      resultUrl: results[0],
-      resultUrls: results,
-      model: 'interior-design',
-      processingTime,
-      prompt,
-    };
-  }
-
-  // Fallback to single generation
-  return processRenovation(request);
-}
-
-// Calculate credits for a renovation
 export function calculateCredits(renovationType: string): number {
-  const type = RENOVATION_TYPES[renovationType as keyof typeof RENOVATION_TYPES];
-  return type?.credits || 3;
+  if (renovationType.includes('+')) {
+    const types = renovationType.split('+');
+    return types.reduce((sum, type) => sum + getSingleTypeCredits(type), 0);
+  }
+  return getSingleTypeCredits(renovationType);
 }
 
-// Estimate cost for analytics
+function getSingleTypeCredits(type: string): number {
+  const creditMap: Record<string, number> = {
+    'cabinets': 3,
+    'counters': 3,
+    'backsplash': 2,
+    'flooring': 3,
+    'paint': 2,
+    'appliances': 2,
+    'vanity': 3,
+    'shower': 3,
+    'fixtures': 2,
+    'fireplace': 3,
+    'lighting': 2,
+    'siding': 3,
+    'roof': 3,
+    'landscaping': 3,
+  };
+  return creditMap[type] || 3;
+}
+
 export function estimateCost(renovationType: string): number {
   const credits = calculateCredits(renovationType);
-  // Rough cost estimate per provider
-  return credits * 0.08; // ~$0.08 per credit for img2img models
+  return credits * 0.15; // Higher cost for multi-model pipeline
 }
