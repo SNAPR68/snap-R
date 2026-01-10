@@ -22,6 +22,7 @@ export interface CaptionOptions {
   includeEmojis?: boolean
   includeCallToAction?: boolean
   maxLength?: number
+  contentType?: string
 }
 
 export interface GenerationResult {
@@ -34,11 +35,16 @@ export async function generateCaption(
   property: PropertyDetails,
   options: CaptionOptions
 ): Promise<GenerationResult> {
-  const { platform, tone, includeEmojis = true, includeCallToAction = true, maxLength = 300 } = options
+  const { platform, tone, includeEmojis = true, includeCallToAction = true, maxLength = 300, contentType } = options
 
   const featuresText = Array.isArray(property.features) 
     ? property.features.join(', ')
     : (property.features || '')
+
+  const contentLabel = contentType?.replace(/_/g, ' ') || 'just listed'
+  const capitalizedContentLabel = contentLabel.split(' ').map(word => 
+    word.charAt(0).toUpperCase() + word.slice(1)
+  ).join(' ')
 
   const platformGuidelines: Record<string, string> = {
     instagram: 'Keep it engaging and visual. Use line breaks for readability. Hashtags will be added separately.',
@@ -54,7 +60,14 @@ export async function generateCaption(
     excited: 'Energetic and enthusiastic. Create urgency and excitement.'
   }
 
-  const prompt = `You are an expert real estate social media copywriter. Write a ${platform} caption for this property listing.
+  const prompt = `You are an expert real estate social media copywriter. Write a ${capitalizedContentLabel} ${platform} caption for this property listing.
+
+Content Type: ${capitalizedContentLabel}
+${contentType === 'just_listed' ? 'This is a NEW LISTING - emphasize that the property is freshly on the market and available now.' : ''}
+${contentType === 'open_house' ? 'This is an OPEN HOUSE announcement - include date/time and encourage attendance.' : ''}
+${contentType === 'price_drop' || contentType === 'price_reduced' ? 'This is a PRICE REDUCTION - highlight the new lower price and value opportunity.' : ''}
+${contentType === 'just_sold' ? 'This is a SOLD/CLOSED listing - celebrate the successful sale and thank everyone involved.' : ''}
+${contentType === 'coming_soon' ? 'This is a COMING SOON preview - create anticipation for the upcoming listing.' : ''}
 
 Property Details:
 - Address: ${property.address || 'Beautiful property'}
@@ -69,6 +82,7 @@ Property Details:
 Guidelines:
 - Platform: ${platformGuidelines[platform]}
 - Tone: ${toneGuidelines[tone]}
+- Content Type: Make sure the caption clearly reflects that this is a ${capitalizedContentLabel} post, not just a generic listing
 - ${includeEmojis ? 'Include relevant emojis throughout' : 'Do not use emojis'}
 - ${includeCallToAction ? 'End with a clear call-to-action (e.g., "DM for details", "Link in bio", "Schedule a tour")' : 'No call-to-action needed'}
 - Maximum length: ${maxLength} characters

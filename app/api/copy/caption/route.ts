@@ -50,12 +50,14 @@ export async function POST(request: NextRequest) {
     // Parse request body
     const body = await request.json()
     const property: PropertyDetails = body.property || {}
+    const contentType = body.contentType || 'just_listed'
     const options: CaptionOptions = {
       platform: body.platform || 'instagram',
       tone: body.tone || 'professional',
       includeEmojis: body.includeEmojis !== false,
       includeCallToAction: body.includeCallToAction !== false,
-      maxLength: body.maxLength
+      maxLength: body.maxLength,
+      contentType: contentType
     }
 
     // Generate caption
