@@ -411,11 +411,6 @@ export function UnifiedCreator() {
         features: []
       }
 
-      console.log('=== Frontend Debug ===')
-      console.log('listingData:', listingData)
-      console.log('property:', property)
-      console.log('propertyData being sent:', propertyData)
-      
       const res = await fetch('/api/copy/caption', { 
         method: 'POST', 
         headers: { 'Content-Type': 'application/json' }, 

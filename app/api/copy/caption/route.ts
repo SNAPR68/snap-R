@@ -18,9 +18,7 @@ export async function POST(request: NextRequest) {
       .from('profiles')
       .select('*')
       .eq('id', user.id)
-      .maybeSingle()  // Use maybeSingle instead of single to avoid error on 0 rows
-    
-    console.log('Profile query result:', { profile })
+      .maybeSingle()      // Use maybeSingle instead of single to avoid error on 0 rows
     
     // Use defaults if no profile
     const plan = profile?.plan || profile?.subscription_tier || 'free'
@@ -44,11 +42,6 @@ export async function POST(request: NextRequest) {
 
     // Parse request body
     const body = await request.json()
-    
-    console.log('=== Caption API Debug ===')
-    console.log('contentType received:', body.contentType)
-    console.log('platform:', body.platform)
-    console.log('Full body:', JSON.stringify(body, null, 2))
     
     const property: PropertyDetails = body.property || {}
     const contentType = body.contentType || 'just_listed'

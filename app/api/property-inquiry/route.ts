@@ -7,9 +7,6 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
     
-    console.log('=== Property Inquiry Debug ===')
-    console.log('Received body:', JSON.stringify(body, null, 2))
-    
     const { 
       name, 
       email, 

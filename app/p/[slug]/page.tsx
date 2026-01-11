@@ -57,10 +57,6 @@ export default async function PropertySitePage({ params }: { params: Promise<{ s
     notFound()
   }
   
-  console.log('=== Property Site Debug ===')
-  console.log('listing.user_id:', listing.user_id)
-  console.log('listing keys:', Object.keys(listing))
-  
   // Fetch profile separately if user_id exists
   let profile = null
   if (listing.user_id) {
@@ -69,11 +65,7 @@ export default async function PropertySitePage({ params }: { params: Promise<{ s
       .select('full_name, email, phone')
       .eq('id', listing.user_id)
       .maybeSingle()
-    console.log('Profile query for user_id:', listing.user_id)
-    console.log('Profile result:', profileData)
-    console.log('Profile error:', profileError)
     profile = profileData
-    console.log('profile fetched:', profile)
   }
   
   const sortedPhotos = (listing.photos || []).sort((a: any, b: any) => (a.display_order || 0) - (b.display_order || 0))
