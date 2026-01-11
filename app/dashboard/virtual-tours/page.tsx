@@ -100,6 +100,118 @@ async function downloadTourPhotosIndividually(tour: Tour) {
   }
 }
 
+// Generate video slideshow from tour photos
+async function generateTourVideo(tour: Tour, setProgress?: (progress: number) => void): Promise<Blob | null> {
+  if (!tour.tour_scenes || tour.tour_scenes.length === 0) return null;
+  
+  const canvas = document.createElement('canvas');
+  canvas.width = 1920;
+  canvas.height = 1080;
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return null;
+
+  // Load all images first
+  const images: HTMLImageElement[] = [];
+  for (let i = 0; i < tour.tour_scenes.length; i++) {
+    const scene = tour.tour_scenes[i];
+    setProgress?.(Math.round((i / tour.tour_scenes.length) * 30)); // 0-30% for loading
+    
+    const img = document.createElement('img');
+    img.crossOrigin = 'anonymous';
+    await new Promise<void>((resolve) => {
+      img.onload = () => { images.push(img); resolve(); };
+      img.onerror = () => resolve(); // Skip failed images
+      img.src = scene.image_url;
+    });
+  }
+
+  if (images.length === 0) return null;
+
+  // Setup MediaRecorder
+  const stream = canvas.captureStream(30);
+  const mediaRecorder = new MediaRecorder(stream, { 
+    mimeType: 'video/webm;codecs=vp9',
+    videoBitsPerSecond: 8000000 
+  });
+  
+  const chunks: Blob[] = [];
+  mediaRecorder.ondataavailable = (e) => {
+    if (e.data.size > 0) chunks.push(e.data);
+  };
+
+  return new Promise((resolve) => {
+    mediaRecorder.onstop = () => {
+      const blob = new Blob(chunks, { type: 'video/webm' });
+      resolve(blob);
+    };
+
+    mediaRecorder.start(100); // Collect data every 100ms
+
+    // Draw each photo for 3 seconds with fade transition
+    const drawImages = async () => {
+      for (let i = 0; i < images.length; i++) {
+        const img = images[i];
+        setProgress?.(30 + Math.round((i / images.length) * 60)); // 30-90% for rendering
+        
+        // Calculate scaling to cover canvas (cover, not contain)
+        const scale = Math.max(canvas.width / img.width, canvas.height / img.height);
+        const x = (canvas.width - img.width * scale) / 2;
+        const y = (canvas.height - img.height * scale) / 2;
+        
+        // Fade in
+        for (let opacity = 0; opacity <= 1; opacity += 0.1) {
+          ctx.fillStyle = '#000';
+          ctx.fillRect(0, 0, canvas.width, canvas.height);
+          ctx.globalAlpha = opacity;
+          ctx.drawImage(img, x, y, img.width * scale, img.height * scale);
+          ctx.globalAlpha = 1;
+          await new Promise(r => setTimeout(r, 50)); // 500ms fade
+        }
+        
+        // Hold for 2.5 seconds
+        ctx.drawImage(img, x, y, img.width * scale, img.height * scale);
+        await new Promise(r => setTimeout(r, 2500));
+      }
+      
+      setProgress?.(100);
+      mediaRecorder.stop();
+    };
+
+    drawImages();
+  });
+}
+
+// Download tour as video
+async function downloadTourAsVideo(tour: Tour, setDownloading: (v: boolean) => void, setProgress: (v: number) => void) {
+  setDownloading(true);
+  setProgress(0);
+  
+  try {
+    const videoBlob = await generateTourVideo(tour, setProgress);
+    
+    if (videoBlob) {
+      const url = URL.createObjectURL(videoBlob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${tour.name || 'gallery'}-video.webm`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } else {
+      console.error('Failed to generate video');
+      // Fallback to ZIP
+      await downloadTourPhotosAsZip(tour);
+    }
+  } catch (error) {
+    console.error('Video generation error:', error);
+    await downloadTourPhotosAsZip(tour);
+  } finally {
+    setDownloading(false);
+    setProgress(0);
+  }
+}
+
 // Tour Card Component
 function TourCard({ tour, onView, onEdit, onDelete }: { 
   tour: Tour; 
@@ -109,6 +221,7 @@ function TourCard({ tour, onView, onEdit, onDelete }: {
 }) {
   const [copied, setCopied] = useState(false);
   const [downloading, setDownloading] = useState(false);
+  const [downloadProgress, setDownloadProgress] = useState(0);
   const tourUrl = `${typeof window !== 'undefined' ? window.location.origin : ''}/tour/${tour.slug}`;
 
   const copyLink = () => {
@@ -118,9 +231,7 @@ function TourCard({ tour, onView, onEdit, onDelete }: {
   };
 
   const handleDownload = async () => {
-    setDownloading(true);
-    await downloadTourPhotosAsZip(tour);
-    setDownloading(false);
+    await downloadTourAsVideo(tour, setDownloading, setDownloadProgress);
   };
 
   return (
@@ -185,9 +296,13 @@ function TourCard({ tour, onView, onEdit, onDelete }: {
             onClick={handleDownload}
             disabled={downloading}
             className="p-2 bg-white/10 rounded-lg hover:bg-white/20 transition-colors"
-            title="Download as ZIP"
+            title="Download as video"
           >
-            {downloading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
+            {downloading ? (
+              <span className="text-xs">{downloadProgress > 0 ? `${downloadProgress}%` : 'Generating...'}</span>
+            ) : (
+              <Download className="w-4 h-4" />
+            )}
           </button>
           <button
             onClick={onEdit}
