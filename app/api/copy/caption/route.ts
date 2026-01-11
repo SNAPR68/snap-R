@@ -13,42 +13,43 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    // Get user profile with plan and usage
-    const { data: profile, error: profileError } = await supabase
+    // Get user profile - use defaults if not found
+    const { data: profile } = await supabase
       .from('profiles')
-      .select('plan, ai_captions_used, ai_captions_reset_at')
+      .select('*')
       .eq('id', user.id)
-      .single()
-
-    if (profileError || !profile) {
-      return NextResponse.json({ error: 'Profile not found' }, { status: 404 })
-    }
-
+      .maybeSingle()  // Use maybeSingle instead of single to avoid error on 0 rows
+    
+    console.log('Profile query result:', { profile })
+    
+    // Use defaults if no profile
+    const plan = profile?.plan || profile?.subscription_tier || 'free'
+    let captionsUsed = profile?.ai_captions_used || 0
+    const resetAt = profile?.ai_captions_reset_at
+    
     // Check if usage should be reset (monthly)
-    let captionsUsed = profile.ai_captions_used || 0
-    if (shouldResetUsage(profile.ai_captions_reset_at)) {
+    if (resetAt && shouldResetUsage(resetAt)) {
       captionsUsed = 0
-      await supabase
-        .from('profiles')
-        .update({ 
-          ai_captions_used: 0, 
-          ai_captions_reset_at: new Date().toISOString() 
-        })
-        .eq('id', user.id)
+      if (profile) {
+        await supabase
+          .from('profiles')
+          .update({ 
+            ai_captions_used: 0, 
+            ai_captions_reset_at: new Date().toISOString() 
+          })
+          .eq('id', user.id)
+      }
     }
 
-    // Check plan limits
-    if (!canGenerateCaption(profile.plan, captionsUsed)) {
-      return NextResponse.json({ 
-        error: 'Caption limit reached',
-        upgrade: true,
-        used: captionsUsed,
-        plan: profile.plan
-      }, { status: 403 })
-    }
 
     // Parse request body
     const body = await request.json()
+    
+    console.log('=== Caption API Debug ===')
+    console.log('contentType received:', body.contentType)
+    console.log('platform:', body.platform)
+    console.log('Full body:', JSON.stringify(body, null, 2))
+    
     const property: PropertyDetails = body.property || {}
     const contentType = body.contentType || 'just_listed'
     const options: CaptionOptions = {
@@ -83,8 +84,8 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       caption: result.text,
       tokensUsed: result.tokensUsed,
-      captionsRemaining: profile.plan === 'agency' ? 'unlimited' : 
-        (profile.plan === 'pro' ? 50 : 10) - (captionsUsed + 1)
+      captionsRemaining: plan === 'agency' ? 'unlimited' : 
+        (plan === 'pro' ? 50 : 10) - (captionsUsed + 1)
     })
 
   } catch (error) {

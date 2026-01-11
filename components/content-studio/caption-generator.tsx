@@ -20,6 +20,7 @@ interface PropertyDetails {
 interface CaptionGeneratorProps {
   property: PropertyDetails
   platform: string
+  contentType?: string
   onCaptionGenerated?: (caption: string) => void
   onHashtagsGenerated?: (hashtags: string[]) => void
 }
@@ -31,7 +32,7 @@ const TONES = [
   { id: 'excited', label: 'Excited', emoji: '🎉' }
 ]
 
-export function CaptionGenerator({ property, platform, onCaptionGenerated, onHashtagsGenerated }: CaptionGeneratorProps) {
+export function CaptionGenerator({ property, platform, contentType, onCaptionGenerated, onHashtagsGenerated }: CaptionGeneratorProps) {
   const [tone, setTone] = useState('professional')
   const [includeEmojis, setIncludeEmojis] = useState(true)
   const [includeCTA, setIncludeCTA] = useState(true)
@@ -45,6 +46,9 @@ export function CaptionGenerator({ property, platform, onCaptionGenerated, onHas
   const generateCaption = async () => {
     setLoading(true)
     try {
+      // Convert contentType from dash format (just-listed) to underscore format (just_listed) for API, or default to just_listed
+      const apiContentType = contentType ? contentType.replace(/-/g, '_') : 'just_listed'
+      
       const res = await fetch('/api/copy/caption', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -53,7 +57,8 @@ export function CaptionGenerator({ property, platform, onCaptionGenerated, onHas
           platform,
           tone,
           includeEmojis,
-          includeCallToAction: includeCTA
+          includeCallToAction: includeCTA,
+          contentType: apiContentType
         })
       })
 

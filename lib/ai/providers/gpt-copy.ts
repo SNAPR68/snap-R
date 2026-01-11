@@ -35,7 +35,7 @@ export async function generateCaption(
   property: PropertyDetails,
   options: CaptionOptions
 ): Promise<GenerationResult> {
-  const { platform, tone, includeEmojis = true, includeCallToAction = true, maxLength = 300, contentType } = options
+  const { platform, tone, includeEmojis = true, includeCallToAction = true, maxLength = 2000, contentType } = options
 
   const featuresText = Array.isArray(property.features) 
     ? property.features.join(', ')
@@ -46,49 +46,119 @@ export async function generateCaption(
     word.charAt(0).toUpperCase() + word.slice(1)
   ).join(' ')
 
-  const platformGuidelines: Record<string, string> = {
-    instagram: 'Keep it engaging and visual. Use line breaks for readability. Hashtags will be added separately.',
-    facebook: 'More conversational and detailed. Can be slightly longer.',
-    tiktok: 'Short, punchy, and trendy. Use casual language.',
-    linkedin: 'Professional and polished. Focus on investment value and market insights.'
+  const contentExamples: Record<string, string> = {
+    'just_listed': `Example format:
+✨ JUST LISTED in [Neighborhood]! ✨
+
+This stunning ${property.bedrooms || 3}bed/${property.bathrooms || 2}bath home is everything you've been looking for. 🏡
+
+[Highlight key features like updated kitchen, spacious backyard, hardwood floors, natural light]
+
+📍 ${property.city || 'Location'}, ${property.state || 'State'}
+💰 Listed at ${property.price ? '$' + Number(property.price).toLocaleString() : 'Contact for price'}
+📐 ${property.squareFeet ? Number(property.squareFeet).toLocaleString() + ' sq ft' : ''} | 🛏️ ${property.bedrooms || ''} | 🛁 ${property.bathrooms || ''}
+
+Don't miss this incredible opportunity! Contact me today for a private showing. 🔑`,
+
+    'open_house': `Example format:
+🏠 OPEN HOUSE THIS WEEKEND! 🎉
+
+You're invited to tour this beautiful ${property.bedrooms || 3}bed/${property.bathrooms || 2}bath home in ${property.city || 'the area'}!
+
+📅 [Day], [Date]
+🕐 [Time] - [Time]
+📍 ${property.address || 'Address'}
+
+[Highlight what makes this home special - renovated kitchen, large backyard, great school district]
+
+💰 Offered at ${property.price ? '$' + Number(property.price).toLocaleString() : 'Contact for price'}
+
+Bring your family and envision your future here! See you there! 👋`,
+
+    'price_reduced': `Example format:
+🚨 PRICE REDUCED! 🚨
+
+Great news for buyers! This stunning ${property.bedrooms || 3}bed/${property.bathrooms || 2}bath home just got even better! 
+
+💰 NOW ${property.price ? '$' + Number(property.price).toLocaleString() : 'Contact for price'}
+
+[Highlight the value proposition - below market, motivated seller, investment opportunity]
+
+📍 ${property.city || 'Location'}, ${property.state || 'State'}
+📐 ${property.squareFeet ? Number(property.squareFeet).toLocaleString() + ' sq ft' : ''} 
+
+This won't last long at this price! Schedule your showing today! 📞`,
+
+    'just_sold': `Example format:
+🎉 JUST SOLD! 🎉
+
+Congratulations to my amazing clients on the purchase of their dream home in ${property.city || 'the area'}! 🏡🔑
+
+This beautiful ${property.bedrooms || 3}bed/${property.bathrooms || 2}bath home is now SOLD!
+
+[Thank buyers/sellers, mention smooth transaction, celebrate the milestone]
+
+💰 Sold for ${property.price ? '$' + Number(property.price).toLocaleString() : 'asking price'}
+
+Thinking of buying or selling? Let's make your real estate dreams come true! DM me to get started. ✨`,
+
+    'coming_soon': `Example format:
+👀 COMING SOON! 👀
+
+Get ready! A stunning new listing is about to hit the market in ${property.city || 'the area'}! 🏡
+
+${property.bedrooms || 3} Beds | ${property.bathrooms || 2} Baths | ${property.squareFeet ? Number(property.squareFeet).toLocaleString() + ' sq ft' : 'Spacious'}
+
+[Tease key features without revealing everything - hint at special amenities, location perks]
+
+💰 Expected at ${property.price ? '$' + Number(property.price).toLocaleString() : 'Contact for preview'}
+
+Want early access before it goes live? DM me NOW to schedule a private preview! 🔑`,
+
+    'under_contract': `Example format:
+📝 UNDER CONTRACT! 📝
+
+This gorgeous ${property.bedrooms || 3}bed/${property.bathrooms || 2}bath home in ${property.city || 'the area'} is officially under contract! 🎊
+
+[Congratulate the parties involved, highlight why this one moved fast]
+
+💰 Listed at ${property.price ? '$' + Number(property.price).toLocaleString() : 'asking price'}
+
+Missed out on this one? Don't worry! Contact me to be first in line for similar properties. More coming soon! 📞`
   }
 
-  const toneGuidelines: Record<string, string> = {
-    professional: 'Maintain a polished, trustworthy tone. Use industry terminology appropriately.',
-    casual: 'Friendly and approachable. Like talking to a neighbor.',
-    luxury: 'Elegant and sophisticated. Emphasize exclusivity and premium features.',
-    excited: 'Energetic and enthusiastic. Create urgency and excitement.'
-  }
+  const selectedExample = contentExamples[contentType || 'just_listed'] || contentExamples['just_listed']
 
-  const prompt = `You are an expert real estate social media copywriter. Write a ${capitalizedContentLabel} ${platform} caption for this property listing.
+  const prompt = `You are an expert US real estate social media copywriter specializing in high-converting property marketing. Write a professional ${capitalizedContentLabel} ${platform} caption for this property listing.
 
-Content Type: ${capitalizedContentLabel}
-${contentType === 'just_listed' ? 'This is a NEW LISTING - emphasize that the property is freshly on the market and available now.' : ''}
-${contentType === 'open_house' ? 'This is an OPEN HOUSE announcement - include date/time and encourage attendance.' : ''}
-${contentType === 'price_drop' || contentType === 'price_reduced' ? 'This is a PRICE REDUCTION - highlight the new lower price and value opportunity.' : ''}
-${contentType === 'just_sold' ? 'This is a SOLD/CLOSED listing - celebrate the successful sale and thank everyone involved.' : ''}
-${contentType === 'coming_soon' ? 'This is a COMING SOON preview - create anticipation for the upcoming listing.' : ''}
+CONTENT TYPE: ${capitalizedContentLabel}
+PLATFORM: ${platform}
+TONE: ${tone}
 
-Property Details:
-- Address: ${property.address || 'Beautiful property'}
-- Location: ${property.city || ''}, ${property.state || ''}
-- Price: ${property.price ? `$${property.price.toLocaleString()}` : 'Contact for price'}
+PROPERTY DETAILS:
+- Address: ${property.address || 'Beautiful home'}
+- City: ${property.city || ''}, ${property.state || ''}
+- Price: ${property.price ? '$' + Number(property.price).toLocaleString() : 'Contact for price'}
 - Bedrooms: ${property.bedrooms || 'N/A'}
 - Bathrooms: ${property.bathrooms || 'N/A'}
-- Square Feet: ${property.squareFeet ? property.squareFeet.toLocaleString() : 'N/A'}
-- Property Type: ${property.propertyType || 'Residential'}
-- Key Features: ${featuresText || 'Modern finishes'}
+- Square Feet: ${property.squareFeet ? Number(property.squareFeet).toLocaleString() + ' sq ft' : 'N/A'}
+- Property Type: ${property.propertyType || 'Home'}
 
-Guidelines:
-- Platform: ${platformGuidelines[platform]}
-- Tone: ${toneGuidelines[tone]}
-- Content Type: Make sure the caption clearly reflects that this is a ${capitalizedContentLabel} post, not just a generic listing
-- ${includeEmojis ? 'Include relevant emojis throughout' : 'Do not use emojis'}
-- ${includeCallToAction ? 'End with a clear call-to-action (e.g., "DM for details", "Link in bio", "Schedule a tour")' : 'No call-to-action needed'}
-- Maximum length: ${maxLength} characters
-- Do NOT include hashtags (they will be added separately)
+${selectedExample}
 
-Write only the caption, nothing else.`
+STRICT REQUIREMENTS:
+1. Write 4-6 sentences MINIMUM - NO one-liners
+2. Start with an attention-grabbing headline with emojis for ${capitalizedContentLabel}
+3. Include specific property details (beds, baths, sqft, price)
+4. Highlight 2-3 compelling features or benefits
+5. Use line breaks between sections for readability
+6. End with a strong call-to-action appropriate for ${capitalizedContentLabel}
+${includeEmojis ? '7. Use 4-6 relevant emojis: 🏡 🔑 ✨ 📍 💰 🏠 🛏️ 🛁 📐 🎉 📝 👀 🚨 📞 📅 🕐' : '7. Do NOT use any emojis'}
+8. Follow ${platform} best practices (Instagram: hashtags, Facebook: conversational, LinkedIn: professional)
+9. Sound professional, warm, and create urgency
+10. This MUST clearly be a ${capitalizedContentLabel} post - make it obvious!
+
+Generate the caption now:`
 
   const response = await openai.chat.completions.create({
     model: 'gpt-4o-mini',
