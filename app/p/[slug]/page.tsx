@@ -7,7 +7,7 @@ export const dynamic = 'force-dynamic'
 // Use service role to bypass RLS for public property pages
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
+  process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY!
 )
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
@@ -57,15 +57,23 @@ export default async function PropertySitePage({ params }: { params: Promise<{ s
     notFound()
   }
   
+  console.log('=== Property Site Debug ===')
+  console.log('listing.user_id:', listing.user_id)
+  console.log('listing keys:', Object.keys(listing))
+  
   // Fetch profile separately if user_id exists
   let profile = null
   if (listing.user_id) {
-    const { data: profileData } = await supabase
+    const { data: profileData, error: profileError } = await supabase
       .from('profiles')
       .select('full_name, email, phone')
       .eq('id', listing.user_id)
-      .single()
+      .maybeSingle()
+    console.log('Profile query for user_id:', listing.user_id)
+    console.log('Profile result:', profileData)
+    console.log('Profile error:', profileError)
     profile = profileData
+    console.log('profile fetched:', profile)
   }
   
   const sortedPhotos = (listing.photos || []).sort((a: any, b: any) => (a.display_order || 0) - (b.display_order || 0))
@@ -82,6 +90,7 @@ export default async function PropertySitePage({ params }: { params: Promise<{ s
   return (
     <PropertySiteClient
       listing={{
+        id: listing.id,
         title: listing.title,
         address: listing.address,
         city: listing.city,

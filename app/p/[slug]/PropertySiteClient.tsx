@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { MapPin, Bed, Bath, Square, Phone, Mail, Share2, ChevronLeft, ChevronRight, X, Calendar, Home, Car, Sparkles } from 'lucide-react'
 
 interface Listing {
+  id?: string
   title: string
   address: string | null
   city: string | null
@@ -38,6 +39,8 @@ export default function PropertySiteClient({ photos, listing, agent }: Props) {
   const [lightboxOpen, setLightboxOpen] = useState(false)
   const [contactForm, setContactForm] = useState({ name: '', email: '', phone: '', message: '' })
   const [formSubmitted, setFormSubmitted] = useState(false)
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [submitError, setSubmitError] = useState<string | null>(null)
 
   const location = [listing.city, listing.state].filter(Boolean).join(', ')
   const fullAddress = [listing.address, listing.city, listing.state, listing.postal_code].filter(Boolean).join(', ')
@@ -58,10 +61,45 @@ export default function PropertySiteClient({ photos, listing, agent }: Props) {
     }
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    // In production, this would send to an API
-    setFormSubmitted(true)
+    setIsSubmitting(true)
+    setSubmitError(null)
+    
+    console.log('=== Form Submit Debug ===')
+    console.log('contactForm:', contactForm)
+    console.log('agent:', agent)
+    console.log('listing.id:', listing.id)
+    
+    const requestBody = {
+      name: contactForm.name,
+      email: contactForm.email,
+      phone: contactForm.phone,
+      message: contactForm.message,
+      listingId: listing.id,
+      listingTitle: listing.title,
+      listingAddress: listing.address,
+      agentEmail: agent?.email,
+      agentName: agent?.name
+    }
+    
+    console.log('Request body being sent:', JSON.stringify(requestBody, null, 2))
+    
+    try {
+      const response = await fetch('/api/property-inquiry', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(requestBody)
+      })
+      
+      if (!response.ok) throw new Error('Failed to send')
+      setFormSubmitted(true)
+    } catch (error) {
+      setSubmitError('Failed to send message. Please try again.')
+      console.error('Contact form error:', error)
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   return (
@@ -209,38 +247,40 @@ export default function PropertySiteClient({ photos, listing, agent }: Props) {
               )}
 
               {/* Additional Details */}
-              <div>
-                <h2 className="text-xl font-bold mb-4">Property Details</h2>
-                <div className="grid md:grid-cols-2 gap-4">
-                  {listing.property_type && (
-                    <div className="flex items-center gap-3 p-3 bg-gray-900 rounded-lg">
-                      <Home className="w-5 h-5 text-amber-500" />
-                      <div>
-                        <p className="text-sm text-white/50">Property Type</p>
-                        <p className="font-medium capitalize">{listing.property_type}</p>
+              {(listing.property_type || listing.lot_size || listing.parking) && (
+                <div>
+                  <h2 className="text-xl font-bold mb-4">Property Details</h2>
+                  <div className="grid md:grid-cols-2 gap-4">
+                    {listing.property_type && (
+                      <div className="flex items-center gap-3 p-3 bg-gray-900 rounded-lg">
+                        <Home className="w-5 h-5 text-amber-500" />
+                        <div>
+                          <p className="text-sm text-white/50">Property Type</p>
+                          <p className="font-medium capitalize">{listing.property_type}</p>
+                        </div>
                       </div>
-                    </div>
-                  )}
-                  {listing.lot_size && (
-                    <div className="flex items-center gap-3 p-3 bg-gray-900 rounded-lg">
-                      <Square className="w-5 h-5 text-amber-500" />
-                      <div>
-                        <p className="text-sm text-white/50">Lot Size</p>
-                        <p className="font-medium">{listing.lot_size}</p>
+                    )}
+                    {listing.lot_size && (
+                      <div className="flex items-center gap-3 p-3 bg-gray-900 rounded-lg">
+                        <Square className="w-5 h-5 text-amber-500" />
+                        <div>
+                          <p className="text-sm text-white/50">Lot Size</p>
+                          <p className="font-medium">{listing.lot_size}</p>
+                        </div>
                       </div>
-                    </div>
-                  )}
-                  {listing.parking && (
-                    <div className="flex items-center gap-3 p-3 bg-gray-900 rounded-lg">
-                      <Car className="w-5 h-5 text-amber-500" />
-                      <div>
-                        <p className="text-sm text-white/50">Parking</p>
-                        <p className="font-medium">{listing.parking}</p>
+                    )}
+                    {listing.parking && (
+                      <div className="flex items-center gap-3 p-3 bg-gray-900 rounded-lg">
+                        <Car className="w-5 h-5 text-amber-500" />
+                        <div>
+                          <p className="text-sm text-white/50">Parking</p>
+                          <p className="font-medium">{listing.parking}</p>
+                        </div>
                       </div>
-                    </div>
-                  )}
+                    )}
+                  </div>
                 </div>
-              </div>
+              )}
 
               {/* Features */}
               {listing.features && listing.features.length > 0 && (
@@ -323,10 +363,14 @@ export default function PropertySiteClient({ photos, listing, agent }: Props) {
                     />
                     <button
                       type="submit"
-                      className="w-full py-3 bg-amber-500 text-black font-bold rounded-xl hover:bg-amber-400 transition-colors"
+                      disabled={isSubmitting}
+                      className="w-full py-3 bg-amber-500 text-black font-bold rounded-xl hover:bg-amber-400 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                      Send Message
+                      {isSubmitting ? 'Sending...' : 'Send Message'}
                     </button>
+                    {submitError && (
+                      <p className="text-red-500 text-sm mt-2">{submitError}</p>
+                    )}
                   </form>
                 )}
               </div>
