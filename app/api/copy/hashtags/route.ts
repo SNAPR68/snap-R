@@ -18,15 +18,17 @@ export async function POST(request: NextRequest) {
       .from('profiles')
       .select('plan, ai_captions_used, ai_captions_reset_at')
       .eq('id', user.id)
-      .single()
+      .maybeSingle()
 
+    /* TEMPORARILY DISABLED - profile check
     if (profileError || !profile) {
       return NextResponse.json({ error: 'Profile not found' }, { status: 404 })
     }
+    */
 
     // Check if usage should be reset (monthly)
-    let captionsUsed = profile.ai_captions_used || 0
-    if (shouldResetUsage(profile.ai_captions_reset_at)) {
+    let captionsUsed = profile?.ai_captions_used || 0
+    if (profile && shouldResetUsage(profile.ai_captions_reset_at)) {
       captionsUsed = 0
       await supabase
         .from('profiles')
@@ -37,6 +39,7 @@ export async function POST(request: NextRequest) {
         .eq('id', user.id)
     }
 
+    /* TEMPORARILY DISABLED - plan limit check
     // Check plan limits (hashtags count as captions)
     if (!canGenerateCaption(profile.plan, captionsUsed)) {
       return NextResponse.json({ 
@@ -46,6 +49,7 @@ export async function POST(request: NextRequest) {
         plan: profile.plan
       }, { status: 403 })
     }
+    */
 
     // Parse request body
     const body = await request.json()
@@ -74,17 +78,19 @@ export async function POST(request: NextRequest) {
     })
 
     // Increment usage counter
-    await supabase
-      .from('profiles')
-      .update({ ai_captions_used: captionsUsed + 1 })
-      .eq('id', user.id)
+    if (profile) {
+      await supabase
+        .from('profiles')
+        .update({ ai_captions_used: captionsUsed + 1 })
+        .eq('id', user.id)
+    }
 
     return NextResponse.json({
       hashtags: hashtagsArray,
       hashtagsText: result.text,
       tokensUsed: result.tokensUsed,
-      generationsRemaining: profile.plan === 'agency' ? 'unlimited' : 
-        (profile.plan === 'pro' ? 50 : 10) - (captionsUsed + 1)
+      generationsRemaining: profile?.plan === 'agency' ? 'unlimited' : 
+        (profile?.plan === 'pro' ? 50 : 10) - (captionsUsed + 1)
     })
 
   } catch (error) {

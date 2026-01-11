@@ -93,7 +93,8 @@ export function UnifiedCreator() {
   const [uploadSuccess, setUploadSuccess] = useState<string | null>(null)
   const [uploadError, setUploadError] = useState<string | null>(null)
 
-  const [property, setProperty] = useState({ address: '', city: '', state: '', price: '' as any, bedrooms: '' as any, bathrooms: '' as any, squareFeet: '' as any })
+  const [property, setProperty] = useState({ address: '', city: '', state: '', price: null as number | null, bedrooms: null as number | null, bathrooms: null as number | null, squareFeet: null as number | null, propertyType: 'House' as string })
+  const [listingData, setListingData] = useState<any>(null)
   const [brand, setBrand] = useState({ business_name: '', logo_url: '', primary_color: '#D4AF37', secondary_color: '#1A1A1A', phone: '', tagline: '' })
 
   useEffect(() => {
@@ -105,8 +106,18 @@ export function UnifiedCreator() {
         ])
         if (brandRes) setBrand(brandRes)
         if (listingRes) {
+          setListingData(listingRes)
           setListingTitle(listingRes.title || listingRes.address || '')
-          setProperty({ address: listingRes.address || '', city: listingRes.city || '', state: listingRes.state || '', price: listingRes.price || '', bedrooms: listingRes.bedrooms || '', bathrooms: listingRes.bathrooms || '', squareFeet: listingRes.square_feet || '' })
+          setProperty({ 
+            address: listingRes.address || '', 
+            city: listingRes.city || '', 
+            state: listingRes.state || '', 
+            price: listingRes.price || null, 
+            bedrooms: listingRes.bedrooms || null, 
+            bathrooms: listingRes.bathrooms || null, 
+            squareFeet: listingRes.square_feet || null,
+            propertyType: listingRes.property_type || 'House'
+          })
           if (listingRes.photos?.length) {
             const urls = listingRes.photos.map((p: any) => p.signedProcessedUrl || p.enhanced_url || p.url).filter(Boolean)
             
@@ -387,6 +398,24 @@ export function UnifiedCreator() {
       // Convert category from dash format (just-listed) to underscore format (just_listed) for API
       const contentType = category.replace(/-/g, '_')
       
+      // Use listingData as primary source, fallback to property state (form values)
+      const propertyData = {
+        address: listingData?.listing?.address || property.address || '',
+        city: listingData?.listing?.city || property.city || '',
+        state: listingData?.listing?.state || property.state || '',
+        price: listingData?.listing?.price || property.price || '',
+        bedrooms: listingData?.listing?.bedrooms || property.bedrooms || '',
+        bathrooms: listingData?.listing?.bathrooms || property.bathrooms || '',
+        squareFeet: listingData?.listing?.square_feet || property.squareFeet || '',
+        propertyType: listingData?.listing?.property_type || property.propertyType || 'House',
+        features: []
+      }
+
+      console.log('=== Frontend Debug ===')
+      console.log('listingData:', listingData)
+      console.log('property:', property)
+      console.log('propertyData being sent:', propertyData)
+      
       const res = await fetch('/api/copy/caption', { 
         method: 'POST', 
         headers: { 'Content-Type': 'application/json' }, 
@@ -396,7 +425,17 @@ export function UnifiedCreator() {
           includeEmojis: true, 
           includeCallToAction: true,
           contentType: contentType,
-          property: { ...property, propertyType: 'House', features: [] }
+          property: {
+            address: propertyData.address || undefined,
+            city: propertyData.city || undefined,
+            state: propertyData.state || undefined,
+            price: propertyData.price || undefined,
+            bedrooms: propertyData.bedrooms || undefined,
+            bathrooms: propertyData.bathrooms || undefined,
+            squareFeet: propertyData.squareFeet || undefined,
+            propertyType: propertyData.propertyType,
+            features: propertyData.features
+          }
         }) 
       })
       if (!res.ok) throw new Error('API error')
@@ -417,7 +456,17 @@ export function UnifiedCreator() {
         headers: { 'Content-Type': 'application/json' }, 
         body: JSON.stringify({ 
           platform: platform === 'story' ? 'instagram' : platform, 
-          property: { city: property.city, state: property.state, propertyType: 'House', features: [] }
+          property: { 
+            address: property.address || undefined,
+            city: property.city || undefined,
+            state: property.state || undefined,
+            price: property.price || undefined,
+            bedrooms: property.bedrooms || undefined,
+            bathrooms: property.bathrooms || undefined,
+            squareFeet: property.squareFeet || undefined,
+            propertyType: property.propertyType || 'House',
+            features: []
+          }
         }) 
       })
       if (!res.ok) throw new Error('API error')
@@ -703,34 +752,34 @@ export function UnifiedCreator() {
             <Label className="text-[10px] text-white/40 uppercase block">Property Details</Label>
             <div>
               <Label className="text-[9px] text-white/30 mb-1 block">Address</Label>
-              <Input value={property.address} onChange={e => setProperty(p => ({...p, address: e.target.value}))} placeholder="123 Main St" className="bg-black/40 border-white/20 h-9 text-xs" />
+              <Input id="property-address" value={property.address} onChange={e => setProperty(p => ({...p, address: e.target.value}))} placeholder="123 Main St" className="bg-black/40 border-white/20 h-9 text-xs" />
             </div>
             <div className="grid grid-cols-2 gap-2">
               <div>
                 <Label className="text-[9px] text-white/30 mb-1 block">City</Label>
-                <Input value={property.city} onChange={e => setProperty(p => ({...p, city: e.target.value}))} placeholder="Los Angeles" className="bg-black/40 border-white/20 h-9 text-xs" />
+                <Input id="property-city" value={property.city} onChange={e => setProperty(p => ({...p, city: e.target.value}))} placeholder="Los Angeles" className="bg-black/40 border-white/20 h-9 text-xs" />
               </div>
               <div>
                 <Label className="text-[9px] text-white/30 mb-1 block">State</Label>
-                <Input value={property.state} onChange={e => setProperty(p => ({...p, state: e.target.value}))} placeholder="CA" className="bg-black/40 border-white/20 h-9 text-xs" />
+                <Input id="property-state" value={property.state} onChange={e => setProperty(p => ({...p, state: e.target.value}))} placeholder="CA" className="bg-black/40 border-white/20 h-9 text-xs" />
               </div>
             </div>
             <div>
               <Label className="text-[9px] text-white/30 mb-1 block">Price</Label>
-              <Input type="number" value={property.price} onChange={e => setProperty(p => ({...p, price: e.target.value ? parseInt(e.target.value) : ''}))} placeholder="750000" className="bg-black/40 border-white/20 h-9 text-xs" />
+              <Input id="property-price" type="number" value={property.price} onChange={e => setProperty(p => ({...p, price: e.target.value ? parseInt(e.target.value) : ''}))} placeholder="750000" className="bg-black/40 border-white/20 h-9 text-xs" />
             </div>
             <div className="grid grid-cols-3 gap-2">
               <div>
                 <Label className="text-[9px] text-white/30 mb-1 block">Beds</Label>
-                <Input type="number" value={property.bedrooms} onChange={e => setProperty(p => ({...p, bedrooms: e.target.value ? parseInt(e.target.value) : ''}))} placeholder="4" className="bg-black/40 border-white/20 h-9 text-xs" />
+                <Input id="property-bedrooms" type="number" value={property.bedrooms} onChange={e => setProperty(p => ({...p, bedrooms: e.target.value ? parseInt(e.target.value) : ''}))} placeholder="4" className="bg-black/40 border-white/20 h-9 text-xs" />
               </div>
               <div>
                 <Label className="text-[9px] text-white/30 mb-1 block">Baths</Label>
-                <Input type="number" value={property.bathrooms} onChange={e => setProperty(p => ({...p, bathrooms: e.target.value ? parseFloat(e.target.value) : ''}))} placeholder="3" className="bg-black/40 border-white/20 h-9 text-xs" />
+                <Input id="property-bathrooms" type="number" value={property.bathrooms} onChange={e => setProperty(p => ({...p, bathrooms: e.target.value ? parseFloat(e.target.value) : ''}))} placeholder="3" className="bg-black/40 border-white/20 h-9 text-xs" />
               </div>
               <div>
                 <Label className="text-[9px] text-white/30 mb-1 block">Sq Ft</Label>
-                <Input type="number" value={property.squareFeet} onChange={e => setProperty(p => ({...p, squareFeet: e.target.value ? parseInt(e.target.value) : ''}))} placeholder="2500" className="bg-black/40 border-white/20 h-9 text-xs" />
+                <Input id="property-sqft" type="number" value={property.squareFeet} onChange={e => setProperty(p => ({...p, squareFeet: e.target.value ? parseInt(e.target.value) : ''}))} placeholder="2500" className="bg-black/40 border-white/20 h-9 text-xs" />
               </div>
             </div>
           </div>
