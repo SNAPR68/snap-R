@@ -761,20 +761,20 @@ export function UnifiedCreator() {
             </div>
             <div>
               <Label className="text-[9px] text-white/30 mb-1 block">Price</Label>
-              <Input id="property-price" type="number" value={property.price} onChange={e => setProperty(p => ({...p, price: e.target.value ? parseInt(e.target.value) : ''}))} placeholder="750000" className="bg-black/40 border-white/20 h-9 text-xs" />
+              <Input id="property-price" type="number" value={property.price ?? ''} onChange={e => setProperty(p => ({...p, price: e.target.value ? parseInt(e.target.value) : null}))} placeholder="750000" className="bg-black/40 border-white/20 h-9 text-xs" />
             </div>
             <div className="grid grid-cols-3 gap-2">
               <div>
                 <Label className="text-[9px] text-white/30 mb-1 block">Beds</Label>
-                <Input id="property-bedrooms" type="number" value={property.bedrooms} onChange={e => setProperty(p => ({...p, bedrooms: e.target.value ? parseInt(e.target.value) : ''}))} placeholder="4" className="bg-black/40 border-white/20 h-9 text-xs" />
+                <Input id="property-bedrooms" type="number" value={property.bedrooms ?? ''} onChange={e => setProperty(p => ({...p, bedrooms: e.target.value ? parseInt(e.target.value) : null}))} placeholder="4" className="bg-black/40 border-white/20 h-9 text-xs" />
               </div>
               <div>
                 <Label className="text-[9px] text-white/30 mb-1 block">Baths</Label>
-                <Input id="property-bathrooms" type="number" value={property.bathrooms} onChange={e => setProperty(p => ({...p, bathrooms: e.target.value ? parseFloat(e.target.value) : ''}))} placeholder="3" className="bg-black/40 border-white/20 h-9 text-xs" />
+                <Input id="property-bathrooms" type="number" value={property.bathrooms ?? ''} onChange={e => setProperty(p => ({...p, bathrooms: e.target.value ? parseFloat(e.target.value) : null}))} placeholder="3" className="bg-black/40 border-white/20 h-9 text-xs" />
               </div>
               <div>
                 <Label className="text-[9px] text-white/30 mb-1 block">Sq Ft</Label>
-                <Input id="property-sqft" type="number" value={property.squareFeet} onChange={e => setProperty(p => ({...p, squareFeet: e.target.value ? parseInt(e.target.value) : ''}))} placeholder="2500" className="bg-black/40 border-white/20 h-9 text-xs" />
+                <Input id="property-sqft" type="number" value={property.squareFeet ?? ''} onChange={e => setProperty(p => ({...p, squareFeet: e.target.value ? parseInt(e.target.value) : null}))} placeholder="2500" className="bg-black/40 border-white/20 h-9 text-xs" />
               </div>
             </div>
           </div>
