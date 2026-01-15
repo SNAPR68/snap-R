@@ -657,7 +657,7 @@ export function UnifiedCreator() {
           propertyData: { address: property.address, city: property.city, state: property.state, price: property.price, beds: property.bedrooms, baths: property.bathrooms, sqft: property.squareFeet }
         })
       })
-      if (res.ok) alert('Saved to library!')
+      if (res.ok) { alert('Saved to library!'); } else { const err = await res.json(); alert('Save failed: ' + (err.error || 'Unknown error')); console.error('Save failed:', err); }
     } catch (e) { console.error('Save error:', e) }
   }
 
@@ -748,7 +748,7 @@ export function UnifiedCreator() {
         <div className="col-span-6 flex flex-col gap-3 overflow-y-auto pr-2">
           {/* Preview */}
           <div className={`flex items-center justify-center ${isVertical ? 'py-2' : ''}`}>
-            <div className={`${isVertical ? 'h-[280px] aspect-[9/16]' : platform === 'instagram' ? 'w-full max-w-[320px] aspect-square' : 'w-full aspect-video'} max-h-full rounded-2xl overflow-hidden shadow-2xl ring-1 ring-white/20 relative`}>
+            <div className={`${isVertical ? 'h-[280px] aspect-[9/16]' : platform === 'instagram' ? 'w-full max-w-[320px] aspect-square' : 'w-full max-w-[400px] aspect-[1200/630]'} max-h-[350px] rounded-2xl overflow-hidden shadow-2xl ring-1 ring-white/20 relative`}>
               <div className="absolute inset-0 origin-top-left" style={{
                 transform: platform === 'instagram' ? 'scale(0.30)' : isVertical ? 'scale(0.15)' : 'scale(0.27)',
                 width: platform === 'instagram' ? '1080px' : isVertical ? '1080px' : '1200px',
