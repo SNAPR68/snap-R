@@ -22,7 +22,7 @@ export async function POST(request: NextRequest) {
       .single();
 
     await resend.emails.send({
-      from: 'SnapR Orders <onboarding@resend.dev>',
+      from: 'SnapR Orders <notifications@snap-r.com>',
       to: 'sales@snap-r.com',
       subject: `${isUrgent ? '🚨 URGENT: ' : ''}Human Edit Request - ${listing?.title || listingId}`,
       html: `
@@ -41,7 +41,7 @@ export async function POST(request: NextRequest) {
     });
 
     await resend.emails.send({
-      from: 'SnapR <onboarding@resend.dev>',
+      from: 'SnapR <notifications@snap-r.com>',
       to: userEmail || user.email,
       subject: 'Your Human Edit Request Received',
       html: `

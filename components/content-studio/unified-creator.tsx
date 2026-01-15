@@ -383,6 +383,33 @@ export function UnifiedCreator() {
     } catch (e) { console.error(e) } finally { setUploading(null) }
   }
 
+  // Publish carousel directly to platform via API
+  const publishCarousel = async (targetPlatform: 'instagram' | 'facebook' | 'linkedin') => {
+    if (selectedPhotos.length < 2) return
+    setUploading(targetPlatform)
+    setUploadError(null)
+    try {
+      const res = await fetch('/api/social/publish', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          platform: targetPlatform,
+          content: getFullCaption(),
+          imageUrls: selectedPhotos,
+          listingId,
+        }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Failed to publish')
+      setUploadSuccess(targetPlatform)
+      if (data.url) setTimeout(() => window.open(data.url, '_blank'), 1000)
+    } catch (e: any) { 
+      setUploadError(e.message || 'Failed to publish carousel') 
+    } finally { 
+      setUploading(null) 
+    }
+  }
+
   // Copy caption to clipboard
   const copyCaption = async () => {
     const text = getFullCaption()
@@ -647,13 +674,23 @@ export function UnifiedCreator() {
             <Label className="text-[10px] text-white/40 uppercase mb-3 block">Upload To</Label>
             
             {postMode === 'carousel' ? (
-              <Button 
-                onClick={downloadCarousel} 
-                disabled={uploading !== null || selectedPhotos.length < 2} 
-                className="w-full bg-gradient-to-r from-[#D4AF37] to-[#B8960C] text-black font-bold h-12 text-sm mb-3"
-              >
-                {uploading === 'carousel' ? <Loader2 className="w-5 h-5 animate-spin" /> : <><Package className="w-5 h-5 mr-2" />Download Carousel ({selectedPhotos.length} slides)</>}
-              </Button>
+              <>
+                <p className="text-[10px] text-white/60 mb-2">Publish {selectedPhotos.length} photos as carousel:</p>
+                <div className="grid grid-cols-3 gap-2 mb-3">
+                  <Button onClick={() => publishCarousel('instagram')} disabled={uploading !== null || selectedPhotos.length < 2} className="h-11 bg-gradient-to-r from-purple-500 to-pink-500 text-white font-semibold">
+                    {uploading === 'instagram' ? <Loader2 className="w-4 h-4 animate-spin" /> : <><Instagram className="w-4 h-4 mr-1" />Instagram</>}
+                  </Button>
+                  <Button onClick={() => publishCarousel('facebook')} disabled={uploading !== null || selectedPhotos.length < 2} className="h-11 bg-gradient-to-r from-blue-600 to-blue-400 text-white font-semibold">
+                    {uploading === 'facebook' ? <Loader2 className="w-4 h-4 animate-spin" /> : <><Facebook className="w-4 h-4 mr-1" />Facebook</>}
+                  </Button>
+                  <Button onClick={() => publishCarousel('linkedin')} disabled={uploading !== null || selectedPhotos.length < 2} className="h-11 bg-gradient-to-r from-blue-700 to-blue-500 text-white font-semibold">
+                    {uploading === 'linkedin' ? <Loader2 className="w-4 h-4 animate-spin" /> : <><Linkedin className="w-4 h-4 mr-1" />LinkedIn</>}
+                  </Button>
+                </div>
+                <Button onClick={downloadCarousel} disabled={uploading !== null || selectedPhotos.length < 2} variant="outline" className="w-full bg-white/5 border-white/20 text-white/70 h-9 text-xs">
+                  {uploading === 'carousel' ? <Loader2 className="w-4 h-4 animate-spin" /> : <><Download className="w-4 h-4 mr-2" />Download ZIP</>}
+                </Button>
+              </>
             ) : (
               <div className="grid grid-cols-2 gap-2 mb-3">
                 {/* Instagram */}

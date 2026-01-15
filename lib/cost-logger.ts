@@ -157,7 +157,7 @@ async function sendCriticalAlert(source: string, message: string, metadata?: any
     const resend = new Resend(process.env.RESEND_API_KEY);
     
     await resend.emails.send({
-      from: 'SnapR Alerts <onboarding@resend.dev>',
+      from: 'SnapR Alerts <notifications@snap-r.com>',
       to: 'rajesh@snap-r.com',
       subject: `🚨 CRITICAL: ${source}`,
       html: `

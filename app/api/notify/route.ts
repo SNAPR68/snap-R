@@ -23,7 +23,7 @@ export async function POST(request: NextRequest) {
 
     const resend = new Resend(process.env.RESEND_API_KEY);
     await resend.emails.send({
-      from: 'SnapR <onboarding@resend.dev>',
+      from: 'SnapR <notifications@snap-r.com>',
       to: 'support@snap-r.com',
       subject: `iOS Waitlist Signup: ${email}`,
       html: `
@@ -34,7 +34,7 @@ export async function POST(request: NextRequest) {
     });
 
     await resend.emails.send({
-      from: 'SnapR <onboarding@resend.dev>',
+      from: 'SnapR <notifications@snap-r.com>',
       to: email,
       subject: "You're on the SnapR iOS waitlist!",
       html: `

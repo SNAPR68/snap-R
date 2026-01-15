@@ -27,7 +27,7 @@ export async function POST(request: NextRequest) {
     // Send email
     const resend = new Resend(process.env.RESEND_API_KEY);
     await resend.emails.send({
-      from: 'SnapR Contact <onboarding@resend.dev>',
+      from: 'SnapR Contact <notifications@snap-r.com>',
       to: 'support@snap-r.com',
       replyTo: email,
       subject: `New Contact: ${name}`,

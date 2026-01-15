@@ -1,0 +1,97 @@
+# Environment Variable Keys (Redacted) - ACTUAL KEYS IN .env.local
+# This file lists all environment variable keys that are ACTUALLY in your .env.local file
+# Values are redacted for security
+
+# ============================================
+# SUPABASE
+# ============================================
+NEXT_PUBLIC_SUPABASE_URL=***REDACTED***
+NEXT_PUBLIC_SUPABASE_ANON_KEY=***REDACTED***
+NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY=***REDACTED***
+SUPABASE_JWT_SECRET=***REDACTED***
+
+# ============================================
+# CLOUDFLARE
+# ============================================
+CLOUDFLARE_ACCOUNT_ID=***REDACTED***
+CLOUDFLARE_API_TOKEN=***REDACTED***
+CLOUDFLARE_UPLOAD_WORKER_URL=***REDACTED***
+
+# ============================================
+# CLOUDINARY
+# ============================================
+CLOUDINARY_CLOUD_NAME=***REDACTED***
+CLOUDINARY_API_KEY=***REDACTED***
+CLOUDINARY_API_SECRET=***REDACTED***
+
+# ============================================
+# AI PROVIDERS
+# ============================================
+OPENAI_API_KEY=***REDACTED***
+RUNWARE_API_KEY=***REDACTED***
+REPLICATE_API_TOKEN=***REDACTED***
+AUTOENHANCE_API_KEY=***REDACTED***
+
+# ============================================
+# STRIPE (PAYMENTS)
+# ============================================
+STRIPE_SECRET_KEY=***REDACTED***
+NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=***REDACTED***
+STRIPE_STARTER_PRICE_ID=***REDACTED***
+STRIPE_PRO_PRICE_ID=***REDACTED***
+STRIPE_AGENCY_PRICE_ID=***REDACTED***
+
+# ============================================
+# EMAIL (RESEND)
+# ============================================
+RESEND_API_KEY=***REDACTED***
+
+# ============================================
+# SOCIAL MEDIA OAUTH
+# ============================================
+# Facebook/Instagram
+NEXT_PUBLIC_FACEBOOK_APP_ID=***REDACTED***
+FACEBOOK_APP_SECRET=***REDACTED***
+
+# LinkedIn
+NEXT_PUBLIC_LINKEDIN_CLIENT_ID=***REDACTED***
+LINKEDIN_CLIENT_SECRET=***REDACTED***
+
+# ============================================
+# APPLICATION URLS
+# ============================================
+NEXT_PUBLIC_BASE_URL=***REDACTED***
+
+# ============================================
+# OTHER SERVICES
+# ============================================
+CUBICASA_API_KEY=***REDACTED***
+CRON_SECRET=***REDACTED***
+VERCEL_OIDC_TOKEN=***REDACTED***
+
+# ============================================
+# OPTIONAL / PRODUCTION-ONLY (in Vercel env vars)
+# ============================================
+# These are NOT required in .env.local for local development:
+# - UPSTASH_REDIS_REST_URL (for production rate limiting - code uses in-memory fallback locally)
+# - UPSTASH_REDIS_REST_TOKEN (for production rate limiting - code uses in-memory fallback locally)
+# - STRIPE_WEBHOOK_SECRET (for Stripe webhooks - only needed in production)
+# - NEXT_PUBLIC_APP_URL (used as fallback in code - defaults to 'https://snap-r.com')
+# - TIKTOK_CLIENT_KEY (for TikTok OAuth - optional feature)
+# - TIKTOK_CLIENT_SECRET (for TikTok OAuth - optional feature)
+# - CLOUDFLARE_R2_BUCKET (for R2 storage - if using R2)
+# - CLOUDFLARE_R2_PUBLIC_URL (for R2 public URLs - if using R2)
+# - NEXT_PUBLIC_CLOUDFLARE_R2_PUBLIC_URL (for R2 public URLs - if using R2)
+# - CLOUDFLARE_IMAGE_QUEUE (for image processing queue - if using Cloudflare Queues)
+# - NEXT_PUBLIC_SENTRY_DSN (for error tracking - not currently integrated)
+# - SENTRY_DSN (for error tracking - not currently integrated)
+
+# ============================================
+# NOTES
+# ============================================
+# - NEXT_PUBLIC_* variables are exposed to the browser
+# - Variables without NEXT_PUBLIC_ are server-side only
+# - Some variables have fallback defaults in the code
+# - Total keys in your .env.local: 30
+# - Upstash Redis keys are ONLY needed in Vercel (production) - local uses in-memory fallback
+# - Sentry is not currently integrated in the codebase

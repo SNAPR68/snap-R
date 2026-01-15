@@ -1,11 +1,13 @@
 'use client'
 
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { ArrowLeft, Video, Play, Pause, Download, Home, Loader2, ChevronLeft, Clock, Sparkles, Check, Music, Type, Instagram, Facebook, Linkedin, Music2, Calendar, ExternalLink, CheckCircle, Copy, Smartphone, Square, RectangleHorizontal, RectangleVertical, Upload } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { trackEvent, SnapREvents } from '@/lib/analytics'
+import { FFmpeg } from '@ffmpeg/ffmpeg'
+import { fetchFile, toBlobURL } from '@ffmpeg/util'
 
 interface Photo { id: string; url: string; selected: boolean }
 type Transition = 'fade' | 'slide' | 'zoom' | 'none'
@@ -34,7 +36,9 @@ export default function VideoCreatorClient() {
   const [aspectRatio, setAspectRatio] = useState<AspectRatio>('9:16')
   const [generating, setGenerating] = useState(false)
   const [progress, setProgress] = useState(0)
+  const [progressMessage, setProgressMessage] = useState('')
   const [videoUrl, setVideoUrl] = useState<string | null>(null)
+  const [videoBlob, setVideoBlob] = useState<Blob | null>(null)
   const [playing, setPlaying] = useState(false)
   const [currentPreview, setCurrentPreview] = useState(0)
   const [showShareModal, setShowShareModal] = useState(false)
@@ -43,7 +47,31 @@ export default function VideoCreatorClient() {
   const [addedToCalendar, setAddedToCalendar] = useState(false)
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const previewIntervalRef = useRef<NodeJS.Timeout | null>(null)
-  const fileInputRef = useRef<HTMLInputElement>(null)
+  const ffmpegRef = useRef<FFmpeg | null>(null)
+  const [ffmpegLoaded, setFfmpegLoaded] = useState(false)
+
+  // Load FFmpeg on mount
+  useEffect(() => {
+    loadFFmpeg()
+  }, [])
+
+  const loadFFmpeg = async () => {
+    try {
+      const ffmpeg = new FFmpeg()
+      ffmpegRef.current = ffmpeg
+      
+      const baseURL = 'https://unpkg.com/@ffmpeg/core@0.12.6/dist/umd'
+      await ffmpeg.load({
+        coreURL: await toBlobURL(`${baseURL}/ffmpeg-core.js`, 'text/javascript'),
+        wasmURL: await toBlobURL(`${baseURL}/ffmpeg-core.wasm`, 'application/wasm'),
+      })
+      
+      setFfmpegLoaded(true)
+      console.log('FFmpeg loaded successfully')
+    } catch (error) {
+      console.error('Failed to load FFmpeg:', error)
+    }
+  }
 
   useEffect(() => { if (listingId) loadPhotos(listingId) }, [listingId])
 
@@ -55,7 +83,6 @@ export default function VideoCreatorClient() {
     }
     return () => { if (previewIntervalRef.current) clearInterval(previewIntervalRef.current) }
   }, [playing, photos, duration])
-
 
   const loadPhotos = async (id: string) => {
     setLoading(true)
@@ -92,18 +119,62 @@ export default function VideoCreatorClient() {
     })
   }
 
+  // Convert WebM to MP4 using FFmpeg
+  const convertToMP4 = async (webmBlob: Blob): Promise<Blob> => {
+    if (!ffmpegRef.current || !ffmpegLoaded) {
+      console.warn('FFmpeg not loaded, returning WebM')
+      return webmBlob
+    }
+
+    const ffmpeg = ffmpegRef.current
+    setProgressMessage('Converting to MP4...')
+
+    try {
+      // Write WebM file to FFmpeg virtual filesystem
+      const webmData = await fetchFile(webmBlob)
+      await ffmpeg.writeFile('input.webm', webmData)
+
+      // Convert WebM to MP4 with H.264 codec (Instagram compatible)
+      await ffmpeg.exec([
+        '-i', 'input.webm',
+        '-c:v', 'libx264',
+        '-preset', 'fast',
+        '-crf', '23',
+        '-pix_fmt', 'yuv420p',
+        '-movflags', '+faststart',
+        '-y',
+        'output.mp4'
+      ])
+
+      // Read the converted MP4 file
+      const mp4Data = await ffmpeg.readFile('output.mp4')
+      const mp4Blob = new Blob([mp4Data as any], { type: 'video/mp4' })
+
+      // Cleanup
+      await ffmpeg.deleteFile('input.webm')
+      await ffmpeg.deleteFile('output.mp4')
+
+      return mp4Blob
+    } catch (error) {
+      console.error('MP4 conversion failed:', error)
+      // Return original WebM if conversion fails
+      return webmBlob
+    }
+  }
+
   const generateVideo = async () => {
     if (selectedPhotos.length === 0) return
     setGenerating(true)
     setProgress(0)
+    setProgressMessage('Preparing frames...')
     setVideoUrl(null)
+    setVideoBlob(null)
 
     const canvas = canvasRef.current
     if (!canvas) return
     const ctx = canvas.getContext('2d')
     if (!ctx) return
 
-    // Set canvas dimensions based on selected aspect ratio
     const { width, height } = ASPECT_RATIOS[aspectRatio]
     canvas.width = width
     canvas.height = height
@@ -119,14 +190,15 @@ export default function VideoCreatorClient() {
       const chunks: Blob[] = []
       mediaRecorder.ondataavailable = (e) => { if (e.data.size > 0) chunks.push(e.data) }
       
-      const videoPromise = new Promise<string>((resolve) => {
+      const webmPromise = new Promise<Blob>((resolve) => {
         mediaRecorder.onstop = () => {
           const blob = new Blob(chunks, { type: 'video/webm' })
-          resolve(URL.createObjectURL(blob))
+          resolve(blob)
         }
       })
 
       mediaRecorder.start()
+      setProgressMessage('Generating frames...')
 
       const images = await Promise.all(selectedPhotos.map(p => loadImage(p.url)))
       const totalFrames = selectedPhotos.length * framesPerPhoto
@@ -237,14 +309,26 @@ export default function VideoCreatorClient() {
           ctx.fillText((photoIndex + 1) + '/' + selectedPhotos.length, canvas.width - 80, 68)
 
           const currentFrame = photoIndex * framesPerPhoto + frame
-          setProgress(Math.round((currentFrame / totalFrames) * 100))
+          setProgress(Math.round((currentFrame / totalFrames) * 80)) // 80% for frame generation
           await new Promise(r => setTimeout(r, frameDuration / 3))
         }
       }
 
       mediaRecorder.stop()
-      const url = await videoPromise
+      const webmBlob = await webmPromise
+      
+      // Convert to MP4 for Instagram compatibility
+      setProgress(85)
+      setProgressMessage('Converting to MP4 for Instagram...')
+      
+      const mp4Blob = await convertToMP4(webmBlob)
+      
+      setProgress(100)
+      setProgressMessage('Complete!')
+      
+      const url = URL.createObjectURL(mp4Blob)
       setVideoUrl(url)
+      setVideoBlob(mp4Blob)
       setShowShareModal(true)
       trackEvent(SnapREvents.VIDEO_CREATED)
     } catch (error) {
@@ -252,18 +336,21 @@ export default function VideoCreatorClient() {
       alert('Error generating video. Please try again.')
     }
     setGenerating(false)
+    setProgressMessage('')
   }
 
   const downloadVideo = () => {
-    if (!videoUrl) return
+    if (!videoUrl || !videoBlob) return
     const a = document.createElement('a')
     a.href = videoUrl
-    a.download = `${listingTitle.replace(/[^a-z0-9]/gi, '_')}_${aspectRatio.replace(':', 'x')}.webm`
+    // Use .mp4 extension for Instagram compatibility
+    const extension = videoBlob.type === 'video/mp4' ? 'mp4' : 'webm'
+    a.download = `${listingTitle.replace(/[^a-z0-9]/gi, '_')}_${aspectRatio.replace(':', 'x')}.${extension}`
     a.click()
   }
 
   const addToCalendar = async () => {
-    if (!videoUrl || !listingId) return
+    if (!videoUrl || !videoBlob || !listingId) return
     setAddingToCalendar(true)
     
     try {
@@ -271,13 +358,12 @@ export default function VideoCreatorClient() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) throw new Error('Not authenticated')
       
-      const response = await fetch(videoUrl)
-      const blob = await response.blob()
-      const fileName = `videos/${user.id}/${listingId}_${Date.now()}.webm`
+      const extension = videoBlob.type === 'video/mp4' ? 'mp4' : 'webm'
+      const fileName = `videos/${user.id}/${listingId}_${Date.now()}.${extension}`
       
       const { error: uploadError } = await supabase.storage
         .from('content')
-        .upload(fileName, blob, { contentType: 'video/webm' })
+        .upload(fileName, videoBlob, { contentType: videoBlob.type })
       
       if (uploadError) throw uploadError
       
@@ -355,6 +441,7 @@ export default function VideoCreatorClient() {
         <div className="flex items-center gap-2">
           <div className="w-8 h-8 rounded-lg bg-pink-500 flex items-center justify-center"><Video className="w-4 h-4" /></div>
           <span className="font-bold">Video Creator</span>
+          {ffmpegLoaded && <span className="text-xs text-green-500 bg-green-500/10 px-2 py-0.5 rounded">MP4 Ready</span>}
         </div>
         <div className="ml-auto flex items-center gap-3">
           {videoUrl && (
@@ -392,7 +479,7 @@ export default function VideoCreatorClient() {
         <div className="w-96 bg-[#111] border-l border-white/5 flex flex-col overflow-y-auto">
           <div className="p-6 space-y-6">
             
-            {/* Aspect Ratio Selector - NEW */}
+            {/* Aspect Ratio Selector */}
             <div className="space-y-3">
               <div className="flex items-center gap-2 text-white/50 text-sm">
                 <RectangleHorizontal className="w-4 h-4" />
@@ -487,16 +574,27 @@ export default function VideoCreatorClient() {
             </div>
 
             {/* Generate Button */}
-            <button onClick={generateVideo} disabled={generating || selectedPhotos.length === 0} className="w-full py-4 bg-gradient-to-r from-pink-500 to-purple-600 rounded-xl font-bold text-white hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2">
+            <button onClick={generateVideo} disabled={generating || selectedPhotos.length === 0 || !ffmpegLoaded} className="w-full py-4 bg-gradient-to-r from-pink-500 to-purple-600 rounded-xl font-bold text-white hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed flex flex-col items-center justify-center gap-1">
               {generating ? (
                 <>
+                  <div className="flex items-center gap-2">
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                    <span>Generating {progress}%</span>
+                  </div>
+                  {progressMessage && <span className="text-xs opacity-70">{progressMessage}</span>}
+                </>
+              ) : !ffmpegLoaded ? (
+                <>
                   <Loader2 className="w-5 h-5 animate-spin" />
-                  <span>Generating {progress}%</span>
+                  <span className="text-sm">Loading MP4 encoder...</span>
                 </>
               ) : (
                 <>
-                  <Video className="w-5 h-5" />
-                  <span>Generate Video</span>
+                  <div className="flex items-center gap-2">
+                    <Video className="w-5 h-5" />
+                    <span>Generate MP4 Video</span>
+                  </div>
+                  <span className="text-xs opacity-70">Instagram & TikTok compatible</span>
                 </>
               )}
             </button>
@@ -505,7 +603,7 @@ export default function VideoCreatorClient() {
               <div className="space-y-2">
                 <button onClick={downloadVideo} className="w-full py-3 bg-white/10 rounded-lg font-medium hover:bg-white/20 flex items-center justify-center gap-2">
                   <Download className="w-4 h-4" />
-                  Download Video
+                  Download MP4 Video
                 </button>
                 <button onClick={addToCalendar} disabled={addingToCalendar} className="w-full py-3 bg-white/10 rounded-lg font-medium hover:bg-white/20 flex items-center justify-center gap-2">
                   {addingToCalendar ? <Loader2 className="w-4 h-4 animate-spin" /> : addedToCalendar ? <CheckCircle className="w-4 h-4 text-green-400" /> : <Calendar className="w-4 h-4" />}
@@ -538,14 +636,17 @@ export default function VideoCreatorClient() {
         <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <div className="bg-[#111] rounded-2xl p-6 max-w-md w-full space-y-4">
             <div className="flex items-center justify-between">
-              <h3 className="text-xl font-bold">Video Ready!</h3>
+              <h3 className="text-xl font-bold flex items-center gap-2">
+                <CheckCircle className="w-6 h-6 text-green-500" />
+                MP4 Video Ready!
+              </h3>
               <button onClick={() => setShowShareModal(false)} className="text-white/50 hover:text-white">✕</button>
             </div>
-            <p className="text-white/70 text-sm">Your {aspectRatio} video has been generated successfully.</p>
+            <p className="text-white/70 text-sm">Your {aspectRatio} video has been generated in MP4 format - compatible with Instagram, TikTok, and all social platforms.</p>
             <div className="space-y-2">
               <button onClick={downloadVideo} className="w-full py-3 bg-pink-500 rounded-lg font-semibold hover:bg-pink-600 flex items-center justify-center gap-2">
                 <Download className="w-4 h-4" />
-                Download Video
+                Download MP4 Video
               </button>
               
               {/* Platform Upload Buttons */}

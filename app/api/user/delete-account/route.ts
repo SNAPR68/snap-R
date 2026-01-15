@@ -70,7 +70,7 @@ export async function POST() {
       const resend = new Resend(process.env.RESEND_API_KEY);
       
       await resend.emails.send({
-        from: 'SnapR <onboarding@resend.dev>',
+        from: 'SnapR <notifications@snap-r.com>',
         to: user.email!,
         subject: 'Your SnapR Account Has Been Deleted',
         html: `

@@ -27,7 +27,7 @@ export async function POST(request: NextRequest) {
     if (userEmail && process.env.RESEND_API_KEY) {
       const resend = new Resend(process.env.RESEND_API_KEY);
       await resend.emails.send({
-        from: 'SnapR <onboarding@resend.dev>',
+        from: 'SnapR <notifications@snap-r.com>',
         to: userEmail,
         subject: '✅ Your Human Edit is Complete!',
         html: `
