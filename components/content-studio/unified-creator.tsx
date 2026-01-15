@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useSearchParams } from 'next/navigation'
 import html2canvas from 'html2canvas'
 import JSZip from 'jszip'
-import { ArrowLeft, Download, Loader2, Check, Sparkles, Instagram, Facebook, Linkedin, Video, Image, Copy, Hash, ClipboardCopy, Package, MessageCircle, Images, ImageIcon, Share2, CheckCircle, Upload, ExternalLink, AlertCircle } from 'lucide-react'
+import { ArrowLeft, Download, Loader2, Check, Sparkles, Instagram, Facebook, Linkedin, Video, Image, Copy, Hash, ClipboardCopy, Package, MessageCircle, Images, ImageIcon, Share2, CheckCircle, Upload, ExternalLink, AlertCircle , FolderOpen } from "lucide-react"
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -629,6 +629,38 @@ export function UnifiedCreator() {
 
   if (loading) return <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-900 flex items-center justify-center"><Loader2 className="w-8 h-8 animate-spin text-[#D4AF37]" /></div>
 
+
+  // Save post to library
+  const saveToLibrary = async () => {
+    try {
+      const blob = await generateImageBlob()
+      let imageUrl = ''
+      if (blob) {
+        const reader = new FileReader()
+        imageUrl = await new Promise(resolve => {
+          reader.onloadend = () => resolve(reader.result as string)
+          reader.readAsDataURL(blob)
+        })
+      }
+      const res = await fetch('/api/content-library', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: headline + ' - ' + (listingTitle || 'Untitled'),
+          category: headline.toLowerCase().replace(/ /g, "-"),
+          platform,
+          postType: postMode,
+          templateId: templates[platform]?.id || "default",
+          imageUrl,
+          caption: getFullCaption(),
+          hashtags: hashtags,
+          propertyData: { address: property.address, city: property.city, state: property.state, price: property.price, beds: property.bedrooms, baths: property.bathrooms, sqft: property.squareFeet }
+        })
+      })
+      if (res.ok) alert('Saved to library!')
+    } catch (e) { console.error('Save error:', e) }
+  }
+
   return (
     <div className="h-screen bg-gradient-to-br from-gray-900 via-black to-gray-900 text-white flex flex-col overflow-hidden">
       {/* Hidden download */}
@@ -780,6 +812,9 @@ export function UnifiedCreator() {
                 </div>
                 <Button onClick={downloadCarousel} disabled={uploading !== null || selectedPhotos.length < 2} variant="outline" className="w-full bg-white/5 border-white/20 text-white/70 h-9 text-xs">
                   {uploading === 'carousel' ? <Loader2 className="w-4 h-4 animate-spin" /> : <><Download className="w-4 h-4 mr-2" />Download ZIP</>}
+                </Button>
+                <Button onClick={saveToLibrary} disabled={uploading !== null || selectedPhotos.length < 2} variant="outline" className="w-full bg-white/5 border-white/20 text-white/70 h-9 text-xs mt-2">
+                  <FolderOpen className="w-4 h-4 mr-2" />Save to Library
                 </Button>
               </>
             ) : (
