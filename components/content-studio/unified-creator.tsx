@@ -103,66 +103,13 @@ export function UnifiedCreator() {
   const [brand, setBrand] = useState({ business_name: '', logo_url: '', primary_color: '#D4AF37', secondary_color: '#1A1A1A', phone: '', tagline: '' })
 
   useEffect(() => {
-    async function load() {
-      try {
-        const [brandRes, listingRes] = await Promise.all([
-          fetch('/api/brand').then(r => r.ok ? r.json() : null),
-          listingId ? fetch(`/api/listings/${listingId}`).then(r => r.ok ? r.json() : null) : Promise.resolve(null)
-        ])
-        if (brandRes) setBrand(brandRes)
-        if (listingRes) {
-          setListingData(listingRes)
-          setListingTitle(listingRes.title || listingRes.address || '')
-          setProperty({ 
-            address: listingRes.address || '', 
-            city: listingRes.city || '', 
-            state: listingRes.state || '', 
-            price: listingRes.price || null, 
-            bedrooms: listingRes.bedrooms || null, 
-            bathrooms: listingRes.bathrooms || null, 
-            squareFeet: listingRes.square_feet || null,
-            propertyType: listingRes.property_type || 'House'
-          })
-          if (listingRes.photos?.length) {
-            const urls = listingRes.photos.map((p: any) => p.signedProcessedUrl || p.enhanced_url || p.url).filter(Boolean)
-            
-            // NEW: If we have a renovated image, add it first
-            if (renovatedImageUrl) {
-              const decodedRenovatedUrl = decodeURIComponent(renovatedImageUrl)
-              urls.unshift(decodedRenovatedUrl)
-              setPhotoUrl(decodedRenovatedUrl) // Set as default selected
-            } else if (urls[0]) {
-              setPhotoUrl(urls[0])
-            }
-            
-            setPhotos(urls)
-          } else if (renovatedImageUrl) {
-            // NEW: No listing photos but have renovated image
-            const decodedRenovatedUrl = decodeURIComponent(renovatedImageUrl)
-            setPhotos([decodedRenovatedUrl])
-            setPhotoUrl(decodedRenovatedUrl)
-          }
-        } else if (renovatedImageUrl) {
-          // NEW: No listing but have renovated image
-          const decodedRenovatedUrl = decodeURIComponent(renovatedImageUrl)
-          setPhotos([decodedRenovatedUrl])
-          setPhotoUrl(decodedRenovatedUrl)
-        }
-      } catch (e) { console.error(e) }
-      setLoading(false)
-    }
-    load()
-  }, [listingId, renovatedImageUrl])
-
-  useEffect(() => {
     const loadFFmpeg = async () => {
       try {
         const ffmpeg = new FFmpeg()
         ffmpegRef.current = ffmpeg
-        const baseURL = 'https://unpkg.com/@ffmpeg/core@0.12.6/dist/umd'
         await ffmpeg.load({
-          coreURL: await toBlobURL(`${baseURL}/ffmpeg-core.js`, 'text/javascript'),
-          wasmURL: await toBlobURL(`${baseURL}/ffmpeg-core.wasm`, 'application/wasm'),
+          coreURL: 'https://unpkg.com/@ffmpeg/core@0.12.6/dist/umd/ffmpeg-core.js',
+          wasmURL: 'https://unpkg.com/@ffmpeg/core@0.12.6/dist/umd/ffmpeg-core.wasm',
         })
         setFfmpegLoaded(true)
       } catch (e) { console.error('FFmpeg load error:', e) }
