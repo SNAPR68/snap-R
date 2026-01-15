@@ -54,7 +54,7 @@ const nextConfig = {
               "font-src 'self' https://fonts.gstatic.com data:",
               "img-src 'self' data: blob: https: http:",
               "media-src 'self' blob: https://*.supabase.co https://*.supabase.in",
-              "connect-src 'self' blob: https://*.supabase.co https://*.supabase.in wss://*.supabase.co https://api.stripe.com https://api.openai.com https://api.replicate.com https://api.runware.ai https://*.cloudinary.com https://*.r2.cloudflarestorage.com https://graph.facebook.com https://www.googletagmanager.com https://*.contentsquare.net",
+              "connect-src 'self' blob: https://*.supabase.co https://*.supabase.in wss://*.supabase.co https://api.stripe.com https://api.openai.com https://api.replicate.com https://api.runware.ai https://*.cloudinary.com https://*.r2.cloudflarestorage.com https://graph.facebook.com https://www.googletagmanager.com https://*.contentsquare.net https://unpkg.com",
               "frame-src 'self' https://js.stripe.com https://hooks.stripe.com",
               "worker-src 'self' blob:",
               "object-src 'none'",

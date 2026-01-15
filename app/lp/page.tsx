@@ -180,8 +180,8 @@ export default function LandingPage() {
           {/* Before/After Demo */}
           <div className="max-w-3xl mx-auto rounded-2xl overflow-hidden shadow-2xl shadow-[#D4A017]/10 border border-white/10">
             <BeforeAfterSlider
-              beforeImage="https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=1200"
-              afterImage="https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=1200"
+              beforeUrl="https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=1200"
+              afterUrl="https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=1200"
             />
           </div>
         </div>

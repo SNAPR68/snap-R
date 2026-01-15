@@ -49,29 +49,23 @@ export default function VideoCreatorClient() {
   const previewIntervalRef = useRef<NodeJS.Timeout | null>(null)
   const ffmpegRef = useRef<FFmpeg | null>(null)
   const [ffmpegLoaded, setFfmpegLoaded] = useState(false)
+  const [videoProgress, setVideoProgress] = useState(0)
 
-  // Load FFmpeg on mount
   useEffect(() => {
+    const loadFFmpeg = async () => {
+      try {
+        const ffmpeg = new FFmpeg()
+        ffmpegRef.current = ffmpeg
+        const baseURL = 'https://unpkg.com/@ffmpeg/core@0.12.6/dist/umd'
+        await ffmpeg.load({
+          coreURL: await toBlobURL(`${baseURL}/ffmpeg-core.js`, 'text/javascript'),
+          wasmURL: await toBlobURL(`${baseURL}/ffmpeg-core.wasm`, 'application/wasm'),
+        })
+        setFfmpegLoaded(true)
+      } catch (e) { console.error('FFmpeg load error:', e) }
+    }
     loadFFmpeg()
   }, [])
-
-  const loadFFmpeg = async () => {
-    try {
-      const ffmpeg = new FFmpeg()
-      ffmpegRef.current = ffmpeg
-      
-      const baseURL = 'https://unpkg.com/@ffmpeg/core@0.12.6/dist/umd'
-      await ffmpeg.load({
-        coreURL: await toBlobURL(`${baseURL}/ffmpeg-core.js`, 'text/javascript'),
-        wasmURL: await toBlobURL(`${baseURL}/ffmpeg-core.wasm`, 'application/wasm'),
-      })
-      
-      setFfmpegLoaded(true)
-      console.log('FFmpeg loaded successfully')
-    } catch (error) {
-      console.error('Failed to load FFmpeg:', error)
-    }
-  }
 
   useEffect(() => { if (listingId) loadPhotos(listingId) }, [listingId])
 
@@ -347,6 +341,129 @@ export default function VideoCreatorClient() {
     const extension = videoBlob.type === 'video/mp4' ? 'mp4' : 'webm'
     a.download = `${listingTitle.replace(/[^a-z0-9]/gi, '_')}_${aspectRatio.replace(':', 'x')}.${extension}`
     a.click()
+  }
+
+  // Generate video from carousel photos and open platform
+  const generateCarouselVideo = async (targetPlatform: 'instagram' | 'facebook' | 'linkedin') => {
+    if (selectedPhotos.length < 2) return
+    if (!ffmpegLoaded || !ffmpegRef.current) {
+      setUploadError('Video encoder still loading, please wait...')
+      return
+    }
+    
+    setUploading(targetPlatform)
+    setUploadError(null)
+    setVideoProgress(0)
+    
+    try {
+      const ffmpeg = ffmpegRef.current
+      const canvas = document.createElement('canvas')
+      const ctx = canvas.getContext('2d')!
+      canvas.width = 1080
+      canvas.height = 1080
+      
+      // Load all images
+      const images: HTMLImageElement[] = []
+      for (const photo of selectedPhotos) {
+        const img = new Image()
+        img.crossOrigin = 'anonymous'
+        await new Promise((resolve, reject) => {
+          img.onload = resolve
+          img.onerror = reject
+          img.src = photo.url
+        })
+        images.push(img)
+      }
+      
+      // Generate frames (3 seconds per image at 30fps = 90 frames per image)
+      const fps = 30
+      const secondsPerImage = 3
+      const framesPerImage = fps * secondsPerImage
+      const totalFrames = images.length * framesPerImage
+      
+      for (let i = 0; i < images.length; i++) {
+        const img = images[i]
+        
+        // Draw image (cover fit)
+        const scale = Math.max(canvas.width / img.width, canvas.height / img.height)
+        const x = (canvas.width - img.width * scale) / 2
+        const y = (canvas.height - img.height * scale) / 2
+        
+        for (let f = 0; f < framesPerImage; f++) {
+          ctx.fillStyle = '#000'
+          ctx.fillRect(0, 0, canvas.width, canvas.height)
+          ctx.drawImage(img, x, y, img.width * scale, img.height * scale)
+          
+          // Add text overlay
+          ctx.fillStyle = 'rgba(0,0,0,0.5)'
+          ctx.fillRect(0, canvas.height - 80, canvas.width, 80)
+          ctx.fillStyle = '#fff'
+          ctx.font = 'bold 28px Arial'
+          ctx.textAlign = 'center'
+          ctx.fillText(listingTitle || 'Property Listing', canvas.width / 2, canvas.height - 35)
+          
+          const frameNum = i * framesPerImage + f
+          const blob = await new Promise<Blob>((r) => canvas.toBlob(b => r(b!), 'image/jpeg', 0.9))
+          await ffmpeg.writeFile(`frame${String(frameNum).padStart(5, '0')}.jpg`, await fetchFile(blob))
+          
+          setVideoProgress(Math.round((frameNum / totalFrames) * 80))
+        }
+      }
+      
+      setVideoProgress(85)
+      
+      // Generate video
+      await ffmpeg.exec([
+        '-framerate', '30',
+        '-i', 'frame%05d.jpg',
+        '-c:v', 'libx264',
+        '-pix_fmt', 'yuv420p',
+        '-preset', 'fast',
+        '-y', 'output.mp4'
+      ])
+      
+      setVideoProgress(95)
+      
+      const mp4Data = await ffmpeg.readFile('output.mp4')
+      const mp4Blob = new Blob([mp4Data as any], { type: 'video/mp4' })
+      
+      // Download
+      const link = document.createElement('a')
+      link.href = URL.createObjectURL(mp4Blob)
+      link.download = `${targetPlatform}-reel-${selectedPhotos.length}-photos.mp4`
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      URL.revokeObjectURL(link.href)
+      
+      // Copy caption
+      const fullCaption = listingTitle || ''
+      if (fullCaption) await navigator.clipboard.writeText(fullCaption)
+      
+      // Open platform
+      const urls: Record<string, string> = {
+        instagram: 'https://www.instagram.com/',
+        facebook: 'https://www.facebook.com/',
+        linkedin: 'https://www.linkedin.com/feed/',
+      }
+      setTimeout(() => window.open(urls[targetPlatform], '_blank'), 500)
+      
+      setVideoProgress(100)
+      setUploadSuccess(targetPlatform)
+      
+      // Cleanup
+      for (let i = 0; i < totalFrames; i++) {
+        try { await ffmpeg.deleteFile(`frame${String(i).padStart(5, '0')}.jpg`) } catch {}
+      }
+      try { await ffmpeg.deleteFile('output.mp4') } catch {}
+      
+    } catch (e: any) {
+      console.error('Video generation error:', e)
+      setUploadError('Failed to generate video: ' + e.message)
+    } finally {
+      setUploading(null)
+      setVideoProgress(0)
+    }
   }
 
   const addToCalendar = async () => {
