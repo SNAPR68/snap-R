@@ -540,7 +540,7 @@ export function StudioClient({ listingId, userRole, showMlsFeatures = false, cre
                       <div key={tool.id}>
                         <button onClick={() => handleToolSelect(tool.id)} disabled={processing || !selectedPhoto} className={`w-full flex items-center justify-between px-2 py-2 rounded-lg text-xs transition-all ${selectedTool === tool.id ? 'bg-gradient-to-r from-[#D4A017] to-[#B8860B] text-black' : 'hover:bg-white/10 text-white/80'} disabled:opacity-50`}>
                           <span className="flex items-center gap-2"><tool.icon className="w-3 h-3" /><span className="truncate">{tool.name}</span></span>
-                          <span className="flex items-center gap-1"><span className="text-[10px] opacity-60">{tool.credits}cr</span>{tool.hasPresets && selectedTool === tool.id && <ChevronDown className="w-3 h-3" />}</span>
+                          <span className="flex items-center gap-1">{tool.hasPresets && selectedTool === tool.id && <ChevronDown className="w-3 h-3" />}</span>
                         </button>
                         {selectedTool === tool.id && tool.hasPresets && currentPresets && (
                           <div className="mt-2 mb-2 p-2 bg-black/30 rounded-lg">

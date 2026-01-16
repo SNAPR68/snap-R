@@ -17,7 +17,7 @@ export async function POST(req: NextRequest) {
     }
 
     const serviceSupabase = getServiceSupabase();
-    const { platform, content, imageUrls, listingId, scheduleFor } = await req.json();
+    const { platform, content, imageUrls, listingId, scheduleFor, postType, category, templateId } = await req.json();
 
     const { data: connection, error: connError } = await serviceSupabase
       .from('social_connections')
@@ -50,6 +50,23 @@ export async function POST(req: NextRequest) {
 
       if (error) throw error;
 
+      // Also save to content_library for scheduled posts
+      try {
+        await serviceSupabase.from('content_library').insert({
+          user_id: user.id,
+          name: `Scheduled ${platform} post`,
+          category: category || 'general',
+          platform,
+          post_type: postType || (imageUrls?.length > 1 ? 'carousel' : 'image'),
+          template_id: templateId || null,
+          image_url: imageUrls?.[0] || null,
+          caption: content,
+          property_data: { listing_id: listingId, status: 'scheduled', scheduled_for: scheduleFor },
+        });
+      } catch (libErr) {
+        console.error('Failed to save scheduled post to library:', libErr);
+      }
+
       return NextResponse.json({ 
         success: true, 
         scheduled: true, 
@@ -74,6 +91,7 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: 'Unsupported platform' }, { status: 400 });
     }
 
+    // Save to scheduled_posts (for analytics/history)
     await serviceSupabase.from('scheduled_posts').insert({
       user_id: user.id,
       listing_id: listingId,
@@ -85,6 +103,23 @@ export async function POST(req: NextRequest) {
       published_at: new Date().toISOString(),
       platform_post_id: result.postId,
     });
+
+    // ✅ FIX: Save to content_library (using only existing columns)
+    try {
+      await serviceSupabase.from('content_library').insert({
+        user_id: user.id,
+        name: `${platform.charAt(0).toUpperCase() + platform.slice(1)} post - ${new Date().toLocaleDateString()}`,
+        category: category || 'general',
+        platform,
+        post_type: postType || (imageUrls?.length > 1 ? 'carousel' : 'image'),
+        template_id: templateId || null,
+        image_url: imageUrls?.[0] || null,
+        caption: content,
+        property_data: { listing_id: listingId, post_url: result.url, platform_post_id: result.postId, published_at: new Date().toISOString() },
+      });
+    } catch (libErr) {
+      console.error('Failed to save to content library:', libErr);
+    }
 
     return NextResponse.json({ success: true, postId: result.postId, url: result.url });
   } catch (error: any) {
@@ -200,7 +235,6 @@ async function publishToLinkedIn(connection: any, content: string, imageUrls: st
   const accessToken = connection.access_token;
   let personId = connection.platform_user_id;
 
-  // If personId is null, fetch it from LinkedIn
   if (!personId) {
     const profileRes = await fetch('https://api.linkedin.com/v2/userinfo', {
       headers: { 'Authorization': `Bearer ${accessToken}` }
@@ -215,7 +249,6 @@ async function publishToLinkedIn(connection: any, content: string, imageUrls: st
 
   console.log('[LinkedIn] Publishing for person:', personId);
 
-  // Use ugcPosts API (still works and more reliable)
   const postBody = {
     author: `urn:li:person:${personId}`,
     lifecycleState: 'PUBLISHED',

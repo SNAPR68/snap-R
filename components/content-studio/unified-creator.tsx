@@ -83,7 +83,7 @@ export function UnifiedCreator() {
   const [photoUrl, setPhotoUrl] = useState(DEFAULT_PHOTO)
   const [photos, setPhotos] = useState<string[]>([])
   const [selectedPhotos, setSelectedPhotos] = useState<string[]>([])
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(false)
   const [uploading, setUploading] = useState<string | null>(null)
   const [listingTitle, setListingTitle] = useState('')
   const [tone, setTone] = useState<Tone>('professional')
@@ -114,8 +114,60 @@ export function UnifiedCreator() {
         setFfmpegLoaded(true)
       } catch (e) { console.error('FFmpeg load error:', e) }
     }
-    loadFFmpeg()
+    //loadFFmpeg()
   }, [])
+
+  // Load listing data and photos
+  useEffect(() => {
+    const loadListingData = async () => {
+      if (!listingId) return
+      
+      const { createClient } = await import('@/lib/supabase/client')
+      const supabase = createClient()
+      
+      const { data: listing } = await supabase
+        .from('listings')
+        .select('*, photos!photos_listing_id_fkey(id, raw_url, processed_url, status, display_order)')
+        .eq('id', listingId)
+        .single()
+      
+      if (listing) {
+        setListingTitle(listing.title || listing.address || 'Property')
+        setListingData({ listing })
+        setProperty({
+          address: listing.address || '',
+          city: listing.city || '',
+          state: listing.state || '',
+          price: listing.price || null,
+          bedrooms: listing.bedrooms || null,
+          bathrooms: listing.bathrooms || null,
+          squareFeet: listing.square_feet || null,
+          propertyType: listing.property_type || 'House'
+        })
+        
+        // Load photos
+        const sortedPhotos = (listing.photos || [])
+          .sort((a: any, b: any) => (a.display_order || 0) - (b.display_order || 0))
+        
+        const photoUrls = await Promise.all(sortedPhotos.map(async (photo: any) => {
+          const path = photo.processed_url || photo.raw_url
+          if (!path) return null
+          if (path.startsWith('http')) return path
+          const { data } = await supabase.storage.from('raw-images').createSignedUrl(path, 3600)
+          return data?.signedUrl || null
+        }))
+        
+        setPhotos(photoUrls.filter(Boolean) as string[])
+        
+        // Auto-select first photo
+        if (photoUrls.length > 0 && photoUrls[0]) {
+          setPhotoUrl(photoUrls[0] as string)
+        }
+      }
+    }
+    
+    loadListingData()
+  }, [listingId])
 
   const selectPhoto = (url: string) => {
     if (postMode === 'carousel') {
@@ -212,6 +264,7 @@ export function UnifiedCreator() {
         setUploadSuccess(targetPlatform)
       } else {
         // Desktop fallback: Download image, copy caption, open platform
+        console.log('Desktop path - downloading image...')
         
         // 1. Download the image
         const link = document.createElement('a')
@@ -232,6 +285,24 @@ export function UnifiedCreator() {
         window.open(platformUrl, '_blank')
 
         setUploadSuccess(targetPlatform)
+        
+        // Save to content library - use the original photo URL
+        try {
+          await fetch('/api/content-library', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              name: `${targetPlatform.charAt(0).toUpperCase() + targetPlatform.slice(1)} post - ${new Date().toLocaleDateString()}`,
+              category: headline?.toLowerCase().replace(/\s+/g, '-') || 'general',
+              platform: targetPlatform,
+              post_type: 'image',
+              imageUrl: photoUrl,
+              caption: getFullCaption(),
+            }),
+          })
+        } catch (libErr) {
+          console.error('Failed to save to library:', libErr)
+        }
       }
     } catch (e: any) {
       // User cancelled share or error
