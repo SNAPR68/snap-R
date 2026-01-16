@@ -286,8 +286,20 @@ export function UnifiedCreator() {
 
         setUploadSuccess(targetPlatform)
         
-        // Save to content library - use the original photo URL
+        // Save to content library - upload generated image first
         try {
+          // Upload the generated image to storage for permanent URL
+          const formData = new FormData()
+          formData.append('file', imageBlob, fileName)
+          formData.append('folder', 'content-library')
+          
+          const uploadRes = await fetch('/api/upload-image', {
+            method: 'POST',
+            body: formData,
+          })
+          const uploadData = await uploadRes.json()
+          const permanentImageUrl = uploadData.url || photoUrl
+          
           await fetch('/api/content-library', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -296,7 +308,7 @@ export function UnifiedCreator() {
               category: headline?.toLowerCase().replace(/\s+/g, '-') || 'general',
               platform: targetPlatform,
               post_type: 'image',
-              imageUrl: photoUrl,
+              imageUrl: permanentImageUrl,
               caption: getFullCaption(),
             }),
           })
