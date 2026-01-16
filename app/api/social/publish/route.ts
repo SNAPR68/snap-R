@@ -17,7 +17,7 @@ export async function POST(req: NextRequest) {
     }
 
     const serviceSupabase = getServiceSupabase();
-    const { platform, content, imageUrls, listingId, scheduleFor, postType, category, templateId } = await req.json();
+    const { platform, content, imageUrls, listingId, scheduleFor } = await req.json();
 
     const { data: connection, error: connError } = await serviceSupabase
       .from('social_connections')
@@ -50,22 +50,19 @@ export async function POST(req: NextRequest) {
 
       if (error) throw error;
 
-      // Also save to content_library for scheduled posts
-      try {
-        await serviceSupabase.from('content_library').insert({
-          user_id: user.id,
-          name: `Scheduled ${platform} post`,
-          category: category || 'general',
-          platform,
-          post_type: postType || (imageUrls?.length > 1 ? 'carousel' : 'image'),
-          template_id: templateId || null,
-          image_url: imageUrls?.[0] || null,
-          caption: content,
-          property_data: { listing_id: listingId, status: 'scheduled', scheduled_for: scheduleFor },
-        });
-      } catch (libErr) {
-        console.error('Failed to save scheduled post to library:', libErr);
-      }
+      // Save scheduled posts to content library
+      const { error: saveError } = await serviceSupabase.from('content_library').insert({
+        user_id: user.id,
+        name: `Scheduled ${platform.charAt(0).toUpperCase() + platform.slice(1)} Post`,
+        category: 'general',
+        platform,
+        post_type: 'image',
+        image_url: imageUrls?.[0] || null,
+        caption: content,
+        is_favorite: false,
+        use_count: 0,
+      });
+      if (saveError) console.error('Content library save error:', saveError);
 
       return NextResponse.json({ 
         success: true, 
@@ -91,7 +88,6 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: 'Unsupported platform' }, { status: 400 });
     }
 
-    // Save to scheduled_posts (for analytics/history)
     await serviceSupabase.from('scheduled_posts').insert({
       user_id: user.id,
       listing_id: listingId,
@@ -104,22 +100,19 @@ export async function POST(req: NextRequest) {
       platform_post_id: result.postId,
     });
 
-    // ✅ FIX: Save to content_library (using only existing columns)
-    try {
-      await serviceSupabase.from('content_library').insert({
-        user_id: user.id,
-        name: `${platform.charAt(0).toUpperCase() + platform.slice(1)} post - ${new Date().toLocaleDateString()}`,
-        category: category || 'general',
-        platform,
-        post_type: postType || (imageUrls?.length > 1 ? 'carousel' : 'image'),
-        template_id: templateId || null,
-        image_url: imageUrls?.[0] || null,
-        caption: content,
-        property_data: { listing_id: listingId, post_url: result.url, platform_post_id: result.postId, published_at: new Date().toISOString() },
-      });
-    } catch (libErr) {
-      console.error('Failed to save to content library:', libErr);
-    }
+    // Save to content_library for the Content Library page
+    const { error: libError } = await serviceSupabase.from('content_library').insert({
+      user_id: user.id,
+      name: `${platform.charAt(0).toUpperCase() + platform.slice(1)} Post - ${new Date().toLocaleDateString()}`,
+      category: 'general',
+      platform,
+      post_type: 'image',
+      image_url: imageUrls?.[0] || null,
+      caption: content,
+      is_favorite: false,
+      use_count: 1,
+    });
+    if (libError) console.error('Content library save error:', libError);
 
     return NextResponse.json({ success: true, postId: result.postId, url: result.url });
   } catch (error: any) {
