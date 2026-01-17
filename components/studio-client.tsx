@@ -145,6 +145,8 @@ export function StudioClient({ listingId, userRole, showMlsFeatures = false, cre
   const [showMlsExport, setShowMlsExport] = useState(false);
   const [preparingListing, setPreparingListing] = useState(false);
   const [listingStatus, setListingStatus] = useState<{ status: string; confidence: number; heroPhotoId: string | null } | null>(null);
+  const [marketingStatus, setMarketingStatus] = useState<string>('');
+  const [changingStatus, setChangingStatus] = useState(false);
   const [prepareProgress, setPrepareProgress] = useState<{ phase: string; message: string } | null>(null);
   const [showReviewPanel, setShowReviewPanel] = useState(false);
   const [flaggedPhotos, setFlaggedPhotos] = useState<Array<{ id: string; url: string; reason: string; confidence: number }>>([]);
@@ -302,6 +304,26 @@ export function StudioClient({ listingId, userRole, showMlsFeatures = false, cre
   };
 
   const handleShare = () => { setShareLink(''); setShowShareModal(true); };
+
+
+  const handleMarketingStatusChange = async (newStatus: string) => {
+    if (!newStatus || changingStatus) return;
+    setChangingStatus(true);
+    try {
+      const supabase = (await import('@/lib/supabase/client')).createClient();
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user?.id) { setChangingStatus(false); return; }
+      await fetch('/api/campaigns/trigger', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ listingId, userId: user.id, statusChange: newStatus, previousStatus: marketingStatus }),
+      });
+      setMarketingStatus(newStatus);
+    } catch (error) {
+      console.error('Status change error:', error);
+    }
+    setChangingStatus(false);
+  };
 
   const handlePrepareListing = async () => {
     if (preparingListing) return;
@@ -512,6 +534,20 @@ export function StudioClient({ listingId, userRole, showMlsFeatures = false, cre
               {preparingListing ? 'Preparing...' : 'Prepare Listing'}
             </button>
           )}
+          <select 
+            value={marketingStatus || ''} 
+            onChange={(e) => handleMarketingStatusChange(e.target.value)}
+            disabled={changingStatus}
+            className="px-3 py-2 bg-[#D4A017]/20 border border-[#D4A017]/40 rounded-lg text-sm text-[#D4A017] cursor-pointer hover:bg-[#D4A017]/30 transition-colors disabled:opacity-50"
+          >
+            <option value="" className="bg-[#1A1A1A] text-white">Set Status</option>
+            <option value="coming_soon" className="bg-[#1A1A1A] text-white">Coming Soon</option>
+            <option value="active" className="bg-[#1A1A1A] text-white">Active</option>
+            <option value="price_drop" className="bg-[#1A1A1A] text-white">Price Drop</option>
+            <option value="open_house" className="bg-[#1A1A1A] text-white">Open House</option>
+            <option value="under_contract" className="bg-[#1A1A1A] text-white">Under Contract</option>
+            <option value="sold" className="bg-[#1A1A1A] text-white">Sold</option>
+          </select>
           <a href={`/dashboard/listing-intelligence?listing=${listingId}`} className="flex items-center gap-2 px-3 py-2 bg-purple-500/20 border border-purple-500/40 rounded-lg text-sm text-purple-300"><Brain className="w-4 h-4" /> AI Analysis</a>
           <button onClick={() => setShowMlsExport(true)} style={showMlsFeatures ? {} : {display: "none"}} disabled={completedPhotos.length === 0 || (listingStatus?.status !== 'prepared' && listingStatus?.status !== 'needs_review')} className="flex items-center gap-2 px-3 py-2 bg-white/10 hover:bg-white/20 rounded-lg text-sm disabled:opacity-50" title={listingStatus?.status !== 'prepared' ? 'Prepare listing first' : ''}><FileArchive className="w-4 h-4" /> MLS Export</button>
           <button onClick={handleShare} disabled={shareLoading} className="flex items-center gap-2 px-3 py-2 bg-white/10 hover:bg-white/20 rounded-lg text-sm disabled:opacity-50">{shareLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Share2 className="w-4 h-4" />} Share Gallery</button>
