@@ -75,17 +75,14 @@ export default async function DashboardLayout({ children }: { children: React.Re
         <nav className="flex-1 space-y-1 overflow-y-auto">
           <p className="text-xs text-white/40 uppercase tracking-wider mb-2 px-3">Main</p>
           <NavLink href="/dashboard/listings" icon={Home}>My Listings</NavLink>
-          <NavLink href="/dashboard/camera" icon={Camera}>Mobile Camera</NavLink>
           
           <p className="text-xs text-white/40 uppercase tracking-wider mb-2 mt-6 px-3">Content</p>
           <NavLink href="/dashboard/content-studio" icon={FileText}>Content Studio</NavLink>
           <NavLink href="/dashboard/brand" icon={Palette}>Brand Profile</NavLink>
           
           <p className="text-xs text-white/40 uppercase tracking-wider mb-2 mt-6 px-3">Tools</p>
-          <NavLink href="/dashboard/listing-intelligence" icon={Sparkles}>AI Analyzer</NavLink>
           <NavLink href="/dashboard/approvals" icon={CheckSquare}>Client Approvals</NavLink>
           <NavLink href="/dashboard/ai-descriptions" icon={FileText}>AI Descriptions</NavLink>
-          <NavLink href="/dashboard/photo-culling" icon={Image}>Photo Culling</NavLink>
           <NavLink href="/dashboard/portfolio" icon={Palette}>Portfolios</NavLink>
           {/* <NavLink href="/dashboard/renovation" icon={Hammer}>Virtual Renovation</NavLink> */}
           <NavLink href="/dashboard/virtual-tours" icon={Images}>Property Gallery</NavLink>
