@@ -217,7 +217,7 @@ function OnboardingContent() {
               </div>
 
               <button
-                onClick={() => setStep(2)}
+                onClick={() => setStep(roleFromUrl ? 3 : 2)}
                 disabled={!name || !selectedRegion}
                 className="w-full mt-6 py-4 bg-gradient-to-r from-[#D4A017] to-[#B8860B] rounded-xl text-black font-semibold disabled:opacity-50 flex items-center justify-center gap-2"
               >
@@ -340,7 +340,7 @@ function OnboardingContent() {
               </div>
 
               <div className="flex gap-3 mt-6">
-                <button onClick={() => setStep(2)} className="px-6 py-4 bg-white/10 rounded-xl flex items-center gap-2">
+                <button onClick={() => setStep(roleFromUrl ? 1 : 2)} className="px-6 py-4 bg-white/10 rounded-xl flex items-center gap-2">
                   <ChevronLeft className="w-5 h-5" /> Back
                 </button>
                 <button
@@ -442,7 +442,7 @@ function OnboardingContent() {
                       <li className="flex items-center gap-3"><CheckCircle className="w-5 h-5 text-green-400" /> <span>Unlimited human revision on photos</span></li>
                       <li className="flex items-center gap-3"><CheckCircle className="w-5 h-5 text-green-400" /> <span>Content Studio & Email Marketing</span></li>
                       <li className="flex items-center gap-3"><CheckCircle className="w-5 h-5 text-green-400" /> <span>Social Publishing (5 platforms)</span></li>
-                      {(planFromUrl === 'complete' || planFromUrl === 'ultimate') && (
+                      {(planFromUrl === 'pro' || planFromUrl === 'agency') && (
                         <li className="flex items-center gap-3"><CheckCircle className="w-5 h-5 text-green-400" /> <span>Virtual Tours & AI Voiceovers</span></li>
                       )}
                     </>

@@ -3,6 +3,9 @@
 import { useState, useEffect } from "react";
 import { useSession } from "@/app/providers/session-provider";
 import {
+  Copy,
+  Download,
+  ExternalLink,
   Zap,
   Play,
   Pause,
@@ -329,6 +332,46 @@ export default function CampaignsPage() {
                             <XCircle className="w-4 h-4" />
                           </button>
                         </>
+                      )}
+                      {item.status === "approved" && (
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => {
+                              navigator.clipboard.writeText(item.content_data?.caption || "");
+                              alert("Caption copied!");
+                            }}
+                            className="p-2 bg-purple-500/20 text-purple-400 rounded-lg hover:bg-purple-500/30 transition-colors"
+                            title="Copy Caption"
+                          >
+                            <Copy className="w-4 h-4" />
+                          </button>
+                          {item.content_data?.imageUrl && (
+                            <a
+                              href={item.content_data.imageUrl}
+                              download={"post-" + item.platform + ".jpg"}
+                              className="p-2 bg-blue-500/20 text-blue-400 rounded-lg hover:bg-blue-500/30 transition-colors"
+                              title="Download Image"
+                            >
+                              <Download className="w-4 h-4" />
+                            </a>
+                          )}
+                          <button
+                            onClick={() => {
+                              const urls = {
+                                instagram: "https://www.instagram.com/",
+                                facebook: "https://www.facebook.com/",
+                                linkedin: "https://www.linkedin.com/feed/",
+                                twitter: "https://twitter.com/compose/tweet",
+                                tiktok: "https://www.tiktok.com/upload",
+                              };
+                              window.open(urls[item.platform as keyof typeof urls] || urls.instagram, "_blank");
+                            }}
+                            className="p-2 bg-[#D4A017]/20 text-[#D4A017] rounded-lg hover:bg-[#D4A017]/30 transition-colors"
+                            title="Open Platform"
+                          >
+                            <ExternalLink className="w-4 h-4" />
+                          </button>
+                        </div>
                       )}
                       <button
                         onClick={() => handleAction("regenerate", { queueItemId: item.id })}

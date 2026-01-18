@@ -313,10 +313,10 @@ export function StudioClient({ listingId, userRole, showMlsFeatures = false, cre
       const supabase = (await import('@/lib/supabase/client')).createClient();
       const { data: { user } } = await supabase.auth.getUser();
       if (!user?.id) { setChangingStatus(false); return; }
-      await fetch('/api/campaigns/trigger', {
+      await fetch('/api/campaigns', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ listingId, userId: user.id, statusChange: newStatus, previousStatus: marketingStatus }),
+        body: JSON.stringify({ action: 'trigger', listingId, userId: user.id, newStatus, previousStatus: marketingStatus }),
       });
       setMarketingStatus(newStatus);
     } catch (error) {

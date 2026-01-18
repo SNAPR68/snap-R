@@ -837,29 +837,34 @@ export default function HomePage() {
                 </div>
                 <p className="text-white/60 mb-4">Everything's ready. Just approve and publish everywhere.</p>
                 
-                {/* What's Ready */}
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                  <div className="p-3 bg-black/30 border border-[#D4A017]/10 rounded-xl text-center">
-                    <div className="text-[#D4A017] text-lg mb-1">📱</div>
-                    <div className="text-xs text-white/70">Social Posts</div>
-                    <div className="text-[10px] text-white/40">IG, FB, LinkedIn, TikTok</div>
+                {/* What's Ready - HIGHLIGHTED MOAT */}
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  <div className="p-4 bg-gradient-to-br from-[#D4A017]/20 to-transparent border-2 border-[#D4A017]/50 rounded-2xl text-center hover:border-[#D4A017] hover:shadow-lg hover:shadow-[#D4A017]/20 transition-all group">
+                    <div className="w-12 h-12 mx-auto mb-3 rounded-xl bg-gradient-to-br from-[#D4A017] to-[#B8860B] flex items-center justify-center text-2xl group-hover:scale-110 transition-transform">📱</div>
+                    <div className="font-semibold text-white mb-1">Social Posts</div>
+                    <div className="text-xs text-[#D4A017]">IG, FB, LinkedIn, TikTok</div>
+                    <div className="text-[10px] text-white/50 mt-1">150+ templates</div>
                   </div>
-                  <div className="p-3 bg-black/30 border border-[#D4A017]/10 rounded-xl text-center">
-                    <div className="text-[#D4A017] text-lg mb-1">🎬</div>
-                    <div className="text-xs text-white/70">Video Reels</div>
-                    <div className="text-[10px] text-white/40">+ AI Voiceover</div>
+                  <div className="p-4 bg-gradient-to-br from-[#D4A017]/20 to-transparent borr-2 border-[#D4A017]/50 rounded-2xl text-center hover:border-[#D4A017] hover:shadow-lg hover:shadow-[#D4A017]/20 transition-all group">
+                    <div className="w-12 h-12 mx-auto mb-3 rounded-xl bg-gradient-to-br from-[#D4A017] to-[#B8860B] flex items-center justify-center text-2xl group-hover:scale-110 transition-transform">🎬</div>
+                    <div className="font-semibold text-white mb-1">Video Reels</div>
+                    <div className="text-xs text-[#D4A017]">+ AI Voiceover</div>
+                    <div className="text-[10px] text-white/50 mt-1">Auto-generated</div>
                   </div>
-                  <div className="p-3 bg-black/30 border border-[#D4A017]/10 rounded-xl text-center">
-                    <div className="text-[#D4A017] text-lg mb-1">🌐</div>
-                    <div className="text-xs text-white/70">Property Site</div>
-                    <div className="text-[10px] text-white/40">Shareable link</div>
+                  <div className="p-4 bg-gradient-to-br from-[#D4A017]/20 to-transparent border-2 border-[#D4A017]/50 rounded-2xl text-center hover:border-[#D4A017] hover:shadow-lg hover:shadow-[#D4A017]/20 transition-all group">
+                    <div className="w-12 h-12 mx-auto mb-3 rounded-xl bg-gradient-to-br from-[#D4A017] to-[#B8860B] flex items-center justify-center text-2xl groupover:scale-110 transition-transform">🌐</div>
+                    <div className="font-semibold text-white mb-1">Property Site</div>
+                    <div className="text-xs text-[#D4A017]">Shareable link</div>
+                    <div className="text-[10px] text-white/50 mt-1">Instant landing page</div>
                   </div>
-                  <div className="p-3 bg-black/30 border border-[#D4A017]/10 rounded-xl text-center">
-                    <div className="text-[#D4A017] text-lg mb-1">✉️</div>
-                    <div className="text-xs text-white/70">Email Campaign</div>
-                    <div className="text-[10px] text-white/40">Ready to send</div>
+                  <div className="p-4 bg-gradient-to-br from-[#D4A017]/20 to-transparent border-2 border-[#D4A017]/50 rounded-2xl text-center hover:border-[#D4A017] hover:shadow-lg hover:shadow-[#D4A017]/20 transition-all group">
+                    <div className="w-12 h-12 mx-auto mb-3 rounded-xl bg-gradient-to-br from-[#D4A017] to-[#B8860B] flex items-center justify-center text-2xl group-hover:scale-110 transition-transform">✉️</div>
+                    <div className="font-semibold text-white mb-1">Email Campaign</div>
+                    <div className="text-xs text-[#D4A017]">Ready to send</div>
+                    <div className="text-[10px] text-white/50 mt-1">Profel templates</div>
                   </div>
                 </div>
+                <p className="text-center text-[#D4A017]/80 text-sm mt-4 font-medium">⚡ No other platform gives you all this from one upload</p>
               </div>
             </div>
           </div>
@@ -1197,7 +1202,7 @@ export default function HomePage() {
             <div className="relative">
               <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-4 py-1 bg-gradient-to-r from-[#D4A017] to-[#B8860B] text-black text-xs font-bold rounded-full z-10">MOST POPULAR</div>
               <div className="rounded-2xl p-6 h-full flex flex-col bg-[#1A1A1A] border-2 border-[#D4A017]">
-                <h3 className="text-xl font-bold mb-2">{userType === 'photographer' ? 'Ultimate' : 'Starter'}</h3>
+                <h3 className="text-xl font-bold mb-2">Pro</h3>
                 <div className="mb-4">
                   <span className="text-4xl font-bold text-[#D4A017]">
                     ${userType === 'photographer' ? photographerPrices.ultimate.toFixed(2) : agentPrices.starter.toFixed(2)}
@@ -1225,7 +1230,7 @@ export default function HomePage() {
             
             {/* Complete Tier */}
             <div className="rounded-2xl p-6 h-full flex flex-col bg-[#1A1A1A] border border-[#D4A017]/20">
-              <h3 className="text-xl font-bold mb-2">Complete</h3>
+              <h3 className="text-xl font-bold mb-2">Agency</h3>
               <div className="mb-4">
                 <span className="text-4xl font-bold">
                   ${userType === 'photographer' ? photographerPrices.complete.toFixed(2) : agentPrices.complete.toFixed(2)}
@@ -1234,7 +1239,7 @@ export default function HomePage() {
               </div>
               <p className="text-white/50 text-sm mb-4">Full marketing suite</p>
               <ul className="space-y-2 text-sm flex-1">
-                <li className="flex items-center gap-2 text-white/70"><span className="text-[#D4A017]">✓</span> Everything in {userType === 'photographer' ? 'Ultimate' : 'Starter'}</li>
+                <li className="flex items-center gap-2 text-white/70"><span className="text-[#D4A017]">✓</span> Everything in Pro</li>
                 <li className="flex items-center gap-2 text-white/70"><span className="text-[#D4A017]">✓</span> Content Studio (150+ templates)</li>
                 <li className="flex items-center gap-2 text-white/70"><span className="text-[#D4A017]">✓</span> Email Marketing</li>
                 <li className="flex items-center gap-2 text-white/70"><span className="text-[#D4A017]">✓</span> Upload to Social Media</li>

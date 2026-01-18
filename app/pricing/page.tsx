@@ -27,10 +27,10 @@ const PHOTOGRAPHER_TIERS = [
     basePrice: 0,
     popular: false,
     photos: 30,
-    listings: 3,
+    listings: 1,
     isFree: true,
     features: [
-      { name: '3 listings/month', included: true },
+      { name: '1 listing (7-day trial)', included: true },
       { name: '30 photos per listing', included: true },
       { name: 'All 15 AI tools', included: true },
       { name: 'Watermarked exports', included: true },
@@ -39,8 +39,8 @@ const PHOTOGRAPHER_TIERS = [
     ],
   },
   {
-    id: 'ultimate',
-    name: 'Ultimate',
+    id: 'pro',
+    name: 'Pro',
     basePrice: 12, // Fotello-competitive
     popular: true,
     photos: 75,
@@ -55,13 +55,13 @@ const PHOTOGRAPHER_TIERS = [
     ],
   },
   {
-    id: 'complete',
-    name: 'Complete',
+    id: 'agency',
+    name: 'Agency',
     basePrice: 14,
     popular: false,
     photos: 75,
     features: [
-      { name: 'Everything in Ultimate', included: true },
+      { name: 'Everything in Pro', included: true },
       { name: 'Content Studio (150+ templates)', included: true },
       { name: 'Email Marketing', included: true },
       { name: 'Upload to Social Media', included: true },
@@ -79,10 +79,10 @@ const AGENT_TIERS = [
     basePrice: 0,
     popular: false,
     photos: 30,
-    listings: 3,
+    listings: 1,
     isFree: true,
     features: [
-      { name: '3 listings/month', included: true },
+      { name: '1 listing (7-day trial)', included: true },
       { name: '30 photos per listing', included: true },
       { name: 'All 15 AI tools', included: true },
       { name: 'Watermarked exports', included: true },
@@ -110,8 +110,8 @@ const AGENT_TIERS = [
     ],
   },
   {
-    id: 'complete',
-    name: 'Complete',
+    id: 'agency',
+    name: 'Agency',
     basePrice: 18,
     popular: true,
     photos: 75,
@@ -133,7 +133,7 @@ export default function PricingPage() {
   const router = useRouter();
   const [userType, setUserType] = useState<'photographer' | 'agent'>('photographer');
   const [sliderIndex, setSliderIndex] = useState(4); // Default to 30 listings
-  const [selectedPlan, setSelectedPlan] = useState<string>('ultimate');
+  const [selectedPlan, setSelectedPlan] = useState<string>('pro');
   const [loading, setLoading] = useState<string | null>(null);
   const [annual, setAnnual] = useState(true);
 
@@ -183,7 +183,7 @@ export default function PricingPage() {
         <div className="flex justify-center mb-8">
           <div className="inline-flex p-1.5 bg-white/5 border border-white/10 rounded-full">
             <button
-              onClick={() => { setUserType('photographer'); setSelectedPlan('ultimate'); }}
+              onClick={() => { setUserType('photographer'); setSelectedPlan('pro'); }}
               className={`flex items-center gap-2 px-6 py-3 rounded-full font-medium transition-all ${
                 userType === 'photographer'
                   ? 'bg-[#D4A017] text-black'
@@ -194,7 +194,7 @@ export default function PricingPage() {
               I&apos;m a Photographer
             </button>
             <button
-              onClick={() => { setUserType('agent'); setSelectedPlan('complete'); }}
+              onClick={() => { setUserType('agent'); setSelectedPlan('agency'); }}
               className={`flex items-center gap-2 px-6 py-3 rounded-full font-medium transition-all ${
                 userType === 'agent'
                   ? 'bg-[#D4A017] text-black'
@@ -356,6 +356,7 @@ export default function PricingPage() {
                   ) : (
                     <>
                       <span className={`text-4xl font-bold ${isSelected ? 'text-[#D4A017]' : ''}`}>
+
                         ${price.toFixed(2)}
                       </span>
                       <span className="text-white/50">/listing</span>

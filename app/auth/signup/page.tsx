@@ -9,8 +9,8 @@ import { trackEvent, identifyUser, SnapREvents } from '@/lib/analytics';
 const PLAN_INFO: Record<string, { title: string; subtitle: string; features: string[] }> = {
   free: {
     title: 'Start Your Free Account',
-    subtitle: 'Get 3 free listings per month with all features.',
-    features: ['3 listings/month', 'All 15 AI tools', 'Watermarked exports', 'Content Studio access'],
+    subtitle: '7-day free trial with 1 listing.',
+    features: ['1 listing (7-day trial)', '30 photos per listing', 'All 15 AI tools', 'Watermarked exports'],
   },
   pro: {
     title: 'Start Your Pro Plan',
