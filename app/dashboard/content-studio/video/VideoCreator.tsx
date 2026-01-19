@@ -560,7 +560,7 @@ export default function VideoCreatorClient() {
       }
       
       const data = await ffmpeg.readFile('output.mp4')
-      const outputBlob = new Blob([data], { type: 'video/mp4' })
+      const outputBlob = new Blob([data as unknown as BlobPart], { type: 'video/mp4' })
       
       // Cleanup
       try {
