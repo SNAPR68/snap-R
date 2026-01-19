@@ -14,7 +14,7 @@ export async function GET(request: Request) {
       // Check if profile exists
       const { data: profile } = await supabase
         .from('profiles')
-        .select('id, role, subscription_tier')
+        .select('id, role, subscription_tier, onboarded_at')
         .eq('id', data.user.id)
         .single();
 
@@ -35,7 +35,7 @@ export async function GET(request: Request) {
       }
 
       // Existing user - check if onboarding complete
-      if (!profile.role) {
+      if (!profile.onboarded_at) {
         return NextResponse.redirect(origin + '/onboarding');
       }
 

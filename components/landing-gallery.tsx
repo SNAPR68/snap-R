@@ -77,7 +77,7 @@ function HoverSlider({ item }: { item: typeof GALLERY_ITEMS[0] }) {
   return (
     <div
       ref={containerRef}
-      className="relative w-full aspect-[4/3] rounded-xl overflow-hidden cursor-ew-resize select-none bg-neutral-800"
+      className="relative w-full aspect-[2/1] rounded-xl overflow-hidden cursor-ew-resize select-none bg-neutral-800"
       onMouseMove={handleMouseMove}
       onTouchMove={handleTouchMove}
       onMouseLeave={() => setPosition(50)}
@@ -115,13 +115,13 @@ function HoverSlider({ item }: { item: typeof GALLERY_ITEMS[0] }) {
 
 export function LandingGallery() {
   return (
-    <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+    <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-3">
       {GALLERY_ITEMS.map((item) => (
         <div key={item.id}>
           <HoverSlider item={item} />
-          <div className="mt-3">
-            <h3 className="text-white font-semibold">{item.title}</h3>
-            <p className="text-white/50 text-sm">{item.description}</p>
+          <div className="mt-1">
+            <h3 className="text-white font-semibold text-sm">{item.title}</h3>
+            <p className="text-white/50 text-xs">{item.description}</p>
           </div>
         </div>
       ))}

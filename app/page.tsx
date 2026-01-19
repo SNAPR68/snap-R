@@ -1,5 +1,7 @@
 'use client';
 
+import PricingSection from '@/components/pricing-section';
+
 import { useState, useMemo } from 'react';
 import Link from 'next/link';
 import { Sparkles, Zap, Check, ArrowRight, Smartphone, Camera, Shield, Mail, Globe, Share2, Wand2, Send, Bell, Upload } from 'lucide-react';
@@ -618,7 +620,7 @@ export default function HomePage() {
           </div>
           
           {/* Solution intro */}
-          <div className="text-center mb-12">
+          <div className="text-center mb-6">
             <p className="text-[#D4A017] text-sm font-semibold tracking-wider mb-3">THE SOLUTION</p>
             <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
               SnapR Fixes Everything
@@ -715,14 +717,14 @@ export default function HomePage() {
       </section>
 
       {/* NEW: How It Works - Animated 3 Steps */}
-      <section className="py-16 px-6 bg-gradient-to-b from-[#0F0F0F] to-[#1A1A1A]">
+      <section className="py-10 px-6 bg-gradient-to-b from-[#0F0F0F] to-[#1A1A1A]">
         <div className="max-w-4xl mx-auto">
-          <div className="text-center mb-12">
-            <p className="text-[#D4A017] text-sm font-semibold tracking-wider mb-3">HOW IT WORKS</p>
-            <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
+          <div className="text-center mb-6">
+            <p className="text-[#D4A017] text-xs font-semibold tracking-wider mb-2">HOW IT WORKS</p>
+            <h2 className="text-2xl md:text-3xl font-bold text-white mb-2">
               Three Steps to Marketing Gold
             </h2>
-            <p className="text-lg text-white/60 max-w-2xl mx-auto">
+            <p className="text-sm text-white/60 max-w-2xl mx-auto">
               From raw photos to fully marketed listing in 60 seconds.
             </p>
           </div>
@@ -733,14 +735,14 @@ export default function HomePage() {
             <div className="absolute left-6 md:left-8 top-0 bottom-0 w-0.5 bg-gradient-to-b from-[#D4A017] via-[#D4A017]/50 to-[#D4A017]/20 hidden md:block"></div>
             
             {/* STEP 1: UPLOAD */}
-            <div className="relative mb-8 md:ml-16">
+            <div className="relative mb-3 md:ml-16">
               <div className="absolute -left-[52px] top-0 hidden md:block">
-                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-[#D4A017] to-[#B8860B] flex items-center justify-center text-black font-bold text-lg pulse-gold">1</div>
+                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#D4A017] to-[#B8860B] flex items-center justify-center text-black font-bold text-sm pulse-gold">1</div>
               </div>
-              <div className="rounded-2xl p-6 bg-[#1A1A1A] border border-[#D4A017]/20">
+              <div className="rounded-xl p-4 bg-[#1A1A1A] border border-[#D4A017]/20">
                 <div className="flex items-center gap-3 mb-3">
                   <div className="md:hidden w-10 h-10 rounded-full bg-gradient-to-br from-[#D4A017] to-[#B8860B] flex items-center justify-center text-black font-bold">1</div>
-                  <h3 className="text-2xl font-bold">Upload Your Photos</h3>
+                  <h3 className="text-lg font-bold">Upload Your Photos</h3>
                   <span className="px-3 py-1 bg-[#D4A017]/10 text-[#D4A017] text-xs rounded-full border border-[#D4A017]/30">10 seconds</span>
                 </div>
                 <p className="text-white/60">Drag & drop up to 75 photos. Create your listing in seconds.</p>
@@ -748,20 +750,19 @@ export default function HomePage() {
             </div>
             
             {/* STEP 2: AI PREPARES (The Big One) */}
-            <div className="relative mb-8 md:ml-16">
+            <div className="relative mb-3 md:ml-16">
               <div className="absolute -left-[52px] top-0 hidden md:block">
-                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-[#D4A017] to-[#B8860B] flex items-center justify-center text-black font-bold text-lg pulse-gold">2</div>
+                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#D4A017] to-[#B8860B] flex items-center justify-center text-black font-bold text-sm pulse-gold">2</div>
               </div>
-              <div className="rounded-2xl p-6 bg-[#1A1A1A] border-2 border-[#D4A017]">
+              <div className="rounded-xl p-4 bg-[#1A1A1A] border-2 border-[#D4A017]">
                 <div className="flex items-center gap-3 mb-4">
                   <div className="md:hidden w-10 h-10 rounded-full bg-gradient-to-br from-[#D4A017] to-[#B8860B] flex items-center justify-center text-black font-bold">2</div>
-                  <h3 className="text-2xl font-bold">AI Prepares Everything</h3>
+                  <h3 className="text-lg font-bold">AI Prepares Everything</h3>
                   <span className="px-3 py-1 bg-[#D4A017]/10 text-[#D4A017] text-xs rounded-full border border-[#D4A017]/30">45 seconds</span>
                 </div>
                 
                 {/* Progress Bar */}
-                <div className="mb-6">
-                  <div className="flex justify-between text-xs text-white/50 mb-2">
+                <div className="mb-3"><div className="flex justify-between text-xs text-white/50 mb-2">
                     <span>Processing...</span>
                     <span>100%</span>
                   </div>
@@ -771,7 +772,7 @@ export default function HomePage() {
                 </div>
                 
                 {/* What AI Does */}
-                <div className="grid md:grid-cols-2 gap-4">
+                <div className="grid md:grid-cols-2 gap-2 text-sm">
                   <div className="flex items-start gap-3">
                     <span className="text-[#D4A017] mt-0.5">✓</span>
                     <div>
@@ -817,7 +818,7 @@ export default function HomePage() {
                 </div>
                 
                 {/* Summary */}
-                <div className="mt-6 pt-4 border-t border-[#D4A017]/20 text-center">
+                <div className="mt-3 pt-2 border-t border-[#D4A017]/20 text-center text-sm">
                   <span className="text-white/60">What takes editors 24-48 hours, SnapR does in</span>
                   <span className="text-[#D4A017] font-bold text-xl"> 60 seconds</span>
                 </div>
@@ -827,38 +828,38 @@ export default function HomePage() {
             {/* STEP 3: REVIEW & PUBLISH */}
             <div className="relative md:ml-16">
               <div className="absolute -left-[52px] top-0 hidden md:block">
-                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-[#D4A017] to-[#B8860B] flex items-center justify-center text-black font-bold text-lg pulse-gold">3</div>
+                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#D4A017] to-[#B8860B] flex items-center justify-center text-black font-bold text-sm pulse-gold">3</div>
               </div>
-              <div className="rounded-2xl p-6 bg-[#1A1A1A] border border-[#D4A017]/20">
+              <div className="rounded-xl p-4 bg-[#1A1A1A] border border-[#D4A017]/20">
                 <div className="flex items-center gap-3 mb-4">
                   <div className="md:hidden w-10 h-10 rounded-full bg-gradient-to-br from-[#D4A017] to-[#B8860B] flex items-center justify-center text-black font-bold">3</div>
-                  <h3 className="text-2xl font-bold">Review & Publish</h3>
+                  <h3 className="text-lg font-bold">Review & Publish</h3>
                   <span className="px-3 py-1 bg-[#D4A017]/10 text-[#D4A017] text-xs rounded-full border border-[#D4A017]/30">5 seconds</span>
                 </div>
                 <p className="text-white/60 mb-4">Everything's ready. Just approve and publish everywhere.</p>
                 
                 {/* What's Ready - HIGHLIGHTED MOAT */}
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="grid grid-cols-4 gap-2">
                   <div className="p-4 bg-gradient-to-br from-[#D4A017]/20 to-transparent border-2 border-[#D4A017]/50 rounded-2xl text-center hover:border-[#D4A017] hover:shadow-lg hover:shadow-[#D4A017]/20 transition-all group">
-                    <div className="w-12 h-12 mx-auto mb-3 rounded-xl bg-gradient-to-br from-[#D4A017] to-[#B8860B] flex items-center justify-center text-2xl group-hover:scale-110 transition-transform">📱</div>
+                    <div className="w-8 h-8 mx-auto mb-1 rounded-lg bg-gradient-to-br from-[#D4A017] to-[#B8860B] flex items-center justify-center text-2xl group-hover:scale-110 transition-transform">📱</div>
                     <div className="font-semibold text-white mb-1">Social Posts</div>
                     <div className="text-xs text-[#D4A017]">IG, FB, LinkedIn, TikTok</div>
                     <div className="text-[10px] text-white/50 mt-1">150+ templates</div>
                   </div>
                   <div className="p-4 bg-gradient-to-br from-[#D4A017]/20 to-transparent borr-2 border-[#D4A017]/50 rounded-2xl text-center hover:border-[#D4A017] hover:shadow-lg hover:shadow-[#D4A017]/20 transition-all group">
-                    <div className="w-12 h-12 mx-auto mb-3 rounded-xl bg-gradient-to-br from-[#D4A017] to-[#B8860B] flex items-center justify-center text-2xl group-hover:scale-110 transition-transform">🎬</div>
+                    <div className="w-8 h-8 mx-auto mb-1 rounded-lg bg-gradient-to-br from-[#D4A017] to-[#B8860B] flex items-center justify-center text-2xl group-hover:scale-110 transition-transform">🎬</div>
                     <div className="font-semibold text-white mb-1">Video Reels</div>
                     <div className="text-xs text-[#D4A017]">+ AI Voiceover</div>
                     <div className="text-[10px] text-white/50 mt-1">Auto-generated</div>
                   </div>
                   <div className="p-4 bg-gradient-to-br from-[#D4A017]/20 to-transparent border-2 border-[#D4A017]/50 rounded-2xl text-center hover:border-[#D4A017] hover:shadow-lg hover:shadow-[#D4A017]/20 transition-all group">
-                    <div className="w-12 h-12 mx-auto mb-3 rounded-xl bg-gradient-to-br from-[#D4A017] to-[#B8860B] flex items-center justify-center text-2xl groupover:scale-110 transition-transform">🌐</div>
+                    <div className="w-8 h-8 mx-auto mb-1 rounded-lg bg-gradient-to-br from-[#D4A017] to-[#B8860B] flex items-center justify-center text-2xl groupover:scale-110 transition-transform">🌐</div>
                     <div className="font-semibold text-white mb-1">Property Site</div>
                     <div className="text-xs text-[#D4A017]">Shareable link</div>
                     <div className="text-[10px] text-white/50 mt-1">Instant landing page</div>
                   </div>
                   <div className="p-4 bg-gradient-to-br from-[#D4A017]/20 to-transparent border-2 border-[#D4A017]/50 rounded-2xl text-center hover:border-[#D4A017] hover:shadow-lg hover:shadow-[#D4A017]/20 transition-all group">
-                    <div className="w-12 h-12 mx-auto mb-3 rounded-xl bg-gradient-to-br from-[#D4A017] to-[#B8860B] flex items-center justify-center text-2xl group-hover:scale-110 transition-transform">✉️</div>
+                    <div className="w-8 h-8 mx-auto mb-1 rounded-lg bg-gradient-to-br from-[#D4A017] to-[#B8860B] flex items-center justify-center text-2xl group-hover:scale-110 transition-transform">✉️</div>
                     <div className="font-semibold text-white mb-1">Email Campaign</div>
                     <div className="text-xs text-[#D4A017]">Ready to send</div>
                     <div className="text-[10px] text-white/50 mt-1">Profel templates</div>
@@ -872,14 +873,14 @@ export default function HomePage() {
       </section>
 
       {/* Gallery Section */}
-      <section id="features" className="py-16 px-6">
+      <section id="features" className="py-10 px-6">
         <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-12">
-            <p className="text-[#D4A017] text-sm font-semibold tracking-wider mb-3">15 AI ENHANCEMENT TOOLS</p>
-            <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
+          <div className="text-center mb-6">
+            <p className="text-[#D4A017] text-xs font-semibold tracking-wider mb-2">15 AI ENHANCEMENT TOOLS</p>
+            <h2 className="text-2xl md:text-3xl font-bold text-white mb-2">
               See the Transformation
             </h2>
-            <p className="text-lg text-white/60 max-w-2xl mx-auto">
+            <p className="text-sm text-white/60 max-w-2xl mx-auto">
               From dull to dazzling in 30 seconds. Drag the slider to see the magic.
             </p>
           </div>
@@ -934,9 +935,9 @@ export default function HomePage() {
       <section className="py-20 px-6 bg-gradient-to-b from-[#0F0F0F] to-[#1A1A1A]">
         <div className="max-w-5xl mx-auto">
           <div className="text-center mb-12">
-            <p className="text-[#D4A017] text-sm font-semibold tracking-wider mb-3">THE NUMBERS</p>
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">Do The Math. Then Switch.</h2>
-            <p className="text-white/50">Cost for 1 listing (25 photos) with full marketing</p>
+            <p className="text-[#D4A017] text-xs font-semibold tracking-wider mb-2">THE NUMBERS</p>
+            <h2 className="text-2xl md:text-3xl font-bold mb-2">Do The Math. Then Switch.</h2>
+            <p className="text-white/50 text-sm">Cost for 1 listing (25 photos) with full marketing</p>
           </div>
           
           <div className="grid md:grid-cols-2 gap-8">
@@ -1079,189 +1080,14 @@ export default function HomePage() {
       </section>
 
       {/* Testimonials */}
-      <section className="py-16 px-6 bg-[#1A1A1A]/30">
+      <section className="py-10 px-6 bg-[#1A1A1A]/30">
         <Testimonials />
       </section>
 
-      {/* NEW: 3-Tier Pricing Section */}
-      <section className="py-20 px-6 bg-[#0F0F0F]">
-        <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-8">
-            <p className="text-[#D4A017] text-sm font-semibold tracking-wider mb-3">SIMPLE PRICING</p>
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">Pay Per Listing. Scale As You Grow.</h2>
-          </div>
-          
-          {/* Role Toggle */}
-          <div className="flex justify-center mb-8">
-            <div className="inline-flex p-1.5 bg-white/5 border border-white/10 rounded-full">
-              <button
-                onClick={() => setUserType('photographer')}
-                className={`flex items-center gap-2 px-6 py-3 rounded-full font-medium transition-all ${
-                  userType === 'photographer'
-                    ? 'bg-[#D4A017] text-black'
-                    : 'text-white/60 hover:text-white'
-                }`}
-              >
-                <Camera className="w-5 h-5" />
-                I'm a Photographer
-              </button>
-              <button
-                onClick={() => setUserType('agent')}
-                className={`flex items-center gap-2 px-6 py-3 rounded-full font-medium transition-all ${
-                  userType === 'agent'
-                    ? 'bg-[#D4A017] text-black'
-                    : 'text-white/60 hover:text-white'
-                }`}
-              >
-                <Globe className="w-5 h-5" />
-                I'm an Agent / Broker
-              </button>
-            </div>
-          </div>
-          
-          {/* Billing Toggle */}
-          <div className="flex items-center justify-center gap-4 mb-6">
-            <div className="flex items-center gap-1 p-1 bg-white/5 border border-white/10 rounded-full">
-              <button
-                onClick={() => setIsAnnual(false)}
-                className={`px-5 py-2 rounded-full text-sm font-medium transition-all ${
-                  !isAnnual ? 'bg-[#D4A017] text-black' : 'text-white/50 hover:text-white'
-                }`}
-              >
-                Monthly
-              </button>
-              <button
-                onClick={() => setIsAnnual(true)}
-                className={`px-5 py-2 rounded-full text-sm font-medium transition-all flex items-center gap-2 ${
-                  isAnnual ? 'bg-[#D4A017] text-black' : 'text-white/50 hover:text-white'
-                }`}
-              >
-                Annual
-                <span className="text-xs bg-green-500/20 text-green-400 px-2 py-0.5 rounded-full">
-                  Save 20%
-                </span>
-              </button>
-            </div>
-          </div>
-          
-          {/* Listings Slider */}
-          <div className="max-w-xl mx-auto mb-10 p-6 bg-white/5 border border-white/10 rounded-2xl">
-            <div className="flex justify-between items-center mb-4">
-              <div>
-                <h3 className="font-semibold">How many listings per month?</h3>
-                <p className="text-sm text-white/50">More listings = lower price per listing</p>
-              </div>
-              <div className="text-right">
-                <div className="text-3xl font-bold text-[#D4A017]">{pricingListings}</div>
-                <div className="text-sm text-white/50">listings/mo</div>
-              </div>
-            </div>
-            <input
-              type="range"
-              min="0"
-              max={LISTING_OPTIONS.length - 1}
-              value={pricingSliderIndex}
-              onChange={(e) => setPricingSliderIndex(Number(e.target.value))}
-              className="pricing-slider w-full"
-              style={{
-                background: `linear-gradient(to right, #D4A017 ${(pricingSliderIndex / (LISTING_OPTIONS.length - 1)) * 100}%, rgba(255,255,255,0.1) ${(pricingSliderIndex / (LISTING_OPTIONS.length - 1)) * 100}%)`
-              }}
-            />
-            <div className="flex justify-between text-sm text-white/40 mt-2">
-              {LISTING_OPTIONS.map((opt, i) => (
-                <span key={opt} className={i === pricingSliderIndex ? 'text-[#D4A017] font-bold' : ''}>
-                  {opt}
-                </span>
-              ))}
-            </div>
-          </div>
-          
-          {/* 3 Pricing Tiers */}
-          <div className="grid md:grid-cols-3 gap-6">
-            
-            {/* Free Tier */}
-            <div className="rounded-2xl p-6 h-full flex flex-col bg-[#1A1A1A] border border-[#D4A017]/20">
-              <h3 className="text-xl font-bold mb-2">Free Trial</h3>
-              <div className="mb-4">
-                <span className="text-4xl font-bold">$0</span>
-              </div>
-              <p className="text-white/50 text-sm mb-4">7-day trial</p>
-              <ul className="space-y-2 text-sm flex-1">
-                <li className="flex items-center gap-2 text-white/70"><span className="text-[#D4A017]">✓</span> 1 listing (7 days)</li>
-                <li className="flex items-center gap-2 text-white/70"><span className="text-[#D4A017]">✓</span> 30 photos</li>
-                <li className="flex items-center gap-2 text-white/70"><span className="text-[#D4A017]">✓</span> All 15 AI tools</li>
-                <li className="flex items-center gap-2 text-white/70"><span className="text-[#D4A017]">✓</span> Watermarked exports</li>
-                <li className="flex items-center gap-2 text-white/40"><span className="text-white/30">✗</span> HD exports</li>
-              </ul>
-              <Link href="/auth/signup" className="w-full mt-6 py-3 bg-white/5 border border-[#D4A017]/30 text-white font-semibold rounded-xl hover:bg-white/10 hover:border-[#D4A017]/50 transition-all text-center block">
-                Start Free Trial
-              </Link>
-            </div>
-            
-            {/* Middle Tier (Popular) */}
-            <div className="relative">
-              <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-4 py-1 bg-gradient-to-r from-[#D4A017] to-[#B8860B] text-black text-xs font-bold rounded-full z-10">MOST POPULAR</div>
-              <div className="rounded-2xl p-6 h-full flex flex-col bg-[#1A1A1A] border-2 border-[#D4A017]">
-                <h3 className="text-xl font-bold mb-2">Pro</h3>
-                <div className="mb-4">
-                  <span className="text-4xl font-bold text-[#D4A017]">
-                    ${userType === 'photographer' ? photographerPrices.ultimate.toFixed(2) : agentPrices.starter.toFixed(2)}
-                  </span>
-                  <span className="text-white/50">/listing</span>
-                </div>
-                <p className="text-white/50 text-sm mb-4">{userType === 'photographer' ? 'For photographers' : 'For agents'}</p>
-                <ul className="space-y-2 text-sm flex-1">
-                  <li className="flex items-center gap-2 text-white/70"><span className="text-[#D4A017]">✓</span> {userType === 'photographer' ? '75' : '60'} photos per listing</li>
-                  <li className="flex items-center gap-2 text-white/70"><span className="text-[#D4A017]">✓</span> All 15 AI tools</li>
-                  <li className="flex items-center gap-2 text-white/70"><span className="text-[#D4A017]">✓</span> {userType === 'photographer' ? 'Unlimited Twilight' : '2 Twilight per listing'}</li>
-                  <li className="flex items-center gap-2 text-white/70"><span className="text-[#D4A017]">✓</span> 2 Virtual Staging/listing</li>
-                  <li className="flex items-center gap-2 text-white/70"><span className="text-[#D4A017]">✓</span> HD exports (no watermark)</li>
-                  <li className="flex items-center gap-2 text-white/70"><span className="text-[#D4A017]">✓</span> Client delivery portal</li>
-                  <li className="flex items-center gap-2 text-white/50"><span className="text-white/30">+</span> Human revision (add-on)</li>
-                </ul>
-                <Link href="/auth/signup" className="w-full mt-6 py-3 bg-gradient-to-r from-[#D4A017] to-[#B8860B] text-black font-bold rounded-xl hover:opacity-90 transition-opacity text-center block">
-                  Get Started
-                </Link>
-                <p className="text-center text-xs text-white/40 mt-2">
-                  ${Math.round((userType === 'photographer' ? photographerPrices.ultimate : agentPrices.starter) * pricingListings)}/mo for {pricingListings} listings
-                </p>
-              </div>
-            </div>
-            
-            {/* Complete Tier */}
-            <div className="rounded-2xl p-6 h-full flex flex-col bg-[#1A1A1A] border border-[#D4A017]/20">
-              <h3 className="text-xl font-bold mb-2">Agency</h3>
-              <div className="mb-4">
-                <span className="text-4xl font-bold">
-                  ${userType === 'photographer' ? photographerPrices.complete.toFixed(2) : agentPrices.complete.toFixed(2)}
-                </span>
-                <span className="text-white/50">/listing</span>
-              </div>
-              <p className="text-white/50 text-sm mb-4">Full marketing suite</p>
-              <ul className="space-y-2 text-sm flex-1">
-                <li className="flex items-center gap-2 text-white/70"><span className="text-[#D4A017]">✓</span> Everything in Pro</li>
-                <li className="flex items-center gap-2 text-white/70"><span className="text-[#D4A017]">✓</span> Content Studio (150+ templates)</li>
-                <li className="flex items-center gap-2 text-white/70"><span className="text-[#D4A017]">✓</span> Email Marketing</li>
-                <li className="flex items-center gap-2 text-white/70"><span className="text-[#D4A017]">✓</span> Upload to Social Media</li>
-                <li className="flex items-center gap-2 text-white/70"><span className="text-[#D4A017]">✓</span> Property Sites</li>
-                <li className="flex items-center gap-2 text-white/70"><span className="text-[#D4A017]">✓</span> Priority Support</li>
-              </ul>
-              <Link href="/auth/signup" className="w-full mt-6 py-3 bg-white/5 border border-[#D4A017]/30 text-white font-semibold rounded-xl hover:bg-white/10 hover:border-[#D4A017]/50 transition-all text-center block">
-                Get Started
-              </Link>
-              <p className="text-center text-xs text-white/40 mt-2">
-                ${Math.round((userType === 'photographer' ? photographerPrices.complete : agentPrices.complete) * pricingListings)}/mo for {pricingListings} listings
-              </p>
-            </div>
-          </div>
-          
-          {/* View Full Pricing */}
-          <div className="mt-10 text-center">
-            <Link href="/pricing" className="inline-flex items-center gap-2 text-[#D4A017] font-medium hover:underline">
-              View full pricing details
-              <ArrowRight className="w-4 h-4" />
-            </Link>
-          </div>
+      {/* Pricing Section */}
+      <section className="py-12 px-6 bg-[#0F0F0F]" id="pricing">
+        <div className="max-w-5xl mx-auto">
+          <PricingSection showHeadline={true} showFAQ={false} showCTA={false} showEnterprise={true} />
         </div>
       </section>
 
