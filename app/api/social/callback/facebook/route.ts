@@ -2,10 +2,12 @@ export const dynamic = 'force-dynamic';
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+function getSupabase() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  );
+}
 
 export async function GET(req: NextRequest) {
   try {
@@ -51,7 +53,7 @@ export async function GET(req: NextRequest) {
     const page = pagesData.data?.[0]; // Use first page
 
     // Save Facebook connection
-    await supabase.from('social_connections').upsert({
+    await getSupabase().from('social_connections').upsert({
       user_id: userId,
       platform: 'facebook',
       platform_user_id: userData.id,
@@ -77,7 +79,7 @@ export async function GET(req: NextRequest) {
         );
         const igAccount = await igAccountResponse.json();
 
-        await supabase.from('social_connections').upsert({
+        await getSupabase().from('social_connections').upsert({
           user_id: userId,
           platform: 'instagram',
           platform_user_id: igAccount.id,

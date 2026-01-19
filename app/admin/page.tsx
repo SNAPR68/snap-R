@@ -20,14 +20,14 @@ export default async function AdminDashboard() {
     { data: recentErrors },
     { data: recentContacts },
   ] = await Promise.all([
-    adminSupabase.from('profiles').select('id, email, full_name, plan, credits, created_at'),
-    adminSupabase.from('api_costs').select('provider, cost_cents, credits_charged, created_at, user_id').gte('created_at', thirtyDaysAgo.toISOString()),
-    adminSupabase.from('api_costs').select('cost_cents').gte('created_at', yesterday.toISOString()).lt('created_at', today.toISOString()),
-    adminSupabase.from('human_edit_orders').select('amount_paid, created_at').gte('created_at', thirtyDaysAgo.toISOString()),
-    adminSupabase.from('listings').select('id, created_at'),
-    adminSupabase.from('photos').select('id, status, created_at'),
-    adminSupabase.from('error_logs').select('id, severity').eq('resolved', false),
-    adminSupabase.from('contact_submissions').select('id').or('status.eq.new,status.is.null'),
+    adminSupabase().from('profiles').select('id, email, full_name, plan, credits, created_at'),
+    adminSupabase().from('api_costs').select('provider, cost_cents, credits_charged, created_at, user_id').gte('created_at', thirtyDaysAgo.toISOString()),
+    adminSupabase().from('api_costs').select('cost_cents').gte('created_at', yesterday.toISOString()).lt('created_at', today.toISOString()),
+    adminSupabase().from('human_edit_orders').select('amount_paid, created_at').gte('created_at', thirtyDaysAgo.toISOString()),
+    adminSupabase().from('listings').select('id, created_at'),
+    adminSupabase().from('photos').select('id, status, created_at'),
+    adminSupabase().from('error_logs').select('id, severity').eq('resolved', false),
+    adminSupabase().from('contact_submissions').select('id').or('status.eq.new,status.is.null'),
   ]);
 
   // User metrics

@@ -2,10 +2,12 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { createClient as createServiceClient } from '@supabase/supabase-js';
 
-const serviceSupabase = createServiceClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+function getServiceSupabase() {
+  return createServiceClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  );
+}
 
 export async function GET(
   req: NextRequest,
@@ -57,6 +59,7 @@ async function handleFacebookOAuth(
   baseUrl: string,
   redirectUrl: string
 ) {
+  const serviceSupabase = getServiceSupabase();
   const appId = process.env.NEXT_PUBLIC_FACEBOOK_APP_ID;
   const appSecret = process.env.FACEBOOK_APP_SECRET;
   const callbackUrl = `${baseUrl}/api/social/oauth/${platform}`;
@@ -179,6 +182,7 @@ async function handleLinkedInOAuth(
   baseUrl: string,
   redirectUrl: string
 ) {
+  const serviceSupabase = getServiceSupabase();
   const clientId = process.env.NEXT_PUBLIC_LINKEDIN_CLIENT_ID;
   const clientSecret = process.env.LINKEDIN_CLIENT_SECRET;
   const callbackUrl = `${baseUrl}/api/social/oauth/linkedin`;
@@ -241,4 +245,3 @@ async function handleLinkedInOAuth(
 
   return NextResponse.redirect(`${redirectUrl}?connected=linkedin`);
 }
-

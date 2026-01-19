@@ -6,10 +6,12 @@ import { Metadata } from 'next'
 export const dynamic = 'force-dynamic'
 
 // Use service role to bypass RLS for public property pages
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
+function getSupabase() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY!
+  );
+}
 
 interface Props {
   params: Promise<{ slug: string }>
@@ -17,6 +19,7 @@ interface Props {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params
+  const supabase = getSupabase()
   
   // Extract UUID from slug - full UUID at the end
   const uuidMatch = slug.match(/([a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12})$/i)
@@ -33,7 +36,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   if (!listing) return { title: 'Property Not Found' }
   
   const title = listing.title || listing.address || 'Property For Sale'
-  const description = listing.description?.slice(0, 160) || 
+  const description = listing.description?.slice(0, 160) ||
     `${listing.bedrooms || ''}bd ${listing.bathrooms || ''}ba ${listing.square_feet ? listing.square_feet.toLocaleString() + ' sqft' : ''} - ${[listing.address, listing.city, listing.state].filter(Boolean).join(', ')}`
   
   return {
@@ -54,6 +57,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function PropertySitePage({ params }: Props) {
   const { slug } = await params
+  const supabase = getSupabase()
   
   // Extract full UUID from slug
   const uuidMatch = slug.match(/([a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12})$/i)
@@ -113,7 +117,7 @@ export default async function PropertySitePage({ params }: Props) {
   }
   
   // Sort photos by display order
-  const sortedPhotos = (listing.photos || []).sort((a: any, b: any) => 
+  const sortedPhotos = (listing.photos || []).sort((a: any, b: any) =>
     (a.display_order || 0) - (b.display_order || 0)
   )
   

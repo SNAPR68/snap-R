@@ -9,27 +9,27 @@ export default async function AdminRevenue() {
   const fourteenDaysAgo = new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000);
 
   // Get profiles for plan counts
-  const { data: profiles } = await adminSupabase.from('profiles').select('plan, subscription_tier, created_at');
+  const { data: profiles } = await adminSupabase().from('profiles').select('plan, subscription_tier, created_at');
 
   // Get AI costs
-  const { data: costs30d } = await adminSupabase
+  const { data: costs30d } = await adminSupabase()
     .from('api_costs')
     .select('cost_cents, credits_charged, created_at')
     .gte('created_at', thirtyDaysAgo.toISOString());
 
-  const { data: costsPrev30d } = await adminSupabase
+  const { data: costsPrev30d } = await adminSupabase()
     .from('api_costs')
     .select('cost_cents')
     .gte('created_at', sixtyDaysAgo.toISOString())
     .lt('created_at', thirtyDaysAgo.toISOString());
 
   // Get human edit orders
-  const { data: humanEdits30d } = await adminSupabase
+  const { data: humanEdits30d } = await adminSupabase()
     .from('human_edit_orders')
     .select('amount_paid, created_at')
     .gte('created_at', thirtyDaysAgo.toISOString());
 
-  const { data: humanEditsPrev30d } = await adminSupabase
+  const { data: humanEditsPrev30d } = await adminSupabase()
     .from('human_edit_orders')
     .select('amount_paid')
     .gte('created_at', sixtyDaysAgo.toISOString())

@@ -7,19 +7,19 @@ async function resolveError(formData: FormData) {
   'use server';
   const { adminSupabase } = await import('@/lib/supabase/admin');
   const errorId = formData.get('errorId') as string;
-  await adminSupabase.from('error_logs').update({ resolved: true, resolved_at: new Date().toISOString() }).eq('id', errorId);
+  await adminSupabase().from('error_logs').update({ resolved: true, resolved_at: new Date().toISOString() }).eq('id', errorId);
   revalidatePath('/admin/logs');
 }
 
 async function resolveAll() {
   'use server';
   const { adminSupabase } = await import('@/lib/supabase/admin');
-  await adminSupabase.from('error_logs').update({ resolved: true, resolved_at: new Date().toISOString() }).eq('resolved', false);
+  await adminSupabase().from('error_logs').update({ resolved: true, resolved_at: new Date().toISOString() }).eq('resolved', false);
   revalidatePath('/admin/logs');
 }
 
 export default async function AdminLogs() {
-  const { data: errors } = await adminSupabase
+  const { data: errors } = await adminSupabase()
     .from('error_logs')
     .select('*')
     .order('created_at', { ascending: false })

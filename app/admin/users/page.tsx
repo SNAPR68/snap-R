@@ -9,7 +9,7 @@ async function updateUserPlan(formData: FormData) {
   const { adminSupabase } = await import('@/lib/supabase/admin');
   const userId = formData.get('userId') as string;
   const plan = formData.get('plan') as string;
-  await adminSupabase.from('profiles').update({ plan }).eq('id', userId);
+  await adminSupabase().from('profiles').update({ plan }).eq('id', userId);
   revalidatePath('/admin/users');
 }
 
@@ -18,14 +18,14 @@ async function addCredits(formData: FormData) {
   const { adminSupabase } = await import('@/lib/supabase/admin');
   const userId = formData.get('userId') as string;
   const amount = parseInt(formData.get('amount') as string) || 0;
-  const { data: user } = await adminSupabase.from('profiles').select('credits').eq('id', userId).single();
-  await adminSupabase.from('profiles').update({ credits: (user?.credits || 0) + amount }).eq('id', userId);
+  const { data: user } = await adminSupabase().from('profiles').select('credits').eq('id', userId).single();
+  await adminSupabase().from('profiles').update({ credits: (user?.credits || 0) + amount }).eq('id', userId);
   revalidatePath('/admin/users');
 }
 
 export default async function AdminUsers() {
-  const { data: users } = await adminSupabase.from('profiles').select('*').order('created_at', { ascending: false });
-  const { data: apiCosts } = await adminSupabase.from('api_costs').select('user_id, cost_cents, credits_charged, created_at');
+  const { data: users } = await adminSupabase().from('profiles').select('*').order('created_at', { ascending: false });
+  const { data: apiCosts } = await adminSupabase().from('api_costs').select('user_id, cost_cents, credits_charged, created_at');
 
   const userStats: Record<string, { cost: number; credits: number; count: number; lastActive: string }> = {};
   (apiCosts || []).forEach((c: any) => {

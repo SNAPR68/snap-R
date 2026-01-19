@@ -4,10 +4,12 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { createClient as createServiceClient } from '@supabase/supabase-js';
 
-const serviceSupabase = createServiceClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+function getServiceSupabase() {
+  return createServiceClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  );
+}
 
 // GET - Fetch organization
 export async function GET(request: NextRequest) {
@@ -18,7 +20,7 @@ export async function GET(request: NextRequest) {
 
     // Public lookup by slug (for branded login pages)
     if (slug) {
-      const { data: org } = await serviceSupabase
+      const { data: org } = await getServiceSupabase()
         .from('organizations')
         .select('name, slug, logo_url, primary_color, secondary_color, accent_color, platform_name, custom_login_message, white_label_active')
         .eq('slug', slug)
@@ -37,7 +39,7 @@ export async function GET(request: NextRequest) {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
       }
 
-      const { data: org } = await serviceSupabase
+      const { data: org } = await getServiceSupabase()
         .from('organizations')
         .select('*')
         .eq('owner_id', user.id)
@@ -75,7 +77,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Check if user already has an org
-    const { data: existingOrg } = await serviceSupabase
+    const { data: existingOrg } = await getServiceSupabase()
       .from('organizations')
       .select('id')
       .eq('owner_id', user.id)
@@ -86,7 +88,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Create organization
-    const { data: newOrg, error: insertError } = await serviceSupabase
+    const { data: newOrg, error: insertError } = await getServiceSupabase()
       .from('organizations')
       .insert({
         name,
@@ -135,7 +137,7 @@ export async function PUT(request: NextRequest) {
     }
 
     // Verify ownership
-    const { data: org } = await serviceSupabase
+    const { data: org } = await getServiceSupabase()
       .from('organizations')
       .select('owner_id')
       .eq('id', id)
@@ -147,7 +149,7 @@ export async function PUT(request: NextRequest) {
 
     // Don't allow slug change if white-label is active
     if (updates.slug) {
-      const { data: currentOrg } = await serviceSupabase
+      const { data: currentOrg } = await getServiceSupabase()
         .from('organizations')
         .select('white_label_active, slug')
         .eq('id', id)
@@ -158,7 +160,7 @@ export async function PUT(request: NextRequest) {
       }
     }
 
-    const { data: updatedOrg, error: updateError } = await serviceSupabase
+    const { data: updatedOrg, error: updateError } = await getServiceSupabase()
       .from('organizations')
       .update(updates)
       .eq('id', id)

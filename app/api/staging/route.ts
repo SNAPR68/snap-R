@@ -5,10 +5,12 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { createClient as createServiceClient } from '@supabase/supabase-js';
 
-const serviceSupabase = createServiceClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+function getServiceSupabase() {
+  return createServiceClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  );
+}
 
 const REPLICATE_API_TOKEN = process.env.REPLICATE_API_TOKEN;
 
@@ -276,7 +278,7 @@ async function uploadToStorage(imageUrl: string, stagingId: string, userId: stri
 
     const fileName = `staging/${userId}/${stagingId}.jpg`;
     
-    const { error } = await serviceSupabase.storage
+    const { error } = await getServiceSupabase().storage
       .from('raw-images')
       .upload(fileName, buffer, {
         contentType: 'image/jpeg',
@@ -288,7 +290,7 @@ async function uploadToStorage(imageUrl: string, stagingId: string, userId: stri
       return null;
     }
 
-    const { data: urlData } = await serviceSupabase.storage
+    const { data: urlData } = await getServiceSupabase().storage
       .from('raw-images')
       .createSignedUrl(fileName, 3600);
 
@@ -367,7 +369,7 @@ export async function POST(request: NextRequest) {
       .eq('id', user.id);
 
     // Save staging record
-    await serviceSupabase
+    await getServiceSupabase()
       .from('enhancements')
       .insert({
         user_id: user.id,
@@ -420,7 +422,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { data: stagings, error } = await serviceSupabase
+    const { data: stagings, error } = await getServiceSupabase()
       .from('enhancements')
       .select('*')
       .eq('user_id', user.id)

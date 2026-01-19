@@ -2,17 +2,19 @@ import { NextRequest, NextResponse } from 'next/server';
 import { Resend } from 'resend';
 import { createClient } from '@supabase/supabase-js';
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+function getSupabase() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  );
+}
 
 export async function POST(req: NextRequest) {
   try {
     const resend = new Resend(process.env.RESEND_API_KEY);
     const { shareToken, clientName } = await req.json();
 
-    const { data: share } = await supabase
+    const { data: share } = await getSupabase()
       .from('shares')
       .select('*')
       .eq('token', shareToken)
@@ -22,13 +24,13 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Share not found' }, { status: 404 });
     }
 
-    const { data: listing } = await supabase
+    const { data: listing } = await getSupabase()
       .from('listings')
       .select('title')
       .eq('id', share.listing_id)
       .single();
 
-    const { data: owner } = await supabase
+    const { data: owner } = await getSupabase()
       .from('profiles')
       .select('email, full_name')
       .eq('id', share.user_id)
@@ -38,7 +40,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Owner email not found' }, { status: 404 });
     }
 
-    const { data: photos } = await supabase
+    const { data: photos } = await getSupabase()
       .from('photos')
       .select('client_approved')
       .eq('listing_id', share.listing_id)

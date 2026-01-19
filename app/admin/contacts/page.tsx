@@ -8,12 +8,12 @@ async function updateStatus(formData: FormData) {
   const { adminSupabase } = await import('@/lib/supabase/admin');
   const id = formData.get('id') as string;
   const status = formData.get('status') as string;
-  await adminSupabase.from('contact_submissions').update({ status }).eq('id', id);
+  await adminSupabase().from('contact_submissions').update({ status }).eq('id', id);
   revalidatePath('/admin/contacts');
 }
 
 export default async function AdminContacts() {
-  const { data: submissions } = await adminSupabase
+  const { data: submissions } = await adminSupabase()
     .from('contact_submissions')
     .select('*')
     .order('created_at', { ascending: false });

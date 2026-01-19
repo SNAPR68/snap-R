@@ -12,9 +12,9 @@ export default async function AdminAnalytics() {
     { data: profiles },
     { data: events },
   ] = await Promise.all([
-    adminSupabase.from('api_costs').select('*').gte('created_at', thirtyDaysAgo.toISOString()),
-    adminSupabase.from('profiles').select('id, email, full_name, plan, created_at'),
-    adminSupabase.from('analytics_events').select('*').gte('created_at', fourteenDaysAgo.toISOString()).order('created_at', { ascending: false }).limit(500),
+    adminSupabase().from('api_costs').select('*').gte('created_at', thirtyDaysAgo.toISOString()),
+    adminSupabase().from('profiles').select('id, email, full_name, plan, created_at'),
+    adminSupabase().from('analytics_events').select('*').gte('created_at', fourteenDaysAgo.toISOString()).order('created_at', { ascending: false }).limit(500),
   ]);
 
   // Cost aggregations

@@ -18,7 +18,7 @@ export async function GET(request: Request) {
         .eq('id', data.user.id)
         .single();
 
-      // If no profile, create one with defaults
+      // If no profile at all - this is a brand new user
       if (!profile) {
         await supabase.from('profiles').insert({
           id: data.user.id,
@@ -34,12 +34,8 @@ export async function GET(request: Request) {
         return NextResponse.redirect(origin + '/onboarding');
       }
 
-      // Existing user - check if onboarding complete
-      if (!profile.onboarded_at) {
-        return NextResponse.redirect(origin + '/onboarding');
-      }
-
-      // Fully onboarded - go to dashboard
+      // Profile exists = existing user - go straight to dashboard
+      // Even if they didn't complete onboarding before, don't force them
       return NextResponse.redirect(origin + (next || '/dashboard'));
     }
   }

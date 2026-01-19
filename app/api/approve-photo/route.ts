@@ -1,10 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+function getSupabase() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  );
+}
 
 export async function POST(req: NextRequest) {
   try {
@@ -18,7 +20,7 @@ export async function POST(req: NextRequest) {
 
     // If shareToken provided, verify it
     if (shareToken) {
-      const { data: share } = await supabase
+      const { data: share } = await getSupabase()
         .from('shares')
         .select('listing_id')
         .eq('token', shareToken)
@@ -30,7 +32,7 @@ export async function POST(req: NextRequest) {
       listingId = share.listing_id;
     } else {
       // No shareToken - get listing from photo directly
-      const { data: photo } = await supabase
+      const { data: photo } = await getSupabase()
         .from('photos')
         .select('listing_id')
         .eq('id', photoId)
@@ -43,7 +45,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Update photo approval
-    const { error } = await supabase
+    const { error } = await getSupabase()
       .from('photos')
       .update({ 
         client_approved: approved,

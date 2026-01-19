@@ -9,10 +9,12 @@ function getStripe() {
   });
 }
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+function getSupabase() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  );
+}
 
 // Listings limits per plan
 const PLAN_LIMITS: Record<string, { listings: number; photos: number }> = {
@@ -34,6 +36,7 @@ const PLAN_LIMITS: Record<string, { listings: number; photos: number }> = {
 
 export async function POST(request: NextRequest) {
   const stripe = getStripe();
+  const supabase = getSupabase();
   const body = await request.text();
   const signature = request.headers.get('stripe-signature')!;
 
