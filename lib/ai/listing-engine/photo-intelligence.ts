@@ -1,123 +1,260 @@
 /**
- * SnapR AI Engine V2 - Photo Intelligence
+ * SnapR AI Engine V3 - Photo Intelligence
  * ========================================
- * Uses GPT-4 Vision to analyze photos and classify them
+ * Production-grade GPT-4o Vision analysis
+ * 
+ * KEY IMPROVEMENTS:
+ * 1. Validates if photo is a real property photo
+ * 2. Only suggests tools that will FIX actual problems
+ * 3. Detects TV content quality (not just presence)
+ * 4. Detects if fireplace needs fire (not just presence)
+ * 5. Better prompting for accurate analysis
+ * 6. Confidence scoring with reasons
  */
 
 import OpenAI from 'openai';
-import { PhotoAnalysis, PhotoType, SkyQuality, LawnQuality, LightingQuality, ClutterLevel, Priority } from './types';
+import { 
+  PhotoAnalysis, 
+  PhotoType, 
+  SkyQuality, 
+  LawnQuality, 
+  LightingQuality, 
+  ClutterLevel, 
+  Priority 
+} from './types';
 import { ToolId } from '../router';
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY!,
 });
 
-const ANALYSIS_VERSION = '2.0.0';
+const ANALYSIS_VERSION = '3.0.0';
 
 // ============================================
-// ANALYSIS PROMPT
+// ENHANCED ANALYSIS PROMPT
 // ============================================
+const ANALYSIS_PROMPT = `You are an expert real estate photo analyst. Your job is to analyze property photos and determine EXACTLY what enhancements are needed - no more, no less.
 
-const ANALYSIS_PROMPT = `You are a professional real estate photo analyst. Analyze this property photo and determine what enhancements it needs.
+CRITICAL RULES:
+1. Only suggest tools that will FIX an actual PROBLEM
+2. Do NOT suggest tools just because an object exists
+3. If something looks GOOD, leave it alone
+4. Be conservative - when in doubt, don't suggest a tool
 
-ANALYZE THE FOLLOWING:
+═══════════════════════════════════════════════════════════════
+STEP 1: VALIDATE THE PHOTO
+═══════════════════════════════════════════════════════════════
 
-1. PHOTO TYPE - Classify as one of:
-   - exterior_front (front of house)
-   - exterior_back (backyard view)
-   - exterior_side (side of house)
-   - interior_living (living room, family room)
-   - interior_kitchen
-   - interior_bedroom
-   - interior_bathroom
-   - interior_dining
-   - interior_office
-   - interior_other
-   - drone (aerial shot)
-   - detail (close-up of feature)
+First, determine if this is a VALID real estate property photo:
 
-2. SKY ANALYSIS (if exterior/drone):
-   - Is sky visible? Estimate percentage of image (0-100)
-   - Sky quality: clear_blue, overcast, blown_out (white/washed out), ugly (stormy/bad), good, none
+✓ VALID: House exterior, interior room, aerial/drone view, backyard, pool area, specific room feature (fireplace, kitchen island, etc.)
 
-3. TWILIGHT POTENTIAL (if exterior):
-   - Would this look good as a twilight/dusk photo?
-   - Are windows visible that could glow with interior light?
-   - Score 0-100 for twilight conversion potential
-   - Best candidates: front exteriors with visible windows, taken during day
+✗ INVALID: 
+- Texture/material close-ups (wood grain, marble, fabric)
+- Documents, floorplans, screenshots
+- People, pets, personal photos
+- Non-property images (cars, furniture only, abstract)
+- Blurry/unusable photos
 
-4. LAWN ANALYSIS (if visible):
-   - Is lawn/grass visible? Estimate percentage (0-100)
-   - Lawn quality: lush_green, patchy, brown, dead, none
+If INVALID → set "isValidPropertyPhoto": false and "skipEnhancement": true
 
-5. LIGHTING:
-   - Overall: well_lit, dark, overexposed, mixed, flash_harsh
-   - Does it need HDR enhancement to balance exposure?
+═══════════════════════════════════════════════════════════════
+STEP 2: CLASSIFY THE PHOTO
+═══════════════════════════════════════════════════════════════
 
-6. INTERIOR ISSUES (if interior):
-   - Is there clutter? Level: none, light, moderate, heavy
-   - Is the room empty/unfurnished (staging candidate)?
-   - Special features visible: fireplace, pool, TV?
+Photo Type (choose ONE):
+- exterior_front: Front of house, main facade
+- exterior_back: Backyard, rear view
+- exterior_side: Side of house
+- interior_living: Living room, family room, great room
+- interior_kitchen: Kitchen
+- interior_bedroom: Bedroom, master suite
+- interior_bathroom: Bathroom
+- interior_dining: Dining room
+- interior_office: Office, study
+- interior_other: Hallway, laundry, closet, garage
+- drone: Aerial view
+- detail: Close-up of specific feature
+- unknown: Cannot determine
 
-7. QUALITY ASSESSMENT:
-   - Composition: excellent, good, average, poor
-   - Sharpness: sharp, acceptable, soft, blurry
-   - Are vertical lines straight or tilted?
+═══════════════════════════════════════════════════════════════
+STEP 3: ANALYZE ISSUES (Be specific!)
+═══════════════════════════════════════════════════════════════
 
-8. HERO POTENTIAL:
-   - Score 0-100 for listing cover photo potential
-   - Best heroes: front exterior, well-composed, good lighting
+SKY (exteriors only):
+- skyQuality: What's the actual sky quality?
+  - "clear_blue" = Beautiful blue sky, no issues
+  - "good" = Acceptable sky, minor clouds
+  - "overcast" = Gray but even, not necessarily bad
+  - "blown_out" = WHITE, washed out, no detail ← NEEDS FIX
+  - "ugly" = Stormy, dark, unappealing ← NEEDS FIX
+  - "none" = No sky visible
 
-9. RECOMMENDED ENHANCEMENTS:
-   Choose from: sky-replacement, virtual-twilight, lawn-repair, pool-enhance, declutter, virtual-staging, fire-fireplace, tv-screen, lights-on, hdr, auto-enhance, perspective-correction, flash-fix
-   
-   Priority: critical (major issues), recommended (would improve), optional (minor), none
+TWILIGHT POTENTIAL (exteriors with windows):
+- Would this specific photo benefit from twilight conversion?
+- Are MULTIPLE windows clearly visible that could glow?
+- Is it currently a DAYTIME photo? (nighttime photos can't be converted)
+- twilightScore: 0-100 (only 80+ should be converted)
 
-Return ONLY a valid JSON object with this exact structure (no markdown, no explanation):
+LAWN (exteriors only):
+- lawnQuality: What's the actual lawn quality?
+  - "lush_green" = Healthy, green ← NO FIX NEEDED
+  - "patchy" = Some brown/bare spots ← NEEDS FIX
+  - "brown" = Mostly brown/dead ← NEEDS FIX
+  - "dead" = Completely dead ← NEEDS FIX
+  - "none" = No lawn visible
+
+INTERIOR ISSUES:
+- clutterLevel: "none" | "light" | "moderate" | "heavy"
+  - Only "moderate" or "heavy" should trigger declutter
+- roomEmpty: Is the room COMPLETELY unfurnished? (for staging)
+  - A room with even one piece of furniture is NOT empty
+
+SPECIAL FEATURES - IMPORTANT: Detect if action is NEEDED, not just present:
+
+TV Analysis:
+- hasTV: Is there a TV/monitor visible?
+- tvNeedsReplacement: Does the TV show DISTRACTING content?
+  - TRUE if: news, sports, bright commercial, static, dated show, black screen with reflection
+  - FALSE if: turned off (dark), nature scene, neutral image, screen not clearly visible
+  - When in doubt: FALSE (don't replace what isn't broken)
+
+Fireplace Analysis:
+- hasFireplace: Is there a fireplace visible?
+- fireplaceNeedsFire: Would adding fire IMPROVE this photo?
+  - TRUE if: fireplace is clearly empty/unlit AND it's a cozy room
+  - FALSE if: already has fire, gas fireplace (no logs), modern electric, or not a focal point
+  - When in doubt: FALSE
+
+Pool Analysis:
+- hasPool: Is there a pool visible?
+- poolNeedsEnhancement: Is the pool water problematic?
+  - TRUE if: green, murky, dirty, debris visible
+  - FALSE if: already crystal clear blue water
+
+LIGHTING:
+- lighting: "well_lit" | "dark" | "overexposed" | "mixed" | "flash_harsh"
+- needsHDR: Are there exposure problems that HDR would fix?
+
+COMPOSITION:
+- verticalAlignment: Are vertical lines (walls, doors) straight? (true/false)
+
+═══════════════════════════════════════════════════════════════
+STEP 4: SUGGEST TOOLS (ONLY if needed!)
+═══════════════════════════════════════════════════════════════
+
+Available tools and WHEN to use them:
+
+EXTERIOR TOOLS:
+- "sky-replacement": ONLY if skyQuality is "blown_out" or "ugly"
+- "virtual-twilight": ONLY if twilightScore >= 80 AND hasVisibleWindows AND daytime photo
+- "lawn-repair": ONLY if lawnQuality is "patchy", "brown", or "dead"
+- "pool-enhance": ONLY if poolNeedsEnhancement is true
+
+INTERIOR TOOLS:
+- "declutter": ONLY if clutterLevel is "moderate" or "heavy"
+- "virtual-staging": ONLY if roomEmpty is true (completely empty)
+- "fire-fireplace": ONLY if fireplaceNeedsFire is true
+- "tv-screen": ONLY if tvNeedsReplacement is true
+- "lights-on": ONLY if lighting is "dark"
+- "window-masking": ONLY if interior has blown-out white windows
+
+ENHANCEMENT TOOLS:
+- "hdr": ONLY if needsHDR is true OR lighting is "mixed"
+- "perspective-correction": ONLY if verticalAlignment is false
+- "auto-enhance": Safe baseline if no other tools needed
+- "flash-fix": ONLY if lighting is "flash_harsh"
+
+HERO SCORE (0-100):
+- 90-100: Perfect hero photo (front exterior, excellent composition, good lighting)
+- 70-89: Good candidate (clear exterior, good angle)
+- 50-69: Acceptable (decent composition)
+- 0-49: Not hero material (interior, poor quality, wrong angle)
+
+═══════════════════════════════════════════════════════════════
+OUTPUT FORMAT
+═══════════════════════════════════════════════════════════════
+
+Return ONLY valid JSON (no markdown, no explanation):
+
 {
+  "isValidPropertyPhoto": true,
+  "skipEnhancement": false,
+  "skipReason": null,
+  
   "photoType": "exterior_front",
+  
   "hasSky": true,
   "skyVisible": 35,
   "skyQuality": "blown_out",
+  
   "twilightCandidate": true,
   "twilightScore": 85,
   "hasVisibleWindows": true,
+  "windowCount": 6,
+  
   "hasLawn": true,
   "lawnVisible": 25,
   "lawnQuality": "patchy",
+  
   "lighting": "well_lit",
   "needsHDR": false,
+  
   "hasClutter": false,
   "clutterLevel": "none",
   "roomEmpty": false,
+  
   "hasFireplace": false,
+  "fireplaceNeedsFire": false,
+  
   "hasPool": false,
+  "poolNeedsEnhancement": false,
+  
   "hasTV": false,
+  "tvNeedsReplacement": false,
+  
   "composition": "good",
   "sharpness": "sharp",
   "verticalAlignment": true,
+  
   "heroScore": 82,
-  "heroReason": "Strong front exterior with good composition, needs sky fix",
+  "heroReason": "Strong front exterior, good composition, needs sky fix",
+  
   "suggestedTools": ["sky-replacement", "lawn-repair"],
+  "toolReasons": {
+    "sky-replacement": "Sky is blown out (white/washed out)",
+    "lawn-repair": "Lawn has brown patches"
+  },
+  
+  "notSuggested": {
+    "virtual-twilight": "Will be evaluated at listing level for top candidates",
+    "declutter": "No clutter present",
+    "tv-screen": "No TV visible"
+  },
+  
   "priority": "critical",
-  "confidence": 90
+  "confidence": 92,
+  "confidenceReason": "Clear exterior photo with obvious issues identified"
 }`;
 
 // ============================================
 // MAIN ANALYSIS FUNCTION
 // ============================================
-
 export async function analyzePhoto(
   photoId: string,
   photoUrl: string
 ): Promise<PhotoAnalysis> {
-  console.log(`[PhotoIntelligence] Analyzing photo: ${photoId}`);
+  console.log(`[PhotoIntelligence V3] Analyzing photo: ${photoId}`);
   const startTime = Date.now();
 
   try {
     const response = await openai.chat.completions.create({
       model: 'gpt-4o',
       messages: [
+        {
+          role: 'system',
+          content: 'You are an expert real estate photo analyst. Be precise and conservative - only suggest enhancements for actual problems.'
+        },
         {
           role: 'user',
           content: [
@@ -132,8 +269,8 @@ export async function analyzePhoto(
           ],
         },
       ],
-      max_tokens: 1000,
-      temperature: 0.1, // Low temperature for consistent analysis
+      max_tokens: 2000,
+      temperature: 0.1, // Very low for consistent analysis
     });
 
     const content = response.choices[0]?.message?.content;
@@ -147,33 +284,51 @@ export async function analyzePhoto(
       .replace(/```\n?/g, '')
       .trim();
     
-    const analysis = JSON.parse(cleanContent);
+    let analysis;
+    try {
+      analysis = JSON.parse(cleanContent);
+    } catch (parseError) {
+      console.error('[PhotoIntelligence V3] JSON parse error:', cleanContent.substring(0, 200));
+      throw new Error('Failed to parse GPT-4 response as JSON');
+    }
     
     const duration = Date.now() - startTime;
-    console.log(`[PhotoIntelligence] Analysis complete in ${duration}ms`);
+    console.log(`[PhotoIntelligence V3] Analysis complete in ${duration}ms`);
+    console.log(`[PhotoIntelligence V3] Type: ${analysis.photoType}`);
+    console.log(`[PhotoIntelligence V3] Valid: ${analysis.isValidPropertyPhoto}`);
+    console.log(`[PhotoIntelligence V3] Tools: ${analysis.suggestedTools?.join(', ') || 'none'}`);
+    console.log(`[PhotoIntelligence V3] Confidence: ${analysis.confidence}%`);
 
     // Validate and normalize the response
     return normalizeAnalysis(photoId, photoUrl, analysis);
+
   } catch (error: any) {
-    console.error(`[PhotoIntelligence] Analysis failed:`, error.message);
+    const duration = Date.now() - startTime;
+    console.error(`[PhotoIntelligence V3] Analysis failed after ${duration}ms:`, error.message);
     
-    // Return a safe default analysis on failure
+    // Return a conservative default analysis on failure
     return getDefaultAnalysis(photoId, photoUrl, error.message);
   }
 }
 
 // ============================================
-// BATCH ANALYSIS
+// BATCH ANALYSIS WITH PROGRESS
 // ============================================
-
 export async function analyzePhotos(
   photos: Array<{ id: string; url: string }>,
-  options: { maxConcurrency?: number } = {}
+  options: { 
+    maxConcurrency?: number;
+    onProgress?: (completed: number, total: number) => void;
+  } = {}
 ): Promise<PhotoAnalysis[]> {
-  const { maxConcurrency = 5 } = options;
+  const { maxConcurrency = 5, onProgress } = options;
   const results: PhotoAnalysis[] = [];
   
-  console.log(`[PhotoIntelligence] Analyzing ${photos.length} photos (concurrency: ${maxConcurrency})`);
+  console.log(`[PhotoIntelligence V3] ═══════════════════════════════════════`);
+  console.log(`[PhotoIntelligence V3] Analyzing ${photos.length} photos`);
+  console.log(`[PhotoIntelligence V3] Concurrency: ${maxConcurrency}`);
+  console.log(`[PhotoIntelligence V3] ═══════════════════════════════════════`);
+  
   const startTime = Date.now();
 
   // Process in batches for rate limiting
@@ -183,7 +338,12 @@ export async function analyzePhotos(
     const batchResults = await Promise.all(batchPromises);
     results.push(...batchResults);
     
-    console.log(`[PhotoIntelligence] Progress: ${results.length}/${photos.length}`);
+    // Report progress
+    if (onProgress) {
+      onProgress(results.length, photos.length);
+    }
+    
+    console.log(`[PhotoIntelligence V3] Progress: ${results.length}/${photos.length}`);
     
     // Small delay between batches to avoid rate limits
     if (i + maxConcurrency < photos.length) {
@@ -192,7 +352,19 @@ export async function analyzePhotos(
   }
 
   const duration = Date.now() - startTime;
-  console.log(`[PhotoIntelligence] All ${photos.length} photos analyzed in ${(duration / 1000).toFixed(1)}s`);
+  
+  // Log summary
+  const validPhotos = results.filter(r => r.isValidPropertyPhoto !== false).length;
+  const skippedPhotos = results.filter(r => r.skipEnhancement).length;
+  const avgConfidence = Math.round(results.reduce((sum, r) => sum + r.confidence, 0) / results.length);
+  
+  console.log(`[PhotoIntelligence V3] ═══════════════════════════════════════`);
+  console.log(`[PhotoIntelligence V3] ANALYSIS COMPLETE`);
+  console.log(`[PhotoIntelligence V3] Time: ${(duration / 1000).toFixed(1)}s`);
+  console.log(`[PhotoIntelligence V3] Valid photos: ${validPhotos}/${photos.length}`);
+  console.log(`[PhotoIntelligence V3] To skip: ${skippedPhotos}`);
+  console.log(`[PhotoIntelligence V3] Avg confidence: ${avgConfidence}%`);
+  console.log(`[PhotoIntelligence V3] ═══════════════════════════════════════`);
 
   return results;
 }
@@ -200,15 +372,26 @@ export async function analyzePhotos(
 // ============================================
 // NORMALIZATION & VALIDATION
 // ============================================
-
 function normalizeAnalysis(
   photoId: string,
   photoUrl: string,
   raw: any
 ): PhotoAnalysis {
+  // Check if photo should be skipped
+  const isValid = raw.isValidPropertyPhoto !== false;
+  const shouldSkip = raw.skipEnhancement === true || !isValid;
+  
+  // Validate suggested tools against our rules
+  const validatedTools = shouldSkip ? [] : validateSuggestedTools(raw);
+  
   return {
     photoId,
     photoUrl,
+    
+    // Validity flags
+    isValidPropertyPhoto: isValid,
+    skipEnhancement: shouldSkip,
+    skipReason: raw.skipReason || (shouldSkip && !isValid ? 'Not a valid property photo' : null),
     
     // Classification
     photoType: validatePhotoType(raw.photoType),
@@ -222,6 +405,7 @@ function normalizeAnalysis(
     twilightCandidate: Boolean(raw.twilightCandidate),
     twilightScore: clamp(raw.twilightScore || 0, 0, 100),
     hasVisibleWindows: Boolean(raw.hasVisibleWindows),
+    windowCount: raw.windowCount || 0,
     
     // Lawn
     hasLawn: Boolean(raw.hasLawn),
@@ -236,9 +420,14 @@ function normalizeAnalysis(
     hasClutter: Boolean(raw.hasClutter),
     clutterLevel: validateClutterLevel(raw.clutterLevel),
     roomEmpty: Boolean(raw.roomEmpty),
+    
+    // Special features with "needs" flags
     hasFireplace: Boolean(raw.hasFireplace),
+    fireplaceNeedsFire: Boolean(raw.fireplaceNeedsFire),
     hasPool: Boolean(raw.hasPool),
+    poolNeedsEnhancement: Boolean(raw.poolNeedsEnhancement),
     hasTV: Boolean(raw.hasTV),
+    tvNeedsReplacement: Boolean(raw.tvNeedsReplacement),
     
     // Quality
     composition: validateComposition(raw.composition),
@@ -249,15 +438,125 @@ function normalizeAnalysis(
     heroScore: clamp(raw.heroScore || 50, 0, 100),
     heroReason: raw.heroReason || '',
     
-    // Recommendations
-    suggestedTools: validateTools(raw.suggestedTools),
-    priority: validatePriority(raw.priority),
+    // Recommendations (validated)
+    suggestedTools: validatedTools,
+    toolReasons: raw.toolReasons || {},
+    notSuggested: raw.notSuggested || {},
+    priority: shouldSkip ? 'none' : validatePriority(raw.priority),
     confidence: clamp(raw.confidence || 70, 0, 100),
+    confidenceReason: raw.confidenceReason || '',
     
     // Metadata
     analyzedAt: new Date().toISOString(),
     analysisVersion: ANALYSIS_VERSION,
   };
+}
+
+/**
+ * Validate that suggested tools make sense given the analysis
+ */
+function validateSuggestedTools(raw: any): ToolId[] {
+  const suggested = raw.suggestedTools || [];
+  if (!Array.isArray(suggested)) return ['auto-enhance'];
+  
+  const validated: ToolId[] = [];
+  
+  for (const tool of suggested) {
+    let isValid = false;
+    
+    switch (tool) {
+      case 'sky-replacement':
+        // Only if sky is bad
+        isValid = raw.skyQuality === 'blown_out' || raw.skyQuality === 'ugly';
+        break;
+        
+      case 'virtual-twilight':
+        // Only if high twilight score and has windows
+        isValid = raw.twilightScore >= 75 && raw.hasVisibleWindows;
+        break;
+        
+      case 'lawn-repair':
+        // Only if lawn is bad
+        isValid = ['patchy', 'brown', 'dead'].includes(raw.lawnQuality);
+        break;
+        
+      case 'pool-enhance':
+        // Only if pool needs it
+        isValid = raw.poolNeedsEnhancement === true;
+        break;
+        
+      case 'declutter':
+        // Only if moderate or heavy clutter
+        isValid = ['moderate', 'heavy'].includes(raw.clutterLevel);
+        break;
+        
+      case 'virtual-staging':
+        // Only if room is empty
+        isValid = raw.roomEmpty === true;
+        break;
+        
+      case 'fire-fireplace':
+        // Only if fireplace needs fire
+        isValid = raw.fireplaceNeedsFire === true;
+        break;
+        
+      case 'tv-screen':
+        // Only if TV needs replacement
+        isValid = raw.tvNeedsReplacement === true;
+        break;
+        
+      case 'lights-on':
+        // Only if dark
+        isValid = raw.lighting === 'dark';
+        break;
+        
+      case 'window-masking':
+        // Interior with potential blown windows
+        isValid = raw.photoType?.startsWith('interior') && raw.lighting === 'mixed';
+        break;
+        
+      case 'hdr':
+        isValid = raw.needsHDR === true || raw.lighting === 'mixed' || raw.lighting === 'dark';
+        break;
+        
+      case 'perspective-correction':
+        isValid = raw.verticalAlignment === false;
+        break;
+        
+      case 'flash-fix':
+        isValid = raw.lighting === 'flash_harsh';
+        break;
+        
+      case 'auto-enhance':
+        // Always valid as fallback
+        isValid = true;
+        break;
+        
+      default:
+        // Allow other valid tools
+        isValid = isValidTool(tool);
+    }
+    
+    if (isValid) {
+      validated.push(tool as ToolId);
+    } else {
+      console.log(`[PhotoIntelligence V3] Rejected invalid tool suggestion: ${tool}`);
+    }
+  }
+  
+  return validated.length > 0 ? validated : ['auto-enhance'];
+}
+
+function isValidTool(tool: string): boolean {
+  const validTools: string[] = [
+    'sky-replacement', 'virtual-twilight', 'lawn-repair', 'pool-enhance',
+    'declutter', 'virtual-staging', 'fire-fireplace', 'tv-screen', 'lights-on',
+    'window-masking', 'color-balance', 'hdr', 'auto-enhance',
+    'perspective-correction', 'lens-correction', 'flash-fix',
+    'snow-removal', 'seasonal-spring', 'seasonal-summer', 'seasonal-fall',
+    'reflection-removal', 'power-line-removal', 'object-removal'
+  ];
+  return validTools.includes(tool);
 }
 
 function getDefaultAnalysis(
@@ -268,6 +567,12 @@ function getDefaultAnalysis(
   return {
     photoId,
     photoUrl,
+    
+    // Default to valid but low confidence - don't skip on error
+    isValidPropertyPhoto: true,
+    skipEnhancement: false,
+    skipReason: null,
+    
     photoType: 'unknown',
     hasSky: false,
     skyVisible: 0,
@@ -275,25 +580,32 @@ function getDefaultAnalysis(
     twilightCandidate: false,
     twilightScore: 0,
     hasVisibleWindows: false,
+    windowCount: 0,
     hasLawn: false,
     lawnVisible: 0,
     lawnQuality: 'none',
     lighting: 'well_lit',
-    needsHDR: true, // Default to HDR as safe enhancement
+    needsHDR: false,
     hasClutter: false,
     clutterLevel: 'none',
     roomEmpty: false,
     hasFireplace: false,
+    fireplaceNeedsFire: false,
     hasPool: false,
+    poolNeedsEnhancement: false,
     hasTV: false,
+    tvNeedsReplacement: false,
     composition: 'average',
     sharpness: 'acceptable',
     verticalAlignment: true,
     heroScore: 50,
     heroReason: `Analysis failed: ${errorReason}`,
-    suggestedTools: ['auto-enhance'], // Safe default
+    suggestedTools: ['auto-enhance'], // Safe conservative default
+    toolReasons: { 'auto-enhance': 'Default enhancement due to analysis failure' },
+    notSuggested: {},
     priority: 'optional',
-    confidence: 30, // Low confidence due to failure
+    confidence: 30,
+    confidenceReason: `Low confidence due to analysis failure: ${errorReason}`,
     analyzedAt: new Date().toISOString(),
     analysisVersion: ANALYSIS_VERSION,
   };
@@ -302,7 +614,6 @@ function getDefaultAnalysis(
 // ============================================
 // VALIDATORS
 // ============================================
-
 function clamp(value: number, min: number, max: number): number {
   return Math.max(min, Math.min(max, value));
 }
@@ -352,25 +663,9 @@ function validatePriority(value: any): Priority {
   return valid.includes(value) ? value : 'optional';
 }
 
-function validateTools(value: any): ToolId[] {
-  if (!Array.isArray(value)) return ['auto-enhance'];
-  
-  const validTools: ToolId[] = [
-    'sky-replacement', 'virtual-twilight', 'lawn-repair', 'pool-enhance',
-    'declutter', 'virtual-staging', 'fire-fireplace', 'tv-screen', 'lights-on',
-    'window-masking', 'color-balance', 'hdr', 'auto-enhance',
-    'perspective-correction', 'lens-correction', 'flash-fix',
-    'snow-removal', 'seasonal-spring', 'seasonal-summer', 'seasonal-fall',
-    'reflection-removal', 'power-line-removal', 'object-removal'
-  ];
-  
-  return value.filter((tool: any) => validTools.includes(tool));
-}
-
 // ============================================
 // UTILITY FUNCTIONS
 // ============================================
-
 export function isExterior(photoType: PhotoType): boolean {
   return photoType.startsWith('exterior') || photoType === 'drone';
 }
@@ -396,4 +691,44 @@ export function getPhotoTypeLabel(photoType: PhotoType): string {
     unknown: 'Photo',
   };
   return labels[photoType] || 'Photo';
+}
+
+/**
+ * Get a summary of what was analyzed
+ */
+export function getAnalysisSummary(analyses: PhotoAnalysis[]): string {
+  const lines: string[] = [];
+  
+  const valid = analyses.filter(a => a.isValidPropertyPhoto !== false);
+  const skipped = analyses.filter(a => a.skipEnhancement);
+  const exteriors = valid.filter(a => isExterior(a.photoType));
+  const interiors = valid.filter(a => isInterior(a.photoType));
+  const twilightCandidates = valid.filter(a => a.twilightScore >= 75);
+  const heroCandidates = valid.filter(a => a.heroScore >= 70);
+  
+  lines.push(`📊 Analysis Summary`);
+  lines.push(`━━━━━━━━━━━━━━━━━━━`);
+  lines.push(`Total photos: ${analyses.length}`);
+  lines.push(`Valid: ${valid.length} | Skipped: ${skipped.length}`);
+  lines.push(`Exteriors: ${exteriors.length} | Interiors: ${interiors.length}`);
+  lines.push(`Twilight candidates: ${twilightCandidates.length}`);
+  lines.push(`Hero candidates: ${heroCandidates.length}`);
+  lines.push(``);
+  
+  // Tool summary
+  const toolCounts: Record<string, number> = {};
+  for (const analysis of valid) {
+    for (const tool of analysis.suggestedTools) {
+      toolCounts[tool] = (toolCounts[tool] || 0) + 1;
+    }
+  }
+  
+  lines.push(`🔧 Tools Needed:`);
+  Object.entries(toolCounts)
+    .sort((a, b) => b[1] - a[1])
+    .forEach(([tool, count]) => {
+      lines.push(`   ${tool}: ${count} photos`);
+    });
+  
+  return lines.join('\n');
 }

@@ -1,74 +1,65 @@
 /**
- * SnapR AI Engine V2 - Batch Processor (Premium)
- * ===============================================
- * Executes enhancements with:
- * - Locked presets for consistency
- * - Multi-pass twilight for superior quality
- * - Window balancing for interiors
+ * SnapR AI Engine V3 - Batch Processor
+ * =====================================
+ * Smart routing to optimal providers
  */
 
 import { 
   PhotoStrategy, 
   ListingStrategy,
   PhotoProcessingResult,
-  ProcessingProgress 
+  ProcessingProgress,
+  LockedPresets,
 } from './types';
-import { ToolId, processEnhancement } from '../router';
-import { LockedPresets, getLockedPrompt } from './preset-locker';
+import { ToolId } from '../router';
+import { 
+  getProviderForTool, 
+  shouldUseAutoEnhance,
+  shouldUseMultiPass,
+  isAutoEnhanceConfigured,
+  Provider,
+} from './provider-router';
 import { multiPassTwilight } from './multi-pass-twilight';
 import { balanceWindowExposure } from './window-masking';
 import { createClient } from '@/lib/supabase/server';
 
+// Import providers
+import { autoEnhance as runAutoEnhance } from '../providers/autoenhance';
+import * as replicate from '../providers/replicate';
+
 // ============================================
 // CONFIGURATION
 // ============================================
-
 const CONFIG = {
   maxConcurrency: 3,
   maxRetries: 2,
   retryDelayMs: 2000,
   toolTimeoutMs: 120000,
   batchDelayMs: 500,
-  
-  // Premium features
-  useMultiPassTwilight: true,
-  useWindowBalancing: true,
 };
 
 // ============================================
-// TYPES
+// MAIN PROCESSOR
 // ============================================
-
-interface ProcessingContext {
-  listingId: string;
-  userId: string;
-  lockedPresets: LockedPresets;
-  onProgress?: (progress: ProcessingProgress) => void;
-}
-
-// ============================================
-// MAIN BATCH PROCESSOR
-// ============================================
-
 export async function processListingBatch(
   strategy: ListingStrategy,
-  context: ProcessingContext
+  context: {
+    listingId: string;
+    userId: string;
+    lockedPresets: LockedPresets;
+    onProgress?: (progress: ProcessingProgress) => void;
+  }
 ): Promise<PhotoProcessingResult[]> {
-  console.log(`[BatchProcessor] Starting PREMIUM batch for listing ${strategy.listingId}`);
-  console.log(`[BatchProcessor] ${strategy.photoStrategies.length} photos, concurrency: ${CONFIG.maxConcurrency}`);
-  console.log(`[BatchProcessor] Multi-pass twilight: ${CONFIG.useMultiPassTwilight}`);
-  console.log(`[BatchProcessor] Window balancing: ${CONFIG.useWindowBalancing}`);
-  console.log(`[BatchProcessor] Locked presets:`, {
-    sky: context.lockedPresets.skyPreset,
-    twilight: context.lockedPresets.twilightPreset,
-    staging: context.lockedPresets.stagingStyle,
-  });
+  console.log(`[BatchProcessor V3] ═══════════════════════════════════════`);
+  console.log(`[BatchProcessor V3] Processing ${strategy.photoStrategies.length} photos`);
+  console.log(`[BatchProcessor V3] AutoEnhance configured: ${isAutoEnhanceConfigured()}`);
+  console.log(`[BatchProcessor V3] ═══════════════════════════════════════`);
   
   const startTime = Date.now();
   const results: PhotoProcessingResult[] = [];
   const supabase = await createClient();
   
-  // Get signed URLs for all photos
+  // Get signed URLs
   const photosWithUrls = await getSignedUrls(strategy.photoStrategies, supabase);
   
   // Process in batches
@@ -84,21 +75,23 @@ export async function processListingBatch(
         totalPhotos: strategy.totalPhotos,
         analyzedPhotos: strategy.totalPhotos,
         processedPhotos: results.length,
-        estimatedTimeRemaining: estimateRemainingTime(strategy, results.length),
+        validatedPhotos: 0,
+        skippedPhotos: strategy.skippedPhotos,
+        estimatedTimeRemaining: estimateRemaining(strategy, results.length),
+        percentComplete: Math.round((results.length / strategy.totalPhotos) * 100),
         startedAt: new Date(startTime).toISOString(),
-        messages: [`Processing photos ${i + 1} to ${Math.min(i + CONFIG.maxConcurrency, photosWithUrls.length)}`],
+        messages: [`Processing ${i + 1} to ${Math.min(i + CONFIG.maxConcurrency, photosWithUrls.length)}`],
       });
     }
     
-    // Process batch in parallel
+    // Process batch
     const batchPromises = batch.map(photo => 
-      processPhotoWithPresets(photo, context, supabase)
+      processPhoto(photo, context, supabase)
     );
-    
     const batchResults = await Promise.all(batchPromises);
     results.push(...batchResults);
     
-    console.log(`[BatchProcessor] Progress: ${results.length}/${strategy.totalPhotos}`);
+    console.log(`[BatchProcessor V3] Progress: ${results.length}/${strategy.totalPhotos}`);
     
     // Delay between batches
     if (i + CONFIG.maxConcurrency < photosWithUrls.length) {
@@ -107,133 +100,108 @@ export async function processListingBatch(
   }
   
   const duration = Date.now() - startTime;
-  console.log(`[BatchProcessor] Complete: ${results.filter(r => r.success).length}/${results.length} successful in ${(duration / 1000).toFixed(1)}s`);
+  const successCount = results.filter(r => r.success).length;
+  
+  console.log(`[BatchProcessor V3] ═══════════════════════════════════════`);
+  console.log(`[BatchProcessor V3] COMPLETE: ${successCount}/${results.length} in ${(duration / 1000).toFixed(1)}s`);
+  console.log(`[BatchProcessor V3] ═══════════════════════════════════════`);
   
   return results;
 }
 
 // ============================================
-// SINGLE PHOTO PROCESSOR (WITH PRESETS)
+// SINGLE PHOTO PROCESSOR
 // ============================================
-
-async function processPhotoWithPresets(
+async function processPhoto(
   photo: PhotoStrategy & { signedUrl: string },
-  context: ProcessingContext,
+  context: { listingId: string; userId: string; lockedPresets: LockedPresets },
   supabase: any
 ): Promise<PhotoProcessingResult> {
   const startTime = Date.now();
+  
+  // Handle skipped photos
+  if (photo.skip) {
+    return {
+      photoId: photo.photoId,
+      originalUrl: photo.signedUrl,
+      enhancedUrl: null,
+      toolsApplied: [],
+      toolsSkipped: [],
+      toolResults: {},
+      success: false,
+      confidence: photo.confidence,
+      processingTime: 0,
+      needsReview: false,
+      skipped: true,
+      skipReason: photo.skipReason,
+    };
+  }
+  
   let currentUrl = photo.signedUrl;
-  const appliedTools: ToolId[] = [];
+  const toolsApplied: ToolId[] = [];
+  const toolsSkipped: ToolId[] = [];
+  const toolResults: PhotoProcessingResult['toolResults'] = {};
   let lastError: string | undefined;
   
-  console.log(`[BatchProcessor] Processing photo ${photo.photoId}`);
-  console.log(`[BatchProcessor] Tools to apply:`, photo.toolOrder);
-  console.log(`[BatchProcessor] Is twilight target:`, photo.isTwilightTarget);
+  console.log(`[BatchProcessor V3] Photo ${photo.photoId}: ${photo.tools.join(' → ')}`);
   
-  // Process tools sequentially for this photo
+  // Process each tool
   for (const tool of photo.toolOrder) {
+    const toolStart = Date.now();
+    const config = getProviderForTool(tool);
+    
     try {
-      // Report current tool
-      if (context.onProgress) {
-        context.onProgress({
-          listingId: context.listingId,
-          status: 'processing',
-          currentPhase: 'Enhancing photos',
-          totalPhotos: 0,
-          analyzedPhotos: 0,
-          processedPhotos: 0,
-          currentPhotoId: photo.photoId,
-          currentTool: tool,
-          estimatedTimeRemaining: 0,
-          startedAt: new Date().toISOString(),
-          messages: [`Applying ${tool} to photo`],
-        });
-      }
-      
-      let result: { success: boolean; enhancedUrl?: string; error?: string };
-      
-      // ========================================
-      // SPECIAL HANDLING: Multi-Pass Twilight
-      // ========================================
-      if (tool === 'virtual-twilight' && CONFIG.useMultiPassTwilight && photo.isTwilightTarget) {
-        console.log(`[BatchProcessor] Using MULTI-PASS twilight for ${photo.photoId}`);
-        
-        try {
-          const twilightResult = await multiPassTwilight(currentUrl, {
-            preset: context.lockedPresets.twilightPreset,
-            enhanceWindowGlow: true,
-            glowIntensity: 'medium',
-          });
-          
-          result = {
-            success: twilightResult.success,
-            enhancedUrl: twilightResult.url,
-          };
-          
-          console.log(`[BatchProcessor] Multi-pass twilight complete (${twilightResult.passes} passes)`);
-        } catch (error: any) {
-          console.error(`[BatchProcessor] Multi-pass twilight failed, falling back to single pass`);
-          // Fallback to regular twilight
-          result = await applyToolWithPresets(currentUrl, tool, context.lockedPresets);
-        }
-      }
-      // ========================================
-      // SPECIAL HANDLING: Window Balancing
-      // ========================================
-      else if (tool === 'window-masking' && CONFIG.useWindowBalancing) {
-        console.log(`[BatchProcessor] Using window balancing for ${photo.photoId}`);
-        
-        try {
-          const balanceResult = await balanceWindowExposure(currentUrl, {
-            showOutdoorView: true,
-            viewType: 'sky',
-          });
-          
-          result = {
-            success: balanceResult.balanced,
-            enhancedUrl: balanceResult.url,
-          };
-        } catch (error: any) {
-          result = { success: false, error: error.message };
-        }
-      }
-      // ========================================
-      // STANDARD TOOLS WITH LOCKED PRESETS
-      // ========================================
-      else {
-        result = await applyToolWithPresets(currentUrl, tool, context.lockedPresets);
-      }
+      const result = await processToolWithRouting(
+        currentUrl,
+        tool,
+        config.provider,
+        context.lockedPresets,
+        photo.isTwilightTarget
+      );
       
       if (result.success && result.enhancedUrl) {
         currentUrl = result.enhancedUrl;
-        appliedTools.push(tool);
-        console.log(`[BatchProcessor] ✓ ${tool} applied to ${photo.photoId}`);
+        toolsApplied.push(tool);
+        toolResults[tool] = {
+          success: true,
+          provider: config.provider,
+          duration: Date.now() - toolStart,
+        };
+        console.log(`[BatchProcessor V3] ✓ ${tool} (${config.provider})`);
       } else {
-        console.warn(`[BatchProcessor] ✗ ${tool} failed for ${photo.photoId}: ${result.error}`);
+        toolsSkipped.push(tool);
+        toolResults[tool] = {
+          success: false,
+          provider: config.provider,
+          duration: Date.now() - toolStart,
+          error: result.error,
+        };
         lastError = result.error;
+        console.log(`[BatchProcessor V3] ✗ ${tool}: ${result.error}`);
       }
     } catch (error: any) {
-      console.error(`[BatchProcessor] Error applying ${tool}:`, error.message);
+      toolsSkipped.push(tool);
+      toolResults[tool] = {
+        success: false,
+        provider: config.provider,
+        duration: Date.now() - toolStart,
+        error: error.message,
+      };
       lastError = error.message;
+      console.error(`[BatchProcessor V3] ✗ ${tool} error:`, error.message);
     }
   }
   
+  const success = toolsApplied.length > 0;
   const processingTime = Date.now() - startTime;
-  const success = appliedTools.length > 0;
   
-  // Save enhanced photo to storage if successful
+  // Save if successful
   let finalUrl = currentUrl;
   if (success && currentUrl !== photo.signedUrl) {
     try {
-      finalUrl = await saveEnhancedPhoto(
-        currentUrl,
-        photo.photoId,
-        context.listingId,
-        context.userId,
-        supabase
-      );
+      finalUrl = await saveEnhancedPhoto(currentUrl, photo.photoId, context.listingId, context.userId, supabase);
     } catch (error: any) {
-      console.error(`[BatchProcessor] Error saving enhanced photo:`, error.message);
+      console.error(`[BatchProcessor V3] Save error:`, error.message);
     }
   }
   
@@ -241,64 +209,225 @@ async function processPhotoWithPresets(
     photoId: photo.photoId,
     originalUrl: photo.signedUrl,
     enhancedUrl: success ? finalUrl : null,
-    toolsApplied: appliedTools,
+    toolsApplied,
+    toolsSkipped,
+    toolResults,
     success,
     error: success ? undefined : lastError,
     confidence: success ? photo.confidence : Math.max(photo.confidence - 30, 0),
     processingTime,
-    needsReview: !success || appliedTools.length < photo.tools.length,
+    needsReview: !success || toolsApplied.length < photo.tools.length,
     reviewReason: !success 
-      ? `Enhancement failed: ${lastError}` 
-      : appliedTools.length < photo.tools.length 
-        ? `Only ${appliedTools.length}/${photo.tools.length} tools applied`
+      ? `Failed: ${lastError}` 
+      : toolsApplied.length < photo.tools.length 
+        ? `Only ${toolsApplied.length}/${photo.tools.length} tools applied`
         : undefined,
+    skipped: false,
   };
 }
 
 // ============================================
-// APPLY TOOL WITH LOCKED PRESETS
+// SMART ROUTING
 // ============================================
-
-async function applyToolWithPresets(
+async function processToolWithRouting(
   imageUrl: string,
   tool: ToolId,
+  provider: Provider,
   presets: LockedPresets,
-  attempt = 1
+  isTwilightTarget: boolean
 ): Promise<{ success: boolean; enhancedUrl?: string; error?: string }> {
-  try {
-    // Get the locked prompt for this tool (ensures consistency)
-    const lockedPrompt = getLockedPrompt(tool, presets);
-    
-    console.log(`[BatchProcessor] Applying ${tool} with ${lockedPrompt ? 'LOCKED' : 'default'} preset`);
-    
-    const result = await withTimeout(
-      processEnhancement(tool, imageUrl, { prompt: lockedPrompt }),
-      CONFIG.toolTimeoutMs,
-      `${tool} timeout`
-    );
-    
-    return {
-      success: result.success,
-      enhancedUrl: result.enhancedUrl,
-      error: result.error,
-    };
-  } catch (error: any) {
-    if (attempt < CONFIG.maxRetries) {
-      console.log(`[BatchProcessor] Retrying ${tool} (attempt ${attempt + 1})`);
-      await delay(CONFIG.retryDelayMs);
-      return applyToolWithPresets(imageUrl, tool, presets, attempt + 1);
+  
+  // Special handling for multi-pass twilight
+  if (tool === 'virtual-twilight' && isTwilightTarget) {
+    try {
+      const result = await multiPassTwilight(imageUrl, {
+        preset: presets.twilightPreset as any,
+        enhanceWindowGlow: true,
+        glowIntensity: 'medium',
+      });
+      return { success: result.success, enhancedUrl: result.url };
+    } catch (error: any) {
+      // Fallback to single-pass
+      console.log('[BatchProcessor V3] Multi-pass failed, trying single-pass');
     }
-    
-    return {
-      success: false,
-      error: error.message || 'Enhancement failed after retries',
-    };
+  }
+  
+  // Special handling for window masking
+  if (tool === 'window-masking') {
+    try {
+      const result = await balanceWindowExposure(imageUrl, { showOutdoorView: true });
+      return { success: result.balanced, enhancedUrl: result.url };
+    } catch (error: any) {
+      return { success: false, error: error.message };
+    }
+  }
+  
+  // Route to provider
+  switch (provider) {
+    case 'autoenhance':
+      if (!isAutoEnhanceConfigured()) {
+        console.log('[BatchProcessor V3] AutoEnhance not configured, using FLUX');
+        return runFluxTool(imageUrl, tool, presets);
+      }
+      return runAutoEnhanceTool(imageUrl, tool);
+      
+    case 'sdxl-lightning':
+      return runSDXLTool(imageUrl, tool);
+      
+    default:
+      return runFluxTool(imageUrl, tool, presets);
   }
 }
 
 // ============================================
-// HELPER FUNCTIONS
+// PROVIDER IMPLEMENTATIONS
 // ============================================
+
+async function runAutoEnhanceTool(
+  imageUrl: string,
+  tool: ToolId
+): Promise<{ success: boolean; enhancedUrl?: string; error?: string }> {
+  try {
+    const options: Record<string, any> = {};
+    
+    switch (tool) {
+      case 'hdr':
+      case 'auto-enhance':
+        options.enhance = true;
+        options.hdr = true;
+        break;
+      case 'perspective-correction':
+        options.vertical_correction = true;
+        break;
+      case 'lens-correction':
+        options.lens_correction = true;
+        break;
+    }
+    
+    const enhancedUrl = await runAutoEnhance(imageUrl, options);
+    return { success: true, enhancedUrl };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
+
+async function runFluxTool(
+  imageUrl: string,
+  tool: ToolId,
+  presets: LockedPresets
+): Promise<{ success: boolean; enhancedUrl?: string; error?: string }> {
+  try {
+    let enhancedUrl: string;
+    
+    // Get preset prompt if available
+    const prompt = getPresetPrompt(tool, presets);
+    
+    switch (tool) {
+      case 'sky-replacement':
+        enhancedUrl = await replicate.skyReplacement(imageUrl, prompt);
+        break;
+      case 'virtual-twilight':
+        enhancedUrl = await replicate.virtualTwilight(imageUrl, prompt);
+        break;
+      case 'lawn-repair':
+        enhancedUrl = await replicate.lawnRepair(imageUrl, prompt);
+        break;
+      case 'declutter':
+        enhancedUrl = await replicate.declutter(imageUrl, prompt);
+        break;
+      case 'virtual-staging':
+        enhancedUrl = await replicate.virtualStaging(imageUrl, prompt);
+        break;
+      case 'fire-fireplace':
+        enhancedUrl = await replicate.fireFireplace(imageUrl);
+        break;
+      case 'tv-screen':
+        enhancedUrl = await replicate.tvScreen(imageUrl);
+        break;
+      case 'lights-on':
+        enhancedUrl = await replicate.lightsOn(imageUrl);
+        break;
+      case 'pool-enhance':
+        enhancedUrl = await replicate.poolEnhance(imageUrl);
+        break;
+      case 'hdr':
+        enhancedUrl = await replicate.hdr(imageUrl);
+        break;
+      case 'auto-enhance':
+        enhancedUrl = await replicate.autoEnhance(imageUrl);
+        break;
+      case 'perspective-correction':
+        enhancedUrl = await replicate.perspectiveCorrection(imageUrl);
+        break;
+      case 'flash-fix':
+        enhancedUrl = await replicate.flashFix(imageUrl);
+        break;
+      case 'color-balance':
+        enhancedUrl = await replicate.colorBalance(imageUrl);
+        break;
+      case 'power-line-removal':
+        enhancedUrl = await replicate.powerLineRemoval(imageUrl);
+        break;
+      case 'reflection-removal':
+        enhancedUrl = await replicate.reflectionRemoval(imageUrl);
+        break;
+      case 'object-removal':
+        enhancedUrl = await replicate.objectRemoval(imageUrl);
+        break;
+      default:
+        enhancedUrl = await replicate.autoEnhance(imageUrl);
+    }
+    
+    return { success: true, enhancedUrl };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
+
+async function runSDXLTool(
+  imageUrl: string,
+  tool: ToolId
+): Promise<{ success: boolean; enhancedUrl?: string; error?: string }> {
+  try {
+    let enhancedUrl: string;
+    
+    switch (tool) {
+      case 'snow-removal':
+        enhancedUrl = await replicate.snowRemoval(imageUrl);
+        break;
+      case 'seasonal-spring':
+        enhancedUrl = await replicate.seasonalSpring(imageUrl);
+        break;
+      case 'seasonal-summer':
+        enhancedUrl = await replicate.seasonalSummer(imageUrl);
+        break;
+      case 'seasonal-fall':
+        enhancedUrl = await replicate.seasonalFall(imageUrl);
+        break;
+      default:
+        return { success: false, error: 'Unknown SDXL tool' };
+    }
+    
+    return { success: true, enhancedUrl };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
+
+// ============================================
+// HELPERS
+// ============================================
+
+function getPresetPrompt(tool: ToolId, presets: LockedPresets): string | undefined {
+  switch (tool) {
+    case 'sky-replacement': return presets.skyPrompt;
+    case 'virtual-twilight': return presets.twilightPrompt;
+    case 'lawn-repair': return presets.lawnPrompt;
+    case 'virtual-staging': return presets.stagingPrompt;
+    case 'declutter': return presets.declutterPrompt;
+    default: return undefined;
+  }
+}
 
 async function getSignedUrls(
   strategies: PhotoStrategy[],
@@ -311,11 +440,10 @@ async function getSignedUrls(
       .from('raw-images')
       .createSignedUrl(strategy.photoUrl, 3600);
     
-    if (data?.signedUrl) {
-      results.push({ ...strategy, signedUrl: data.signedUrl });
-    } else {
-      results.push({ ...strategy, signedUrl: strategy.photoUrl });
-    }
+    results.push({ 
+      ...strategy, 
+      signedUrl: data?.signedUrl || strategy.photoUrl 
+    });
   }
   
   return results;
@@ -329,23 +457,16 @@ async function saveEnhancedPhoto(
   supabase: any
 ): Promise<string> {
   const response = await fetch(enhancedUrl);
-  if (!response.ok) {
-    throw new Error('Failed to fetch enhanced image');
-  }
+  if (!response.ok) throw new Error('Failed to fetch enhanced image');
   
   const buffer = await response.arrayBuffer();
   const storagePath = `enhanced/${userId}/${listingId}/${photoId}-prepared.jpg`;
   
-  const { error: uploadError } = await supabase.storage
+  const { error } = await supabase.storage
     .from('raw-images')
-    .upload(storagePath, buffer, {
-      contentType: 'image/jpeg',
-      upsert: true,
-    });
+    .upload(storagePath, buffer, { contentType: 'image/jpeg', upsert: true });
   
-  if (uploadError) {
-    throw new Error(`Upload failed: ${uploadError.message}`);
-  }
+  if (error) throw new Error(`Upload failed: ${error.message}`);
   
   await supabase
     .from('photos')
@@ -364,54 +485,25 @@ async function saveEnhancedPhoto(
   return data?.signedUrl || enhancedUrl;
 }
 
-function estimateRemainingTime(
-  strategy: ListingStrategy,
-  processedCount: number
-): number {
-  const remaining = strategy.totalPhotos - processedCount;
-  const avgTimePerPhoto = strategy.estimatedTotalTime / strategy.totalPhotos;
-  return Math.round(remaining * avgTimePerPhoto);
+function estimateRemaining(strategy: ListingStrategy, processed: number): number {
+  const remaining = strategy.totalPhotos - processed;
+  const avgTime = strategy.estimatedTotalTime / strategy.totalPhotos;
+  return Math.round(remaining * avgTime);
 }
 
 function delay(ms: number): Promise<void> {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-async function withTimeout<T>(
-  promise: Promise<T>,
-  ms: number,
-  message: string
-): Promise<T> {
-  let timeoutId: NodeJS.Timeout;
-  
-  const timeoutPromise = new Promise<never>((_, reject) => {
-    timeoutId = setTimeout(() => reject(new Error(message)), ms);
-  });
-  
-  try {
-    const result = await Promise.race([promise, timeoutPromise]);
-    clearTimeout(timeoutId!);
-    return result;
-  } catch (error) {
-    clearTimeout(timeoutId!);
-    throw error;
-  }
-}
-
 // ============================================
 // PRIORITY ORDERING
 // ============================================
-
 export function orderByPriority(strategies: PhotoStrategy[]): PhotoStrategy[] {
   const priorityOrder = { critical: 0, recommended: 1, optional: 2, none: 3 };
   
   return [...strategies].sort((a, b) => {
     if (a.isHeroCandidate && !b.isHeroCandidate) return -1;
     if (!a.isHeroCandidate && b.isHeroCandidate) return 1;
-    
-    const priorityDiff = priorityOrder[a.priority] - priorityOrder[b.priority];
-    if (priorityDiff !== 0) return priorityDiff;
-    
-    return b.tools.length - a.tools.length;
+    return priorityOrder[a.priority] - priorityOrder[b.priority];
   });
 }
