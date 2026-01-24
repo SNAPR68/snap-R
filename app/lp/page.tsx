@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { BeforeAfterSlider } from '@/components/before-after-slider';
+import { LandingDemo } from '@/components/landing-demo';
 
 // Founding Members Counter - In production, fetch from API/DB
 const TOTAL_FOUNDING_SPOTS = 50;
@@ -177,13 +178,8 @@ export default function LandingPage() {
             </div>
           </div>
 
-          {/* Before/After Demo */}
-          <div className="max-w-3xl mx-auto rounded-2xl overflow-hidden shadow-2xl shadow-[#D4A017]/10 border border-white/10">
-            <BeforeAfterSlider
-              beforeUrl="https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=1200"
-              afterUrl="https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=1200"
-            />
-          </div>
+          {/* Animated Demo */}
+          <LandingDemo />
         </div>
       </section>
 

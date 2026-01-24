@@ -9,6 +9,7 @@ import { MlsExportModal } from "./mls-export-modal";
 import { AdjustmentPanel } from "./adjustment-panel";
 import { StylePromptModal } from "./style-prompt-modal";
 import Link from 'next/link';
+import { PreparationOverlay } from './preparation-overlay';
 import { ArrowLeft, Upload, Sun, Moon, Leaf, Trash2, Sofa, Sparkles, Wand2, Loader2, ChevronDown, ChevronUp, Check, X, Download, Share2, Copy, LogOut, FileArchive, UserCheck, Flame, Tv, Lightbulb, PanelTop, Waves, Move, Circle, Palette, Brain, Snowflake, Flower2, Eraser, Zap, Rocket, CheckCircle, AlertCircle, Star, Eye, RefreshCw, History } from 'lucide-react';
 
 const AI_TOOLS = [
@@ -148,6 +149,7 @@ export function StudioClient({ listingId, userRole, showMlsFeatures = false, cre
   const [marketingStatus, setMarketingStatus] = useState<string>('');
   const [changingStatus, setChangingStatus] = useState(false);
   const [prepareProgress, setPrepareProgress] = useState<{ phase: string; message: string } | null>(null);
+  const [showPrepareOverlay, setShowPrepareOverlay] = useState(false);
   const [showReviewPanel, setShowReviewPanel] = useState(false);
   const [flaggedPhotos, setFlaggedPhotos] = useState<Array<{ id: string; url: string; reason: string; confidence: number }>>([]);
   const [newPhotosAfterPrepare, setNewPhotosAfterPrepare] = useState(false);
@@ -327,53 +329,7 @@ export function StudioClient({ listingId, userRole, showMlsFeatures = false, cre
 
   const handlePrepareListing = async () => {
     if (preparingListing) return;
-    setPreparingListing(true);
-    setPrepareProgress({ phase: 'Starting', message: 'Initializing AI engine...' });
-    try {
-      const phases = [
-        { phase: 'Analyzing', message: 'AI is analyzing your photos...' },
-        { phase: 'Planning', message: 'Building enhancement strategy...' },
-        { phase: 'Enhancing', message: 'Applying premium enhancements...' },
-        { phase: 'Finalizing', message: 'Validating results...' },
-      ];
-      let phaseIndex = 0;
-      const progressInterval = setInterval(() => {
-        if (phaseIndex < phases.length) {
-          setPrepareProgress(phases[phaseIndex]);
-          phaseIndex++;
-        }
-      }, 8000);
-      const res = await fetch('/api/listing/prepare', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ listingId }),
-      });
-      clearInterval(progressInterval);
-      const data = await res.json();
-      if (data.success) {
-        setListingStatus({ status: data.status, confidence: data.stats?.overallConfidence || 0, heroPhotoId: data.heroPhotoId });
-        setPrepareProgress({ phase: 'Complete', message: 'Listing prepared successfully!' });
-        setNewPhotosAfterPrepare(false);
-        // Set flagged photos if any
-        if (data.stats?.flaggedPhotos) {
-          setFlaggedPhotos(data.stats.flaggedPhotos);
-        } else {
-          setFlaggedPhotos([]);
-        }
-        setTimeout(() => setPrepareProgress(null), 3000);
-        loadData();
-        // Trigger notification
-        sendPrepareNotification(data);
-      } else {
-        setPrepareProgress(null);
-        alert('Preparation failed: ' + (data.error || 'Unknown error'));
-      }
-    } catch (error: any) {
-      setPrepareProgress(null);
-      alert('Error: ' + error.message);
-    } finally {
-      setPreparingListing(false);
-    }
+    setShowPrepareOverlay(true);
   };
 
   const fetchListingStatus = async () => {
@@ -490,6 +446,55 @@ export function StudioClient({ listingId, userRole, showMlsFeatures = false, cre
 
   return (
     <div className="h-screen bg-[#0F0F0F] text-white flex flex-col overflow-hidden">
+      {prepareProgress && (
+        <div className="fixed inset-0 z-50 bg-black/90 backdrop-blur-sm flex items-center justify-center">
+          <div className="bg-[#1A1A1A] border border-white/10 rounded-2xl p-8 max-w-md w-full mx-4 text-center">
+            <div className="w-16 h-16 mx-auto mb-6 relative">
+              <div className="absolute inset-0 border-4 border-amber-500/30 rounded-full"></div>
+              <div className="absolute inset-0 border-4 border-amber-500 rounded-full border-t-transparent animate-spin"></div>
+            </div>
+            <h2 className="text-xl font-bold mb-2">{prepareProgress.phase}</h2>
+            <p className="text-white/60 mb-6">{prepareProgress.message}</p>
+            <div className="space-y-3 text-left">
+              <div className="flex items-center gap-3">
+                <div className={`w-5 h-5 rounded-full flex items-center justify-center ${prepareProgress.phase === 'Starting' ? 'bg-amber-500 animate-pulse' : 'bg-emerald-500'}`}>
+                  {prepareProgress.phase !== 'Starting' && <Check className="w-3 h-3" />}
+                </div>
+                <span className={prepareProgress.phase === 'Starting' ? 'text-white' : 'text-white/50'}>Initializing AI engine</span>
+              </div>
+              <div className="flex items-center gap-3">
+                <div className={`w-5 h-5 rounded-full flex items-center justify-center ${prepareProgress.phase === 'Analyzing' ? 'bg-amber-500 animate-pulse' : ['Planning','Enhancing','Finalizing','Complete'].includes(prepareProgress.phase) ? 'bg-emerald-500' : 'bg-white/20'}`}>
+                  {['Planning','Enhancing','Finalizing','Complete'].includes(prepareProgress.phase) && <Check className="w-3 h-3" />}
+                </div>
+                <span className={prepareProgress.phase === 'Analyzing' ? 'text-white' : ['Planning','Enhancing','Finalizing','Complete'].includes(prepareProgress.phase) ? 'text-white/50' : 'text-white/30'}>Analyzing photos</span>
+              </div>
+              <div className="flex items-center gap-3">
+                <div className={`w-5 h-5 rounded-full flex items-center justify-center ${prepareProgress.phase === 'Planning' ? 'bg-amber-500 animate-pulse' : ['Enhancing','Finalizing','Complete'].includes(prepareProgress.phase) ? 'bg-emerald-500' : 'bg-white/20'}`}>
+                  {['Enhancing','Finalizing','Complete'].includes(prepareProgress.phase) && <Check className="w-3 h-3" />}
+                </div>
+                <span className={prepareProgress.phase === 'Planning' ? 'text-white' : ['Enhancing','Finalizing','Complete'].includes(prepareProgress.phase) ? 'text-white/50' : 'text-white/30'}>Building enhancement strategy</span>
+              </div>
+              <div className="flex items-center gap-3">
+                <div className={`w-5 h-5 rounded-full flex items-center justify-center ${prepareProgress.phase === 'Enhancing' ? 'bg-amber-500 animate-pulse' : ['Finalizing','Complete'].includes(prepareProgress.phase) ? 'bg-emerald-500' : 'bg-white/20'}`}>
+                  {['Finalizing','Complete'].includes(prepareProgress.phase) && <Check className="w-3 h-3" />}
+                </div>
+                <span className={prepareProgress.phase === 'Enhancing' ? 'text-white' : ['Finalizing','Complete'].includes(prepareProgress.phase) ? 'text-white/50' : 'text-white/30'}>Applying AI enhancements</span>
+              </div>
+              <div className="flex items-center gap-3">
+                <div className={`w-5 h-5 rounded-full flex items-center justify-center ${prepareProgress.phase === 'Finalizing' ? 'bg-amber-500 animate-pulse' : prepareProgress.phase === 'Complete' ? 'bg-emerald-500' : 'bg-white/20'}`}>
+                  {prepareProgress.phase === 'Complete' && <Check className="w-3 h-3" />}
+                </div>
+                <span className={prepareProgress.phase === 'Finalizing' ? 'text-white' : prepareProgress.phase === 'Complete' ? 'text-white/50' : 'text-white/30'}>Finalizing results</span>
+              </div>
+            </div>
+            {prepareProgress.phase === 'Complete' && (
+              <div className="mt-6 p-4 bg-emerald-500/20 border border-emerald-500/30 rounded-xl">
+                <p className="text-emerald-400 font-medium">✓ Listing Prepared Successfully!</p>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
       <header className="h-14 bg-[#1A1A1A] border-b border-white/10 flex items-center justify-between px-4 flex-shrink-0">
         <div className="flex items-center gap-3">
           <Link href="/dashboard" className="flex items-center gap-2 px-3 py-2 hover:bg-white/10 rounded-lg text-white/70 hover:text-white transition-colors"><ArrowLeft className="w-4 h-4" /><span className="text-sm">Back</span></Link>
@@ -702,6 +707,30 @@ export function StudioClient({ listingId, userRole, showMlsFeatures = false, cre
       {showMlsExport && completedPhotos.length > 0 && <MlsExportModal photos={completedPhotos} listingTitle={listing?.title} listingAddress={listing?.address} onClose={() => setShowMlsExport(false)} />}
       {showStylePrompt && <StylePromptModal adjustments={adjustments} onJustThisPhoto={handleJustThisPhoto} onApplyToAll={handleApplyStyleToAll} />}
       {showHumanEditModal && selectedPhoto && <HumanEditRequestModal listingId={listingId} photoUrl={selectedPhoto?.signedUrl || ""} onClose={() => setShowHumanEditModal(false)} />}
+      <PreparationOverlay
+        isOpen={showPrepareOverlay}
+        listingId={listingId}
+        listingTitle={listing?.title || 'Your Listing'}
+        photos={photos}
+        onComplete={(result) => {
+          setShowPrepareOverlay(false);
+          setPreparingListing(false);
+          setListingStatus({ 
+            status: result.status || 'prepared', 
+            confidence: result.stats?.overallConfidence || 0, 
+            heroPhotoId: result.heroPhotoId 
+          });
+          if (result.stats?.flaggedPhotos) {
+            setFlaggedPhotos(result.stats.flaggedPhotos);
+          }
+          loadData();
+        }}
+        onError={(error) => {
+          setShowPrepareOverlay(false);
+          setPreparingListing(false);
+          alert('Preparation failed: ' + error);
+        }}
+      />
     </div>
   );
 }

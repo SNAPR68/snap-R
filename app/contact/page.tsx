@@ -1,39 +1,74 @@
 'use client';
 
-import { useState } from 'react';
+import { Suspense } from 'react';
 import Link from 'next/link';
-import { Instagram, Linkedin, Youtube, Loader2, CheckCircle } from 'lucide-react';
+import { useSearchParams } from 'next/navigation';
+import { Instagram, Linkedin, Youtube, Check } from 'lucide-react';
+
+// TODO: Replace with actual Calendly URL
+const CALENDLY_URL = 'https://calendly.com/snapr-team/sales-call';
+
+function ContactContent() {
+  const searchParams = useSearchParams();
+  const plan = searchParams.get('plan');
+  const isTeamPlan = plan === 'team';
+
+  return (
+    <>
+      <main className="flex-1 max-w-4xl mx-auto px-6 py-12">
+        <h1 className="text-4xl font-bold text-white mb-4 text-center">Let's talk</h1>
+        <p className="text-white/60 mb-8 text-center">Book a call to discuss custom pricing for your team.</p>
+        
+        {isTeamPlan && (
+          <div className="mb-6 p-4 bg-[#D4A017]/10 border border-[#D4A017]/30 rounded-xl text-center">
+            <p className="text-white font-medium">You selected the Team plan. Let's discuss custom pricing for your brokerage.</p>
+          </div>
+        )}
+
+        <div className="glass-card p-8 mb-6">
+          <h2 className="text-xl font-semibold text-white mb-4">Schedule a 15-minute call</h2>
+          <ul className="space-y-3 mb-6 text-white/80">
+            <li className="flex items-start gap-3">
+              <Check className="w-5 h-5 text-[#D4A017] flex-shrink-0 mt-0.5" />
+              <span>Discuss your team's volume and needs</span>
+            </li>
+            <li className="flex items-start gap-3">
+              <Check className="w-5 h-5 text-[#D4A017] flex-shrink-0 mt-0.5" />
+              <span>Get custom pricing for 30+ listings</span>
+            </li>
+            <li className="flex items-start gap-3">
+              <Check className="w-5 h-5 text-[#D4A017] flex-shrink-0 mt-0.5" />
+              <span>Learn about white-label options</span>
+            </li>
+            <li className="flex items-start gap-3">
+              <Check className="w-5 h-5 text-[#D4A017] flex-shrink-0 mt-0.5" />
+              <span>No commitment required</span>
+            </li>
+          </ul>
+        </div>
+
+        <div className="glass-card p-8">
+          <div className="w-full" style={{ minHeight: '700px' }}>
+            <iframe
+              src={CALENDLY_URL}
+              width="100%"
+              height="700"
+              frameBorder="0"
+              title="Schedule a call"
+              className="rounded-xl"
+            />
+          </div>
+        </div>
+
+        <p className="text-white/60 text-sm mt-6 text-center">
+          Prefer email? Reach us at <a href="mailto:team@snap-r.com" className="text-[#D4A017] hover:underline">team@snap-r.com</a>
+        </p>
+      </main>
+    </>
+  );
+}
 
 export default function ContactPage() {
-  const [formData, setFormData] = useState({ name: '', email: '', message: '' });
-  const [loading, setLoading] = useState(false);
-  const [sent, setSent] = useState(false);
-  const [error, setError] = useState('');
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    setError('');
-
-    try {
-      const res = await fetch('/api/contact', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData),
-      });
-
-      if (res.ok) {
-        setSent(true);
-        setFormData({ name: '', email: '', message: '' });
-      } else {
-        setError('Failed to send. Please try again.');
-      }
-    } catch {
-      setError('Failed to send. Please try again.');
-    } finally {
-      setLoading(false);
-    }
-  };
 
   return (
     <div className="min-h-screen bg-[#0F0F0F] flex flex-col">
@@ -52,63 +87,19 @@ export default function ContactPage() {
         </Link>
       </div>
       
-      <main className="flex-1 max-w-xl mx-auto px-6 py-12">
-        <h1 className="text-4xl font-bold text-white mb-4 text-center">Contact Us</h1>
-        <p className="text-white/60 mb-8 text-center">Have questions? We'd love to hear from you.</p>
-        
-        <div className="glass-card p-8">
-          {sent ? (
-            <div className="text-center py-8">
-              <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-4" />
-              <h2 className="text-xl font-semibold text-white mb-2">Message Sent!</h2>
-              <p className="text-white/60">We'll get back to you soon.</p>
-              <button onClick={() => setSent(false)} className="mt-4 text-[#D4A017] hover:underline">
-                Send another message
-              </button>
+      <Suspense fallback={
+        <main className="flex-1 max-w-4xl mx-auto px-6 py-12">
+          <div className="glass-card p-8">
+            <div className="animate-pulse">
+              <div className="h-8 bg-white/10 rounded mb-4"></div>
+              <div className="h-4 bg-white/10 rounded mb-8"></div>
+              <div className="h-[700px] bg-white/5 rounded"></div>
             </div>
-          ) : (
-            <>
-              <h2 className="text-xl font-semibold text-white mb-6">Send a Message</h2>
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <input 
-                  type="text" 
-                  placeholder="Your Name" 
-                  value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  required
-                  className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white" 
-                />
-                <input 
-                  type="email" 
-                  placeholder="Email" 
-                  value={formData.email}
-                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  required
-                  className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white" 
-                />
-                <textarea 
-                  placeholder="Message" 
-                  rows={4} 
-                  value={formData.message}
-                  onChange={(e) => setFormData({ ...formData, message: e.target.value })}
-                  required
-                  className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white resize-none"
-                />
-                {error && <p className="text-red-400 text-sm">{error}</p>}
-                <button 
-                  type="submit" 
-                  disabled={loading}
-                  className="btn-gold-glass w-full flex items-center justify-center gap-2"
-                >
-                  {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
-                  {loading ? 'Sending...' : 'Send Message'}
-                </button>
-              </form>
-              <p className="text-white/40 text-sm mt-4 text-center">Or email us at support@snap-r.com</p>
-            </>
-          )}
-        </div>
-      </main>
+          </div>
+        </main>
+      }>
+        <ContactContent />
+      </Suspense>
 
       <footer className="py-16 px-6 border-t border-white/10 bg-[#0A0A0A]">
         <div className="max-w-6xl mx-auto">

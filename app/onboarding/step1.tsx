@@ -10,7 +10,6 @@ export default function OnboardingStep1() {
   const [formData, setFormData] = useState({
     fullName: "",
     companyName: "",
-    role: "",
   });
 
   const handleContinue = () => {
@@ -63,34 +62,6 @@ export default function OnboardingStep1() {
               className="w-full pl-12 pr-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white focus:outline-none focus:border-[#D4A017]"
             />
           </div>
-        </div>
-
-        <div>
-          <label className="block text-sm text-white/60 mb-2">Your Role</label>
-          <select
-            value={formData.role}
-            onChange={(e) => setFormData({ ...formData, role: e.target.value })}
-            className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white focus:outline-none focus:border-[#D4A017]"
-          >
-            <option value="" className="bg-[#1A1A1A]">
-              Select your role
-            </option>
-            <option value="agent" className="bg-[#1A1A1A]">
-              Real Estate Agent
-            </option>
-            <option value="photographer" className="bg-[#1A1A1A]">
-              Real Estate Photographer
-            </option>
-            <option value="broker" className="bg-[#1A1A1A]">
-              Broker / Team Lead
-            </option>
-            <option value="property_manager" className="bg-[#1A1A1A]">
-              Property Manager
-            </option>
-            <option value="other" className="bg-[#1A1A1A]">
-              Other
-            </option>
-          </select>
         </div>
 
         <button
