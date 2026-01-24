@@ -42,3 +42,4 @@ TEST_ACCOUNT_SETUP.md
 env-local-redacted.txt
 snapr-code.zip
 scripts/
+app/api/admin/create-test-account/
