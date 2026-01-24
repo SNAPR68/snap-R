@@ -36,3 +36,9 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+CODEBASE_OVERVIEW.md
+TEST_ACCOUNT_CREDENTIALS.txt
+TEST_ACCOUNT_SETUP.md
+env-local-redacted.txt
+snapr-code.zip
+scripts/
