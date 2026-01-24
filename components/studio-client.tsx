@@ -717,11 +717,11 @@ export function StudioClient({ listingId, userRole, showMlsFeatures = false, cre
           setPreparingListing(false);
           setListingStatus({ 
             status: result.status || 'prepared', 
-            confidence: result.stats?.overallConfidence || 0, 
-            heroPhotoId: result.heroPhotoId 
+            confidence: result.confidenceScore || 0, 
+            heroPhotoId: result.heroPhotoId || null 
           });
-          if (result.stats?.flaggedPhotos) {
-            setFlaggedPhotos(result.stats.flaggedPhotos);
+          if (result.flaggedPhotos) {
+            setFlaggedPhotos([]);
           }
           loadData();
         }}
