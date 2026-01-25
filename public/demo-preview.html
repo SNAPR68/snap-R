@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>SnapR Landing Demo Preview</title>
+  <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    @keyframes fadeIn { from { opacity: 0; transform: scale(0.8); } to { opacity: 1; transform: scale(1); } }
+    @keyframes bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+    .animate-bounce { animation: bounce 1s infinite; }
+    .animate-pulse { animation: pulse 2s infinite; }
+  </style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const { useState, useEffect } = React;
+
+const Upload = ({ className }) => (
+  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" style={{width:'1.75rem',height:'1.75rem'}}>
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+  </svg>
+);
+
+const Sparkles = ({ className }) => (
+  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" style={{width:'1.75rem',height:'1.75rem'}}>
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
+  </svg>
+);
+
+const Check = ({ className, style }) => (
+  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" style={style || {width:'1rem',height:'1rem'}}>
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+  </svg>
+);
+
+const ImageIcon = ({ className, style }) => (
+  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" style={style || {width:'0.875rem',height:'0.875rem'}}>
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+  </svg>
+);
+
+const processingSteps = [
+  { label: 'Analyzing lighting...' },
+  { label: 'Detecting rooms...' },
+  { label: 'Enhancing colors...' },
+  { label: 'Applying HDR...' },
+  { label: 'Replacing sky...' },
+  { label: 'Final polish...' },
+];
+
+const contentItems = ['12 Instagram Posts', '8 Facebook Posts', '4 LinkedIn Posts', '6 Email Templates', 'Property Website', 'Virtual Tour'];
+const phases = ['upload', 'processing', 'complete'];
+
+function App() {
+  const [phase, setPhase] = useState('upload');
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [currentStep, setCurrentStep] = useState(0);
+  const [stepProgress, setStepProgress] = useState(0);
+  const [showContent, setShowContent] = useState(false);
+  const [sliderPosition, setSliderPosition] = useState(50);
+
+  useEffect(() => {
+    const runAnimation = async () => {
+      setPhase('upload'); setUploadProgress(0); setCurrentStep(0); setStepProgress(0); setShowContent(false); setSliderPosition(50);
+      await new Promise(r => setTimeout(r, 300));
+      for (let i = 0; i <= 100; i += 5) { setUploadProgress(i); await new Promise(r => setTimeout(r, 60)); }
+      await new Promise(r => setTimeout(r, 300));
+      setPhase('processing');
+      for (let step = 0; step < 6; step++) {
+        setCurrentStep(step); setStepProgress(0);
+        for (let p = 0; p <= 100; p += 8) { setStepProgress(Math.min(p, 100)); await new Promise(r => setTimeout(r, 40)); }
+        setStepProgress(100); await new Promise(r => setTimeout(r, 80));
+      }
+      await new Promise(r => setTimeout(r, 300));
+      setPhase('complete');
+      await new Promise(r => setTimeout(r, 400));
+      for (let pos = 50; pos >= 20; pos -= 3) { setSliderPosition(pos); await new Promise(r => setTimeout(r, 25)); }
+      await new Promise(r => setTimeout(r, 200));
+      for (let pos = 20; pos <= 80; pos += 3) { setSliderPosition(pos); await new Promise(r => setTimeout(r, 25)); }
+      await new Promise(r => setTimeout(r, 200));
+      for (let pos = 80; pos >= 50; pos -= 3) { setSliderPosition(pos); await new Promise(r => setTimeout(r, 25)); }
+      await new Promise(r => setTimeout(r, 400));
+      setShowContent(true);
+      await new Promise(r => setTimeout(r, 2500));
+      runAnimation();
+    };
+    runAnimation();
+  }, []);
+
+  const phaseIndex = phases.indexOf(phase);
+
+  return (
+    <div style={{minHeight:'100vh',background:'#0a0a0a',display:'flex',alignItems:'center',justifyContent:'center',padding:'1rem',fontFamily:'system-ui,-apple-system,sans-serif'}}>
+      <div style={{width:'100%',maxWidth:'600px'}}>
+        <div style={{textAlign:'center',marginBottom:'1.5rem'}}>
+          <div style={{display:'flex',alignItems:'center',justifyContent:'center',gap:'0.5rem',marginBottom:'0.75rem'}}>
+            <div style={{width:'2.5rem',height:'2.5rem',borderRadius:'0.75rem',background:'linear-gradient(135deg,#D4A017,#B8860B)',display:'flex',alignItems:'center',justifyContent:'center'}}>
+              <svg style={{width:'1.5rem',height:'1.5rem',color:'black'}} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/>
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/>
+              </svg>
+            </div>
+            <span style={{fontSize:'1.25rem',fontWeight:'bold',color:'white'}}>Snap<span style={{color:'#D4A017'}}>R</span></span>
+          </div>
+          <h1 style={{fontSize:'1.5rem',fontWeight:'bold',color:'white',marginBottom:'0.25rem'}}>Real Estate Photos. <span style={{color:'#D4A017'}}>Perfected in Seconds.</span></h1>
+          <p style={{color:'rgba(255,255,255,0.5)',fontSize:'0.875rem'}}>Watch SnapR transform your listing in real-time</p>
+        </div>
+
+        <div style={{display:'flex',alignItems:'center',justifyContent:'center',gap:'0.5rem',marginBottom:'1rem'}}>
+          {phases.map((p, i) => (
+            <div key={p} style={{display:'flex',alignItems:'center'}}>
+              <div style={{width:'1.75rem',height:'1.75rem',borderRadius:'50%',display:'flex',alignItems:'center',justifyContent:'center',fontSize:'0.75rem',fontWeight:'500',transition:'all 0.3s',background:phase===p?'#D4A017':phaseIndex>i?'rgba(212,160,23,0.3)':'rgba(255,255,255,0.1)',color:phase===p?'black':phaseIndex>i?'#D4A017':'rgba(255,255,255,0.4)',transform:phase===p?'scale(1.1)':'scale(1)'}}>
+                {phaseIndex > i ? <Check style={{width:'0.875rem',height:'0.875rem'}} /> : i + 1}
+              </div>
+              {i < 2 && <div style={{width:'2.5rem',height:'2px',margin:'0 0.375rem',transition:'all 0.3s',background:phaseIndex>i?'#D4A017':'rgba(255,255,255,0.1)'}} />}
+            </div>
+          ))}
+        </div>
+
+        <div style={{display:'flex',justifyContent:'center',gap:'2.5rem',marginBottom:'1rem',fontSize:'0.75rem'}}>
+          <span style={{color:phase==='upload'?'#D4A017':'rgba(255,255,255,0.4)'}}>Upload</span>
+          <span style={{color:phase==='processing'?'#D4A017':'rgba(255,255,255,0.4)'}}>AI Enhance</span>
+          <span style={{color:phase==='complete'?'#D4A017':'rgba(255,255,255,0.4)'}}>Complete</span>
+        </div>
+
+        <div style={{borderRadius:'0.75rem',overflow:'hidden',border:'1px solid rgba(255,255,255,0.1)',background:'rgba(0,0,0,0.6)',boxShadow:'0 25px 50px -12px rgba(212,160,23,0.1)'}}>
+          
+          {phase === 'upload' && (
+            <div style={{padding:'1.5rem',minHeight:'320px',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center'}}>
+              <div className="animate-bounce" style={{width:'3.5rem',height:'3.5rem',borderRadius:'0.75rem',background:'rgba(212,160,23,0.2)',display:'flex',alignItems:'center',justifyContent:'center',marginBottom:'1rem',color:'#D4A017'}}>
+                <Upload />
+              </div>
+              <p style={{color:'rgba(255,255,255,0.6)',fontSize:'0.875rem',marginBottom:'0.75rem'}}>Uploading 25 photos...</p>
+              <div style={{width:'12rem',height:'0.375rem',background:'rgba(255,255,255,0.1)',borderRadius:'9999px',overflow:'hidden'}}>
+                <div style={{height:'100%',background:'linear-gradient(90deg,#D4A017,#B8860B)',transition:'width 75ms',width:`${uploadProgress}%`}} />
+              </div>
+              <p style={{color:'#D4A017',marginTop:'0.5rem',fontWeight:'bold'}}>{uploadProgress}%</p>
+              <div style={{display:'grid',gridTemplateColumns:'repeat(5,1fr)',gap:'0.375rem',marginTop:'1rem'}}>
+                {Array.from({ length: Math.min(Math.floor(uploadProgress / 4), 25) }).map((_, i) => (
+                  <div key={i} style={{width:'2rem',height:'2rem',borderRadius:'0.25rem',background:'rgba(255,255,255,0.1)',display:'flex',alignItems:'center',justifyContent:'center',animation:'fadeIn 0.3s ease-out forwards',opacity:0,animationDelay:`${i*30}ms`,color:'rgba(255,255,255,0.4)'}}>
+                    <ImageIcon />
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {phase === 'processing' && (
+            <div style={{padding:'1.5rem',minHeight:'320px',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center'}}>
+              <div className="animate-pulse" style={{width:'3.5rem',height:'3.5rem',borderRadius:'0.75rem',background:'rgba(212,160,23,0.2)',display:'flex',alignItems:'center',justifyContent:'center',marginBottom:'1rem',color:'#D4A017'}}>
+                <Sparkles />
+              </div>
+              <p style={{color:'white',fontWeight:'500',marginBottom:'0.125rem'}}>AI Enhancement in Progress</p>
+              <p style={{color:'rgba(255,255,255,0.4)',fontSize:'0.75rem',marginBottom:'1rem'}}>Processing 25 photos</p>
+              <div style={{display:'flex',flexDirection:'column',gap:'0.5rem',width:'14rem'}}>
+                {processingSteps.map((step, index) => (
+                  <div key={index} style={{display:'flex',alignItems:'center',gap:'0.625rem',transition:'opacity 0.3s',opacity:index<currentStep?0.5:index===currentStep?1:0.3}}>
+                    <div style={{width:'1.5rem',height:'1.5rem',borderRadius:'0.25rem',display:'flex',alignItems:'center',justifyContent:'center',transition:'all 0.3s',background:index<currentStep?'rgba(34,197,94,0.2)':index===currentStep?'rgba(212,160,23,0.2)':'rgba(255,255,255,0.05)',color:index<currentStep?'#4ade80':index===currentStep?'#D4A017':'rgba(255,255,255,0.3)'}}>
+                      {index < currentStep ? <Check style={{width:'0.75rem',height:'0.75rem'}} /> : <span style={{fontSize:'0.625rem'}}>●</span>}
+                    </div>
+                    <div style={{flex:1}}>
+                      <p style={{ftSize:'0.75rem',color:'rgba(255,255,255,0.8)'}}>{step.label}</p>
+                      {index === currentStep && (
+                        <div style={{height:'0.125rem',background:'rgba(255,255,255,0.1)',borderRadius:'9999px',marginTop:'0.25rem',overflow:'hidden'}}>
+                          <div style={{height:'100%',background:'#D4A017',transition:'width 50ms',width:`${stepProgress}%`}} />
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <p style={{color:'#D4A017',marginTop:'1rem',fontSize:'1.5rem',fontWeight:'bold'}}>{Math.floor((currentStep * 5 + (stepProgress / 100) * 5))}s</p>
+              <p style={{color:'rgba(255,255,255,0.4)',fontSize:'0.75rem'}}>Competitors take 24-48 hours</p>
+            </div>
+          )}
+
+          {phase === 'complete' && (
+            <div style={{minHeight:'320px'}}>
+              <div style={{position:'relative',height:'220px',overflow:'hidden'}}>
+                <div style={{position:'absolute',inset:0}}>
+                  <img src="https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&q=80" alt="Before" style={{width:'100%',height:'100%',objectFit:'cover',filter:'brightness(0.7) saturate(0.7)'}} />
+                  <div style={{position:'absolute',top:'0.5rem',left:'0.5rem',padding:'0.125rem 0.5rem',background:'rgba(0,0,0,0.7)',borderRadius:'9999px',color:'white',fontSize:'0.625rem',fontWeight:'500'}}>BEFORE</div>
+                </div>
+                <div style={{position:'absolute',inset:0,overflow:'hidden',clipPath:`inset(0 ${100-sliderPosition}% 0 0)`}}>
+                  <img src="https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=800&q=80" alt="After" style={{width:'100%',height:'100%',objectFit:'cover'}} />
+                  <div style={{position:'absolute',top:'0.5rem',left:'0.5rem',padding:'0.125rem 0.5rem',background:'#D4A017',borderRadius:'9999px',color:'black',fontSize:'0.625rem',fontWeight:'bold'}}>AFTER</div>
+                </div>
+                <div style={{position:'absolute',top:0,bottom:0,width:'2px',background:'white',boxShadow:'0 0 10px rgba(0,0,0,0.5)',left:`${sliderPosition}%`,transform:'translateX(-50%)',transition:'left 75ms'}}>
+                  <div style={{position:'absolute',top:'50%',left:'50%',transform:'translate(-50%,-50%)',width:'1.75rem',height:'1.75rem',borderRadius:'50%',background:'white',boxShadow:'0 2px 10px rgba(0,0,0,0.3)',display:'flex',alignItems:'center',justifyContent:'center'}}>
+                    <div style={{display:'flex',gap:'2px'}}>
+                      <div style={{width:'2px',height:'0.625rem',background:'#9ca3af',borderRadius:'9999px'}} />
+                      <div style={{width:'2px',height:'0.625rem',background:'#9ca3af',borderRadius:'9999px'}} />
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div style={{padding:'1rem',borderTop:'1px solid rgba(255,255,255,0.1)'}}>
+                <div style={{display:'flex',alignItems:'center',gap:'0.5rem',marginBottom:'0.625rem'}}>
+                  <Check style={{width:'1rem',height:'1rem',color:'#4ade80'}} />
+                  <span style={{color:'white',fontSize:'0.875rem',fontWeight:'500'}}>25 Photos Enhanced</span>
+                  <span style={{color:'#D4A017',marginLeft:'auto',fontSize:'0.75rem'}}>+ Marketing Content Ready</span>
+                </div>
+                {showContent && (
+                  <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:'0.375rem'}}>
+                    {contentItems.map((item, i) => (
+                      <div key={i} style={{padding:'0.25rem 0.5rem',background:'rgba(212,160,23,0.1)',border:'1px solid rgba(212,160,23,0.2)',borderRadius:'0.25rem',fontSize:'0.625rem',color:'rgba(255,255,255,0.8)',textAlign:'center',animation:'fadeIn 0.4s ease-out forwards',opacity:0,animationDelay:`${i*100}ms`}}>{item}</div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+
+        <p style={{textAlign:'center',color:'rgba(255,255,255,0.4)',fontSize:'0.75rem',marginTop:'0.75rem'}}>
+          {phase === 'upload' && 'Drag & drop or import from any device'}
+          {phase === 'processing' && 'AI analyzes and enhances every photo automatically'}
+          {phase === 'complete' && 'Ready to publish across all platforms'}
+        </p>
+        <div style={{textAlign:'center',marginTop:'1rem'}}>
+          <button style={{padding:'0.625rem 1.5rem',background:'#D4A017',color:'black',fontSize:'0.875rem',fontWeight:'bold',borderRadius:'0.5rem',border:'none',cursor:'pointer'}}>Try SnapR Free →</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+ReactDOM.render(<App />, document.getElementById('root'));
+</script>
+</body>
+</html>

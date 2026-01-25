@@ -288,13 +288,18 @@ async function runAutoEnhanceTool(
   tool: ToolId
 ): Promise<{ success: boolean; enhancedUrl?: string; error?: string }> {
   try {
+    // AutoEnhance.ai single-image API options
+    // Note: hdr=true requires HDR bracket workflow with orders, not for single images
     const options: Record<string, any> = {};
     
     switch (tool) {
       case 'hdr':
       case 'auto-enhance':
+        // For single images, use enhance without hdr flag
+        // HDR flag is only for multi-bracket HDR workflows
         options.enhance = true;
-        options.hdr = true;
+        options.contrast_boost = 'MEDIUM';
+        options.saturation = 1.1;
         break;
       case 'perspective-correction':
         options.vertical_correction = true;
