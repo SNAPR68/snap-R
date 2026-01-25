@@ -43,3 +43,4 @@ env-local-redacted.txt
 snapr-code.zip
 scripts/
 app/api/admin/create-test-account/
+.env.local.backup
