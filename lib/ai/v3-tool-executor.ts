@@ -118,13 +118,10 @@ export async function executeTool(
         break;
         
       case 'auto-enhance':
-        // Use Sharp.js (FREE) instead of AutoEnhance.ai
-        const imageResponse = await fetch(imageUrl);
-        const imageBuffer = Buffer.from(await imageResponse.arrayBuffer());
-        const result = await sharpEnhance(imageBuffer);
-        // For now, return original URL since we'd need to upload the buffer
-        // In production, upload result.buffer to storage and return URL
-        outputUrl = imageUrl; // TODO: Upload enhanced buffer
+        // Use Sharp.js (FREE) instead of AutoEnhance.ai ($0.29)
+        // This downloads, enhances, and uploads to Supabase
+        const { enhanceAndUpload } = await import('./providers/sharp-enhance');
+        outputUrl = await enhanceAndUpload(imageUrl, 'v3-enhanced', tool + '-' + Date.now());
         break;
         
       case 'perspective-correction':
@@ -185,7 +182,20 @@ export async function executePhotoStrategy(
   
   console.log(`[V3 Executor] Processing photo ${strategy.photoId} with ${strategy.toolOrder.length} tools`);
   
-  // Execute tools in order (each tool's output becomes next tool's input)
+  // Apply Sharp.js base enhancement to ALL photos (FREE - replaces AutoEnhance $0.29)
+  if (true) {
+    try {
+      console.log('[V3 Executor] Applying Sharp.js base enhancement (FREE)...');
+      const { enhanceAndUpload } = await import('./providers/sharp-enhance');
+      const enhancedUrl = await enhanceAndUpload(currentUrl, 'v3-enhanced', strategy.photoId + '-base');
+      currentUrl = enhancedUrl;
+      console.log('[V3 Executor] Base enhancement complete');
+    } catch (err) {
+      console.warn('[V3 Executor] Base enhancement failed, continuing with original:', err);
+    }
+  }
+
+  // Execute creative tools in order (each tool's output becomes next tool's input)
   for (const tool of strategy.toolOrder) {
     // Find preset for this tool
     const decision = strategy.decisions.find(d => d.tool === tool);
@@ -237,17 +247,8 @@ export async function executeListingStrategy(
     
     const batchResults = await Promise.all(
       batch.map(async (strategy) => {
-        // Skip if no tools to apply
-        if (strategy.toolOrder.length === 0) {
-          return {
-            photoId: strategy.photoId,
-            success: true,
-            finalUrl: await getImageUrl(strategy.photoId),
-            toolResults: [],
-            totalTimeMs: 0,
-            totalCost: 0,
-          };
-        }
+        // Even with no creative tools, still apply Sharp.js base enhancement
+        // This replaces AutoEnhance.ai ($0.29) with FREE local processing
         
         const imageUrl = await getImageUrl(strategy.photoId);
         const result = await executePhotoStrategy(strategy, imageUrl);

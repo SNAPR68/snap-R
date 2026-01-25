@@ -2,8 +2,7 @@
  * SnapR V3 - Sharp.js Enhancement Provider
  * =========================================
  * 
- * Replaces AutoEnhance.ai for basic photo enhancement.
- * Cost: FREE (local processing)
+ * Replaces AutoEnhance.ai ($0.29/image) with FREE local processing.
  * 
  * What it does:
  * - Brightness correction
@@ -11,11 +10,10 @@
  * - Saturation boost
  * - Sharpening
  * - Color temperature
- * 
- * This handles what AutoEnhance was charging $0.29/image for.
  */
 
 import sharp from 'sharp';
+import { adminSupabase } from '@/lib/supabase/admin';
 
 // ============================================
 // TYPES
@@ -23,19 +21,18 @@ import sharp from 'sharp';
 
 export interface EnhancementPreset {
   name: string;
-  brightness: number;      // -0.5 to 0.5 (0 = no change)
-  contrast: number;        // 0.5 to 2.0 (1 = no change)
-  saturation: number;      // 0.5 to 2.0 (1 = no change)
-  gamma: number;           // 0.5 to 3.0 (1 = no change, <1 = brighter shadows)
-  sharpness: number;       // 0 to 3 (0 = no sharpening)
-  warmth: number;          // -0.3 to 0.3 (0 = neutral)
+  brightness: number;
+  contrast: number;
+  saturation: number;
+  gamma: number;
+  sharpness: number;
+  warmth: number;
 }
 
 export interface ImageStats {
   brightness: number;
   contrast: number;
   saturation: number;
-  sharpness: number;
   isInterior: boolean;
   isDark: boolean;
   isOverexposed: boolean;
@@ -59,16 +56,16 @@ export const PRESETS: Record<string, EnhancementPreset> = {
     brightness: 0.05,
     contrast: 1.1,
     saturation: 1.1,
-    gamma: 0.95,
+    gamma: 2.2,
     sharpness: 0.8,
     warmth: 0.05,
   },
   brightAiry: {
     name: 'Bright & Airy',
     brightness: 0.12,
-    contrast: 0.95,
-    saturation: 0.95,
-    gamma: 0.85,
+    contrast: 1.0,
+    saturation: 1.0,
+    gamma: 1.8,
     sharpness: 0.5,
     warmth: 0,
   },
@@ -77,7 +74,7 @@ export const PRESETS: Record<string, EnhancementPreset> = {
     brightness: 0.05,
     contrast: 1.05,
     saturation: 1.15,
-    gamma: 0.9,
+    gamma: 2.0,
     sharpness: 0.8,
     warmth: 0.15,
   },
@@ -86,7 +83,7 @@ export const PRESETS: Record<string, EnhancementPreset> = {
     brightness: 0.03,
     contrast: 1.15,
     saturation: 1.12,
-    gamma: 1.0,
+    gamma: 2.2,
     sharpness: 1.0,
     warmth: 0,
   },
@@ -95,7 +92,7 @@ export const PRESETS: Record<string, EnhancementPreset> = {
     brightness: 0,
     contrast: 1.02,
     saturation: 1.02,
-    gamma: 1.0,
+    gamma: 2.2,
     sharpness: 0.3,
     warmth: 0,
   },
@@ -104,7 +101,7 @@ export const PRESETS: Record<string, EnhancementPreset> = {
     brightness: 0.15,
     contrast: 1.1,
     saturation: 1.05,
-    gamma: 0.75,
+    gamma: 1.5,
     sharpness: 0.6,
     warmth: 0.1,
   },
@@ -144,20 +141,14 @@ export async function analyzeImage(buffer: Buffer): Promise<ImageStats> {
   const minChannel = Math.min(rMean, gMean, bMean);
   const saturation = maxChannel > 0 ? (maxChannel - minChannel) / maxChannel : 0;
 
-  const isInterior = brightness < 140 && contrast < 50;
-  const isDark = brightness < 80;
-  const isOverexposed = brightness > 220;
-  const needsWarmth = bMean > rMean + 10;
-
   return {
     brightness,
     contrast,
     saturation,
-    sharpness: contrast / 3,
-    isInterior,
-    isDark,
-    isOverexposed,
-    needsWarmth,
+    isInterior: brightness < 140 && contrast < 50,
+    isDark: brightness < 80,
+    isOverexposed: brightness > 220,
+    needsWarmth: bMean > rMean + 10,
   };
 }
 
@@ -166,21 +157,11 @@ export async function analyzeImage(buffer: Buffer): Promise<ImageStats> {
 // ============================================
 
 export function selectPreset(stats: ImageStats): EnhancementPreset {
-  if (stats.isDark && stats.isInterior) {
-    return PRESETS.darkRoom;
-  }
-  if (stats.isOverexposed) {
-    return PRESETS.minimal;
-  }
-  if (stats.needsWarmth && stats.isInterior) {
-    return PRESETS.warmInviting;
-  }
-  if (!stats.isInterior && stats.saturation > 0.4) {
-    return PRESETS.exterior;
-  }
-  if (stats.contrast < 40) {
-    return PRESETS.realEstate;
-  }
+  if (stats.isDark && stats.isInterior) return PRESETS.darkRoom;
+  if (stats.isOverexposed) return PRESETS.minimal;
+  if (stats.needsWarmth && stats.isInterior) return PRESETS.warmInviting;
+  if (!stats.isInterior && stats.saturation > 0.4) return PRESETS.exterior;
+  if (stats.contrast < 40) return PRESETS.realEstate;
   return PRESETS.realEstate;
 }
 
@@ -210,13 +191,6 @@ export async function applyEnhancement(
     pipeline = pipeline.linear(preset.contrast, 128 * (1 - preset.contrast));
   }
 
-  // Warmth via tint
-  if (preset.warmth !== 0) {
-    const tintR = preset.warmth > 0 ? Math.min(preset.warmth * 100, 30) : 0;
-    const tintB = preset.warmth < 0 ? Math.min(Math.abs(preset.warmth) * 100, 30) : 0;
-    pipeline = pipeline.tint({ r: 255 + tintR, g: 255, b: 255 - tintR + tintB });
-  }
-
   // Sharpening
   if (preset.sharpness > 0) {
     pipeline = pipeline.sharpen({
@@ -234,11 +208,11 @@ export async function applyEnhancement(
 // ============================================
 
 /**
- * Auto-enhance an image with intelligent preset selection
+ * Auto-enhance an image buffer
  */
 export async function autoEnhance(
   buffer: Buffer,
-  options?: { preset?: string; analyzeFirst?: boolean }
+  options?: { preset?: string }
 ): Promise<EnhanceResult> {
   const startTime = Date.now();
   
@@ -262,26 +236,63 @@ export async function autoEnhance(
 }
 
 /**
- * Enhance with a specific preset
+ * Enhance an image from URL and upload result to Supabase
  */
-export async function enhanceWithPreset(
-  buffer: Buffer,
-  presetName: string
-): Promise<Buffer> {
-  const preset = PRESETS[presetName] || PRESETS.realEstate;
-  return applyEnhancement(buffer, preset);
+export async function enhanceAndUpload(
+  imageUrl: string,
+  listingId: string,
+  photoId: string
+): Promise<string> {
+  console.log('[Sharp] Enhancing image...');
+  const startTime = Date.now();
+
+  // Download image
+  const response = await fetch(imageUrl);
+  const arrayBuffer = await response.arrayBuffer();
+  const inputBuffer = Buffer.from(arrayBuffer);
+
+  // Enhance
+  const result = await autoEnhance(inputBuffer);
+  console.log(`[Sharp] Enhanced with ${result.preset.name} preset in ${result.processingTimeMs}ms`);
+
+  // Upload to Supabase
+  const supabase = adminSupabase();
+
+  const filename = `enhanced/v3/${listingId}/${photoId}_enhanced.jpg`;
+  
+  const { data, error } = await supabase.storage
+    .from('raw-images')
+    .upload(filename, result.buffer, {
+      contentType: 'image/jpeg',
+      upsert: true,
+    });
+
+  if (error) {
+    console.error('[Sharp] Upload failed:', error);
+    throw new Error(`Failed to upload enhanced image: ${error.message}`);
+  }
+
+  // Get public URL
+  const { data: urlData } = await supabase.storage
+    .from('raw-images')
+    .createSignedUrl(filename, 3600);
+
+  console.log(`[Sharp] Complete in ${Date.now() - startTime}ms`);
+  
+  return urlData?.signedUrl || '';
 }
 
 /**
- * Quick enhance for batch processing
+ * Quick enhance - returns buffer only (for chaining)
  */
 export async function quickEnhance(buffer: Buffer): Promise<Buffer> {
-  return applyEnhancement(buffer, PRESETS.realEstate);
+  const result = await autoEnhance(buffer);
+  return result.buffer;
 }
 
 export default {
   autoEnhance,
-  enhanceWithPreset,
+  enhanceAndUpload,
   quickEnhance,
   analyzeImage,
   selectPreset,
