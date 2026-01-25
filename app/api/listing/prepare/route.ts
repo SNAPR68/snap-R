@@ -3,23 +3,22 @@
  * ============================
  * POST /api/listing/prepare
  * 
- * Initiates the AI-powered listing preparation process
+ * Now uses V3 pipeline by default.
  */
 
 export const dynamic = 'force-dynamic';
-export const maxDuration = 300; // 5 minutes max for Vercel
+export const maxDuration = 300;
 
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
-import { prepareListing, buildPrepareResponse } from '@/lib/ai/listing-engine';
+import { prepareListingV3, buildV3PrepareResponse } from '@/lib/ai/v3-prepare';
 
 export async function POST(request: NextRequest) {
   const startTime = Date.now();
   
   try {
-    console.log('\n[API] ========== PREPARE LISTING ==========');
+    console.log('\n[API] ========== PREPARE LISTING (V3) ==========');
     
-    // Parse request
     const body = await request.json();
     const { listingId, options = {} } = body;
     
@@ -32,7 +31,6 @@ export async function POST(request: NextRequest) {
     
     console.log('[API] Listing:', listingId);
     
-    // Authenticate user
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
     
@@ -64,7 +62,6 @@ export async function POST(request: NextRequest) {
       );
     }
     
-    // Check if already preparing
     if (listing.status === 'preparing') {
       return NextResponse.json(
         { success: false, error: 'Listing is already being prepared' },
@@ -72,19 +69,15 @@ export async function POST(request: NextRequest) {
       );
     }
     
-    // Check listing quota (future: subscription-based limits)
-    // For now, allow all authenticated users
+    console.log('[API] Starting V3 preparation for:', listing.title);
     
-    console.log('[API] Starting preparation for:', listing.title);
-    
-    // Run the preparation
-    const result = await prepareListing(
+    // Run V3 preparation
+    const result = await prepareListingV3(
       { listingId, options },
       user.id
     );
     
-    // Build response
-    const response = buildPrepareResponse(result);
+    const response = buildV3PrepareResponse(result);
     
     const duration = Date.now() - startTime;
     console.log(`[API] ✅ Complete in ${(duration / 1000).toFixed(1)}s`);
@@ -111,7 +104,7 @@ export async function POST(request: NextRequest) {
       { 
         success: false, 
         error: error.message || 'Failed to prepare listing',
-        status: 'failed',
+      status: 'failed',
       },
       { status: 500 }
     );
