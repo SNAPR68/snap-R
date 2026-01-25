@@ -3,7 +3,7 @@
  * ============================
  * POST /api/listing/prepare
  * 
- * Now uses V3 pipeline by default.
+ * Uses V3 pipeline by default, with V2 fallback option.
  */
 
 export const dynamic = 'force-dynamic';
@@ -12,15 +12,14 @@ export const maxDuration = 300;
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { prepareListingV3, buildV3PrepareResponse } from '@/lib/ai/v3-prepare';
+import { prepareListing, buildPrepareResponse } from '@/lib/ai/listing-engine';
 
 export async function POST(request: NextRequest) {
   const startTime = Date.now();
   
   try {
-    console.log('\n[API] ========== PREPARE LISTING (V3) ==========');
-    
     const body = await request.json();
-    const { listingId, options = {} } = body;
+    const { listingId, options = {}, useV2 = false } = body;
     
     if (!listingId) {
       return NextResponse.json(
@@ -29,6 +28,7 @@ export async function POST(request: NextRequest) {
       );
     }
     
+    console.log(`\n[API] ========== PREPARE LISTING (${useV2 ? 'V2' : 'V3'}) ==========`);
     console.log('[API] Listing:', listingId);
     
     const supabase = await createClient();
@@ -69,15 +69,20 @@ export async function POST(request: NextRequest) {
       );
     }
     
-    console.log('[API] Starting V3 preparation for:', listing.title);
+    console.log('[API] Starting preparation for:', listing.title);
     
-    // Run V3 preparation
-    const result = await prepareListingV3(
-      { listingId, options },
-      user.id
-    );
+    let response;
+    let result;
     
-    const response = buildV3PrepareResponse(result);
+    if (useV2) {
+      // V2 fallback
+      result = await prepareListing({ listingId, options }, user.id);
+      response = buildPrepareResponse(result);
+    } else {
+      // V3 default
+      result = await prepareListingV3({ listingId, options }, user.id);
+      response = buildV3PrepareResponse(result);
+    }
     
     const duration = Date.now() - startTime;
     console.log(`[API] ✅ Complete in ${(duration / 1000).toFixed(1)}s`);
@@ -92,7 +97,7 @@ export async function POST(request: NextRequest) {
         totalPhotos: result.totalPhotos,
         successfulPhotos: result.successfulPhotos,
         failedPhotos: result.failedPhotos,
-        photosNeedingReview: result.photosNeedingReview,
+        photosNeedingReview: result.photosNeedingReview || 0,
         overallConfidence: result.overallConfidence,
       },
     });
@@ -104,7 +109,7 @@ export async function POST(request: NextRequest) {
       { 
         success: false, 
         error: error.message || 'Failed to prepare listing',
-      status: 'failed',
+        status: 'failed',
       },
       { status: 500 }
     );
