@@ -6,7 +6,7 @@ import { useSearchParams } from 'next/navigation';
 import { Instagram, Linkedin, Youtube, Check } from 'lucide-react';
 
 // TODO: Replace with actual Calendly URL
-const CALENDLY_URL = 'https://calendly.com/snapr-team/sales-call';
+const CALENDLY_URL = 'https://calendly.com/rajesh-snap-r/30min';
 
 function ContactContent() {
   const searchParams = useSearchParams();
