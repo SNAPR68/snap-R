@@ -2,9 +2,9 @@
  * SnapR V3 - HDR Processor
  * =========================
  * 
- * Handles HDR merge for bracketed photo sets:
- * 1. Imagen AI (Premium) - Professional HDR merge + window pull + perspective
- * 2. Local OpenCV (FREE) - Mertens exposure fusion fallback
+ * Handles HDR merge and enhancement via Imagen AI:
+ * 1. Imagen AI - Professional HDR merge + window pull + perspective
+ * 2. Local Sharp.js fallback for basic processing
  */
 
 import sharp from 'sharp';
@@ -16,17 +16,16 @@ import { BracketGroup } from './input-router';
 
 export interface HDRProcessingOptions {
   useImagen?: boolean;
-  imagenApiKey?: string;
-  imagenProfileKey?: string;
+  profileKey?: number;
   toneMapping?: 'natural' | 'vivid' | 'dramatic';
-  alignImages?: boolean;
   enableWindowPull?: boolean;
   enablePerspective?: boolean;
+  enableHDRMerge?: boolean;
 }
 
 export interface HDRResult {
   success: boolean;
-  outputBuffer: Buffer;
+  outputBuffer?: Buffer;
   outputUrl?: string;
   provider: 'imagen' | 'local';
   processingTimeMs: number;
@@ -36,25 +35,29 @@ export interface HDRResult {
   error?: string;
 }
 
-export interface ImagenConfig {
-  apiKey: string;
-  baseUrl?: string;
-  profileKey?: string;
-}
-
 // ============================================
 // CONFIGURATION
 // ============================================
 
 const CONFIG = {
   IMAGEN_BASE_URL: 'https://api.imagen-ai.com/v1',
-  IMAGEN_TIMEOUT_MS: 60000,
-  COST_IMAGEN_HDR: 0.05,
+  IMAGEN_TIMEOUT_MS: 120000, // 2 minutes
+  IMAGEN_POLL_INTERVAL_MS: 2000, // 2 seconds
+  IMAGEN_MAX_POLLS: 60, // Max 2 minutes waiting
+  
+  // Profiles for real estate
+  PROFILES: {
+    ELEGANT_HOME_JPEG: 178014,
+    ELEGANT_HOME_RAW: 178011,
+    NATURAL_HOME_JPEG: 333757,
+    NATURAL_HOME_RAW: 333755,
+  },
+  
+  // Costs (estimated per image)
+  COST_IMAGEN_BASE: 0.08,
+  COST_IMAGEN_HDR: 0.04,
+  COST_IMAGEN_WINDOW_PULL: 0.02,
   COST_IMAGEN_PERSPECTIVE: 0.02,
-  COST_IMAGEN_WINDOW_PULL: 0.00,
-  COST_LOCAL: 0.00,
-  LOCAL_OUTPUT_QUALITY: 92,
-  LOCAL_MAX_DIMENSION: 4096,
 };
 
 // ============================================
@@ -64,14 +67,358 @@ const CONFIG = {
 export class ImagenAIClient {
   private apiKey: string;
   private baseUrl: string;
-  private profileKey?: string;
-  
-  constructor(config: ImagenConfig) {
-    this.apiKey = config.apiKey;
-    this.baseUrl = config.baseUrl || CONFIG.IMAGEN_BASE_URL;
-    this.profileKey = config.profileKey;
+
+  constructor(apiKey: string) {
+    this.apiKey = apiKey;
+    this.baseUrl = CONFIG.IMAGEN_BASE_URL;
   }
-  
+
+  private async request(endpoint: string, options: RequestInit = {}) {
+    const response = await fetch(`${this.baseUrl}${endpoint}`, {
+      ...options,
+      headers: {
+        'x-api-key': this.apiKey,
+        'Content-Type': 'application/json',
+        ...options.headers,
+      },
+    });
+
+    if (!response.ok) {
+      const error = await response.text();
+      throw new Error(`Imagen API error: ${response.status} - ${error}`);
+    }
+
+    return response.json();
+  }
+
+  async createProject(): Promise<string> {
+    const result = await this.request('/projects/', { method: 'POST' });
+    return result.data.project_uuid;
+  }
+
+  async getUploadLinks(projectUuid: string, fileNames: string[]): Promise<{ fileName: string; uploadLink: string }[]> {
+    const result = await this.request(`/projects/${projectUuid}/get_temporary_upload_links`, {
+      method: 'POST',
+      body: JSON.stringify({
+        files_list: fileNames.map(name => ({ file_name: name })),
+      }),
+    });
+    
+    return result.data.files_list.map((f: any) => ({
+      fileName: f.file_name,
+      uploadLink: f.upload_link,
+    }));
+  }
+
+  async uploadImage(uploadLink: string, buffer: Buffer): Promise<void> {
+    const response = await fetch(uploadLink, {
+      method: 'PUT',
+      body: new Uint8Array(buffer),
+    });
+
+    if (!response.ok) {
+      throw new Error(`Upload failed: ${response.status}`);
+    }
+  }
+
+  async startEdit(projectUuid: string, options: {
+    profileKey: number;
+    hdrMerge?: boolean;
+    windowPull?: boolean;
+    perspectiveCorrection?: boolean;
+  }): Promise<void> {
+    await this.request(`/projects/${projectUuid}/edit`, {
+      method: 'POST',
+      body: JSON.stringify({
+        profile_key: options.profileKey,
+        hdr_merge: options.hdrMerge ?? false,
+        window_pull: options.windowPull ?? true,
+        perspective_correction: options.perspectiveCorrection ?? true,
+        straighten: false, // Can't use with perspective_correction
+        headshot_crop: false,
+        portrait_crop: false,
+        crop: false,
+        subject_mask: false,
+        smooth_skin: false,
+      }),
+    });
+  }
+
+  async getEditStatus(projectUuid: string): Promise<string> {
+    const result = await this.request(`/projects/${projectUuid}/edit/status`, {
+      method: 'GET',
+    });
+    return result.data.status;
+  }
+
+  async waitForCompletion(projectUuid: string): Promise<void> {
+    let polls = 0;
+    while (polls < CONFIG.IMAGEN_MAX_POLLS) {
+      const status = await this.getEditStatus(projectUuid);
+      
+      if (status === 'Completed') {
+        return;
+      }
+      
+      if (status === 'Failed' || status === 'Error') {
+        throw new Error(`Imagen processing failed: ${status}`);
+      }
+      
+      await new Promise(resolve => setTimeout(resolve, CONFIG.IMAGEN_POLL_INTERVAL_MS));
+      polls++;
+    }
+    
+    throw new Error('Imagen processing timeout');
+  }
+
+  async getDownloadLinks(projectUuid: string): Promise<{ fileName: string; downloadLink: string }[]> {
+    const result = await this.request(`/projects/${projectUuid}/edit/get_temporary_download_links`, {
+      method: 'GET',
+    });
+    
+    return result.data.files_list.map((f: any) => ({
+      fileName: f.file_name,
+      downloadLink: f.download_link,
+    }));
+  }
+
+  async downloadImage(downloadLink: string): Promise<Buffer> {
+    const response = await fetch(downloadLink);
+    if (!response.ok) {
+      throw new Error(`Download failed: ${response.status}`);
+    }
+    const arrayBuffer = await response.arrayBuffer();
+    return Buffer.from(arrayBuffer);
+  }
+
+  async isHealthy(): Promise<boolean> {
+    try {
+      await this.request('/profiles/', { method: 'GET' });
+      return true;
+    } catch {
+      return false;
+    }
+  }
+}
+
+// ============================================
+// MAIN HDR PROCESSOR
+// ============================================
+
+export async function processWithImagen(
+  images: { buffer: Buffer; filename: string }[],
+  options: HDRProcessingOptions = {}
+): Promise<HDRResult> {
+  const startTime = Date.now();
+  const apiKey = process.env.IMAGEN_API_KEY;
+
+  if (!apiKey) {
+    return {
+      success: false,
+      provider: 'imagen',
+      processingTimeMs: Date.now() - startTime,
+      cost: 0,
+      error: 'IMAGEN_API_KEY not configured',
+    };
+  }
+
+  const client = new ImagenAIClient(apiKey);
+
+  try {
+    console.log(`[Imagen] Processing ${images.length} image(s)`);
+
+    // 1. Create project
+    const projectUuid = await client.createProject();
+    console.log(`[Imagen] Created project: ${projectUuid}`);
+
+    // 2. Get upload links
+    const fileNames = images.map(img => img.filename);
+    const uploadLinks = await client.getUploadLinks(projectUuid, fileNames);
+    console.log(`[Imagen] Got ${uploadLinks.length} upload links`);
+
+    // 3. Upload images
+    for (let i = 0; i < images.length; i++) {
+      await client.uploadImage(uploadLinks[i].uploadLink, images[i].buffer);
+      console.log(`[Imagen] Uploaded: ${images[i].filename}`);
+    }
+
+    // 4. Start edit
+    const profileKey = options.profileKey || CONFIG.PROFILES.ELEGANT_HOME_JPEG;
+    await client.startEdit(projectUuid, {
+      profileKey,
+      hdrMerge: options.enableHDRMerge ?? (images.length > 1),
+      windowPull: options.enableWindowPull ?? true,
+      perspectiveCorrection: options.enablePerspective ?? true,
+    });
+    console.log(`[Imagen] Edit started with profile: ${profileKey}`);
+
+    // 5. Wait for completion
+    await client.waitForCompletion(projectUuid);
+    console.log(`[Imagen] Processing complete`);
+
+    // 6. Download result
+    const downloadLinks = await client.getDownloadLinks(projectUuid);
+    const outputBuffer = await client.downloadImage(downloadLinks[0].downloadLink);
+    console.log(`[Imagen] Downloaded result: ${outputBuffer.length} bytes`);
+
+    // Calculate cost
+    let cost = CONFIG.COST_IMAGEN_BASE;
+    if (options.enableHDRMerge || images.length > 1) cost += CONFIG.COST_IMAGEN_HDR;
+    if (options.enableWindowPull !== false) cost += CONFIG.COST_IMAGEN_WINDOW_PULL;
+    if (options.enablePerspective !== false) cost += CONFIG.COST_IMAGEN_PERSPECTIVE;
+
+    return {
+      success: true,
+      outputBuffer,
+      provider: 'imagen',
+      processingTimeMs: Date.now() - startTime,
+      windowPullApplied: options.enableWindowPull !== false,
+      perspectiveCorrected: options.enablePerspective !== false,
+      cost,
+    };
+
+  } catch (error: any) {
+    console.error(`[Imagen] Error:`, error.message);
+    return {
+      success: false,
+      provider: 'imagen',
+      processingTimeMs: Date.now() - startTime,
+      cost: 0,
+      error: error.message,
+    };
+  }
+}
+
+// ============================================
+// HDR BRACKET PROCESSOR
+// ============================================
+
+export async function processHDRBracket(
+  bracket: BracketGroup,
+  options: HDRProcessingOptions = {}
+): Promise<HDRResult> {
+  console.log(`[HDR] Processing bracket ${bracket.id} with ${bracket.images.length} images`);
+
+  // Prepare images
+  const images = bracket.images
+    .filter(img => img.buffer)
+    .map(img => ({
+      buffer: img.buffer!,
+      filename: img.filename,
+    }));
+
+  if (images.length === 0) {
+    return {
+      success: false,
+      provider: 'local',
+      processingTimeMs: 0,
+      cost: 0,
+      error: 'No images with buffers in bracket',
+    };
+  }
+
+  // Try Imagen first
+  const result = await processWithImagen(images, {
+    ...options,
+    enableHDRMerge: true,
+  });
+
+  if (result.success) {
+    return result;
+  }
+
+  // Fallback to local processing
+  console.log(`[HDR] Imagen failed, falling back to local processing`);
+  return processLocalHDR(bracket, options);
+}
+
+// ============================================
+// LOCAL HDR FALLBACK (Sharp.js)
+// ============================================
+
+export async function processLocalHDR(
+  bracket: BracketGroup,
+  options?: HDRProcessingOptions
+): Promise<HDRResult> {
+  const startTime = Date.now();
+
+  try {
+    // For local processing, we just enhance the middle exposure
+    const middleIndex = Math.floor(bracket.images.length / 2);
+    const middleImage = bracket.images[middleIndex];
+
+    if (!middleImage.buffer) {
+      throw new Error('No buffer for middle exposure');
+    }
+
+    // Apply Sharp.js enhancement
+    const outputBuffer = await sharp(middleImage.buffer)
+      .modulate({
+        brightness: 1.05,
+        saturation: 1.1,
+      })
+      .sharpen({ sigma: 1.0 })
+      .normalize()
+      .jpeg({ quality: 92 })
+      .toBuffer();
+
+    return {
+      success: true,
+      outputBuffer,
+      provider: 'local',
+      processingTimeMs: Date.now() - startTime,
+      windowPullApplied: false,
+      perspectiveCorrected: false,
+      cost: 0,
+    };
+
+  } catch (error: any) {
+    return {
+      success: false,
+      provider: 'local',
+      processingTimeMs: Date.now() - startTime,
+      cost: 0,
+      error: error.message,
+    };
+  }
+}
+
+// ============================================
+// SINGLE IMAGE ENHANCEMENT
+// ============================================
+
+export async function enhanceWithImagen(
+  buffer: Buffer,
+  filename: string,
+  options: HDRProcessingOptions = {}
+): Promise<HDRResult> {
+  return processWithImagen([{ buffer, filename }], {
+    ...options,
+    enableHDRMerge: false,
+  });
+}
+
+// ============================================
+// EXPORTS
+// ============================================
+
+export { CONFIG as IMAGEN_CONFIG };
+
+// ============================================
+// HDR PROCESSOR CLASS (for compatibility)
+// ============================================
+
+export class HDRProcessor {
+  private apiKey: string;
+  private client: ImagenAIClient | null = null;
+
+  constructor(config: { apiKey?: string; profileKey?: string; useImagen?: boolean; imagenApiKey?: string; imagenProfileKey?: string }) {
+    this.apiKey = config.imagenApiKey || config.apiKey || process.env.IMAGEN_API_KEY || '';
+    if (this.apiKey) {
+      this.client = new ImagenAIClient(this.apiKey);
+    }
+  }
+
   async processHDRBracket(
     bracket: BracketGroup,
     options: {
@@ -85,272 +432,46 @@ export class ImagenAIClient {
     perspectiveCorrected: boolean;
     cost: number;
   }> {
-    console.log(`[ImagenAI] Processing bracket ${bracket.id} with ${bracket.images.length} images`);
-    
-    const formData = new FormData();
-    
-    for (let i = 0; i < bracket.images.length; i++) {
-      const img = bracket.images[i];
-      if (img.buffer) {
-        // Convert Buffer to Uint8Array for Blob compatibility
-        const uint8Array = new Uint8Array(img.buffer);
-        const blob = new Blob([uint8Array], { type: 'image/jpeg' });
-        formData.append('images', blob, img.filename);
-      }
-    }
-    
-    formData.append('hdr', JSON.stringify(options.hdr || { enabled: true }));
-    formData.append('windowBalance', JSON.stringify(options.windowBalance || { enabled: true }));
-    formData.append('perspective', JSON.stringify(options.perspective || { enabled: true }));
-    
-    if (this.profileKey) {
-      formData.append('profileKey', this.profileKey);
-    }
-    
-    const response = await fetch(`${this.baseUrl}/edits/hdr-bracket`, {
-      method: 'POST',
-      headers: { 'Authorization': `Bearer ${this.apiKey}` },
-      body: formData,
-      signal: AbortSignal.timeout(CONFIG.IMAGEN_TIMEOUT_MS),
+    const result = await processHDRBracket(bracket, {
+      enableHDRMerge: options.hdr?.enabled ?? true,
+      enableWindowPull: options.windowBalance?.enabled ?? true,
+      enablePerspective: options.perspective?.enabled ?? true,
+      toneMapping: options.hdr?.toneMapping as any,
     });
-    
-    if (!response.ok) {
-      const error = await response.text();
-      throw new Error(`Imagen API error: ${response.status} - ${error}`);
+
+    if (!result.success || !result.outputBuffer) {
+      throw new Error(result.error || 'HDR processing failed');
     }
-    
-    const result = await response.json();
-    const imageResponse = await fetch(result.outputUrl);
-    const arrayBuffer = await imageResponse.arrayBuffer();
-    const buffer = Buffer.from(arrayBuffer);
-    
-    let cost = CONFIG.COST_IMAGEN_HDR;
-    if (options.perspective?.enabled && result.perspectiveCorrected) {
-      cost += CONFIG.COST_IMAGEN_PERSPECTIVE;
-    }
-    
+
     return {
-      buffer,
-      windowPullApplied: result.windowBalanceApplied || false,
+      buffer: result.outputBuffer,
+      windowPullApplied: result.windowPullApplied || false,
       perspectiveCorrected: result.perspectiveCorrected || false,
-      cost,
+      cost: result.cost,
     };
   }
-  
-  async healthCheck(): Promise<boolean> {
-    try {
-      const response = await fetch(`${this.baseUrl}/health`, {
-        headers: { 'Authorization': `Bearer ${this.apiKey}` },
-        signal: AbortSignal.timeout(5000),
-      });
-      return response.ok;
-    } catch {
-      return false;
-    }
+
+  async isAvailable(): Promise<boolean> {
+    if (!this.client) return false;
+    return this.client.isHealthy();
   }
-}
 
-// ============================================
-// LOCAL HDR PROCESSING
-// ============================================
-
-export async function processLocalHDR(
-  bracket: BracketGroup,
-  options?: { toneMapping?: 'natural' | 'vivid' | 'dramatic' }
-): Promise<HDRResult> {
-  const startTime = Date.now();
-  
-  console.log(`[LocalHDR] Processing bracket ${bracket.id} with ${bracket.images.length} images`);
-  
-  try {
-    const sortedImages = [...bracket.images].sort((a, b) => 
-      (a.exposureValue ?? 0) - (b.exposureValue ?? 0)
-    );
-    
-    const loadedImages = await Promise.all(
-      sortedImages.map(async (img) => {
-        if (!img.buffer) {
-          throw new Error(`No buffer for image ${img.filename}`);
-        }
-        
-        const { data, info } = await sharp(img.buffer)
-          .resize(CONFIG.LOCAL_MAX_DIMENSION, CONFIG.LOCAL_MAX_DIMENSION, {
-            fit: 'inside',
-            withoutEnlargement: true,
-          })
-          .raw()
-          .toBuffer({ resolveWithObject: true });
-        
-        return {
-          data,
-          width: info.width,
-          height: info.height,
-          channels: info.channels,
-          exposureValue: img.exposureValue ?? 0,
-        };
-      })
-    );
-    
-    const targetWidth = loadedImages[0].width;
-    const targetHeight = loadedImages[0].height;
-    const channels = loadedImages[0].channels;
-    
-    const fusedData = exposureFusion(loadedImages, targetWidth, targetHeight, channels);
-    
-    let outputBuffer = await sharp(fusedData, {
-      raw: { width: targetWidth, height: targetHeight, channels: channels as 3 | 4 },
-    })
-      .jpeg({ quality: CONFIG.LOCAL_OUTPUT_QUALITY })
-      .toBuffer();
-    
-    const toneMapping = options?.toneMapping || 'natural';
-    outputBuffer = await applyToneMapping(outputBuffer, toneMapping);
-    
-    return {
-      success: true,
-      outputBuffer,
-      provider: 'local',
-      processingTimeMs: Date.now() - startTime,
-      cost: CONFIG.COST_LOCAL,
-    };
-    
-  } catch (error) {
-    console.error('[LocalHDR] Processing failed:', error);
-    return {
-      success: false,
-      outputBuffer: Buffer.alloc(0),
-      provider: 'local',
-      processingTimeMs: Date.now() - startTime,
-      cost: 0,
-      error: error instanceof Error ? error.message : 'Unknown error',
-    };
-  }
-}
-
-function exposureFusion(
-  images: Array<{ data: Buffer; width: number; height: number; channels: number; exposureValue: number }>,
-  width: number,
-  height: number,
-  channels: number
-): Buffer {
-  const pixelCount = width * height;
-  const result = Buffer.alloc(pixelCount * channels);
-  
-  const weights = images.map(img => calculateExposureWeights(img.data, pixelCount, channels));
-  
-  const weightSums = new Float32Array(pixelCount);
-  for (let i = 0; i < images.length; i++) {
-    for (let p = 0; p < pixelCount; p++) {
-      weightSums[p] += weights[i][p];
-    }
-  }
-  
-  for (let p = 0; p < pixelCount; p++) {
-    const pixelOffset = p * channels;
-    const weightSum = weightSums[p] || 1;
-    
-    for (let c = 0; c < channels; c++) {
-      let blendedValue = 0;
-      for (let i = 0; i < images.length; i++) {
-        const imgPixelValue = images[i].data[pixelOffset + c];
-        const weight = weights[i][p] / weightSum;
-        blendedValue += imgPixelValue * weight;
-      }
-      result[pixelOffset + c] = Math.round(Math.max(0, Math.min(255, blendedValue)));
-    }
-  }
-  
-  return result;
-}
-
-function calculateExposureWeights(data: Buffer, pixelCount: number, channels: number): Float32Array {
-  const weights = new Float32Array(pixelCount);
-  
-  for (let p = 0; p < pixelCount; p++) {
-    const pixelOffset = p * channels;
-    const r = data[pixelOffset];
-    const g = data[pixelOffset + 1];
-    const b = data[pixelOffset + 2];
-    const luminance = 0.299 * r + 0.587 * g + 0.114 * b;
-    
-    const normalizedLum = luminance / 255;
-    const wellExposedness = Math.exp(-0.5 * Math.pow((normalizedLum - 0.5) / 0.2, 2));
-    const contrast = Math.abs(luminance - 128) / 128;
-    const max = Math.max(r, g, b);
-    const min = Math.min(r, g, b);
-    const saturation = max > 0 ? (max - min) / max : 0;
-    
-    weights[p] = wellExposedness * (0.5 + 0.3 * contrast + 0.2 * saturation);
-  }
-  
-  return weights;
-}
-
-async function applyToneMapping(buffer: Buffer, style: 'natural' | 'vivid' | 'dramatic'): Promise<Buffer> {
-  const adjustments: Record<string, { brightness: number; saturation: number; contrast: number }> = {
-    natural: { brightness: 1.0, saturation: 1.05, contrast: 1.05 },
-    vivid: { brightness: 1.02, saturation: 1.15, contrast: 1.1 },
-    dramatic: { brightness: 0.98, saturation: 1.2, contrast: 1.15 },
-  };
-  
-  const adj = adjustments[style];
-  
-  return sharp(buffer)
-    .modulate({ brightness: adj.brightness, saturation: adj.saturation })
-    .linear(adj.contrast, -(128 * adj.contrast) + 128)
-    .jpeg({ quality: CONFIG.LOCAL_OUTPUT_QUALITY })
-    .toBuffer();
-}
-
-// ============================================
-// HDR PROCESSOR (MAIN CLASS)
-// ============================================
-
-export class HDRProcessor {
-  private imagenClient?: ImagenAIClient;
-  private useImagen: boolean;
-  private preferLocal: boolean;
-  
-  constructor(options?: HDRProcessingOptions) {
-    this.useImagen = !!(options?.useImagen && options?.imagenApiKey);
-    this.preferLocal = !this.useImagen;
-    
-    if (options?.imagenApiKey) {
-      this.imagenClient = new ImagenAIClient({
-        apiKey: options.imagenApiKey,
-        profileKey: options.imagenProfileKey,
-      });
-    }
-  }
-  
+  // Alias for compatibility - returns full HDRResult
   async processBracket(
     bracket: BracketGroup,
-    options?: {
-      forceLocal?: boolean;
-      forceImagen?: boolean;
-      toneMapping?: 'natural' | 'vivid' | 'dramatic';
+    options: {
+      toneMapping?: string;
       enableWindowPull?: boolean;
       enablePerspective?: boolean;
     }
   ): Promise<HDRResult> {
     const startTime = Date.now();
     
-    const useLocal = options?.forceLocal || 
-      (this.preferLocal && !options?.forceImagen) ||
-      !this.imagenClient;
-    
-    if (useLocal) {
-      console.log('[HDRProcessor] Using LOCAL processing (OpenCV-style)');
-      return processLocalHDR(bracket, { toneMapping: options?.toneMapping });
-    }
-    
-    console.log('[HDRProcessor] Using IMAGEN AI for HDR processing');
-    
     try {
-      const result = await this.imagenClient!.processHDRBracket(bracket, {
-        hdr: { enabled: true, toneMapping: options?.toneMapping || 'natural' },
-        windowBalance: { enabled: options?.enableWindowPull ?? true },
-        perspective: { enabled: options?.enablePerspective ?? true },
+      const result = await this.processHDRBracket(bracket, {
+        hdr: { enabled: true, toneMapping: options.toneMapping },
+        windowBalance: { enabled: options.enableWindowPull ?? true },
+        perspective: { enabled: options.enablePerspective ?? true },
       });
       
       return {
@@ -362,23 +483,14 @@ export class HDRProcessor {
         perspectiveCorrected: result.perspectiveCorrected,
         cost: result.cost,
       };
-      
-    } catch (error) {
-      console.error('[HDRProcessor] Imagen failed, falling back to local:', error);
-      
-      const localResult = await processLocalHDR(bracket, { toneMapping: options?.toneMapping });
-      
+    } catch (error: any) {
       return {
-        ...localResult,
-        error: `Imagen failed: ${error instanceof Error ? error.message : 'Unknown'}. Used local fallback.`,
+        success: false,
+        provider: 'local',
+        processingTimeMs: Date.now() - startTime,
+        cost: 0,
+        error: error.message,
       };
     }
   }
-  
-  async isImagenAvailable(): Promise<boolean> {
-    if (!this.imagenClient) return false;
-    return this.imagenClient.healthCheck();
-  }
 }
-
-export default { HDRProcessor, ImagenAIClient, processLocalHDR, CONFIG };
