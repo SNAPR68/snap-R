@@ -44,3 +44,6 @@ snapr-code.zip
 scripts/
 app/api/admin/create-test-account/
 .env.local.backup
+
+# Sentry Config File
+.env.sentry-build-plugin
