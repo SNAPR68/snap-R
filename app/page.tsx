@@ -422,7 +422,7 @@ export default function HomePage() {
           </Link>
           
           <div className="hidden md:flex items-center gap-8">
-            <Link href="#features" className="text-white/70 hover:text-[#D4A017] transition-colors text-sm">Features</Link>
+            <Link href="#see-demo" className="text-white/70 hover:text-[#D4A017] transition-colors text-sm">See Demo</Link>
             <Link href="/pricing" className="text-white/70 hover:text-[#D4A017] transition-colors text-sm">Pricing</Link>
             <Link href="/faq" className="text-white/70 hover:text-[#D4A017] transition-colors text-sm">FAQ</Link>
             <Link href="/academy" className="text-white/70 hover:text-[#D4A017] transition-colors text-sm">Academy</Link>
@@ -449,87 +449,78 @@ export default function HomePage() {
         
         <div className="max-w-6xl mx-auto relative z-10">
           
-          {/* Hero Text - AI Listing OS */}
+          {/* Hero Text - New Messaging */}
           <div className="text-center mb-10">
-            {/* Category Badge */}
-            <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-white/5 border border-white/10 rounded-full mb-5">
-              <span className="text-white/50 text-xs">For</span>
-              <span className="text-white text-xs font-medium">Agents</span>
-              <span className="text-white/20 text-xs">•</span>
-              <span className="text-white text-xs font-medium">Photographers</span>
-              <span className="text-white/20 text-xs">•</span>
-              <span className="text-white text-xs font-medium">Brokers</span>
+            {/* Platform Badge */}
+            <div className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-[#D4A017]/20 to-[#D4A017]/10 border border-[#D4A017]/40 rounded-full mb-6">
+              <span className="text-[#D4A017] text-xs md:text-sm font-semibold tracking-wide uppercase">
+                World's First AI-Powered Real Estate Media & Marketing Platform
+              </span>
             </div>
             
-            {/* Main Headline - UPDATED to AI Listing OS */}
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white leading-[1.1] mb-4">
-              The Complete <span className="text-[#D4A017]">AI Listing</span> OS
+            {/* Main Headline - Upload. Enhance. Publish. */}
+            <h1 className="text-4xl md:text-5xl lg:text-7xl font-bold text-white leading-[1.1] mb-5">
+              <span className="text-[#D4A017]">Upload.</span> <span className="text-[#D4A017]">Enhance.</span> <span className="text-[#D4A017]">Publish.</span>
             </h1>
             
-            {/* Feature Stack - UPDATED: Property galleries instead of virtual tours, upload to social instead of social publishing */}
-            <p className="text-sm md:text-base text-white/50 mb-4 max-w-3xl mx-auto">
-              Photo enhancement • Content studio • Video + AI voiceovers • Property galleries • CMA reports • Email marketing • Upload to social • Client approval
+            {/* Trust Line */}
+            <p className="text-base md:text-lg text-white/60 mb-4 max-w-2xl mx-auto">
+              For property owners, photographers, and agents — less work, faster sales.
             </p>
             
-            {/* Empowerment Hook */}
-            <p className="text-lg text-white/80 font-medium mb-2">
-              One upload. AI does everything. <span className="text-[#D4A017]">WhatsApp alerts you when clients engage.</span>
+            {/* Promise */}
+            <p className="text-xl md:text-2xl lg:text-3xl text-white font-medium mb-4">
+              Listings ready to sell in under 10 minutes.
             </p>
             
-            {/* Speed Line */}
-            <p className="text-base text-[#D4A017] font-semibold mb-6">
-              "Shot at 2pm. Listed, marketed & shared by 2:12."
+            {/* Tagline */}
+            <p className="text-2xl md:text-3xl lg:text-4xl text-[#D4A017] font-bold mb-8">
+              Just SnapR it.
             </p>
             
-            {/* FREE TRIAL CTA - UPDATED from 3 listings to 7-day trial */}
-            <Link 
-              href="/auth/signup" 
-              onClick={() => trackEvent(SnapREvents.HOMEPAGE_CTA_CLICK)}
-              className="inline-flex items-center gap-4 px-6 py-3 bg-gradient-to-r from-[#D4A017]/20 to-[#D4A017]/10 border-2 border-[#D4A017]/50 rounded-full mb-6 hover:border-[#D4A017] hover:scale-105 transition-all cursor-pointer group"
-            >
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-[#D4A017] flex items-center justify-center shadow-lg shadow-[#D4A017]/30 group-hover:scale-110 transition-transform">
-                  <Check className="w-6 h-6 text-black" />
-                </div>
-                <div className="text-left">
-                  <div className="text-[#D4A017] text-xs font-bold tracking-wide">FREE TRIAL</div>
-                  <div className="text-white text-xl font-black">7 Days • 1 Listing</div>
-                </div>
-              </div>
-              <div className="h-10 w-px bg-white/20"></div>
-              <div className="text-left">
-                <div className="text-white/80 text-sm font-medium">All Features Included</div>
-                <div className="text-white/50 text-xs">No credit card required</div>
-              </div>
-              <ArrowRight className="w-5 h-5 text-[#D4A017] group-hover:translate-x-1 transition-transform" />
-            </Link>
-            
-            {/* Feature Badges - UPDATED: Removed iOS badge, changed colors to gold */}
-            <div className="flex flex-wrap justify-center items-center gap-3 mb-5">
-              {/* REMOVED: First-ever iOS & Android app badge */}
-              <span className="flex items-center gap-1.5 px-3 py-1.5 bg-[#D4A017]/10 border border-[#D4A017]/30 rounded-full text-xs text-[#D4A017]">
-                <Bell className="w-3.5 h-3.5" />
-                WhatsApp client alerts
-              </span>
-              <span className="flex items-center gap-1.5 px-3 py-1.5 bg-[#D4A017]/10 border border-[#D4A017]/30 rounded-full text-xs text-[#D4A017]">
-                <Zap className="w-3.5 h-3.5" />
-                60-sec AI (vs 48hr industry)
-              </span>
+            {/* CTA Buttons - Start Free | Book a Demo */}
+            <div className="flex flex-col sm:flex-row justify-center items-center gap-4 mb-6">
+              <Link 
+                href="/auth/signup" 
+                onClick={() => trackEvent(SnapREvents.HOMEPAGE_CTA_CLICK)}
+                className="px-8 py-4 bg-gradient-to-r from-[#D4A017] to-[#B8860B] text-black font-bold text-lg rounded-full hover:opacity-90 hover:scale-105 transition-all shadow-lg shadow-[#D4A017]/30"
+              >
+                Start Free
+              </Link>
+              <Link 
+                href="/contact" 
+                className="px-8 py-4 bg-white/5 border border-white/20 text-white font-semibold text-lg rounded-full hover:bg-white/10 hover:border-white/30 transition-all"
+              >
+                Book a Demo
+              </Link>
             </div>
             
-            {/* Trust Signals - UPDATED: Gold checkmarks */}
-            <div className="flex flex-wrap justify-center items-center gap-5 text-xs">
-              <span className="flex items-center gap-1.5 text-white/40">
+            {/* Footer Line */}
+            <p className="text-white/40 text-sm mb-8">
+              No credit card ✦ 3 listings free
+            </p>
+            
+            {/* Feature Pills */}
+            <div className="flex flex-wrap justify-center items-center gap-3 mb-5">
+              <span className="flex items-center gap-1.5 px-3 py-1.5 bg-white/5 border border-white/10 rounded-full text-xs text-white/60">
                 <Check className="w-3.5 h-3.5 text-[#D4A017]" />
-                MLS-Ready
+                MLS-ready photos
               </span>
-              <span className="flex items-center gap-1.5 text-white/40">
+              <span className="flex items-center gap-1.5 px-3 py-1.5 bg-white/5 border border-white/10 rounded-full text-xs text-white/60">
                 <Check className="w-3.5 h-3.5 text-[#D4A017]" />
-                15 AI Tools
+                Social content
               </span>
-              <span className="flex items-center gap-1.5 text-white/40">
+              <span className="flex items-center gap-1.5 px-3 py-1.5 bg-white/5 border border-white/10 rounded-full text-xs text-white/60">
                 <Check className="w-3.5 h-3.5 text-[#D4A017]" />
-                No Credit Card
+                Email campaigns
+              </span>
+              <span className="flex items-center gap-1.5 px-3 py-1.5 bg-white/5 border border-white/10 rounded-full text-xs text-white/60">
+                <Check className="w-3.5 h-3.5 text-[#D4A017]" />
+                Property sites
+              </span>
+              <span className="flex items-center gap-1.5 px-3 py-1.5 bg-white/5 border border-white/10 rounded-full text-xs text-white/60">
+                <Check className="w-3.5 h-3.5 text-[#D4A017]" />
+                Video
               </span>
             </div>
           </div>
@@ -886,6 +877,56 @@ export default function HomePage() {
           </div>
         </div>
         <LandingGallery />
+      </section>
+
+      {/* See Demo - Video Section */}
+      <section id="see-demo" className="py-16 px-6 bg-gradient-to-b from-[#0F0F0F] to-[#1A1A1A]">
+        <div className="max-w-4xl mx-auto">
+          <div className="text-center mb-8">
+            <p className="text-[#D4A017] text-xs font-semibold tracking-wider mb-2">SEE DEMO</p>
+            <h2 className="text-2xl md:text-3xl font-bold text-white mb-3">
+              Watch SnapR in Action
+            </h2>
+            <p className="text-sm text-white/60 max-w-xl mx-auto">
+              From raw photos to fully marketed listing in under 10 minutes.
+            </p>
+          </div>
+          
+          {/* Video Placeholder */}
+          <div className="relative aspect-video rounded-2xl overflow-hidden border-2 border-[#D4A017]/30 bg-[#1A1A1A]">
+            {/* Placeholder Content */}
+            <div className="absolute inset-0 flex flex-col items-center justify-center">
+              {/* Play Button */}
+              <div className="w-20 h-20 rounded-full bg-gradient-to-br from-[#D4A017] to-[#B8860B] flex items-center justify-center mb-4 cursor-pointer hover:scale-110 transition-transform shadow-lg shadow-[#D4A017]/30">
+                <svg className="w-8 h-8 text-black ml-1" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M8 5v14l11-7z" />
+                </svg>
+              </div>
+              <p className="text-white/60 text-sm">Demo video coming soon</p>
+            </div>
+            
+            {/* Decorative Grid Overlay */}
+            <div className="absolute inset-0 opacity-5">
+              <div className="w-full h-full" style={{ backgroundImage: 'linear-gradient(rgba(212,160,23,0.3) 1px, transparent 1px), linear-gradient(90deg, rgba(212,160,23,0.3) 1px, transparent 1px)', backgroundSize: '40px 40px' }}></div>
+            </div>
+          </div>
+          
+          {/* Video Highlights */}
+          <div className="grid grid-cols-3 gap-4 mt-6">
+            <div className="text-center p-4 bg-white/5 rounded-xl border border-white/10">
+              <p className="text-[#D4A017] font-bold text-lg mb-1">2 min</p>
+              <p className="text-white/50 text-xs">Full walkthrough</p>
+            </div>
+            <div className="text-center p-4 bg-white/5 rounded-xl border border-white/10">
+              <p className="text-[#D4A017] font-bold text-lg mb-1">Real listing</p>
+              <p className="text-white/50 text-xs">Live demo</p>
+            </div>
+            <div className="text-center p-4 bg-white/5 rounded-xl border border-white/10">
+              <p className="text-[#D4A017] font-bold text-lg mb-1">No fluff</p>
+              <p className="text-white/50 text-xs">Just results</p>
+            </div>
+          </div>
+        </div>
       </section>
 
       {/* NEW: Features Grid - 15 AI Tools */}
