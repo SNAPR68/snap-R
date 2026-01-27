@@ -74,19 +74,19 @@ async function runFluxKontext(
 
 const SKY_PROMPTS: Record<string, string> = {
   // Default / Blue Sky
-  'default': 'Replace the sky with a beautiful clear blue sky with a few soft white clouds. The sky should be bright and inviting. Keep the house, roof, trees, lawn, driveway, and ALL other elements exactly the same. Do not change the lighting on the building. Only replace the sky area.',
+  'default': 'Replace the sky with a perfectly CLEAR blue sky with absolutely NO clouds. Pure pristine blue gradient from light azure at horizon to deeper cerulean blue at top. Crisp, clean, perfect weather. Keep the house, roof, trees, lawn, driveway, and ALL other elements exactly the same. Only replace the sky.',
   
   // Sunny variant
-  'sunny': 'Replace the sky with a bright, vibrant blue sky with scattered fluffy white cumulus clouds. Sunny summer day atmosphere. Keep the house, roof, trees, lawn, and everything else exactly the same. Only replace the sky.',
-  'blue': 'Replace the sky with a bright, vibrant blue sky with scattered fluffy white cumulus clouds. Sunny summer day atmosphere. Keep the house, roof, trees, lawn, and everything else exactly the same. Only replace the sky.',
+  'sunny': 'Replace the sky with a perfectly CLEAR vibrant blue sky with NO clouds whatsoever. Pure blue, bright and cheerful. Keep the house, roof, trees, lawn, and everything else exactly the same. Only replace the sky.',
+  'blue': 'Replace the sky with a perfectly CLEAR vibrant blue sky with NO clouds whatsoever. Pure blue, bright and cheerful. Keep the house, roof, trees, lawn, and everything else exactly the same. Only replace the sky.',
   
   // Sunset variant - BRIGHTER, not dark
   'sunset': 'Replace the sky with a beautiful sunset sky featuring warm orange, pink and golden colors near the horizon, transitioning to light blue higher up. The sunset should be BRIGHT and colorful, not dark. Keep the house, roof, trees, lawn, and everything else exactly the same. Only replace the sky.',
   'golden': 'Replace the sky with a beautiful sunset sky featuring warm orange, pink and golden colors near the horizon, transitioning to light blue higher up. The sunset should be BRIGHT and colorful, not dark. Keep the house, roof, trees, lawn, and everything else exactly the same. Only replace the sky.',
   
   // Dramatic variant
-  'dramatic': 'Replace the sky with dramatic clouds - large billowing white and gray clouds against a deep blue sky. Impressive and eye-catching but still daytime. Keep the house, roof, trees, lawn, and everything else exactly the same. Only replace the sky.',
-  'clouds': 'Replace the sky with dramatic clouds - large billowing white and gray clouds against a deep blue sky. Impressive and eye-catching but still daytime. Keep the house, roof, trees, lawn, and everything else exactly the same. Only replace the sky.',
+  'dramatic': 'Replace the sky with a beautiful blue sky featuring a few elegant white fluffy clouds artfully scattered. Not too many clouds - just enough to add visual interest. Bright, appealing, professional real estate sky. Keep the house, roof, trees, lawn, and everything else exactly the same. Only replace the sky.',
+  'clouds': 'Replace the sky with a beautiful blue sky featuring a few elegant white fluffy clouds artfully scattered. Not too many clouds - just enough to add visual interest. Bright, appealing, professional real estate sky. Keep the house, roof, trees, lawn, and everything else exactly the same. Only replace the sky.',
   
   // Cloudy variant
   'cloudy': 'Replace the sky with a soft overcast sky - light gray clouds providing even, diffused lighting. Professional real estate look without harsh shadows. Keep the house, roof, trees, lawn, and everything else exactly the same. Only replace the sky.',
@@ -103,7 +103,10 @@ export async function skyReplacement(imageUrl: string, customPrompt?: string): P
     const lowerPrompt = customPrompt.toLowerCase();
     
     // Match preset keywords
-    if (lowerPrompt.includes('sunset') || lowerPrompt.includes('golden') || lowerPrompt.includes('orange')) {
+    if (lowerPrompt.includes('twilight') || lowerPrompt.includes('dusk') || lowerPrompt.includes('purple')) {
+      prompt = SKY_PROMPTS['twilight'];
+      console.log('[Replicate] Using TWILIGHT preset');
+    } else if (lowerPrompt.includes('sunset') || lowerPrompt.includes('golden') || lowerPrompt.includes('orange')) {
       prompt = SKY_PROMPTS['sunset'];
     } else if (lowerPrompt.includes('dramatic') || lowerPrompt.includes('cloud')) {
       prompt = SKY_PROMPTS['dramatic'];
@@ -130,26 +133,26 @@ export async function skyReplacement(imageUrl: string, customPrompt?: string): P
 
 const TWILIGHT_PROMPTS: Record<string, string> = {
   // Default twilight
-  'default': 'Transform this daytime exterior photo into a beautiful twilight scene. Replace the sky with a gradient from deep blue at top to warm orange-pink at the horizon. Add warm yellow-orange light glowing from inside all windows. The house should have interior lights on. Keep the house structure, landscaping, and all other elements exactly the same. Professional real estate twilight photography.',
+  'default': 'Transform this daytime photo into stunning professional twilight. Keep the scene BRIGHT and visible - this is dusk, not night. Sky shows beautiful gradient from soft blue at top through lavender to warm coral-pink and peach at horizon. Windows glow with warm amber light from inside. House and landscape must remain clearly visible and well-lit. Magazine-quality real estate twilight. Keep architecture exactly the same.',
   
   // Warm Twilight - orange/pink sky
-  'warm': 'Transform this into GOLDEN HOUR twilight. The sky should show warm ORANGE and PINK sunset colors with golden light. Add bright warm yellow light glowing from every window. The scene should feel cozy and inviting with golden warm tones. Keep house structure exactly the same.',
-  'golden': 'Transform this into GOLDEN HOUR twilight. The sky should show warm ORANGE and PINK sunset colors with golden light. Add bright warm yellow light glowing from every window. The scene should feel cozy and inviting with golden warm tones. Keep house structure exactly the same.',
-  'golden hour': 'Transform this into GOLDEN HOUR twilight. The sky should show warm ORANGE and PINK sunset colors with golden light. Add bright warm yellow light glowing from every window. The scene should feel cozy and inviting with golden warm tones. Keep house structure exactly the same.',
+  'warm': 'Transform into GOLDEN HOUR - warm and BRIGHT, not dark. Sky shows warm peach, soft orange, and golden pink colors - bright and luminous, not heavy or dark. House bathed in warm golden light, all details visible. Windows glow amber from within. Scene feels warm, inviting, luxurious but BRIGHT. Keep house structure exactly the same.',
+  'golden': 'Transform into GOLDEN HOUR - warm and BRIGHT, not dark. Sky shows warm peach, soft orange, and golden pink colors - bright and luminous, not heavy or dark. House bathed in warm golden light, all details visible. Windows glow amber from within. Scene feels warm, inviting, luxurious but BRIGHT. Keep house structure exactly the same.',
+  'golden hour': 'Transform into GOLDEN HOUR - warm and BRIGHT, not dark. Sky shows warm peach, soft orange, and golden pink colors - bright and luminous, not heavy or dark. House bathed in warm golden light, all details visible. Windows glow amber from within. Scene feels warm, inviting, luxurious but BRIGHT. Keep house structure exactly the same.',
   
   // Blue Hour - deep blue sky, no orange
-  'blue': 'Transform this into BLUE HOUR. Make the sky a rich DEEP BLUE color - no orange, no pink, just beautiful deep blue twilight. All windows should glow with bright warm YELLOW light creating contrast against the blue sky. Cool blue atmosphere with warm window glow. Keep house structure exactly the same.',
-  'blue hour': 'Transform this into BLUE HOUR. Make the sky a rich DEEP BLUE color - no orange, no pink, just beautiful deep blue twilight. All windows should glow with bright warm YELLOW light creating contrast against the blue sky. Cool blue atmosphere with warm window glow. Keep house structure exactly the same.',
-  'cool': 'Transform this into BLUE HOUR. Make the sky a rich DEEP BLUE color - no orange, no pink, just beautiful deep blue twilight. All windows should glow with bright warm YELLOW light creating contrast against the blue sky. Cool blue atmosphere with warm window glow. Keep house structure exactly the same.',
+  'blue': 'Transform into BLUE HOUR twilight - deep blue sky but house remains CLEARLY VISIBLE. Sky is rich cobalt blue, no orange or pink. The house is well-lit and all architectural details visible. Windows BLAZING with bright warm golden-yellow light creating beautiful contrast. Cool blue atmosphere but the property is the star - bright, visible, dramatic. Keep house structure exactly the same.',
+  'blue hour': 'Transform into BLUE HOUR twilight - deep blue sky but house remains CLEARLY VISIBLE. Sky is rich cobalt blue, no orange or pink. The house is well-lit and all architectural details visible. Windows BLAZING with bright warm golden-yellow light creating beautiful contrast. Cool blue atmosphere but the property is the star - bright, visible, dramatic. Keep house structure exactly the same.',
+  'cool': 'Transform into BLUE HOUR twilight - deep blue sky but house remains CLEARLY VISIBLE. Sky is rich cobalt blue, no orange or pink. The house is well-lit and all architectural details visible. Windows BLAZING with bright warm golden-yellow light creating beautiful contrast. Cool blue atmosphere but the property is the star - bright, visible, dramatic. Keep house structure exactly the same.',
   
   // Night - dark sky with stars
-  'night': 'Transform this into a NIGHT scene. Make the sky completely DARK - deep black-blue with visible stars. Turn on ALL lights in the house with BRIGHT warm yellow-orange glow from every window. Strong contrast between dark sky and bright windows. Nighttime atmosphere. Keep house structure exactly the same.',
-  'dark': 'Transform this into a NIGHT scene. Make the sky completely DARK - deep black-blue with visible stars. Turn on ALL lights in the house with BRIGHT warm yellow-orange glow from every window. Strong contrast between dark sky and bright windows. Nighttime atmosphere. Keep house structure exactly the same.',
-  'stars': 'Transform this into a NIGHT scene. Make the sky completely DARK - deep black-blue with visible stars. Turn on ALL lights in the house with BRIGHT warm yellow-orange glow from every window. Strong contrast between dark sky and bright windows. Nighttime atmosphere. Keep house structure exactly the same.',
+  'night': 'Transform into elegant NIGHT scene - dark navy blue sky BUT the house is BRIGHTLY ILLUMINATED. Sky is deep blue-black with some stars. The house itself is the HERO - bathed in exterior lighting, every window blazing bright warm golden light. You can see all details of the house clearly despite dark sky. Luxurious showcase. Keep house structure exactly the same.',
+  'dark': 'Transform into elegant NIGHT scene - dark navy blue sky BUT the house is BRIGHTLY ILLUMINATED. Sky is deep blue-black with some stars. The house itself is the HERO - bathed in exterior lighting, every window blazing bright warm golden light. You can see all details of the house clearly despite dark sky. Luxurious showcase. Keep house structure exactly the same.',
+  'stars': 'Transform into elegant NIGHT scene - dark navy blue sky BUT the house is BRIGHTLY ILLUMINATED. Sky is deep blue-black with some stars. The house itself is the HERO - bathed in exterior lighting, every window blazing bright warm golden light. You can see all details of the house clearly despite dark sky. Luxurious showcase. Keep house structure exactly the same.',
   
   // Dramatic - purple/orange dramatic sky
-  'dramatic': 'Transform this into DRAMATIC twilight. Create a stunning sky with deep purple, orange, and pink colors - a spectacular sunset. All windows glowing warmly. Dramatic, eye-catching real estate photo. Keep house structure exactly the same.',
-  'purple': 'Transform this into DRAMATIC twilight. Create a stunning sky with deep purple, orange, and pink colors - a spectacular sunset. All windows glowing warmly. Dramatic, eye-catching real estate photo. Keep house structure exactly the same.',
+  'dramatic': 'Transform into SPECTACULAR dramatic twilight - vivid sky colors but house remains BRIGHT and visible. Sky shows stunning purple, magenta, coral gradient. House is well-lit, windows glowing warmly. Breathtaking but professional - you can see all property details. Keep house structure exactly the same.',
+  'purple': 'Transform into SPECTACULAR dramatic twilight - vivid sky colors but house remains BRIGHT and visible. Sky shows stunning purple, magenta, coral gradient. House is well-lit, windows glowing warmly. Breathtaking but professional - you can see all property details. Keep house structure exactly the same.',
 };
 
 export async function virtualTwilight(imageUrl: string, customPrompt?: string): Promise<string> {
@@ -165,6 +168,9 @@ export async function virtualTwilight(imageUrl: string, customPrompt?: string): 
     if (lowerPrompt.includes('night') || lowerPrompt.includes('dark') || lowerPrompt.includes('star') || lowerPrompt.includes('midnight')) {
       prompt = TWILIGHT_PROMPTS['night'];
       console.log('[Replicate] Using NIGHT preset');
+    } else if (lowerPrompt.includes('dusk') || lowerPrompt.includes('early') || lowerPrompt.includes('soft')) {
+      prompt = TWILIGHT_PROMPTS['default'];
+      console.log('[Replicate] Using DUSK preset');
     } else if (lowerPrompt.includes('blue hour') || lowerPrompt.includes('blue') || lowerPrompt.includes('cool')) {
       prompt = TWILIGHT_PROMPTS['blue'];
       console.log('[Replicate] Using BLUE HOUR preset');

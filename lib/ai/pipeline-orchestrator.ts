@@ -13,6 +13,8 @@
 
 import { BracketGroup, ImageMetadata, RoutingResult, routeImages } from './input-router';
 import { HDRProcessor, HDRResult } from './hdr-processor';
+import { analyzePhotos as analyzePhotosWithGPT } from './listing-engine/photo-intelligence';
+import { PhotoAnalysis as ListingEngineAnalysis } from './listing-engine/types';
 import { buildListingStrategy, getStrategySummary } from './v3-strategy-builder';
 import { 
   PhotoAnalysis, 
@@ -204,42 +206,98 @@ export class PipelineOrchestrator {
   }
   
   private async analyzePhotos(images: Map<string, { buffer?: Buffer; url?: string; metadata: ImageMetadata; isHDR: boolean }>): Promise<PhotoAnalysis[]> {
-    const analyses: PhotoAnalysis[] = [];
+    // Convert map to array format for GPT-4o analyzer
+    const photosToAnalyze = Array.from(images.entries()).map(([id, img]) => ({
+      id,
+      url: img.url || img.metadata.filepath || '',
+    }));
+
+    console.log(`[Pipeline] Analyzing ${photosToAnalyze.length} photos with GPT-4o Vision...`);
     
-    for (const [id, img] of images) {
-      // Simplified analysis - in production, use GPT-4o Vision
-      const analysis = this.createMockAnalysis(id, img.metadata, img.isHDR);
-      analyses.push(analysis);
-    }
-    
-    return analyses;
-  }
-  
-  private createMockAnalysis(photoId: string, metadata: ImageMetadata, isHDR: boolean): PhotoAnalysis {
-    // Mock analysis - replace with actual GPT-4o Vision call
-    const isExterior = Math.random() > 0.5;
-    
-    return {
-      photoId,
-      photoUrl: metadata.filepath || '',
-      photoType: isExterior ? 'exterior' : 'interior',
-      subType: isExterior ? 'front' : 'living',
-      scores: { composition: 70 + Math.random() * 20, lighting: isHDR ? 85 : 60 + Math.random() * 25, sharpness: 75 + Math.random() * 15 },
-      deficiencies: {
-        sky: isExterior ? { severity: Math.random() * 80, coverage: 20 + Math.random() * 30 } : undefined,
-        lawn: isExterior ? { severity: Math.random() * 60, coverage: 15 + Math.random() * 25 } : undefined,
-        lighting: { severity: isHDR ? 20 : 40 + Math.random() * 40 },
-        clutter: !isExterior ? { severity: Math.random() * 50 } : undefined,
-        perspective: { severity: Math.random() * 40 },
+    // Call the real GPT-4o Vision analyzer
+    const rawAnalyses = await analyzePhotosWithGPT(photosToAnalyze, {
+      maxConcurrency: 3,
+      onProgress: (completed, total) => {
+        this.reportProgress({
+          phase: 'analyzing',
+          message: `Analyzing photo ${completed}/${total}...`,
+          totalImages: total,
+          processedImages: completed,
+          percentComplete: 30 + (completed / total) * 20,
+        });
       },
-      heroScore: 50 + Math.random() * 50,
-      hasSky: isExterior,
-      hasLawn: isExterior && Math.random() > 0.3,
-      hasPool: Math.random() > 0.85,
-      hasFireplace: !isExterior && Math.random() > 0.8,
-      hasWindows: true,
-      isEmpty: !isExterior && Math.random() > 0.9,
-      analysisConfidence: 0.7 + Math.random() * 0.25,
+    });
+
+    // Convert listing-engine format to decision-engine format
+    return rawAnalyses.map((raw: ListingEngineAnalysis) => this.convertAnalysis(raw));
+  }
+
+  private convertAnalysis(raw: ListingEngineAnalysis): PhotoAnalysis {
+    const isExterior = raw.photoType.startsWith('exterior') || raw.photoType === 'drone';
+    
+    // Map detailed photo types to simple exterior/interior
+    const photoType: PhotoType = isExterior ? 'exterior' : 'interior';
+    
+    // Map to subType
+    const subTypeMap: Record<string, PhotoSubType> = {
+      'exterior_front': 'front',
+      'exterior_back': 'back', 
+      'exterior_side': 'side',
+      'interior_living': 'living',
+      'interior_kitchen': 'kitchen',
+      'interior_bedroom': 'bedroom',
+      'interior_bathroom': 'bathroom',
+      'interior_dining': 'dining',
+      'interior_office': 'office',
+      'interior_other': 'other',
+      'drone': 'aerial',
+      'detail': 'other',
+      'unknown': 'other',
+    };
+    
+    // Map quality strings to numeric scores
+    const compositionScore = { excellent: 95, good: 80, average: 65, poor: 40 }[raw.composition] || 65;
+    const lightingScore = { well_lit: 85, mixed: 65, dark: 40, overexposed: 50, flash_harsh: 55 }[raw.lighting] || 65;
+    const sharpnessScore = { sharp: 90, acceptable: 75, soft: 55, blurry: 30 }[raw.sharpness] || 75;
+    
+    // Map sky quality to severity
+    const skySeverity = { clear_blue: 0, good: 10, overcast: 50, blown_out: 80, ugly: 90, none: 0 }[raw.skyQuality] || 0;
+    
+    // Map lawn quality to severity  
+    const lawnSeverity = { lush_green: 0, patchy: 50, brown: 75, dead: 95, none: 0 }[raw.lawnQuality] || 0;
+    
+    // Map clutter to severity
+    const clutterSeverity = { none: 0, light: 30, moderate: 60, heavy: 90 }[raw.clutterLevel] || 0;
+    
+    // Map lighting to severity
+    const lightingSeverity = { well_lit: 0, mixed: 40, dark: 70, overexposed: 60, flash_harsh: 50 }[raw.lighting] || 30;
+
+    return {
+      photoId: raw.photoId,
+      photoUrl: raw.photoUrl,
+      photoType,
+      subType: subTypeMap[raw.photoType] || 'other',
+      scores: {
+        composition: compositionScore,
+        lighting: lightingScore,
+        sharpness: sharpnessScore,
+      },
+      deficiencies: {
+        sky: raw.hasSky && skySeverity > 20 ? { severity: skySeverity, coverage: raw.skyVisible || 30 } : undefined,
+        lawn: raw.hasLawn && lawnSeverity > 20 ? { severity: lawnSeverity, coverage: raw.lawnVisible || 20 } : undefined,
+        lighting: lightingSeverity > 20 ? { severity: lightingSeverity } : undefined,
+        clutter: clutterSeverity > 20 ? { severity: clutterSeverity } : undefined,
+        perspective: !raw.verticalAlignment ? { severity: 50 } : undefined,
+      },
+      heroScore: raw.heroScore || 50,
+      heroReason: raw.heroReason,
+      hasSky: raw.hasSky,
+      hasLawn: raw.hasLawn,
+      hasPool: raw.hasPool,
+      hasFireplace: raw.hasFireplace,
+      hasWindows: raw.hasVisibleWindows,
+      isEmpty: raw.roomEmpty,
+      analysisConfidence: (raw.confidence || 70) / 100,
     };
   }
   
