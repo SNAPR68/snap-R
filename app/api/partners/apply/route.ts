@@ -1,17 +1,26 @@
-import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-
-// Initialize Supabase admin client
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+import { NextRequest, NextResponse } from 'next/server';
 
 export async function POST(request: NextRequest) {
   try {
+    // Initialize Supabase client inside the function (not at module level)
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+    
+    if (!supabaseUrl || !supabaseKey) {
+      console.error('Missing Supabase credentials');
+      return NextResponse.json(
+        { error: 'Server configuration error' },
+        { status: 500 }
+      );
+    }
+    
+    const supabase = createClient(supabaseUrl, supabaseKey);
+    
     const body = await request.json();
-    const { name, email, partner_type, company, message } = body;
-
+    
+    const { name, email, phone, company, website, partner_type, audience_size, message } = body;
+    
     // Validate required fields
     if (!name || !email || !partner_type) {
       return NextResponse.json(
@@ -19,65 +28,40 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       );
     }
-
-    // Save to Supabase
+    
+    // Insert into database
     const { data, error } = await supabase
       .from('partner_applications')
-      .insert({
-        name,
-        email,
-        partner_type,
-        company: company || null,
-        message: message || null,
-        status: 'pending',
-        created_at: new Date().toISOString(),
-      })
+      .insert([
+        {
+          name,
+          email,
+          phone,
+          company,
+          website,
+          partner_type,
+          audience_size,
+          message,
+          status: 'pending',
+        }
+      ])
       .select()
       .single();
-
+    
     if (error) {
       console.error('Supabase error:', error);
       return NextResponse.json(
-        { error: 'Failed to save application' },
+        { error: 'Failed to submit application' },
         { status: 500 }
       );
     }
-
-    // Send email notification
-    try {
-      await fetch('https://api.resend.com/emails', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${process.env.RESEND_API_KEY}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          from: 'SnapR <notifications@snap-r.com>',
-          to: 'rajesh@snap-r.com',
-          subject: `New Partner Application: ${name}`,
-          html: `
-            <h2>New Partner Application</h2>
-            <p><strong>Name:</strong> ${name}</p>
-            <p><strong>Email:</strong> ${email}</p>
-            <p><strong>Type:</strong> ${partner_type}</p>
-            <p><strong>Company:</strong> ${company || 'Not provided'}</p>
-            <p><strong>Message:</strong> ${message || 'Not provided'}</p>
-            <br/>
-            <p><a href="https://snap-r.com/admin/partners">View in Dashboard</a></p>
-          `,
-        }),
-      });
-    } catch (emailError) {
-      // Log but don't fail the request if email fails
-      console.error('Email notification failed:', emailError);
-    }
-
-    return NextResponse.json({
-      success: true,
+    
+    return NextResponse.json({ 
+      success: true, 
       message: 'Application submitted successfully',
-      id: data.id,
+      id: data?.id 
     });
-
+    
   } catch (error) {
     console.error('Partner application error:', error);
     return NextResponse.json(

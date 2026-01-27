@@ -354,11 +354,11 @@ export default function PricingSection({
                   <li 
                     key={i} 
                     className={`flex items-center gap-2 text-xs ${
-                      feature.isHeader ? 'text-white font-medium mt-2' :
+                      'isHeader' in feature && feature.isHeader ? 'text-white font-medium mt-2' :
                       feature.included ? 'text-white/80' : 'text-white/30'
                     }`}
                   >
-                    {!feature.isHeader && (
+                    {!('isHeader' in feature && feature.isHeader) && (
                       feature.included ? (
                         <Check className="w-3.5 h-3.5 flex-shrink-0 text-green-400" />
                       ) : (
