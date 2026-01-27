@@ -9,59 +9,29 @@ function getStripe() {
   });
 }
 
-// New pricing model
-// Photographers: ultimate ($12), complete ($14)
-// Agents: starter ($14), complete ($18)
-const PLAN_PRICING: Record<string, { base: number; annual: number; description: string }> = {
-  // Photographer plans
-  'photographer-ultimate': { base: 12, annual: 9.60, description: '75 photos, unlimited twilight, 2 staging/listing' },
-  'photographer-complete': { base: 14, annual: 11.20, description: '75 photos, tours, voiceovers, video, CMA' },
-  // Agent plans
-  'agent-starter': { base: 14, annual: 11.20, description: '60 photos, content studio, email marketing' },
-  'agent-complete': { base: 18, annual: 14.40, description: '75 photos, full marketing suite, tours, video' },
-};
+// New pricing model: Pro = $99 base + $18/listing (max 30)
+const PRO_BASE_PRICE = 99; // dollars
+const PRO_PER_LISTING = 18; // dollars
+const MAX_LISTINGS = 30;
+const ANNUAL_DISCOUNT = 0.20; // 20% off base only
 
-// Volume discounts (per listing reduction)
-const VOLUME_DISCOUNTS: Record<number, number> = {
-  10: 0,
-  15: 0.50,
-  20: 1.00,
-  25: 1.50,
-  30: 2.00,
-  40: 2.50,
-  50: 3.00,
-};
-
-function calculatePrice(
-  role: 'photographer' | 'agent',
-  plan: string,
-  listings: number,
-  isAnnual: boolean
-): { pricePerListing: number; total: number; totalCents: number } {
-  const planKey = `${role}-${plan}`;
-  const pricing = PLAN_PRICING[planKey];
-  
-  if (!pricing) {
-    throw new Error(`Invalid plan: ${planKey}`);
-  }
-
-  // Base price per listing
-  let pricePerListing = isAnnual ? pricing.annual : pricing.base;
-  
-  // Apply volume discount
-  const discount = VOLUME_DISCOUNTS[listings] || 0;
-  pricePerListing = Math.max(pricePerListing - discount, pricing.base * 0.5); // Never below 50% of base
-  
-  const total = pricePerListing * listings;
-  const totalCents = Math.round(total * 100);
-
-  return { pricePerListing, total, totalCents };
+function calculateProPrice(listings: number, isAnnual: boolean): { base: number; perListing: number; total: number; totalCents: number } {
+  const cappedListings = Math.min(listings, MAX_LISTINGS);
+  const base = isAnnual ? PRO_BASE_PRICE * (1 - ANNUAL_DISCOUNT) : PRO_BASE_PRICE;
+  const listingCost = PRO_PER_LISTING * cappedListings;
+  const total = base + listingCost;
+  return {
+    base,
+    perListing: PRO_PER_LISTING,
+    total,
+    totalCents: Math.round(total * 100),
+  };
 }
 
 export async function POST(request: NextRequest) {
   try {
     const stripe = getStripe();
-    const { role, plan, listings, billing } = await request.json();
+    const { plan, listings, billing } = await request.json();
 
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
@@ -70,12 +40,10 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Free plan doesn't need checkout
+    // Free plan - no checkout needed
     if (plan === 'free') {
-      // Just update the profile to free plan
       await supabase.from('profiles').update({
         plan: 'free',
-        role: role || 'photographer',
         listings_limit: 3,
       }).eq('id', user.id);
       
@@ -85,32 +53,20 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    // Validate inputs
-    if (!['photographer', 'agent'].includes(role)) {
-      return NextResponse.json({ error: 'Invalid role' }, { status: 400 });
+    // Only Pro plan is self-serve (Team/Brokerage require sales call)
+    if (plan !== 'pro') {
+      return NextResponse.json({ 
+        error: 'Team and Brokerage plans require a sales call. Visit /contact to schedule.' 
+      }, { status: 400 });
     }
 
-    const validPlans = role === 'photographer' 
-      ? ['ultimate', 'complete'] 
-      : ['starter', 'complete'];
-    
-    if (!validPlans.includes(plan)) {
-      return NextResponse.json({ error: 'Invalid plan for role' }, { status: 400 });
-    }
-
-    const validListings = [10, 15, 20, 25, 30, 40, 50];
-    if (!validListings.includes(listings)) {
-      return NextResponse.json({ error: 'Invalid listing count' }, { status: 400 });
-    }
-
+    // Validate listings (1-30 for Pro)
+    const listingCount = Math.min(Math.max(1, listings || 15), MAX_LISTINGS);
     const isAnnual = billing === 'annual';
-    const { pricePerListing, total, totalCents } = calculatePrice(role, plan, listings, isAnnual);
+    const { base, total, totalCents } = calculateProPrice(listingCount, isAnnual);
 
-    const planKey = `${role}-${plan}`;
-    const pricing = PLAN_PRICING[planKey];
-    
-    const productName = `SnapR ${plan.charAt(0).toUpperCase() + plan.slice(1)} - ${listings} listings/mo`;
-    const description = `${pricing.description} • ${isAnnual ? 'Annual' : 'Monthly'} billing • $${pricePerListing.toFixed(2)}/listing`;
+    const productName = `SnapR Pro - ${listingCount} listings/mo`;
+    const description = `$${base.toFixed(0)} base + $${PRO_PER_LISTING}/listing | ${isAnnual ? 'Annual' : 'Monthly'} billing`;
 
     const session = await stripe.checkout.sessions.create({
       mode: 'subscription',
@@ -138,22 +94,19 @@ export async function POST(request: NextRequest) {
         trial_period_days: isAnnual ? 14 : 7,
         metadata: {
           userId: user.id,
-          role,
-          plan,
-          planKey,
+          plan: 'pro',
           billing,
-          listings: String(listings),
-          pricePerListing: String(pricePerListing),
+          listings: String(listingCount),
+          basePrice: String(base),
+          perListing: String(PRO_PER_LISTING),
         },
       },
       allow_promotion_codes: true,
       metadata: {
         userId: user.id,
-        role,
-        plan,
-        planKey,
+        plan: 'pro',
         billing,
-        listings: String(listings),
+        listings: String(listingCount),
       },
     });
 

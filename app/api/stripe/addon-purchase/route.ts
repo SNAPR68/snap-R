@@ -9,13 +9,13 @@ function getStripe() {
   });
 }
 
-// Add-on prices (in cents)
-const ADDON_PRICES: Record<string, { amount: number; name: string }> = {
-  floorplan_2d: { amount: 2500, name: 'Floor Plan - 2D' },
-  floorplan_3d: { amount: 5000, name: 'Floor Plan - 3D' },
-  virtual_tour: { amount: 5000, name: 'Virtual Tour' },
-  virtual_renovation: { amount: 3500, name: 'Virtual Renovation' },
-  ai_voiceover: { amount: 1500, name: 'AI Voiceover' },
+// Current add-on prices (in cents)
+const ADDON_PRICES: Record<string, { amount: number; name: string; description: string }> = {
+  virtual_renovation_basic: { amount: 1500, name: 'Virtual Renovation - Basic', description: 'Single room renovation' },
+  virtual_renovation_standard: { amount: 2500, name: 'Virtual Renovation - Standard', description: 'Up to 3 rooms' },
+  virtual_renovation_premium: { amount: 5000, name: 'Virtual Renovation - Premium', description: 'Whole home renovation' },
+  human_editing: { amount: 500, name: 'Human Editing', description: 'Professional editor touch-up per image' },
+  extra_user: { amount: 2500, name: 'Extra User', description: 'Additional team member (monthly)' },
 };
 
 export async function POST(request: NextRequest) {
@@ -31,38 +31,50 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Validate addon
     const addon = ADDON_PRICES[addonType];
     if (!addon) {
       return NextResponse.json({ error: 'Invalid add-on type' }, { status: 400 });
     }
 
-    // Create one-time payment session
+    // Extra user is a subscription, others are one-time
+    const isSubscription = addonType === 'extra_user';
+
+    if (isSubscription) {
+      const session = await stripe.checkout.sessions.create({
+        mode: 'subscription',
+        payment_method_types: ['card'],
+        line_items: [{
+          price_data: {
+            currency: 'usd',
+            product_data: { name: addon.name, description: addon.description },
+            unit_amount: addon.amount,
+            recurring: { interval: 'month' },
+          },
+          quantity,
+        }],
+        success_url: `${process.env.NEXT_PUBLIC_BASE_URL || 'https://snap-r.com'}/dashboard?addon=success&type=${addonType}`,
+        cancel_url: `${process.env.NEXT_PUBLIC_BASE_URL || 'https://snap-r.com'}/settings`,
+        customer_email: user.email,
+        metadata: { userId: user.id, addonType, quantity: quantity.toString() },
+      });
+      return NextResponse.json({ url: session.url });
+    }
+
     const session = await stripe.checkout.sessions.create({
       mode: 'payment',
       payment_method_types: ['card'],
-      line_items: [
-        {
-          price_data: {
-            currency: 'usd',
-            product_data: {
-              name: addon.name,
-              description: `One-time purchase for your listing`,
-            },
-            unit_amount: addon.amount,
-          },
-          quantity,
+      line_items: [{
+        price_data: {
+          currency: 'usd',
+          product_data: { name: addon.name, description: addon.description },
+          unit_amount: addon.amount,
         },
-      ],
+        quantity,
+      }],
       success_url: `${process.env.NEXT_PUBLIC_BASE_URL || 'https://snap-r.com'}/dashboard?addon=success&type=${addonType}`,
       cancel_url: `${process.env.NEXT_PUBLIC_BASE_URL || 'https://snap-r.com'}/pricing`,
       customer_email: user.email,
-      metadata: {
-        userId: user.id,
-        addonType,
-        listingId: listingId || '',
-        quantity: quantity.toString(),
-      },
+      metadata: { userId: user.id, addonType, listingId: listingId || '', quantity: quantity.toString() },
     });
 
     return NextResponse.json({ url: session.url });

@@ -38,13 +38,12 @@ const getVolumeDiscount = (listings: number): number => {
   return 0;
 };
 
-// UPDATED: Corrected pricing - Property Gallery FREE, Virtual Renovation $15/$25/$50, AI Voiceover $2, removed Auto Campaigns
+// UPDATED: Corrected pricing - Property Gallery FREE, Virtual Renovation $15/$25/$50, AI Voiceover $2, CMA FREE, White Label in Platinum
 const ADDONS = [
   { id: 'property_gallery', name: 'Property Gallery', price: 'FREE', icon: 'eye', tooltip: 'Shareable photo galleries with contact form for every listing - included free' },
   { id: 'virtual_renovation', name: 'Virtual Renovation', price: '$15 / $25 / $50', icon: 'brush', tooltip: 'Digitally remodel kitchens, bathrooms, flooring & more to show potential' },
   { id: 'ai_voiceover', name: 'AI Voiceovers', price: '$2 flat', icon: 'mic', tooltip: 'Professional AI-generated narration for property videos - flat rate regardless of length' },
-  { id: 'cma_report', name: 'CMA Reports', price: 'From $20', icon: 'file', tooltip: 'Comparative Market Analysis reports with your photos & branding' },
-  { id: 'white_label', name: 'White Label', price: '$99/mo', icon: 'tag', tooltip: 'Remove SnapR branding & use your own logo for client-facing deliverables' },
+  { id: 'cma_report', name: 'CMA Reports', price: 'FREE', icon: 'file', tooltip: 'Comparative Market Analysis reports with your photos & branding - included free' },
   { id: 'human_editing', name: 'Human Editing', price: 'From $5/image', icon: 'user', tooltip: 'Complex edits by professionals: object removal, compositing, retouching' },
 ] as const;
 
@@ -982,27 +981,27 @@ export default function HomePage() {
           </div>
           
           <div className="grid md:grid-cols-2 gap-8">
-            {/* Traditional */}
+            {/* Pay Per Service */}
             <div className="rounded-2xl p-8 bg-[#1A1A1A] border border-white/10">
               <div className="flex items-center justify-between mb-6">
-                <h3 className="text-xl font-bold text-white/70">Traditional Services</h3>
-                <span className="text-xs text-white/30">BoxBrownie, PhotoUp, Styldod</span>
+                <h3 className="text-xl font-bold text-white/70">Pay-Per-Service</h3>
+                <span className="text-xs text-white/30">Industry Average</span>
               </div>
               <div className="space-y-3 text-sm">
                 <div className="flex justify-between text-white/50">
-                  <span>Basic enhancement (25 × $1.60)</span>
+                  <span>HDR Enhancement (25 photos)</span>
                   <span>$40</span>
                 </div>
                 <div className="flex justify-between text-white/50">
-                  <span>Sky replacement (5 × $4)</span>
+                  <span>Sky Replacement (5 photos)</span>
                   <span>$20</span>
                 </div>
                 <div className="flex justify-between text-white/50">
-                  <span>Virtual twilight (2 × $8)</span>
+                  <span>Virtual Twilight (2 photos)</span>
                   <span>$16</span>
                 </div>
                 <div className="flex justify-between text-white/50">
-                  <span>Virtual staging (3 × $24)</span>
+                  <span>Virtual Staging (3 rooms)</span>
                   <span>$72</span>
                 </div>
                 <div className="border-t border-white/10 my-3 pt-3">
@@ -1012,7 +1011,7 @@ export default function HomePage() {
                   </div>
                 </div>
                 <div className="flex justify-between text-white/50">
-                  <span>Social media graphics (5 posts)</span>
+                  <span>Social media graphics</span>
                   <span>$75+</span>
                 </div>
                 <div className="flex justify-between text-white/50">
@@ -1031,69 +1030,69 @@ export default function HomePage() {
               <div className="border-t border-white/10 pt-4 mt-6">
                 <div className="flex justify-between items-center">
                   <span className="font-semibold text-white/70">TOTAL</span>
-                  <span className="text-3xl font-bold text-white/50">$373+</span>
+                  <span className="text-3xl font-bold text-red-400">$373+</span>
                 </div>
                 <p className="text-white/30 text-sm mt-2">⏱ 2-3 days turnaround</p>
               </div>
             </div>
             
-            {/* SnapR */}
+            {/* SnapR Gold */}
             <div className="rounded-2xl p-8 bg-[#1A1A1A] border-2 border-[#D4A017] relative">
               <div className="absolute -top-3 right-6 px-4 py-1 bg-gradient-to-r from-[#D4A017] to-[#B8860B] text-black text-xs font-bold rounded-full">BEST VALUE</div>
               <div className="flex items-center justify-between mb-6">
-                <h3 className="text-xl font-bold text-[#D4A017]">SnapR</h3>
+                <h3 className="text-xl font-bold text-[#D4A017]">SnapR Gold</h3>
                 <span className="text-xs text-[#D4A017]/70">Everything Included</span>
               </div>
               <div className="space-y-3 text-sm">
                 <div className="flex justify-between text-white/70">
-                  <span>All 15 AI tools (unlimited)</span>
+                  <span>HDR Enhancement (unlimited)</span>
                   <span className="text-[#D4A017]">✓</span>
                 </div>
                 <div className="flex justify-between text-white/70">
-                  <span>Sky replacement (unlimited)</span>
+                  <span>Sky Replacement (unlimited)</span>
                   <span className="text-[#D4A017]">✓</span>
                 </div>
                 <div className="flex justify-between text-white/70">
-                  <span>Virtual twilight (unlimited)</span>
+                  <span>Virtual Twilight (unlimited)</span>
                   <span className="text-[#D4A017]">✓</span>
                 </div>
                 <div className="flex justify-between text-white/70">
-                  <span>Virtual staging</span>
+                  <span>Virtual Staging (2/listing)</span>
                   <span className="text-[#D4A017]">✓</span>
                 </div>
                 <div className="border-t border-[#D4A017]/20 my-3 pt-3">
                   <div className="flex justify-between text-white/70">
-                    <span>150+ social templates</span>
+                    <span>150+ Social Templates</span>
                     <span className="text-[#D4A017]">✓</span>
                   </div>
                 </div>
                 <div className="flex justify-between text-white/70">
-                  <span>Video creator + AI voiceover</span>
+                  <span>Video Creator + AI Voiceover</span>
                   <span className="text-[#D4A017]">✓</span>
                 </div>
                 <div className="flex justify-between text-white/70">
-                  <span>Property website</span>
+                  <span>Property Website</span>
                   <span className="text-[#D4A017]">✓</span>
                 </div>
                 <div className="flex justify-between text-white/70">
-                  <span>AI MLS description</span>
+                  <span>AI MLS Description</span>
                   <span className="text-[#D4A017]">✓</span>
                 </div>
                 <div className="flex justify-between text-white/70">
-                  <span>Email campaigns</span>
+                  <span>Email Campaigns</span>
                   <span className="text-[#D4A017]">✓</span>
                 </div>
                 <div className="flex justify-between text-white/70">
-                  <span>Client approval system</span>
+                  <span>Client Approval System</span>
                   <span className="text-[#D4A017]">✓</span>
                 </div>
               </div>
               <div className="border-t border-[#D4A017]/30 pt-4 mt-6">
                 <div className="flex justify-between items-center">
-                  <span className="font-semibold">TOTAL</span>
-                  <span className="text-4xl font-bold text-[#D4A017]">From $8</span>
+                  <span className="font-semibold">PER LISTING</span>
+                  <span className="text-4xl font-bold text-[#D4A017]">$16-$28</span>
                 </div>
-                <p className="text-[#D4A017]/70 text-sm mt-2">⚡ 60 seconds turnaround</p>
+                <p className="text-[#D4A017]/70 text-sm mt-2">⚡ 60 seconds turnaround • Volume discounts available</p>
               </div>
             </div>
           </div>
@@ -1128,34 +1127,7 @@ export default function HomePage() {
       {/* Pricing Section */}
       <section className="py-12 px-6 bg-[#0F0F0F]" id="pricing">
         <div className="max-w-5xl mx-auto">
-          <PricingSection showHeadline={true} showFAQ={false} showCTA={false} showEnterprise={true} />
-        </div>
-      </section>
-
-      {/* Premium Add-ons - UPDATED with correct pricing */}
-      <section className="py-16 px-6 bg-[#0A0A0A]">
-        <div className="max-w-5xl mx-auto">
-          <div className="text-center mb-12">
-            <h2 className="text-2xl font-bold mb-2">Premium Add-ons</h2>
-            <p className="text-white/50">Unlock advanced capabilities • Pay as you go</p>
-          </div>
-          
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-            {[
-              { name: 'Property Gallery', desc: 'Shareable galleries', price: 'FREE', color: 'green' },
-              { name: 'Renovation', desc: 'Digital remodeling', price: '$15 / $25 / $50', color: 'orange' },
-              { name: 'AI Voiceovers', desc: 'Pro narration', price: '$2 flat', color: 'blue' },
-              { name: 'CMA Reports', desc: 'Market analysis', price: 'From $20', color: 'purple' },
-              { name: 'Human Editing', desc: 'Pro retouching', price: 'From $5/img', color: 'cyan' },
-              { name: 'White Label', desc: 'Your brand', price: '$99/mo', color: 'yellow' },
-            ].map((addon) => (
-              <div key={addon.name} className="p-4 rounded-xl bg-white/5 border border-white/10 hover:border-[#D4A017]/50 transition-all cursor-pointer text-center">
-                <h4 className="font-semibold text-sm mb-1">{addon.name}</h4>
-                <p className="text-white/40 text-xs mb-2">{addon.desc}</p>
-                <span className={`text-sm font-medium ${addon.price === 'FREE' ? 'text-green-400' : 'text-[#D4A017]'}`}>{addon.price}</span>
-              </div>
-            ))}
-          </div>
+          <PricingSection showHeadline={true} showFAQ={false} showCTA={false} showAddons={true} />
         </div>
       </section>
 
@@ -1171,6 +1143,7 @@ export default function HomePage() {
             <div className="flex items-center gap-6 text-sm text-white/50">
               <Link href="/faq" className="hover:text-[#D4A017] transition-colors">FAQ</Link>
               <Link href="/academy" className="hover:text-[#D4A017] transition-colors">Academy</Link>
+              <Link href="/partners" className="hover:text-[#D4A017] transition-colors">Partner with us</Link>
               <Link href="/contact" className="hover:text-[#D4A017] transition-colors">Contact</Link>
               <Link href="/privacy" className="hover:text-[#D4A017] transition-colors">Privacy</Link>
               <Link href="/terms" className="hover:text-[#D4A017] transition-colors">Terms</Link>
