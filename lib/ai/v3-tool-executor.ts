@@ -9,6 +9,7 @@
 import { ToolId } from './decision-engine/types';
 import { PhotoStrategy } from './decision-engine/types';
 import * as replicate from './providers/replicate';
+import { windowPull } from './providers/window-pull';
 import { autoEnhance as sharpEnhance } from './providers/sharp-enhance';
 
 // ============================================
@@ -53,7 +54,7 @@ const TOOL_COSTS: Record<ToolId, number> = {
   'hdr': 0.03,
   'auto-enhance': 0.00, // FREE with Sharp.js
   'perspective-correction': 0.04,
-  'window-masking': 0.06,
+  'window-masking': 0.06, // SAM ($0.01) + FLUX ($0.05)
   'flash-fix': 0.03,
 };
 
@@ -129,7 +130,16 @@ export async function executeTool(
         break;
         
       case 'window-masking':
-        outputUrl = await replicate.windowMasking(imageUrl, preset);
+        // Use enhanced Window Pull with SAM detection
+        const wpResult = await windowPull(imageUrl, { 
+          exteriorView: preset as any || 'natural',
+          useSAM: true 
+        });
+        if (wpResult.success && wpResult.outputUrl) {
+          outputUrl = wpResult.outputUrl;
+        } else {
+          throw new Error(wpResult.error || 'Window pull failed');
+        }
         break;
         
       case 'flash-fix':
