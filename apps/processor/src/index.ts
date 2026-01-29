@@ -1,5 +1,25 @@
+// CRITICAL: Set up process.env BEFORE any V2 imports
+(globalThis as any).process = {
+  env: {
+    REPLICATE_API_TOKEN: '',
+    AUTOENHANCE_API_KEY: '',
+    OPENAI_API_KEY: ''
+  }
+};
+
+// Function to update with real env values
+function updateProcessEnv(env: Record<string, string>) {
+  (globalThis as any).process.env = {
+    REPLICATE_API_TOKEN: env.REPLICATE_API_TOKEN || '',
+    AUTOENHANCE_API_KEY: env.REPLICATE_API_TOKEN || '',
+    OPENAI_API_KEY: env.OPENAI_API_KEY || '',
+    ...env
+  };
+}
+
 import { Env, JobMessage, ProcessingCheckpoint } from './types.js';
-import { analyzePhotos, buildStrategy } from '../../../lib/ai/listing-engine/photo-intelligence.js';
+import { analyzePhotos } from '../../../lib/ai/listing-engine/photo-intelligence.js';
+import { buildListingStrategy } from '../../../lib/ai/listing-engine/strategy-builder.js';
 import { determineLockedPresets } from '../../../lib/ai/listing-engine/preset-locker.js';
 import { 
   createSupabaseClient, 
@@ -12,6 +32,9 @@ import {
 
 export default {
   async queue(batch: MessageBatch<JobMessage>, env: Env): Promise<void> {
+    // Update process.env with real values
+    updateProcessEnv(env);
+    
     console.log(`[Worker] Received batch of ${batch.messages.length} messages`);
     
     for (const message of batch.messages) {
@@ -21,13 +44,11 @@ export default {
         console.log(`[Worker] Processing job ${jobId} for listing ${listingId}`);
         await updateJobStatus(jobId, 'processing', env);
         
-        // Check for resume
         const checkpoint = await getCheckpoint(jobId, env);
         if (checkpoint) {
           console.log(`[Worker] Resuming from checkpoint`);
         }
         
-        // Phase 1: Fetch photos
         console.log(`[Worker] Fetching photos for listing ${listingId}`);
         const photos = await getListingPhotos(listingId, env);
         console.log(`[Worker] Found ${photos.length} photos`);
@@ -36,7 +57,6 @@ export default {
           throw new Error(`No photos found for listing ${listingId}`);
         }
         
-        // Phase 2: Analyze with V2 intelligence
         console.log(`[Worker] Analyzing photos with V2 engine`);
         const photosForAnalysis = photos.map(p => ({ 
           id: p.id, 
@@ -49,10 +69,17 @@ export default {
         });
         console.log(`[Worker] Analysis complete for ${analyses.length} photos`);
         
-        // Phase 3: Build strategy
-        const strategy = buildStrategy(analyses);
+        // Filter out failed analyses (undefined/null from rate limits or errors)
+const validAnalyses = analyses.filter(a => a && a.valid !== false);
+console.log(`[Worker] Valid analyses: ${validAnalyses.length}/${analyses.length}`);
+
+if (validAnalyses.length === 0) {
+  throw new Error("All photo analyses failed");
+}
+
+const strategy = buildListingStrategy(validAnalyses);
         const presets = determineLockedPresets(analyses);
-        console.log(`[Worker] Strategy: ${JSON.stringify(strategy, null, 2)}`);
+        console.log(`[Worker] Strategy: hero=${strategy.heroPhotoId}, tools=${strategy.totalToolCalls}`);
         
         await createCheckpoint({
           jobId,
@@ -61,7 +88,6 @@ export default {
           timestamp: Date.now()
         } as ProcessingCheckpoint, env);
         
-        // Phase 4: Mock processing (will implement real in Step 13)
         console.log(`[Worker] Would process ${photos.length} photos`);
         for (let i = 0; i < photos.length; i++) {
           await updatePhotoStatus(photos[i].id, 'completed', null, env);
@@ -96,16 +122,22 @@ export default {
         const body = await request.json() as JobMessage;
         console.log(`[HTTP] Direct process request for job ${body.jobId}`);
         
-        // Trigger queue instead of processing directly
-        await env.SNAPR_QUEUE.send(body);
+        // Process immediately instead of queuing (for testing)
+        const mockMessage = {
+          body: body,
+          ack: () => console.log('Message acked'),
+          retry: (opts) => console.log('Message retried', opts)
+        };
+        
+        await this.queue({ messages: [mockMessage] }, env);
         
         return Response.json({ 
-          status: "queued", 
+          status: "processing", 
           jobId: body.jobId,
-          message: "Job sent to queue"
+          message: "Job processed directly"
         });
       } catch (error) {
-        return Response.json({ error: "Failed to queue job" }, { status: 500 });
+        return Response.json({ error: "Failed to process job" }, { status: 500 });
       }
     }
     
