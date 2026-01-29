@@ -77,7 +77,7 @@ if (validAnalyses.length === 0) {
   throw new Error("All photo analyses failed");
 }
 
-const strategy = buildListingStrategy(validAnalyses);
+const strategy = buildListingStrategy(listingId, validAnalyses);
         const presets = determineLockedPresets(analyses);
         console.log(`[Worker] Strategy: hero=${strategy.heroPhotoId}, tools=${strategy.totalToolCalls}`);
         
