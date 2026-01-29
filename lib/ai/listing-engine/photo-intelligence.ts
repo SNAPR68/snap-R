@@ -25,7 +25,7 @@ import {
 import { ToolId } from '../router';
 
 const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY!,
+  apiKey: (typeof process !== "undefined" ? process.env.OPENAI_API_KEY : "")!,
 });
 
 const ANALYSIS_VERSION = '3.0.0';
