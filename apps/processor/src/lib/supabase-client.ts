@@ -65,7 +65,7 @@ export async function updatePhotoStatus(
   
   if (status === 'completed') {
     updateData.processed_url = processedUrl;
-    updateData.processed_at = new Date().toISOString();
+    // processed_at field not in schema
   }
   
   const { error } = await supabase
