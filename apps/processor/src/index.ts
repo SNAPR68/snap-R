@@ -1,4 +1,14 @@
-import { Env, JobMessage } from './types.js';
+import { Env, JobMessage, ProcessingCheckpoint } from './types.js';
+import { analyzePhotos, buildStrategy } from '../../../lib/ai/listing-engine/photo-intelligence.js';
+import { determineLockedPresets } from '../../../lib/ai/listing-engine/preset-locker.js';
+import { 
+  createSupabaseClient, 
+  updateJobStatus, 
+  updatePhotoStatus,
+  getListingPhotos,
+  createCheckpoint,
+  getCheckpoint
+} from './lib/supabase-client.js';
 
 export default {
   async queue(batch: MessageBatch<JobMessage>, env: Env): Promise<void> {
@@ -9,16 +19,62 @@ export default {
       
       try {
         console.log(`[Worker] Processing job ${jobId} for listing ${listingId}`);
+        await updateJobStatus(jobId, 'processing', env);
         
-        // TODO: Implement processing logic in Step 5
-        // For now, just log and acknowledge
-        console.log(`[Worker] Job ${jobId} would process here`);
+        // Check for resume
+        const checkpoint = await getCheckpoint(jobId, env);
+        if (checkpoint) {
+          console.log(`[Worker] Resuming from checkpoint`);
+        }
         
-        message.ack();
+        // Phase 1: Fetch photos
+        console.log(`[Worker] Fetching photos for listing ${listingId}`);
+        const photos = await getListingPhotos(listingId, env);
+        console.log(`[Worker] Found ${photos.length} photos`);
+        
+        if (photos.length === 0) {
+          throw new Error(`No photos found for listing ${listingId}`);
+        }
+        
+        // Phase 2: Analyze with V2 intelligence
+        console.log(`[Worker] Analyzing photos with V2 engine`);
+        const photosForAnalysis = photos.map(p => ({ 
+          id: p.id, 
+          url: p.signedUrl || p.raw_url 
+        }));
+        
+        const analyses = await analyzePhotos(photosForAnalysis, {
+          maxConcurrency: 20,
+          apiKey: env.OPENAI_API_KEY
+        });
+        console.log(`[Worker] Analysis complete for ${analyses.length} photos`);
+        
+        // Phase 3: Build strategy
+        const strategy = buildStrategy(analyses);
+        const presets = determineLockedPresets(analyses);
+        console.log(`[Worker] Strategy: ${JSON.stringify(strategy, null, 2)}`);
+        
+        await createCheckpoint({
+          jobId,
+          completedPhotoIds: [],
+          currentStage: 'processing',
+          timestamp: Date.now()
+        } as ProcessingCheckpoint, env);
+        
+        // Phase 4: Mock processing (will implement real in Step 13)
+        console.log(`[Worker] Would process ${photos.length} photos`);
+        for (let i = 0; i < photos.length; i++) {
+          await updatePhotoStatus(photos[i].id, 'completed', null, env);
+          console.log(`[Worker] Photo ${i+1}/${photos.length} marked complete`);
+        }
+        
+        await updateJobStatus(jobId, 'completed', env);
         console.log(`[Worker] Job ${jobId} completed successfully`);
+        message.ack();
         
       } catch (error) {
         console.error(`[Worker] Job ${jobId} failed:`, error);
+        await updateJobStatus(jobId, 'failed', env);
         message.retry({ delaySeconds: 60 });
       }
     }
@@ -27,7 +83,6 @@ export default {
   async fetch(request: Request, env: Env): Promise<Response> {
     const url = new URL(request.url);
     
-    // Health check endpoint
     if (url.pathname === '/health' && request.method === 'GET') {
       return Response.json({ 
         status: "ok", 
@@ -36,20 +91,21 @@ export default {
       });
     }
     
-    // Direct process endpoint for testing (bypasses queue)
     if (url.pathname === '/process' && request.method === 'POST') {
       try {
         const body = await request.json() as JobMessage;
         console.log(`[HTTP] Direct process request for job ${body.jobId}`);
         
-        // TODO: Implement processing
+        // Trigger queue instead of processing directly
+        await env.SNAPR_QUEUE.send(body);
+        
         return Response.json({ 
           status: "queued", 
           jobId: body.jobId,
-          message: "Direct processing not yet implemented" 
+          message: "Job sent to queue"
         });
       } catch (error) {
-        return Response.json({ error: "Invalid request body" }, { status: 400 });
+        return Response.json({ error: "Failed to queue job" }, { status: 500 });
       }
     }
     
