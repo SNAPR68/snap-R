@@ -242,13 +242,16 @@ Return ONLY valid JSON (no markdown, no explanation):
 // ============================================
 export async function analyzePhoto(
   photoId: string,
-  photoUrl: string
+  photoUrl: string,
+  apiKey?: string
 ): Promise<PhotoAnalysis> {
   console.log(`[PhotoIntelligence V3] Analyzing photo: ${photoId}`);
   const startTime = Date.now();
 
   try {
-    const response = await openai.chat.completions.create({
+    // Use provided apiKey or fall back to global openai client
+    const client = apiKey ? new OpenAI({ apiKey }) : openai;
+    const response = await client.chat.completions.create({
       model: 'gpt-4o',
       messages: [
         {
@@ -318,10 +321,12 @@ export async function analyzePhotos(
   photos: Array<{ id: string; url: string }>,
   options: { 
     maxConcurrency?: number;
+    apiKey?: string;
     onProgress?: (completed: number, total: number) => void;
   } = {}
 ): Promise<PhotoAnalysis[]> {
-  const { maxConcurrency = 5, onProgress } = options;
+  const { maxConcurrency = 5, onProgress, apiKey: providedApiKey } = options;
+  const apiKey = providedApiKey || process.env.OPENAI_API_KEY;
   const results: PhotoAnalysis[] = [];
   
   console.log(`[PhotoIntelligence V3] ═══════════════════════════════════════`);
@@ -334,7 +339,7 @@ export async function analyzePhotos(
   // Process in batches for rate limiting
   for (let i = 0; i < photos.length; i += maxConcurrency) {
     const batch = photos.slice(i, i + maxConcurrency);
-    const batchPromises = batch.map(photo => analyzePhoto(photo.id, photo.url));
+    const batchPromises = batch.map(photo => analyzePhoto(photo.id, photo.url, apiKey));
     const batchResults = await Promise.all(batchPromises);
     results.push(...batchResults);
     
