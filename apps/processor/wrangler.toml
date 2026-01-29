@@ -14,8 +14,8 @@ vars = { ENVIRONMENT = "staging" }
 [env.production]
 vars = { ENVIRONMENT = "production" }
 
-# Queue binding (required for all environments)
-[[queues]]
+# Queue binding (for producing messages)
+[[queues.producers]]
 binding = "SNAPR_QUEUE"
 queue = "snapr-processing-queue"
 
