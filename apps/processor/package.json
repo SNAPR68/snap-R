@@ -1,0 +1,20 @@
+{
+  "name": "@snapr/processor",
+  "version": "2.1.0-worker",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev --local",
+    "deploy": "wrangler deploy",
+    "deploy:staging": "wrangler deploy --env staging"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.39.0",
+    "p-limit": "^5.0.0"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20260129.0",
+    "typescript": "^5.3.3",
+    "wrangler": "^3.22.0"
+  }
+}

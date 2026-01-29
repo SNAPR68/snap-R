@@ -1,0 +1,30 @@
+name = "snapr-processor"
+main = "src/index.ts"
+compatibility_date = "2024-01-29"
+
+# Development environment (local)
+[env.dev]
+vars = { ENVIRONMENT = "development" }
+
+# Staging environment
+[env.staging]
+vars = { ENVIRONMENT = "staging" }
+
+# Production environment
+[env.production]
+vars = { ENVIRONMENT = "production" }
+
+# Queue binding (required for all environments)
+[[queues]]
+binding = "SNAPR_QUEUE"
+queue = "snapr-processing-queue"
+
+# R2 bucket for processed images
+[[r2_buckets]]
+binding = "IMAGES"
+bucket_name = "snapr-images"
+
+# KV namespace for checkpoints/resume
+[[kv_namespaces]]
+binding = "CHECKPOINTS"
+id = "local"
