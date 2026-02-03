@@ -99,7 +99,7 @@ export async function POST(request: NextRequest) {
             listingId: result.listingId,
             status: result.status,
             message: result.error || `Listing prepared with status: ${result.status}`,
-            heroPhotoId: result.heroPhotoId,
+            heroPhotoId: result.heroPhotoId ?? undefined,
             totalPhotos: result.totalPhotos,
             successfulPhotos: result.successfulPhotos,
             photosNeedingReview: result.photosNeedingReview,

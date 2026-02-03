@@ -279,6 +279,7 @@ export interface ListingProcessingResult {
   // Timing & Cost
   totalProcessingTime: number;
   totalCost: number;
+  toolsApplied: Record<string, number>;
   phaseTimingsMs?: {
     fetchMs: number;
     analysisMs: number;
@@ -415,6 +416,7 @@ export interface PrepareListingResponse {
   estimatedCost?: number;
   totalProcessingTimeMs?: number;
   phaseTimingsMs?: ListingProcessingResult['phaseTimingsMs'];
+  toolsApplied?: Record<string, number>;
   
   // Error
   error?: string;

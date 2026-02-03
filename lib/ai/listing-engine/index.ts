@@ -267,6 +267,7 @@ export async function prepareListing(
     const analysisCostCents = (COST_ESTIMATES.openai?.['image-analysis'] ?? COST_ESTIMATES.openai?.default ?? 0) * analyses.length;
     costBreakdownCents.openai = (costBreakdownCents.openai || 0) + analysisCostCents;
     const totalCostUsd = Object.values(costBreakdownCents).reduce((sum, cents) => sum + cents, 0) / 100;
+    const toolsApplied = countToolsApplied(results);
     
     // Determine final status
     let finalStatus: ProcessingStatus = 'completed';
@@ -282,7 +283,7 @@ export async function prepareListing(
       status: finalStatus === 'completed' ? 'prepared' : finalStatus,
       heroPhotoId: strategy.heroPhotoId,
       confidence: overallConfidence,
-      toolsApplied: countToolsApplied(results),
+      toolsApplied,
       lockedPresets: {
         sky: lockedPresets.skyPreset,
         twilight: lockedPresets.twilightPreset,
@@ -328,6 +329,7 @@ export async function prepareListing(
       consistencyScore: 85,
       totalProcessingTime: totalTime,
       totalCost: totalCostUsd,
+      toolsApplied,
       phaseTimingsMs,
       startedAt: new Date(startTime).toISOString(),
       completedAt: new Date().toISOString(),
@@ -353,6 +355,7 @@ export async function prepareListing(
       consistencyScore: 0,
       totalProcessingTime: Date.now() - startTime,
       totalCost: 0,
+      toolsApplied: {},
       phaseTimingsMs: {
         ...phaseTimingsMs,
         totalMs: Date.now() - startTime,
@@ -372,6 +375,7 @@ async function fetchListingPhotos(
   supabase: any,
   listingId: string
 ): Promise<Array<{ id: string; url: string }>> {
+  type RawPhoto = { id: string; raw_url: string };
   const { data: photos, error } = await supabase
     .from('photos')
     .select('id, raw_url')
@@ -389,7 +393,7 @@ async function fetchListingPhotos(
   const photosWithUrls: Array<{ id: string; url: string }> = [];
   
   const resolved = await Promise.all(
-    photos.map(async (photo) => {
+    (photos as RawPhoto[]).map(async (photo: RawPhoto) => {
       if (photo.raw_url.startsWith('http://') || photo.raw_url.startsWith('https://')) {
         return { id: photo.id, url: photo.raw_url };
       }
@@ -589,6 +593,7 @@ export function buildPrepareResponse(
     estimatedTime: Math.round(result.totalProcessingTime / 1000),
     totalProcessingTimeMs: result.totalProcessingTime,
     phaseTimingsMs: result.phaseTimingsMs,
+    toolsApplied: result.toolsApplied,
   };
 }
 

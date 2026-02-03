@@ -929,10 +929,7 @@ async function saveEnhancedPhoto(
 ): Promise<string> {
   let buffer: ArrayBuffer;
   if (bufferOverride) {
-    buffer = bufferOverride.buffer.slice(
-      bufferOverride.byteOffset,
-      bufferOverride.byteOffset + bufferOverride.byteLength
-    );
+    buffer = Uint8Array.from(bufferOverride).buffer;
   } else {
   const response = await fetch(enhancedUrl);
   if (!response.ok) throw new Error('Failed to fetch enhanced image');
