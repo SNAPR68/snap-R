@@ -51,8 +51,18 @@ export default function NewListingPage() {
       if (!user) throw new Error('Not authenticated');
 
       // Check listing limit
-      const { data: profile } = await supabase.from('profiles').select('subscription_tier, listings_limit, listings_used_this_month').eq('id', user.id).single();
-      const limit = profile?.listings_limit || 3;
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('subscription_tier, listings_limit, listings_used_this_month, plan')
+        .eq('id', user.id)
+        .single();
+      const metadataPlan = user?.user_metadata?.plan || user?.user_metadata?.subscription_tier;
+      const tier = profile?.subscription_tier || profile?.plan || metadataPlan || 'free';
+      let limit = typeof profile?.listings_limit === 'number' ? profile.listings_limit : 3;
+      if (tier !== 'free') {
+        // Paid tiers should never be blocked at free limits
+        limit = Math.max(limit, tier === 'platinum' || tier === 'team' ? 999 : 30);
+      }
       // Count actual listings created this month
       const startOfMonth = new Date();
       startOfMonth.setDate(1);

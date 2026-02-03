@@ -3,7 +3,7 @@
  * ============================
  * POST /api/listing/prepare
  * 
- * Uses V3 pipeline by default, with V2 fallback option.
+ * Uses listing-engine pipeline (V2) for all requests.
  */
 
 export const dynamic = 'force-dynamic';
@@ -11,7 +11,7 @@ export const maxDuration = 300;
 
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
-import { prepareListingV3, buildV3PrepareResponse } from '@/lib/ai/v3-prepare';
+import { adminSupabase } from '@/lib/supabase/admin';
 import { prepareListing, buildPrepareResponse } from '@/lib/ai/listing-engine';
 
 export async function POST(request: NextRequest) {
@@ -19,7 +19,7 @@ export async function POST(request: NextRequest) {
   
   try {
     const body = await request.json();
-    const { listingId, options = {}, useV2 = false } = body;
+    const { listingId, options = {} } = body;
     
     if (!listingId) {
       return NextResponse.json(
@@ -28,13 +28,19 @@ export async function POST(request: NextRequest) {
       );
     }
     
-    console.log(`\n[API] ========== PREPARE LISTING (${useV2 ? 'V2' : 'V3'}) ==========`);
+    console.log(`\n[API] ========== PREPARE LISTING (LISTING ENGINE) ==========`);
     console.log('[API] Listing:', listingId);
     
+    const adminKey = request.headers.get('x-admin-key');
+    const allowAdmin = Boolean(
+      adminKey &&
+        (adminKey === process.env.WORKER_ADMIN_KEY || adminKey === process.env.PREPARE_ADMIN_KEY)
+    );
+
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
     
-    if (!user) {
+    if (!user && !allowAdmin) {
       return NextResponse.json(
         { success: false, error: 'Unauthorized' },
         { status: 401 }
@@ -42,7 +48,8 @@ export async function POST(request: NextRequest) {
     }
     
     // Verify user owns the listing
-    const { data: listing, error: listingError } = await supabase
+    const listingClient = allowAdmin ? adminSupabase() : supabase;
+    const { data: listing, error: listingError } = await listingClient
       .from('listings')
       .select('id, user_id, title, status')
       .eq('id', listingId)
@@ -55,7 +62,7 @@ export async function POST(request: NextRequest) {
       );
     }
     
-    if (listing.user_id !== user.id) {
+    if (!allowAdmin && listing.user_id !== user?.id) {
       return NextResponse.json(
         { success: false, error: 'You do not own this listing' },
         { status: 403 }
@@ -71,18 +78,9 @@ export async function POST(request: NextRequest) {
     
     console.log('[API] Starting preparation for:', listing.title);
     
-    let response;
-    let result;
-    
-    if (useV2) {
-      // V2 fallback
-      result = await prepareListing({ listingId, options }, user.id);
-      response = buildPrepareResponse(result);
-    } else {
-      // V3 default
-      result = await prepareListingV3({ listingId, options }, user.id);
-      response = buildV3PrepareResponse(result);
-    }
+    const effectiveUserId = allowAdmin ? listing.user_id : user!.id;
+    const result = await prepareListing({ listingId, options }, effectiveUserId);
+    const response = buildPrepareResponse(result);
     
     const duration = Date.now() - startTime;
     console.log(`[API] ✅ Complete in ${(duration / 1000).toFixed(1)}s`);

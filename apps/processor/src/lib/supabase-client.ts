@@ -102,10 +102,20 @@ export async function getListingPhotos(
   
   const photosWithSignedUrls = await Promise.all(
     photos.map(async (photo) => {
+      const isExternal = typeof photo.raw_url === 'string' && /^https?:\/\//i.test(photo.raw_url);
+      if (isExternal) {
+        return {
+          id: photo.id,
+          raw_url: photo.raw_url,
+          status: photo.status,
+          signedUrl: photo.raw_url,
+        };
+      }
+
       const { data: signedData, error: signedError } = await supabase.storage
         .from('raw-images')
         .createSignedUrl(photo.raw_url, 3600);
-        
+
       return {
         id: photo.id,
         raw_url: photo.raw_url,

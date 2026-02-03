@@ -49,16 +49,20 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Access denied' }, { status: 403 });
     }
     
-    const { data: signedUrlData } = await supabase.storage
-      .from('raw-images')
-      .createSignedUrl(photo.raw_url, 3600);
-      
-    if (!signedUrlData?.signedUrl) {
-      return NextResponse.json({ error: 'Could not get image URL' }, { status: 500 });
+    let sourceUrl = photo.raw_url;
+    if (!sourceUrl.startsWith('http://') && !sourceUrl.startsWith('https://')) {
+      const { data: signedUrlData } = await supabase.storage
+        .from('raw-images')
+        .createSignedUrl(photo.raw_url, 3600);
+
+      if (!signedUrlData?.signedUrl) {
+        return NextResponse.json({ error: 'Could not get image URL' }, { status: 500 });
+      }
+      sourceUrl = signedUrlData.signedUrl;
     }
     
     console.log('[API] Processing with tier:', profile?.subscription_tier || 'free');
-    const result = await processEnhancement(toolId as ToolId, signedUrlData.signedUrl, options);
+    const result = await processEnhancement(toolId as ToolId, sourceUrl, options);
     
     const processingTime = Date.now() - startTime;
     

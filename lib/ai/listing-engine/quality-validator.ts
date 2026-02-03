@@ -331,7 +331,8 @@ export function quickValidate(result: PhotoProcessingResult): ValidationResult {
   const issues: ValidationIssue[] = [];
   
   // Check for partial tool application
-  if (result.toolsApplied.length === 0) {
+  const noToolsPlanned = result.toolsApplied.length === 0 && result.toolsSkipped.length === 0;
+  if (result.toolsApplied.length === 0 && !noToolsPlanned) {
     issues.push({
       type: 'other',
       severity: 'high',
@@ -359,6 +360,16 @@ export function quickValidate(result: PhotoProcessingResult): ValidationResult {
   
   const hasHighSeverity = issues.some(i => i.severity === 'high');
   
+  if (noToolsPlanned && result.success) {
+    return {
+      photoId: result.photoId,
+      isValid: true,
+      confidence: Math.max(result.confidence, CONFIG.minConfidence),
+      issues: [],
+      needsReview: false,
+    };
+  }
+
   return {
     photoId: result.photoId,
     isValid: result.success && !hasHighSeverity,

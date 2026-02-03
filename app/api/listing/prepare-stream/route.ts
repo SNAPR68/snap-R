@@ -8,12 +8,13 @@ export const maxDuration = 300;
 
 import { NextRequest } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
-import { prepareListingV3 } from '@/lib/ai/v3-prepare';
+import { adminSupabase } from '@/lib/supabase/admin';
+import { prepareListing, ProcessingProgress, PrepareListingResponse } from '@/lib/ai/listing-engine';
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { listingId } = body;
+    const { listingId, options = {} } = body;
 
     if (!listingId) {
       return new Response(
@@ -22,17 +23,21 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const adminKey = request.headers.get('x-admin-key');
+    const allowAdmin = adminKey && process.env.WORKER_ADMIN_KEY && adminKey === process.env.WORKER_ADMIN_KEY;
+
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
 
-    if (!user) {
+    if (!user && !allowAdmin) {
       return new Response(
         JSON.stringify({ error: 'Unauthorized' }),
         { status: 401, headers: { 'Content-Type': 'application/json' } }
       );
     }
 
-    const { data: listing, error: listingError } = await supabase
+    const listingClient = allowAdmin ? adminSupabase() : supabase;
+    const { data: listing, error: listingError } = await listingClient
       .from('listings')
       .select('id, user_id, title')
       .eq('id', listingId)
@@ -45,7 +50,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (listing.user_id !== user.id) {
+    if (!allowAdmin && listing.user_id !== user?.id) {
       return new Response(
         JSON.stringify({ error: 'You do not own this listing' }),
         { status: 403, headers: { 'Content-Type': 'application/json' } }
@@ -55,35 +60,63 @@ export async function POST(request: NextRequest) {
     const encoder = new TextEncoder();
     const stream = new ReadableStream({
       async start(controller) {
+        let isClosed = false;
         const sendEvent = (event: string, data: any) => {
-          controller.enqueue(encoder.encode(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`));
+          if (isClosed) return;
+          try {
+            controller.enqueue(encoder.encode(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`));
+          } catch {
+            isClosed = true;
+          }
+        };
+
+        const onProgress = (progress: ProcessingProgress) => {
+          sendEvent('progress', {
+            phase: progress.status,
+            message: progress.currentPhase,
+            progress: progress.percentComplete,
+            photoProgress: {
+              current: progress.processedPhotos,
+              total: progress.totalPhotos,
+            },
+            currentTool: progress.currentTool,
+            currentPhotoId: progress.currentPhotoId,
+          });
         };
 
         try {
-          sendEvent('progress', { stage: 'analyzing', message: 'Initializing SnapR AI Vision...', progress: 0 });
-          
-          sendEvent('progress', { stage: 'analyzing', message: 'AI Analyzer examining photos...', progress: 10 });
+          sendEvent('progress', { phase: 'starting', message: 'Initializing SnapR AI Engine...', progress: 0 });
 
-          const result = await prepareListingV3(
-            { listingId, options: {} },
-            user.id
+          const effectiveUserId = allowAdmin ? listing.user_id : user!.id;
+          const result = await prepareListing(
+            { listingId, options: allowAdmin ? { ...options, admin: true } : options },
+            effectiveUserId,
+            onProgress
           );
 
-          sendEvent('complete', {
-            success: result.success,
+          const response: PrepareListingResponse = {
+            success: result.status !== 'failed',
+            listingId: result.listingId,
             status: result.status,
+            message: result.error || `Listing prepared with status: ${result.status}`,
+            heroPhotoId: result.heroPhotoId,
             totalPhotos: result.totalPhotos,
             successfulPhotos: result.successfulPhotos,
-            failedPhotos: result.failedPhotos,
-            photosNeedingReview: result.photosNeedingReview || 0,
-            heroPhotoId: result.heroPhotoId,
-          });
+            photosNeedingReview: result.photosNeedingReview,
+            estimatedTime: Math.round(result.totalProcessingTime / 1000),
+            estimatedCost: result.totalCost,
+            toolsApplied: result.toolsApplied,
+          };
 
+          sendEvent('complete', { result: response });
         } catch (error: any) {
           console.error('[prepare-stream] Error:', error);
           sendEvent('error', { error: error.message || 'Preparation failed' });
         } finally {
-          controller.close();
+          if (!isClosed) {
+            isClosed = true;
+            controller.close();
+          }
         }
       },
     });

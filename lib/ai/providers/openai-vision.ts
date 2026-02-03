@@ -197,3 +197,73 @@ Check for:
     });
   }
 }
+
+export async function checkStructuralIntegrity(
+  originalUrl: string,
+  enhancedUrl: string,
+  enhancementType: string
+): Promise<{ passed: boolean; issues: string[] }> {
+  console.log('[QC] Checking structural integrity...');
+  const startTime = Date.now();
+  let success = true;
+  let errorMessage: string | undefined;
+
+  try {
+    const response = await openai.chat.completions.create({
+      model: 'gpt-4o',
+      messages: [
+        {
+          role: 'user',
+          content: [
+            {
+              type: 'text',
+              text: `Compare these two real estate photos. The second is an AI "${enhancementType}" edit of the first.
+
+Return ONLY valid JSON:
+{
+  "passed": boolean,
+  "issues": ["issue1", "issue2"]
+}
+
+PASS only if:
+- The structure, geometry, and room layout are unchanged
+- No objects are resized, moved, or invented
+- Only the intended enhancement appears (e.g. sky, lawn, lights, declutter)
+
+FAIL if you see:
+- Structural changes to walls, rooflines, windows, doors
+- Furniture moved/resized
+- New objects added or removed beyond the intended tool
+- Perspective/geometry altered unexpectedly`,
+            },
+            { type: 'image_url', image_url: { url: originalUrl } },
+            { type: 'image_url', image_url: { url: enhancedUrl } },
+          ],
+        },
+      ],
+      max_tokens: 300,
+    });
+
+    const content = response.choices[0]?.message?.content || '{}';
+    try {
+      const cleanContent = content.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+      const result = JSON.parse(cleanContent) as { passed: boolean; issues?: string[] };
+      return { passed: result.passed !== false, issues: result.issues || [] };
+    } catch {
+      return { passed: true, issues: [] };
+    }
+  } catch (error: any) {
+    success = false;
+    errorMessage = error.message;
+    console.error('[QC] Structural check API error:', error.message);
+    return { passed: true, issues: [] };
+  } finally {
+    await logApiCost({
+      provider: 'openai',
+      toolId: 'structure-check',
+      success,
+      errorMessage,
+      processingTimeMs: Date.now() - startTime,
+    });
+  }
+}

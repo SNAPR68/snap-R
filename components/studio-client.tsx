@@ -32,10 +32,10 @@ const AI_TOOLS = [
 
 const TOOL_PRESETS: Record<string, { id: string; name: string; prompt: string; thumbnail: string }[]> = {
   'sky-replacement': [
-    { id: 'clear-blue', name: 'Clear Blue', prompt: 'Replace ONLY the sky with a perfectly clear bright blue sky with no clouds. Do NOT change the house, trees, lawn, or anything else. Only the sky changes.', thumbnail: 'https://images.unsplash.com/photo-1601297183305-6df142704ea2?w=200&h=120&fit=crop' },
-    { id: 'sunset', name: 'Sunset', prompt: 'Replace ONLY the sky with a dramatic sunset with orange, pink and purple colors. Do NOT change the house, trees, lawn, or anything else. Only the sky changes.', thumbnail: 'https://images.unsplash.com/photo-1495616811223-4d98c6e9c869?w=200&h=120&fit=crop' },
-    { id: 'dramatic-clouds', name: 'Dramatic Clouds', prompt: 'Replace ONLY the sky with dramatic white fluffy clouds against deep blue sky. Do NOT change the house, trees, lawn, or anything else. Only the sky changes.', thumbnail: 'https://images.unsplash.com/photo-1534088568595-a066f410bcda?w=200&h=120&fit=crop' },
-    { id: 'twilight', name: 'Twilight Sky', prompt: 'Replace ONLY the sky with a twilight dusk sky showing deep purple and blue gradient. Do NOT change the house lighting or anything else. Only the sky changes to twilight colors.', thumbnail: 'https://images.unsplash.com/photo-1472120435266-53107fd0c44a?w=200&h=120&fit=crop' },
+    { id: 'clear-blue', name: 'Clear Blue', prompt: 'Replace ONLY the sky with a clean, natural blue sky. Smooth gradient from pale azure at the horizon to deeper blue overhead. NO clouds. Do NOT change exposure, shadows, or any other elements. Only the sky changes.', thumbnail: 'https://images.unsplash.com/photo-1601297183305-6df142704ea2?w=200&h=120&fit=crop' },
+    { id: 'sunset', name: 'Sunset', prompt: 'Replace ONLY the sky with a bright sunset gradient: warm peach/gold at the horizon, soft pink mid‑sky, pale blue above. NO clouds. Keep the scene bright; do NOT darken the house or change lighting. Only the sky changes.', thumbnail: 'https://images.unsplash.com/photo-1495616811223-4d98c6e9c869?w=200&h=120&fit=crop' },
+    { id: 'dramatic-clouds', name: 'Dramatic Clouds', prompt: 'Replace ONLY the sky with a rich blue sky and a few elegant white cumulus clouds. Bright and professional, not stormy. Do NOT change the house, trees, lawn, or exposure. Only the sky changes.', thumbnail: 'https://images.unsplash.com/photo-1534088568595-a066f410bcda?w=200&h=120&fit=crop' },
+    { id: 'twilight', name: 'Twilight Sky', prompt: 'Replace ONLY the sky with a clean twilight dusk gradient: deep indigo/blue overhead fading to magenta/violet near the horizon. NO clouds. Do NOT change house lighting or exposure. Only the sky changes.', thumbnail: 'https://images.unsplash.com/photo-1472120435266-53107fd0c44a?w=200&h=120&fit=crop' },
   ],
   'virtual-twilight': [
     { id: 'dusk', name: 'Dusk', prompt: 'Transform to early dusk with purple-orange sky at horizon, soft twilight beginning, warm glow starting in windows', thumbnail: 'https://images.unsplash.com/photo-1518780664697-55e3ad937233?w=200&h=120&fit=crop' },
@@ -44,8 +44,8 @@ const TOOL_PRESETS: Record<string, { id: string; name: string; prompt: string; t
     { id: 'deep-night', name: 'Night', prompt: 'Transform to NIGHT scene with DARK BLACK-BLUE sky with stars visible, all house lights glowing bright, nighttime atmosphere', thumbnail: 'https://images.unsplash.com/photo-1449824913935-59a10b8d2000?w=200&h=120&fit=crop' },
   ],
   'lawn-repair': [
-    { id: 'lush-green', name: 'Lush Green', prompt: 'Transform lawn into PERFECTLY MANICURED VIBRANT EMERALD GREEN grass like golf course putting green', thumbnail: 'https://images.unsplash.com/photo-1589923188651-268a9765e432?w=200&h=120&fit=crop' },
-    { id: 'natural-green', name: 'Natural Green', prompt: 'Transform lawn into healthy NATURAL looking green grass like well-maintained residential lawn', thumbnail: 'https://images.unsplash.com/photo-1464226184884-fa280b87c399?w=200&h=120&fit=crop' },
+    { id: 'lush-green', name: 'Lush Green', prompt: 'Improve ONLY the lawn/grass to a premium lush emerald green (golf‑course quality) but still realistic. Dense, even turf with natural texture, no neon. Do NOT affect shrubs, trees, soil, mulch, driveway, patio, or shadows.', thumbnail: 'https://images.unsplash.com/photo-1589923188651-268a9765e432?w=200&h=120&fit=crop' },
+    { id: 'natural-green', name: 'Natural Green', prompt: 'Improve ONLY the lawn/grass to a natural residential green. Mid‑green tone with subtle variation and visible texture. No neon. Do NOT alter shrubs, trees, soil, mulch, driveway, patio, or shadows.', thumbnail: 'https://images.unsplash.com/photo-1464226184884-fa280b87c399?w=200&h=120&fit=crop' },
   ],
   'declutter': [
     { id: 'light', name: 'Light Clean', prompt: 'Light Clean: Remove only small clutter like papers, cups, remotes from surfaces', thumbnail: 'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=200&h=120&fit=crop' },
@@ -202,16 +202,34 @@ export function StudioClient({ listingId, userRole, showMlsFeatures = false, cre
     const { data: photosData } = await supabase.from('photos').select('*').eq('listing_id', listingId).order('created_at', { ascending: false });
     if (photosData) {
       const photosWithUrls = await Promise.all(photosData.map(async (photo) => {
-        const { data: signedUrl } = await supabase.storage.from('raw-images').createSignedUrl(photo.raw_url, 3600);
-        let processedSignedUrl = null;
-        if (photo.processed_url) {
-          const { data } = await supabase.storage.from('raw-images').createSignedUrl(photo.processed_url, 3600);
-          processedSignedUrl = data?.signedUrl;
+        let signedRawUrl: string | null = null;
+        if (typeof photo.raw_url === 'string' && /^https?:\/\//i.test(photo.raw_url)) {
+          signedRawUrl = photo.raw_url;
+        } else {
+          const { data } = await supabase.storage.from('raw-images').createSignedUrl(photo.raw_url, 3600);
+          signedRawUrl = data?.signedUrl ?? null;
         }
-        return { ...photo, signedRawUrl: signedUrl?.signedUrl, signedProcessedUrl: processedSignedUrl };
+
+        let processedSignedUrl: string | null = null;
+        if (photo.processed_url) {
+          if (typeof photo.processed_url === 'string' && /^https?:\/\//i.test(photo.processed_url)) {
+            processedSignedUrl = photo.processed_url;
+          } else {
+            const { data } = await supabase.storage.from('raw-images').createSignedUrl(photo.processed_url, 3600);
+            processedSignedUrl = data?.signedUrl ?? null;
+          }
+        }
+
+        return { ...photo, signedRawUrl, signedProcessedUrl: processedSignedUrl };
       }));
-      setPhotos(photosWithUrls);
-      setCompletedPhotos(photosWithUrls.filter(p => p.status === 'completed' && p.signedProcessedUrl));
+      const photoAudit = listingData?.preparation_metadata?.photoAudit || {};
+      const photosWithAudit = photosWithUrls.map((photo) => ({
+        ...photo,
+        ai_audit: photoAudit?.[photo.id],
+      }));
+
+      setPhotos(photosWithAudit);
+      setCompletedPhotos(photosWithAudit.filter(p => p.status === 'completed' && p.signedProcessedUrl));
       if (photosWithUrls.length && !selectedPhoto) setSelectedPhoto(photosWithUrls[0]);
       // Track if new photos uploaded after preparation
       if (listingStatus?.status === 'prepared') {

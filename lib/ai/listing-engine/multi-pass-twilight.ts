@@ -12,6 +12,20 @@ const replicate = new Replicate({
   auth: (typeof process !== "undefined" ? (typeof process !== "undefined" ? process.env.REPLICATE_API_TOKEN : "") : "")!,
 });
 
+const TWILIGHT_MODEL =
+  (typeof process !== "undefined" ? process.env.AI_TWILIGHT_MODEL : undefined) ||
+  (typeof process !== "undefined" ? process.env.AI_KONTEXT_MODEL : undefined) ||
+  'black-forest-labs/flux-kontext-dev';
+
+function normalizeOutputUrl(output: unknown): string {
+  if (!output) throw new Error('Replicate returned no output');
+  const result = Array.isArray(output) ? output[0] : output;
+  if (!result) throw new Error('Replicate returned empty result');
+  if (typeof result === 'string') return result;
+  if (typeof (result as any).url === 'function') return (result as any).url();
+  return String(result);
+}
+
 export interface TwilightOptions {
   preset: 'dusk' | 'blue-hour' | 'golden-hour' | 'night';
   enhanceWindowGlow: boolean;
@@ -48,10 +62,10 @@ export async function multiPassTwilight(
     
     const twilightPrompt = getTwilightPrompt(opts.preset);
     
-    const pass1Output = await replicate.run('black-forest-labs/flux-kontext-dev', {
+    const pass1Output = await replicate.run(TWILIGHT_MODEL as `${string}/${string}`, {
       input: {
         prompt: twilightPrompt,
-        image: imageUrl,
+        input_image: imageUrl,
         guidance: 3.5,
         num_inference_steps: 28,
         output_format: 'jpg',
@@ -60,7 +74,7 @@ export async function multiPassTwilight(
       },
     }) as any;
     
-    const pass1Url = Array.isArray(pass1Output) ? pass1Output[0] : pass1Output;
+    const pass1Url = normalizeOutputUrl(pass1Output);
     
     if (!pass1Url) {
       throw new Error('Pass 1 failed - no output');
@@ -80,10 +94,10 @@ export async function multiPassTwilight(
     
     const glowPrompt = getWindowGlowPrompt(opts.glowIntensity);
     
-    const pass2Output = await replicate.run('black-forest-labs/flux-kontext-dev', {
+    const pass2Output = await replicate.run(TWILIGHT_MODEL as `${string}/${string}`, {
       input: {
         prompt: glowPrompt,
-        image: pass1Url,
+        input_image: pass1Url,
         guidance: 2.0, // Lower guidance for subtle refinement
         num_inference_steps: 20,
         output_format: 'jpg',
@@ -92,7 +106,7 @@ export async function multiPassTwilight(
       },
     }) as any;
     
-    const pass2Url = Array.isArray(pass2Output) ? pass2Output[0] : pass2Output;
+    const pass2Url = normalizeOutputUrl(pass2Output);
     
     if (!pass2Url) {
       console.warn('[MultiPassTwilight] Pass 2 failed, returning Pass 1 result');
@@ -114,33 +128,32 @@ export async function multiPassTwilight(
  */
 function getTwilightPrompt(preset: TwilightOptions['preset']): string {
   const prompts: Record<TwilightOptions['preset'], string> = {
-    'dusk': `Transform this daytime exterior into EARLY DUSK twilight.
-SKY: Gradient from soft blue at top to warm orange-pink at horizon.
-LIGHTING: Soft diffused light, beginning of golden hour warmth.
-WINDOWS: Start showing warm interior light, not too bright yet.
-ATMOSPHERE: Peaceful, inviting early evening feel.
+    'dusk': `Transform this daytime exterior into BRIGHT EARLY DUSK twilight.
+SKY: Clean, natural dusk gradient with NO clouds (no dramatic or fake clouds).
+LIGHTING: Warm, inviting, and BRIGHT — not dark.
+WINDOWS: Warm interior glow visible in all windows.
+ATMOSPHERE: Peaceful, professional real estate twilight.
 Keep the house structure, landscaping, and all details exactly the same.`,
 
-    'blue-hour': `Transform this daytime exterior into BLUE HOUR twilight.
-SKY: Rich deep BLUE color - no orange or pink, pure blue twilight.
-LIGHTING: Cool blue ambient light on exterior surfaces.
-WINDOWS: ALL windows glowing with bright warm YELLOW-ORANGE light.
-CONTRAST: Strong contrast between cool blue exterior and warm window glow.
+    'blue-hour': `Transform this daytime exterior into BRIGHT BLUE HOUR twilight.
+SKY: Clean, natural blue-hour gradient with NO clouds (no dramatic or fake clouds).
+LIGHTING: Cool blue ambience but keep the house clearly visible and bright.
+WINDOWS: ALL windows glowing with warm yellow-orange light.
+CONTRAST: Crisp contrast between cool exterior and warm windows.
 Keep the house structure, landscaping, and all details exactly the same.`,
 
-    'golden-hour': `Transform this daytime exterior into GOLDEN HOUR twilight.
-SKY: Warm sunset colors - ORANGE, PINK, and GOLD gradients.
-LIGHTING: Golden warm light bathing the entire scene.
-WINDOWS: Warm yellow glow from all windows, complementing sunset.
-ATMOSPHERE: Romantic, luxurious, magazine-quality real estate photo.
+    'golden-hour': `Transform this daytime exterior into BRIGHT GOLDEN HOUR twilight.
+SKY: Clean, natural golden-hour gradient with NO clouds (no dramatic or fake clouds).
+LIGHTING: Golden warm light bathing the scene, house clearly visible.
+WINDOWS: Warm yellow glow from all windows.
+ATMOSPHERE: Luxurious, magazine-quality real estate photo.
 Keep the house structure, landscaping, and all details exactly the same.`,
 
-    'night': `Transform this daytime exterior into a NIGHT scene.
-SKY: Deep DARK blue-black sky, can show stars.
-LIGHTING: Nighttime darkness on exterior, no ambient light.
-WINDOWS: ALL windows brightly lit with warm interior glow - this is key.
-CONTRAST: Maximum contrast between dark exterior and bright windows.
-LANDSCAPE LIGHTING: Show subtle pathway lights if visible.
+    'night': `Transform this daytime exterior into a NIGHT scene but keep the house BRIGHTLY visible.
+SKY: Deep blue-black with NO clouds, stars are ok (no dramatic or fake clouds).
+LIGHTING: House remains clearly visible, not crushed dark.
+WINDOWS: ALL windows brightly lit with warm interior glow.
+CONTRAST: Strong but not overly dark.
 Keep the house structure, landscaping, and all details exactly the same.`,
   };
   

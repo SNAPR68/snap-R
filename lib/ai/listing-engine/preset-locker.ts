@@ -44,31 +44,19 @@ export function determineLockedPresets(analyses: PhotoAnalysis[]): LockedPresets
   const hasGoodSky = exteriors.some(a => a.skyQuality === 'clear_blue' || a.skyQuality === 'good');
   const hasBadSky = exteriors.some(a => a.skyQuality === 'blown_out' || a.skyQuality === 'ugly' || a.skyQuality === 'overcast');
   
-  // Determine best sky preset based on listing quality
-  let skyPreset: LockedPresets['skyPreset'] = 'dramatic-clouds';
-  const heroCandidate = analyses.find(a => a.heroScore > 80 && a.photoType === 'exterior_front');
-  
-  if (heroCandidate && heroCandidate.twilightCandidate && heroCandidate.twilightScore > 85) {
-    // Premium listing - dramatic clouds work best
-    skyPreset = 'dramatic-clouds';
-  } else if (hasBadSky && !hasGoodSky) {
-    // All bad sky - use clear blue for clean look
+  // Determine best sky preset (favor clean, natural sky with no clouds)
+  let skyPreset: LockedPresets['skyPreset'] = 'clear-blue';
+  if (hasBadSky && !hasGoodSky) {
     skyPreset = 'clear-blue';
-  } else {
-    // Mixed - dramatic clouds for visual impact
-    skyPreset = 'dramatic-clouds';
   }
   
-  // Determine twilight preset - blue hour is most universally appealing
+  // Determine twilight preset - force warm, natural dusk/golden (no blue-hour by default)
   const twilightCandidates = analyses.filter(a => a.twilightCandidate && a.twilightScore > 75);
-  let twilightPreset: LockedPresets['twilightPreset'] = 'blue-hour';
+  let twilightPreset: LockedPresets['twilightPreset'] = 'dusk';
   
   if (twilightCandidates.length > 0) {
-    // Check if listing is luxury (high hero scores)
-    const avgHeroScore = analyses.reduce((sum, a) => sum + a.heroScore, 0) / analyses.length;
-    if (avgHeroScore > 75) {
-      twilightPreset = 'golden-hour'; // Luxury gets warm golden
-    }
+    // Prefer warm golden for best natural results
+    twilightPreset = 'golden-hour';
   }
   
   // Determine staging style based on interior analysis
@@ -123,17 +111,17 @@ export function determineLockedPresets(analyses: PhotoAnalysis[]): LockedPresets
 // ============================================
 
 const SKY_PROMPTS: Record<LockedPresets['skyPreset'], string> = {
-  'clear-blue': 'Replace ONLY the sky with a perfectly clear bright blue sky with minimal clouds. Crisp, clean real estate photography look. Do NOT change the house, trees, lawn, or anything else.',
-  'sunset': 'Replace ONLY the sky with a beautiful golden sunset - warm orange and pink colors at the horizon fading to soft blue above. Do NOT change the house, trees, lawn, or anything else.',
-  'dramatic-clouds': 'Replace ONLY the sky with dramatic white fluffy cumulus clouds against a deep vivid blue sky. Eye-catching real estate photography. Do NOT change the house, trees, lawn, or anything else.',
-  'twilight': 'Replace ONLY the sky with a twilight gradient - deep blue at top transitioning to warm purple-orange at the horizon. Dusk atmosphere. Do NOT change the house or anything else.',
+  'clear-blue': 'Replace ONLY the sky with a clean, natural blue sky with NO clouds. Crisp, realistic real estate photography look. Do NOT change the house, trees, lawn, or anything else.',
+  'sunset': 'Replace ONLY the sky with a clean golden sunset gradient - warm orange and pink near the horizon fading to soft blue above, NO clouds. Do NOT change the house, trees, lawn, or anything else.',
+  'dramatic-clouds': 'Replace ONLY the sky with a clean, natural blue sky with NO clouds. Do NOT change the house, trees, lawn, or anything else.',
+  'twilight': 'Replace ONLY the sky with a clean twilight gradient - deep blue at top transitioning to warm purple-orange at the horizon, NO clouds. Do NOT change the house or anything else.',
 };
 
 const TWILIGHT_PROMPTS: Record<LockedPresets['twilightPreset'], string> = {
-  'dusk': 'Transform into early dusk with purple-orange sky at horizon, soft twilight beginning, warm glow starting in windows. Keep house structure exactly the same.',
-  'blue-hour': 'Transform into BLUE HOUR. Make the sky a rich DEEP BLUE color - no orange, no pink, just beautiful deep blue twilight. All windows should glow with bright warm YELLOW light creating contrast against the blue sky. Cool blue atmosphere with warm window glow.',
-  'golden-hour': 'Transform into GOLDEN HOUR twilight. The sky should show warm ORANGE and PINK sunset colors with golden light. Add bright warm yellow light glowing from every window. The scene should feel cozy and inviting with golden warm tones.',
-  'night': 'Transform into a NIGHT scene. Make the sky completely DARK - deep black-blue with visible stars. Turn on ALL lights in the house with BRIGHT warm yellow-orange glow from every window. Strong contrast between dark sky and bright windows.',
+  'dusk': 'Transform into BRIGHT early dusk. Sky should have a soft purple-to-warm-orange gradient with NO clouds. Keep the house well-lit and clearly visible. Add warm glow in windows. Do NOT darken the scene.',
+  'blue-hour': 'Transform into BLUE HOUR but keep it BRIGHT. Sky should be rich blue with NO clouds, house clearly visible, and windows glowing warm yellow light. Avoid night darkness.',
+  'golden-hour': 'Transform into GOLDEN HOUR twilight. Sky should show warm orange/pink sunset colors with NO clouds. Keep the house bright and visible. Add warm yellow glow from every window.',
+  'night': 'Transform into a NIGHT scene but keep the house BRIGHTLY lit and fully visible. Deep blue-black sky with NO clouds. All windows glowing warm yellow-orange.',
 };
 
 const STAGING_PROMPTS: Record<LockedPresets['stagingStyle'], string> = {

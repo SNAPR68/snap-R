@@ -1,8 +1,13 @@
 import Replicate from 'replicate';
+import { SAMMasksClient, generateDeterministicLawnMask } from './sam-masks';
+import { enqueueReplicate } from './replicate-queue';
 
 const replicate = new Replicate({
   auth: process.env.REPLICATE_API_TOKEN!,
 });
+
+const KONTEXT_MODEL = process.env.AI_KONTEXT_MODEL || 'black-forest-labs/flux-kontext-dev';
+const REPLICATE_MIN_INTERVAL_MS = Number(process.env.REPLICATE_MIN_INTERVAL_MS || 12000);
 
 // ============================================
 // TIMEOUT UTILITIES
@@ -23,6 +28,10 @@ async function withTimeout<T>(promise: Promise<T>, ms: number, label: string): P
   }
 }
 
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 function extractUrl(output: unknown): string {
   if (!output) throw new Error('Replicate returned no output');
   const result = Array.isArray(output) ? output[0] : output;
@@ -32,39 +41,129 @@ function extractUrl(output: unknown): string {
   return String(result);
 }
 
+async function runWithQueue<T>(fn: () => Promise<T>): Promise<T> {
+  return enqueueReplicate(fn, REPLICATE_MIN_INTERVAL_MS);
+}
+
 // ============================================
 // FLUX KONTEXT - Main editing model
 // FIXED: Lower guidance for subtle edits, higher for dramatic
 // ============================================
 
+export type FluxOptions = { guidance?: number; steps?: number };
+export type FluxFillOptions = { guidance?: number; steps?: number; model?: string };
+
+function withFluxDefaults(
+  defaults: Required<FluxOptions>,
+  overrides?: FluxOptions
+): Required<FluxOptions> {
+  return {
+    guidance: overrides?.guidance ?? defaults.guidance,
+    steps: overrides?.steps ?? defaults.steps,
+  };
+}
+
 async function runFluxKontext(
   imageUrl: string, 
   prompt: string, 
-  options: { guidance?: number; steps?: number } = {}
+  options: FluxOptions = {}
 ): Promise<string> {
   const { guidance = 3.0, steps = 28 } = options;
+  const safePrompt = (prompt || '').trim() || 'Apply a subtle professional real estate enhancement. Keep structure unchanged.';
   
   console.log('[Replicate] Running Flux Kontext...');
-  console.log('[Replicate] Prompt:', prompt.substring(0, 100) + '...');
+  console.log('[Replicate] Prompt:', safePrompt.substring(0, 100) + '...');
   console.log('[Replicate] Guidance:', guidance, 'Steps:', steps);
 
-  const output = await withTimeout(
-    replicate.run('black-forest-labs/flux-kontext-dev', {
+  let output: unknown;
+  for (let attempt = 0; attempt < 2; attempt += 1) {
+    try {
+      output = await withTimeout(
+        runWithQueue(() =>
+          replicate.run(KONTEXT_MODEL as `${string}/${string}`, {
       input: {
         input_image: imageUrl,
-        prompt,
+              prompt: safePrompt,
         guidance,
         num_inference_steps: steps,
         aspect_ratio: 'match_input_image',
         output_format: 'jpg',
         output_quality: 95,
       },
-    }),
+          })
+        ),
     120000,
     'Flux Kontext',
   );
+      break;
+    } catch (error: any) {
+      const message = error?.message || '';
+      if (attempt === 0 && message.includes('429')) {
+        const retryAfter = message.match(/retry_after\\":\\s*(\\d+)/i)?.[1];
+        const waitMs = retryAfter ? Number(retryAfter) * 1000 : 8000;
+        console.warn(`[Replicate] Flux Kontext rate limited, retrying in ${Math.round(waitMs / 1000)}s...`);
+        await sleep(waitMs);
+        continue;
+      }
+      throw error;
+    }
+  }
 
   console.log('[Replicate] Flux Kontext complete');
+  return extractUrl(output);
+}
+
+// ============================================
+// FLUX FILL - Masked inpainting (sky/lawn/objects)
+// ============================================
+export async function fluxFillInpaint(
+  imageUrl: string,
+  maskUrl: string,
+  prompt: string,
+  options: FluxFillOptions = {}
+): Promise<string> {
+  const {
+    guidance = 8,
+    steps = 40,
+    model = process.env.AI_INPAINT_PROVIDER || 'black-forest-labs/flux-fill-pro',
+  } = options;
+
+  console.log('[Replicate] Running Flux Fill...');
+  console.log('[Replicate] Model:', model);
+
+  let output: any;
+  const maxAttempts = 2;
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    try {
+      output = await withTimeout(
+        runWithQueue(() =>
+          replicate.run(model as `${string}/${string}`, {
+            input: {
+              image: imageUrl,
+              mask: maskUrl,
+              prompt,
+              steps,
+              guidance,
+              output_format: 'jpg',
+              output_quality: 95,
+            },
+          })
+        ),
+        180000,
+        'Flux Fill',
+      );
+      break;
+    } catch (error: any) {
+      const message = error?.message || '';
+      if (attempt < maxAttempts && message.toLowerCase().includes('timeout')) {
+        console.warn('[Replicate] Flux Fill timeout, retrying...');
+        continue;
+      }
+      throw error;
+    }
+  }
+
+  console.log('[Replicate] Flux Fill complete');
   return extractUrl(output);
 }
 
@@ -74,46 +173,62 @@ async function runFluxKontext(
 
 const SKY_PROMPTS: Record<string, string> = {
   // Default / Blue Sky
-  'default': 'Replace the sky with a perfectly CLEAR blue sky with absolutely NO clouds. Pure pristine blue gradient from light azure at horizon to deeper cerulean blue at top. Crisp, clean, perfect weather. Keep the house, roof, trees, lawn, driveway, and ALL other elements exactly the same. Only replace the sky.',
+  'default': 'Replace ONLY the sky with a clean, natural blue sky. Smooth gradient from pale azure at the horizon to deeper blue overhead. NO clouds. Do NOT change exposure, shadows, color, or lighting on the house, trees, lawn, or ground. Only the sky changes.',
   
   // Sunny variant
-  'sunny': 'Replace the sky with a perfectly CLEAR vibrant blue sky with NO clouds whatsoever. Pure blue, bright and cheerful. Keep the house, roof, trees, lawn, and everything else exactly the same. Only replace the sky.',
-  'blue': 'Replace the sky with a perfectly CLEAR vibrant blue sky with NO clouds whatsoever. Pure blue, bright and cheerful. Keep the house, roof, trees, lawn, and everything else exactly the same. Only replace the sky.',
+  'sunny': 'Replace ONLY the sky with a bright, clean blue sky (NO clouds). Smooth gradient, natural midday clarity. Do NOT alter the house, trees, lawn, shadows, or overall exposure. Only the sky changes.',
+  'blue': 'Replace ONLY the sky with a bright, clean blue sky (NO clouds). Smooth gradient, natural midday clarity. Do NOT alter the house, trees, lawn, shadows, or overall exposure. Only the sky changes.',
   
   // Sunset variant - BRIGHTER, not dark
-  'sunset': 'Replace the sky with a beautiful sunset sky featuring warm orange, pink and golden colors near the horizon, transitioning to light blue higher up. The sunset should be BRIGHT and colorful, not dark. Keep the house, roof, trees, lawn, and everything else exactly the same. Only replace the sky.',
-  'golden': 'Replace the sky with a beautiful sunset sky featuring warm orange, pink and golden colors near the horizon, transitioning to light blue higher up. The sunset should be BRIGHT and colorful, not dark. Keep the house, roof, trees, lawn, and everything else exactly the same. Only replace the sky.',
+  'sunset': 'Replace ONLY the sky with a bright sunset gradient. Horizon: warm peach/gold, mid-sky: soft pink, upper sky: pale blue. NO clouds. Keep the scene bright and realistic—do NOT darken the house or change lighting. Only the sky changes.',
+  'golden': 'Replace ONLY the sky with a bright sunset gradient. Horizon: warm peach/gold, mid-sky: soft pink, upper sky: pale blue. NO clouds. Keep the scene bright and realistic—do NOT darken the house or change lighting. Only the sky changes.',
   
   // Dramatic variant
-  'dramatic': 'Replace the sky with a beautiful blue sky featuring a few elegant white fluffy clouds artfully scattered. Not too many clouds - just enough to add visual interest. Bright, appealing, professional real estate sky. Keep the house, roof, trees, lawn, and everything else exactly the same. Only replace the sky.',
-  'clouds': 'Replace the sky with a beautiful blue sky featuring a few elegant white fluffy clouds artfully scattered. Not too many clouds - just enough to add visual interest. Bright, appealing, professional real estate sky. Keep the house, roof, trees, lawn, and everything else exactly the same. Only replace the sky.',
+  'dramatic': 'Replace ONLY the sky with a rich blue sky and a few elegant white cumulus clouds. Bright and professional, not stormy. Keep house, trees, lawn, shadows, and exposure unchanged. Only the sky changes.',
+  'clouds': 'Replace ONLY the sky with a rich blue sky and a few elegant white cumulus clouds. Bright and professional, not stormy. Keep house, trees, lawn, shadows, and exposure unchanged. Only the sky changes.',
   
   // Cloudy variant
-  'cloudy': 'Replace the sky with a soft overcast sky - light gray clouds providing even, diffused lighting. Professional real estate look without harsh shadows. Keep the house, roof, trees, lawn, and everything else exactly the same. Only replace the sky.',
-  'overcast': 'Replace the sky with a soft overcast sky - light gray clouds providing even, diffused lighting. Professional real estate look without harsh shadows. Keep the house, roof, trees, lawn, and everything else exactly the same. Only replace the sky.',
+  'cloudy': 'Replace ONLY the sky with a soft, bright overcast (light gray) sky. Even, diffused look. Do NOT change house lighting or shadows. Only the sky changes.',
+  'overcast': 'Replace ONLY the sky with a soft, bright overcast (light gray) sky. Even, diffused look. Do NOT change house lighting or shadows. Only the sky changes.',
+  
+  // Twilight sky only (no lighting changes)
+  'twilight': 'Replace ONLY the sky with a clean twilight dusk gradient: deep indigo/blue overhead fading to magenta/violet near the horizon. NO clouds. Do NOT change house lighting, windows, or exposure. Only the sky changes.',
 };
 
-export async function skyReplacement(imageUrl: string, customPrompt?: string): Promise<string> {
+export async function skyReplacement(
+  imageUrl: string,
+  customPrompt?: string,
+  presetId?: string,
+  options?: FluxOptions
+): Promise<string> {
   console.log('[Replicate] === SKY REPLACEMENT ===');
   console.log('[Replicate] Custom prompt:', customPrompt || 'none');
+  if (presetId) {
+    console.log('[Replicate] Preset:', presetId);
+  }
 
   let prompt = SKY_PROMPTS['default'];
   
-  if (customPrompt) {
+  if (presetId) {
+    if (presetId === 'clear-blue') prompt = SKY_PROMPTS['sunny'];
+    else if (presetId === 'sunset') prompt = SKY_PROMPTS['sunset'];
+    else if (presetId === 'dramatic-clouds') prompt = SKY_PROMPTS['dramatic'];
+    else if (presetId === 'twilight') prompt = SKY_PROMPTS['twilight'];
+  } else if (customPrompt) {
     const lowerPrompt = customPrompt.toLowerCase();
     
-    // Match preset keywords
-    if (lowerPrompt.includes('twilight') || lowerPrompt.includes('dusk') || lowerPrompt.includes('purple')) {
-      prompt = SKY_PROMPTS['twilight'];
-      console.log('[Replicate] Using TWILIGHT preset');
-    } else if (lowerPrompt.includes('sunset') || lowerPrompt.includes('golden') || lowerPrompt.includes('orange')) {
+    // Match preset keywords (prioritize clear/sunset over dramatic)
+    if (lowerPrompt.includes('sunset') || lowerPrompt.includes('golden') || lowerPrompt.includes('orange')) {
       prompt = SKY_PROMPTS['sunset'];
-    } else if (lowerPrompt.includes('dramatic') || lowerPrompt.includes('cloud')) {
-      prompt = SKY_PROMPTS['dramatic'];
+    } else if (lowerPrompt.includes('no clouds') || lowerPrompt.includes('cloudless') || lowerPrompt.includes('clear') || lowerPrompt.includes('sunny') || lowerPrompt.includes('blue sky')) {
+      prompt = SKY_PROMPTS['sunny'];
     } else if (lowerPrompt.includes('overcast') || lowerPrompt.includes('cloudy') || lowerPrompt.includes('soft')) {
       prompt = SKY_PROMPTS['cloudy'];
-    } else if (lowerPrompt.includes('sunny') || lowerPrompt.includes('blue') || lowerPrompt.includes('clear')) {
-      prompt = SKY_PROMPTS['sunny'];
+    } else if (lowerPrompt.includes('twilight') || lowerPrompt.includes('dusk')) {
+      prompt = SKY_PROMPTS['twilight'];
+      console.log('[Replicate] Using TWILIGHT preset');
+    } else if (lowerPrompt.includes('dramatic') || lowerPrompt.includes('cloud')) {
+      prompt = SKY_PROMPTS['dramatic'];
     } else {
       // Custom prompt - append preservation instructions
       prompt = `${customPrompt}. Keep the house, roof, trees, lawn, driveway, and ALL other elements exactly the same. Only replace the sky.`;
@@ -121,7 +236,8 @@ export async function skyReplacement(imageUrl: string, customPrompt?: string): P
   }
 
   // Use lower guidance for sky - we want subtle, natural replacement
-  const result = await runFluxKontext(imageUrl, prompt, { guidance: 2.5, steps: 25 });
+  const fluxOptions = withFluxDefaults({ guidance: 2.5, steps: 25 }, options);
+  const result = await runFluxKontext(imageUrl, prompt, fluxOptions);
   console.log('[Replicate] === SKY REPLACEMENT COMPLETE ===');
   return result;
 }
@@ -133,35 +249,52 @@ export async function skyReplacement(imageUrl: string, customPrompt?: string): P
 
 const TWILIGHT_PROMPTS: Record<string, string> = {
   // Default twilight
-  'default': 'Transform this daytime photo into stunning professional twilight. Keep the scene BRIGHT and visible - this is dusk, not night. Sky shows beautiful gradient from soft blue at top through lavender to warm coral-pink and peach at horizon. Windows glow with warm amber light from inside. House and landscape must remain clearly visible and well-lit. Magazine-quality real estate twilight. Keep architecture exactly the same.',
+  'default': 'Transform this daytime exterior into a professional DUSK look. Keep the scene BRIGHT and clearly visible (not night). Sky: smooth clean gradient from warm peach/orange near the horizon to soft cobalt blue overhead, NO clouds. House remains bright with natural contrast; do NOT darken shadows excessively. Windows: warm amber glow that is subtle and realistic, not blown out. Add soft ambient warmth on the patio/ground immediately around the windows. Keep all architecture, trees, lawn, and composition unchanged.',
+  'dusk': 'Transform this daytime exterior into a professional DUSK look. Keep the scene BRIGHT and clearly visible (not night). Sky: smooth clean gradient from warm peach/orange near the horizon to soft cobalt blue overhead, NO clouds. House remains bright with natural contrast; do NOT darken shadows excessively. Windows: warm amber glow that is subtle and realistic, not blown out. Add soft ambient warmth on the patio/ground immediately around the windows. Keep all architecture, trees, lawn, and composition unchanged.',
   
   // Warm Twilight - orange/pink sky
-  'warm': 'Transform into GOLDEN HOUR - warm and BRIGHT, not dark. Sky shows warm peach, soft orange, and golden pink colors - bright and luminous, not heavy or dark. House bathed in warm golden light, all details visible. Windows glow amber from within. Scene feels warm, inviting, luxurious but BRIGHT. Keep house structure exactly the same.',
-  'golden': 'Transform into GOLDEN HOUR - warm and BRIGHT, not dark. Sky shows warm peach, soft orange, and golden pink colors - bright and luminous, not heavy or dark. House bathed in warm golden light, all details visible. Windows glow amber from within. Scene feels warm, inviting, luxurious but BRIGHT. Keep house structure exactly the same.',
-  'golden hour': 'Transform into GOLDEN HOUR - warm and BRIGHT, not dark. Sky shows warm peach, soft orange, and golden pink colors - bright and luminous, not heavy or dark. House bathed in warm golden light, all details visible. Windows glow amber from within. Scene feels warm, inviting, luxurious but BRIGHT. Keep house structure exactly the same.',
+  'golden-hour': 'Transform into BRIGHT GOLDEN HOUR. Sky: clean warm gradient with soft peach, honey-gold, and light pink tones near the horizon, fading to pale blue above. NO clouds. House: warm directional sunlight with gentle golden highlights on walls/roof edges; preserve texture and detail. Windows: warm interior glow, moderate intensity. Keep the scene bright, crisp, and natural. No structural changes.',
+  'warm': 'Transform into BRIGHT GOLDEN HOUR. Sky: clean warm gradient with soft peach, honey-gold, and light pink tones near the horizon, fading to pale blue above. NO clouds. House: warm directional sunlight with gentle golden highlights on walls/roof edges; preserve texture and detail. Windows: warm interior glow, moderate intensity. Keep the scene bright, crisp, and natural. No structural changes.',
+  'golden': 'Transform into BRIGHT GOLDEN HOUR. Sky: clean warm gradient with soft peach, honey-gold, and light pink tones near the horizon, fading to pale blue above. NO clouds. House: warm directional sunlight with gentle golden highlights on walls/roof edges; preserve texture and detail. Windows: warm interior glow, moderate intensity. Keep the scene bright, crisp, and natural. No structural changes.',
+  'golden hour': 'Transform into BRIGHT GOLDEN HOUR. Sky: clean warm gradient with soft peach, honey-gold, and light pink tones near the horizon, fading to pale blue above. NO clouds. House: warm directional sunlight with gentle golden highlights on walls/roof edges; preserve texture and detail. Windows: warm interior glow, moderate intensity. Keep the scene bright, crisp, and natural. No structural changes.',
   
   // Blue Hour - deep blue sky, no orange
-  'blue': 'Transform into BLUE HOUR twilight - deep blue sky but house remains CLEARLY VISIBLE. Sky is rich cobalt blue, no orange or pink. The house is well-lit and all architectural details visible. Windows BLAZING with bright warm golden-yellow light creating beautiful contrast. Cool blue atmosphere but the property is the star - bright, visible, dramatic. Keep house structure exactly the same.',
-  'blue hour': 'Transform into BLUE HOUR twilight - deep blue sky but house remains CLEARLY VISIBLE. Sky is rich cobalt blue, no orange or pink. The house is well-lit and all architectural details visible. Windows BLAZING with bright warm golden-yellow light creating beautiful contrast. Cool blue atmosphere but the property is the star - bright, visible, dramatic. Keep house structure exactly the same.',
-  'cool': 'Transform into BLUE HOUR twilight - deep blue sky but house remains CLEARLY VISIBLE. Sky is rich cobalt blue, no orange or pink. The house is well-lit and all architectural details visible. Windows BLAZING with bright warm golden-yellow light creating beautiful contrast. Cool blue atmosphere but the property is the star - bright, visible, dramatic. Keep house structure exactly the same.',
+  'blue-hour': 'Transform into BLUE HOUR twilight. Sky: deep cobalt/royal blue gradient, NO orange/pink, NO clouds. Keep the house clearly visible with cool ambient light, but NOT dark. Windows: warm yellow glow to contrast the blue sky, realistic intensity (not blown out). Add subtle warm spill on nearby patio/ground. Preserve architecture and landscaping exactly.',
+  'blue': 'Transform into BLUE HOUR twilight. Sky: deep cobalt/royal blue gradient, NO orange/pink, NO clouds. Keep the house clearly visible with cool ambient light, but NOT dark. Windows: warm yellow glow to contrast the blue sky, realistic intensity (not blown out). Add subtle warm spill on nearby patio/ground. Preserve architecture and landscaping exactly.',
+  'blue hour': 'Transform into BLUE HOUR twilight. Sky: deep cobalt/royal blue gradient, NO orange/pink, NO clouds. Keep the house clearly visible with cool ambient light, but NOT dark. Windows: warm yellow glow to contrast the blue sky, realistic intensity (not blown out). Add subtle warm spill on nearby patio/ground. Preserve architecture and landscaping exactly.',
+  'cool': 'Transform into BLUE HOUR twilight. Sky: deep cobalt/royal blue gradient, NO orange/pink, NO clouds. Keep the house clearly visible with cool ambient light, but NOT dark. Windows: warm yellow glow to contrast the blue sky, realistic intensity (not blown out). Add subtle warm spill on nearby patio/ground. Preserve architecture and landscaping exactly.',
   
   // Night - dark sky with stars
-  'night': 'Transform into elegant NIGHT scene - dark navy blue sky BUT the house is BRIGHTLY ILLUMINATED. Sky is deep blue-black with some stars. The house itself is the HERO - bathed in exterior lighting, every window blazing bright warm golden light. You can see all details of the house clearly despite dark sky. Luxurious showcase. Keep house structure exactly the same.',
-  'dark': 'Transform into elegant NIGHT scene - dark navy blue sky BUT the house is BRIGHTLY ILLUMINATED. Sky is deep blue-black with some stars. The house itself is the HERO - bathed in exterior lighting, every window blazing bright warm golden light. You can see all details of the house clearly despite dark sky. Luxurious showcase. Keep house structure exactly the same.',
-  'stars': 'Transform into elegant NIGHT scene - dark navy blue sky BUT the house is BRIGHTLY ILLUMINATED. Sky is deep blue-black with some stars. The house itself is the HERO - bathed in exterior lighting, every window blazing bright warm golden light. You can see all details of the house clearly despite dark sky. Luxurious showcase. Keep house structure exactly the same.',
+  'deep-night': 'Transform into NIGHT. Sky: deep blue‑black with NO clouds, subtle stars allowed. House: still clearly visible with balanced exposure, not crushed blacks. Windows: warm interior glow, moderate intensity, realistic. Add gentle warm spill near windows. Preserve all structure and landscaping.',
+  'night': 'Transform into NIGHT. Sky: deep blue‑black with NO clouds, subtle stars allowed. House: still clearly visible with balanced exposure, not crushed blacks. Windows: warm interior glow, moderate intensity, realistic. Add gentle warm spill near windows. Preserve all structure and landscaping.',
+  'dark': 'Transform into NIGHT. Sky: deep blue‑black with NO clouds, subtle stars allowed. House: still clearly visible with balanced exposure, not crushed blacks. Windows: warm interior glow, moderate intensity, realistic. Add gentle warm spill near windows. Preserve all structure and landscaping.',
+  'stars': 'Transform into NIGHT. Sky: deep blue‑black with NO clouds, subtle stars allowed. House: still clearly visible with balanced exposure, not crushed blacks. Windows: warm interior glow, moderate intensity, realistic. Add gentle warm spill near windows. Preserve all structure and landscaping.',
   
   // Dramatic - purple/orange dramatic sky
-  'dramatic': 'Transform into SPECTACULAR dramatic twilight - vivid sky colors but house remains BRIGHT and visible. Sky shows stunning purple, magenta, coral gradient. House is well-lit, windows glowing warmly. Breathtaking but professional - you can see all property details. Keep house structure exactly the same.',
-  'purple': 'Transform into SPECTACULAR dramatic twilight - vivid sky colors but house remains BRIGHT and visible. Sky shows stunning purple, magenta, coral gradient. House is well-lit, windows glowing warmly. Breathtaking but professional - you can see all property details. Keep house structure exactly the same.',
+  'dramatic': 'Transform into DRAMATIC twilight while keeping the scene realistic. Sky: vivid but smooth gradient with purple/magenta/coral tones, NO clouds. House remains bright and detailed; do NOT darken. Windows glow warm but not overexposed. Subtle warm spill on nearby surfaces. Preserve structure and landscaping.',
+  'purple': 'Transform into DRAMATIC twilight while keeping the scene realistic. Sky: vivid but smooth gradient with purple/magenta/coral tones, NO clouds. House remains bright and detailed; do NOT darken. Windows glow warm but not overexposed. Subtle warm spill on nearby surfaces. Preserve structure and landscaping.',
 };
 
-export async function virtualTwilight(imageUrl: string, customPrompt?: string): Promise<string> {
+export async function virtualTwilight(
+  imageUrl: string,
+  customPrompt?: string,
+  presetId?: string,
+  options?: FluxOptions
+): Promise<string> {
   console.log('[Replicate] === VIRTUAL TWILIGHT ===');
   console.log('[Replicate] Custom prompt:', customPrompt || 'none');
+  if (presetId) {
+    console.log('[Replicate] Preset:', presetId);
+  }
 
   let prompt = TWILIGHT_PROMPTS['default'];
   
-  if (customPrompt) {
+  if (presetId) {
+    if (presetId === 'dusk') prompt = TWILIGHT_PROMPTS['dusk'];
+    else if (presetId === 'blue-hour') prompt = TWILIGHT_PROMPTS['blue-hour'];
+    else if (presetId === 'golden-hour') prompt = TWILIGHT_PROMPTS['golden-hour'];
+    else if (presetId === 'deep-night') prompt = TWILIGHT_PROMPTS['deep-night'];
+  } else if (customPrompt) {
     const lowerPrompt = customPrompt.toLowerCase();
     
     // Match preset keywords - check most specific first
@@ -169,13 +302,13 @@ export async function virtualTwilight(imageUrl: string, customPrompt?: string): 
       prompt = TWILIGHT_PROMPTS['night'];
       console.log('[Replicate] Using NIGHT preset');
     } else if (lowerPrompt.includes('dusk') || lowerPrompt.includes('early') || lowerPrompt.includes('soft')) {
-      prompt = TWILIGHT_PROMPTS['default'];
+      prompt = TWILIGHT_PROMPTS['dusk'];
       console.log('[Replicate] Using DUSK preset');
     } else if (lowerPrompt.includes('blue hour') || lowerPrompt.includes('blue') || lowerPrompt.includes('cool')) {
-      prompt = TWILIGHT_PROMPTS['blue'];
+      prompt = TWILIGHT_PROMPTS['blue-hour'];
       console.log('[Replicate] Using BLUE HOUR preset');
     } else if (lowerPrompt.includes('golden') || lowerPrompt.includes('warm') || lowerPrompt.includes('orange') || lowerPrompt.includes('pink')) {
-      prompt = TWILIGHT_PROMPTS['warm'];
+      prompt = TWILIGHT_PROMPTS['golden-hour'];
       console.log('[Replicate] Using WARM/GOLDEN preset');
     } else if (lowerPrompt.includes('dramatic') || lowerPrompt.includes('purple') || lowerPrompt.includes('spectacular')) {
       prompt = TWILIGHT_PROMPTS['dramatic'];
@@ -188,7 +321,8 @@ export async function virtualTwilight(imageUrl: string, customPrompt?: string): 
   }
 
   // Higher guidance for twilight - we want more dramatic transformation
-  const result = await runFluxKontext(imageUrl, prompt, { guidance: 3.5, steps: 30 });
+  const fluxOptions = withFluxDefaults({ guidance: 3.5, steps: 30 }, options);
+  const result = await runFluxKontext(imageUrl, prompt, fluxOptions);
   console.log('[Replicate] === VIRTUAL TWILIGHT COMPLETE ===');
   return result;
 }
@@ -198,21 +332,34 @@ export async function virtualTwilight(imageUrl: string, customPrompt?: string): 
 // ============================================
 
 const LAWN_PROMPTS: Record<string, string> = {
-  'default': 'Make the lawn and grass healthy and green. Transform any brown, patchy, or dead grass into well-maintained green turf. Natural, realistic grass color - not artificial looking. Keep the house, driveway, landscaping features, and everything else exactly the same. Only improve the grass and lawn areas.',
+  'default': 'Improve ONLY the grass/lawn areas. Restore patchy/brown grass to healthy green turf with realistic texture and subtle variation. Do NOT change shrubs, trees, flowers, soil, driveway, patio, walls, roof, windows, pool, or shadows. Avoid painting green onto concrete, mulch, stone, or planters. NO structure changes. Keep everything else identical.',
   
-  'natural': 'Transform the lawn into healthy NATURAL looking green grass, like a well-maintained residential lawn. Realistic green color, not too dark or artificial. Normal healthy yard appearance. Keep everything else exactly the same.',
+  'natural': 'Improve ONLY the lawn/grass to a natural residential green. Mid‑green tone with subtle variation, visible grass texture, no neon. Do NOT alter shrubs, trees, soil, mulch, driveway, patio, walls, roof, windows, pool, or shadows. NO structure changes. Keep all other elements unchanged.',
   
-  'emerald': 'Transform the lawn into PERFECTLY MANICURED, VIBRANT EMERALD GREEN grass like a professional golf course. Thick, lush, flawless turf with no brown patches, deep rich green color. Keep everything else exactly the same.',
-  'golf': 'Transform the lawn into PERFECTLY MANICURED, VIBRANT EMERALD GREEN grass like a professional golf course. Thick, lush, flawless turf with no brown patches, deep rich green color. Keep everything else exactly the same.',
-  'perfect': 'Transform the lawn into PERFECTLY MANICURED, VIBRANT EMERALD GREEN grass like a professional golf course. Thick, lush, flawless turf with no brown patches, deep rich green color. Keep everything else exactly the same.',
+  'emerald': 'Improve ONLY the lawn/grass to a premium lush emerald green (golf‑course quality) but still realistic. Dense, even turf with natural texture, no neon. Do NOT affect shrubs, trees, soil, mulch, driveway, patio, walls, roof, windows, pool, or shadows. NO structure changes. Keep everything else identical.',
+  'golf': 'Improve ONLY the lawn/grass to a premium lush emerald green (golf‑course quality) but still realistic. Dense, even turf with natural texture, no neon. Do NOT affect shrubs, trees, soil, mulch, driveway, patio, walls, roof, windows, pool, or shadows. NO structure changes. Keep everything else identical.',
+  'perfect': 'Improve ONLY the lawn/grass to a premium lush emerald green (golf‑course quality) but still realistic. Dense, even turf with natural texture, no neon. Do NOT affect shrubs, trees, soil, mulch, driveway, patio, walls, roof, windows, pool, or shadows. NO structure changes. Keep everything else identical.',
 };
 
-export async function lawnRepair(imageUrl: string, customPrompt?: string): Promise<string> {
+export async function lawnRepair(
+  imageUrl: string,
+  customPrompt?: string,
+  presetId?: string,
+  options?: (FluxOptions & { useMask?: boolean; requireMask?: boolean })
+): Promise<string> {
   console.log('[Replicate] === LAWN REPAIR ===');
+  if (presetId) {
+    console.log('[Replicate] Preset:', presetId);
+  }
+  const minMaskArea = Number(process.env.AI_LAWN_MASK_MIN_AREA || 4);
+  const minMaskConfidence = Number(process.env.AI_LAWN_MASK_MIN_CONFIDENCE || 0.75);
   
   let prompt = LAWN_PROMPTS['default'];
   
-  if (customPrompt) {
+  if (presetId) {
+    if (presetId === 'natural-green') prompt = LAWN_PROMPTS['natural'];
+    else if (presetId === 'lush-green') prompt = LAWN_PROMPTS['emerald'];
+  } else if (customPrompt) {
     const lowerPrompt = customPrompt.toLowerCase();
     
     if (lowerPrompt.includes('emerald') || lowerPrompt.includes('golf') || lowerPrompt.includes('perfect') || lowerPrompt.includes('manicured')) {
@@ -224,7 +371,43 @@ export async function lawnRepair(imageUrl: string, customPrompt?: string): Promi
     }
   }
 
-  const result = await runFluxKontext(imageUrl, prompt, { guidance: 2.5, steps: 25 });
+  const { useMask = true, requireMask = false, ...fluxOverrides } = options || {};
+  const fluxOptions = withFluxDefaults({ guidance: 2.5, steps: 25 }, fluxOverrides);
+  const forceDeterministicMask = String(process.env.AI_LAWN_MASK_FORCE_DETERMINISTIC || '').toLowerCase() === 'true';
+
+  if (useMask) {
+    try {
+      const maskResult = forceDeterministicMask
+        ? await generateDeterministicLawnMask(imageUrl)
+        : await new SAMMasksClient().generateMask({ imageUrl, maskType: 'lawn' });
+      if (
+        maskResult.success &&
+        maskResult.maskUrl &&
+        maskResult.area >= minMaskArea &&
+        maskResult.confidence >= minMaskConfidence
+      ) {
+        const inpainted = await fluxFillInpaint(imageUrl, maskResult.maskUrl, prompt, {
+          guidance: 7,
+          steps: 32,
+        });
+        console.log('[Replicate] === LAWN REPAIR (MASKED) COMPLETE ===');
+        return inpainted;
+      }
+      if (maskResult.success) {
+        console.warn(
+          `[Replicate] Lawn mask rejected (area ${maskResult.area.toFixed(1)}%, confidence ${maskResult.confidence.toFixed(2)})`
+        );
+      }
+    } catch (error: any) {
+      console.warn('[Replicate] Lawn mask failed:', error?.message);
+    }
+  }
+
+  if (useMask && (requireMask || forceDeterministicMask)) {
+    throw new Error('Mask required for lawn repair');
+  }
+
+  const result = await runFluxKontext(imageUrl, prompt, fluxOptions);
   console.log('[Replicate] === LAWN REPAIR COMPLETE ===');
   return result;
 }
@@ -246,7 +429,11 @@ const DECLUTTER_PROMPTS: Record<string, string> = {
   'staging': 'Remove ALL furniture and ALL items from this room completely. Leave ONLY the empty room with bare walls, floor, windows, and doors. Completely empty room ready for virtual staging.',
 };
 
-export async function declutter(imageUrl: string, customPrompt?: string): Promise<string> {
+export async function declutter(
+  imageUrl: string,
+  customPrompt?: string,
+  options?: FluxOptions
+): Promise<string> {
   console.log('[Replicate] === DECLUTTER ===');
   
   let prompt = DECLUTTER_PROMPTS['default'];
@@ -267,7 +454,8 @@ export async function declutter(imageUrl: string, customPrompt?: string): Promis
     }
   }
 
-  const result = await runFluxKontext(imageUrl, prompt, { guidance: 3.0, steps: 28 });
+  const fluxOptions = withFluxDefaults({ guidance: 3.0, steps: 28 }, options);
+  const result = await runFluxKontext(imageUrl, prompt, fluxOptions);
   console.log('[Replicate] === DECLUTTER COMPLETE ===');
   return result;
 }
@@ -288,7 +476,11 @@ const STAGING_PROMPTS: Record<string, string> = {
   'luxury': 'Stage this empty room with LUXURY HIGH-END furniture. Premium designer pieces, rich materials, elegant styling. Add luxury sofa, designer coffee table, high-end artwork, plush rug, statement lighting. Keep room architecture exactly the same.',
 };
 
-export async function virtualStaging(imageUrl: string, customPrompt?: string): Promise<string> {
+export async function virtualStaging(
+  imageUrl: string,
+  customPrompt?: string,
+  options?: FluxOptions
+): Promise<string> {
   console.log('[Replicate] === VIRTUAL STAGING ===');
   
   let prompt = STAGING_PROMPTS['default'];
@@ -309,7 +501,8 @@ export async function virtualStaging(imageUrl: string, customPrompt?: string): P
     }
   }
 
-  const result = await runFluxKontext(imageUrl, prompt, { guidance: 3.5, steps: 32 });
+  const fluxOptions = withFluxDefaults({ guidance: 3.5, steps: 32 }, options);
+  const result = await runFluxKontext(imageUrl, prompt, fluxOptions);
   console.log('[Replicate] === VIRTUAL STAGING COMPLETE ===');
   return result;
 }
@@ -319,15 +512,20 @@ export async function virtualStaging(imageUrl: string, customPrompt?: string): P
 // FIXED: More controlled prompt to not affect whole room
 // ============================================
 
-export async function fireFireplace(imageUrl: string, customPrompt?: string): Promise<string> {
+export async function fireFireplace(
+  imageUrl: string,
+  customPrompt?: string,
+  options?: FluxOptions
+): Promise<string> {
   console.log('[Replicate] === FIRE IN FIREPLACE ===');
 
   const prompt = customPrompt
-    ? `${customPrompt}. IMPORTANT: Only add fire inside the fireplace opening. Do NOT change the rest of the room at all.`
-    : 'Add a realistic crackling fire inside the fireplace. Orange and yellow flames with a natural warm glow. The fire should only be inside the fireplace opening. DO NOT change the rest of the room - keep all furniture, walls, floors, and decorations exactly the same.';
+    ? `${customPrompt}. STRICT: Only add fire inside the existing fireplace opening. Do NOT change any walls, mantle, hearth, furniture, room layout, or proportions. Do NOT expand or resize the fireplace.`
+    : 'Add a small realistic fire ONLY inside the existing fireplace opening. Keep the fireplace size, mantle, hearth, walls, and room geometry exactly the same. Do NOT expand the opening, change structure, or alter any furniture. Subtle warm glow only from within the opening.';
 
   // Lower guidance to prevent affecting whole room
-  const result = await runFluxKontext(imageUrl, prompt, { guidance: 2.5, steps: 25 });
+  const fluxOptions = withFluxDefaults({ guidance: 2.0, steps: 22 }, options);
+  const result = await runFluxKontext(imageUrl, prompt, fluxOptions);
   console.log('[Replicate] === FIRE IN FIREPLACE COMPLETE ===');
   return result;
 }
@@ -336,14 +534,19 @@ export async function fireFireplace(imageUrl: string, customPrompt?: string): Pr
 // 7. TV SCREEN REPLACE
 // ============================================
 
-export async function tvScreen(imageUrl: string, customPrompt?: string): Promise<string> {
+export async function tvScreen(
+  imageUrl: string,
+  customPrompt?: string,
+  options?: FluxOptions
+): Promise<string> {
   console.log('[Replicate] === TV SCREEN REPLACE ===');
 
   const prompt = customPrompt
     ? `${customPrompt}. Only change the TV screen content. Keep the TV frame, stand, and rest of room exactly the same.`
     : 'Replace the TV screen with a beautiful nature landscape showing mountains and a lake. Only change what is displayed on the TV screen. Keep the TV frame, TV stand, and the rest of the room exactly the same.';
 
-  const result = await runFluxKontext(imageUrl, prompt, { guidance: 2.5, steps: 25 });
+  const fluxOptions = withFluxDefaults({ guidance: 2.5, steps: 25 }, options);
+  const result = await runFluxKontext(imageUrl, prompt, fluxOptions);
   console.log('[Replicate] === TV SCREEN REPLACE COMPLETE ===');
   return result;
 }
@@ -352,14 +555,19 @@ export async function tvScreen(imageUrl: string, customPrompt?: string): Promise
 // 8. LIGHTS ON
 // ============================================
 
-export async function lightsOn(imageUrl: string, customPrompt?: string): Promise<string> {
+export async function lightsOn(
+  imageUrl: string,
+  customPrompt?: string,
+  options?: FluxOptions
+): Promise<string> {
   console.log('[Replicate] === LIGHTS ON ===');
 
   const prompt = customPrompt
     ? `${customPrompt}. Keep everything else exactly the same.`
     : 'Turn on all the lights in this room. Make all light fixtures, lamps, ceiling lights, and recessed lights appear to be turned on with a warm inviting glow. Keep everything else in the room exactly the same.';
 
-  const result = await runFluxKontext(imageUrl, prompt, { guidance: 2.5, steps: 25 });
+  const fluxOptions = withFluxDefaults({ guidance: 2.5, steps: 25 }, options);
+  const result = await runFluxKontext(imageUrl, prompt, fluxOptions);
   console.log('[Replicate] === LIGHTS ON COMPLETE ===');
   return result;
 }
@@ -368,14 +576,19 @@ export async function lightsOn(imageUrl: string, customPrompt?: string): Promise
 // 9. WINDOW MASKING
 // ============================================
 
-export async function windowMasking(imageUrl: string, customPrompt?: string): Promise<string> {
+export async function windowMasking(
+  imageUrl: string,
+  customPrompt?: string,
+  options?: FluxOptions
+): Promise<string> {
   console.log('[Replicate] === WINDOW MASKING ===');
 
   const prompt = customPrompt
     ? `${customPrompt}. Keep the interior room exactly the same.`
     : 'Balance the window exposure. Replace any blown-out white windows with a clear view of blue sky and green landscaping outside. Keep the interior room, furniture, and everything else exactly the same.';
 
-  const result = await runFluxKontext(imageUrl, prompt, { guidance: 2.5, steps: 25 });
+  const fluxOptions = withFluxDefaults({ guidance: 2.5, steps: 25 }, options);
+  const result = await runFluxKontext(imageUrl, prompt, fluxOptions);
   console.log('[Replicate] === WINDOW MASKING COMPLETE ===');
   return result;
 }
@@ -384,7 +597,11 @@ export async function windowMasking(imageUrl: string, customPrompt?: string): Pr
 // 10. COLOR BALANCE
 // ============================================
 
-export async function colorBalance(imageUrl: string, customPrompt?: string): Promise<string> {
+export async function colorBalance(
+  imageUrl: string,
+  customPrompt?: string,
+  options?: FluxOptions
+): Promise<string> {
   console.log('[Replicate] === COLOR BALANCE ===');
 
   const prompt = customPrompt
@@ -392,7 +609,8 @@ export async function colorBalance(imageUrl: string, customPrompt?: string): Pro
     : 'Apply warm color balance with cozy golden warmth. Keep everything in the scene exactly the same - same composition, same objects. Only adjust the color temperature and tones.';
 
   // Very low guidance for subtle color adjustment
-  const result = await runFluxKontext(imageUrl, prompt, { guidance: 2.0, steps: 20 });
+  const fluxOptions = withFluxDefaults({ guidance: 2.0, steps: 20 }, options);
+  const result = await runFluxKontext(imageUrl, prompt, fluxOptions);
   console.log('[Replicate] === COLOR BALANCE COMPLETE ===');
   return result;
 }
@@ -401,53 +619,57 @@ export async function colorBalance(imageUrl: string, customPrompt?: string): Pro
 // ONE-CLICK TOOLS (no presets)
 // ============================================
 
-export async function poolEnhance(imageUrl: string): Promise<string> {
+export async function poolEnhance(imageUrl: string, options?: FluxOptions): Promise<string> {
   console.log('[Replicate] === POOL ENHANCEMENT ===');
+  const fluxOptions = withFluxDefaults({ guidance: 2.5, steps: 25 }, options);
   const result = await runFluxKontext(
     imageUrl,
-    'Make the swimming pool water crystal clear and inviting with a beautiful vibrant blue-turquoise color. Remove any debris or equipment from the pool. Keep the pool shape, surrounding deck, and everything else exactly the same.',
-    { guidance: 2.5, steps: 25 }
+    'Enhance the pool water to look crystal clear and premium. Rich turquoise-blue water with natural light reflections, no murkiness. Clean the pool surface. IMPORTANT: Do NOT darken the overall scene. Keep the pool shape, deck, landscaping, and everything else exactly the same.',
+    fluxOptions
   );
   console.log('[Replicate] === POOL ENHANCEMENT COMPLETE ===');
   return result;
 }
 
-export async function hdr(imageUrl: string): Promise<string> {
+export async function hdr(imageUrl: string, options?: FluxOptions): Promise<string> {
   console.log('[Replicate] === HDR ENHANCEMENT ===');
+  const fluxOptions = withFluxDefaults({ guidance: 2.0, steps: 22 }, options);
   const result = await runFluxKontext(
     imageUrl,
     'Apply professional HDR enhancement. Brighten dark shadows to reveal detail, balance highlights, make colors more vibrant. Keep everything in the scene exactly the same. Only improve lighting and exposure.',
-    { guidance: 2.0, steps: 22 }
+    fluxOptions
   );
   console.log('[Replicate] === HDR ENHANCEMENT COMPLETE ===');
   return result;
 }
 
-export async function perspectiveCorrection(imageUrl: string): Promise<string> {
+export async function perspectiveCorrection(imageUrl: string, options?: FluxOptions): Promise<string> {
   console.log('[Replicate] === PERSPECTIVE CORRECTION ===');
+  const fluxOptions = withFluxDefaults({ guidance: 2.5, steps: 25 }, options);
   const result = await runFluxKontext(
     imageUrl,
     'Correct the perspective and vertical lines. Make all vertical lines perfectly straight and parallel. Fix any lens distortion or tilted angles. Keep everything else exactly the same.',
-    { guidance: 2.5, steps: 25 }
+    fluxOptions
   );
   console.log('[Replicate] === PERSPECTIVE CORRECTION COMPLETE ===');
   return result;
 }
 
-export async function lensCorrection(imageUrl: string): Promise<string> {
+export async function lensCorrection(imageUrl: string, options?: FluxOptions): Promise<string> {
   console.log('[Replicate] === LENS CORRECTION ===');
+  const fluxOptions = withFluxDefaults({ guidance: 2.5, steps: 25 }, options);
   const result = await runFluxKontext(
     imageUrl,
     'Correct lens distortion. Fix barrel and pincushion distortion. Straighten curved lines. Remove vignetting. Keep everything else exactly the same.',
-    { guidance: 2.5, steps: 25 }
+    fluxOptions
   );
   console.log('[Replicate] === LENS CORRECTION COMPLETE ===');
   return result;
 }
 
-export async function autoEnhance(imageUrl: string): Promise<string> {
+export async function autoEnhance(imageUrl: string, options?: FluxOptions): Promise<string> {
   console.log('[Replicate] === AUTO ENHANCE ===');
-  return hdr(imageUrl);
+  return hdr(imageUrl, options);
 }
 
 // ============================================
@@ -551,42 +773,50 @@ export async function seasonalFall(imageUrl: string): Promise<string> {
 // FIX TOOLS (4) - Using Flux Kontext
 // ========================================
 
-export async function reflectionRemoval(imageUrl: string): Promise<string> {
+export async function reflectionRemoval(imageUrl: string, options?: FluxOptions): Promise<string> {
   console.log('[Replicate] Reflection Removal');
+  const fluxOptions = withFluxDefaults({ guidance: 2.5, steps: 25 }, options);
   const result = await runFluxKontext(
     imageUrl,
     'Remove all reflections and glare from the windows. Make the glass clear so you can see through. Keep everything else exactly the same.',
-    { guidance: 2.5, steps: 25 }
+    fluxOptions
   );
   return result;
 }
 
-export async function powerLineRemoval(imageUrl: string): Promise<string> {
+export async function powerLineRemoval(imageUrl: string, options?: FluxOptions): Promise<string> {
   console.log('[Replicate] Power Line Removal');
+  const fluxOptions = withFluxDefaults({ guidance: 2.5, steps: 25 }, options);
   const result = await runFluxKontext(
     imageUrl,
     'Remove all power lines, telephone wires, and electrical cables from the sky. Keep the house and everything else exactly the same.',
-    { guidance: 2.5, steps: 25 }
+    fluxOptions
   );
   return result;
 }
 
-export async function objectRemoval(imageUrl: string, prompt?: string): Promise<string> {
+export async function objectRemoval(
+  imageUrl: string,
+  prompt?: string,
+  options?: FluxOptions
+): Promise<string> {
   console.log('[Replicate] Object Removal');
+  const fluxOptions = withFluxDefaults({ guidance: 2.5, steps: 25 }, options);
   const result = await runFluxKontext(
     imageUrl,
     prompt || 'Remove trash cans, cars, hoses, and clutter from this photo. Keep the house and main features exactly the same.',
-    { guidance: 2.5, steps: 25 }
+    fluxOptions
   );
   return result;
 }
 
-export async function flashFix(imageUrl: string): Promise<string> {
+export async function flashFix(imageUrl: string, options?: FluxOptions): Promise<string> {
   console.log('[Replicate] Flash Hotspot Fix');
+  const fluxOptions = withFluxDefaults({ guidance: 2.0, steps: 22 }, options);
   const result = await runFluxKontext(
     imageUrl,
     'Fix flash hotspots and harsh bright spots. Create natural, even lighting throughout the photo. Remove any overexposed areas. Keep everything else exactly the same.',
-    { guidance: 2.0, steps: 22 }
+    fluxOptions
   );
   return result;
 }

@@ -127,15 +127,18 @@ export async function processEnhancement(
       // ========================================
       
       case 'sky-replacement':
-        enhancedUrl = await skyReplacement(imageUrl, options.prompt);
+        enhancedUrl = await skyReplacement(imageUrl, options.prompt, options.preset);
         break;
 
       case 'virtual-twilight':
-        enhancedUrl = await virtualTwilight(imageUrl, options.prompt);
+        enhancedUrl = await virtualTwilight(imageUrl, options.prompt, options.preset);
         break;
 
       case 'lawn-repair':
-        enhancedUrl = await lawnRepair(imageUrl, options.prompt);
+        enhancedUrl = await lawnRepair(imageUrl, options.prompt, options.preset, {
+          useMask: true,
+          requireMask: true,
+        });
         break;
 
       case 'declutter':

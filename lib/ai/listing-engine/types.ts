@@ -53,6 +53,7 @@ export interface PhotoAnalysis {
   hasSky: boolean;
   skyVisible: number;              // 0-100 percentage
   skyQuality: SkyQuality;
+  skyNeedsReplacement: boolean;    // True only when sky is a real issue
   
   // ═══════════════════════════════════════════
   // TWILIGHT POTENTIAL
@@ -61,6 +62,7 @@ export interface PhotoAnalysis {
   twilightScore: number;           // 0-100
   hasVisibleWindows: boolean;
   windowCount: number;             // Number of windows visible
+  windowExposureIssue: boolean;    // Blown-out/overexposed windows
   
   // ═══════════════════════════════════════════
   // LAWN ANALYSIS
@@ -68,6 +70,7 @@ export interface PhotoAnalysis {
   hasLawn: boolean;
   lawnVisible: number;             // 0-100 percentage
   lawnQuality: LawnQuality;
+  lawnNeedsRepair: boolean;        // True only when lawn is a real issue
   
   // ═══════════════════════════════════════════
   // LIGHTING
@@ -228,9 +231,11 @@ export interface PhotoProcessingResult {
     success: boolean;
     provider: string;
     duration: number;
+    model?: string;
     error?: string;
     retryCount?: number;
   }>>;
+  postProcessing?: string[];
   
   // Status
   success: boolean;
@@ -274,6 +279,17 @@ export interface ListingProcessingResult {
   // Timing & Cost
   totalProcessingTime: number;
   totalCost: number;
+  phaseTimingsMs?: {
+    fetchMs: number;
+    analysisMs: number;
+    presetsMs: number;
+    strategyMs: number;
+    processingMs: number;
+    consistencyMs: number;
+    validationMs: number;
+    finalizeMs: number;
+    totalMs: number;
+  };
   
   // Timestamps
   startedAt: string;
@@ -378,6 +394,7 @@ export interface PrepareListingRequest {
     skipStaging?: boolean;          // Don't do staging
     forceReprocess?: boolean;       // Reprocess even if done
     maxBudget?: number;             // Cost limit in USD
+    admin?: boolean;                // Use admin client (local testing)
   };
 }
 
@@ -396,6 +413,8 @@ export interface PrepareListingResponse {
   // Estimates (if processing)
   estimatedTime?: number;
   estimatedCost?: number;
+  totalProcessingTimeMs?: number;
+  phaseTimingsMs?: ListingProcessingResult['phaseTimingsMs'];
   
   // Error
   error?: string;

@@ -1,7 +1,7 @@
 import { createClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
-import { LayoutDashboard, Users, Zap, DollarSign, Clock, Settings, TrendingUp, AlertTriangle, Mail, Server, Command } from 'lucide-react';
+import { LayoutDashboard, Users, Zap, DollarSign, Clock, Settings, TrendingUp, AlertTriangle, Mail, Server, Command, Brain } from 'lucide-react';
 
 const ADMIN_EMAILS = ['rajesh@snap-r.com'];
 
@@ -40,6 +40,10 @@ export default async function AdminLayout({ children }: { children: React.ReactN
           <Link href="/admin/analytics" className="flex items-center gap-3 px-4 py-2.5 rounded-lg hover:bg-white/10 transition-colors">
             <TrendingUp className="w-5 h-5 text-[#D4A017]" />
             Analytics & Costs
+          </Link>
+          <Link href="/admin/ai-decisions" className="flex items-center gap-3 px-4 py-2.5 rounded-lg hover:bg-white/10 transition-colors">
+            <Brain className="w-5 h-5 text-[#D4A017]" />
+            AI Decisions
           </Link>
           <Link href="/admin/revenue" className="flex items-center gap-3 px-4 py-2.5 rounded-lg hover:bg-white/10 transition-colors">
             <DollarSign className="w-5 h-5 text-[#D4A017]" />

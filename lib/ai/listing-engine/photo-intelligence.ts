@@ -39,7 +39,8 @@ CRITICAL RULES:
 1. Only suggest tools that will FIX an actual PROBLEM
 2. Do NOT suggest tools just because an object exists
 3. If something looks GOOD, leave it alone
-4. Be conservative - when in doubt, don't suggest a tool
+4. Be decisive: if an enhancement will clearly improve a listing, suggest it
+5. If NO enhancements are needed, return "suggestedTools": []
 
 ═══════════════════════════════════════════════════════════════
 STEP 1: VALIDATE THE PHOTO
@@ -84,11 +85,12 @@ STEP 3: ANALYZE ISSUES (Be specific!)
 SKY (exteriors only):
 - skyQuality: What's the actual sky quality?
   - "clear_blue" = Beautiful blue sky, no issues
-  - "good" = Acceptable sky, minor clouds
-  - "overcast" = Gray but even, not necessarily bad
+  - "good" = Pleasing sky with some clouds, still attractive
+  - "overcast" = Flat gray/hazy sky that looks dull or washed out
   - "blown_out" = WHITE, washed out, no detail ← NEEDS FIX
   - "ugly" = Stormy, dark, unappealing ← NEEDS FIX
   - "none" = No sky visible
+ - skyNeedsReplacement: true ONLY if skyQuality is "blown_out", "ugly", or "overcast"
 
 TWILIGHT POTENTIAL (exteriors with windows):
 - Would this specific photo benefit from twilight conversion?
@@ -103,12 +105,17 @@ LAWN (exteriors only):
   - "brown" = Mostly brown/dead ← NEEDS FIX
   - "dead" = Completely dead ← NEEDS FIX
   - "none" = No lawn visible
+ - lawnNeedsRepair: true ONLY if lawnQuality is "patchy", "brown", or "dead"
 
 INTERIOR ISSUES:
 - clutterLevel: "none" | "light" | "moderate" | "heavy"
-  - Only "moderate" or "heavy" should trigger declutter
+  - "light" if you see items on counters/tables/shelves (books, decor, small clutter)
+  - "moderate" if multiple surfaces have items or the room feels busy
+  - "heavy" if clutter is dominant or distracting
 - roomEmpty: Is the room COMPLETELY unfurnished? (for staging)
   - A room with even one piece of furniture is NOT empty
+ - windowExposureIssue: true ONLY if windows are visibly blown out/white and need balancing
+  - Only set true if the blown-out windows are large/important (>=2 windows or one large primary window)
 
 SPECIAL FEATURES - IMPORTANT: Detect if action is NEEDED, not just present:
 
@@ -146,7 +153,7 @@ STEP 4: SUGGEST TOOLS (ONLY if needed!)
 Available tools and WHEN to use them:
 
 EXTERIOR TOOLS:
-- "sky-replacement": ONLY if skyQuality is "blown_out" or "ugly"
+- "sky-replacement": ONLY if skyQuality is "blown_out", "ugly", or "overcast"
 - "virtual-twilight": ONLY if twilightScore >= 80 AND hasVisibleWindows AND daytime photo
 - "lawn-repair": ONLY if lawnQuality is "patchy", "brown", or "dead"
 - "pool-enhance": ONLY if poolNeedsEnhancement is true
@@ -162,7 +169,7 @@ INTERIOR TOOLS:
 ENHANCEMENT TOOLS:
 - "hdr": ONLY if needsHDR is true OR lighting is "mixed"
 - "perspective-correction": ONLY if verticalAlignment is false
-- "auto-enhance": Safe baseline if no other tools needed
+- "auto-enhance": ONLY if overall exposure/contrast/color is slightly flat/off and a mild global polish is needed
 - "flash-fix": ONLY if lighting is "flash_harsh"
 
 HERO SCORE (0-100):
@@ -187,15 +194,18 @@ Return ONLY valid JSON (no markdown, no explanation):
   "hasSky": true,
   "skyVisible": 35,
   "skyQuality": "blown_out",
+  "skyNeedsReplacement": true,
   
   "twilightCandidate": true,
   "twilightScore": 85,
   "hasVisibleWindows": true,
   "windowCount": 6,
+  "windowExposureIssue": true,
   
   "hasLawn": true,
   "lawnVisible": 25,
   "lawnQuality": "patchy",
+  "lawnNeedsRepair": true,
   
   "lighting": "well_lit",
   "needsHDR": false,
@@ -247,35 +257,72 @@ export async function analyzePhoto(
 ): Promise<PhotoAnalysis> {
   console.log(`[PhotoIntelligence V3] Analyzing photo: ${photoId}`);
   const startTime = Date.now();
+  const analysisProvider = process.env.ANALYSIS_PROVIDER || 'openai';
+  const failOpen = process.env.AI_ANALYSIS_FAIL_OPEN === 'true';
 
   try {
+    if (analysisProvider === 'replicate') {
+      const analysis = await analyzeWithReplicate(photoUrl);
+      return normalizeAnalysis(photoId, photoUrl, analysis);
+    }
+
+    if (analysisProvider !== 'openai') {
+      return getFailOpenAnalysis(
+        photoId,
+        photoUrl,
+        `Analysis provider "${analysisProvider}" not implemented`
+      );
+    }
+
+    if (!apiKey && !openai) {
+      return getFailOpenAnalysis(photoId, photoUrl, 'Missing OpenAI API key');
+    }
+
     // Use provided apiKey or fall back to global openai client
     const client = apiKey ? new OpenAI({ apiKey }) : openai;
-    const response = await client.chat.completions.create({
-      model: 'gpt-4o',
-      messages: [
-        {
-          role: 'system',
-          content: 'You are an expert real estate photo analyst. Be precise and conservative - only suggest enhancements for actual problems.'
-        },
-        {
-          role: 'user',
-          content: [
-            { type: 'text', text: ANALYSIS_PROMPT },
+    let response;
+    for (let attempt = 0; attempt < 2; attempt += 1) {
+      try {
+        response = await client.chat.completions.create({
+          model: 'gpt-4o',
+          messages: [
             {
-              type: 'image_url',
-              image_url: {
-                url: photoUrl,
-                detail: 'high',
-              },
+              role: 'system',
+              content: 'You are an expert real estate photo analyst. Be precise and conservative - only suggest enhancements for actual problems.'
+            },
+            {
+              role: 'user',
+              content: [
+                { type: 'text', text: ANALYSIS_PROMPT },
+                {
+                  type: 'image_url',
+                  image_url: {
+                    url: photoUrl,
+                    detail: 'high',
+                  },
+                },
+              ],
             },
           ],
-        },
-      ],
-      max_tokens: 2000,
-      temperature: 0.1, // Very low for consistent analysis
-    });
+          max_tokens: 2000,
+          temperature: 0.1, // Very low for consistent analysis
+        });
+        break;
+      } catch (error: any) {
+        const message = error?.message || '';
+        if (attempt === 0 && (message.includes('429') || message.toLowerCase().includes('rate limit'))) {
+          const retryAfter = message.match(/retry_after[^0-9]*([0-9.]+)/i)?.[1];
+          const waitMs = retryAfter ? Number(retryAfter) * 1000 : 6000;
+          await new Promise(resolve => setTimeout(resolve, waitMs));
+          continue;
+        }
+        throw error;
+      }
+    }
 
+    if (!response) {
+      throw new Error('No response from GPT-4 Vision');
+    }
     const content = response.choices[0]?.message?.content;
     if (!content) {
       throw new Error('No response from GPT-4 Vision');
@@ -308,7 +355,10 @@ export async function analyzePhoto(
   } catch (error: any) {
     const duration = Date.now() - startTime;
     console.error(`[PhotoIntelligence V3] Analysis failed after ${duration}ms:`, error.message);
-    
+
+    if (failOpen || String(error?.message || '').includes('429')) {
+      return getFailOpenAnalysis(photoId, photoUrl, error.message);
+    }
     // Return a conservative default analysis on failure
     return getDefaultAnalysis(photoId, photoUrl, error.message);
   }
@@ -321,11 +371,12 @@ export async function analyzePhotos(
   photos: Array<{ id: string; url: string }>,
   options: { 
     maxConcurrency?: number;
+    batchDelayMs?: number;
     apiKey?: string;
     onProgress?: (completed: number, total: number) => void;
   } = {}
 ): Promise<PhotoAnalysis[]> {
-  const { maxConcurrency = 5, onProgress, apiKey: providedApiKey } = options;
+  const { maxConcurrency = 3, batchDelayMs = 1200, onProgress, apiKey: providedApiKey } = options;
   const apiKey = providedApiKey || process.env.OPENAI_API_KEY;
   const results: PhotoAnalysis[] = [];
   
@@ -350,9 +401,9 @@ export async function analyzePhotos(
     
     console.log(`[PhotoIntelligence V3] Progress: ${results.length}/${photos.length}`);
     
-    // Small delay between batches to avoid rate limits
+    // Delay between batches to avoid rate limits
     if (i + maxConcurrency < photos.length) {
-      await new Promise(resolve => setTimeout(resolve, 500));
+      await new Promise(resolve => setTimeout(resolve, batchDelayMs));
     }
   }
 
@@ -386,8 +437,30 @@ function normalizeAnalysis(
   const isValid = raw.isValidPropertyPhoto !== false;
   const shouldSkip = raw.skipEnhancement === true || !isValid;
   
+  const normalizedSkyQuality = validateSkyQuality(raw.skyQuality);
+  const normalizedLawnQuality = validateLawnQuality(raw.lawnQuality);
+  const skyNeedsReplacement =
+    typeof raw.skyNeedsReplacement === 'boolean'
+      ? raw.skyNeedsReplacement
+      : ['blown_out', 'ugly', 'overcast'].includes(normalizedSkyQuality);
+  const lawnNeedsRepair =
+    typeof raw.lawnNeedsRepair === 'boolean'
+      ? raw.lawnNeedsRepair
+      : ['patchy', 'brown', 'dead'].includes(normalizedLawnQuality);
+  const windowExposureIssue =
+    typeof raw.windowExposureIssue === 'boolean'
+      ? raw.windowExposureIssue
+      : false;
+
   // Validate suggested tools against our rules
-  const validatedTools = shouldSkip ? [] : validateSuggestedTools(raw);
+  const validatedTools = shouldSkip ? [] : validateSuggestedTools({
+    ...raw,
+    skyQuality: normalizedSkyQuality,
+    lawnQuality: normalizedLawnQuality,
+    skyNeedsReplacement,
+    lawnNeedsRepair,
+    windowExposureIssue,
+  });
   
   return {
     photoId,
@@ -404,18 +477,21 @@ function normalizeAnalysis(
     // Sky
     hasSky: Boolean(raw.hasSky),
     skyVisible: clamp(raw.skyVisible || 0, 0, 100),
-    skyQuality: validateSkyQuality(raw.skyQuality),
+    skyQuality: normalizedSkyQuality,
+    skyNeedsReplacement,
     
     // Twilight
     twilightCandidate: Boolean(raw.twilightCandidate),
     twilightScore: clamp(raw.twilightScore || 0, 0, 100),
     hasVisibleWindows: Boolean(raw.hasVisibleWindows),
     windowCount: raw.windowCount || 0,
+    windowExposureIssue,
     
     // Lawn
     hasLawn: Boolean(raw.hasLawn),
     lawnVisible: clamp(raw.lawnVisible || 0, 0, 100),
-    lawnQuality: validateLawnQuality(raw.lawnQuality),
+    lawnQuality: normalizedLawnQuality,
+    lawnNeedsRepair,
     
     // Lighting
     lighting: validateLighting(raw.lighting),
@@ -472,17 +548,17 @@ function validateSuggestedTools(raw: any): ToolId[] {
     switch (tool) {
       case 'sky-replacement':
         // Only if sky is bad
-        isValid = raw.skyQuality === 'blown_out' || raw.skyQuality === 'ugly';
+        isValid = raw.skyNeedsReplacement === true;
         break;
         
       case 'virtual-twilight':
         // Only if high twilight score and has windows
-        isValid = raw.twilightScore >= 75 && raw.hasVisibleWindows;
+        isValid = raw.twilightScore >= 80 && raw.hasVisibleWindows;
         break;
         
       case 'lawn-repair':
         // Only if lawn is bad
-        isValid = ['patchy', 'brown', 'dead'].includes(raw.lawnQuality);
+        isValid = raw.lawnNeedsRepair === true;
         break;
         
       case 'pool-enhance':
@@ -517,7 +593,7 @@ function validateSuggestedTools(raw: any): ToolId[] {
         
       case 'window-masking':
         // Interior with potential blown windows
-        isValid = raw.photoType?.startsWith('interior') && raw.lighting === 'mixed';
+        isValid = raw.photoType?.startsWith('interior') && raw.windowExposureIssue === true && raw.hasVisibleWindows && (raw.windowCount || 0) >= 2;
         break;
         
       case 'hdr':
@@ -533,7 +609,7 @@ function validateSuggestedTools(raw: any): ToolId[] {
         break;
         
       case 'auto-enhance':
-        // Always valid as fallback
+        // Only if explicitly suggested (no fallback default)
         isValid = true;
         break;
         
@@ -549,7 +625,7 @@ function validateSuggestedTools(raw: any): ToolId[] {
     }
   }
   
-  return validated.length > 0 ? validated : ['auto-enhance'];
+  return validated;
 }
 
 function isValidTool(tool: string): boolean {
@@ -574,21 +650,24 @@ function getDefaultAnalysis(
     photoUrl,
     
     // Default to valid but low confidence - don't skip on error
-    isValidPropertyPhoto: true,
-    skipEnhancement: false,
-    skipReason: null,
+    isValidPropertyPhoto: false,
+    skipEnhancement: true,
+    skipReason: `Analysis failed: ${errorReason}`,
     
     photoType: 'unknown',
     hasSky: false,
     skyVisible: 0,
     skyQuality: 'none',
+    skyNeedsReplacement: false,
     twilightCandidate: false,
     twilightScore: 0,
     hasVisibleWindows: false,
     windowCount: 0,
+    windowExposureIssue: false,
     hasLawn: false,
     lawnVisible: 0,
     lawnQuality: 'none',
+    lawnNeedsRepair: false,
     lighting: 'well_lit',
     needsHDR: false,
     hasClutter: false,
@@ -605,8 +684,8 @@ function getDefaultAnalysis(
     verticalAlignment: true,
     heroScore: 50,
     heroReason: `Analysis failed: ${errorReason}`,
-    suggestedTools: ['auto-enhance'], // Safe conservative default
-    toolReasons: { 'auto-enhance': 'Default enhancement due to analysis failure' },
+    suggestedTools: [],
+    toolReasons: {},
     notSuggested: {},
     priority: 'optional',
     confidence: 30,
@@ -614,6 +693,109 @@ function getDefaultAnalysis(
     analyzedAt: new Date().toISOString(),
     analysisVersion: ANALYSIS_VERSION,
   };
+}
+
+function getFailOpenAnalysis(
+  photoId: string,
+  photoUrl: string,
+  errorReason: string
+): PhotoAnalysis {
+  return {
+    photoId,
+    photoUrl,
+
+    // Fail-open: allow processing to continue with low confidence defaults
+    isValidPropertyPhoto: true,
+    skipEnhancement: false,
+    skipReason: null,
+
+    photoType: 'unknown',
+    hasSky: false,
+    skyVisible: 0,
+    skyQuality: 'none',
+    skyNeedsReplacement: false,
+    twilightCandidate: false,
+    twilightScore: 0,
+    hasVisibleWindows: false,
+    windowCount: 0,
+    windowExposureIssue: false,
+    hasLawn: false,
+    lawnVisible: 0,
+    lawnQuality: 'none',
+    lawnNeedsRepair: false,
+    lighting: 'well_lit',
+    needsHDR: false,
+    hasClutter: false,
+    clutterLevel: 'none',
+    roomEmpty: false,
+    hasFireplace: false,
+    fireplaceNeedsFire: false,
+    hasPool: false,
+    poolNeedsEnhancement: false,
+    hasTV: false,
+    tvNeedsReplacement: false,
+    composition: 'average',
+    sharpness: 'acceptable',
+    verticalAlignment: true,
+    heroScore: 50,
+    heroReason: `Analysis unavailable: ${errorReason}`,
+    suggestedTools: ['auto-enhance'],
+    toolReasons: {
+      'auto-enhance': 'Fallback enhancement when analysis is unavailable.',
+    },
+    notSuggested: {},
+    priority: 'optional',
+    confidence: 40,
+    confidenceReason: `Low confidence due to analysis failure: ${errorReason}`,
+    analyzedAt: new Date().toISOString(),
+    analysisVersion: ANALYSIS_VERSION,
+  };
+}
+
+async function analyzeWithReplicate(photoUrl: string): Promise<any> {
+  const token = process.env.REPLICATE_API_TOKEN;
+  if (!token) {
+    throw new Error('Missing REPLICATE_API_TOKEN');
+  }
+
+  const { default: Replicate } = await import('replicate');
+  const replicate = new Replicate({ auth: token });
+  const model = process.env.ANALYSIS_REPLICATE_MODEL || 'yorickvp/llava-13b';
+
+  const output = await replicate.run(model as `${string}/${string}`, {
+    input: {
+      image: photoUrl,
+      prompt: `${ANALYSIS_PROMPT}\n\nReturn ONLY valid JSON.`,
+      max_tokens: 1600,
+      temperature: 0.1,
+    },
+  }) as any;
+
+  const text = extractReplicateText(output);
+  const cleanContent = String(text || '')
+    .replace(/```json\n?/g, '')
+    .replace(/```\n?/g, '')
+    .trim();
+
+  if (!cleanContent) {
+    throw new Error('No response from Replicate vision model');
+  }
+
+  try {
+    return JSON.parse(cleanContent);
+  } catch {
+    console.error('[PhotoIntelligence V3] Replicate JSON parse error:', cleanContent.substring(0, 200));
+    throw new Error('Failed to parse Replicate response as JSON');
+  }
+}
+
+function extractReplicateText(output: any): string {
+  if (!output) return '';
+  if (typeof output === 'string') return output;
+  if (Array.isArray(output)) return output.join('');
+  if (typeof output?.text === 'string') return output.text;
+  if (typeof output?.output === 'string') return output.output;
+  return JSON.stringify(output);
 }
 
 // ============================================
@@ -708,7 +890,7 @@ export function getAnalysisSummary(analyses: PhotoAnalysis[]): string {
   const skipped = analyses.filter(a => a.skipEnhancement);
   const exteriors = valid.filter(a => isExterior(a.photoType));
   const interiors = valid.filter(a => isInterior(a.photoType));
-  const twilightCandidates = valid.filter(a => a.twilightScore >= 75);
+  const twilightCandidates = valid.filter(a => a.twilightScore >= 80);
   const heroCandidates = valid.filter(a => a.heroScore >= 70);
   
   lines.push(`📊 Analysis Summary`);

@@ -24,6 +24,7 @@ import { ToolId } from '../router';
 export type Provider = 
   | 'autoenhance'      // Professional real estate API
   | 'flux-kontext'     // Creative transformations
+  | 'flux-fill'        // Masked inpainting
   | 'flux-multipass'   // Multi-pass twilight
   | 'sdxl-lightning'   // Fast seasonal
   | 'sam-flux'         // SAM detection + FLUX edit
@@ -419,6 +420,7 @@ export function getRoutingSummary(tools: ToolId[]): string {
   const byProvider: Record<Provider, ToolId[]> = {
     'autoenhance': [],
     'flux-kontext': [],
+    'flux-fill': [],
     'flux-multipass': [],
     'sdxl-lightning': [],
     'sam-flux': [],

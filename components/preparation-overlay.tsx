@@ -7,6 +7,8 @@ interface Photo {
   id: string;
   thumbnailUrl?: string;
   url?: string;
+  signedRawUrl?: string | null;
+  signedProcessedUrl?: string | null;
 }
 
 interface PrepareResult {
@@ -59,6 +61,33 @@ export function PreparationOverlay({
   const [isStarted, setIsStarted] = useState(false);
 
   const abortControllerRef = useRef<AbortController | null>(null);
+  const lastProgressRef = useRef(0);
+
+  const getPhaseIndex = (value: Phase) => PHASE_CONFIG[value]?.index ?? 0;
+
+  const mapPhase = (raw?: string): Phase | null => {
+    switch (raw) {
+      case 'analyzing':
+        return 'analyzing';
+      case 'strategizing':
+        return 'strategizing';
+      case 'processing':
+        return 'executing';
+      case 'validating':
+      case 'consistency_pass':
+        return 'verifying';
+      case 'completed':
+      case 'needs_review':
+        return 'complete';
+      case 'failed':
+        return 'error';
+      case 'starting':
+      case 'pending':
+        return 'analyzing';
+      default:
+        return null;
+    }
+  };
 
   const addActivity = (msg: string) => {
     setActivityFeed(prev => [...prev.slice(-4), msg]);
@@ -86,6 +115,7 @@ export function PreparationOverlay({
 
         const decoder = new TextDecoder();
         let buffer = '';
+        let currentEvent = 'message';
 
         while (true) {
           const { done, value } = await reader.read();
@@ -96,10 +126,14 @@ export function PreparationOverlay({
           buffer = lines.pop() || '';
 
           for (const line of lines) {
+            if (line.startsWith('event: ')) {
+              currentEvent = line.slice(7).trim();
+              continue;
+            }
             if (line.startsWith('data: ')) {
               try {
                 const data = JSON.parse(line.slice(6));
-                handleSSEMessage(data);
+                handleSSEMessage(data, currentEvent);
               } catch (e) {
                 // Skip invalid JSON
               }
@@ -122,12 +156,32 @@ export function PreparationOverlay({
     };
   }, [isOpen, listingId]);
 
-  const handleSSEMessage = (data: any) => {
+  const handleSSEMessage = (data: any, event?: string) => {
+    if (event === 'complete' && data.result) {
+      setResult(data.result);
+      setPhase('complete');
+      setProgress(100);
+      setTimeout(() => onComplete(data.result), 1500);
+      return;
+    }
+
+    if (event === 'error') {
+      setError(data.error || 'Unknown error');
+      setPhase('error');
+      return;
+    }
+
     if (data.phase) {
-      setPhase(data.phase as Phase);
+      const mapped = mapPhase(data.phase);
+      if (mapped) {
+        setPhase(prev => (getPhaseIndex(mapped) >= getPhaseIndex(prev) ? mapped : prev));
+      }
     }
     if (data.progress !== undefined) {
-      setProgress(Math.min(100, Math.max(0, data.progress)));
+      const next = Math.min(100, Math.max(0, data.progress));
+      const locked = Math.max(lastProgressRef.current, next);
+      lastProgressRef.current = locked;
+      setProgress(locked);
     }
     if (data.message) {
       setCurrentDetail(data.message);
@@ -292,8 +346,14 @@ export function PreparationOverlay({
                       'opacity-40'
                     }`}
                   >
-                    <img
-                      src={photo.thumbnailUrl || photo.url || '/placeholder.jpg'}
+                  <img
+                    src={
+                      photo.thumbnailUrl ||
+                      photo.url ||
+                      photo.signedRawUrl ||
+                      photo.signedProcessedUrl ||
+                      '/placeholder.jpg'
+                    }
                       alt=""
                       className="w-full h-full object-cover"
                     />
