@@ -64,7 +64,11 @@ export async function POST(request: NextRequest) {
         const sendEvent = (event: string, data: any) => {
           if (isClosed) return;
           try {
-            controller.enqueue(encoder.encode(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`));
+            const message = `event: ${event}\ndata: ${JSON.stringify(data)}\n\n`;
+            controller.enqueue(encoder.encode(message));
+            // Force flush by yielding control - allows Next.js to send the chunk immediately
+            // Use queueMicrotask for immediate flush without blocking
+            queueMicrotask(() => {});
           } catch {
             isClosed = true;
           }
@@ -124,8 +128,10 @@ export async function POST(request: NextRequest) {
     return new Response(stream, {
       headers: {
         'Content-Type': 'text/event-stream',
-        'Cache-Control': 'no-cache',
+        'Cache-Control': 'no-cache, no-transform',
         'Connection': 'keep-alive',
+        'X-Accel-Buffering': 'no', // Disable nginx buffering
+        'X-Content-Type-Options': 'nosniff',
       },
     });
 
