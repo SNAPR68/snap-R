@@ -61,6 +61,14 @@ export async function prepareListing(
     finalizeMs: 0,
     totalMs: 0,
   };
+
+  const progressMarks = {
+    analysisMax: Number(process.env.AI_PROGRESS_ANALYSIS_MAX || 35),
+    strategizing: Number(process.env.AI_PROGRESS_STRATEGIZING || 40),
+    processingStart: Number(process.env.AI_PROGRESS_PROCESSING_START || 40),
+    consistency: Number(process.env.AI_PROGRESS_CONSISTENCY || 92),
+    validating: Number(process.env.AI_PROGRESS_VALIDATING || 96),
+  };
   
   console.log(`\n[ListingEngine] ========================================`);
   console.log(`[ListingEngine] PREPARE LISTING (PREMIUM): ${listingId}`);
@@ -110,12 +118,29 @@ export async function prepareListing(
     // ========================================
     reportProgress(onProgress, listingId, 'analyzing', `Analyzing ${photos.length} photos with AI vision...`, startTime);
     
-    const analysisConcurrency = Number(process.env.ANALYSIS_CONCURRENCY || (options.prioritizeSpeed ? 4 : 2));
-    const analysisBatchDelayMs = Number(process.env.ANALYSIS_BATCH_DELAY_MS || (options.prioritizeSpeed ? 900 : 1500));
+    const analysisConcurrency = Number(process.env.ANALYSIS_CONCURRENCY || (options.prioritizeSpeed ? 4 : 3));
+    const analysisBatchDelayMs = Number(process.env.ANALYSIS_BATCH_DELAY_MS || (options.prioritizeSpeed ? 900 : 1000));
     const analysisStart = Date.now();
     const analyses = await analyzePhotos(photos, {
       maxConcurrency: analysisConcurrency,
       batchDelayMs: analysisBatchDelayMs,
+      onProgress: (completed, total) => {
+        reportProgress(
+          onProgress,
+          listingId,
+          'analyzing',
+          `Analyzing ${total} photos with AI vision...`,
+          startTime,
+          {
+            totalPhotos: total,
+            analyzedPhotos: completed,
+            processedPhotos: 0,
+            validatedPhotos: 0,
+            skippedPhotos: 0,
+            percentComplete: Math.round((completed / Math.max(total, 1)) * progressMarks.analysisMax),
+          }
+        );
+      },
     });
     phaseTimingsMs.analysisMs = Date.now() - analysisStart;
     
@@ -124,7 +149,14 @@ export async function prepareListing(
     // ========================================
     // PHASE 3: DETERMINE LOCKED PRESETS
     // ========================================
-    reportProgress(onProgress, listingId, 'strategizing', 'Locking presets for consistency...', startTime);
+    reportProgress(onProgress, listingId, 'strategizing', 'Locking presets for consistency...', startTime, {
+      totalPhotos: photos.length,
+      analyzedPhotos: photos.length,
+      processedPhotos: 0,
+      validatedPhotos: 0,
+      skippedPhotos: 0,
+      percentComplete: progressMarks.strategizing,
+    });
     
     const presetsStart = Date.now();
     const lockedPresets = determineLockedPresets(analyses);
@@ -140,7 +172,14 @@ export async function prepareListing(
     // ========================================
     // PHASE 4: BUILD STRATEGY
     // ========================================
-    reportProgress(onProgress, listingId, 'strategizing', 'Building enhancement strategy...', startTime);
+    reportProgress(onProgress, listingId, 'strategizing', 'Building enhancement strategy...', startTime, {
+      totalPhotos: photos.length,
+      analyzedPhotos: photos.length,
+      processedPhotos: 0,
+      validatedPhotos: 0,
+      skippedPhotos: 0,
+      percentComplete: progressMarks.strategizing,
+    });
     
     const strategyStart = Date.now();
     const strategy = buildListingStrategy(listingId, analyses);
@@ -151,7 +190,14 @@ export async function prepareListing(
     // ========================================
     // PHASE 5: PROCESS PHOTOS (PREMIUM)
     // ========================================
-    reportProgress(onProgress, listingId, 'processing', 'Enhancing photos with premium engine...', startTime);
+    reportProgress(onProgress, listingId, 'processing', 'Enhancing photos with premium engine...', startTime, {
+      totalPhotos: photos.length,
+      analyzedPhotos: photos.length,
+      processedPhotos: 0,
+      validatedPhotos: 0,
+      skippedPhotos: 0,
+      percentComplete: progressMarks.processingStart,
+    });
     
     // Order by priority (hero first, then critical, etc.)
     strategy.photoStrategies = orderByPriority(strategy.photoStrategies);
@@ -173,7 +219,14 @@ export async function prepareListing(
     // PHASE 6: CONSISTENCY PASS
     // ========================================
     if (CONFIG.enableConsistencyPass) {
-      reportProgress(onProgress, listingId, 'consistency_pass', 'Verifying consistency...', startTime);
+      reportProgress(onProgress, listingId, 'consistency_pass', 'Verifying consistency...', startTime, {
+        totalPhotos: photos.length,
+        analyzedPhotos: photos.length,
+        processedPhotos: results.length,
+        validatedPhotos: 0,
+        skippedPhotos: strategy.skippedPhotos,
+        percentComplete: progressMarks.consistency,
+      });
       
       const consistencyStart = Date.now();
       const consistency = await analyzeConsistency(results);
@@ -184,7 +237,14 @@ export async function prepareListing(
     // ========================================
     // PHASE 7: VALIDATION
     // ========================================
-    reportProgress(onProgress, listingId, 'validating', 'Validating results...', startTime);
+    reportProgress(onProgress, listingId, 'validating', 'Validating results...', startTime, {
+      totalPhotos: photos.length,
+      analyzedPhotos: photos.length,
+      processedPhotos: results.length,
+      validatedPhotos: 0,
+      skippedPhotos: strategy.skippedPhotos,
+      percentComplete: progressMarks.validating,
+    });
     
     const validationStart = Date.now();
     let validations;
@@ -534,7 +594,8 @@ function reportProgress(
   listingId: string,
   status: ProcessingStatus,
   message: string,
-  startTime: number
+  startTime: number,
+  overrides: Partial<ProcessingProgress> = {}
 ): void {
   if (onProgress) {
     onProgress({
@@ -550,6 +611,7 @@ function reportProgress(
       percentComplete: 0,
       startedAt: new Date(startTime).toISOString(),
       messages: [message],
+      ...overrides,
     });
   }
   

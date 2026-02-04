@@ -46,7 +46,7 @@ const CONFIG = {
 const SKY_PROMPTS = {
   'clear-blue': 'Replace the sky with a clean natural blue sky with NO clouds. Keep everything else exactly the same.',
   'sunset': 'Replace the sky with a clean warm sunset gradient with NO clouds. Keep everything else exactly the same.',
-  'dramatic-clouds': 'Replace the sky with a clean natural blue sky with NO clouds. Keep everything else exactly the same.',
+  'dramatic-clouds': 'Replace the sky with a rich blue sky and several large, soft cumulus clouds. Bright and professional, not stormy. Keep everything else exactly the same.',
 };
 
 const TWILIGHT_PROMPTS = {
@@ -178,7 +178,11 @@ function makeListingDecisions(analyses: PhotoAnalysis[]): ListingDecisions {
 // PRESET LOCKING
 // ============================================
 function determineLockedPresets(analyses: PhotoAnalysis[], decisions: ListingDecisions): LockedPresets {
-  const skyPreset = 'clear-blue';
+  const overcastOrUglyCount = analyses.filter(a => a.skyQuality === 'overcast' || a.skyQuality === 'ugly').length;
+  const blownOutCount = analyses.filter(a => a.skyQuality === 'blown_out').length;
+  const skyPreset = decisions.shouldReplaceSky
+    ? (overcastOrUglyCount >= blownOutCount ? 'dramatic-clouds' : 'clear-blue')
+    : 'clear-blue';
   const twilightPreset = 'golden-hour';
   const stagingStyle = decisions.propertyStyle === 'luxury' ? 'luxury' : 'modern';
   
@@ -188,7 +192,7 @@ function determineLockedPresets(analyses: PhotoAnalysis[], decisions: ListingDec
     twilightPreset: twilightPreset as LockedPresets['twilightPreset'],
     twilightPrompt: TWILIGHT_PROMPTS[twilightPreset],
     lawnPreset: 'lush-green',
-    lawnPrompt: 'Transform lawn into healthy green grass. Keep everything else exactly the same.',
+    lawnPrompt: 'Improve ONLY the existing lawn/grass. Natural healthy green with realistic texture. Do NOT add any new plants, flowers, shrubs, or grass outside the lawn. Keep everything else exactly the same.',
     stagingStyle: stagingStyle as LockedPresets['stagingStyle'],
     stagingPrompt: STAGING_PROMPTS[stagingStyle],
     colorTemp: decisions.dominantLighting === 'dark' ? 'warm' : 'neutral',

@@ -35,11 +35,16 @@ import type { FluxOptions } from '../providers/replicate';
 // CONFIGURATION
 // ============================================
 const CONFIG = {
-  maxConcurrency: Number(process.env.BATCH_MAX_CONCURRENCY || 3),
+  maxConcurrency: Number(process.env.BATCH_MAX_CONCURRENCY || 4),
   maxRetries: 2,
   retryDelayMs: 2000,
   toolTimeoutMs: 120000,
-  batchDelayMs: Number(process.env.BATCH_DELAY_MS || 500),
+  batchDelayMs: Number(process.env.BATCH_DELAY_MS || 350),
+};
+
+const PROGRESS_RANGE = {
+  processingStart: Number(process.env.AI_PROGRESS_PROCESSING_START || 40),
+  processingEnd: Number(process.env.AI_PROGRESS_PROCESSING_END || 90),
 };
 
 const HERO_UPSCALE = {
@@ -173,7 +178,10 @@ export async function processListingBatch(
         validatedPhotos: 0,
         skippedPhotos: strategy.skippedPhotos,
         estimatedTimeRemaining: estimateRemaining(strategy, results.length),
-        percentComplete: Math.round((results.length / strategy.totalPhotos) * 100),
+        percentComplete: Math.round(
+          PROGRESS_RANGE.processingStart +
+            (results.length / strategy.totalPhotos) * (PROGRESS_RANGE.processingEnd - PROGRESS_RANGE.processingStart)
+        ),
         startedAt: new Date(startTime).toISOString(),
         messages: [`Processing ${i + 1} to ${Math.min(i + CONFIG.maxConcurrency, photosWithUrls.length)}`],
       });

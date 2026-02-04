@@ -43,11 +43,13 @@ export function determineLockedPresets(analyses: PhotoAnalysis[]): LockedPresets
   const exteriors = analyses.filter(a => a.photoType.startsWith('exterior') || a.photoType === 'drone');
   const hasGoodSky = exteriors.some(a => a.skyQuality === 'clear_blue' || a.skyQuality === 'good');
   const hasBadSky = exteriors.some(a => a.skyQuality === 'blown_out' || a.skyQuality === 'ugly' || a.skyQuality === 'overcast');
+  const overcastOrUglyCount = exteriors.filter(a => a.skyQuality === 'overcast' || a.skyQuality === 'ugly').length;
+  const blownOutCount = exteriors.filter(a => a.skyQuality === 'blown_out').length;
   
   // Determine best sky preset (favor clean, natural sky with no clouds)
   let skyPreset: LockedPresets['skyPreset'] = 'clear-blue';
   if (hasBadSky && !hasGoodSky) {
-    skyPreset = 'clear-blue';
+    skyPreset = overcastOrUglyCount >= blownOutCount ? 'dramatic-clouds' : 'clear-blue';
   }
   
   // Determine twilight preset - force warm, natural dusk/golden (no blue-hour by default)
@@ -87,7 +89,7 @@ export function determineLockedPresets(analyses: PhotoAnalysis[]): LockedPresets
     twilightPreset,
     twilightPrompt: TWILIGHT_PROMPTS[twilightPreset],
     lawnPreset: 'lush-green',
-    lawnPrompt: 'Transform into perfectly manicured vibrant emerald green grass like a golf course',
+    lawnPrompt: 'Improve ONLY the existing lawn/grass. Natural healthy green with realistic texture. Do NOT add any new plants, flowers, shrubs, or grass outside the lawn. Do NOT change landscaping, driveway, patio, or structures.',
     stagingStyle,
     stagingPrompt: STAGING_PROMPTS[stagingStyle],
     colorTemp,
@@ -113,7 +115,7 @@ export function determineLockedPresets(analyses: PhotoAnalysis[]): LockedPresets
 const SKY_PROMPTS: Record<LockedPresets['skyPreset'], string> = {
   'clear-blue': 'Replace ONLY the sky with a clean, natural blue sky with NO clouds. Crisp, realistic real estate photography look. Do NOT change the house, trees, lawn, or anything else.',
   'sunset': 'Replace ONLY the sky with a clean golden sunset gradient - warm orange and pink near the horizon fading to soft blue above, NO clouds. Do NOT change the house, trees, lawn, or anything else.',
-  'dramatic-clouds': 'Replace ONLY the sky with a clean, natural blue sky with NO clouds. Do NOT change the house, trees, lawn, or anything else.',
+  'dramatic-clouds': 'Replace ONLY the sky with a rich blue sky and several large, soft cumulus clouds. Bright, professional real estate look (not stormy). Do NOT change the house, trees, lawn, or anything else.',
   'twilight': 'Replace ONLY the sky with a clean twilight gradient - deep blue at top transitioning to warm purple-orange at the horizon, NO clouds. Do NOT change the house or anything else.',
 };
 

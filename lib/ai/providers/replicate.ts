@@ -184,8 +184,8 @@ const SKY_PROMPTS: Record<string, string> = {
   'golden': 'Replace ONLY the sky with a bright sunset gradient. Horizon: warm peach/gold, mid-sky: soft pink, upper sky: pale blue. NO clouds. Keep the scene bright and realistic—do NOT darken the house or change lighting. Only the sky changes.',
   
   // Dramatic variant
-  'dramatic': 'Replace ONLY the sky with a rich blue sky and a few elegant white cumulus clouds. Bright and professional, not stormy. Keep house, trees, lawn, shadows, and exposure unchanged. Only the sky changes.',
-  'clouds': 'Replace ONLY the sky with a rich blue sky and a few elegant white cumulus clouds. Bright and professional, not stormy. Keep house, trees, lawn, shadows, and exposure unchanged. Only the sky changes.',
+  'dramatic': 'Replace ONLY the sky with a rich blue sky and several large, soft cumulus clouds. Bright and professional, not stormy. Keep house, trees, lawn, shadows, and exposure unchanged. Only the sky changes.',
+  'clouds': 'Replace ONLY the sky with a rich blue sky and several large, soft cumulus clouds. Bright and professional, not stormy. Keep house, trees, lawn, shadows, and exposure unchanged. Only the sky changes.',
   
   // Cloudy variant
   'cloudy': 'Replace ONLY the sky with a soft, bright overcast (light gray) sky. Even, diffused look. Do NOT change house lighting or shadows. Only the sky changes.',
@@ -332,13 +332,13 @@ export async function virtualTwilight(
 // ============================================
 
 const LAWN_PROMPTS: Record<string, string> = {
-  'default': 'Improve ONLY the grass/lawn areas. Restore patchy/brown grass to healthy green turf with realistic texture and subtle variation. Do NOT change shrubs, trees, flowers, soil, driveway, patio, walls, roof, windows, pool, or shadows. Avoid painting green onto concrete, mulch, stone, or planters. NO structure changes. Keep everything else identical.',
+  'default': 'Improve ONLY the grass/lawn areas. Restore patchy/brown grass to healthy green turf with realistic texture and subtle variation. Do NOT add any new plants, flowers, shrubs, or grass beyond the existing lawn. Do NOT change shrubs, trees, flowers, soil, driveway, patio, walls, roof, windows, pool, or shadows. Avoid painting green onto concrete, mulch, stone, or planters. NO structure changes. Keep everything else identical.',
   
-  'natural': 'Improve ONLY the lawn/grass to a natural residential green. Mid‑green tone with subtle variation, visible grass texture, no neon. Do NOT alter shrubs, trees, soil, mulch, driveway, patio, walls, roof, windows, pool, or shadows. NO structure changes. Keep all other elements unchanged.',
+  'natural': 'Improve ONLY the lawn/grass to a natural residential green. Mid‑green tone with subtle variation, visible grass texture, no neon. Do NOT add any new plants, flowers, shrubs, or grass beyond the existing lawn. Do NOT alter shrubs, trees, soil, mulch, driveway, patio, walls, roof, windows, pool, or shadows. NO structure changes. Keep all other elements unchanged.',
   
-  'emerald': 'Improve ONLY the lawn/grass to a premium lush emerald green (golf‑course quality) but still realistic. Dense, even turf with natural texture, no neon. Do NOT affect shrubs, trees, soil, mulch, driveway, patio, walls, roof, windows, pool, or shadows. NO structure changes. Keep everything else identical.',
-  'golf': 'Improve ONLY the lawn/grass to a premium lush emerald green (golf‑course quality) but still realistic. Dense, even turf with natural texture, no neon. Do NOT affect shrubs, trees, soil, mulch, driveway, patio, walls, roof, windows, pool, or shadows. NO structure changes. Keep everything else identical.',
-  'perfect': 'Improve ONLY the lawn/grass to a premium lush emerald green (golf‑course quality) but still realistic. Dense, even turf with natural texture, no neon. Do NOT affect shrubs, trees, soil, mulch, driveway, patio, walls, roof, windows, pool, or shadows. NO structure changes. Keep everything else identical.',
+  'emerald': 'Improve ONLY the lawn/grass to a premium lush emerald green (golf‑course quality) but still realistic. Dense, even turf with natural texture, no neon. Do NOT add any new plants, flowers, shrubs, or grass beyond the existing lawn. Do NOT affect shrubs, trees, soil, mulch, driveway, patio, walls, roof, windows, pool, or shadows. NO structure changes. Keep everything else identical.',
+  'golf': 'Improve ONLY the lawn/grass to a premium lush emerald green (golf‑course quality) but still realistic. Dense, even turf with natural texture, no neon. Do NOT add any new plants, flowers, shrubs, or grass beyond the existing lawn. Do NOT affect shrubs, trees, soil, mulch, driveway, patio, walls, roof, windows, pool, or shadows. NO structure changes. Keep everything else identical.',
+  'perfect': 'Improve ONLY the lawn/grass to a premium lush emerald green (golf‑course quality) but still realistic. Dense, even turf with natural texture, no neon. Do NOT add any new plants, flowers, shrubs, or grass beyond the existing lawn. Do NOT affect shrubs, trees, soil, mulch, driveway, patio, walls, roof, windows, pool, or shadows. NO structure changes. Keep everything else identical.',
 };
 
 export async function lawnRepair(

@@ -62,6 +62,7 @@ export function PreparationOverlay({
 
   const abortControllerRef = useRef<AbortController | null>(null);
   const lastProgressRef = useRef(0);
+  const pollIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
   const getPhaseIndex = (value: Phase) => PHASE_CONFIG[value]?.index ?? 0;
 
@@ -96,6 +97,61 @@ export function PreparationOverlay({
   useEffect(() => {
     if (!isOpen || isStarted) return;
     setIsStarted(true);
+
+    const startPolling = () => {
+      if (pollIntervalRef.current) return;
+      const poll = async () => {
+        try {
+          const res = await fetch(`/api/listing/status?listingId=${listingId}`);
+          if (!res.ok) return;
+          const data = await res.json();
+          const mapped = mapPhase(data.status);
+          if (mapped) {
+            setPhase(prev => (getPhaseIndex(mapped) >= getPhaseIndex(prev) ? mapped : prev));
+          }
+
+          const total = data.totalPhotos || photos.length || 0;
+          const enhanced = data.enhancedPhotos || 0;
+          if (total > 0) {
+            const next = Math.min(99, Math.round((enhanced / total) * 100));
+            const locked = Math.max(lastProgressRef.current, next);
+            lastProgressRef.current = locked;
+            setProgress(locked);
+            setPhotoProgress({ current: enhanced, total });
+          }
+
+          if (data.status === 'prepared' || data.status === 'needs_review' || data.status === 'failed') {
+            if (pollIntervalRef.current) {
+              clearInterval(pollIntervalRef.current);
+              pollIntervalRef.current = null;
+            }
+            if (data.status === 'failed') {
+              setError('Preparation failed');
+              setPhase('error');
+              onError('Preparation failed');
+              return;
+            }
+            const resultPayload: PrepareResult = {
+              status: data.status,
+              heroPhotoId: data.heroPhotoId || undefined,
+              confidenceScore: data.confidence || 0,
+              totalPhotos: total,
+              enhancedPhotos: enhanced,
+              flaggedPhotos: Array.isArray(data.flaggedPhotos) ? data.flaggedPhotos.length : 0,
+            };
+            setResult(resultPayload);
+            setPhase('complete');
+            setProgress(100);
+            setTimeout(() => onComplete(resultPayload), 1500);
+          }
+        } catch {
+          // Ignore polling errors; we'll try again on next interval.
+        }
+      };
+
+      poll();
+      pollIntervalRef.current = setInterval(poll, 5000);
+    };
 
     const runPreparation = async () => {
       abortControllerRef.current = new AbortController();
@@ -140,6 +196,10 @@ export function PreparationOverlay({
             }
           }
         }
+
+        if (!result && !error) {
+          startPolling();
+        }
       } catch (err: any) {
         if (err.name !== 'AbortError') {
           setError(err.message || 'Preparation failed');
@@ -153,6 +213,10 @@ export function PreparationOverlay({
 
     return () => {
       abortControllerRef.current?.abort();
+      if (pollIntervalRef.current) {
+        clearInterval(pollIntervalRef.current);
+        pollIntervalRef.current = null;
+      }
     };
   }, [isOpen, listingId]);
 

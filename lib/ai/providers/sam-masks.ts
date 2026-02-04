@@ -90,8 +90,8 @@ const CONFIG = {
   LAWN_GREEN_THRESHOLD: 0.6, // Green channel dominance
 
   // Heuristic lawn mask fallback (used if SAM fails)
-  LAWN_MASK_REGION_START: Number(process.env.AI_LAWN_MASK_REGION_START || 0.65), // bottom 35%
-  LAWN_MASK_SIDE_MARGIN: Number(process.env.AI_LAWN_MASK_SIDE_MARGIN || 0.08), // trim 8% each side
+  LAWN_MASK_REGION_START: Number(process.env.AI_LAWN_MASK_REGION_START || 0.72), // bottom 28%
+  LAWN_MASK_SIDE_MARGIN: Number(process.env.AI_LAWN_MASK_SIDE_MARGIN || 0.12), // trim 12% each side
   LAWN_MASK_MIN_GREEN_RATIO: Number(process.env.AI_LAWN_MASK_MIN_GREEN_RATIO || 1.15),
   LAWN_MASK_MIN_BRIGHTNESS: Number(process.env.AI_LAWN_MASK_MIN_BRIGHTNESS || 40),
 };
