@@ -72,7 +72,7 @@ export default function NewListingPage() {
         throw new Error('You have reached your limit of ' + limit + ' listings this month. Upgrade to Pro for more.');
       }
 
-      const { data: listing, error: listingError } = await supabase.from('listings').insert({ user_id: user.id, title: title.trim(), address: address.trim() || null, description: description.trim() || null, status: 'active' }).select('id').single();
+      const { data: listing, error: listingError } = await supabase.from('listings').insert({ user_id: user.id, title: title.trim(), address: address.trim() || null, description: description.trim() || null, marketing_status: 'Active' }).select('id').single();
       if (listingError) throw new Error('Listing error: ' + listingError.message);
 
       // Increment usage

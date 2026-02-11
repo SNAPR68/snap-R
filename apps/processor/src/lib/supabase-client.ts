@@ -30,6 +30,27 @@ export function createSupabaseClient(
 }
 
 // Placeholder functions - will implement in Step 4
+export async function updateListingPreparationStatus(
+  listingId: string,
+  preparationStatus: 'prepared' | 'failed',
+  env: { SUPABASE_URL: string; SUPABASE_SERVICE_KEY: string }
+): Promise<void> {
+  const supabase = createSupabaseClient(env);
+  const now = new Date().toISOString();
+  const { error } = await supabase
+    .from('listings')
+    .update({
+      preparation_status: preparationStatus,
+      processing_completed_at: now,
+      updated_at: now,
+      ...(preparationStatus === 'prepared' && { prepared_at: now }),
+    })
+    .eq('id', listingId);
+  if (error) {
+    console.error(`[Worker] Failed to update listing ${listingId}:`, error.message);
+  }
+}
+
 export async function updateJobStatus(
   jobId: string, 
   status: string, 

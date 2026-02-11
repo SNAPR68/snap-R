@@ -317,6 +317,7 @@ export default {
       createSupabaseClient,
       updateJobStatus,
       updatePhotoStatus,
+      updateListingPreparationStatus,
       getListingPhotos,
       createCheckpoint,
       getCheckpoint,
@@ -432,6 +433,7 @@ export default {
         }
         
         await updateJobStatus(jobId, 'completed', env);
+        await updateListingPreparationStatus(listingId, 'prepared', env);
         console.log(`[Worker] Job ${jobId} completed successfully`);
         message.ack();
         
@@ -439,6 +441,7 @@ export default {
         console.error(`[Worker] Job ${jobId} failed:`, error);
         try {
           await updateJobStatus(jobId, 'failed', env);
+          await updateListingPreparationStatus(listingId, 'failed', env);
         } catch (updateError) {
           console.error(`[Worker] Failed to mark job ${jobId} as failed:`, updateError);
         }

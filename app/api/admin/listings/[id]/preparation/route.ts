@@ -25,7 +25,7 @@ export async function GET(
   const admin = adminSupabase();
   const { data, error } = await admin
     .from('listings')
-    .select('id, title, status, prepared_at, updated_at, preparation_metadata')
+    .select('id, title, preparation_status, prepared_at, updated_at, preparation_metadata')
     .eq('id', listingId)
     .single();
 

@@ -29,7 +29,7 @@ export async function GET(request: NextRequest) {
     // Get listing with preparation metadata
     const { data: listing, error } = await supabase
       .from('listings')
-      .select('id, status, hero_photo_id, prepared_at, preparation_metadata')
+      .select('id, preparation_status, hero_photo_id, prepared_at, preparation_metadata')
       .eq('id', listingId)
       .eq('user_id', user.id)
       .single();
@@ -37,6 +37,16 @@ export async function GET(request: NextRequest) {
     if (error || !listing) {
       return NextResponse.json({ error: 'Listing not found' }, { status: 404 });
     }
+
+    // Get active job for this listing (queued or processing)
+    const { data: activeJob } = await supabase
+      .from('jobs')
+      .select('id, status')
+      .eq('listing_id', listingId)
+      .in('status', ['queued', 'processing'])
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
 
     // Get photos count
     const { count: totalPhotos } = await supabase
@@ -86,6 +96,7 @@ export async function GET(request: NextRequest) {
     }));
 
     // If no history table yet, use metadata
+    const prepStatus = listing.preparation_status || 'pending';
     if (preparationHistory.length === 0 && listing.preparation_metadata) {
       preparationHistory.push({
         id: listing.id,
@@ -94,19 +105,21 @@ export async function GET(request: NextRequest) {
         photosProcessed: totalPhotos || 0,
         toolsUsed: listing.preparation_metadata?.toolsApplied || {},
         presets: listing.preparation_metadata?.lockedPresets || {},
-        status: listing.status,
+        status: prepStatus,
       });
     }
 
     return NextResponse.json({
       listingId: listing.id,
-      status: listing.status || 'pending',
+      status: prepStatus,
+      jobId: activeJob?.id ?? null,
+      jobStatus: activeJob?.status ?? null,
       heroPhotoId: listing.hero_photo_id,
       preparedAt: listing.prepared_at,
       totalPhotos: totalPhotos || 0,
       enhancedPhotos: enhancedPhotos || 0,
       confidence: listing.preparation_metadata?.confidence || 0,
-      canExport: listing.status === 'prepared' || listing.status === 'needs_review',
+      canExport: prepStatus === 'prepared' || prepStatus === 'needs_review',
       canShare: !!listing.prepared_at,
       flaggedPhotos,
       preparationHistory,
@@ -141,7 +154,7 @@ export async function PATCH(request: NextRequest) {
     }
 
     const updates: any = { updated_at: new Date().toISOString() };
-    if (status) updates.status = status;
+    if (status) updates.preparation_status = status;
     if (heroPhotoId) updates.hero_photo_id = heroPhotoId;
     if (status === 'prepared') updates.prepared_at = new Date().toISOString();
 

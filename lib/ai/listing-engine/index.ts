@@ -478,16 +478,20 @@ async function updateListingStatus(
   listingId: string,
   status: string
 ): Promise<void> {
+  const payload: Record<string, unknown> = {
+    preparation_status: status,
+    updated_at: new Date().toISOString(),
+  };
+  if (status === 'preparing') {
+    payload.processing_started_at = new Date().toISOString();
+  }
   const { error } = await supabase
     .from('listings')
-    .update({
-      status,
-      updated_at: new Date().toISOString(),
-    })
+    .update(payload)
     .eq('id', listingId);
   
   if (error) {
-    console.error(`[ListingEngine] Failed to update status:`, error.message);
+    console.error(`[ListingEngine] Failed to update preparation_status:`, error.message);
   }
 }
 
@@ -513,12 +517,16 @@ async function finalizeListing(
     totalCostUsd?: number;
   }
 ): Promise<void> {
+  const now = new Date().toISOString();
+  const totalCostCents = data.totalCostUsd != null ? Math.round(data.totalCostUsd * 100) : undefined;
   const { error } = await supabase
     .from('listings')
     .update({
-      status: data.status,
+      preparation_status: data.status,
       hero_photo_id: data.heroPhotoId,
-      prepared_at: data.status === 'prepared' ? new Date().toISOString() : null,
+      prepared_at: data.status === 'prepared' ? now : null,
+      processing_completed_at: now,
+      ...(totalCostCents !== undefined && { total_cost_cents: totalCostCents }),
       preparation_metadata: {
         confidence: data.confidence,
         toolsApplied: data.toolsApplied,
@@ -529,10 +537,10 @@ async function finalizeListing(
         costBreakdown: data.costBreakdown,
         totalCostUsd: data.totalCostUsd,
         phaseTimingsMs: data.phaseTimingsMs,
-        preparedAt: new Date().toISOString(),
+        preparedAt: now,
         engineVersion: '2.0.0-premium',
       },
-      updated_at: new Date().toISOString(),
+      updated_at: now,
     })
     .eq('id', listingId);
   

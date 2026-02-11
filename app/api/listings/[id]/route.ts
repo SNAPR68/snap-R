@@ -19,7 +19,7 @@ export async function GET(
   // Fetch the listing
   const { data: listing, error: listingError } = await supabase
     .from("listings")
-    .select("id, title, address, city, state, postal_code, description, status, created_at")
+    .select("id, title, address, city, state, postal_code, description, preparation_status, marketing_status, created_at")
     .eq("id", listingId)
     .eq("user_id", user.id)
     .single();

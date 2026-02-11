@@ -19,7 +19,7 @@ export default async function AdminAiDecisions({ searchParams }: { searchParams?
 
   const { data: recentListings } = await supabase
     .from('listings')
-    .select('id, title, address, status, prepared_at, created_at, preparation_metadata')
+    .select('id, title, address, preparation_status, prepared_at, created_at, preparation_metadata')
     .order('prepared_at', { ascending: false })
     .limit(50);
 
@@ -29,7 +29,7 @@ export default async function AdminAiDecisions({ searchParams }: { searchParams?
       : listingId
         ? (await supabase
             .from('listings')
-            .select('id, title, address, status, prepared_at, created_at, preparation_metadata')
+            .select('id, title, address, preparation_status, prepared_at, created_at, preparation_metadata')
             .eq('id', listingId)
             .single()).data
         : null;
@@ -90,7 +90,7 @@ export default async function AdminAiDecisions({ searchParams }: { searchParams?
                       <p className="text-xs text-white/40">{listing.id}</p>
                     </div>
                     <div className="text-right">
-                      <p className="text-xs text-white/50">{listing.status}</p>
+                      <p className="text-xs text-white/50">{listing.preparation_status}</p>
                       <p className="text-xs text-white/30">{formatDate(listing.prepared_at || listing.created_at)}</p>
                     </div>
                   </div>

@@ -26,7 +26,7 @@ export default async function CommandCenter() {
     adminSupabase().from('api_costs').select('cost_cents, provider, created_at').gte('created_at', today.toISOString()),
     adminSupabase().from('error_logs').select('id, severity, message, created_at').eq('resolved', false).order('created_at', { ascending: false }).limit(5),
     adminSupabase().from('analytics_events').select('event_type, user_id, created_at').gte('created_at', oneHourAgo.toISOString()),
-    adminSupabase().from('listings').select('id, status, created_at').gte('created_at', thirtyDaysAgo.toISOString()),
+    adminSupabase().from('listings').select('id, preparation_status, created_at').gte('created_at', thirtyDaysAgo.toISOString()),
     adminSupabase().from('human_edit_orders').select('amount_paid, created_at').gte('created_at', thirtyDaysAgo.toISOString()),
   ]);
 

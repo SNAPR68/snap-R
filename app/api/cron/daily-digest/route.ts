@@ -43,7 +43,7 @@ export async function GET(request: NextRequest) {
         // Gather stats
         const { count: listingsPrepared } = await supabase.from('listings').select('id', { count: 'exact', head: true }).eq('user_id', user.id).gte('prepared_at', yesterday);
         const { count: clientViews } = await supabase.from('notification_logs').select('id', { count: 'exact', head: true }).eq('user_id', user.id).eq('type', 'client_viewed').gte('created_at', yesterday);
-        const { data: needsReview } = await supabase.from('listings').select('title, address').eq('user_id', user.id).eq('status', 'needs_review').limit(3);
+        const { data: needsReview } = await supabase.from('listings').select('title, address').eq('user_id', user.id).eq('preparation_status', 'needs_review').limit(3);
 
         // Skip if no activity
         if ((listingsPrepared || 0) === 0 && (clientViews || 0) === 0 && !needsReview?.length) {

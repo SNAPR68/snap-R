@@ -72,6 +72,8 @@ export function PreparationOverlay({
         return 'analyzing';
       case 'strategizing':
         return 'strategizing';
+      case 'queued':
+        return 'analyzing';
       case 'processing':
         return 'executing';
       case 'validating':
@@ -79,6 +81,7 @@ export function PreparationOverlay({
         return 'verifying';
       case 'completed':
       case 'needs_review':
+      case 'prepared':
         return 'complete';
       case 'failed':
         return 'error';
@@ -105,9 +108,16 @@ export function PreparationOverlay({
           const res = await fetch(`/api/listing/status?listingId=${listingId}`);
           if (!res.ok) return;
           const data = await res.json();
-          const mapped = mapPhase(data.status);
+          // Prefer jobStatus when job is active; otherwise use listing preparation_status
+          const effectiveStatus = data.jobStatus ?? data.status;
+          const mapped = mapPhase(effectiveStatus);
           if (mapped) {
             setPhase(prev => (getPhaseIndex(mapped) >= getPhaseIndex(prev) ? mapped : prev));
+          }
+          if (data.jobStatus === 'queued') {
+            setCurrentDetail('Job queued, starting worker...');
+          } else if (data.jobStatus === 'processing') {
+            setCurrentDetail('Processing photos with AI...');
           }
 
           const total = data.totalPhotos || photos.length || 0;
@@ -120,12 +130,13 @@ export function PreparationOverlay({
             setPhotoProgress({ current: enhanced, total });
           }
 
-          if (data.status === 'prepared' || data.status === 'needs_review' || data.status === 'failed') {
+          const isTerminal = data.status === 'prepared' || data.status === 'needs_review' || data.status === 'failed';
+          if (isTerminal) {
             if (pollIntervalRef.current) {
               clearInterval(pollIntervalRef.current);
               pollIntervalRef.current = null;
             }
-            if (data.status === 'failed') {
+            if (data.status === 'failed' || data.jobStatus === 'failed') {
               setError('Preparation failed');
               setPhase('error');
               onError('Preparation failed');
@@ -157,48 +168,22 @@ export function PreparationOverlay({
       abortControllerRef.current = new AbortController();
 
       try {
-        const response = await fetch('/api/listing/prepare-stream', {
+        const response = await fetch('/api/listing/prepare', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ listingId }),
           signal: abortControllerRef.current.signal,
         });
 
-        if (!response.ok) throw new Error('Failed to start preparation');
-
-        const reader = response.body?.getReader();
-        if (!reader) throw new Error('No response stream');
-
-        const decoder = new TextDecoder();
-        let buffer = '';
-        let currentEvent = 'message';
-
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
-
-          buffer += decoder.decode(value, { stream: true });
-          const lines = buffer.split('\n');
-          buffer = lines.pop() || '';
-
-          for (const line of lines) {
-            if (line.startsWith('event: ')) {
-              currentEvent = line.slice(7).trim();
-              continue;
-            }
-            if (line.startsWith('data: ')) {
-              try {
-                const data = JSON.parse(line.slice(6));
-                handleSSEMessage(data, currentEvent);
-              } catch (e) {
-                // Skip invalid JSON
-              }
-            }
-          }
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok) {
+          throw new Error(data.error || 'Failed to start preparation');
         }
 
-        if (!result && !error) {
+        if (data.success) {
           startPolling();
+        } else {
+          throw new Error(data.error || 'Preparation failed to start');
         }
       } catch (err: any) {
         if (err.name !== 'AbortError') {

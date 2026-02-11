@@ -29,7 +29,7 @@ export async function GET(request: Request) {
     // NOTE: Only select columns that EXIST in your listings table
     const { data: listing, error: listingError } = await supabase
       .from("listings")
-      .select("id, title, address, city, state, postal_code, description, status, created_at")
+      .select("id, title, address, city, state, postal_code, description, preparation_status, marketing_status, created_at")
       .eq("id", listingId)
       .eq("user_id", user.id)
       .single();
@@ -115,8 +115,8 @@ export async function GET(request: Request) {
     .from("listings")
     .select(
       withPhotos
-        ? `id,title,address,city,state,postal_code,description,status,created_at,photos!photos_listing_id_fkey(id,raw_url,processed_url,variant,status,created_at)`
-        : "id,title,address,city,state,postal_code,description,status,created_at,photos!photos_listing_id_fkey(count)"
+        ? `id,title,address,city,state,postal_code,description,preparation_status,marketing_status,created_at,photos!photos_listing_id_fkey(id,raw_url,processed_url,variant,status,created_at)`
+        : "id,title,address,city,state,postal_code,description,preparation_status,marketing_status,created_at,photos!photos_listing_id_fkey(count)"
     )
     .eq("user_id", user.id)
     .order("created_at", { ascending: false });
@@ -162,7 +162,7 @@ export async function POST(request: Request) {
       state: sanitize(state),
       postal_code: sanitize(postal_code),
       description: sanitize(description),
-      status: "draft"
+      marketing_status: "Coming Soon"
     })
     .select()
     .single();
@@ -184,7 +184,7 @@ export async function PUT(request: Request) {
   }
 
   const body = await request.json();
-  const { id, title, address, city, state, postal_code, description, status } = body;
+  const { id, title, address, city, state, postal_code, description, marketingStatus, status } = body;
 
   if (!id) {
     return NextResponse.json({ error: "Listing ID required" }, { status: 400 });
@@ -197,7 +197,9 @@ export async function PUT(request: Request) {
   if (state !== undefined) updates.state = sanitize(state);
   if (postal_code !== undefined) updates.postal_code = sanitize(postal_code);
   if (description !== undefined) updates.description = sanitize(description);
-  if (status !== undefined) updates.status = status;
+  // Prefer marketingStatus; accept legacy status for backward compatibility
+  if (marketingStatus !== undefined) updates.marketing_status = marketingStatus;
+  else if (status !== undefined) updates.marketing_status = status;
 
   const { data, error } = await supabase
     .from("listings")

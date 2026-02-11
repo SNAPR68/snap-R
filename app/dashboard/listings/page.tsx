@@ -108,7 +108,7 @@ export default function ListingsPage() {
                   <div className="absolute top-3 right-3 flex items-center gap-1 px-2 py-1 bg-black/70 rounded-lg text-xs">
                     <Image className="w-3 h-3" />{listing.photoCount}
                   </div>
-                  <div className="absolute top-3 left-3">{getStatusBadge(listing.status)}</div>
+                  <div className="absolute top-3 left-3">{getStatusBadge(listing.preparation_status ?? listing.status)}</div>
                 </div>
                 <div className="p-4">
                   <h3 className="font-semibold text-lg truncate group-hover:text-amber-400 transition-colors">

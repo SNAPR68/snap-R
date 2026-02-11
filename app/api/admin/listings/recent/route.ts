@@ -17,7 +17,7 @@ export async function GET(request: NextRequest) {
   const admin = adminSupabase();
   const { data, error } = await admin
     .from('listings')
-    .select('id, title, status, updated_at, created_at')
+    .select('id, title, preparation_status, updated_at, created_at')
     .order('updated_at', { ascending: false })
     .limit(5);
 

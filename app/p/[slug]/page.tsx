@@ -157,7 +157,7 @@ export default async function PropertySitePage({ params }: Props) {
     lot_size: listing.lot_size,
     parking: listing.parking,
     features: listing.features || [],
-    status: listing.status,
+    status: listing.marketing_status ?? listing.status,
     mls_number: listing.mls_number,
     hoa_fees: listing.hoa_fees,
     latitude: listing.latitude,

@@ -21,10 +21,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Get current listing status
+    // Get current marketing status
     const { data: listing, error: fetchError } = await supabase
       .from('listings')
-      .select('status')
+      .select('marketing_status')
       .eq('id', listingId)
       .eq('user_id', userId)
       .single();
@@ -33,13 +33,13 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Listing not found' }, { status: 404 });
     }
 
-    const previousStatus = listing.status;
+    const previousStatus = listing.marketing_status;
 
-    // Update listing status in database
+    // Update marketing status in database
     const { error: updateError } = await supabase
       .from('listings')
       .update({ 
-        status: newStatus,
+        marketing_status: newStatus,
         updated_at: new Date().toISOString(),
       })
       .eq('id', listingId)

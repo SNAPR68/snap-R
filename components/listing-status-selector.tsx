@@ -1,4 +1,5 @@
 // components/listing-status-selector.tsx
+// Marketing status selector – expects currentStatus = listing.marketing_status
 "use client";
 
 import { useState } from "react";

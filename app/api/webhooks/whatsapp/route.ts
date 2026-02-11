@@ -83,7 +83,7 @@ async function handleExportCommand(userId: string, supabase: any): Promise<strin
     .from('listings')
     .select('id, title, address')
     .eq('user_id', userId)
-    .eq('status', 'prepared')
+    .eq('preparation_status', 'prepared')
     .order('prepared_at', { ascending: false })
     .limit(1)
     .single();
@@ -99,7 +99,7 @@ async function handleShareCommand(userId: string, supabase: any): Promise<string
     .from('listings')
     .select('id, title, address')
     .eq('user_id', userId)
-    .eq('status', 'prepared')
+    .eq('preparation_status', 'prepared')
     .order('prepared_at', { ascending: false })
     .limit(1)
     .single();
@@ -130,7 +130,7 @@ async function handlePendingCommand(userId: string, supabase: any): Promise<stri
     .from('listings')
     .select('title, address')
     .eq('user_id', userId)
-    .eq('status', 'needs_review')
+    .eq('preparation_status', 'needs_review')
     .limit(5);
   
   let message = `⚡ *Pending Items*\n\n`;
@@ -150,7 +150,7 @@ async function handleExportAllCommand(userId: string, supabase: any): Promise<st
     .from('listings')
     .select('title, address')
     .eq('user_id', userId)
-    .eq('status', 'prepared')
+    .eq('preparation_status', 'prepared')
     .limit(10);
   
   if (!listings?.length) return `📦 No listings ready for export.`;
