@@ -111,7 +111,8 @@ export default async function AdminAiDecisions({ searchParams }: { searchParams?
                   {selectedListing.title || selectedListing.address || 'Untitled listing'}
                 </p>
                 <p>{selectedListing.id}</p>
-                <p>Status: {selectedListing.status}</p>
+                <p>Status: {selectedListing.preparation_status}</p>
+
                 <p>Prepared: {formatDate(selectedListing.prepared_at)}</p>
               </div>
 
