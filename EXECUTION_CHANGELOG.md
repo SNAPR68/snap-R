@@ -67,3 +67,26 @@ Cloudflare Worker (queue handler)
 - Blueprint Alignment:
 - Risk Level:
 
+
+-------------------------------------------------------------------------------
+## 2026-02-12 — Normalize preparation status lifecycle
+-------------------------------------------------------------------------------
+
+- Description:
+  Replaced 'queued' with 'preparing' in app/api/listing/prepare/route.ts.
+  This aligns the API guard condition and the state update with the intended lifecycle.
+
+- Files Modified:
+  app/api/listing/prepare/route.ts
+
+- Architectural Impact:
+  Corrects state machine inconsistency that caused duplicate prepares,
+  UI polling issues, and potential race conditions.
+
+- Blueprint Alignment:
+  Yes — lifecycle now strictly follows:
+  idle → preparing → prepared | failed
+
+- Risk Level:
+  Low
+

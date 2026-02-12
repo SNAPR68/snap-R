@@ -138,7 +138,7 @@ export async function POST(request: NextRequest) {
     const { error: updateError } = await admin
       .from('listings')
       .update({
-        preparation_status: 'queued',
+        preparation_status: 'preparing',
         processing_started_at: now,
         updated_at: now,
       })
