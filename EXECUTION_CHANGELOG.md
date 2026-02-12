@@ -31,7 +31,7 @@
 
 ### 4. Identified Queue vs HTTP Architecture Mismatch
 - API was calling worker via HTTP `/process`.
-- Worker implemented only `eue()` consumer.
+- Worker implemented only `queue()` consumer.
 - Result: Jobs stuck in `queued`.
 - Diagnosis: Hybrid trigger model.
 
