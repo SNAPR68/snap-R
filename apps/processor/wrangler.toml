@@ -3,29 +3,41 @@ main = "src/index.ts"
 compatibility_date = "2024-09-23"
 compatibility_flags = ["nodejs_compat"]
 
-# Development environment (local)
+############################
+# Development Environment  #
+############################
+
 [env.dev]
 vars = { ENVIRONMENT = "development" }
 
-# Staging environment
+############################
+# Staging Environment      #
+############################
+
 [env.staging]
 vars = { ENVIRONMENT = "staging" }
 
-# Production environment
+############################
+# Production Environment   #
+############################
+
 [env.production]
 vars = { ENVIRONMENT = "production" }
 
-# Queue binding (for producing messages)
-[[queues.producers]]
+[[env.production.queues.consumers]]
+queue = "snapr-processing-queue"
+
+# KV namespace for checkpoints
+[[env.production.kv_namespaces]]
+binding = "CHECKPOINTS"
+id = "45d1866418174829a071089c11b5e7bd"
+
+# Queue binding
+[[env.production.queues.producers]]
 binding = "SNAPR_QUEUE"
 queue = "snapr-processing-queue"
 
-# R2 bucket for processed images
-[[r2_buckets]]
+# R2 bucket
+[[env.production.r2_buckets]]
 binding = "IMAGES"
 bucket_name = "snapr-images"
-
-# KV namespace for checkpoints/resume
-[[kv_namespaces]]
-binding = "CHECKPOINTS"
-id = "local"

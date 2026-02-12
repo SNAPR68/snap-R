@@ -432,6 +432,7 @@ export default {
           }
         }
         
+        await updateListingPreparationStatus(listingId, 'prepared', env);
         await updateJobStatus(jobId, 'completed', env);
         await updateListingPreparationStatus(listingId, 'prepared', env);
         console.log(`[Worker] Job ${jobId} completed successfully`);
@@ -490,32 +491,29 @@ export default {
       });
     }
     
+    
     if (url.pathname === '/process' && request.method === 'POST') {
       try {
-        const body = await request.json() as JobMessage;
-        console.log(`[HTTP] Direct process request for job ${body.jobId}`);
+        const body = await request.json();
+        console.log(`[HTTP] Enqueuing job ${body.jobId}`);
 
-        // Process immediately instead of queuing (for testing)
-        const mockMessage = {
-          body: body,
-          ack: () => console.log('Message acked'),
-          retry: (opts?: { delaySeconds?: number }) => console.log('Message retried', opts)
-        };
-
-        await this.queue({ messages: [mockMessage] }, env);
+        await env.SNAPR_QUEUE.send(body);
 
         return Response.json({
-          status: "processing",
+          status: "queued",
           jobId: body.jobId,
-          message: "Job processed directly"
+          message: "Job enqueued successfully"
         });
       } catch (error) {
-        console.error('[HTTP] Failed to process job:', error);
+        console.error('[HTTP] Failed to enqueue job:', error);
         const details = error instanceof Error ? error.message : String(error);
-        return Response.json({ error: "Failed to process job", details }, { status: 500 });
+        return Response.json(
+          { error: "Failed to enqueue job", details },
+          { status: 500 }
+        );
       }
     }
-    
+
     return new Response('Not Found', { status: 404 });
   }
 };

@@ -56,3 +56,14 @@ Cloudflare Queue
     ↓ consume
 Cloudflare Worker (queue handler)
 
+
+-------------------------------------------------------------------------------
+## 2026-02-12 20:37:25 — Restore HTTP to Queue architecture
+-------------------------------------------------------------------------------
+
+- Description:
+- Files Modified:
+- Architectural Impact:
+- Blueprint Alignment:
+- Risk Level:
+

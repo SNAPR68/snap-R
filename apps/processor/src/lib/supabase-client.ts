@@ -179,3 +179,44 @@ export async function getCheckpoint(
     return null;
   }
 }
+
+export async function incrementUsageIfNotCounted(
+  listingId: string,
+  userId: string,
+  env: Env
+) {
+  const supabase = createSupabaseClient(env);
+
+  const { data: listing, error: listingError } = await supabase
+    .from('listings')
+    .select('counted_for_usage')
+    .eq('id', listingId)
+    .single();
+
+  if (listingError || !listing) {
+    console.error('[Billing] Failed to fetch listing:', listingError);
+    return;
+  }
+
+  if (listing.counted_for_usage) {
+    console.log('[Billing] Usage already counted for listing', listingId);
+    return;
+  }
+
+  const { error: rpcError } = await supabase.rpc('increment_subscription_usage', {
+    p_user_id: userId
+  });
+
+  if (rpcError) {
+    console.error('[Billing] Failed to increment subscription usage:', rpcError);
+    return;
+  }
+
+  await supabase
+    .from('listings')
+    .update({ counted_for_usage: true })
+    .eq('id', listingId);
+
+  console.log('[Billing] Usage incremented for listing', listingId);
+}
+

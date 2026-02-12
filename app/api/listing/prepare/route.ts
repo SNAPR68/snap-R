@@ -48,6 +48,9 @@ export async function POST(request: NextRequest) {
       .eq('id', listingId)
       .single();
 
+    
+
+
     if (listingError || !listing) {
       return NextResponse.json(
         { success: false, error: 'Listing not found' },
@@ -62,6 +65,28 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Subscription enforcement
+    if (!allowAdmin) {
+      const { data: subscription } = await admin
+        .from('subscriptions')
+        .select('monthly_listing_limit, listings_used_this_month, status')
+        .eq('user_id', listing.user_id)
+        .single();
+
+      if (!subscription || subscription.status !== 'active') {
+        return NextResponse.json(
+          { success: false, error: 'No active subscription' },
+          { status: 402 }
+        );
+      }
+
+      if (subscription.listings_used_this_month >= subscription.monthly_listing_limit) {
+        return NextResponse.json(
+          { success: false, error: 'Monthly listing limit exceeded' },
+          { status: 402 }
+        );
+      }
+    }
     if (listing.preparation_status === 'preparing') {
       return NextResponse.json(
         { success: false, error: 'Listing is already being prepared' },
@@ -88,12 +113,32 @@ export async function POST(request: NextRequest) {
         { status: 500 }
       );
     }
+      // Increment usage after successful job creation
+      if (!allowAdmin) {
+        const { error: rpcError } = await admin.rpc('increment_subscription_usage', {
+          p_user_id: listing.user_id
+        });
+
+        if (rpcError) {
+          console.error('[Billing] Failed to increment usage:', rpcError.message);
+          return NextResponse.json(
+            { success: false, error: 'Failed to increment usage' },
+            { status: 500 }
+          );
+        }
+
+        await admin
+          .from('listings')
+          .update({ counted_for_usage: true })
+          .eq('id', listingId);
+      }
+
 
     // 2. Set listing preparation_status = 'preparing' and processing_started_at
     const { error: updateError } = await admin
       .from('listings')
       .update({
-        preparation_status: 'preparing',
+        preparation_status: 'queued',
         processing_started_at: now,
         updated_at: now,
       })
