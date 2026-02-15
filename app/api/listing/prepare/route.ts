@@ -7,10 +7,9 @@
  * Client should poll /api/listing/status for completion.
  *
  * ENFORCEMENT:
- * - Checks profiles.subscription_status === 'active' (or free tier with remaining quota)
- * - Checks profiles.listings_used_this_month < profiles.listings_limit
- * - Increments listings_used_this_month on job creation
- * - Rolls back on worker failure
+ * - Checks profiles.subscription_tier is valid (free/starter/pro/agency)
+ * - Counts listings with counted_for_usage=true this month against listings_per_month
+ * - Sets counted_for_usage=true on the listing when job is created
  */
 
 export const dynamic = 'force-dynamic';
@@ -70,14 +69,13 @@ export async function POST(request: NextRequest) {
 
     // ============================================
     // SUBSCRIPTION ENFORCEMENT
-    // Queries profiles table (where Stripe webhook writes)
     // ============================================
     if (!allowAdmin) {
       const effectiveUserId = listing.user_id;
 
       const { data: profile, error: profileError } = await admin
         .from('profiles')
-        .select('plan, subscription_status, listings_limit, listings_used_this_month')
+        .select('plan, subscription_tier, listings_per_month')
         .eq('id', effectiveUserId)
         .single();
 
@@ -88,27 +86,33 @@ export async function POST(request: NextRequest) {
         );
       }
 
-      // Check subscription is active (or free tier)
       const isFreeTier = profile.plan === 'free' || !profile.plan;
-      const isActive = profile.subscription_status === 'active';
+      const isActive = ['free', 'starter', 'pro', 'agency'].includes(profile.subscription_tier || 'free');
 
       if (!isFreeTier && !isActive) {
         return NextResponse.json(
           {
             success: false,
             error: 'Subscription is not active. Please update your payment method.',
-            subscriptionStatus: profile.subscription_status,
+            subscriptionTier: profile.subscription_tier,
           },
           { status: 402 }
         );
       }
 
       // Check monthly listing limit
-      const limit = profile.listings_limit || 3; // Default to free tier limit
-      const used = profile.listings_used_this_month || 0;
+      const limit = profile.listings_per_month || 3;
+      const startOfMonth = new Date();
+      startOfMonth.setDate(1);
+      startOfMonth.setHours(0, 0, 0, 0);
+      const { count: used } = await admin
+        .from('listings')
+        .select('id', { count: 'exact', head: true })
+        .eq('user_id', effectiveUserId)
+        .eq('counted_for_usage', true)
+        .gte('created_at', startOfMonth.toISOString());
 
-      // Only count against quota if this listing hasn't been counted before
-      if (!listing.counted_for_usage && used >= limit) {
+      if (!listing.counted_for_usage && (used || 0) >= limit) {
         return NextResponse.json(
           {
             success: false,
@@ -155,30 +159,17 @@ export async function POST(request: NextRequest) {
     }
 
     // ============================================
-    // 2. INCREMENT USAGE (only if not already counted)
+    // 2. MARK LISTING AS COUNTED FOR USAGE
     // ============================================
     if (!allowAdmin && !listing.counted_for_usage) {
       const { error: incrementError } = await admin
-        .from('profiles')
-        .update({
-          listings_used_this_month: (await admin
-            .from('profiles')
-            .select('listings_used_this_month')
-            .eq('id', listing.user_id)
-            .single()
-          ).data?.listings_used_this_month + 1 || 1,
-        })
-        .eq('id', listing.user_id);
-
-      if (incrementError) {
-        console.error('[Billing] Failed to increment usage:', incrementError.message);
-        // Don't block the job — log and continue
-      }
-
-      await admin
         .from('listings')
         .update({ counted_for_usage: true })
         .eq('id', listingId);
+
+      if (incrementError) {
+        console.error('[Billing] Failed to mark listing for usage:', incrementError.message);
+      }
     }
 
     // ============================================
@@ -200,7 +191,7 @@ export async function POST(request: NextRequest) {
     // ============================================
     // 4. TRIGGER WORKER
     // ============================================
-    const workerUrl = process.env.WORKER_URL || 'http://127.0.0.1:8787';
+  const workerUrl = process.env.WORKER_URL || 'http://127.0.0.1:8787';
     const effectiveUserId = allowAdmin ? listing.user_id : user?.id;
     let workerResponse: Response;
     try {
@@ -216,7 +207,6 @@ export async function POST(request: NextRequest) {
         }),
       });
     } catch (error: any) {
-      // ROLLBACK on worker fetch failure
       await admin
         .from('listings')
         .update({
@@ -237,7 +227,6 @@ export async function POST(request: NextRequest) {
     }
 
     if (!workerResponse.ok) {
-      // ROLLBACK on worker error
       await admin
         .from('listings')
         .update({

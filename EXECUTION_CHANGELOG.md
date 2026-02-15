@@ -343,3 +343,11 @@ Cloudflare Worker (queue handler)
   - Removed broken `new OpenAI()` creation inside batch loop
   - Preserved `gpt-4o-mini` for analysis (deliberate speed optimization)
   - Build now passes clean
+
+### Subscription Enforcement v2
+- **prepare/route.ts**: Refactored usage tracking
+  - Replaced profiles.listings_used_this_month counter with count of listings where counted_for_usage=true
+  - Uses subscription_tier instead of subscription_status for active check
+  - Counts actual listings table rows per month — no counter drift possible
+  - Simplified usage marking: just sets counted_for_usage=true on listings table
+  - Removed redundant ROLLBACK comments (rollback logic preserved)
