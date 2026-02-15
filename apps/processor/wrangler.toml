@@ -10,9 +10,19 @@ compatibility_flags = ["nodejs_compat"]
 [env.dev]
 vars = { ENVIRONMENT = "development" }
 
-############################
-# Staging Environment      #
-############################
+[[env.dev.queues.consumers]]
+queue = "snapr-processing-queue-dev"
+
+[[env.dev.kv_namespaces]]
+binding = "CHECKPOINTS"
+id = "45d1866418174829a071089c11b5e7bd"
+
+[[env.dev.queues.producers]]
+binding = "SNAPR_QUEUE"
+queue = "snapr-processing-queue-dev"
+
+
+
 
 [env.staging]
 vars = { ENVIRONMENT = "staging" }

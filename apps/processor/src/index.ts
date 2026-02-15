@@ -434,7 +434,6 @@ export default {
         
         await updateListingPreparationStatus(listingId, 'prepared', env);
         await updateJobStatus(jobId, 'completed', env);
-        await updateListingPreparationStatus(listingId, 'prepared', env);
         console.log(`[Worker] Job ${jobId} completed successfully`);
         message.ack();
         

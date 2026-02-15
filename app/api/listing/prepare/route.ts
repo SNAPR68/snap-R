@@ -5,6 +5,12 @@
  *
  * Creates a job, sets listing to preparing, triggers the worker, and returns jobId.
  * Client should poll /api/listing/status for completion.
+ *
+ * ENFORCEMENT:
+ * - Checks profiles.subscription_status === 'active' (or free tier with remaining quota)
+ * - Checks profiles.listings_used_this_month < profiles.listings_limit
+ * - Increments listings_used_this_month on job creation
+ * - Rolls back on worker failure
  */
 
 export const dynamic = 'force-dynamic';
@@ -44,12 +50,9 @@ export async function POST(request: NextRequest) {
     const admin = adminSupabase();
     const { data: listing, error: listingError } = await admin
       .from('listings')
-      .select('id, user_id, title, preparation_status')
+      .select('id, user_id, title, preparation_status, counted_for_usage')
       .eq('id', listingId)
       .single();
-
-    
-
 
     if (listingError || !listing) {
       return NextResponse.json(
@@ -65,28 +68,63 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Subscription enforcement
+    // ============================================
+    // SUBSCRIPTION ENFORCEMENT
+    // Queries profiles table (where Stripe webhook writes)
+    // ============================================
     if (!allowAdmin) {
-      const { data: subscription } = await admin
-        .from('subscriptions')
-        .select('monthly_listing_limit, listings_used_this_month, status')
-        .eq('user_id', listing.user_id)
+      const effectiveUserId = listing.user_id;
+
+      const { data: profile, error: profileError } = await admin
+        .from('profiles')
+        .select('plan, subscription_status, listings_limit, listings_used_this_month')
+        .eq('id', effectiveUserId)
         .single();
 
-      if (!subscription || subscription.status !== 'active') {
+      if (profileError || !profile) {
         return NextResponse.json(
-          { success: false, error: 'No active subscription' },
+          { success: false, error: 'User profile not found' },
           { status: 402 }
         );
       }
 
-      if (subscription.listings_used_this_month >= subscription.monthly_listing_limit) {
+      // Check subscription is active (or free tier)
+      const isFreeTier = profile.plan === 'free' || !profile.plan;
+      const isActive = profile.subscription_status === 'active';
+
+      if (!isFreeTier && !isActive) {
         return NextResponse.json(
-          { success: false, error: 'Monthly listing limit exceeded' },
+          {
+            success: false,
+            error: 'Subscription is not active. Please update your payment method.',
+            subscriptionStatus: profile.subscription_status,
+          },
+          { status: 402 }
+        );
+      }
+
+      // Check monthly listing limit
+      const limit = profile.listings_limit || 3; // Default to free tier limit
+      const used = profile.listings_used_this_month || 0;
+
+      // Only count against quota if this listing hasn't been counted before
+      if (!listing.counted_for_usage && used >= limit) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: `Monthly listing limit reached (${used}/${limit}). Upgrade your plan for more listings.`,
+            used,
+            limit,
+            plan: profile.plan,
+          },
           { status: 402 }
         );
       }
     }
+
+    // ============================================
+    // IDEMPOTENCY GUARD
+    // ============================================
     if (listing.preparation_status === 'preparing') {
       return NextResponse.json(
         { success: false, error: 'Listing is already being prepared' },
@@ -96,7 +134,9 @@ export async function POST(request: NextRequest) {
 
     const now = new Date().toISOString();
 
-    // 1. Create job record
+    // ============================================
+    // 1. CREATE JOB RECORD
+    // ============================================
     const { data: job, error: jobError } = await admin
       .from('jobs')
       .insert({
@@ -113,28 +153,37 @@ export async function POST(request: NextRequest) {
         { status: 500 }
       );
     }
-      // Increment usage after successful job creation
-      if (!allowAdmin) {
-        const { error: rpcError } = await admin.rpc('increment_subscription_usage', {
-          p_user_id: listing.user_id
-        });
 
-        if (rpcError) {
-          console.error('[Billing] Failed to increment usage:', rpcError.message);
-          return NextResponse.json(
-            { success: false, error: 'Failed to increment usage' },
-            { status: 500 }
-          );
-        }
+    // ============================================
+    // 2. INCREMENT USAGE (only if not already counted)
+    // ============================================
+    if (!allowAdmin && !listing.counted_for_usage) {
+      const { error: incrementError } = await admin
+        .from('profiles')
+        .update({
+          listings_used_this_month: (await admin
+            .from('profiles')
+            .select('listings_used_this_month')
+            .eq('id', listing.user_id)
+            .single()
+          ).data?.listings_used_this_month + 1 || 1,
+        })
+        .eq('id', listing.user_id);
 
-        await admin
-          .from('listings')
-          .update({ counted_for_usage: true })
-          .eq('id', listingId);
+      if (incrementError) {
+        console.error('[Billing] Failed to increment usage:', incrementError.message);
+        // Don't block the job — log and continue
       }
 
+      await admin
+        .from('listings')
+        .update({ counted_for_usage: true })
+        .eq('id', listingId);
+    }
 
-    // 2. Set listing preparation_status = 'preparing' and processing_started_at
+    // ============================================
+    // 3. SET LISTING STATUS → PREPARING
+    // ============================================
     const { error: updateError } = await admin
       .from('listings')
       .update({
@@ -146,10 +195,11 @@ export async function POST(request: NextRequest) {
 
     if (updateError) {
       console.error('[Prepare] Failed to update listing:', updateError.message);
-      // Continue anyway - job is created
     }
 
-    // 3. Call worker /process endpoint
+    // ============================================
+    // 4. TRIGGER WORKER
+    // ============================================
     const workerUrl = process.env.WORKER_URL || 'http://127.0.0.1:8787';
     const effectiveUserId = allowAdmin ? listing.user_id : user?.id;
     let workerResponse: Response;
@@ -166,6 +216,14 @@ export async function POST(request: NextRequest) {
         }),
       });
     } catch (error: any) {
+      // ROLLBACK on worker fetch failure
+      await admin
+        .from('listings')
+        .update({
+          preparation_status: null,
+          processing_started_at: null,
+        })
+        .eq('id', listingId);
       console.error('[Prepare] Worker fetch failed:', error?.message || error);
       return NextResponse.json(
         {
@@ -179,6 +237,14 @@ export async function POST(request: NextRequest) {
     }
 
     if (!workerResponse.ok) {
+      // ROLLBACK on worker error
+      await admin
+        .from('listings')
+        .update({
+          preparation_status: null,
+          processing_started_at: null,
+        })
+        .eq('id', listingId);
       const text = await workerResponse.text();
       return NextResponse.json(
         { success: false, error: `Worker error: ${text}`, jobId: job.id },
