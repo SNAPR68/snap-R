@@ -247,15 +247,15 @@ Return ONLY valid JSON (no markdown, no explanation):
 // ============================================
 // MAIN ANALYSIS FUNCTION
 // ============================================
-
-
 export async function analyzePhoto(
   photoId: string,
   photoUrl: string,
   client: OpenAI
 ): Promise<PhotoAnalysis> {
   console.log(`[PhotoIntelligence V3] Analyzing photo: ${photoId}`);
+  const startTime = Date.now();
   const analysisProvider = process.env.ANALYSIS_PROVIDER || 'openai';
+  const failOpen = process.env.AI_ANALYSIS_FAIL_OPEN === 'true';
 
   try {
     if (analysisProvider === 'replicate') {
@@ -271,8 +271,11 @@ export async function analyzePhoto(
       );
     }
 
-    let response;
+    if (!client) {
+      return getFailOpenAnalysis(photoId, photoUrl, 'Missing OpenAI client');
+    }
 
+    let response;
     for (let attempt = 0; attempt < 2; attempt += 1) {
       try {
         response = await client.chat.completions.create({
@@ -280,8 +283,7 @@ export async function analyzePhoto(
           messages: [
             {
               role: 'system',
-              content:
-                'You are an expert real estate photo analyst. Be precise and conservative - only suggest enhancements for actual problems.',
+              content: 'You are an expert real estate photo analyst. Be precise and conservative - only suggest enhancements for actual problems.'
             },
             {
               role: 'user',
@@ -301,19 +303,14 @@ export async function analyzePhoto(
           temperature: 0.1,
         });
         break;
-      } catch (error) {
-        const message =
-          error instanceof Error ? error.message : 'Unknown error';
-
-        if (
-          attempt === 0 &&
-          (message.includes('429') ||
-            message.toLowerCase().includes('rate limit'))
-        ) {
-          await new Promise((resolve) => setTimeout(resolve, 6000));
+      } catch (error: any) {
+        const message = error?.message || '';
+        if (attempt === 0 && (message.includes('429') || message.toLowerCase().includes('rate limit'))) {
+          const retryAfter = message.match(/retry_after[^0-9]*([0-9.]+)/i)?.[1];
+          const waitMs = retryAfter ? Number(retryAfter) * 1000 : 6000;
+          await new Promise(resolve => setTimeout(resolve, waitMs));
           continue;
         }
-
         throw error;
       }
     }
@@ -321,105 +318,46 @@ export async function analyzePhoto(
     if (!response) {
       throw new Error('No response from GPT-4 Vision');
     }
-
     const content = response.choices[0]?.message?.content;
-
     if (!content) {
-      throw new Error('No response content from GPT-4 Vision');
+      throw new Error('No response from GPT-4 Vision');
     }
 
+    // Parse the JSON response
     const cleanContent = content
-      .replace(/\`\`\`json\n?/g, '')
-      .replace(/\`\`\`\n?/g, '');
+      .replace(/```json\n?/g, '')
+      .replace(/```\n?/g, '')
+      .trim();
+    
+    let analysis;
+    try {
+      analysis = JSON.parse(cleanContent);
+    } catch (parseError) {
+      console.error('[PhotoIntelligence V3] JSON parse error:', cleanContent.substring(0, 200));
+      throw new Error('Failed to parse GPT-4 response as JSON');
+    }
+    
+    const duration = Date.now() - startTime;
+    console.log(`[PhotoIntelligence V3] Analysis complete in ${duration}ms`);
+    console.log(`[PhotoIntelligence V3] Type: ${analysis.photoType}`);
+    console.log(`[PhotoIntelligence V3] Valid: ${analysis.isValidPropertyPhoto}`);
+    console.log(`[PhotoIntelligence V3] Tools: ${analysis.suggestedTools?.join(', ') || 'none'}`);
+    console.log(`[PhotoIntelligence V3] Confidence: ${analysis.confidence}%`);
 
-    const parsed = JSON.parse(cleanContent);
+    // Validate and normalize the response
+    return normalizeAnalysis(photoId, photoUrl, analysis);
 
-    return normalizeAnalysis(photoId, photoUrl, parsed);
-  } catch (error) {
-    const message =
-      error instanceof Error ? error.message : 'Unknown error';
+  } catch (error: any) {
+    const duration = Date.now() - startTime;
+    console.error(`[PhotoIntelligence V3] Analysis failed after ${duration}ms:`, error.message);
 
-    return getFailOpenAnalysis(photoId, photoUrl, message);
+    if (failOpen || String(error?.message || '').includes('429')) {
+      return getFailOpenAnalysis(photoId, photoUrl, error.message);
+    }
+    // Return a conservative default analysis on failure
+    return getDefaultAnalysis(photoId, photoUrl, error.message);
   }
 }
-port async function analyzePhoto(
-  photoId: string,
-  photoUrl: string,
-  apiKey?: string
-): Promise<PhotoAnalysis> {
-  console.log(`[PhotoIntelligence V3] Analyzing photo: ${photoId}`);
-  const analysisProvider = process.env.ANALYSIS_PROVIDER || 'openai';
-
-  try {
-    if (analysisProvider === 'replicate') {
-      const analysis = await analyzeWithReplicate(photoUrl);
-      return normalizeAnalysis(photoId, photoUrl, analysis);
-    }
-
-    if (analysisProvider !== 'openai') {
-      return getFailOpenAnalysis(
-        photoId,
-        photoUrl,
-        `Analysis provider "${analysisProvider}" not implemented`
-      );
-    }
-
-    const client = new OpenAI({ apiKey: apiKey || process.env.OPENAI_API_KEY });
-
-    let response;
-
-    for (let attempt = 0; attempt < 2; attempt++) {
-      try {
-        response = await client.chat.completions.create({
-          model: 'gpt-4o-mini',
-          messages: [
-            {
-              role: 'system',
-              content: 'You are an expert real estate photo analyst.'
-            },
-            {
-              role: 'user',
-              content: [
-                { type: 'text', text: ANALYSIS_PROMPT },
-                {
-                  type: 'image_url',
-                  image_url: { url: photoUrl, detail: 'high' }
-                }
-              ]
-            }
-          ],
-          max_tokens: 2000,
-          temperature: 0.1
-        });
-        break;
-      } catch (err) {
-        if (attempt === 0) {
-          await new Promise(r => setTimeout(r, 6000));
-          continue;
-        }
-        throw err;
-      }
-    }
-
-    if (!response) throw new Error('No response from GPT-4 Vision');
-
-    const messageContent = response.choices[0]?.message?.content;
-    if (!messageContent) throw new Error('No response from GPT-4 Vision');
-
-    const cleanContent = messageContent
-      .replace(/\`\`\`json\n?/g, '')
-      .replace(/\`\`\`\n?/g, '');
-
-    const parsed = JSON.parse(cleanContent);
-    return normalizeAnalysis(photoId, photoUrl, parsed);
-
-  } catch (error) {
-    const message =
-      error instanceof Error ? error.message : 'Unknown error';
-    return getFailOpenAnalysis(photoId, photoUrl, message);
-  }
-}
-
 
 // ============================================
 // BATCH ANALYSIS WITH PROGRESS
@@ -429,12 +367,17 @@ export async function analyzePhotos(
   options: { 
     maxConcurrency?: number;
     batchDelayMs?: number;
-    apiKey?: string;
+    client?: OpenAI;
     onProgress?: (completed: number, total: number) => void;
   } = {}
 ): Promise<PhotoAnalysis[]> {
-  const { maxConcurrency = 3, batchDelayMs = 1200, onProgress, apiKey: providedApiKey } = options;
-  const apiKey = providedApiKey || process.env.OPENAI_API_KEY;
+  const { maxConcurrency = 3, batchDelayMs = 1200, onProgress } = options;
+
+  // Build OpenAI client: use provided client, or create from env
+  const openaiClient = options.client || new OpenAI({
+    apiKey: process.env.OPENAI_API_KEY!,
+  });
+
   const results: PhotoAnalysis[] = [];
   
   console.log(`[PhotoIntelligence V3] ═══════════════════════════════════════`);
@@ -446,16 +389,8 @@ export async function analyzePhotos(
 
   // Process in batches for rate limiting
   for (let i = 0; i < photos.length; i += maxConcurrency) {
-  if (!options?.apiKey) {
-    throw new Error("Missing OpenAI API key in analyzePhotos");
-  }
-
-  const client = new OpenAI({
-    apiKey: options.apiKey
-  });
-
     const batch = photos.slice(i, i + maxConcurrency);
-    const batchPromises = batch.map(photo => analyzePhoto(photo.id, photo.url, client));
+    const batchPromises = batch.map(photo => analyzePhoto(photo.id, photo.url, openaiClient));
     const batchResults = await Promise.all(batchPromises);
     results.push(...batchResults);
     
@@ -714,7 +649,7 @@ function getDefaultAnalysis(
     photoId,
     photoUrl,
     
-    // Default to valid but low confidence - don't skip on error
+    // Default to invalid on error — skip processing
     isValidPropertyPhoto: false,
     skipEnhancement: true,
     skipReason: `Analysis failed: ${errorReason}`,

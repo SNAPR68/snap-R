@@ -333,3 +333,13 @@ Cloudflare Worker (queue handler)
   Yes — Model stack v4: "Fix SAM calls to use schananas/grounded_sam."
 - Risk Level:
   Medium (changes mask generation for all masked tools)
+
+## Day 4 — Feb 15, 2026
+### Photo Intelligence Build Fix
+- **photo-intelligence.ts**: Complete file replacement
+  - Removed stale `apiKey` / `openai` references (lines 274-279) — function now correctly uses passed `client: OpenAI` parameter
+  - Removed `const client` redeclaration that shadowed function parameter
+  - Fixed `analyzePhotos` batch function: accepts `client?: OpenAI` instead of `apiKey?: string`
+  - Removed broken `new OpenAI()` creation inside batch loop
+  - Preserved `gpt-4o-mini` for analysis (deliberate speed optimization)
+  - Build now passes clean
