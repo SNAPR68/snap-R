@@ -277,3 +277,59 @@ Cloudflare Worker (queue handler)
 - Blueprint Alignme  Yes — pre-existing bug blocking production deploys.
 - Risk Level:
   Low (syntax fix only, no logic changes)
+
+-------------------------------------------------------------------------------
+## 2026-02-15 — Day 4: Model Stack Upgrade
+-------------------------------------------------------------------------------
+
+### 1. Kontext Dev → Pro
+- Description:
+  Changed default KONTEXT_MODEL from flux-kontext-dev to flux-kontext-pro.
+  Improves virtual twilight, staging, and all instruction-based tools.
+  Dev model produced dark/muddy results. Pro follows prompts accurately.
+- Files Modified:
+  lib/ai/providers/replicate.ts
+- Architectural Impact:
+  All Kontext-based tools upgraded: virtual-twilight, virtual-staging,
+  fire-fireplace, tv-screen, lights-on, pool-enhance, and Kontext
+  fallback paths for sky/lawn.
+- Blueprint Alignment:
+  Yes — Day 4-5 spec: Kontext Dev → Pro.
+- Risk Level:
+  Low (model swap, same API)
+
+### 2. Sky Replacement — SAM Mask + FLUX Fill Pro
+- Description:
+  Sky replacement now generates a pixel-perfect sky mask via Grounded SAM
+  then inpaintX Fill Pro. Only the sky region is touched —
+  house, trees, lawn physically cannot be modified. Falls back to
+  Kontext Pro if mask generation fails.
+- Files Modified:
+  lib/ai/providers/replicate.ts
+- Architectural Impact:
+  Mask-based sky replacement eliminates house/tree bleeding that
+  instruction-based approach caused. Same pattern as lawn repair.
+  Cost: ~$0.05/image (SAM $0.0014 + Fill Pro $0.05).
+- Blueprint Alignment:
+  Yes — Model stack v4: "Grounded SAM generates sky mask → FLUX Fill Pro
+  inpaints new sky into masked region."
+- Risk Level:
+  Medium (new pipeline path, Kontext fallback preserves reliability)
+
+### 3. SAM Model Priority Fix
+- Description:
+  Fixed getModelCandidates() in sam-masks.ts to prefer grounded_sam
+  (text-prompted) over sam-2-image (points-based). Points-based model
+  caused lawn hallucination — clicks random coordinates instead of
+  understanding "grass" semantically. Grounded SAM uses text prompts
+  like "grass. lawn." and "sky." for accurate segmentation.
+- Fileed:
+  lib/ai/providers/sam-masks.ts
+- Architectural Impact:
+  All mask-dependent tools (sky, lawn, declutter) now get accurate
+  text-prompted masks. Lawn repair pipeline was already wired correctly
+  but SAM was returning garbage masks due to wrong model priority.
+- Blueprint Alignment:
+  Yes — Model stack v4: "Fix SAM calls to use schananas/grounded_sam."
+- Risk Level:
+  Medium (changes mask generation for all masked tools)

@@ -6,7 +6,7 @@ const replicate = new Replicate({
   auth: process.env.REPLICATE_API_TOKEN!,
 });
 
-const KONTEXT_MODEL = process.env.AI_KONTEXT_MODEL || 'black-forest-labs/flux-kontext-dev';
+const KONTEXT_MODEL = process.env.AI_KONTEXT_MODEL || 'black-forest-labs/flux-kontext-pro';
 const REPLICATE_MIN_INTERVAL_MS = Number(process.env.REPLICATE_MIN_INTERVAL_MS || 12000);
 
 // ============================================
@@ -235,10 +235,29 @@ export async function skyReplacement(
     }
   }
 
-  // Use lower guidance for sky - we want subtle, natural replacement
+  // PRIMARY: SAM mask + FLUX Fill Pro (precise, only touches sky)
+  try {
+    const maskResult = await new SAMMasksClient().generateMask({ imageUrl, maskType: 'sky' });
+    if (maskResult.success && maskResult.maskUrl && maskResult.area >= 3) {
+      console.log('[Replicate] Sky mask generated (' + maskResult.area.toFixed(1) + '% area)');
+      const inpainted = await fluxFillInpaint(imageUrl, maskResult.maskUrl, prompt, {
+        guidance: 8,
+        steps: 35,
+      });
+      console.log('[Replicate] === SKY REPLACEMENT (MASKED) COMPLETE ===');
+      return inpainted;
+    }
+    if (maskResult.success) {
+      console.warn('[Replicate] Sky mask too small (' + maskResult.area.toFixed(1) + '%), falling back to Kontext');
+    }
+  } catch (maskError: any) {
+    console.warn('[Replicate] Sky mask failed, falling back to Kontext:', maskError?.message);
+  }
+
+  // FALLBACK: Kontext instruction-based (less precise but always works)
   const fluxOptions = withFluxDefaults({ guidance: 2.5, steps: 25 }, options);
   const result = await runFluxKontext(imageUrl, prompt, fluxOptions);
-  console.log('[Replicate] === SKY REPLACEMENT COMPLETE ===');
+  console.log('[Replicate] === SKY REPLACEMENT (KONTEXT FALLBACK) COMPLETE ===');
   return result;
 }
 

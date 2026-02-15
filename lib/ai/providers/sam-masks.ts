@@ -273,7 +273,7 @@ export class SAMMasksClient {
     ];
     const all = Array.from(new Set([...fromEnv, ...defaults]))
       .filter((model) => !SAMMasksClient.badModels.has(model))
-      .filter((model) => model !== 'schananas/grounded_sam')
+      // grounded_sam bare name kept — resolveModelVersion handles version lookup
       .filter((model) => model !== 'meta/sam-2-image:latest');
     const filtered = all.filter((model) => {
       if (model.includes('grounded_sam:')) return true;
@@ -284,12 +284,12 @@ export class SAMMasksClient {
     if (filtered.length === 0) {
       return defaults;
     }
-    // Prefer SAM2 points model first, then grounded_sam
+    // Prefer grounded_sam (text prompts) FIRST, then SAM2 points as fallback
     return filtered.sort((a, b) => {
+      if (a.includes('grounded_sam') && !b.includes('grounded_sam')) return -1;
+      if (b.includes('grounded_sam') && !a.includes('grounded_sam')) return 1;
       if (a.includes('sam-2-image') && !b.includes('sam-2-image')) return -1;
       if (b.includes('sam-2-image') && !a.includes('sam-2-image')) return 1;
-      if (a.includes('grounded_sam')) return -1;
-      if (b.includes('grounded_sam')) return 1;
       return 0;
     });
   }
