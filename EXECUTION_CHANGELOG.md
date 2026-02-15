@@ -160,3 +160,41 @@ Cloudflare Worker (queue handler)
 - Blueprint Alignment:
   Yes — clean state machine: preparing → prepared | failed.Level:
   Low
+
+-------------------------------------------------------------------------------
+## 2026-02-15 — Day 2: Cost Tracking Per Listing
+-------------------------------------------------------------------------------
+
+### 1. Cost Tracking Wired Into Worker Pipeline
+- Description:
+  Added per-tool cost tracking to apps/processor/src/index.ts.
+  Each runTool call now captures duration and cost in cents.
+  Analysis cost (OpenAI vision) tracked at 2¢ per photo.
+  TOOL_COST_CENTS map kept inline to avoid cross-environment
+  import issues in Cloudflare Worker context.
+- Files Modified:
+  apps/processor/src/index.ts
+- Architectural Impact:
+  Every job now records: totalCostCents, totalCostDollars,
+  per-tool breakdown with duration/success, photosProcessed,
+  toolsApplied. Failed jobs record partial costs with failed flag.
+- Blueprint Alignment:
+  Yes — Day 2 spec: wire cost-logger into runTool, accumulate
+  per-listing total, store in listing metadata.
+- Risk Level:
+  additive logging, no behavioral changes)
+
+### 2. Cost Summary Stored in jobs.metadata JSONB
+- Description:
+  After all photos processed, cost summary written to existing
+  jobs.metadata jsonb column. No new tables or columns needed.
+  Failure path also stores partial cost data.
+- Files Modified:
+  apps/processor/src/index.ts
+- Architectural Impact:
+  Enables cost visibility per job. Can query jobs table to see
+  actual processing costs vs revenue per listing.
+- Blueprint Alignment:
+  Yes — uses existing schema (jobs.metadata jsonb).
+- Risk Level:
+  Low

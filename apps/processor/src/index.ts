@@ -102,6 +102,91 @@ async function loadModules() {
   return cachedModules;
 }
 
+// ============================================
+// COST TRACKING
+// Per-tool cost estimates in cents (from cost-logger.ts)
+// Kept inline to avoid cross-environment import issues
+// in Cloudflare Worker context
+// ============================================
+
+const TOOL_COST_CENTS: Record<string, number> = {
+  'sky-replacement': 5,
+  'virtual-twilight': 6,
+  'lawn-repair': 4,
+  'declutter': 5,
+  'virtual-staging': 8,
+  'fire-fireplace': 4,
+  'tv-screen': 4,
+  'lights-on': 4,
+  'window-masking': 5,
+  'color-balance': 3,
+  'pool-enhance': 4,
+  'hdr': 3,
+  'auto-enhance': 3,
+  'perspective-correction': 3,
+  'lens-correction': 3,
+  'reflection-removal': 5,
+  'power-line-removal': 5,
+  'object-removal': 5,
+  'flash-fix': 3,
+  'snow-removal': 3,
+  'seasonal-spring': 3,
+  'seasonal-summer': 3,
+  'seasonal-fall': 3,
+};
+
+// Analysis cost: OpenAI vision call per photo
+const ANALYSIS_COST_CENTS = 2;
+
+function getToolCost(tool: string): number {
+  return TOOL_COST_CENTS[tool] ?? 5;
+}
+
+interface CostTracker {
+  toolCosts: Array<{ tool: string; costCents: number; durationMs: number; success: boolean }>;
+  analysisCostCents: number;
+  totalCostCents: number;
+  photosProcessed: number;
+  toolsApplied: number;
+}
+
+function createCostTracker(): CostTracker {
+  return {
+    toolCosts: [],
+    analysisCostCents: 0,
+    totalCostCents: 0,
+    photosProcessed: 0,
+    toolsApplied: 0,
+  };
+}
+
+function recordToolCost(tracker: CostTracker, tool: string, durationMs: number, success: boolean) {
+  const costCents = success ? getToolCost(tool) : 0;
+  tracker.toolCosts.push({ tool, costCents, durationMs, success });
+  tracker.totalCostCents += costCents;
+  if (success) tracker.toolsApplied++;
+}
+
+function recordAnalysisCost(tracker: CostTracker, photoCount: number) {
+  tracker.analysisCostCents = photoCount * ANALYSIS_COST_CENTS;
+  tracker.totalCostCents += tracker.analysisCostCents;
+}
+
+function getCostSummary(tracker: CostTracker) {
+  return {
+    totalCostCents: tracker.totalCostCents,
+    analysisCostCents: tracker.analysisCostCents,
+    toolCosts: tracker.toolCosts,
+    photosProcessed: tracker.photosProcessed,
+    toolsApplied: tracker.toolsApplied,
+    totalCostDollars: (tracker.totalCostCents / 100).toFixed(4),
+  };
+}
+
+// ============================================
+// TOOL ROUTING
+// ============================================
+
 function getPresetPrompt(tool: ToolId, presets: LockedPresets): string | undefined {
   switch (tool) {
     case 'sky-replacement':
@@ -328,6 +413,7 @@ export default {
     
     for (const message of batch.messages) {
       const { jobId, listingId, userId } = message.body;
+      const costTracker = createCostTracker();
       
       try {
         console.log(`[Worker] Processing job ${jobId} for listing ${listingId}`);
@@ -347,7 +433,7 @@ export default {
         }
         
         console.log(`[Worker] Analyzing photos with V2 engine`);
-        const photosForAnalysis = photos.map(p => ({ 
+        const photosForAnalysis = photos.map(p => ({
           id: p.id, 
           url: p.signedUrl || p.raw_url 
         }));
@@ -365,6 +451,9 @@ export default {
           apiKey: env.OPENAI_API_KEY
         });
         console.log(`[Worker] Analysis complete for ${analyses.length} photos`);
+
+        // Track analysis cost
+        recordAnalysisCost(costTracker, analyses.length);
 
         const analysesById = new Map<string, PhotoAnalysis>();
         for (const analysis of analyses) {
@@ -407,18 +496,25 @@ export default {
             continue;
           }
 
+          costTracker.photosProcessed++;
           let currentUrl = photo.signedUrl || photo.raw_url;
           let appliedAny = false;
 
           for (const tool of strategyForPhoto.toolOrder) {
+            const toolStart = Date.now();
             try {
               const outputUrl = await runTool(tool, currentUrl, presets, analysis);
+              const durationMs = Date.now() - toolStart;
               if (outputUrl) {
                 currentUrl = outputUrl;
                 appliedAny = true;
+                recordToolCost(costTracker, tool, durationMs, true);
+                console.log(`[Worker] Tool ${tool} completed in ${durationMs}ms (${getToolCost(tool)}¢)`);
               }
             } catch (toolError) {
-              console.error(`[Worker] Tool ${tool} failed for photo ${photo.id}:`, toolError);
+              const durationMs = Date.now() - toolStart;
+              recordToolCost(costTracker, tool, durationMs, false);
+              console.error(`[Worker] Tool ${tool} failed for photo ${photo.id} in ${durationMs}ms:`, toolError);
             }
           }
 
@@ -432,6 +528,25 @@ export default {
           }
         }
         
+        // Store cost summary in job metadata
+        const costSummary = getCostSummary(costTracker);
+        console.log(`[Worker] Job ${jobId} cost: ${costSummary.totalCostDollars} (${costSummary.toolsApplied} tools, ${costSummary.photosProcessed} photos)`);
+
+        try {
+          const { error: costError } = await supabase
+            .from('jobs')
+            .update({
+              metadata: costSummary,
+              updated_at: new Date().toISOString(),
+            })
+            .eq('id', jobId);
+          if (costError) {
+            console.error(`[Worker] Failed to store cost metadata for job ${jobId}:`, costError.message);
+          }
+        } catch (costWriteError) {
+          console.error(`[Worker] Cost metadata write exception:`, costWriteError);
+        }
+
         await updateListingPreparationStatus(listingId, 'prepared', env);
         await updateJobStatus(jobId, 'completed', env);
         console.log(`[Worker] Job ${jobId} completed successfully`);
@@ -439,6 +554,24 @@ export default {
         
       } catch (error) {
         console.error(`[Worker] Job ${jobId} failed:`, error);
+
+        // Store partial cost data even on failure
+        const costSummary = getCostSummary(costTracker);
+        if (costTracker.totalCostCents > 0) {
+          try {
+            const supabase = createSupabaseClient(env);
+            await supabase
+              .from('jobs')
+              .update({
+                metadata: { ...costSummary, failed: true },
+                updated_at: new Date().toISOString(),
+              })
+              .eq('id', jobId);
+          } catch (costWriteError) {
+            console.error(`[Worker] Failed cost write on error path:`, costWriteError);
+          }
+        }
+
         try {
           await updateJobStatus(jobId, 'failed', env);
           await updateListingPreparationStatus(listingId, 'failed', env);
@@ -460,7 +593,7 @@ export default {
     if (url.pathname === '/health' && request.method === 'GET') {
       return Response.json({ 
         status: "ok", 
-        version: "2.1.0-worker",
+        version: "2.2.0-worker",
         environment: env.ENVIRONMENT || 'unknown'
       });
     }
