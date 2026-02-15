@@ -12,6 +12,8 @@ vars = { ENVIRONMENT = "development" }
 
 [[env.dev.queues.consumers]]
 queue = "snapr-processing-queue-dev"
+max_retries = 3
+dead_letter_queue = "snapr-dead-letter-dev"
 
 [[env.dev.kv_namespaces]]
 binding = "CHECKPOINTS"
@@ -20,9 +22,6 @@ id = "45d1866418174829a071089c11b5e7bd"
 [[env.dev.queues.producers]]
 binding = "SNAPR_QUEUE"
 queue = "snapr-processing-queue-dev"
-
-
-
 
 [env.staging]
 vars = { ENVIRONMENT = "staging" }
@@ -36,6 +35,8 @@ vars = { ENVIRONMENT = "production" }
 
 [[env.production.queues.consumers]]
 queue = "snapr-processing-queue"
+max_retries = 3
+dead_letter_queue = "snapr-dead-letter"
 
 # KV namespace for checkpoints
 [[env.production.kv_namespaces]]

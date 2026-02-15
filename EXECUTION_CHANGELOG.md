@@ -198,3 +198,82 @@ Cloudflare Worker (queue handler)
   Yes — uses existing schema (jobs.metadata jsonb).
 - Risk Level:
   Low
+
+-------------------------------------------------------------------------------
+## 2026-02-15 — Day 3: Parallel Processing, Worker Hardening, Build Fix
+-------------------------------------------------------------------------------
+
+### 1. Parallel Photo Processing (Concurrency 8)
+- Description:
+  Restored parallel processing with PHOTO_CONCURRENCY=8. Photos process
+  in batches of 8 via Promise.all chunking. Each photo runs its tool chain
+  independently. Proven pattern from previous testing — hits 3min/5min
+  speed targets for 30/50 photo listings.
+- Files Modified:
+  apps/processor/src/index.ts
+- Architectural Impact:
+  30 photos: ~80s processing + ~60-90s analysis = under 3 minutes.
+  50 photos: ~140s processing + ~60-90s analysis = under 5 minutes.
+  Matches Fotello speed targets.
+- Blueprint Alignment:
+  Yes — restores architecture from feat/worker-transplant-v2.
+- Risk Level:
+  Medium (concurrency change, proven pattern)
+
+### 2. Always-Complete Job ics
+- Description:
+  Tool failures skip gracefully with logged reasons — never kill photo or job.
+  Per-photo result report: toolsApplied, toolsSkipped (with reasons),
+  processingMs. Only infrastructure failures trigger retries.
+- Files Modified:
+  apps/processor/src/index.ts
+- Architectural Impact:
+  Jobs always complete and mark listing as prepared. No more stuck jobs
+  from transient API failures. UI gets per-photo breakdown.
+- Blueprint Alignment:
+  Yes — Day 3 spec: always-complete semantics.
+- Risk Level:
+  Low
+
+### 3. Per-Tool Timeouts
+- Description:
+  withToolTimeout() wrapper using Promise.race. Twilight/staging: 60s,
+  sky/lawn/declutter: 45s, default: 30s. Timeout errors logged distinctly.
+- Files Modified:
+  apps/processor/src/index.ts
+- Architectural Impact:
+  Prevents single slow API call from blocking entire job.
+  Failed tools recorded with 0 cost, success=false.
+- Blueprint Alignment:
+  Yes — Day 3 spec: per-tool timeout.
+- Risk Level:
+  Low
+
+### 4. Infrastructure Retry with Exponentckoff
+- Description:
+  Retry tracking via CHECKPOINTS KV: retry:{jobId} key, 24h TTL.
+  Max 3 retries: 60s/120s/240s. After max retries: job marked failed
+  permanently, message ack'd (dead-letter). Tool failures never retry.
+- Files Modified:
+  apps/processor/src/index.ts
+  apps/processor/wrangler.toml (dead-letter queue config)
+- Architectural Impact:
+  Defense-in-depth: app-level retry + queue-level dead letter.
+  Infrastructure failures retry, tool failures skip gracefully.
+- Blueprint Alignment:
+  Yes — Day 3 spec: max 3 retries, exponential backoff.
+- Risk Level:
+  Low
+
+### 5. Fixed photo-intelligence.ts ESLint Parse Error
+- Description:
+  Fixed tagged template literals throughout photo-intelligence.ts.
+  console.log`...`) → console.log(`...`). Same for console.error.
+  This was causing Vercel build failures (ESLint parse error).
+- Files Modified:
+  lib/ai/listing-engine/photo-intelligence.ts
+- Architectural Impact:
+  Vercel builds now pass. ESLint can parse the file correctly.
+- Blueprint Alignme  Yes — pre-existing bug blocking production deploys.
+- Risk Level:
+  Low (syntax fix only, no logic changes)

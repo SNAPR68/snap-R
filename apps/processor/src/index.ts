@@ -103,6 +103,91 @@ async function loadModules() {
 }
 
 // ============================================
+// PARALLEL PROCESSING CONFIGURATION
+// ============================================
+
+const PHOTO_CONCURRENCY = 8; // Process 8 photos simultaneously
+// 30 photos / 8 = 4 batches × ~20s = ~80s processing
+// 50 photos / 8 = 7 batches × ~20s = ~140s processing
+// + analysis time (~60-90s) = total under 3min/5min targets
+
+// ============================================
+// RETRY & BACKOFF CONFIGURATION
+// Only for catastrophic infrastructure failures
+// (Supabase down, queue corruption)
+// Tool failures NEVER fail a job — tools skip gracefully
+// ============================================
+
+const MAX_JOB_RETRIES = 3;
+const BACKOFF_SECONDS = [60, 120, 240];
+
+async function getRetryCount(jobId: string, env: { CHECKPOINTS: KVNamespace }): Promise<number> {
+  try {
+    const val = await env.CHECKPOINTS.get(`retry:${jobId}`);
+    return val ? parseInt(val, 10) : 0;
+  } catch {
+    return 0;
+  }
+}
+
+async function incrementRetryCount(jobId: string, env: { CHECKPOINTS: KVNamespace }): Promise<number> {
+  const current = await getRetryCount(jobId, env);
+  const next = current + 1;
+  try {
+    await env.CHECKPOINTS.put(`retry:${jobId}`, String(next), { expirationTtl: 86400 });
+  } catch (e) {
+    console.error(`[Retry] Failed to store retry count for ${jobId}:`, e);
+  }
+  return next;
+}
+
+async function clearRetryCount(jobId: string, env: { CHECKPOINTS: KVNamespace }): Promise<void> {
+  try {
+    await env.CHECKPOINTS.delete(`retry:${jobId}`);
+  } catch {
+    // Best effort
+  }
+}
+
+function getBackoffSeconds(attempt: number): number {
+  return BACKOFF_SECONDS[Math.min(attempt, BACKOFF_SECONDS.length - 1)];
+}
+
+// ============================================
+// PER-TOOL TIMEOUT CONFIGURATION
+// ============================================
+
+const TOOL_TIMEOUT_MS: Record<string, number> = {
+  'virtual-twilight': 60000,
+  'virtual-staging': 60000,
+  'sky-replacement': 45000,
+  'lawn-repair': 45000,
+  'declutter': 45000,
+};
+
+const DEFAULT_TOOL_TIMEOUT_MS = 30000;
+
+function getToolTimeout(tool: string): number {
+  return TOOL_TIMEOUT_MS[tool] ?? DEFAULT_TOOL_TIMEOUT_MS;
+}
+
+async function withToolTimeout<T>(promise: Promise<T>, tool: string): Promise<T> {
+  const ms = getToolTimeout(tool);
+  let timeoutId: ReturnType<typeof setTimeout>;
+  const timeoutPromise = new Promise<never>((_, reject) => {
+    timeoutId = setTimeout(() => reject(new Error(`Tool ${tool} timeout after ${ms}ms`)), ms);
+  });
+  try {
+    const result = await Promise.race([promise, timeoutPromise]);
+    clearTimeout(timeoutId!);
+    return result;
+  } catch (error) {
+    clearTimeout(timeoutId!);
+    throw error;
+  }
+}
+
+// ============================================
 // COST TRACKING
 // Per-tool cost estimates in cents (from cost-logger.ts)
 // Kept inline to avoid cross-environment import issues
@@ -135,15 +220,21 @@ const TOOL_COST_CENTS: Record<string, number> = {
   'seasonal-fall': 3,
 };
 
-// Analysis cost: OpenAI vision call per photo
 const ANALYSIS_COST_CENTS = 2;
 
 function getToolCost(tool: string): number {
   return TOOL_COST_CENTS[tool] ?? 5;
 }
 
+interface ToolCostEntry {
+  tool: string;
+  costCents: number;
+  durationMs: number;
+  success: boolean;
+}
+
 interface CostTracker {
-  toolCosts: Array<{ tool: string; costCents: number; durationMs: number; success: boolean }>;
+  toolCosts: ToolCostEntry[];
   analysisCostCents: number;
   totalCostCents: number;
   photosProcessed: number;
@@ -181,6 +272,19 @@ function getCostSummary(tracker: CostTracker) {
     toolsApplied: tracker.toolsApplied,
     totalCostDollars: (tracker.totalCostCents / 100).toFixed(4),
   };
+}
+
+// ============================================
+// PHOTO PROCESSING RESULT (per-photo report)
+// ============================================
+
+interface PhotoResult {
+  photoId: string;
+  toolsApplied: string[];
+  toolsSkipped: Array<{ tool: string; reason: string }>;
+  enhanced: boolean;
+  storagePath: string | null;
+  processingMs: number;
 }
 
 // ============================================
@@ -324,48 +428,53 @@ async function runTool(
   const toolOptions = getToolStrength(tool, analysis);
   const { replicate } = await loadModules();
 
-  switch (tool) {
-    case 'sky-replacement':
-      return replicate.skyReplacement(imageUrl, presetPrompt, toolOptions);
-    case 'virtual-twilight':
-      return replicate.virtualTwilight(imageUrl, presetPrompt, toolOptions);
-    case 'lawn-repair':
-      return replicate.lawnRepair(imageUrl, presetPrompt, toolOptions);
-    case 'pool-enhance':
-      return replicate.poolEnhance(imageUrl, toolOptions);
-    case 'declutter':
-      return replicate.declutter(imageUrl, presetPrompt, toolOptions);
-    case 'virtual-staging':
-      return replicate.virtualStaging(imageUrl, presetPrompt, toolOptions);
-    case 'fire-fireplace':
-      return replicate.fireFireplace(imageUrl, presetPrompt, toolOptions);
-    case 'tv-screen':
-      return replicate.tvScreen(imageUrl, presetPrompt, toolOptions);
-    case 'lights-on':
-      return replicate.lightsOn(imageUrl, presetPrompt, toolOptions);
-    case 'window-masking':
-      return replicate.windowMasking(imageUrl, presetPrompt, toolOptions);
-    case 'color-balance':
-      return replicate.colorBalance(imageUrl, presetPrompt, toolOptions);
-    case 'hdr':
-      return replicate.hdr(imageUrl, toolOptions);
-    case 'auto-enhance':
-      return replicate.autoEnhance(imageUrl, toolOptions);
-    case 'perspective-correction':
-      return replicate.perspectiveCorrection(imageUrl, toolOptions);
-    case 'lens-correction':
-      return replicate.lensCorrection(imageUrl, toolOptions);
-    case 'reflection-removal':
-      return replicate.reflectionRemoval(imageUrl, toolOptions);
-    case 'power-line-removal':
-      return replicate.powerLineRemoval(imageUrl, toolOptions);
-    case 'object-removal':
-      return replicate.objectRemoval(imageUrl, presetPrompt, toolOptions);
-    case 'flash-fix':
-      return replicate.flashFix(imageUrl, toolOptions);
-    default:
-      return replicate.autoEnhance(imageUrl, toolOptions);
-  }
+  // Wrap every tool call in per-tool timeout
+  const execute = (): Promise<string> => {
+    switch (tool) {
+      case 'sky-replacement':
+        return replicate.skyReplacement(imageUrl, presetPrompt, toolOptions);
+      case 'virtual-twilight':
+        return replicate.virtualTwilight(imageUrl, presetPrompt, toolOptions);
+      case 'lawn-repair':
+        return replicate.lawnRepair(imageUrl, presetPrompt, toolOptions);
+      case 'pool-enhance':
+        return replicate.poolEnhance(imageUrl, toolOptions);
+      case 'declutter':
+        return replicate.declutter(imageUrl, presetPrompt, toolOptions);
+      case 'virtual-staging':
+        return replicate.virtualStaging(imageUrl, presetPrompt, toolOptions);
+      case 'fire-fireplace':
+        return replicate.fireFireplace(imageUrl, presetPrompt, toolOptions);
+      case 'tv-screen':
+        return replicate.tvScreen(imageUrl, presetPrompt, toolOptions);
+      case 'lights-on':
+        return replicate.lightsOn(imageUrl, presetPrompt, toolOptions);
+      case 'window-masking':
+        return replicate.windowMasking(imageUrl, presetPrompt, toolOptions);
+      case 'color-balance':
+        return replicate.colorBalance(imageUrl, presetPrompt, toolOptions);
+      case 'hdr':
+        return replicate.hdr(imageUrl, toolOptions);
+      case 'auto-enhance':
+        return replicate.autoEnhance(imageUrl, toolOptions);
+      case 'perspective-correction':
+        return replicate.perspectiveCorrection(imageUrl, toolOptions);
+      case 'lens-correction':
+        return replicate.lensCorrection(imageUrl, toolOptions);
+      case 'reflection-removal':
+        return replicate.reflectionRemoval(imageUrl, toolOptions);
+      case 'power-line-removal':
+        return replicate.powerLineRemoval(imageUrl, toolOptions);
+      case 'object-removal':
+        return replicate.objectRemoval(imageUrl, presetPrompt, toolOptions);
+      case 'flash-fix':
+        return replicate.flashFix(imageUrl, toolOptions);
+      default:
+        return replicate.autoEnhance(imageUrl, toolOptions);
+    }
+  };
+
+  return withToolTimeout(execute(), tool);
 }
 
 async function uploadToSupabase(
@@ -394,6 +503,96 @@ async function uploadToSupabase(
   return storagePath;
 }
 
+// ============================================
+// SINGLE PHOTO PROCESSOR
+// Processes one photo's entire tool chain.
+// Tool failures skip gracefully — never kill the photo or job.
+// ============================================
+
+async function processOnePhoto(
+  photo: { id: string; signedUrl?: string; raw_url: string },
+  photoIndex: number,
+  totalPhotos: number,
+  strategyForPhoto: { toolOrder: ToolId[]; skip?: boolean } | undefined,
+  analysis: PhotoAnalysis | undefined,
+  presets: LockedPresets,
+  costTracker: CostTracker,
+  supabase: any,
+  userId: string,
+  listingId: string,
+  env: Env
+): Promise<PhotoResult> {
+  const photoStart = Date.now();
+  const { updatePhotoStatus } = await loadWorkerDeps();
+
+  // Skip if no strategy or explicitly skipped
+  if (!strategyForPhoto || strategyForPhoto.skip) {
+    await updatePhotoStatus(photo.id, 'completed', null, env);
+    console.log(`[Worker] Photo ${photoIndex + 1}/${totalPhotos} skipped`);
+    return {
+      photoId: photo.id,
+      toolsApplied: [],
+      toolsSkipped: [],
+      enhanced: false,
+      storagePath: null,
+      processingMs: Date.now() - photoStart,
+    };
+  }
+
+  costTracker.photosProcessed++;
+  let currentUrl = photo.signedUrl || photo.raw_url;
+  let appliedAny = false;
+  const toolsApplied: string[] = [];
+  const toolsSkipped: Array<{ tool: string; reason: string }> = [];
+
+  for (const tool of strategyForPhoto.toolOrder) {
+    const toolStart = Date.now();
+    try {
+      const outputUrl = await runTool(tool, currentUrl, presets, analysis);
+      const durationMs = Date.now() - toolStart;
+      if (outputUrl) {
+        currentUrl = outputUrl;
+        appliedAny = true;
+        toolsApplied.push(tool);
+        recordToolCost(costTracker, tool, durationMs, true);
+        console.log(`[Worker] Photo ${photoIndex + 1}/${totalPhotos} tool ${tool} ✓ ${durationMs}ms (${getToolCost(tool)}¢)`);
+      }
+    } catch (toolError: any) {
+      const durationMs = Date.now() - toolStart;
+      const isTimeout = toolError?.message?.includes('timeout');
+      const reason = isTimeout ? `timeout (${getToolTimeout(tool)}ms)` : (toolError?.message || 'unknown error');
+      toolsSkipped.push({ tool, reason });
+      recordToolCost(costTracker, tool, durationMs, false);
+      console.warn(`[Worker] Photo ${photoIndex + 1}/${totalPhotos} tool ${tool} SKIPPED: ${reason}`);
+    }
+  }
+
+  let storagePath: string | null = null;
+  if (appliedAny && currentUrl !== (photo.signedUrl || photo.raw_url)) {
+    try {
+      storagePath = await uploadToSupabase(supabase, userId, listingId, photo.id, currentUrl);
+      await updatePhotoStatus(photo.id, 'completed', storagePath, env);
+    } catch (uploadError: any) {
+      console.error(`[Worker] Photo ${photoIndex + 1}/${totalPhotos} upload failed: ${uploadError?.message}`);
+      await updatePhotoStatus(photo.id, 'completed', null, env);
+    }
+  } else {
+    await updatePhotoStatus(photo.id, 'completed', null, env);
+  }
+
+  const processingMs = Date.now() - photoStart;
+  console.log(`[Worker] Photo ${photoIndex + 1}/${totalPhotos} done in ${processingMs}ms (${toolsApplied.length} applied, ${toolsSkipped.length} skipped)`);
+
+  return {
+    photoId: photo.id,
+    toolsApplied,
+    toolsSkipped,
+    enhanced: appliedAny,
+    storagePath,
+    processingMs,
+  };
+}
+
 export default {
   async queue(batch: MessageBatch<JobMessage>, env: Env): Promise<void> {
     // Update process.env with real values
@@ -414,9 +613,34 @@ export default {
     for (const message of batch.messages) {
       const { jobId, listingId, userId } = message.body;
       const costTracker = createCostTracker();
+      const jobStart = Date.now();
       
       try {
-        console.log(`[Worker] Processing job ${jobId} for listing ${listingId}`);
+        // Check retry count — only for infrastructure failures
+        const retryCount = await getRetryCount(jobId, env);
+        if (retryCount >= MAX_JOB_RETRIES) {
+          console.error(`[Worker] Job ${jobId} exceeded max retries (${retryCount}/${MAX_JOB_RETRIES}). Dead-lettering.`);
+          await updateJobStatus(jobId, 'failed', env);
+          await updateListingPreparationStatus(listingId, 'failed', env);
+          const supabase = createSupabaseClient(env);
+          await supabase
+            .from('jobs')
+            .update({
+              metadata: {
+                ...getCostSummary(costTracker),
+                failed: true,
+                failureReason: `Exceeded max retries (${MAX_JOB_RETRIES}) due to infrastructure errors`,
+                retryCount,
+              },
+              updated_at: new Date().toISOString(),
+            })
+            .eq('id', jobId);
+          await clearRetryCount(jobId, env);
+          message.ack();
+          continue;
+        }
+
+        console.log(`[Worker] Processing job ${jobId} for listing ${listingId} (attempt ${retryCount + 1})`);
         await updateJobStatus(jobId, 'processing', env);
         
         const checkpoint = await getCheckpoint(jobId, env);
@@ -432,25 +656,31 @@ export default {
           throw new Error(`No photos found for listing ${listingId}`);
         }
         
-        console.log(`[Worker] Analyzing photos with V2 engine`);
+        // =============================================
+        // PHASE 1: ANALYSIS (parallel, concurrency 8)
+        // =============================================
+        const analysisStart = Date.now();
+        console.log(`[Worker] Analyzing ${photos.length} photos with V2 engine (concurrency: 8)`);
         const photosForAnalysis = photos.map(p => ({
           id: p.id, 
           url: p.signedUrl || p.raw_url 
         }));
         
+        // Always use concurrency 8 for analysis — GPT-4o handles it fine
         const analysisConcurrency = env.ANALYSIS_CONCURRENCY
           ? Number(env.ANALYSIS_CONCURRENCY)
-          : (env.ENVIRONMENT === 'production' ? 8 : 2);
+          : 8;
         const analysisBatchDelayMs = env.ANALYSIS_BATCH_DELAY_MS
           ? Number(env.ANALYSIS_BATCH_DELAY_MS)
-          : (env.ENVIRONMENT === 'production' ? 300 : 1500);
+          : 300;
 
         const analyses = await analyzePhotos(photosForAnalysis, {
-          maxConcurrency: Number.isFinite(analysisConcurrency) ? analysisConcurrency : 2,
-          batchDelayMs: Number.isFinite(analysisBatchDelayMs) ? analysisBatchDelayMs : 1500,
+          maxConcurrency: Number.isFinite(analysisConcurrency) ? analysisConcurrency : 8,
+          batchDelayMs: Number.isFinite(analysisBatchDelayMs) ? analysisBatchDelayMs : 300,
           apiKey: env.OPENAI_API_KEY
         });
-        console.log(`[Worker] Analysis complete for ${analyses.length} photos`);
+        const analysisMs = Date.now() - analysisStart;
+        console.log(`[Worker] Analysis complete: ${analyses.length} photos in ${(analysisMs / 1000).toFixed(1)}s`);
 
         // Track analysis cost
         recordAnalysisCost(costTracker, analyses.length);
@@ -485,77 +715,112 @@ export default {
         
         const supabase = createSupabaseClient(env);
 
-        console.log(`[Worker] Processing ${photos.length} photos`);
-        for (let i = 0; i < photos.length; i++) {
-          const photo = photos[i];
-          const strategyForPhoto = strategy.photoStrategies.find(s => s.photoId === photo.id);
-          const analysis = analysesById.get(photo.id);
-          if (!strategyForPhoto || strategyForPhoto.skip) {
-            await updatePhotoStatus(photo.id, 'completed', null, env);
-            console.log(`[Worker] Photo ${i + 1}/${photos.length} skipped`);
-            continue;
-          }
+        // =============================================
+        // PHASE 2: PROCESSING (parallel, concurrency 8)
+        // Process photos in batches of PHOTO_CONCURRENCY
+        // Each photo applies its tools sequentially
+        // Tool failures skip gracefully — job ALWAYS completes
+        // =============================================
+        const processingStart = Date.now();
+        console.log(`[Worker] Processing ${photos.length} photos with concurrency: ${PHOTO_CONCURRENCY}`);
 
-          costTracker.photosProcessed++;
-          let currentUrl = photo.signedUrl || photo.raw_url;
-          let appliedAny = false;
+        const allPhotoResults: PhotoResult[] = [];
 
-          for (const tool of strategyForPhoto.toolOrder) {
-            const toolStart = Date.now();
-            try {
-              const outputUrl = await runTool(tool, currentUrl, presets, analysis);
-              const durationMs = Date.now() - toolStart;
-              if (outputUrl) {
-                currentUrl = outputUrl;
-                appliedAny = true;
-                recordToolCost(costTracker, tool, durationMs, true);
-                console.log(`[Worker] Tool ${tool} completed in ${durationMs}ms (${getToolCost(tool)}¢)`);
-              }
-            } catch (toolError) {
-              const durationMs = Date.now() - toolStart;
-              recordToolCost(costTracker, tool, durationMs, false);
-              console.error(`[Worker] Tool ${tool} failed for photo ${photo.id} in ${durationMs}ms:`, toolError);
-            }
-          }
+        for (let batchStart = 0; batchStart < photos.length; batchStart += PHOTO_CONCURRENCY) {
+          const batchEnd = Math.min(batchStart + PHOTO_CONCURRENCY, photos.length);
+          const batch = photos.slice(batchStart, batchEnd);
+          const batchNum = Math.floor(batchStart / PHOTO_CONCURRENCY) + 1;
+          const totalBatches = Math.ceil(photos.length / PHOTO_CONCURRENCY);
 
-          if (appliedAny && currentUrl !== (photo.signedUrl || photo.raw_url)) {
-            const storagePath = await uploadToSupabase(supabase, userId, listingId, photo.id, currentUrl);
-            await updatePhotoStatus(photo.id, 'completed', storagePath, env);
-            console.log(`[Worker] Photo ${i + 1}/${photos.length} completed`);
-          } else {
-            await updatePhotoStatus(photo.id, 'completed', null, env);
-            console.log(`[Worker] Photo ${i + 1}/${photos.length} completed (no changes)`);
-          }
+          console.log(`[Worker] Batch ${batchNum}/${totalBatches}: photos ${batchStart + 1}-${batchEnd}`);
+
+          const batchResults = await Promise.all(
+            batch.map((photo, idx) => {
+              const globalIdx = batchStart + idx;
+              const strategyForPhoto = strategy.photoStrategies.find(
+                (s: any) => s.photoId === photo.id
+              );
+              const analysis = analysesById.get(photo.id);
+
+              return processOnePhoto(
+                photo,
+                globalIdx,
+                photos.length,
+                strategyForPhoto,
+                analysis,
+                presets,
+                costTracker,
+                supabase,
+                userId,
+                listingId,
+                env
+              );
+            })
+          );
+
+          allPhotoResults.push(...batchResults);
         }
-        
-        // Store cost summary in job metadata
+
+        const processingMs = Date.now() - processingStart;
+        const totalMs = Date.now() - jobStart;
+        const enhancedCount = allPhotoResults.filter(r => r.enhanced).length;
+        const skippedToolsTotal = allPhotoResults.reduce((sum, r) => sum + r.toolsSkipped.length, 0);
+
+        console.log(`[Worker] ═══════════════════════════════════════`);
+        console.log(`[Worker] JOB COMPLETE: ${jobId}`);
+        console.log(`[Worker] Photos: ${photos.length} total, ${enhancedCount} enhanced`);
+        console.log(`[Worker] Analysis: ${(analysisMs / 1000).toFixed(1)}s`);
+        console.log(`[Worker] Processing: ${(processingMs / 1000).toFixed(1)}s`);
+        console.log(`[Worker] Total: ${(totalMs / 1000).toFixed(1)}s`);
+        if (skippedToolsTotal > 0) {
+          console.log(`[Worker] Skipped tools: ${skippedToolsTotal} (see photo details)`);
+        }
+        console.log(`[Worker] ═══════════════════════════════════════`);
+
+        // Store cost summary + photo results in job metadata
         const costSummary = getCostSummary(costTracker);
-        console.log(`[Worker] Job ${jobId} cost: ${costSummary.totalCostDollars} (${costSummary.toolsApplied} tools, ${costSummary.photosProcessed} photos)`);
+        const jobMetadata = {
+          ...costSummary,
+          totalDurationMs: totalMs,
+          analysisDurationMs: analysisMs,
+          processingDurationMs: processingMs,
+          photoResults: allPhotoResults.map(r => ({
+            photoId: r.photoId,
+            enhanced: r.enhanced,
+            toolsApplied: r.toolsApplied,
+            toolsSkipped: r.toolsSkipped,
+            processingMs: r.processingMs,
+          })),
+        };
 
         try {
-          const { error: costError } = await supabase
+          await supabase
             .from('jobs')
             .update({
-              metadata: costSummary,
+              metadata: jobMetadata,
               updated_at: new Date().toISOString(),
             })
             .eq('id', jobId);
-          if (costError) {
-            console.error(`[Worker] Failed to store cost metadata for job ${jobId}:`, costError.message);
-          }
         } catch (costWriteError) {
           console.error(`[Worker] Cost metadata write exception:`, costWriteError);
         }
 
+        // Job ALWAYS completes — tool failures are logged, not fatal
         await updateListingPreparationStatus(listingId, 'prepared', env);
         await updateJobStatus(jobId, 'completed', env);
-        console.log(`[Worker] Job ${jobId} completed successfully`);
+        await clearRetryCount(jobId, env);
+        console.log(`[Worker] Job ${jobId} completed — cost: $${costSummary.totalCostDollars}`);
         message.ack();
         
       } catch (error) {
-        console.error(`[Worker] Job ${jobId} failed:`, error);
+        // This catch is ONLY for infrastructure failures:
+        // - Supabase unreachable
+        // - Can't fetch photos
+        // - All analyses failed (no valid photos at all)
+        // Tool-level failures are handled inside processOnePhoto and never reach here.
+        console.error(`[Worker] Job ${jobId} INFRASTRUCTURE ERROR:`, error);
 
-        // Store partial cost data even on failure
+        // Store partial cost data
         const costSummary = getCostSummary(costTracker);
         if (costTracker.totalCostCents > 0) {
           try {
@@ -563,7 +828,7 @@ export default {
             await supabase
               .from('jobs')
               .update({
-                metadata: { ...costSummary, failed: true },
+                metadata: { ...costSummary, failed: true, error: String(error) },
                 updated_at: new Date().toISOString(),
               })
               .eq('id', jobId);
@@ -572,16 +837,27 @@ export default {
           }
         }
 
-        try {
-          await updateJobStatus(jobId, 'failed', env);
-          await updateListingPreparationStatus(listingId, 'failed', env);
-        } catch (updateError) {
-          console.error(`[Worker] Failed to mark job ${jobId} as failed:`, updateError);
-        }
-        try {
-          message.retry({ delaySeconds: 60 });
-        } catch (retryError) {
-          console.error(`[Worker] Failed to retry job ${jobId}:`, retryError);
+        // Retry with exponential backoff for infrastructure failures
+        const retryCount = await incrementRetryCount(jobId, env);
+        if (retryCount >= MAX_JOB_RETRIES) {
+          console.error(`[Worker] Job ${jobId} permanently failed after ${retryCount} infrastructure retries.`);
+          try {
+            await updateJobStatus(jobId, 'failed', env);
+            await updateListingPreparationStatus(listingId, 'failed', env);
+          } catch (updateError) {
+            console.error(`[Worker] Failed to mark job as failed:`, updateError);
+          }
+          message.ack();
+        } else {
+          const backoffSeconds = getBackoffSeconds(retryCount - 1);
+          console.log(`[Worker] Infrastructure retry ${retryCount}/${MAX_JOB_RETRIES} in ${backoffSeconds}s`);
+          try {
+            await updateJobStatus(jobId, 'queued', env);
+            message.retry({ delaySeconds: backoffSeconds });
+          } catch (retryError) {
+            console.error(`[Worker] Failed to retry:`, retryError);
+            message.ack();
+          }
         }
       }
     }
@@ -593,7 +869,8 @@ export default {
     if (url.pathname === '/health' && request.method === 'GET') {
       return Response.json({ 
         status: "ok", 
-        version: "2.2.0-worker",
+        version: "3.0.0-worker",
+        features: ["parallel-processing", "per-tool-timeout", "retry-backoff", "cost-tracking"],
         environment: env.ENVIRONMENT || 'unknown'
       });
     }
