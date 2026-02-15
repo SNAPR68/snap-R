@@ -1,9 +1,10 @@
 import OpenAI from 'openai';
 import { logApiCost } from '@/lib/cost-logger';
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+function getOpenAIClient(client?: OpenAI): OpenAI {
+  if (client) return client;
+  return new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+}
 
 export interface ImageAnalysis {
   sky_replacement_needed: boolean;
@@ -21,12 +22,13 @@ export interface ImageAnalysis {
   recommended_enhancements: string[];
 }
 
-export async function analyzeImage(imageUrl: string): Promise<ImageAnalysis> {
+export async function analyzeImage(imageUrl: string, client?: OpenAI): Promise<ImageAnalysis> {
   console.log('[Vision] Analyzing image...');
   const startTime = Date.now();
   let success = true;
   let errorMessage: string | undefined;
-  
+  const openai = getOpenAIClient(client);
+
   try {
     const response = await openai.chat.completions.create({
       model: 'gpt-4o',
@@ -125,13 +127,15 @@ Be accurate and concise. Only flag issues that are clearly visible.`
 export async function scoreEnhancementQuality(
   originalUrl: string,
   enhancedUrl: string,
-  enhancementType: string
+  enhancementType: string,
+  client?: OpenAI
 ): Promise<{ score: number; issues: string[]; passed: boolean }> {
   console.log('[QC] Scoring enhancement quality...');
   const startTime = Date.now();
   let success = true;
   let errorMessage: string | undefined;
-  
+  const openai = getOpenAIClient(client);
+
   try {
     const response = await openai.chat.completions.create({
       model: 'gpt-4o',
@@ -201,12 +205,14 @@ Check for:
 export async function checkStructuralIntegrity(
   originalUrl: string,
   enhancedUrl: string,
-  enhancementType: string
+  enhancementType: string,
+  client?: OpenAI
 ): Promise<{ passed: boolean; issues: string[] }> {
   console.log('[QC] Checking structural integrity...');
   const startTime = Date.now();
   let success = true;
   let errorMessage: string | undefined;
+  const openai = getOpenAIClient(client);
 
   try {
     const response = await openai.chat.completions.create({

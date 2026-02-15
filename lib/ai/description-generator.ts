@@ -1,6 +1,9 @@
 import OpenAI from 'openai';
 
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+function getOpenAIClient(client?: OpenAI): OpenAI {
+  if (client) return client;
+  return new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+}
 
 export type DescriptionTone = 'professional' | 'luxury' | 'casual' | 'first_time_buyer';
 export type DescriptionLength = 'short' | 'medium' | 'full';
@@ -92,7 +95,7 @@ RESPOND IN THIS EXACT JSON FORMAT:
   ]
 }`;
 
-export async function analyzePhotosForDescription(photoUrls: string[]): Promise<{
+export async function analyzePhotosForDescription(photoUrls: string[], client?: OpenAI): Promise<{
   features: PropertyFeatures;
   analysis: PhotoAnalysisSummary[];
   style: string;
@@ -118,6 +121,7 @@ export async function analyzePhotosForDescription(photoUrls: string[]): Promise<
       image_url: { url, detail: 'low' as const } // Use low detail for faster/cheaper analysis
     }));
 
+    const openai = getOpenAIClient(client);
     const response = await openai.chat.completions.create({
       model: 'gpt-4o',
       messages: [{
@@ -183,12 +187,13 @@ export async function generateListingDescription(
     propertyType?: string;
   },
   tone: DescriptionTone = 'professional',
-  length: DescriptionLength = 'medium'
+  length: DescriptionLength = 'medium',
+  client?: OpenAI
 ): Promise<GeneratedDescription> {
   console.log(`[Description Generator] Generating ${tone} ${length} description...`);
-  
+
   // First, analyze photos
-  const photoAnalysis = await analyzePhotosForDescription(photoUrls);
+  const photoAnalysis = await analyzePhotosForDescription(photoUrls, client);
   
   // Merge listing data with detected features
   const features: PropertyFeatures = {
@@ -243,6 +248,7 @@ RESPOND IN THIS EXACT JSON FORMAT:
 }`;
 
   try {
+    const openai = getOpenAIClient(client);
     const response = await openai.chat.completions.create({
       model: 'gpt-4o',
       messages: [{
@@ -254,7 +260,7 @@ RESPOND IN THIS EXACT JSON FORMAT:
     });
 
     const content = response.choices[0]?.message?.content || '';
-    
+
     // Parse JSON
     let jsonStr = content.trim();
     const codeBlockMatch = jsonStr.match(/```(?:json)?\s*([\s\S]*?)```/);
@@ -268,7 +274,7 @@ RESPOND IN THIS EXACT JSON FORMAT:
     const result = JSON.parse(jsonStr);
 
     const description = result.description || '';
-    
+
     console.log(`[Description Generator] Generated ${description.length} chars, ${description.split(/\s+/).length} words`);
 
     return {
@@ -315,7 +321,8 @@ export async function regenerateDescription(
     propertyType?: string;
   },
   tone: DescriptionTone = 'professional',
-  length: DescriptionLength = 'medium'
+  length: DescriptionLength = 'medium',
+  client?: OpenAI
 ): Promise<GeneratedDescription> {
   const features: PropertyFeatures = {
     bedrooms: listingData.beds,
@@ -360,6 +367,8 @@ RESPOND IN THIS EXACT JSON FORMAT:
   "seoKeywords": ["keyword1", "keyword2", "keyword3", "keyword4", "keyword5"]
 }`;
 
+  const openai = getOpenAIClient(client);
+
   const response = await openai.chat.completions.create({
     model: 'gpt-4o',
     messages: [{ role: 'user', content: descriptionPrompt }],
@@ -368,7 +377,7 @@ RESPOND IN THIS EXACT JSON FORMAT:
   });
 
   const content = response.choices[0]?.message?.content || '';
-  
+
   let jsonStr = content.trim();
   const codeBlockMatch = jsonStr.match(/```(?:json)?\s*([\s\S]*?)```/);
   if (codeBlockMatch) {

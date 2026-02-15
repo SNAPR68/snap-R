@@ -351,3 +351,36 @@ Cloudflare Worker (queue handler)
   - Counts actual listings table rows per month — no counter drift possible
   - Simplified usage marking: just sets counted_for_usage=true on listings table
   - Removed redundant ROLLBACK comments (rollback logic preserved)
+
+-------------------------------------------------------------------------------
+## 2026-02-15 — Day 5: DI Hardening Complete
+-------------------------------------------------------------------------------
+
+### 1. Zero Global OpenAI Instances — Full Codebase
+- Description:
+  Replaced all module-level `const openai = new OpenAI()` with lazy
+  `getOpenAIClient(client?: OpenAI)` factory pattern across 11 files.
+  Every AI function now accepts an optional `client` parameter.
+  Worker explicitly creates OpenAI client from `env.OPENAI_API_KEY`
+  and passes via DI — was previously passing `apiKey` which was
+  silently ignored.
+- Files Modified:
+  apps/processor/src/index.ts
+  lib/ai/listing-engine/photo-intelligence.ts
+  lib/ai/listing-engine/quality-validator.ts
+  lib/ai/providers/openai-vision.ts
+  lib/ai/providers/gpt-copy.ts
+  lib/ai/photo-culler.ts
+  lib/ai/description-generator.ts
+  lib/listing-intelligence/analyzer.ts
+  app/api/ai/generate-caption/route.ts
+  app/api/translate/route.ts
+  app/api/email-template/route.ts
+- Architectural Impact:
+  Blueprint Section 7 (all 7 hardening goals) now complete.
+  Blueprint Section 11 (all architectural guardrails) enforced.
+  Zero global OpenAI instances remain anywhere in the codebase.
+- Blueprint Alignment:
+  Yes — Phase 1 Hardening fully satisfied.
+- Risk Level:
+  Low (DI refactor only, no behavioral changes)

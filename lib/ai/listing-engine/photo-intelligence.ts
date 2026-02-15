@@ -13,17 +13,21 @@
  */
 
 import OpenAI from 'openai';
-import { 
-  PhotoAnalysis, 
-  PhotoType, 
-  SkyQuality, 
-  LawnQuality, 
-  LightingQuality, 
-  ClutterLevel, 
-  Priority 
+import {
+  PhotoAnalysis,
+  PhotoType,
+  SkyQuality,
+  LawnQuality,
+  LightingQuality,
+  ClutterLevel,
+  Priority
 } from './types';
 import { ToolId } from '../router';
 
+function getOpenAIClient(client?: OpenAI): OpenAI {
+  if (client) return client;
+  return new OpenAI({ apiKey: process.env.OPENAI_API_KEY! });
+}
 
 const ANALYSIS_VERSION = '3.0.0';
 
@@ -374,9 +378,7 @@ export async function analyzePhotos(
   const { maxConcurrency = 3, batchDelayMs = 1200, onProgress } = options;
 
   // Build OpenAI client: use provided client, or create from env
-  const openaiClient = options.client || new OpenAI({
-    apiKey: process.env.OPENAI_API_KEY!,
-  });
+  const openaiClient = getOpenAIClient(options.client);
 
   const results: PhotoAnalysis[] = [];
   

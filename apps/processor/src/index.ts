@@ -674,10 +674,14 @@ export default {
           ? Number(env.ANALYSIS_BATCH_DELAY_MS)
           : 300;
 
+        // Create OpenAI client from worker env — explicit DI, no process.env fallback
+        const { default: OpenAI } = await import('openai');
+        const openaiClient = new OpenAI({ apiKey: env.OPENAI_API_KEY });
+
         const analyses = await analyzePhotos(photosForAnalysis, {
           maxConcurrency: Number.isFinite(analysisConcurrency) ? analysisConcurrency : 8,
           batchDelayMs: Number.isFinite(analysisBatchDelayMs) ? analysisBatchDelayMs : 300,
-          apiKey: env.OPENAI_API_KEY
+          client: openaiClient,
         });
         const analysisMs = Date.now() - analysisStart;
         console.log(`[Worker] Analysis complete: ${analyses.length} photos in ${(analysisMs / 1000).toFixed(1)}s`);

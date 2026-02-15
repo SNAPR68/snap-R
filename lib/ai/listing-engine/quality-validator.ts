@@ -7,9 +7,10 @@
 import OpenAI from 'openai';
 import { PhotoProcessingResult, ValidationResult, ValidationIssue } from './types';
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY!,
-});
+function getOpenAIClient(client?: OpenAI): OpenAI {
+  if (client) return client;
+  return new OpenAI({ apiKey: process.env.OPENAI_API_KEY! });
+}
 
 // ============================================
 // CONFIGURATION
@@ -68,7 +69,8 @@ Where:
 // ============================================
 
 export async function validateResult(
-  result: PhotoProcessingResult
+  result: PhotoProcessingResult,
+  client?: OpenAI
 ): Promise<ValidationResult> {
   // Skip validation for failed results
   if (!result.success || !result.enhancedUrl) {
@@ -99,6 +101,8 @@ export async function validateResult(
   
   console.log(`[Validator] Validating photo ${result.photoId}`);
   
+  const openai = getOpenAIClient(client);
+
   try {
     const response = await openai.chat.completions.create({
       model: 'gpt-4o',
@@ -153,17 +157,18 @@ export async function validateResult(
 // ============================================
 
 export async function validateResults(
-  results: PhotoProcessingResult[]
+  results: PhotoProcessingResult[],
+  client?: OpenAI
 ): Promise<ValidationResult[]> {
   console.log(`[Validator] Validating ${results.length} photos`);
   const startTime = Date.now();
-  
+
   const validations: ValidationResult[] = [];
-  
+
   // Process in batches
   for (let i = 0; i < results.length; i += CONFIG.maxConcurrency) {
     const batch = results.slice(i, i + CONFIG.maxConcurrency);
-    const batchPromises = batch.map(result => validateResult(result));
+    const batchPromises = batch.map(result => validateResult(result, client));
     const batchValidations = await Promise.all(batchPromises);
     validations.push(...batchValidations);
     

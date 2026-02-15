@@ -1,8 +1,9 @@
 import OpenAI from 'openai'
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY
-})
+function getOpenAIClient(client?: OpenAI): OpenAI {
+  if (client) return client
+  return new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
+}
 
 export interface PropertyDetails {
   address?: string
@@ -33,7 +34,8 @@ export interface GenerationResult {
 
 export async function generateCaption(
   property: PropertyDetails,
-  options: CaptionOptions
+  options: CaptionOptions,
+  client?: OpenAI
 ): Promise<GenerationResult> {
   const { platform, tone, includeEmojis = true, includeCallToAction = true, maxLength = 2000, contentType } = options
 
@@ -160,6 +162,8 @@ ${includeEmojis ? '7. Use 4-6 relevant emojis: 🏡 🔑 ✨ 📍 💰 🏠 🛏
 
 Generate the caption now:`
 
+  const openai = getOpenAIClient(client)
+
   const response = await openai.chat.completions.create({
     model: 'gpt-4o-mini',
     messages: [{ role: 'user', content: prompt }],
@@ -177,7 +181,8 @@ Generate the caption now:`
 export async function generateHashtags(
   property: PropertyDetails,
   platform: string = 'instagram',
-  count: number = 20
+  count: number = 20,
+  client?: OpenAI
 ): Promise<GenerationResult> {
   const featuresText = Array.isArray(property.features) 
     ? property.features.join(', ')
@@ -198,6 +203,8 @@ Requirements:
 - Just the hashtags
 
 Generate exactly ${count} hashtags.`
+
+  const openai = getOpenAIClient(client)
 
   const response = await openai.chat.completions.create({
     model: 'gpt-4o-mini',
@@ -220,7 +227,8 @@ export interface DescriptionOptions {
 
 export async function generateDescription(
   property: PropertyDetails,
-  options: DescriptionOptions
+  options: DescriptionOptions,
+  client?: OpenAI
 ): Promise<GenerationResult> {
   const { style, maxWords = 300 } = options
 
@@ -250,6 +258,8 @@ Style Guidelines: ${styleGuidelines[style]}
 Maximum Words: ${maxWords}
 
 Write only the description, nothing else.`
+
+  const openai = getOpenAIClient(client)
 
   const response = await openai.chat.completions.create({
     model: 'gpt-4o-mini',

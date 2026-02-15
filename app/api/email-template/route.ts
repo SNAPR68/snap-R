@@ -1,11 +1,15 @@
 import { NextResponse } from 'next/server'
 import OpenAI from 'openai'
 
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
+function getOpenAIClient(): OpenAI {
+  return new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
+}
 
 export async function POST(request: Request) {
   try {
     const { property, postType, agentInfo, tone = 'professional' } = await request.json()
+
+    const openai = getOpenAIClient()
 
     const toneGuide: Record<string, string> = {
       professional: 'formal and polished',

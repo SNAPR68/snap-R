@@ -1,7 +1,9 @@
 import { NextResponse } from 'next/server'
 import OpenAI from 'openai'
 
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
+function getOpenAIClient(): OpenAI {
+  return new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
+}
 
 const LANGUAGES: Record<string, string> = {
   es: 'Spanish', fr: 'French', zh: 'Chinese (Simplified)', de: 'German',
@@ -14,6 +16,7 @@ export async function POST(request: Request) {
     const { text, targetLanguage } = await request.json()
     if (!text || !targetLanguage) return NextResponse.json({ error: 'Text and target language required' }, { status: 400 })
 
+    const openai = getOpenAIClient()
     const languageName = LANGUAGES[targetLanguage] || targetLanguage
 
     const response = await openai.chat.completions.create({
