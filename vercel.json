@@ -11,6 +11,14 @@
     "app/api/enhance/route.ts": {
       "maxDuration": 120,
       "memory": 1024
+    },
+    "app/api/cron/publish-scheduled/route.ts": {
+      "maxDuration": 300,
+      "memory": 1024
+    },
+    "app/api/cron/sync-analytics/route.ts": {
+      "maxDuration": 300,
+      "memory": 1024
     }
   },
   "routes": [
@@ -20,6 +28,16 @@
       "headers": {
         "x-vercel-proxy-body-size": "52428800"
       }
+    }
+  ],
+  "crons": [
+    {
+      "path": "/api/cron/publish-scheduled",
+      "schedule": "*/15 * * * *"
+    },
+    {
+      "path": "/api/cron/sync-analytics",
+      "schedule": "0 */6 * * *"
     }
   ]
 }

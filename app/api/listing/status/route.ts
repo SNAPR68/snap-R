@@ -112,7 +112,7 @@ export async function GET(request: NextRequest) {
     // Phase 2: Get latest marketing job status
     const { data: marketingJob } = await supabase
       .from('marketing_jobs')
-      .select('id, status, description_status, captions_status, mls_status, property_site_status, completed_at')
+      .select('id, status, description_status, captions_status, mls_status, property_site_status, scheduled_posts_status, completed_at')
       .eq('listing_id', listingId)
       .order('created_at', { ascending: false })
       .limit(1)
@@ -142,6 +142,7 @@ export async function GET(request: NextRequest) {
         captions: marketingJob.captions_status,
         mls: marketingJob.mls_status,
         propertySite: marketingJob.property_site_status,
+        scheduledPosts: marketingJob.scheduled_posts_status,
         completedAt: marketingJob.completed_at,
       } : null,
     });

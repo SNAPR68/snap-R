@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import Link from 'next/link';
-import { Plus, Home, Image, MapPin, CheckCircle, AlertCircle, Clock, Loader2 } from 'lucide-react';
+import { Plus, Home, Image, MapPin, CheckCircle, AlertCircle, Clock, Loader2, Megaphone } from 'lucide-react';
 
 const getStatusBadge = (status: string) => {
   switch (status) {
@@ -17,6 +17,22 @@ const getStatusBadge = (status: string) => {
       return <span className="flex items-center gap-1 px-2 py-1 bg-red-500/20 text-red-400 rounded-full text-xs font-medium"><AlertCircle className="w-3 h-3" />Failed</span>;
     default:
       return <span className="flex items-center gap-1 px-2 py-1 bg-white/10 text-white/50 rounded-full text-xs font-medium"><Clock className="w-3 h-3" />Pending</span>;
+  }
+};
+
+const getMarketingBadge = (status: string | null | undefined) => {
+  if (!status) return null;
+  switch (status) {
+    case 'processing':
+      return <span className="flex items-center gap-1 px-2 py-1 bg-amber-500/20 text-amber-400 rounded-full text-xs font-medium animate-pulse"><Megaphone className="w-3 h-3" />Marketing...</span>;
+    case 'completed':
+      return <span className="flex items-center gap-1 px-2 py-1 bg-purple-500/20 text-purple-400 rounded-full text-xs font-medium"><Megaphone className="w-3 h-3" />Marketed</span>;
+    case 'skipped':
+      return null; // Don't show badge for skipped (free tier)
+    case 'failed':
+      return <span className="flex items-center gap-1 px-2 py-1 bg-red-500/20 text-red-400 rounded-full text-xs font-medium"><AlertCircle className="w-3 h-3" />Marketing Failed</span>;
+    default:
+      return null;
   }
 };
 
@@ -108,7 +124,10 @@ export default function ListingsPage() {
                   <div className="absolute top-3 right-3 flex items-center gap-1 px-2 py-1 bg-black/70 rounded-lg text-xs">
                     <Image className="w-3 h-3" />{listing.photoCount}
                   </div>
-                  <div className="absolute top-3 left-3">{getStatusBadge(listing.preparation_status ?? listing.status)}</div>
+                  <div className="absolute top-3 left-3 flex flex-col gap-1">
+                    {getStatusBadge(listing.preparation_status ?? listing.status)}
+                    {getMarketingBadge(listing.marketing_status)}
+                  </div>
                 </div>
                 <div className="p-4">
                   <h3 className="font-semibold text-lg truncate group-hover:text-amber-400 transition-colors">

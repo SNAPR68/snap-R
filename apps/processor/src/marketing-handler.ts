@@ -6,6 +6,7 @@
  * 2. Social media captions per platform (GPT-4o-mini)
  * 3. MLS photo manifest (no AI — metadata only)
  * 4. Property site draft (no AI — DB insert)
+ * 5. Auto-schedule social posts (no AI — DB insert)
  *
  * Each step is independent. If one fails, others still run.
  * Same always-complete semantics as Phase 1.
@@ -19,6 +20,7 @@ const MARKETING_COST_CENTS = {
   captionPerPlatform: 3,  // GPT-4o-mini per platform
   mls: 0,             // No AI
   propertySite: 0,    // No AI
+  scheduledPosts: 0,  // No AI — just DB inserts
 };
 
 interface MarketingStepResult {
@@ -33,6 +35,7 @@ interface MarketingCostBreakdown {
   captions: MarketingStepResult;
   mls: MarketingStepResult;
   propertySite: MarketingStepResult;
+  scheduledPosts: MarketingStepResult;
   totalCostCents: number;
   totalDurationMs: number;
 }
@@ -60,6 +63,12 @@ export async function handleMarketingJob(
     })
     .eq('id', jobId);
 
+  // Update listing marketing_status → processing
+  await supabase
+    .from('listings')
+    .update({ marketing_status: 'processing', updated_at: new Date().toISOString() })
+    .eq('id', listingId);
+
   // Load listing data
   const { data: listing, error: listingError } = await supabase
     .from('listings')
@@ -70,6 +79,34 @@ export async function handleMarketingJob(
   if (listingError || !listing) {
     console.error(`[Marketing] Failed to load listing ${listingId}:`, listingError);
     await markJobFailed(supabase, jobId, `Failed to load listing: ${listingError?.message}`);
+    return;
+  }
+
+  // =============================================
+  // BILLING GATE: Skip marketing for free-tier users
+  // =============================================
+  const { data: userProfile } = await supabase
+    .from('profiles')
+    .select('subscription_tier')
+    .eq('id', userId)
+    .single();
+
+  const tier = (userProfile?.subscription_tier || 'free').toLowerCase();
+  if (tier === 'free') {
+    console.log(`[Marketing] Skipping for free-tier user ${userId}`);
+    await supabase
+      .from('marketing_jobs')
+      .update({
+        status: 'skipped',
+        error: 'Free plan — upgrade to unlock marketing automation',
+        completed_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', jobId);
+    await supabase
+      .from('listings')
+      .update({ marketing_status: 'skipped', updated_at: new Date().toISOString() })
+      .eq('id', listingId);
     return;
   }
 
@@ -101,6 +138,7 @@ export async function handleMarketingJob(
     captions: { status: 'skipped', durationMs: 0, costCents: 0 },
     mls: { status: 'skipped', durationMs: 0, costCents: 0 },
     propertySite: { status: 'skipped', durationMs: 0, costCents: 0 },
+    scheduledPosts: { status: 'skipped', durationMs: 0, costCents: 0 },
     totalCostCents: 0,
     totalDurationMs: 0,
   };
@@ -389,6 +427,153 @@ export async function handleMarketingJob(
   }
 
   // =============================================
+  // STEP 5: Auto-Schedule Social Posts (no AI)
+  // =============================================
+  await updateStepStatus(supabase, jobId, 'scheduled_posts_status', 'processing');
+  const schedStart = Date.now();
+  try {
+    // Only schedule if captions were generated
+    if (costBreakdown.captions.status !== 'completed') {
+      const schedMs = Date.now() - schedStart;
+      costBreakdown.scheduledPosts = {
+        status: 'skipped',
+        durationMs: schedMs,
+        costCents: 0,
+        error: 'Captions not generated — skipping post scheduling',
+      };
+      await supabase
+        .from('marketing_jobs')
+        .update({
+          scheduled_posts_status: 'skipped',
+          scheduled_posts_result: { reason: 'Captions not generated' },
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', jobId);
+      console.log(`[Marketing] Scheduled posts skipped — no captions available`);
+    } else {
+      // Get user's connected social accounts
+      const { data: connections } = await supabase
+        .from('social_connections')
+        .select('id, platform, access_token, page_id, page_name')
+        .eq('user_id', userId)
+        .eq('is_active', true);
+
+      if (!connections || connections.length === 0) {
+        const schedMs = Date.now() - schedStart;
+        costBreakdown.scheduledPosts = {
+          status: 'skipped',
+          durationMs: schedMs,
+          costCents: 0,
+          error: 'No social accounts connected',
+        };
+        await supabase
+          .from('marketing_jobs')
+          .update({
+            scheduled_posts_status: 'skipped',
+            scheduled_posts_result: { reason: 'No social accounts connected' },
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', jobId);
+        console.log(`[Marketing] Scheduled posts skipped — no social connections`);
+      } else {
+        // Get captions result from the job we just updated
+        const { data: jobData } = await supabase
+          .from('marketing_jobs')
+          .select('captions_result')
+          .eq('id', jobId)
+          .single();
+
+        const captionsResult = (jobData?.captions_result || {}) as Record<string, { caption?: string; hashtags?: string }>;
+
+        // Get hero photo URL for the post image
+        const heroPhoto = listing.hero_photo_id
+          ? photos.find(p => p.id === listing.hero_photo_id)
+          : photos[0];
+        const heroPhotoUrl = heroPhoto?.processed_url || heroPhoto?.raw_url || photoUrls[0] || '';
+
+        // Schedule a post for each connected platform that has a caption
+        const scheduledFor = new Date(Date.now() + 60 * 60 * 1000).toISOString(); // +1 hour
+        const postIds: string[] = [];
+        const platforms: string[] = [];
+
+        for (const conn of connections) {
+          const platformKey = conn.platform?.toLowerCase();
+          const platformCaption = captionsResult[platformKey as string];
+
+          if (!platformCaption?.caption) {
+            console.log(`[Marketing] No caption for ${platformKey} — skipping`);
+            continue;
+          }
+
+          // Combine caption + hashtags
+          const content = platformCaption.hashtags
+            ? `${platformCaption.caption}\n\n${platformCaption.hashtags}`
+            : platformCaption.caption;
+
+          const { data: post, error: postError } = await supabase
+            .from('scheduled_posts')
+            .insert({
+              user_id: userId,
+              listing_id: listingId,
+              platform: platformKey,
+              content,
+              image_urls: heroPhotoUrl ? [heroPhotoUrl] : [],
+              scheduled_for: scheduledFor,
+              status: 'pending',
+              post_type: 'just_listed',
+            })
+            .select('id')
+            .single();
+
+          if (postError) {
+            console.error(`[Marketing] Failed to schedule ${platformKey} post:`, postError.message);
+            continue;
+          }
+
+          postIds.push(post.id);
+          platforms.push(platformKey as string);
+          console.log(`[Marketing] Scheduled ${platformKey} post ${post.id} for ${scheduledFor}`);
+        }
+
+        const schedMs = Date.now() - schedStart;
+        const schedResult = {
+          platforms,
+          postIds,
+          scheduledFor,
+          totalScheduled: postIds.length,
+        };
+
+        costBreakdown.scheduledPosts = {
+          status: postIds.length > 0 ? 'completed' : 'skipped',
+          durationMs: schedMs,
+          costCents: 0,
+        };
+
+        await supabase
+          .from('marketing_jobs')
+          .update({
+            scheduled_posts_status: postIds.length > 0 ? 'completed' : 'skipped',
+            scheduled_posts_result: schedResult,
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', jobId);
+
+        console.log(`[Marketing] Scheduled ${postIds.length} posts across ${platforms.join(', ')} (${schedMs}ms)`);
+      }
+    }
+  } catch (error) {
+    const schedMs = Date.now() - schedStart;
+    costBreakdown.scheduledPosts = {
+      status: 'failed',
+      durationMs: schedMs,
+      costCents: 0,
+      error: String(error),
+    };
+    await updateStepStatus(supabase, jobId, 'scheduled_posts_status', 'failed');
+    console.error(`[Marketing] Scheduled posts failed:`, error);
+  }
+
+  // =============================================
   // FINALIZE: Update job status + cost
   // =============================================
   const totalMs = Date.now() - jobStart;
@@ -398,13 +583,15 @@ export async function handleMarketingJob(
     costBreakdown.description.status === 'completed' ||
     costBreakdown.captions.status === 'completed' ||
     costBreakdown.mls.status === 'completed' ||
-    costBreakdown.propertySite.status === 'completed';
+    costBreakdown.propertySite.status === 'completed' ||
+    costBreakdown.scheduledPosts.status === 'completed';
 
   const allStepsFailed =
     costBreakdown.description.status === 'failed' &&
     costBreakdown.captions.status === 'failed' &&
     costBreakdown.mls.status === 'failed' &&
-    costBreakdown.propertySite.status === 'failed';
+    costBreakdown.propertySite.status === 'failed' &&
+    costBreakdown.scheduledPosts.status === 'failed';
 
   const finalStatus = allStepsFailed ? 'failed' : 'completed';
 
@@ -419,6 +606,15 @@ export async function handleMarketingJob(
       ...(allStepsFailed && { error: 'All marketing steps failed' }),
     })
     .eq('id', jobId);
+
+  // Update listing marketing_status to reflect final state
+  await supabase
+    .from('listings')
+    .update({
+      marketing_status: finalStatus,
+      updated_at: new Date().toISOString(),
+    })
+    .eq('id', listingId);
 
   console.log(
     `[Marketing] Job ${jobId} ${finalStatus} — cost: $${(costBreakdown.totalCostCents / 100).toFixed(2)}, duration: ${totalMs}ms`

@@ -25,6 +25,9 @@ export function createSupabaseClient(
     auth: {
       autoRefreshToken: false,
       persistSession: false
+    },
+    db: {
+      schema: 'public'
     }
   });
 }
@@ -33,18 +36,32 @@ export function createSupabaseClient(
 export async function updateListingPreparationStatus(
   listingId: string,
   preparationStatus: 'prepared' | 'failed',
-  env: { SUPABASE_URL: string; SUPABASE_SERVICE_KEY: string }
+  env: { SUPABASE_URL: string; SUPABASE_SERVICE_KEY: string },
+  metadata?: {
+    confidence?: number;
+    photoAudit?: Record<string, { toolsApplied: string[]; enhanced: boolean; processingMs: number }>;
+    heroPhotoId?: string | null;
+    totalPhotos?: number;
+    enhancedPhotos?: number;
+  }
 ): Promise<void> {
   const supabase = createSupabaseClient(env);
   const now = new Date().toISOString();
+  const updateData: Record<string, unknown> = {
+    preparation_status: preparationStatus,
+    processing_completed_at: now,
+    updated_at: now,
+    ...(preparationStatus === 'prepared' && { prepared_at: now }),
+  };
+  if (metadata) {
+    updateData.preparation_metadata = metadata;
+    if (metadata.heroPhotoId) {
+      updateData.hero_photo_id = metadata.heroPhotoId;
+    }
+  }
   const { error } = await supabase
     .from('listings')
-    .update({
-      preparation_status: preparationStatus,
-      processing_completed_at: now,
-      updated_at: now,
-      ...(preparationStatus === 'prepared' && { prepared_at: now }),
-    })
+    .update(updateData)
     .eq('id', listingId);
   if (error) {
     console.error(`[Worker] Failed to update listing ${listingId}:`, error.message);
@@ -75,18 +92,21 @@ export async function updatePhotoStatus(
   photoId: string,
   status: string,
   processedUrl: string | null,
-  env: { SUPABASE_URL: string; SUPABASE_SERVICE_KEY: string }
+  env: { SUPABASE_URL: string; SUPABASE_SERVICE_KEY: string },
+  toolsApplied?: string[]
 ): Promise<void> {
   const supabase = createSupabaseClient(env);
-  
-  const updateData: Record<string, unknown> = { 
-    status, 
-    updated_at: new Date().toISOString() 
+
+  const updateData: Record<string, unknown> = {
+    status,
+    updated_at: new Date().toISOString()
   };
-  
+
   if (status === 'completed') {
     updateData.processed_url = processedUrl;
-    // processed_at field not in schema
+  }
+  if (toolsApplied && toolsApplied.length > 0) {
+    updateData.tools_applied = toolsApplied;
   }
   
   const { error } = await supabase

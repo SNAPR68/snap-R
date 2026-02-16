@@ -78,6 +78,10 @@ export async function GET(request: NextRequest) {
           status: marketingJob.property_site_status,
           result: marketingJob.property_site_result,
         },
+        scheduledPosts: {
+          status: marketingJob.scheduled_posts_status,
+          result: marketingJob.scheduled_posts_result,
+        },
         totalCostCents: marketingJob.total_cost_cents,
         costBreakdown: marketingJob.cost_breakdown,
         startedAt: marketingJob.started_at,
