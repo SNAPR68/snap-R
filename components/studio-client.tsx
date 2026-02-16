@@ -273,12 +273,24 @@ export function StudioClient({ listingId, userRole, showMlsFeatures = false, cre
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ imageId: selectedPhoto.id, toolId, options: selectedPreset ? { preset: selectedPreset.id, prompt: selectedPreset.prompt } : {} }),
       });
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({ error: `Server error (${res.status})` }));
+        alert(errorData.error || `Enhancement failed (${res.status})`);
+        setProcessing(false);
+        setActiveTool(null);
+        return;
+      }
       const data = await res.json();
       if (data.success && data.enhancedUrl) {
         setPendingEnhancement({ originalUrl: selectedPhoto.signedRawUrl, storagePath: data.storagePath, enhancedUrl: data.enhancedUrl, toolId, photoId: selectedPhoto.id });
         setSliderPosition(50);
-      } else alert(data.error || 'Enhancement failed');
-    } catch (error) { console.error('Enhancement failed:', error); }
+      } else {
+        alert(data.error || 'Enhancement failed — please try again');
+      }
+    } catch (error: any) {
+      console.error('Enhancement failed:', error);
+      alert(error?.message?.includes('abort') ? 'Enhancement timed out — try a simpler preset' : 'Enhancement failed — check your connection and try again');
+    }
     setProcessing(false);
     setActiveTool(null);
   };

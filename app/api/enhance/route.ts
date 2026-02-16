@@ -4,7 +4,7 @@ import { createClient } from '@/lib/supabase/server';
 import { processEnhancement, ToolId } from '@/lib/ai/router';
 import { logApiCost } from '@/lib/cost-logger';
 
-export const maxDuration = 120;
+export const maxDuration = 180;
 
 export async function POST(request: NextRequest) {
   const startTime = Date.now();
@@ -127,9 +127,9 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       success: true,
       enhancedUrl: enhancedSignedUrl?.signedUrl || result.enhancedUrl,
-      processedPath: enhancedPath,
+      storagePath: enhancedPath,
+      processedPath: enhancedPath, // Legacy alias
       processingTime,
-      // No credits info in new model
     });
     
   } catch (error) {

@@ -629,3 +629,41 @@ Cloudflare Worker (queue handler)
   causing entire query to return null.
 - Risk Level:
   Low (query fix + display fix, no behavioral changes)
+
+-------------------------------------------------------------------------------
+## 2026-02-16 — Fix Manual Enhancement Tools in Studio
+-------------------------------------------------------------------------------
+
+### 1. Fix storagePath Property Mismatch
+- Description:
+  API returned `processedPath` but studio client expected `storagePath`.
+  Result: enhanced image displayed correctly in before/after slider but
+  saving to DB used fallback CDN URL (temporary) instead of permanent
+  Supabase storage path. Fixed API to return both `storagePath` and
+  `processedPath` (legacy alias).
+- Files Modified:
+  app/api/enhance/route.ts
+- Risk Level:
+  Low (property name fix)
+
+### 2. Add Error Handling to Manual Enhancement Flow
+- Description:
+  Studio client had no `res.ok` check — 500 errors parsed as JSON
+  silently. Catch block only logged to console with no user feedback.
+  Fixed: added res.ok validation, user-visible error alerts for
+  failures and timeouts, proper error messages.
+- Files Modified:
+  components/studio-client.tsx
+- Risk Level:
+  Low (error handling improvement)
+
+### 3. Increase Enhance API Timeout to 180s
+- Description:
+  Manual tools use SAM mask + Flux Fill (no skipMask) which can take
+  60-120s for complex images. Bumped maxDuration from 120s to 180s
+  in both vercel.json and route.ts for headroom.
+- Files Modified:
+  app/api/enhance/route.ts
+  vercel.json
+- Risk Level:
+  Low (timeout increase only)

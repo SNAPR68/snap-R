@@ -9,7 +9,7 @@
       "memory": 1024
     },
     "app/api/enhance/route.ts": {
-      "maxDuration": 120,
+      "maxDuration": 180,
       "memory": 1024
     },
     "app/api/cron/publish-scheduled/route.ts": {
