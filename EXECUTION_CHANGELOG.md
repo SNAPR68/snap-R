@@ -600,3 +600,32 @@ Cloudflare Worker (queue handler)
 - Processing time: ~7min → ~3min (Sharp.js + parallel + higher timeouts)
 - Structural tools: 0% → 100% success rate (skipMask + retry + 120s timeout)
 - Cost savings: auto-enhance $0.00 (Sharp.js) vs $0.50 (Replicate Kontext)
+
+-------------------------------------------------------------------------------
+## 2026-02-16 — Fix Phantom Column Queries + Tier Badge Display
+-------------------------------------------------------------------------------
+
+### 1. Fix Sidebar Showing "Free" for Pro Users
+- Description:
+  Dashboard layout.tsx queried `listings_limit` column which doesn't exist
+  on profiles table. Supabase returned error, profile=null, tier defaulted
+  to 'free'. Fixed to use `listings_per_month` (actual column) with
+  tier-based defaults. Also added `plan` field fallback for accounts where
+  Stripe webhook wrote to `plan` but not `subscription_tier`.
+- Files Modified:
+  app/dashboard/layout.tsx
+  app/dashboard/billing/page.tsx
+  app/listings/new/page.tsx
+  app/api/enhance/route.ts
+  app/api/stripe/webhook/route.ts
+- Architectural Impact:
+  All Supabase SELECT queries now reference only columns that exist.
+  Stripe webhook now writes `subscription_tier` alongside `plan`.
+  Tier display correct across sidebar, billing, and listing creation.
+- Root Cause:
+  Code referenced phantom columns (`listings_limit`, `listings_used_this_month`,
+  `billing_cycle_start`, `photos_per_listing`) that were never migrated to
+  the production database. Supabase REST API returns error for unknown columns,
+  causing entire query to return null.
+- Risk Level:
+  Low (query fix + display fix, no behavioral changes)

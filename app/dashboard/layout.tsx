@@ -12,10 +12,10 @@ export default async function DashboardLayout({ children }: { children: React.Re
   // Fetch profile for usage info
   const { data: profile } = await supabase
     .from('profiles')
-    .select('subscription_tier, listings_limit')
+    .select('subscription_tier, plan, listings_per_month')
     .eq('id', user.id)
     .single()
-  
+
   // Count actual listings created this month
   const now = new Date()
   const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString()
@@ -24,10 +24,13 @@ export default async function DashboardLayout({ children }: { children: React.Re
     .select('*', { count: 'exact', head: true })
     .eq('user_id', user.id)
     .gte('created_at', monthStart)
-  
-  const tier = profile?.subscription_tier || 'free'
+
+  // Prefer subscription_tier, fall back to plan field (Stripe webhook writes both, but older accounts may only have plan)
+  const rawTier = profile?.subscription_tier || profile?.plan || 'free'
+  const tier = rawTier === 'free' && profile?.plan && profile.plan !== 'free' ? profile.plan : rawTier
   const listingsUsed = listingsCount || 0
-  const listingsLimit = profile?.listings_limit || 3
+  const tierDefaults: Record<string, number> = { free: 3, starter: 10, pro: 30, agency: 50 }
+  const listingsLimit = profile?.listings_per_month || tierDefaults[tier] || 3
   const usagePercent = Math.min((listingsUsed / listingsLimit) * 100, 100)
   
   return (

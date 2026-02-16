@@ -53,15 +53,17 @@ export default function NewListingPage() {
       // Check listing limit
       const { data: profile } = await supabase
         .from('profiles')
-        .select('subscription_tier, listings_limit, listings_used_this_month, plan')
+        .select('subscription_tier, plan, listings_per_month')
         .eq('id', user.id)
         .single();
       const metadataPlan = user?.user_metadata?.plan || user?.user_metadata?.subscription_tier;
-      const tier = profile?.subscription_tier || profile?.plan || metadataPlan || 'free';
-      let limit = typeof profile?.listings_limit === 'number' ? profile.listings_limit : 3;
+      const rawTier = profile?.subscription_tier || profile?.plan || metadataPlan || 'free';
+      const tier = rawTier === 'free' && profile?.plan && profile.plan !== 'free' ? profile.plan : rawTier;
+      const tierDefaults: Record<string, number> = { free: 3, starter: 10, pro: 30, agency: 50, team: 999, platinum: 999 };
+      let limit = profile?.listings_per_month || tierDefaults[tier] || 3;
       if (tier !== 'free') {
         // Paid tiers should never be blocked at free limits
-        limit = Math.max(limit, tier === 'platinum' || tier === 'team' ? 999 : 30);
+        limit = Math.max(limit, tierDefaults[tier] || 30);
       }
       // Count actual listings created this month
       const startOfMonth = new Date();
@@ -75,8 +77,7 @@ export default function NewListingPage() {
       const { data: listing, error: listingError } = await supabase.from('listings').insert({ user_id: user.id, title: title.trim(), address: address.trim() || null, description: description.trim() || null, marketing_status: 'Active' }).select('id').single();
       if (listingError) throw new Error('Listing error: ' + listingError.message);
 
-      // Increment usage
-      await supabase.from('profiles').update({ listings_used_this_month: (used || 0) + 1 }).eq('id', user.id);
+      // Usage tracking: count-based from listings table (no counter column needed)
 
       const uploadedPhotos = [];
       for (let i = 0; i < files.length; i++) {

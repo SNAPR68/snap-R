@@ -94,6 +94,7 @@ export async function POST(request: NextRequest) {
           
           await supabase.from('profiles').update({
             plan: effectivePlanKey,
+            subscription_tier: effectivePlanKey,
             role: role || 'photographer',
             listings_limit: listingsLimit,
             photos_per_listing: limits.photos,
