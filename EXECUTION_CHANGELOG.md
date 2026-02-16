@@ -384,3 +384,97 @@ Cloudflare Worker (queue handler)
   Yes — Phase 1 Hardening fully satisfied.
 - Risk Level:
   Low (DI refactor only, no behavioral changes)
+
+-------------------------------------------------------------------------------
+## 2026-02-16 — Phase 2: Marketing Automation Layer
+-------------------------------------------------------------------------------
+
+### 1. Database — marketing_jobs Table
+- Description:
+  Created marketing_jobs table with per-step status tracking
+  (description, captions, mls, property_site), JSONB artifact storage,
+  cost tracking, and RLS policies. CHECK constraints enforce valid states.
+- Files Created:
+  supabase/migrations/20260216_marketing_jobs.sql
+- Architectural Impact:
+  Blueprint Phase 2 data layer. Stores all marketing artifacts per listing.
+  Enables cost tracking and status visibility for marketing pipeline.
+- Blueprint Alignment:
+  Yes — "New table: marketing_jobs" per Phase 2 spec.
+- Risk Level:
+  Low (additive schema only)
+
+### 2. Discriminated Union Queue Messages
+- Description:
+  Extended queue message types with discriminated union:
+  PreparationJobMessage | MarketingJobMessage, routed by `type` field.
+  Worker queue() handler routes marketing messages to dedicated handler.
+  Backwards compatible — messages without type treated as preparation.
+- Files Modified:
+  apps/processor/src/types.ts
+  apps/processor/src/index.ts
+- Architectural Impact:
+  Single queue handles both preparation and marketing jobs.
+  No new Cloudflare infrastructure required. Same retry/dead-letter.
+- Blueprint Alignment:
+  Yes — same queue, typed routing per architecture decision.
+- Risk Level:
+  Low (backwards-compatible routing)
+
+### 3. Marketing Pipeline Handler
+- Description:
+  New marketing-handler.ts implements 4-step pipeline:
+  1. Description generation (GPT-4o via description-generator.ts)
+  2. Social captions per platform (GPT-4o-mini via gpt-copy.ts)
+  3. MLS photo manifest (no AI — metadata ordering)
+  4. Property site draft (no AI — DB insert)
+  Each step is independent — failures don't block other steps.
+  Same always-complete semantics as Phase 1.
+  Cost tracking per step, ~21¢ estimated per listing.
+- Files Created:
+  apps/processor/src/marketing-handler.ts
+- Architectural Impact:
+  All AI code reused from existing DI-hardened modules.
+  No new AI capabilities — pure orchestration.
+- Blueprint Alignment:
+  Yes — Phase 2 pipeline: description → captions → MLS → property site.
+- Risk Level:
+  Medium (new pipeline path, uses proven AI modules)
+
+### 4. Auto-Trigger After Preparation
+- Description:
+  After listing preparation completes (status → prepared), Worker
+  automatically creates a marketing_jobs row and enqueues a marketing
+  message. Marketing trigger failure is non-fatal — preparation
+  is already complete and persisted.
+- Files Modified:
+  apps/processor/src/index.ts
+- Architectural Impact:
+  Blueprint Definition of Done: "Marketing auto-triggers."
+  Zero human intervention after upload → prepare → market.
+- Blueprint Alignment:
+  Yes — "Trigger when preparation_status = prepared."
+- Risk Level:
+  Low (non-fatal hook, preparation state already committed)
+
+### 5. Marketing API Routes
+- Description:
+  Three new API routes for marketing status, manual trigger, and
+  MLS export download:
+  - GET /api/marketing/status — returns marketing job + artifacts
+  - POST /api/marketing/trigger — manual re-trigger for prepared listings
+  - GET /api/marketing/mls-export — on-demand MLS ZIP (Vercel, uses sharp)
+  Extended GET /api/listing/status with marketingStatus and marketingJob.
+- Files Created:
+  app/api/marketing/status/route.ts
+  app/api/marketing/trigger/route.ts
+  app/api/marketing/mls-export/route.ts
+- Files Modified:
+  app/api/listing/status/route.ts
+- Architectural Impact:
+  Blueprint Definition of Done: "Artifacts generated. Status visible."
+  MLS ZIP stays on Vercel (sharp+archiver requirement).
+- Blueprint Alignment:
+  Yes — API contracts for marketing layer.
+- Risk Level:
+  Low (additive API routes)

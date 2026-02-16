@@ -63,7 +63,7 @@ function updateProcessEnv(env: Env) {
   ensureProcessReportStub();
 }
 
-import type { Env, JobMessage, ProcessingCheckpoint } from './types.js';
+import type { Env, JobMessage, QueueMessage, MarketingJobMessage, ProcessingCheckpoint } from './types.js';
 import type { ToolId } from '../../../lib/ai/router.js';
 import type { PhotoAnalysis } from '../../../lib/ai/listing-engine/types.js';
 
@@ -594,9 +594,33 @@ async function processOnePhoto(
 }
 
 export default {
-  async queue(batch: MessageBatch<JobMessage>, env: Env): Promise<void> {
+  async queue(batch: MessageBatch<QueueMessage>, env: Env): Promise<void> {
     // Update process.env with real values
     updateProcessEnv(env);
+
+    console.log(`[Worker] Received batch of ${batch.messages.length} messages`);
+
+    for (const message of batch.messages) {
+      const body = message.body;
+
+      // Phase 2: Route marketing jobs to dedicated handler
+      if (body.type === 'marketing') {
+        try {
+          const { handleMarketingJob } = await import('./marketing-handler.js');
+          await handleMarketingJob(body as MarketingJobMessage, env);
+          message.ack();
+        } catch (error) {
+          console.error(`[Worker] Marketing job ${body.jobId} failed:`, error);
+          message.ack(); // Don't retry marketing failures — artifacts are best-effort
+        }
+        continue;
+      }
+
+      // Phase 1: Preparation job (existing logic)
+      // Backwards compatible: messages without type are treated as preparation
+    }
+
+    // Re-enter the preparation loop (existing logic below)
     const {
       createSupabaseClient,
       updateJobStatus,
@@ -607,11 +631,13 @@ export default {
       getCheckpoint,
     } = await loadWorkerDeps();
     const { analyzePhotos, buildListingStrategy, determineLockedPresets } = await loadModules();
-    
-    console.log(`[Worker] Received batch of ${batch.messages.length} messages`);
-    
+
     for (const message of batch.messages) {
-      const { jobId, listingId, userId } = message.body;
+      const body = message.body;
+      // Skip marketing messages (already handled above)
+      if (body.type === 'marketing') continue;
+
+      const { jobId, listingId, userId } = body;
       const costTracker = createCostTracker();
       const jobStart = Date.now();
       
@@ -814,6 +840,36 @@ export default {
         await updateJobStatus(jobId, 'completed', env);
         await clearRetryCount(jobId, env);
         console.log(`[Worker] Job ${jobId} completed — cost: $${costSummary.totalCostDollars}`);
+
+        // =============================================
+        // PHASE 2: AUTO-TRIGGER MARKETING
+        // Listing is prepared → enqueue marketing job
+        // =============================================
+        try {
+          const marketingJobId = crypto.randomUUID();
+          const supabaseForMarketing = createSupabaseClient(env);
+          await supabaseForMarketing
+            .from('marketing_jobs')
+            .insert({
+              id: marketingJobId,
+              listing_id: listingId,
+              user_id: userId,
+              status: 'queued',
+            });
+
+          await env.SNAPR_QUEUE.send({
+            type: 'marketing' as const,
+            jobId: marketingJobId,
+            listingId,
+            userId,
+          });
+
+          console.log(`[Worker] Marketing job ${marketingJobId} auto-triggered for listing ${listingId}`);
+        } catch (marketingError) {
+          // Marketing trigger failure is non-fatal — preparation is already complete
+          console.error(`[Worker] Failed to auto-trigger marketing for listing ${listingId}:`, marketingError);
+        }
+
         message.ack();
         
       } catch (error) {

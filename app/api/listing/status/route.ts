@@ -26,10 +26,10 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Get listing with preparation metadata
+    // Get listing with preparation metadata + marketing status
     const { data: listing, error } = await supabase
       .from('listings')
-      .select('id, preparation_status, hero_photo_id, prepared_at, preparation_metadata')
+      .select('id, preparation_status, marketing_status, hero_photo_id, prepared_at, preparation_metadata')
       .eq('id', listingId)
       .eq('user_id', user.id)
       .single();
@@ -109,9 +109,19 @@ export async function GET(request: NextRequest) {
       });
     }
 
+    // Phase 2: Get latest marketing job status
+    const { data: marketingJob } = await supabase
+      .from('marketing_jobs')
+      .select('id, status, description_status, captions_status, mls_status, property_site_status, completed_at')
+      .eq('listing_id', listingId)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
     return NextResponse.json({
       listingId: listing.id,
       status: prepStatus,
+      marketingStatus: listing.marketing_status || null,
       jobId: activeJob?.id ?? null,
       jobStatus: activeJob?.status ?? null,
       heroPhotoId: listing.hero_photo_id,
@@ -124,6 +134,16 @@ export async function GET(request: NextRequest) {
       flaggedPhotos,
       preparationHistory,
       metadata: listing.preparation_metadata,
+      // Phase 2: Marketing automation status
+      marketingJob: marketingJob ? {
+        id: marketingJob.id,
+        status: marketingJob.status,
+        description: marketingJob.description_status,
+        captions: marketingJob.captions_status,
+        mls: marketingJob.mls_status,
+        propertySite: marketingJob.property_site_status,
+        completedAt: marketingJob.completed_at,
+      } : null,
     });
 
   } catch (error: any) {
