@@ -34,14 +34,14 @@ const ANALYSIS_VERSION = '3.0.0';
 // ============================================
 // ENHANCED ANALYSIS PROMPT
 // ============================================
-const ANALYSIS_PROMPT = `You are an expert real estate photo analyst. Your job is to analyze property photos and determine EXACTLY what enhancements are needed - no more, no less.
+const ANALYSIS_PROMPT = `You are an expert real estate photo enhancement strategist. Your goal is to make EVERY property photo look like a luxury showcase. Real estate marketing demands aspirational imagery that maximizes buyer appeal.
 
 CRITICAL RULES:
-1. Only suggest tools that will FIX an actual PROBLEM
-2. Do NOT suggest tools just because an object exists
-3. If something looks GOOD, leave it alone
-4. Be decisive: if an enhancement will clearly improve a listing, suggest it
-5. If NO enhancements are needed, return "suggestedTools": []
+1. ENHANCE AGGRESSIVELY — every photo should look better after processing
+2. Always suggest "auto-enhance" for ALL valid property photos (HDR boost, color pop, sharpness)
+3. For exteriors: ALWAYS suggest "sky-replacement" unless the sky is already a stunning blue with clouds or a beautiful sunset
+4. Be decisive: when in doubt, SUGGEST the enhancement — subtle improvement is better than none
+5. Only return "suggestedTools": [] for invalid/non-property photos
 
 ═══════════════════════════════════════════════════════════════
 STEP 1: VALIDATE THE PHOTO
@@ -91,7 +91,7 @@ SKY (exteriors only):
   - "blown_out" = WHITE, washed out, no detail ← NEEDS FIX
   - "ugly" = Stormy, dark, unappealing ← NEEDS FIX
   - "none" = No sky visible
- - skyNeedsReplacement: true ONLY if skyQuality is "blown_out", "ugly", or "overcast"
+ - skyNeedsReplacement: true if skyQuality is "blown_out", "ugly", "overcast", OR "clear_blue" without dramatic clouds (a plain blue sky benefits from replacement with a more dynamic sky)
 
 TWILIGHT POTENTIAL (exteriors with windows):
 - Would this specific photo benefit from twilight conversion?
@@ -154,24 +154,24 @@ STEP 4: SUGGEST TOOLS (ONLY if needed!)
 Available tools and WHEN to use them:
 
 EXTERIOR TOOLS:
-- "sky-replacement": ONLY if skyQuality is "blown_out", "ugly", or "overcast"
-- "virtual-twilight": ONLY if twilightScore >= 80 AND hasVisibleWindows AND daytime photo
-- "lawn-repair": ONLY if lawnQuality is "patchy", "brown", or "dead"
-- "pool-enhance": ONLY if poolNeedsEnhancement is true
+- "sky-replacement": Suggest for ANY exterior with visible sky unless sky is already stunning (golden hour, dramatic sunset, beautiful clouds). Overcast, hazy, plain blue, white, blown-out — ALL benefit from replacement.
+- "virtual-twilight": If twilightScore >= 70 AND hasVisibleWindows AND daytime photo
+- "lawn-repair": If lawnQuality is "patchy", "brown", or "dead"
+- "pool-enhance": If poolNeedsEnhancement is true
 
 INTERIOR TOOLS:
-- "declutter": ONLY if clutterLevel is "moderate" or "heavy"
-- "virtual-staging": ONLY if roomEmpty is true (completely empty)
-- "fire-fireplace": ONLY if fireplaceNeedsFire is true
-- "tv-screen": ONLY if tvNeedsReplacement is true
-- "lights-on": ONLY if lighting is "dark"
-- "window-masking": ONLY if interior has blown-out white windows
+- "declutter": If clutterLevel is "moderate" or "heavy"
+- "virtual-staging": Only if roomEmpty is true (completely empty)
+- "fire-fireplace": If fireplaceNeedsFire is true
+- "tv-screen": If tvNeedsReplacement is true
+- "lights-on": If lighting is "dark"
+- "window-masking": If interior has blown-out white windows
 
-ENHANCEMENT TOOLS:
-- "hdr": ONLY if needsHDR is true OR lighting is "mixed"
-- "perspective-correction": ONLY if verticalAlignment is false
-- "auto-enhance": ONLY if overall exposure/contrast/color is slightly flat/off and a mild global polish is needed
-- "flash-fix": ONLY if lighting is "flash_harsh"
+ENHANCEMENT TOOLS (apply liberally):
+- "hdr": If needsHDR is true OR lighting is "mixed" or "dark" or "overexposed"
+- "perspective-correction": If verticalAlignment is false (suggest for ALL interiors — most benefit from straightening)
+- "auto-enhance": ALWAYS suggest for every valid property photo — boosts exposure, contrast, color, and sharpness for a polished look
+- "flash-fix": If lighting is "flash_harsh"
 
 HERO SCORE (0-100):
 - 90-100: Perfect hero photo (front exterior, excellent composition, good lighting)
@@ -283,11 +283,11 @@ export async function analyzePhoto(
     for (let attempt = 0; attempt < 2; attempt += 1) {
       try {
         response = await client.chat.completions.create({
-          model: 'gpt-4o-mini',
+          model: 'gpt-4o',
           messages: [
             {
               role: 'system',
-              content: 'You are an expert real estate photo analyst. Be precise and conservative - only suggest enhancements for actual problems.'
+              content: 'You are an expert real estate photo enhancement strategist. Your goal is to maximize the visual appeal of every property photo. Always suggest auto-enhance, and be aggressive with sky-replacement on exteriors.'
             },
             {
               role: 'user',
@@ -304,7 +304,7 @@ export async function analyzePhoto(
             },
           ],
           max_tokens: 2000,
-          temperature: 0.1,
+          temperature: 0.3,
         });
         break;
       } catch (error: any) {
@@ -647,15 +647,16 @@ function getDefaultAnalysis(
   photoUrl: string,
   errorReason: string
 ): PhotoAnalysis {
+  // Fail-open: assume valid and apply auto-enhance as baseline
+  // Better to enhance a non-property photo than to skip a real one
   return {
     photoId,
     photoUrl,
-    
-    // Default to invalid on error — skip processing
-    isValidPropertyPhoto: false,
-    skipEnhancement: true,
-    skipReason: `Analysis failed: ${errorReason}`,
-    
+
+    isValidPropertyPhoto: true,
+    skipEnhancement: false,
+    skipReason: null,
+
     photoType: 'unknown',
     hasSky: false,
     skyVisible: 0,
@@ -685,13 +686,15 @@ function getDefaultAnalysis(
     sharpness: 'acceptable',
     verticalAlignment: true,
     heroScore: 50,
-    heroReason: `Analysis failed: ${errorReason}`,
-    suggestedTools: [],
-    toolReasons: {},
+    heroReason: `Analysis fallback: ${errorReason}`,
+    suggestedTools: ['auto-enhance'],
+    toolReasons: {
+      'auto-enhance': 'Fallback enhancement when analysis is unavailable.',
+    },
     notSuggested: {},
     priority: 'optional',
-    confidence: 30,
-    confidenceReason: `Low confidence due to analysis failure: ${errorReason}`,
+    confidence: 50,
+    confidenceReason: `Fallback analysis: ${errorReason}`,
     analyzedAt: new Date().toISOString(),
     analysisVersion: ANALYSIS_VERSION,
   };

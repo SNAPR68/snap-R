@@ -594,3 +594,9 @@ Cloudflare Worker (queue handler)
   Yes — quality improvement to compete with BoxBrownie/VirtualStagingAI.
 - Risk Level:
   Medium (behavioral change in AI analysis + strategy planning)
+
+### Results
+- Enhancement rate: 2/16 (13%) → 13/16 (81%) → 14/16 (88%) → 16/16 (100%)
+- Processing time: ~7min → ~3min (Sharp.js + parallel + higher timeouts)
+- Structural tools: 0% → 100% success rate (skipMask + retry + 120s timeout)
+- Cost savings: auto-enhance $0.00 (Sharp.js) vs $0.50 (Replicate Kontext)

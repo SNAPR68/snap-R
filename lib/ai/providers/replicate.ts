@@ -7,7 +7,7 @@ const replicate = new Replicate({
 });
 
 const KONTEXT_MODEL = process.env.AI_KONTEXT_MODEL || 'black-forest-labs/flux-kontext-pro';
-const REPLICATE_MIN_INTERVAL_MS = Number(process.env.REPLICATE_MIN_INTERVAL_MS || 12000);
+const REPLICATE_MIN_INTERVAL_MS = Number(process.env.REPLICATE_MIN_INTERVAL_MS || 2000);
 
 // ============================================
 // TIMEOUT UTILITIES
@@ -199,7 +199,7 @@ export async function skyReplacement(
   imageUrl: string,
   customPrompt?: string,
   presetId?: string,
-  options?: FluxOptions
+  options?: FluxOptions & { skipMask?: boolean }
 ): Promise<string> {
   console.log('[Replicate] === SKY REPLACEMENT ===');
   console.log('[Replicate] Custom prompt:', customPrompt || 'none');
@@ -208,7 +208,7 @@ export async function skyReplacement(
   }
 
   let prompt = SKY_PROMPTS['default'];
-  
+
   if (presetId) {
     if (presetId === 'clear-blue') prompt = SKY_PROMPTS['sunny'];
     else if (presetId === 'sunset') prompt = SKY_PROMPTS['sunset'];
@@ -216,7 +216,7 @@ export async function skyReplacement(
     else if (presetId === 'twilight') prompt = SKY_PROMPTS['twilight'];
   } else if (customPrompt) {
     const lowerPrompt = customPrompt.toLowerCase();
-    
+
     // Match preset keywords (prioritize clear/sunset over dramatic)
     if (lowerPrompt.includes('sunset') || lowerPrompt.includes('golden') || lowerPrompt.includes('orange')) {
       prompt = SKY_PROMPTS['sunset'];
@@ -236,28 +236,33 @@ export async function skyReplacement(
   }
 
   // PRIMARY: SAM mask + FLUX Fill Pro (precise, only touches sky)
-  try {
-    const maskResult = await new SAMMasksClient().generateMask({ imageUrl, maskType: 'sky' });
-    if (maskResult.success && maskResult.maskUrl && maskResult.area >= 3) {
-      console.log('[Replicate] Sky mask generated (' + maskResult.area.toFixed(1) + '% area)');
-      const inpainted = await fluxFillInpaint(imageUrl, maskResult.maskUrl, prompt, {
-        guidance: 8,
-        steps: 35,
-      });
-      console.log('[Replicate] === SKY REPLACEMENT (MASKED) COMPLETE ===');
-      return inpainted;
+  // Skip mask for batch prepare pipeline (skipMask=true) — saves ~15s, avoids timeout
+  if (!options?.skipMask) {
+    try {
+      const maskResult = await new SAMMasksClient().generateMask({ imageUrl, maskType: 'sky' });
+      if (maskResult.success && maskResult.maskUrl && maskResult.area >= 3) {
+        console.log('[Replicate] Sky mask generated (' + maskResult.area.toFixed(1) + '% area)');
+        const inpainted = await fluxFillInpaint(imageUrl, maskResult.maskUrl, prompt, {
+          guidance: 8,
+          steps: 35,
+        });
+        console.log('[Replicate] === SKY REPLACEMENT (MASKED) COMPLETE ===');
+        return inpainted;
+      }
+      if (maskResult.success) {
+        console.warn('[Replicate] Sky mask too small (' + maskResult.area.toFixed(1) + '%), falling back to Kontext');
+      }
+    } catch (maskError: any) {
+      console.warn('[Replicate] Sky mask failed, falling back to Kontext:', maskError?.message);
     }
-    if (maskResult.success) {
-      console.warn('[Replicate] Sky mask too small (' + maskResult.area.toFixed(1) + '%), falling back to Kontext');
-    }
-  } catch (maskError: any) {
-    console.warn('[Replicate] Sky mask failed, falling back to Kontext:', maskError?.message);
+  } else {
+    console.log('[Replicate] Skipping SAM mask (batch prepare mode)');
   }
 
-  // FALLBACK: Kontext instruction-based (less precise but always works)
+  // Kontext instruction-based
   const fluxOptions = withFluxDefaults({ guidance: 2.5, steps: 25 }, options);
   const result = await runFluxKontext(imageUrl, prompt, fluxOptions);
-  console.log('[Replicate] === SKY REPLACEMENT (KONTEXT FALLBACK) COMPLETE ===');
+  console.log('[Replicate] === SKY REPLACEMENT (KONTEXT) COMPLETE ===');
   return result;
 }
 
@@ -364,7 +369,7 @@ export async function lawnRepair(
   imageUrl: string,
   customPrompt?: string,
   presetId?: string,
-  options?: (FluxOptions & { useMask?: boolean; requireMask?: boolean })
+  options?: (FluxOptions & { useMask?: boolean; requireMask?: boolean; skipMask?: boolean })
 ): Promise<string> {
   console.log('[Replicate] === LAWN REPAIR ===');
   if (presetId) {
@@ -372,15 +377,15 @@ export async function lawnRepair(
   }
   const minMaskArea = Number(process.env.AI_LAWN_MASK_MIN_AREA || 4);
   const minMaskConfidence = Number(process.env.AI_LAWN_MASK_MIN_CONFIDENCE || 0.75);
-  
+
   let prompt = LAWN_PROMPTS['default'];
-  
+
   if (presetId) {
     if (presetId === 'natural-green') prompt = LAWN_PROMPTS['natural'];
     else if (presetId === 'lush-green') prompt = LAWN_PROMPTS['emerald'];
   } else if (customPrompt) {
     const lowerPrompt = customPrompt.toLowerCase();
-    
+
     if (lowerPrompt.includes('emerald') || lowerPrompt.includes('golf') || lowerPrompt.includes('perfect') || lowerPrompt.includes('manicured')) {
       prompt = LAWN_PROMPTS['emerald'];
     } else if (lowerPrompt.includes('natural') || lowerPrompt.includes('realistic')) {
@@ -390,11 +395,12 @@ export async function lawnRepair(
     }
   }
 
-  const { useMask = true, requireMask = false, ...fluxOverrides } = options || {};
+  const { useMask = true, requireMask = false, skipMask = false, ...fluxOverrides } = options || {};
   const fluxOptions = withFluxDefaults({ guidance: 2.5, steps: 25 }, fluxOverrides);
   const forceDeterministicMask = String(process.env.AI_LAWN_MASK_FORCE_DETERMINISTIC || '').toLowerCase() === 'true';
 
-  if (useMask) {
+  // Skip mask for batch prepare pipeline (skipMask=true) — saves ~15s, avoids timeout
+  if (useMask && !skipMask) {
     try {
       const maskResult = forceDeterministicMask
         ? await generateDeterministicLawnMask(imageUrl)
@@ -420,14 +426,16 @@ export async function lawnRepair(
     } catch (error: any) {
       console.warn('[Replicate] Lawn mask failed:', error?.message);
     }
+  } else if (skipMask) {
+    console.log('[Replicate] Skipping lawn mask (batch prepare mode)');
   }
 
-  if (useMask && (requireMask || forceDeterministicMask)) {
+  if (useMask && !skipMask && (requireMask || forceDeterministicMask)) {
     throw new Error('Mask required for lawn repair');
   }
 
   const result = await runFluxKontext(imageUrl, prompt, fluxOptions);
-  console.log('[Replicate] === LAWN REPAIR COMPLETE ===');
+  console.log('[Replicate] === LAWN REPAIR (KONTEXT) COMPLETE ===');
   return result;
 }
 

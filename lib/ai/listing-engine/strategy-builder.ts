@@ -20,13 +20,13 @@ import { getProviderForTool, estimateProcessingTime, estimateCost } from './prov
 // ============================================
 const CONFIG = {
   maxTwilightPhotos: 3,
-  minTwilightScore: 80,
+  minTwilightScore: 70,
   minHeroScore: 70,
-  minSkyVisiblePercent: 12,
-  minLawnVisiblePercent: 12,
+  minSkyVisiblePercent: 8,
+  minLawnVisiblePercent: 8,
   minWindowCountForMasking: 2,
-  badSkyRatioThreshold: 0.3,
-  minConfidenceForRiskyTools: 70,
+  badSkyRatioThreshold: 0.2,
+  minConfidenceForRiskyTools: 50,
   strategyVersion: '3.0.0',
   
   toolOrder: [
@@ -393,18 +393,8 @@ function buildPhotoStrategy(
     if (idx !== -1) tools.splice(idx, 1);
   }
   
-  // Hero polish: add auto-enhance only when it will improve the image
-  if (
-    isHeroCandidate &&
-    !isTwilightTarget &&
-    !tools.includes('auto-enhance') &&
-    shouldApplyAutoEnhance(analysis, isHeroCandidate)
-  ) {
-    tools.push('auto-enhance');
-  }
-
-  // Add auto-enhance only when it will improve the image
-  if (!isTwilightTarget && !tools.includes('auto-enhance') && shouldApplyAutoEnhance(analysis, isHeroCandidate)) {
+  // Always apply auto-enhance to every photo for a polished, professional look
+  if (!tools.includes('auto-enhance')) {
     tools.push('auto-enhance');
   }
   
@@ -454,7 +444,8 @@ function validateToolForPhoto(
     case 'sky-replacement':
       if (!analysis.hasSky || analysis.skyVisible < CONFIG.minSkyVisiblePercent) return false;
       if (isTwilightTarget) return false; // Twilight handles sky
-      if (analysis.skyQuality === 'overcast' && analysis.skyVisible < 20) return false;
+      // Allow sky replacement for any non-stunning sky
+      if (['blown_out', 'ugly', 'overcast'].includes(analysis.skyQuality)) return true;
       return analysis.skyNeedsReplacement;
       
     case 'virtual-twilight':

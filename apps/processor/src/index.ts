@@ -158,14 +158,21 @@ function getBackoffSeconds(attempt: number): number {
 // ============================================
 
 const TOOL_TIMEOUT_MS: Record<string, number> = {
-  'virtual-twilight': 60000,
-  'virtual-staging': 60000,
-  'sky-replacement': 45000,
-  'lawn-repair': 45000,
-  'declutter': 45000,
+  'sky-replacement': 120000,   // SAM mask (~15s) + Kontext fallback (~30s) + queue wait
+  'lawn-repair': 120000,       // Mask + Kontext fallback + queue wait
+  'virtual-twilight': 120000,  // Kontext + queue wait
+  'virtual-staging': 120000,   // Kontext + queue wait
+  'declutter': 90000,
+  'auto-enhance': 45000,       // Sharp.js via Vercel API — 45s for large images + cold start
+  'hdr': 90000,
+  'fire-fireplace': 90000,
+  'tv-screen': 90000,
+  'lights-on': 90000,
+  'window-masking': 90000,
+  'perspective-correction': 90000,
 };
 
-const DEFAULT_TOOL_TIMEOUT_MS = 30000;
+const DEFAULT_TOOL_TIMEOUT_MS = 60000;
 
 function getToolTimeout(tool: string): number {
   return TOOL_TIMEOUT_MS[tool] ?? DEFAULT_TOOL_TIMEOUT_MS;
@@ -418,12 +425,74 @@ function buildStrategyAudit(
   };
 }
 
+// ============================================
+// QUICK ENHANCE (Sharp.js via Vercel API)
+// Bypasses Replicate queue entirely — ~1-2s vs ~25-30s
+// ============================================
+
+async function runQuickEnhance(
+  imageUrl: string,
+  photoId: string,
+  listingId: string,
+  userId: string,
+  env: Env
+): Promise<string> {
+  const quickUrl = env.QUICK_ENHANCE_URL;
+  if (!quickUrl) {
+    throw new Error('QUICK_ENHANCE_URL not configured');
+  }
+
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 40000);
+
+  try {
+    const res = await fetch(`${quickUrl}/api/enhance-quick`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-admin-key': env.WORKER_ADMIN_KEY || '',
+      },
+      body: JSON.stringify({ imageUrl, photoId, listingId, userId }),
+      signal: controller.signal,
+    });
+
+    clearTimeout(timeout);
+
+    if (!res.ok) {
+      const errText = await res.text();
+      throw new Error(`Quick enhance API error ${res.status}: ${errText}`);
+    }
+
+    const data = await res.json() as { signedUrl: string; preset: string; timings: { totalMs: number } };
+    console.log(`[Worker] Quick enhance: ${data.preset} preset in ${data.timings.totalMs}ms`);
+    return data.signedUrl;
+  } catch (error: any) {
+    clearTimeout(timeout);
+    if (error.name === 'AbortError') {
+      throw new Error('Quick enhance timeout (40s)');
+    }
+    throw error;
+  }
+}
+
 async function runTool(
   tool: ToolId,
   imageUrl: string,
   presets: LockedPresets,
-  analysis?: PhotoAnalysis
+  analysis?: PhotoAnalysis,
+  toolContext?: { photoId: string; listingId: string; userId: string; env: Env }
 ): Promise<string> {
+  // Route auto-enhance through Sharp.js API (fast, free, no queue)
+  if (tool === 'auto-enhance' && toolContext?.env.QUICK_ENHANCE_URL) {
+    return runQuickEnhance(
+      imageUrl,
+      toolContext.photoId,
+      toolContext.listingId,
+      toolContext.userId,
+      toolContext.env
+    );
+  }
+
   const presetPrompt = getPresetPrompt(tool, presets);
   const toolOptions = getToolStrength(tool, analysis);
   const { replicate } = await loadModules();
@@ -432,11 +501,11 @@ async function runTool(
   const execute = (): Promise<string> => {
     switch (tool) {
       case 'sky-replacement':
-        return replicate.skyReplacement(imageUrl, presetPrompt, toolOptions);
+        return replicate.skyReplacement(imageUrl, presetPrompt, undefined, { ...toolOptions, skipMask: true });
       case 'virtual-twilight':
         return replicate.virtualTwilight(imageUrl, presetPrompt, toolOptions);
       case 'lawn-repair':
-        return replicate.lawnRepair(imageUrl, presetPrompt, toolOptions);
+        return replicate.lawnRepair(imageUrl, presetPrompt, undefined, { ...toolOptions, skipMask: true });
       case 'pool-enhance':
         return replicate.poolEnhance(imageUrl, toolOptions);
       case 'declutter':
@@ -456,6 +525,7 @@ async function runTool(
       case 'hdr':
         return replicate.hdr(imageUrl, toolOptions);
       case 'auto-enhance':
+        // Fallback if QUICK_ENHANCE_URL not set
         return replicate.autoEnhance(imageUrl, toolOptions);
       case 'perspective-correction':
         return replicate.perspectiveCorrection(imageUrl, toolOptions);
@@ -548,7 +618,9 @@ async function processOnePhoto(
   for (const tool of strategyForPhoto.toolOrder) {
     const toolStart = Date.now();
     try {
-      const outputUrl = await runTool(tool, currentUrl, presets, analysis);
+      const outputUrl = await runTool(tool, currentUrl, presets, analysis, {
+            photoId: photo.id, listingId, userId, env,
+          });
       const durationMs = Date.now() - toolStart;
       if (outputUrl) {
         currentUrl = outputUrl;
@@ -560,10 +632,33 @@ async function processOnePhoto(
     } catch (toolError: any) {
       const durationMs = Date.now() - toolStart;
       const isTimeout = toolError?.message?.includes('timeout');
-      const reason = isTimeout ? `timeout (${getToolTimeout(tool)}ms)` : (toolError?.message || 'unknown error');
-      toolsSkipped.push({ tool, reason });
+      const firstReason = isTimeout ? `timeout (${getToolTimeout(tool)}ms)` : (toolError?.message || 'unknown error');
+
+      // Retry high-value structural tools once
+      const isStructuralTool = ['sky-replacement', 'lawn-repair'].includes(tool);
+      if (isStructuralTool) {
+        console.warn(`[Worker] Photo ${photoIndex + 1}/${totalPhotos} tool ${tool} RETRYING (first: ${firstReason})`);
+        try {
+          const retryStart = Date.now();
+          const retryUrl = await runTool(tool, currentUrl, presets, analysis, {
+            photoId: photo.id, listingId, userId, env,
+          });
+          if (retryUrl) {
+            currentUrl = retryUrl;
+            appliedAny = true;
+            toolsApplied.push(tool);
+            recordToolCost(costTracker, tool, Date.now() - retryStart, true);
+            console.log(`[Worker] Photo ${photoIndex + 1}/${totalPhotos} tool ${tool} ✓ RETRY SUCCESS ${Date.now() - retryStart}ms`);
+            continue;
+          }
+        } catch (retryError: any) {
+          console.warn(`[Worker] Photo ${photoIndex + 1}/${totalPhotos} tool ${tool} RETRY ALSO FAILED: ${retryError?.message}`);
+        }
+      }
+
+      toolsSkipped.push({ tool, reason: firstReason });
       recordToolCost(costTracker, tool, durationMs, false);
-      console.warn(`[Worker] Photo ${photoIndex + 1}/${totalPhotos} tool ${tool} SKIPPED: ${reason}`);
+      console.warn(`[Worker] Photo ${photoIndex + 1}/${totalPhotos} tool ${tool} SKIPPED: ${firstReason}`);
     }
   }
 
@@ -571,12 +666,15 @@ async function processOnePhoto(
   if (appliedAny && currentUrl !== (photo.signedUrl || photo.raw_url)) {
     try {
       storagePath = await uploadToSupabase(supabase, userId, listingId, photo.id, currentUrl);
-      await updatePhotoStatus(photo.id, 'completed', storagePath, env);
+      await updatePhotoStatus(photo.id, 'completed', storagePath, env, toolsApplied);
     } catch (uploadError: any) {
       console.error(`[Worker] Photo ${photoIndex + 1}/${totalPhotos} upload failed: ${uploadError?.message}`);
-      await updatePhotoStatus(photo.id, 'completed', null, env);
+      await updatePhotoStatus(photo.id, 'completed', null, env, toolsApplied);
     }
   } else {
+    console.warn(`[Worker] Photo ${photoIndex + 1}/${totalPhotos} NO UPLOAD: appliedAny=${appliedAny} urlChanged=${currentUrl !== (photo.signedUrl || photo.raw_url)}`);
+    if (currentUrl) console.warn(`[Worker]   currentUrl: ${currentUrl.substring(0, 100)}`);
+    console.warn(`[Worker]   originalUrl: ${(photo.signedUrl || photo.raw_url)?.substring(0, 100)}`);
     await updatePhotoStatus(photo.id, 'completed', null, env);
   }
 
@@ -729,8 +827,10 @@ export default {
           throw new Error("All photo analyses failed");
         }
 
-        const strategy = buildListingStrategy(listingId, validAnalyses);
-        const presets = determineLockedPresets(validAnalyses);
+        // Pass ALL analyses to strategy builder — it handles skips internally
+        // This ensures every photo gets a strategy (even if it's just auto-enhance)
+        const strategy = buildListingStrategy(listingId, analyses);
+        const presets = determineLockedPresets(analyses);
         console.log(`[Worker] Strategy: hero=${strategy.heroPhotoId}, tools=${strategy.photosRequiringWork}`);
 
         const strategyAudit = buildStrategyAudit(listingId, analysesById, strategy, presets);
@@ -835,8 +935,31 @@ export default {
           console.error(`[Worker] Cost metadata write exception:`, costWriteError);
         }
 
+        // Build preparation metadata for UI (confidence, per-photo audit, hero)
+        const confidence = photos.length > 0 ? Math.round((enhancedCount / photos.length) * 100) : 0;
+        const photoAudit: Record<string, {
+          toolsApplied: string[];
+          toolsSkipped: Array<{ tool: string; reason: string }>;
+          enhanced: boolean;
+          processingMs: number;
+        }> = {};
+        for (const r of allPhotoResults) {
+          photoAudit[r.photoId] = {
+            toolsApplied: r.toolsApplied,
+            toolsSkipped: r.toolsSkipped,
+            enhanced: r.enhanced,
+            processingMs: r.processingMs,
+          };
+        }
+
         // Job ALWAYS completes — tool failures are logged, not fatal
-        await updateListingPreparationStatus(listingId, 'prepared', env);
+        await updateListingPreparationStatus(listingId, 'prepared', env, {
+          confidence,
+          photoAudit,
+          heroPhotoId: strategy.heroPhotoId,
+          totalPhotos: photos.length,
+          enhancedPhotos: enhancedCount,
+        });
         await updateJobStatus(jobId, 'completed', env);
         await clearRetryCount(jobId, env);
         console.log(`[Worker] Job ${jobId} completed — cost: $${costSummary.totalCostDollars}`);

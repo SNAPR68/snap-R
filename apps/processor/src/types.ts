@@ -38,6 +38,7 @@ export interface Env {
   REPLICATE_API_TOKEN: string;
   OPENAI_API_KEY: string;
   WORKER_ADMIN_KEY?: string;
+  QUICK_ENHANCE_URL?: string;
   ANALYSIS_CONCURRENCY?: string;
   ANALYSIS_BATCH_DELAY_MS?: string;
 }
