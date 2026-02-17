@@ -1,11 +1,11 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
-import { 
-  ArrowLeft, Calendar as CalendarIcon, ChevronLeft, ChevronRight, Plus, 
+import {
+  ArrowLeft, Calendar as CalendarIcon, ChevronLeft, ChevronRight, Plus,
   Instagram, Facebook, Linkedin, Video, Clock, Trash2, Edit2, X,
-  Home, Loader2, Check
+  Home, Loader2, Check, CheckCircle, AlertCircle, Sparkles
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 
@@ -18,8 +18,10 @@ interface ScheduledPost {
   scheduled_date: string
   scheduled_time: string
   caption: string
-  status: 'scheduled' | 'published' | 'failed'
+  status: 'pending' | 'published' | 'failed' | 'cancelled'
   thumbnail?: string
+  image_urls?: string[]
+  source?: 'manual' | 'auto'
 }
 
 interface Listing {
@@ -43,10 +45,41 @@ export default function ContentCalendar() {
   // Form state
   const [formListing, setFormListing] = useState('')
   const [formPlatform, setFormPlatform] = useState('instagram')
-  const [formPostType, setFormPostType] = useState('just-listed')
+  const [formPostType, setFormPostType] = useState('just_listed')
   const [formTime, setFormTime] = useState('09:00')
   const [formCaption, setFormCaption] = useState('')
   const [saving, setSaving] = useState(false)
+
+  const loadPosts = useCallback(async () => {
+    try {
+      // Load all non-cancelled posts from database
+      const res = await fetch('/api/schedule?status=pending,published,failed')
+      if (!res.ok) throw new Error('Failed to fetch posts')
+      const { posts } = await res.json()
+
+      const mapped: ScheduledPost[] = (posts || []).map((p: any) => {
+        const scheduledFor = new Date(p.scheduled_for)
+        const listingTitle = p.listings?.title || p.listings?.address || 'Untitled'
+        return {
+          id: p.id,
+          listing_id: p.listing_id || '',
+          listing_title: listingTitle,
+          platform: p.platform,
+          post_type: p.post_type || 'just_listed',
+          scheduled_date: scheduledFor.toISOString().split('T')[0],
+          scheduled_time: scheduledFor.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false }),
+          caption: p.content || '',
+          status: p.status,
+          image_urls: p.image_urls,
+          source: (p.post_type === 'just_listed' && p.content && p.content.length > 50) ? 'auto' : 'manual',
+        }
+      })
+
+      setScheduledPosts(mapped)
+    } catch (error) {
+      console.error('Error loading scheduled posts:', error)
+    }
+  }, [])
 
   useEffect(() => {
     loadData()
@@ -55,7 +88,7 @@ export default function ContentCalendar() {
   const loadData = async () => {
     setLoading(true)
     const supabase = createClient()
-    
+
     try {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return
@@ -93,21 +126,13 @@ export default function ContentCalendar() {
         if (processed.length > 0) setFormListing(processed[0].id)
       }
 
-      // Load scheduled posts (using localStorage for demo)
-      const savedPosts = localStorage.getItem('snapr_scheduled_posts')
-      if (savedPosts) {
-        setScheduledPosts(JSON.parse(savedPosts))
-      }
+      // Load scheduled posts from database
+      await loadPosts()
     } catch (error) {
       console.error('Error loading data:', error)
     }
-    
-    setLoading(false)
-  }
 
-  const savePosts = (posts: ScheduledPost[]) => {
-    localStorage.setItem('snapr_scheduled_posts', JSON.stringify(posts))
-    setScheduledPosts(posts)
+    setLoading(false)
   }
 
   const getDaysInMonth = (date: Date) => {
@@ -117,19 +142,19 @@ export default function ContentCalendar() {
     const lastDay = new Date(year, month + 1, 0)
     const daysInMonth = lastDay.getDate()
     const startingDay = firstDay.getDay()
-    
+
     const days: (Date | null)[] = []
-    
+
     // Add empty slots for days before the first of the month
     for (let i = 0; i < startingDay; i++) {
       days.push(null)
     }
-    
+
     // Add all days of the month
     for (let i = 1; i <= daysInMonth; i++) {
       days.push(new Date(year, month, i))
     }
-    
+
     return days
   }
 
@@ -173,36 +198,61 @@ export default function ContentCalendar() {
     if (!selectedDate || !formListing) return
     setSaving(true)
 
-    const listing = listings.find(l => l.id === formListing)
-    const newPost: ScheduledPost = {
-      id: editingPost?.id || `post_${Date.now()}`,
-      listing_id: formListing,
-      listing_title: listing?.title || 'Untitled',
-      platform: formPlatform,
-      post_type: formPostType,
-      scheduled_date: selectedDate.toISOString().split('T')[0],
-      scheduled_time: formTime,
-      caption: formCaption,
-      status: 'scheduled',
-      thumbnail: listing?.thumbnail || undefined
+    try {
+      // Build ISO timestamp from date + time
+      const [hours, minutes] = formTime.split(':').map(Number)
+      const scheduledFor = new Date(selectedDate)
+      scheduledFor.setHours(hours, minutes, 0, 0)
+
+      if (editingPost) {
+        // Cancel old post and create new one (no PATCH endpoint)
+        await fetch('/api/schedule', {
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id: editingPost.id }),
+        })
+      }
+
+      const res = await fetch('/api/schedule', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          listingId: formListing,
+          platform: formPlatform,
+          postType: formPostType,
+          content: formCaption,
+          scheduledFor: scheduledFor.toISOString(),
+        }),
+      })
+
+      if (!res.ok) {
+        const err = await res.json()
+        throw new Error(err.error || 'Failed to schedule')
+      }
+
+      // Reload posts from DB
+      await loadPosts()
+    } catch (error) {
+      console.error('Error saving post:', error)
     }
 
-    let updatedPosts: ScheduledPost[]
-    if (editingPost) {
-      updatedPosts = scheduledPosts.map(p => p.id === editingPost.id ? newPost : p)
-    } else {
-      updatedPosts = [...scheduledPosts, newPost]
-    }
-
-    savePosts(updatedPosts)
     setSaving(false)
     closeModal()
   }
 
-  const handleDelete = (postId: string) => {
-    if (confirm('Delete this scheduled post?')) {
-      const updatedPosts = scheduledPosts.filter(p => p.id !== postId)
-      savePosts(updatedPosts)
+  const handleDelete = async (postId: string) => {
+    if (!confirm('Cancel this scheduled post?')) return
+
+    try {
+      const res = await fetch('/api/schedule', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: postId }),
+      })
+      if (!res.ok) throw new Error('Failed to cancel')
+      await loadPosts()
+    } catch (error) {
+      console.error('Error cancelling post:', error)
     }
   }
 
@@ -225,14 +275,41 @@ export default function ContentCalendar() {
     tiktok: 'bg-black'
   }
 
+  const postTypeLabels: Record<string, string> = {
+    'just_listed': 'Just Listed',
+    'just-listed': 'Just Listed',
+    'open_house': 'Open House',
+    'open-house': 'Open House',
+    'price_drop': 'Price Reduced',
+    'price-reduced': 'Price Reduced',
+    'sold': 'Just Sold',
+    'just-sold': 'Just Sold',
+    'custom': 'Custom',
+  }
+
   const postTypeColors: Record<string, string> = {
+    'just_listed': '#D4AF37',
     'just-listed': '#D4AF37',
+    'open_house': '#22C55E',
     'open-house': '#22C55E',
+    'price_drop': '#EF4444',
     'price-reduced': '#EF4444',
-    'just-sold': '#8B5CF6'
+    'sold': '#8B5CF6',
+    'just-sold': '#8B5CF6',
+    'custom': '#6B7280',
+  }
+
+  const statusColors: Record<string, { bg: string; text: string; icon: React.ElementType }> = {
+    pending: { bg: 'bg-amber-500/20', text: 'text-amber-400', icon: Clock },
+    published: { bg: 'bg-emerald-500/20', text: 'text-emerald-400', icon: CheckCircle },
+    failed: { bg: 'bg-red-500/20', text: 'text-red-400', icon: AlertCircle },
   }
 
   const days = getDaysInMonth(currentDate)
+
+  // Stats
+  const pendingCount = scheduledPosts.filter(p => p.status === 'pending').length
+  const publishedCount = scheduledPosts.filter(p => p.status === 'published').length
 
   return (
     <div className="min-h-screen bg-[#0A0A0A] text-white">
@@ -248,6 +325,21 @@ export default function ContentCalendar() {
               <CalendarIcon className="w-4 h-4 text-white" />
             </div>
             <span className="font-bold">Content Calendar</span>
+          </div>
+          {/* Stats pills */}
+          <div className="flex items-center gap-2 ml-4">
+            {pendingCount > 0 && (
+              <span className="flex items-center gap-1 px-2 py-1 bg-amber-500/10 border border-amber-500/20 rounded-full text-xs text-amber-400">
+                <Clock className="w-3 h-3" />
+                {pendingCount} queued
+              </span>
+            )}
+            {publishedCount > 0 && (
+              <span className="flex items-center gap-1 px-2 py-1 bg-emerald-500/10 border border-emerald-500/20 rounded-full text-xs text-emerald-400">
+                <CheckCircle className="w-3 h-3" />
+                {publishedCount} published
+              </span>
+            )}
           </div>
         </div>
         <Link
@@ -275,7 +367,7 @@ export default function ContentCalendar() {
               </button>
             </div>
             <div className="flex items-center gap-2">
-              <button 
+              <button
                 onClick={() => setCurrentDate(new Date())}
                 className="px-3 py-1.5 bg-white/10 rounded-lg text-sm hover:bg-white/20"
               >
@@ -300,7 +392,7 @@ export default function ContentCalendar() {
               {days.map((date, i) => {
                 const posts = date ? getPostsForDate(date) : []
                 const today = date ? isToday(date) : false
-                
+
                 return (
                   <div
                     key={i}
@@ -317,17 +409,23 @@ export default function ContentCalendar() {
                         <div className="space-y-1">
                           {posts.slice(0, 3).map(post => {
                             const Icon = platformIcons[post.platform] || Instagram
+                            const isPublished = post.status === 'published'
+                            const isFailed = post.status === 'failed'
                             return (
                               <div
                                 key={post.id}
                                 onClick={(e) => { e.stopPropagation(); openScheduleModal(date, post) }}
-                                className="flex items-center gap-1.5 p-1.5 rounded-lg text-xs truncate"
-                                style={{ backgroundColor: postTypeColors[post.post_type] + '30' }}
+                                className={`flex items-center gap-1.5 p-1.5 rounded-lg text-xs truncate ${
+                                  isPublished ? 'opacity-60' : isFailed ? 'opacity-50' : ''
+                                }`}
+                                style={{ backgroundColor: (postTypeColors[post.post_type] || '#6B7280') + '30' }}
                               >
-                                <div className={`w-4 h-4 rounded flex items-center justify-center ${platformColors[post.platform]}`}>
+                                <div className={`w-4 h-4 rounded flex items-center justify-center flex-shrink-0 ${platformColors[post.platform] || 'bg-gray-600'}`}>
                                   <Icon className="w-2.5 h-2.5 text-white" />
                                 </div>
                                 <span className="truncate">{post.listing_title}</span>
+                                {isPublished && <CheckCircle className="w-3 h-3 text-emerald-400 flex-shrink-0" />}
+                                {isFailed && <AlertCircle className="w-3 h-3 text-red-400 flex-shrink-0" />}
                               </div>
                             )
                           })}
@@ -348,32 +446,42 @@ export default function ContentCalendar() {
           {/* Upcoming Posts */}
           <div className="mt-8">
             <h3 className="text-lg font-bold mb-4">Upcoming Scheduled Posts</h3>
-            {scheduledPosts.filter(p => new Date(p.scheduled_date) >= new Date()).length === 0 ? (
+            {scheduledPosts.filter(p => p.status === 'pending').length === 0 ? (
               <div className="bg-[#111] rounded-xl border border-white/5 p-8 text-center">
                 <CalendarIcon className="w-12 h-12 text-white/10 mx-auto mb-3" />
                 <p className="text-white/40">No upcoming posts scheduled</p>
-                <p className="text-white/30 text-sm mt-1">Click on any date to schedule a post</p>
+                <p className="text-white/30 text-sm mt-1">Click on any date to schedule a post, or auto-generate via the marketing pipeline</p>
               </div>
             ) : (
               <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {scheduledPosts
-                  .filter(p => new Date(p.scheduled_date) >= new Date())
-                  .sort((a, b) => new Date(a.scheduled_date).getTime() - new Date(b.scheduled_date).getTime())
+                  .filter(p => p.status === 'pending')
+                  .sort((a, b) => new Date(a.scheduled_date + 'T' + a.scheduled_time).getTime() - new Date(b.scheduled_date + 'T' + b.scheduled_time).getTime())
                   .slice(0, 6)
                   .map(post => {
                     const Icon = platformIcons[post.platform] || Instagram
+                    const listing = listings.find(l => l.id === post.listing_id)
                     return (
                       <div key={post.id} className="bg-[#111] rounded-xl border border-white/5 overflow-hidden">
                         <div className="flex items-center gap-3 p-3 border-b border-white/5">
-                          {post.thumbnail ? (
-                            <img src={post.thumbnail} alt="" className="w-12 h-12 rounded-lg object-cover" />
+                          {listing?.thumbnail ? (
+                            <img src={listing.thumbnail} alt="" className="w-12 h-12 rounded-lg object-cover" />
+                          ) : post.image_urls?.[0] ? (
+                            <img src={post.image_urls[0]} alt="" className="w-12 h-12 rounded-lg object-cover" />
                           ) : (
                             <div className="w-12 h-12 rounded-lg bg-white/10 flex items-center justify-center">
                               <Home className="w-6 h-6 text-white/30" />
                             </div>
                           )}
                           <div className="flex-1 min-w-0">
-                            <p className="font-medium truncate">{post.listing_title}</p>
+                            <div className="flex items-center gap-1.5">
+                              <p className="font-medium truncate">{post.listing_title}</p>
+                              {post.source === 'auto' && (
+                                <span title="Auto-generated by marketing pipeline">
+                                  <Sparkles className="w-3 h-3 text-[#D4AF37] flex-shrink-0" />
+                                </span>
+                              )}
+                            </div>
                             <div className="flex items-center gap-2 text-xs text-white/50">
                               <Clock className="w-3 h-3" />
                               {new Date(post.scheduled_date).toLocaleDateString()} at {post.scheduled_time}
@@ -382,14 +490,14 @@ export default function ContentCalendar() {
                         </div>
                         <div className="p-3">
                           <div className="flex items-center gap-2 mb-2">
-                            <div className={`w-6 h-6 rounded flex items-center justify-center ${platformColors[post.platform]}`}>
+                            <div className={`w-6 h-6 rounded flex items-center justify-center ${platformColors[post.platform] || 'bg-gray-600'}`}>
                               <Icon className="w-3.5 h-3.5 text-white" />
                             </div>
-                            <span 
+                            <span
                               className="text-xs px-2 py-0.5 rounded capitalize"
-                              style={{ backgroundColor: postTypeColors[post.post_type] + '30', color: postTypeColors[post.post_type] }}
+                              style={{ backgroundColor: (postTypeColors[post.post_type] || '#6B7280') + '30', color: postTypeColors[post.post_type] || '#6B7280' }}
                             >
-                              {post.post_type.replace('-', ' ')}
+                              {postTypeLabels[post.post_type] || post.post_type?.replace(/[_-]/g, ' ')}
                             </span>
                           </div>
                           {post.caption && (
@@ -416,6 +524,37 @@ export default function ContentCalendar() {
               </div>
             )}
           </div>
+
+          {/* Recently Published */}
+          {scheduledPosts.filter(p => p.status === 'published').length > 0 && (
+            <div className="mt-8">
+              <h3 className="text-lg font-bold mb-4">Recently Published</h3>
+              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {scheduledPosts
+                  .filter(p => p.status === 'published')
+                  .slice(0, 3)
+                  .map(post => {
+                    const Icon = platformIcons[post.platform] || Instagram
+                    return (
+                      <div key={post.id} className="bg-[#111] rounded-xl border border-emerald-500/10 overflow-hidden opacity-80">
+                        <div className="flex items-center gap-3 p-3">
+                          <div className={`w-8 h-8 rounded flex items-center justify-center ${platformColors[post.platform] || 'bg-gray-600'}`}>
+                            <Icon className="w-4 h-4 text-white" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="font-medium text-sm truncate">{post.listing_title}</p>
+                            <div className="flex items-center gap-1 text-xs text-emerald-400">
+                              <CheckCircle className="w-3 h-3" />
+                              Published
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    )
+                  })}
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
@@ -431,8 +570,21 @@ export default function ContentCalendar() {
                 <X className="w-5 h-5" />
               </button>
             </div>
-            
+
             <div className="p-4 space-y-4">
+              {/* Show status for existing posts */}
+              {editingPost && editingPost.status !== 'pending' && (
+                <div className={`flex items-center gap-2 px-3 py-2 rounded-lg ${statusColors[editingPost.status]?.bg || 'bg-white/5'}`}>
+                  {(() => {
+                    const StatusIcon = statusColors[editingPost.status]?.icon || Clock
+                    return <StatusIcon className={`w-4 h-4 ${statusColors[editingPost.status]?.text || 'text-white/50'}`} />
+                  })()}
+                  <span className={`text-sm font-medium capitalize ${statusColors[editingPost.status]?.text || 'text-white/50'}`}>
+                    {editingPost.status}
+                  </span>
+                </div>
+              )}
+
               <div>
                 <label className="block text-sm font-medium mb-2">Date</label>
                 <div className="px-4 py-3 bg-white/5 rounded-xl text-white/70">
@@ -446,6 +598,7 @@ export default function ContentCalendar() {
                   value={formListing}
                   onChange={(e) => setFormListing(e.target.value)}
                   className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl focus:outline-none focus:border-blue-500"
+                  disabled={editingPost?.status === 'published'}
                 >
                   {listings.map(l => (
                     <option key={l.id} value={l.id} className="bg-gray-900">{l.title}</option>
@@ -460,6 +613,7 @@ export default function ContentCalendar() {
                     value={formPlatform}
                     onChange={(e) => setFormPlatform(e.target.value)}
                     className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl focus:outline-none focus:border-blue-500"
+                    disabled={editingPost?.status === 'published'}
                   >
                     <option value="instagram" className="bg-gray-900">Instagram</option>
                     <option value="facebook" className="bg-gray-900">Facebook</option>
@@ -474,6 +628,7 @@ export default function ContentCalendar() {
                     value={formTime}
                     onChange={(e) => setFormTime(e.target.value)}
                     className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl focus:outline-none focus:border-blue-500"
+                    disabled={editingPost?.status === 'published'}
                   />
                 </div>
               </div>
@@ -482,21 +637,22 @@ export default function ContentCalendar() {
                 <label className="block text-sm font-medium mb-2">Post Type</label>
                 <div className="grid grid-cols-2 gap-2">
                   {[
-                    { id: 'just-listed', label: '🏠 Just Listed' },
-                    { id: 'open-house', label: '🚪 Open House' },
-                    { id: 'price-reduced', label: '💰 Price Reduced' },
-                    { id: 'just-sold', label: '🎉 Just Sold' },
+                    { id: 'just_listed', label: '🏠 Just Listed' },
+                    { id: 'open_house', label: '🚪 Open House' },
+                    { id: 'price_drop', label: '💰 Price Reduced' },
+                    { id: 'sold', label: '🎉 Just Sold' },
                   ].map(type => (
                     <button
                       key={type.id}
                       onClick={() => setFormPostType(type.id)}
+                      disabled={editingPost?.status === 'published'}
                       className={`py-2 px-3 rounded-lg text-sm transition-all ${
                         formPostType === type.id
                           ? 'text-white'
                           : 'bg-white/5 text-white/60'
-                      }`}
-                      style={{ 
-                        backgroundColor: formPostType === type.id ? postTypeColors[type.id] : undefined 
+                      } ${editingPost?.status === 'published' ? 'opacity-50 cursor-not-allowed' : ''}`}
+                      style={{
+                        backgroundColor: formPostType === type.id ? postTypeColors[type.id] : undefined
                       }}
                     >
                       {type.label}
@@ -506,13 +662,14 @@ export default function ContentCalendar() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium mb-2">Caption (optional)</label>
+                <label className="block text-sm font-medium mb-2">Caption</label>
                 <textarea
                   value={formCaption}
                   onChange={(e) => setFormCaption(e.target.value)}
                   rows={3}
                   placeholder="Add your caption here..."
                   className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl focus:outline-none focus:border-blue-500 resize-none"
+                  readOnly={editingPost?.status === 'published'}
                 />
               </div>
             </div>
@@ -522,16 +679,18 @@ export default function ContentCalendar() {
                 onClick={closeModal}
                 className="flex-1 py-3 bg-white/10 rounded-xl font-medium hover:bg-white/20"
               >
-                Cancel
+                {editingPost?.status === 'published' ? 'Close' : 'Cancel'}
               </button>
-              <button
-                onClick={handleSave}
-                disabled={saving || !formListing}
-                className="flex-1 py-3 bg-[#D4AF37] text-black rounded-xl font-semibold hover:bg-[#B8860B] disabled:opacity-50 flex items-center justify-center gap-2"
-              >
-                {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
-                {editingPost ? 'Update' : 'Schedule'}
-              </button>
+              {editingPost?.status !== 'published' && (
+                <button
+                  onClick={handleSave}
+                  disabled={saving || !formListing}
+                  className="flex-1 py-3 bg-[#D4AF37] text-black rounded-xl font-semibold hover:bg-[#B8860B] disabled:opacity-50 flex items-center justify-center gap-2"
+                >
+                  {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
+                  {editingPost ? 'Update' : 'Schedule'}
+                </button>
+              )}
             </div>
           </div>
         </div>

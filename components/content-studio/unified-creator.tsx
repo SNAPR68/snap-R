@@ -169,6 +169,53 @@ export function UnifiedCreator() {
     loadListingData()
   }, [listingId])
 
+  // Pre-fill from marketing pipeline when ?prefill=marketing
+  const prefill = searchParams.get('prefill')
+  const [marketingCaptions, setMarketingCaptions] = useState<Record<string, any> | null>(null)
+  const [captionManuallyEdited, setCaptionManuallyEdited] = useState(false)
+
+  // Fetch marketing captions once (no platform dependency)
+  useEffect(() => {
+    if (prefill !== 'marketing' || !listingId) return
+
+    const loadMarketingContent = async () => {
+      try {
+        const res = await fetch(`/api/marketing/status?listingId=${listingId}`)
+        if (!res.ok) return
+        const data = await res.json()
+        const job = data.marketingJob
+        if (!job || job.status !== 'completed') return
+
+        // Cache all captions
+        const captions = job.captions?.result
+        if (captions && typeof captions === 'object') {
+          setMarketingCaptions(captions)
+        }
+      } catch (error) {
+        console.error('Error loading marketing content for prefill:', error)
+      }
+    }
+
+    // Small delay to ensure listing data loads first
+    const timer = setTimeout(loadMarketingContent, 500)
+    return () => clearTimeout(timer)
+  }, [prefill, listingId])
+
+  // Apply cached caption when platform changes (only if user hasn't manually edited)
+  useEffect(() => {
+    if (!marketingCaptions || captionManuallyEdited) return
+
+    const platformCaption = marketingCaptions[platform] || marketingCaptions.instagram || marketingCaptions.facebook || marketingCaptions.linkedin
+    if (platformCaption) {
+      const captionText = typeof platformCaption === 'string' ? platformCaption : platformCaption?.caption || platformCaption?.text || ''
+      const hashtagsText = typeof platformCaption === 'object' ? platformCaption?.hashtags : null
+      if (captionText) setCaption(captionText)
+      if (hashtagsText) {
+        setHashtags(Array.isArray(hashtagsText) ? hashtagsText.join(' ') : String(hashtagsText))
+      }
+    }
+  }, [platform, marketingCaptions, captionManuallyEdited])
+
   const selectPhoto = (url: string) => {
     if (postMode === 'carousel') {
       setSelectedPhotos(prev => prev.includes(url) ? prev.filter(u => u !== url) : prev.length < 10 ? [...prev, url] : prev)
@@ -636,7 +683,7 @@ export function UnifiedCreator() {
       })
       if (!res.ok) throw new Error('API error')
       const data = await res.json()
-      if (data.caption) setCaption(data.caption)
+      if (data.caption) { setCaption(data.caption); setCaptionManuallyEdited(true) }
       else if (data.error) console.error('Caption error:', data.error)
     } catch (e) { 
       console.error('Failed to generate caption:', e)
@@ -691,8 +738,9 @@ export function UnifiedCreator() {
     if (price) text += `💰 ${price}\n`
     if (details) text += `🏠 ${details}\n`
     text += `\n📞 Contact me for more information!`
-    
+
     setCaption(text)
+    setCaptionManuallyEdited(true)
   }
 
   const generateFallbackHashtags = () => {
@@ -949,6 +997,15 @@ export function UnifiedCreator() {
               {copied === 'caption' ? <><Check className="w-4 h-4 mr-2 text-green-400" />Copied!</> : <><ClipboardCopy className="w-4 h-4 mr-2" />Copy Caption & Hashtags</>}
             </Button>
           </div>
+
+          {/* Auto-generated badge when pre-filled */}
+          {prefill === 'marketing' && caption && (
+            <div className="flex items-center gap-2 px-3 py-2 bg-emerald-500/10 border border-emerald-500/20 rounded-lg">
+              <CheckCircle className="w-3.5 h-3.5 text-emerald-400" />
+              <span className="text-xs text-emerald-400 font-medium">Pre-filled from marketing pipeline</span>
+              <span className="text-xs text-white/30 ml-auto">Edit freely below</span>
+            </div>
+          )}
 
           {/* AI Caption - FIXED: Now visible with proper spacing */}
           <div className="bg-white/5 rounded-xl p-4 border border-white/10">

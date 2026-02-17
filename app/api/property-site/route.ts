@@ -55,6 +55,40 @@ export async function POST(request: Request) {
   }
 }
 
+// PATCH - Update property site (publish/unpublish, theme, etc.)
+export async function PATCH(request: Request) {
+  try {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+    const body = await request.json()
+    const { id, is_published, template, custom_colors, agent_info } = body
+
+    if (!id) return NextResponse.json({ error: 'Site ID required' }, { status: 400 })
+
+    const updates: Record<string, any> = {}
+    if (typeof is_published === 'boolean') updates.is_published = is_published
+    if (template) updates.template = template
+    if (custom_colors !== undefined) updates.custom_colors = custom_colors
+    if (agent_info !== undefined) updates.agent_info = agent_info
+
+    const { data: site, error } = await supabase
+      .from('property_sites')
+      .update(updates)
+      .eq('id', id)
+      .eq('user_id', user.id)
+      .select()
+      .single()
+
+    if (error) throw error
+    return NextResponse.json({ site })
+  } catch (error) {
+    console.error('Error updating site:', error)
+    return NextResponse.json({ error: 'Failed to update site' }, { status: 500 })
+  }
+}
+
 // DELETE - Delete property site
 export async function DELETE(request: Request) {
   try {

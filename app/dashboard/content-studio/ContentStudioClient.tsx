@@ -3,11 +3,11 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { 
+import {
   ArrowLeft, Image, Video, Calendar, FolderOpen, Settings,
   Instagram, Facebook, Linkedin, Sparkles, Mail, Globe,
   Home, Coins, ChevronRight, Hash, Palette, Zap,
-  BarChart3, ArrowRight, Loader2, Download
+  BarChart3, ArrowRight, Loader2, Download, CheckCircle
 } from 'lucide-react'
 import { trackEvent, SnapREvents } from '@/lib/analytics'
 
@@ -21,12 +21,22 @@ interface Listing {
   thumbnail: string | null
 }
 
-export default function ContentStudioClient({ 
-  initialListings, 
-  credits 
-}: { 
+interface MarketingStatus {
+  status: string
+  hasDescription: boolean
+  hasCaptions: boolean
+  hasSite: boolean
+  hasScheduledPosts: boolean
+}
+
+export default function ContentStudioClient({
+  initialListings,
+  credits,
+  marketingStatuses
+}: {
   initialListings: Listing[]
-  credits: number 
+  credits: number
+  marketingStatuses?: Record<string, MarketingStatus>
 }) {
   const router = useRouter()
   const [selectedTab, setSelectedTab] = useState<TabType>('social')
@@ -254,6 +264,14 @@ export default function ContentStudioClient({
                             <span className="text-[10px] bg-black/60 px-1.5 py-0.5 rounded">{listing.photoCount} photos</span>
                             {listing.enhancedCount > 0 && (
                               <span className="text-[10px] bg-green-500/80 px-1.5 py-0.5 rounded">{listing.enhancedCount} ready</span>
+                            )}
+                            {marketingStatuses?.[listing.id]?.status === 'completed' && (
+                              <span className="text-[10px] bg-emerald-500/80 px-1.5 py-0.5 rounded flex items-center gap-0.5">
+                                <CheckCircle className="w-2.5 h-2.5" /> Content Ready
+                              </span>
+                            )}
+                            {marketingStatuses?.[listing.id]?.status === 'processing' && (
+                              <span className="text-[10px] bg-amber-500/80 px-1.5 py-0.5 rounded">Processing</span>
                             )}
                           </div>
                         </div>

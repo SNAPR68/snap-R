@@ -667,3 +667,81 @@ Cloudflare Worker (queue handler)
   vercel.json
 - Risk Level:
   Low (timeout increase only)
+
+-------------------------------------------------------------------------------
+## 2026-02-17 — Phase 3: Content Studio Integration + Bug Fixes
+-------------------------------------------------------------------------------
+
+### 1. Content Studio — DB-Backed Calendar
+- Description:
+  Rewrote calendar/page.tsx from localStorage-based to DB-backed via
+  /api/schedule API. Supports multi-status filtering (pending, published,
+  failed, cancelled), listing joins for display, stats pills, Recently
+  Published section. Modal disabled for published posts (read-only).
+  Fixed source detection bug: was always 'auto' because created_at always
+  exists. Now uses post_type + content.length heuristic.
+- Files Modified:
+  app/dashboard/content-studio/calendar/page.tsx
+  app/api/schedule/route.ts
+- Architectural Impact:
+  Calendar now reflects real scheduled_posts table state. Manual and
+  auto-generated posts visually distinguished. CRUD operations persist
+  to DB instead of localStorage.
+- Risk Level:
+  Low (UI + API rewrite, no pipeline changes)
+
+### 2. Content Studio — Marketing Status Badges
+- Description:
+  Added MarketingStatus interface and badges on listing cards in Content
+  Studio. Server-side page.tsx queries marketing_jobs table (wrapped in
+  try/catch) and builds status map passed to ContentStudioClient.
+  Cards show "Content Ready" (green) or "Processing" (amber) badges.
+- Files Modified:
+  app/dashboard/content-studio/page.tsx
+  app/dashboard/content-studio/ContentStudioClient.tsx
+- Architectural Impact:
+  Marketing pipeline visibility in Content Studio. Graceful degradation
+  if marketing_jobs table unavailable.
+- Risk Level:
+  Low (additive UI, non-breaking)
+
+### 3. Content Studio — Marketing Content Preview on Select Page
+- Description:
+  Select page now shows marketing content preview (description + captions)
+  when a listing has completed marketing. "Edit & Post with Auto Content"
+  CTA links to unified creator with prefill=marketing param.
+  Fixed two pre-existing bugs: original_url → raw_url column name,
+  uploads → raw-images storage bucket.
+- Files Modified:
+  app/dashboard/content-studio/select/page.tsx
+- Architectural Impact:
+  Bridges marketing pipeline output to content creation workflow.
+  Photos now load correctly on select page (was broken by wrong column).
+- Risk Level:
+  Low (bug fixes + additive UI)
+
+### 4. Unified Creator — Marketing Prefill with Caching
+- Description:
+  When prefill=marketing param present, fetches marketing captions once
+  from /api/marketing/status and caches in state. Platform changes apply
+  cached caption without re-fetching. captionManuallyEdited flag prevents
+  overwriting user edits on platform switch.
+- Files Modified:
+  components/content-studio/unified-creator.tsx
+- Architectural Impact:
+  Eliminates API hammering on platform switch. Respects user edits.
+  Marketing content flows from pipeline → content studio seamlessly.
+- Risk Level:
+  Low (caching optimization + UX improvement)
+
+### 5. Property Site API — PATCH Method
+- Description:
+  Added PATCH endpoint to /api/property-site for publish/unpublish toggle,
+  theme updates, custom colors, and agent info. Selective field updates
+  (only provided fields are modified).
+- Files Modified:
+  app/api/property-site/route.ts
+- Architectural Impact:
+  Enables property site management from Content Studio UI.
+- Risk Level:
+  Low (additive API endpoint)
