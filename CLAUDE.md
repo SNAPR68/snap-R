@@ -227,13 +227,14 @@ Each tool has presets (e.g., sky-replacement: Clear Blue, Sunset, Dramatic Cloud
 | `/api/download-all` | POST | ZIP download of enhanced photos |
 | `/api/analytics/posts` | GET | Published posts analytics |
 
-## Pending Migrations (not yet applied to remote)
+## Applied Migrations (Feb 2026)
 
-These were created but Supabase is offline (billing issue). Apply when back:
+These migrations have been applied to the live Supabase database:
 
-1. `20260216_marketing_jobs.sql` — marketing_jobs table
-2. `20260216_marketing_jobs_scheduled_posts.sql` — scheduled_posts columns on marketing_jobs
-3. `20260216_published_posts.sql` — published_posts table with analytics + RLS + service role bypass
+1. `20260216_marketing_jobs.sql` — marketing_jobs table with per-step status, JSONB artifacts, cost tracking, RLS
+2. `20260216_marketing_jobs_scheduled_posts.sql` — scheduled_posts_status/result columns on marketing_jobs
+3. `20260216_published_posts.sql` — published_posts table with analytics columns, RLS, service role bypass
+4. `20260216_photos_tools_applied.sql` — tools_applied text[] column on photos table
 
 ## Environment Variables
 
@@ -270,7 +271,7 @@ Default:       100 req/min
 2. **No test framework** currently configured
 3. **Image Pipeline**: Raw → Supabase Storage → Worker → R2 → CDN (Cloudinary)
 4. **Deploy**: Next.js to Vercel, Worker to Cloudflare via wrangler
-5. **Supabase project**: `asoiwonhqoesbvcilqwd.supabase.co` (currently NXDOMAIN — billing issue)
+5. **Supabase project**: `asoiwonhqoesbvcilqwd.supabase.co` (South Asia / Mumbai region)
 6. **Always run `npx tsc --noEmit` before considering any change complete**
 7. **Marketing pipeline uses always-complete semantics** — each step is independent; one failing doesn't block others
 8. **Free-tier users are gated** at both marketing handler (skipped) and cron publisher (canPublish: false)
