@@ -23,6 +23,38 @@ export default async function ContentStudio() {
     .order('created_at', { ascending: false })
     .limit(20)
 
+  // Fetch marketing jobs for all user listings (wrapped in try/catch for resilience)
+  let marketingJobs: any[] | null = null
+  try {
+    const { data } = await supabase
+      .from('marketing_jobs')
+      .select('listing_id, status, description_status, captions_status, property_site_status, scheduled_posts_status')
+      .eq('user_id', user.id)
+    marketingJobs = data
+  } catch { /* marketing_jobs query failed — degrade gracefully */ }
+
+  // Build marketing status map
+  const marketingStatuses: Record<string, {
+    status: string
+    hasDescription: boolean
+    hasCaptions: boolean
+    hasSite: boolean
+    hasScheduledPosts: boolean
+  }> = {}
+  if (marketingJobs) {
+    for (const job of marketingJobs) {
+      if (!marketingStatuses[job.listing_id]) {
+        marketingStatuses[job.listing_id] = {
+          status: job.status,
+          hasDescription: job.description_status === 'completed',
+          hasCaptions: job.captions_status === 'completed',
+          hasSite: job.property_site_status === 'completed',
+          hasScheduledPosts: job.scheduled_posts_status === 'completed',
+        }
+      }
+    }
+  }
+
   const listingsWithPhotos = await Promise.all(
     (listings || []).map(async (listing: any) => {
       const photos = listing.photos || []
@@ -51,9 +83,10 @@ export default async function ContentStudio() {
   )
 
   return (
-    <ContentStudioClient 
-      initialListings={listingsWithPhotos} 
-      credits={profile?.credits || 0} 
+    <ContentStudioClient
+      initialListings={listingsWithPhotos}
+      credits={profile?.credits || 0}
+      marketingStatuses={marketingStatuses}
     />
   )
 }

@@ -1,6 +1,9 @@
 import OpenAI from 'openai';
 
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+function getOpenAIClient(client?: OpenAI): OpenAI {
+  if (client) return client;
+  return new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+}
 
 export interface PhotoCullScore {
   photoIndex: number;
@@ -85,7 +88,8 @@ RESPOND IN THIS EXACT JSON FORMAT:
 
 export async function analyzePhotosForCulling(
   photoUrls: string[],
-  targetCount: number = 25
+  targetCount: number = 25,
+  client?: OpenAI
 ): Promise<{
   scores: PhotoCullScore[];
   duplicateGroups: { original: number; duplicates: number[] }[];
@@ -104,6 +108,7 @@ export async function analyzePhotosForCulling(
     console.log(`[Photo Culling] Processing chunk ${Math.floor(i / chunkSize) + 1} (photos ${i + 1}-${Math.min(i + chunkSize, photoUrls.length)})`);
     
     try {
+      const openai = getOpenAIClient(client);
       const imageContent = chunk.map((url, idx) => ({
         type: 'image_url' as const,
         image_url: { url, detail: 'low' as const }
@@ -335,11 +340,12 @@ function applySelectionLogic(
 
 export async function runCullSession(
   photoUrls: string[],
-  targetCount: number = 25
+  targetCount: number = 25,
+  client?: OpenAI
 ): Promise<CullSessionResult> {
   const startTime = Date.now();
-  
-  const { scores, duplicateGroups } = await analyzePhotosForCulling(photoUrls, targetCount);
+
+  const { scores, duplicateGroups } = await analyzePhotosForCulling(photoUrls, targetCount, client);
   
   const selectedPhotos = scores.filter(s => s.isSelected).sort((a, b) => 
     (a.recommendedOrder || 999) - (b.recommendedOrder || 999)

@@ -10,6 +10,8 @@ import { AdjustmentPanel } from "./adjustment-panel";
 import { StylePromptModal } from "./style-prompt-modal";
 import Link from 'next/link';
 import { PreparationOverlay } from './preparation-overlay';
+import { MarketingBanner, type MarketingJobData } from './marketing-banner';
+import { MarketingResultsPanel } from './marketing-results-panel';
 import { ArrowLeft, Upload, Sun, Moon, Leaf, Trash2, Sofa, Sparkles, Wand2, Loader2, ChevronDown, ChevronUp, Check, X, Download, Share2, Copy, LogOut, FileArchive, UserCheck, Flame, Tv, Lightbulb, PanelTop, Waves, Move, Circle, Palette, Brain, Snowflake, Flower2, Eraser, Zap, Rocket, CheckCircle, AlertCircle, Star, Eye, RefreshCw, History } from 'lucide-react';
 
 const AI_TOOLS = [
@@ -166,6 +168,9 @@ export function StudioClient({ listingId, userRole, showMlsFeatures = false, cre
   const [shareLink, setShareLink] = useState('');
   const [shareLoading, setShareLoading] = useState(false);
   const [shareOptions, setShareOptions] = useState({ allowDownload: true, showComparison: true });
+  const [showMarketingPanel, setShowMarketingPanel] = useState(false);
+  const [marketingJobData, setMarketingJobData] = useState<MarketingJobData | null>(null);
+  const [marketingListingStatus, setMarketingListingStatus] = useState<string | null>(null);
 
   useEffect(() => { loadData(); }, [listingId]);
 
@@ -226,11 +231,18 @@ export function StudioClient({ listingId, userRole, showMlsFeatures = false, cre
       const photosWithAudit = photosWithUrls.map((photo) => ({
         ...photo,
         ai_audit: photoAudit?.[photo.id],
+        tools_applied: photo.tools_applied || photoAudit?.[photo.id]?.toolsApplied || [],
       }));
 
       setPhotos(photosWithAudit);
       setCompletedPhotos(photosWithAudit.filter(p => p.status === 'completed' && p.signedProcessedUrl));
-      if (photosWithUrls.length && !selectedPhoto) setSelectedPhoto(photosWithUrls[0]);
+      // Refresh selectedPhoto with updated data (e.g., after preparation adds processed_url)
+      if (selectedPhoto) {
+        const updated = photosWithAudit.find(p => p.id === selectedPhoto.id);
+        if (updated) setSelectedPhoto(updated);
+      } else if (photosWithAudit.length) {
+        setSelectedPhoto(photosWithAudit[0]);
+      }
       // Track if new photos uploaded after preparation
       if (listingStatus?.status === 'prepared') {
         setNewPhotosAfterPrepare(true);
@@ -261,12 +273,24 @@ export function StudioClient({ listingId, userRole, showMlsFeatures = false, cre
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ imageId: selectedPhoto.id, toolId, options: selectedPreset ? { preset: selectedPreset.id, prompt: selectedPreset.prompt } : {} }),
       });
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({ error: `Server error (${res.status})` }));
+        alert(errorData.error || `Enhancement failed (${res.status})`);
+        setProcessing(false);
+        setActiveTool(null);
+        return;
+      }
       const data = await res.json();
       if (data.success && data.enhancedUrl) {
         setPendingEnhancement({ originalUrl: selectedPhoto.signedRawUrl, storagePath: data.storagePath, enhancedUrl: data.enhancedUrl, toolId, photoId: selectedPhoto.id });
         setSliderPosition(50);
-      } else alert(data.error || 'Enhancement failed');
-    } catch (error) { console.error('Enhancement failed:', error); }
+      } else {
+        alert(data.error || 'Enhancement failed — please try again');
+      }
+    } catch (error: any) {
+      console.error('Enhancement failed:', error);
+      alert(error?.message?.includes('abort') ? 'Enhancement timed out — try a simpler preset' : 'Enhancement failed — check your connection and try again');
+    }
     setProcessing(false);
     setActiveTool(null);
   };
@@ -367,6 +391,42 @@ export function StudioClient({ listingId, userRole, showMlsFeatures = false, cre
   };
 
   useEffect(() => { fetchListingStatus(); }, [listingId]);
+
+  // Marketing status polling — fetch on mount, then poll every 5s while processing
+  useEffect(() => {
+    let cancelled = false;
+    let interval: NodeJS.Timeout | null = null;
+
+    const fetchMarketingStatus = async () => {
+      try {
+        const res = await fetch('/api/marketing/status?listingId=' + listingId);
+        if (!res.ok) return;
+        const data = await res.json();
+        if (cancelled) return;
+
+        setMarketingListingStatus(data.marketingStatus || null);
+        setMarketingJobData(data.marketingJob || null);
+
+        // Stop polling if no marketing job or terminal state
+        const mStatus = data.marketingStatus;
+        if (!mStatus || !['processing', 'queued'].includes(mStatus)) {
+          if (interval) { clearInterval(interval); interval = null; }
+        }
+      } catch (e) {
+        // Silently fail — non-critical
+      }
+    };
+
+    fetchMarketingStatus();
+
+    // Start polling — will self-stop when no longer processing
+    interval = setInterval(fetchMarketingStatus, 5000);
+
+    return () => {
+      cancelled = true;
+      if (interval) clearInterval(interval);
+    };
+  }, [listingId]);
 
   const sendPrepareNotification = async (prepareData: any) => {
     try {
@@ -579,9 +639,18 @@ export function StudioClient({ listingId, userRole, showMlsFeatures = false, cre
               <RefreshCw className="w-4 h-4" /> Re-prepare
             </button>
           )}
+          {marketingListingStatus === 'completed' && (
+            <Link href={`/dashboard/content-studio/create-all?listing=${listingId}&prefill=marketing`} className="flex items-center gap-2 px-3 py-2 bg-emerald-500/20 border border-emerald-500/40 rounded-lg text-sm text-emerald-300 hover:bg-emerald-500/30 transition-colors"><Sparkles className="w-4 h-4" /> Create Social Post</Link>
+          )}
           <label className="flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-[#D4A017] to-[#B8860B] rounded-lg cursor-pointer text-black font-medium text-sm"><Upload className="w-4 h-4" /> Upload<input type="file" multiple accept="image/*" onChange={handleUpload} className="hidden" /></label>
         </div>
       </header>
+
+      <MarketingBanner
+        marketingStatus={marketingListingStatus}
+        marketingJob={marketingJobData}
+        onViewResults={() => setShowMarketingPanel(true)}
+      />
 
       <div className="flex-1 flex min-h-0">
         <aside className="w-[240px] bg-[#1A1A1A] border-r border-white/10 flex flex-col flex-shrink-0">
@@ -673,36 +742,44 @@ export function StudioClient({ listingId, userRole, showMlsFeatures = false, cre
           )}
         </main>
 
-        <aside className="w-[200px] bg-[#1A1A1A] border-l border-white/10 p-3 overflow-y-auto flex-shrink-0">
-          <div className="flex items-center justify-between mb-3">
-            <h2 className="text-xs font-semibold text-white/40">READY FOR DOWNLOAD</h2>
-            {completedPhotos.length > 1 && (
-              <button onClick={handleDownloadAll} disabled={zipLoading} className="flex items-center gap-1 px-2 py-1 bg-[#D4A017] hover:bg-[#B8860B] rounded text-[10px] text-black font-bold disabled:opacity-50">
-                {zipLoading ? <Loader2 className="w-3 h-3 animate-spin" /> : <FileArchive className="w-3 h-3" />} ZIP
-              </button>
-            )}
-          </div>
-          {completedPhotos.length === 0 ? (
-            <div className="text-center text-white/30 py-6"><Download className="w-8 h-8 mx-auto mb-2 opacity-50" /><p className="text-xs">Enhanced photos appear here</p></div>
-          ) : (
-            <div className="space-y-2">
-              {completedPhotos.map(photo => (
-                <div key={photo.id} className="bg-[#0F0F0F] rounded-lg overflow-hidden border border-white/10 group relative">
-                  <button onClick={() => handleDeleteEnhanced(photo.id, photo.processed_url)} className="absolute top-1 right-1 w-5 h-5 bg-red-500 rounded-full items-center justify-center text-white hidden group-hover:flex z-10"><X className="w-3 h-3" /></button>
-                  <div className="aspect-video relative">
-                    <img src={photo.signedProcessedUrl} alt="" className="w-full h-full object-cover" />
-                    {photo.variant && (
-                      <div className="absolute top-1 left-1 px-1.5 py-0.5 bg-[#D4A017] rounded text-[10px] text-black capitalize">
-                        {photo.variant.replace(/-/g, ' ')}
-                      </div>
-                    )}
-                  </div>
-                  <button onClick={() => handleDownload(photo.signedProcessedUrl, `enhanced-${photo.variant || 'photo'}-${photo.id.slice(0,6)}.jpg`)} className="w-full flex items-center justify-center gap-1 px-2 py-1.5 bg-gradient-to-r from-[#D4A017] to-[#B8860B] text-black text-xs font-medium"><Download className="w-3 h-3" /> Download</button>
-                </div>
-              ))}
+        {showMarketingPanel && marketingJobData ? (
+          <MarketingResultsPanel
+            marketingJob={marketingJobData}
+            listingId={listingId}
+            onClose={() => setShowMarketingPanel(false)}
+          />
+        ) : (
+          <aside className="w-[200px] bg-[#1A1A1A] border-l border-white/10 p-3 overflow-y-auto flex-shrink-0">
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="text-xs font-semibold text-white/40">READY FOR DOWNLOAD</h2>
+              {completedPhotos.length > 1 && (
+                <button onClick={handleDownloadAll} disabled={zipLoading} className="flex items-center gap-1 px-2 py-1 bg-[#D4A017] hover:bg-[#B8860B] rounded text-[10px] text-black font-bold disabled:opacity-50">
+                  {zipLoading ? <Loader2 className="w-3 h-3 animate-spin" /> : <FileArchive className="w-3 h-3" />} ZIP
+                </button>
+              )}
             </div>
-          )}
-        </aside>
+            {completedPhotos.length === 0 ? (
+              <div className="text-center text-white/30 py-6"><Download className="w-8 h-8 mx-auto mb-2 opacity-50" /><p className="text-xs">Enhanced photos appear here</p></div>
+            ) : (
+              <div className="space-y-2">
+                {completedPhotos.map(photo => (
+                  <div key={photo.id} className="bg-[#0F0F0F] rounded-lg overflow-hidden border border-white/10 group relative">
+                    <button onClick={() => handleDeleteEnhanced(photo.id, photo.processed_url)} className="absolute top-1 right-1 w-5 h-5 bg-red-500 rounded-full items-center justify-center text-white hidden group-hover:flex z-10"><X className="w-3 h-3" /></button>
+                    <div className="aspect-video relative">
+                      <img src={photo.signedProcessedUrl} alt="" className="w-full h-full object-cover" />
+                      {photo.variant && (
+                        <div className="absolute top-1 left-1 px-1.5 py-0.5 bg-[#D4A017] rounded text-[10px] text-black capitalize">
+                          {photo.variant.replace(/-/g, ' ')}
+                        </div>
+                      )}
+                    </div>
+                    <button onClick={() => handleDownload(photo.signedProcessedUrl, `enhanced-${photo.variant || 'photo'}-${photo.id.slice(0,6)}.jpg`)} className="w-full flex items-center justify-center gap-1 px-2 py-1.5 bg-gradient-to-r from-[#D4A017] to-[#B8860B] text-black text-xs font-medium"><Download className="w-3 h-3" /> Download</button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </aside>
+        )}
       </div>
 
       {showShareModal && (

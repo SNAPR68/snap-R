@@ -9,15 +9,24 @@ export async function GET(request: Request) {
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
     const url = new URL(request.url)
-    const status = url.searchParams.get('status') || 'scheduled'
-    const limit = parseInt(url.searchParams.get('limit') || '50')
+    const status = url.searchParams.get('status') || 'pending'
+    const limit = parseInt(url.searchParams.get('limit') || '100')
 
-    const { data: posts, error } = await supabase
+    let query = supabase
       .from('scheduled_posts')
-      .select('*')
+      .select('*, listings(title, address)')
       .eq('user_id', user.id)
-      .eq('status', status)
-      .order('scheduled_at', { ascending: true })
+
+    // Support comma-separated statuses (e.g. "pending,published,failed")
+    const statuses = status.split(',').map(s => s.trim())
+    if (statuses.length === 1) {
+      query = query.eq('status', statuses[0])
+    } else {
+      query = query.in('status', statuses)
+    }
+
+    const { data: posts, error } = await query
+      .order('scheduled_for', { ascending: true })
       .limit(limit)
 
     if (error) throw error
@@ -37,21 +46,17 @@ export async function POST(request: Request) {
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
     const body = await request.json()
-    const { 
-      listingId, 
-      platform, 
-      postType, 
-      templateId, 
-      imageUrl, 
-      caption, 
-      hashtags, 
-      scheduledAt,
-      propertyData,
-      brandData
+    const {
+      listingId,
+      platform,
+      postType,
+      content,
+      imageUrls,
+      scheduledFor,
     } = body
 
-    if (!platform || !scheduledAt) {
-      return NextResponse.json({ error: 'Platform and scheduledAt required' }, { status: 400 })
+    if (!platform || !scheduledFor) {
+      return NextResponse.json({ error: 'Platform and scheduledFor required' }, { status: 400 })
     }
 
     const { data: post, error } = await supabase
@@ -60,14 +65,11 @@ export async function POST(request: Request) {
         user_id: user.id,
         listing_id: listingId || null,
         platform,
-        post_type: postType || 'just-listed',
-        template_id: templateId || 'default',
-        image_url: imageUrl,
-        caption,
-        hashtags,
-        scheduled_at: scheduledAt,
-        property_data: propertyData,
-        brand_data: brandData
+        post_type: postType || 'just_listed',
+        content: content || '',
+        image_urls: imageUrls || [],
+        scheduled_for: scheduledFor,
+        status: 'pending',
       })
       .select()
       .single()

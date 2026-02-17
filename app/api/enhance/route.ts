@@ -4,7 +4,7 @@ import { createClient } from '@/lib/supabase/server';
 import { processEnhancement, ToolId } from '@/lib/ai/router';
 import { logApiCost } from '@/lib/cost-logger';
 
-export const maxDuration = 120;
+export const maxDuration = 180;
 
 export async function POST(request: NextRequest) {
   const startTime = Date.now();
@@ -23,12 +23,13 @@ export async function POST(request: NextRequest) {
     // Get user profile for subscription tier (optional - proceed even if missing)
     const { data: profile } = await supabase
       .from("profiles")
-      .select("subscription_tier, listings_limit, listings_used_this_month")
+      .select("subscription_tier, plan")
       .eq("id", user.id)
       .single();
-    
+
     // If no profile, use defaults (free tier behavior)
-    const userTier = profile?.subscription_tier || "free";
+    const rawTier = profile?.subscription_tier || profile?.plan || "free";
+    const userTier = rawTier === "free" && profile?.plan && profile.plan !== "free" ? profile.plan : rawTier;
     
     // NEW MODEL: AI enhancements are FREE for all tiers
     // The limit is on LISTINGS per month, not enhancements
@@ -126,9 +127,9 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       success: true,
       enhancedUrl: enhancedSignedUrl?.signedUrl || result.enhancedUrl,
-      processedPath: enhancedPath,
+      storagePath: enhancedPath,
+      processedPath: enhancedPath, // Legacy alias
       processingTime,
-      // No credits info in new model
     });
     
   } catch (error) {

@@ -1,6 +1,9 @@
 import OpenAI from 'openai';
 
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+function getOpenAIClient(client?: OpenAI): OpenAI {
+  if (client) return client;
+  return new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+}
 
 export interface PhotoAnalysis {
   photoIndex: number;
@@ -77,7 +80,8 @@ RESPOND IN THIS EXACT JSON FORMAT ONLY (no markdown, no explanation):
   "aiFeedback": "Good composition but overcast sky and slightly dark exposure reduce appeal. Sky replacement and HDR would significantly improve engagement."
 }`;
 
-export async function analyzePhoto(photoUrl: string, photoIndex: number): Promise<PhotoAnalysis> {
+export async function analyzePhoto(photoUrl: string, photoIndex: number, client?: OpenAI): Promise<PhotoAnalysis> {
+  const openai = getOpenAIClient(client);
   try {
     const response = await openai.chat.completions.create({
       model: 'gpt-4o',
@@ -135,12 +139,12 @@ export async function analyzePhoto(photoUrl: string, photoIndex: number): Promis
   }
 }
 
-export async function analyzePhotoBatch(photoUrls: string[], concurrency = 3): Promise<PhotoAnalysis[]> {
+export async function analyzePhotoBatch(photoUrls: string[], concurrency = 3, client?: OpenAI): Promise<PhotoAnalysis[]> {
   const results: PhotoAnalysis[] = [];
-  
+
   for (let i = 0; i < photoUrls.length; i += concurrency) {
     const batch = photoUrls.slice(i, i + concurrency);
-    const batchPromises = batch.map((url, idx) => analyzePhoto(url, i + idx));
+    const batchPromises = batch.map((url, idx) => analyzePhoto(url, i + idx, client));
     const batchResults = await Promise.all(batchPromises);
     results.push(...batchResults);
     
@@ -152,10 +156,10 @@ export async function analyzePhotoBatch(photoUrls: string[], concurrency = 3): P
   return results;
 }
 
-export async function analyzeListingPhotos(photoUrls: string[]): Promise<ListingAnalysis> {
+export async function analyzeListingPhotos(photoUrls: string[], client?: OpenAI): Promise<ListingAnalysis> {
   console.log(`[Listing Intelligence] Analyzing ${photoUrls.length} photos...`);
-  
-  const photoScores = await analyzePhotoBatch(photoUrls);
+
+  const photoScores = await analyzePhotoBatch(photoUrls, 3, client);
   
   const overallScore = Math.round(
     photoScores.reduce((sum, p) => sum + p.overallScore, 0) / photoScores.length

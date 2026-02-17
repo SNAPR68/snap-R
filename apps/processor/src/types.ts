@@ -1,11 +1,26 @@
-// Job message from queue
-export interface JobMessage {
+// Preparation job message (Phase 1)
+export interface PreparationJobMessage {
+  type: 'preparation';
   jobId: string;
   listingId: string;
   userId: string;
   priority: 'standard' | 'rush';
   timestamp: string;
 }
+
+// Marketing job message (Phase 2)
+export interface MarketingJobMessage {
+  type: 'marketing';
+  jobId: string;
+  listingId: string;
+  userId: string;
+}
+
+// Discriminated union — queue routes by message.type
+export type QueueMessage = PreparationJobMessage | MarketingJobMessage;
+
+// Legacy alias — existing code references JobMessage
+export type JobMessage = PreparationJobMessage;
 
 // Environment bindings
 export interface Env {
@@ -23,6 +38,7 @@ export interface Env {
   REPLICATE_API_TOKEN: string;
   OPENAI_API_KEY: string;
   WORKER_ADMIN_KEY?: string;
+  QUICK_ENHANCE_URL?: string;
   ANALYSIS_CONCURRENCY?: string;
   ANALYSIS_BATCH_DELAY_MS?: string;
 }

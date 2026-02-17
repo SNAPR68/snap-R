@@ -1,21 +1,23 @@
 import { NextRequest, NextResponse } from 'next/server'
 import OpenAI from 'openai'
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY
-})
+function getOpenAIClient(): OpenAI {
+  return new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
+}
 
 export async function POST(request: NextRequest) {
   try {
     const { prompt, platform } = await request.json()
-    
+
     if (!prompt) {
       return NextResponse.json(
         { error: 'Prompt is required' },
         { status: 400 }
       )
     }
-    
+
+    const openai = getOpenAIClient()
+
     // Platform-specific max lengths for the model to target
     const targetLengths: Record<string, string> = {
       instagram: 'Target 150-300 words. Use line breaks for readability.',

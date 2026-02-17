@@ -1,9 +1,9 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import Link from 'next/link';
-import { Plus, Home, Image, MapPin, CheckCircle, AlertCircle, Clock, Loader2 } from 'lucide-react';
+import { Plus, Home, Image, MapPin, CheckCircle, AlertCircle, Clock, Loader2, Megaphone, Search, ArrowUpDown } from 'lucide-react';
 
 const getStatusBadge = (status: string) => {
   switch (status) {
@@ -20,10 +20,41 @@ const getStatusBadge = (status: string) => {
   }
 };
 
+const getMarketingBadge = (status: string | null | undefined) => {
+  if (!status) return null;
+  switch (status) {
+    case 'processing':
+      return <span className="flex items-center gap-1 px-2 py-1 bg-amber-500/20 text-amber-400 rounded-full text-xs font-medium animate-pulse"><Megaphone className="w-3 h-3" />Marketing...</span>;
+    case 'completed':
+      return <span className="flex items-center gap-1 px-2 py-1 bg-purple-500/20 text-purple-400 rounded-full text-xs font-medium"><Megaphone className="w-3 h-3" />Marketed</span>;
+    case 'skipped':
+      return null;
+    case 'failed':
+      return <span className="flex items-center gap-1 px-2 py-1 bg-red-500/20 text-red-400 rounded-full text-xs font-medium"><AlertCircle className="w-3 h-3" />Marketing Failed</span>;
+    default:
+      return null;
+  }
+};
+
+type SortOption = 'newest' | 'oldest' | 'title'
+
+const STATUS_FILTERS = [
+  { key: 'all', label: 'All' },
+  { key: 'pending', label: 'Pending' },
+  { key: 'preparing', label: 'Preparing' },
+  { key: 'prepared', label: 'Prepared' },
+  { key: 'marketing', label: 'Marketing' },
+  { key: 'marketed', label: 'Marketed' },
+  { key: 'failed', label: 'Failed' },
+] as const
+
 export default function ListingsPage() {
   const supabase = createClient();
   const [listings, setListings] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [sortBy, setSortBy] = useState<SortOption>('newest');
 
   useEffect(() => {
     const fetchListings = async () => {
@@ -63,6 +94,46 @@ export default function ListingsPage() {
     fetchListings();
   }, []);
 
+  const filteredListings = useMemo(() => {
+    let result = listings;
+
+    // Search filter
+    if (searchQuery) {
+      const q = searchQuery.toLowerCase();
+      result = result.filter(l =>
+        (l.title || '').toLowerCase().includes(q) ||
+        (l.address || '').toLowerCase().includes(q)
+      );
+    }
+
+    // Status filter
+    if (statusFilter !== 'all') {
+      result = result.filter(l => {
+        const prepStatus = l.preparation_status ?? l.status;
+        const mktStatus = l.marketing_status;
+        if (statusFilter === 'marketed') return mktStatus === 'completed';
+        if (statusFilter === 'marketing') return mktStatus === 'processing';
+        if (statusFilter === 'failed') return prepStatus === 'failed' || mktStatus === 'failed';
+        return prepStatus === statusFilter;
+      });
+    }
+
+    // Sort
+    result = [...result].sort((a, b) => {
+      switch (sortBy) {
+        case 'oldest':
+          return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+        case 'title':
+          return (a.title || '').localeCompare(b.title || '');
+        case 'newest':
+        default:
+          return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+      }
+    });
+
+    return result;
+  }, [listings, searchQuery, statusFilter, sortBy]);
+
   if (loading) {
     return (
       <div className="min-h-screen bg-[#0A0A0A] text-white flex items-center justify-center">
@@ -74,15 +145,68 @@ export default function ListingsPage() {
   return (
     <div className="min-h-screen bg-[#0A0A0A] text-white">
       <div className="max-w-7xl mx-auto px-4 py-8">
-        <div className="flex items-center justify-between mb-8">
+        {/* Header */}
+        <div className="flex items-center justify-between mb-6">
           <div>
             <h1 className="text-3xl font-bold">My Listings</h1>
-            <p className="text-white/50 mt-1">{listings.length} properties</p>
+            <p className="text-white/50 mt-1">
+              {filteredListings.length === listings.length
+                ? `${listings.length} properties`
+                : `Showing ${filteredListings.length} of ${listings.length} properties`
+              }
+            </p>
           </div>
           <Link href="/listings/new" className="flex items-center gap-2 px-4 py-2 bg-amber-500 text-black rounded-xl font-semibold hover:bg-amber-400">
             <Plus className="w-5 h-5" />New Listing
           </Link>
         </div>
+
+        {/* Search + Filters */}
+        {listings.length > 0 && (
+          <div className="flex flex-wrap items-center gap-3 mb-6">
+            {/* Search */}
+            <div className="relative flex-1 min-w-[200px] max-w-sm">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
+              <input
+                value={searchQuery}
+                onChange={e => setSearchQuery(e.target.value)}
+                placeholder="Search by title or address..."
+                className="w-full pl-10 pr-4 py-2 bg-white/5 border border-white/10 rounded-lg text-sm text-white placeholder:text-white/30 focus:outline-none focus:border-[#D4A017]/50 transition-colors"
+              />
+            </div>
+
+            {/* Status Filters */}
+            <div className="flex gap-1.5 flex-wrap">
+              {STATUS_FILTERS.map(({ key, label }) => (
+                <button
+                  key={key}
+                  onClick={() => setStatusFilter(key)}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                    statusFilter === key
+                      ? 'bg-[#D4A017] text-black'
+                      : 'bg-white/5 text-white/60 hover:bg-white/10'
+                  }`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+
+            {/* Sort */}
+            <div className="relative">
+              <select
+                value={sortBy}
+                onChange={e => setSortBy(e.target.value as SortOption)}
+                className="appearance-none pl-8 pr-8 py-1.5 bg-white/5 border border-white/10 rounded-lg text-xs text-white/60 focus:outline-none focus:border-[#D4A017]/50 cursor-pointer"
+              >
+                <option value="newest">Newest First</option>
+                <option value="oldest">Oldest First</option>
+                <option value="title">Title A-Z</option>
+              </select>
+              <ArrowUpDown className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-white/40 pointer-events-none" />
+            </div>
+          </div>
+        )}
 
         {listings.length === 0 ? (
           <div className="text-center py-20 bg-white/5 rounded-2xl border border-white/10">
@@ -93,9 +217,15 @@ export default function ListingsPage() {
               <Plus className="w-5 h-5" />Create First Listing
             </Link>
           </div>
+        ) : filteredListings.length === 0 ? (
+          <div className="text-center py-16 bg-white/5 rounded-2xl border border-white/10">
+            <Search className="w-12 h-12 text-white/10 mx-auto mb-3" />
+            <h3 className="text-lg font-medium mb-2">No matches found</h3>
+            <p className="text-white/40 text-sm">Try adjusting your search or filters</p>
+          </div>
         ) : (
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {listings.map((listing: any) => (
+            {filteredListings.map((listing: any) => (
               <Link key={listing.id} href={'/dashboard/studio?id=' + listing.id} className="group bg-white/5 rounded-2xl border border-white/10 overflow-hidden hover:border-amber-500/50 transition-all">
                 <div className="aspect-video relative">
                   {listing.thumbnail ? (
@@ -108,7 +238,10 @@ export default function ListingsPage() {
                   <div className="absolute top-3 right-3 flex items-center gap-1 px-2 py-1 bg-black/70 rounded-lg text-xs">
                     <Image className="w-3 h-3" />{listing.photoCount}
                   </div>
-                  <div className="absolute top-3 left-3">{getStatusBadge(listing.preparation_status ?? listing.status)}</div>
+                  <div className="absolute top-3 left-3 flex flex-col gap-1">
+                    {getStatusBadge(listing.preparation_status ?? listing.status)}
+                    {getMarketingBadge(listing.marketing_status)}
+                  </div>
                 </div>
                 <div className="p-4">
                   <h3 className="font-semibold text-lg truncate group-hover:text-amber-400 transition-colors">

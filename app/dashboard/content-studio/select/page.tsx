@@ -1,23 +1,23 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
-import { Instagram, Facebook, Linkedin, Video, Image, ArrowLeft, Home, Check, Sparkles } from 'lucide-react'
+import { Instagram, Facebook, Linkedin, Video, Image, ArrowLeft, Home, Check, Sparkles, FileText, MessageSquare, Globe, Calendar, Copy, ChevronRight } from 'lucide-react'
 import Link from 'next/link'
 
 export const dynamic = 'force-dynamic'
 
-export default async function SelectPlatformPage({ 
-  searchParams 
-}: { 
-  searchParams: Promise<{ listing?: string }> 
+export default async function SelectPlatformPage({
+  searchParams
+}: {
+  searchParams: Promise<{ listing?: string }>
 }) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-  
+
   if (!user) redirect('/auth/login')
 
   const params = await searchParams
   const listingId = params.listing
-  
+
   if (!listingId) redirect('/dashboard/content-studio')
 
   const { data: listing, error: listingError } = await supabase
@@ -33,17 +33,41 @@ export default async function SelectPlatformPage({
 
   const { data: photos } = await supabase
     .from('photos')
-    .select('id, processed_url, original_url')
+    .select('id, processed_url, raw_url')
     .eq('listing_id', listingId)
 
+  // Fetch marketing job for this listing (wrapped in try/catch for resilience)
+  let marketingJob: any = null
+  try {
+    const { data } = await supabase
+      .from('marketing_jobs')
+      .select('*')
+      .eq('listing_id', listingId)
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle()
+    marketingJob = data
+  } catch { /* marketing_jobs query failed — degrade gracefully */ }
+
+  const hasMarketingContent = marketingJob?.status === 'completed'
+  const descriptionResult = hasMarketingContent ? marketingJob?.description_result : null
+  const captionsResult = hasMarketingContent ? marketingJob?.captions_result : null
+  const descriptionText = typeof descriptionResult === 'string'
+    ? descriptionResult
+    : descriptionResult?.description || ''
+  const captionPlatforms = captionsResult && typeof captionsResult === 'object'
+    ? Object.keys(captionsResult)
+    : []
+
   const enhancedPhotos = photos?.filter((p) => p.processed_url) || []
-  
+
   const photosWithUrls = await Promise.all(
     (photos || []).slice(0, 6).map(async (photo) => {
-      const photoPath = photo.processed_url || photo.original_url
+      const photoPath = photo.processed_url || photo.raw_url
       if (photoPath && !photoPath.startsWith('http')) {
         const { data } = await supabase.storage
-          .from('uploads')
+          .from('raw-images')
           .createSignedUrl(photoPath, 3600)
         return data?.signedUrl || null
       }
@@ -84,6 +108,58 @@ export default async function SelectPlatformPage({
             </div>
           </div>
         </div>
+
+        {/* Auto-Generated Marketing Content */}
+        {hasMarketingContent && (
+          <div className="bg-gradient-to-r from-emerald-500/10 to-emerald-500/5 rounded-xl border border-emerald-500/20 p-5 mb-6">
+            <div className="flex items-center gap-2 mb-4">
+              <Sparkles className="w-4 h-4 text-emerald-400" />
+              <h3 className="text-sm font-semibold text-emerald-300">Auto-Generated Marketing Content</h3>
+              <span className="text-[10px] px-2 py-0.5 bg-emerald-500/20 text-emerald-400 rounded-full">Ready to use</span>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3 mb-4">
+              {/* Description */}
+              {descriptionText && (
+                <div className="bg-white/5 rounded-lg p-3">
+                  <div className="flex items-center gap-1.5 mb-2">
+                    <FileText className="w-3.5 h-3.5 text-white/50" />
+                    <span className="text-xs font-medium text-white/60">Description</span>
+                  </div>
+                  <p className="text-xs text-white/50 line-clamp-2">{descriptionText}</p>
+                </div>
+              )}
+
+              {/* Captions */}
+              {captionPlatforms.length > 0 && (
+                <div className="bg-white/5 rounded-lg p-3">
+                  <div className="flex items-center gap-1.5 mb-2">
+                    <MessageSquare className="w-3.5 h-3.5 text-white/50" />
+                    <span className="text-xs font-medium text-white/60">Social Captions</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {captionPlatforms.map(p => (
+                      <span key={p} className="text-[10px] px-2 py-0.5 bg-white/10 rounded-full text-white/50 capitalize">{p}</span>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Quick action: use auto-generated captions */}
+            <div className="flex items-center gap-2">
+              <Link
+                href={`/dashboard/content-studio/create-all?listing=${listingId}&prefill=marketing`}
+                className="flex items-center gap-1.5 px-3 py-2 bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-500/20 rounded-lg text-xs text-emerald-300 font-medium transition-colors"
+              >
+                <Sparkles className="w-3 h-3" />
+                Edit & Post with Auto Content
+                <ChevronRight className="w-3 h-3" />
+              </Link>
+              <span className="text-xs text-white/30">or create from scratch below</span>
+            </div>
+          </div>
+        )}
 
         {/* MAIN CTA - Create All Posts */}
         <Link href={`/dashboard/content-studio/create-all?listing=${listingId}`}>
