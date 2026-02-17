@@ -639,6 +639,9 @@ export function StudioClient({ listingId, userRole, showMlsFeatures = false, cre
               <RefreshCw className="w-4 h-4" /> Re-prepare
             </button>
           )}
+          {marketingListingStatus === 'completed' && (
+            <Link href={`/dashboard/content-studio/create-all?listing=${listingId}&prefill=marketing`} className="flex items-center gap-2 px-3 py-2 bg-emerald-500/20 border border-emerald-500/40 rounded-lg text-sm text-emerald-300 hover:bg-emerald-500/30 transition-colors"><Sparkles className="w-4 h-4" /> Create Social Post</Link>
+          )}
           <label className="flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-[#D4A017] to-[#B8860B] rounded-lg cursor-pointer text-black font-medium text-sm"><Upload className="w-4 h-4" /> Upload<input type="file" multiple accept="image/*" onChange={handleUpload} className="hidden" /></label>
         </div>
       </header>

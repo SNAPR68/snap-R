@@ -1,11 +1,12 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import {
   FileText, MessageSquare, FileArchive, Globe, Calendar,
   CheckCircle, AlertCircle, Copy, Check, ExternalLink,
   Download, X, ChevronDown, ChevronUp, Clock, Loader2,
-  Facebook, Instagram, Linkedin,
+  Facebook, Instagram, Linkedin, Sparkles,
 } from 'lucide-react';
 import type { MarketingJobData } from './marketing-banner';
 
@@ -313,16 +314,33 @@ export function MarketingResultsPanel({ marketingJob, listingId, onClose }: Mark
       </div>
 
       {/* Footer */}
-      <div className="p-3 border-t border-white/10">
+      <div className="p-3 border-t border-white/10 space-y-2">
         {marketingJob.completedAt && (
-          <p className="text-[10px] text-white/30 mb-2 text-center">
+          <p className="text-[10px] text-white/30 mb-1 text-center">
             Completed {new Date(marketingJob.completedAt).toLocaleDateString()} at{' '}
             {new Date(marketingJob.completedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
           </p>
         )}
+
+        {/* CTA: Create Social Post */}
+        <Link
+          href={`/dashboard/content-studio/create-all?listing=${listingId}&prefill=marketing`}
+          className="w-full py-2 bg-[#D4A017] hover:bg-[#B8960F] text-black rounded-lg text-xs font-semibold transition-colors flex items-center justify-center gap-1.5"
+        >
+          <Sparkles className="w-3.5 h-3.5" /> Create Social Post
+        </Link>
+
+        {/* CTA: View Calendar */}
+        <Link
+          href="/dashboard/calendar"
+          className="w-full py-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg text-xs text-white/60 transition-colors flex items-center justify-center gap-1.5"
+        >
+          <Calendar className="w-3.5 h-3.5" /> View Calendar
+        </Link>
+
         <button
           onClick={onClose}
-          className="w-full py-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg text-xs text-white/60 transition-colors"
+          className="w-full py-2 text-xs text-white/40 hover:text-white/60 transition-colors"
         >
           Back to Downloads
         </button>

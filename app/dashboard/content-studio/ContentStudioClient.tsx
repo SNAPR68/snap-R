@@ -47,9 +47,9 @@ export default function ContentStudioClient({
   }, []);
 
   const tabs = [
-    { 
-      id: 'social' as TabType, 
-      label: 'Social Post', 
+    {
+      id: 'social' as TabType,
+      label: 'Social Post',
       desc: 'All platforms & templates',
       icon: Image,
       color: 'from-[#D4AF37] to-[#B8860B]',
@@ -60,9 +60,9 @@ export default function ContentStudioClient({
       activeBg: 'from-[#D4AF37]/15 to-[#B8860B]/10',
       route: '/dashboard/content-studio/create-all'
     },
-    { 
-      id: 'video' as TabType, 
-      label: 'Video Reels', 
+    {
+      id: 'video' as TabType,
+      label: 'Video Reels',
       desc: 'TikTok & Instagram Reels',
       icon: Video,
       color: 'from-pink-500 to-rose-500',
@@ -73,9 +73,9 @@ export default function ContentStudioClient({
       activeBg: 'from-pink-500/15 to-rose-500/10',
       route: '/dashboard/content-studio/video'
     },
-    { 
-      id: 'bulk' as TabType, 
-      label: 'Bulk Creator', 
+    {
+      id: 'bulk' as TabType,
+      label: 'Bulk Creator',
       desc: 'Multiple listings at once',
       icon: Zap,
       color: 'from-purple-500 to-violet-500',
@@ -86,9 +86,9 @@ export default function ContentStudioClient({
       activeBg: 'from-purple-500/15 to-violet-500/10',
       route: '/dashboard/content-studio/bulk'
     },
-    { 
-      id: 'email' as TabType, 
-      label: 'Email Marketing', 
+    {
+      id: 'email' as TabType,
+      label: 'Email Marketing',
       desc: 'Campaign templates',
       icon: Mail,
       color: 'from-blue-500 to-cyan-500',
@@ -121,215 +121,175 @@ export default function ContentStudioClient({
   }
 
   return (
-    <div className="h-screen bg-[#0A0A0A] text-white flex flex-col overflow-hidden">
-      {/* Top Navigation */}
-      <header className="h-12 bg-[#111] border-b border-white/5 flex items-center justify-between px-4 flex-shrink-0">
-        <div className="flex items-center gap-4">
-          <Link href="/dashboard" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
-            <ArrowLeft className="w-4 h-4 text-white/50" />
-            <span className="text-white/50 text-sm">Dashboard</span>
-          </Link>
-          <div className="h-5 w-px bg-white/10" />
-          <div className="flex items-center gap-2">
-            <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-[#D4AF37] to-[#B8860B] flex items-center justify-center">
-              <Sparkles className="w-3.5 h-3.5 text-black" />
+    <div className="min-h-screen bg-[#0A0A0A] text-white flex flex-col">
+      {/* Header */}
+      <header className="bg-[#111] border-b border-white/5 px-6 pt-6 pb-0 flex-shrink-0">
+        <div className="max-w-6xl mx-auto">
+          {/* Top Row: Title + Credits */}
+          <div className="flex items-center justify-between mb-5">
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#D4AF37] to-[#B8860B] flex items-center justify-center">
+                <Sparkles className="w-4.5 h-4.5 text-black" />
+              </div>
+              <div>
+                <h1 className="text-xl font-bold text-white">Content Studio</h1>
+                <p className="text-xs text-white/40">Create and manage marketing content</p>
+              </div>
             </div>
-            <span className="font-bold text-[#D4AF37]">Content Studio</span>
+            <div className="flex items-center gap-3">
+              {/* Quick Links */}
+              <div className="flex items-center gap-1.5">
+                <Link href="/dashboard/content-studio/library" className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs text-white/50 hover:bg-white/5 hover:text-white/70 transition-colors">
+                  <FolderOpen className="w-3.5 h-3.5" /> Library
+                </Link>
+                <Link href="/dashboard/content-studio/sites" className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs text-white/50 hover:bg-white/5 hover:text-white/70 transition-colors">
+                  <Globe className="w-3.5 h-3.5" /> Sites
+                </Link>
+                <Link href="/dashboard/content-studio/customize" className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs text-white/50 hover:bg-white/5 hover:text-white/70 transition-colors">
+                  <Palette className="w-3.5 h-3.5" /> Templates
+                </Link>
+              </div>
+              <div className="h-5 w-px bg-white/10" />
+              <div className="flex items-center gap-1 bg-white/5 rounded-lg px-2.5 py-1.5">
+                <Coins className="w-3.5 h-3.5 text-[#D4AF37]" />
+                <span className="text-sm font-semibold">{credits}</span>
+              </div>
+            </div>
           </div>
-        </div>
-        <div className="flex items-center gap-2">
-          <div className="flex items-center gap-1 bg-white/5 rounded-lg px-2.5 py-1">
-            <Coins className="w-3.5 h-3.5 text-[#D4AF37]" />
-            <span className="text-sm font-semibold">{credits}</span>
+
+          {/* Horizontal Tabs */}
+          <div className="flex gap-1">
+            {tabs.map((tab) => {
+              const isActive = selectedTab === tab.id
+              const Icon = tab.icon
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => setSelectedTab(tab.id)}
+                  className={`flex items-center gap-2 px-4 py-2.5 rounded-t-lg border-b-2 transition-all ${
+                    isActive
+                      ? `bg-[#0A0A0A] border-[#D4AF37] ${tab.textColor}`
+                      : 'bg-transparent border-transparent text-white/50 hover:text-white/70 hover:bg-white/5'
+                  }`}
+                >
+                  <div className={`w-6 h-6 rounded-md ${isActive ? tab.bgColor : 'bg-white/10'} flex items-center justify-center`}>
+                    <Icon className={`w-3.5 h-3.5 ${isActive ? 'text-black' : 'text-white/50'}`} />
+                  </div>
+                  <div className="text-left">
+                    <p className="font-medium text-sm">{tab.label}</p>
+                  </div>
+                </button>
+              )
+            })}
           </div>
         </div>
       </header>
 
-      <div className="flex flex-1 overflow-hidden">
-        {/* Left Panel */}
-        <aside className="w-72 bg-[#111] border-r border-white/5 flex flex-col flex-shrink-0">
-          {/* Create Tabs */}
-          <div className="p-3 border-b border-white/5">
-            <h3 className="text-[10px] font-semibold text-white/40 uppercase tracking-wider mb-2">Create</h3>
-            <div className="space-y-1.5">
-              {tabs.map((tab) => {
-                const isActive = selectedTab === tab.id
-                const Icon = tab.icon
-                return (
-                  <button
-                    key={tab.id}
-                    onClick={() => setSelectedTab(tab.id)}
-                    className={`w-full flex items-center gap-2.5 p-2.5 rounded-lg border transition-all text-left ${
-                      isActive 
-                        ? `bg-gradient-to-r ${tab.activeBg} ${tab.activeBorder}` 
-                        : `bg-white/5 border-white/5 ${tab.hoverBorder}`
-                    }`}
-                  >
-                    <div className={`w-8 h-8 rounded-lg ${isActive ? tab.bgColor : 'bg-white/10'} flex items-center justify-center`}>
-                      <Icon className={`w-4 h-4 ${isActive ? 'text-black' : 'text-white/50'}`} />
-                    </div>
-                    <div className="flex-1">
-                      <p className={`font-medium text-sm ${isActive ? tab.textColor : 'text-white'}`}>{tab.label}</p>
-                      <p className="text-[9px] text-white/40">{tab.desc}</p>
-                    </div>
-                    {isActive && <ChevronRight className={`w-4 h-4 ${tab.textColor}`} />}
-                  </button>
-                )
-              })}
-            </div>
+      {/* Main Content */}
+      <main className="flex-1 overflow-auto">
+        <div className="max-w-6xl mx-auto px-6 py-6">
+          {/* Tab Header */}
+          <div className="text-center mb-6">
+            <p className="text-white/40 text-sm">{getTabDescription()}</p>
+            <h2 className="text-lg font-bold mt-1">Select a Listing</h2>
           </div>
 
-          {/* Manage - Simplified */}
-          <div className="p-3 border-b border-white/5">
-            <h3 className="text-[10px] font-semibold text-white/40 uppercase tracking-wider mb-2">Manage</h3>
-            <div className="space-y-0.5">
-              <Link href="/dashboard/content-studio/library" className="flex items-center gap-2.5 p-2 rounded-lg hover:bg-white/5 transition-all">
-                <FolderOpen className="w-4 h-4 text-green-400" />
-                <span className="text-sm">Content Library</span>
-              </Link>
-              <Link href="/dashboard/content-studio/sites" className="flex items-center gap-2.5 p-2 rounded-lg hover:bg-white/5 transition-all">
-                <Globe className="w-4 h-4 text-cyan-400" />
-                <span className="text-sm">Property Sites</span>
+          {listings.length === 0 ? (
+            <div className="text-center py-16 bg-[#111] rounded-xl border border-white/5">
+              <Home className="w-12 h-12 text-white/10 mx-auto mb-3" />
+              <h3 className="font-medium mb-2">No Listings Yet</h3>
+              <p className="text-white/40 text-sm mb-4">Create a listing and enhance photos first</p>
+              <Link href="/listings/new" className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#D4AF37] text-black rounded-lg font-semibold text-sm">
+                Create Listing
               </Link>
             </div>
-          </div>
-
-          {/* Customize */}
-          <div className="p-3 flex-1">
-            <h3 className="text-[10px] font-semibold text-white/40 uppercase tracking-wider mb-2">Customize</h3>
-            <div className="space-y-0.5">
-              <Link href="/dashboard/content-studio/customize" className="flex items-center gap-2.5 p-2 rounded-lg hover:bg-white/5 transition-all">
-                <Palette className="w-4 h-4 text-purple-400" />
-                <span className="text-sm">Template Customizer</span>
-              </Link>
-              <Link href="/dashboard/settings/watermark" className="flex items-center gap-2.5 p-2 rounded-lg hover:bg-white/5 transition-all">
-                <Image className="w-4 h-4 text-teal-400" />
-                <span className="text-sm">Watermark Settings</span>
-              </Link>
-            </div>
-          </div>
-
-          {/* Settings */}
-          <div className="p-3 border-t border-white/5">
-            <Link href="/dashboard/settings" className="flex items-center gap-2.5 p-2 rounded-lg hover:bg-white/5 transition-all text-white/50">
-              <Settings className="w-4 h-4" />
-              <span className="text-sm">Settings</span>
-            </Link>
-          </div>
-        </aside>
-
-        {/* Center - Listings */}
-        <main className="flex-1 bg-[#080808] overflow-auto flex flex-col">
-          <div className="flex-1 p-5">
-            <div className="max-w-4xl mx-auto">
-              {/* Tab Header */}
-              <div className="text-center mb-5">
-                <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r ${activeTab.activeBg} border ${activeTab.activeBorder} mb-3`}>
-                  <activeTab.icon className={`w-5 h-5 ${activeTab.textColor}`} />
-                  <span className={`font-semibold ${activeTab.textColor}`}>{activeTab.label}</span>
-                </div>
-                <h2 className="text-xl font-bold mb-1">Select a Listing</h2>
-                <p className="text-white/40 text-sm">{getTabDescription()}</p>
-              </div>
-
-              {listings.length === 0 ? (
-                <div className="text-center py-12 bg-[#111] rounded-xl border border-white/5">
-                  <Home className="w-12 h-12 text-white/10 mx-auto mb-3" />
-                  <h3 className="font-medium mb-2">No Listings Yet</h3>
-                  <p className="text-white/40 text-sm mb-4">Create a listing and enhance photos first</p>
-                  <Link href="/listings/new" className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#D4AF37] text-black rounded-lg font-semibold text-sm">
-                    Create Listing
-                  </Link>
-                </div>
-              ) : (
-                <div className="grid grid-cols-3 gap-3">
-                  {listings.map((listing) => (
-                    <button
-                      key={listing.id}
-                      onClick={() => handleListingClick(listing.id)}
-                      className={`group bg-[#111] rounded-xl border border-white/5 transition-all overflow-hidden text-left ${activeTab.hoverBorder}`}
-                    >
-                      <div className="aspect-[4/3] relative">
-                        {listing.thumbnail ? (
-                          <img src={listing.thumbnail} alt="" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
-                        ) : (
-                          <div className="w-full h-full bg-white/5 flex items-center justify-center">
-                            <Home className="w-8 h-8 text-white/10" />
-                          </div>
-                        )}
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
-                        <div className="absolute bottom-2 left-2 right-2">
-                          <h3 className={`font-semibold text-sm truncate group-hover:${activeTab.textColor} transition-colors`}>{listing.title}</h3>
-                          <div className="flex items-center gap-1.5 mt-1">
-                            <span className="text-[10px] bg-black/60 px-1.5 py-0.5 rounded">{listing.photoCount} photos</span>
-                            {listing.enhancedCount > 0 && (
-                              <span className="text-[10px] bg-green-500/80 px-1.5 py-0.5 rounded">{listing.enhancedCount} ready</span>
-                            )}
-                            {marketingStatuses?.[listing.id]?.status === 'completed' && (
-                              <span className="text-[10px] bg-emerald-500/80 px-1.5 py-0.5 rounded flex items-center gap-0.5">
-                                <CheckCircle className="w-2.5 h-2.5" /> Content Ready
-                              </span>
-                            )}
-                            {marketingStatuses?.[listing.id]?.status === 'processing' && (
-                              <span className="text-[10px] bg-amber-500/80 px-1.5 py-0.5 rounded">Processing</span>
-                            )}
-                          </div>
-                        </div>
-                        {/* Hover CTA */}
-                        <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/40">
-                          <span className={`${activeTab.bgColor} text-black px-3 py-1.5 rounded-lg font-semibold text-xs flex items-center gap-1.5`}>
-                            <activeTab.icon className="w-3.5 h-3.5" /> 
-                            {selectedTab === 'social' && 'Create Post'}
-                            {selectedTab === 'video' && 'Create Video'}
-                            {selectedTab === 'bulk' && 'Add to Bulk'}
-                            {selectedTab === 'email' && 'Create Email'}
-                          </span>
-                        </div>
-                      </div>
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Bottom Stats Band */}
-          <div className="bg-[#111] border-t border-white/5 px-5 py-3 flex-shrink-0">
-            <div className="max-w-4xl mx-auto flex items-center justify-between">
-              <div className="flex items-center gap-6">
-                <div className="flex items-center gap-2">
-                  <div className="flex -space-x-1">
-                    <div className="w-5 h-5 rounded bg-gradient-to-r from-purple-500 to-pink-500 flex items-center justify-center border border-black"><Instagram className="w-3 h-3" /></div>
-                    <div className="w-5 h-5 rounded bg-blue-600 flex items-center justify-center border border-black"><Facebook className="w-3 h-3" /></div>
-                    <div className="w-5 h-5 rounded bg-blue-700 flex items-center justify-center border border-black"><Linkedin className="w-3 h-3" /></div>
-                  </div>
-                  <span className="text-sm"><span className="font-bold text-white">5</span> <span className="text-white/50">Platforms</span></span>
-                </div>
-                <div className="h-4 w-px bg-white/10" />
-                <div className="text-sm">
-                  <span className="font-bold text-white">6</span> <span className="text-white/50">Post Types</span>
-                </div>
-                <div className="h-4 w-px bg-white/10" />
-                <div className="text-sm">
-                  <span className="font-bold text-white">150+</span> <span className="text-white/50">Templates</span>
-                </div>
-                <div className="h-4 w-px bg-white/10" />
-                <div className="flex items-center gap-1.5 text-sm">
-                  <Download className="w-3.5 h-3.5 text-[#D4AF37]" />
-                  <span className="text-white/50">Download & Share Anywhere</span>
-                </div>
-              </div>
-              {listings.length > 0 && (
-                <Link 
-                  href={`${activeTab.route}?listing=${listings[0].id}`}
-                  className={`px-4 py-2 ${activeTab.bgColor} text-black rounded-lg font-semibold text-sm hover:opacity-90 transition-colors flex items-center gap-2`}
+          ) : (
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+              {listings.map((listing) => (
+                <button
+                  key={listing.id}
+                  onClick={() => handleListingClick(listing.id)}
+                  className={`group bg-[#111] rounded-xl border border-white/5 transition-all overflow-hidden text-left ${activeTab.hoverBorder}`}
                 >
-                  Start Creating <ArrowRight className="w-4 h-4" />
-                </Link>
-              )}
+                  <div className="aspect-[4/3] relative">
+                    {listing.thumbnail ? (
+                      <img src={listing.thumbnail} alt="" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                    ) : (
+                      <div className="w-full h-full bg-white/5 flex items-center justify-center">
+                        <Home className="w-8 h-8 text-white/10" />
+                      </div>
+                    )}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+                    <div className="absolute bottom-2 left-2 right-2">
+                      <h3 className={`font-semibold text-sm truncate group-hover:${activeTab.textColor} transition-colors`}>{listing.title}</h3>
+                      <div className="flex items-center gap-1.5 mt-1 flex-wrap">
+                        <span className="text-[10px] bg-black/60 px-1.5 py-0.5 rounded">{listing.photoCount} photos</span>
+                        {listing.enhancedCount > 0 && (
+                          <span className="text-[10px] bg-green-500/80 px-1.5 py-0.5 rounded">{listing.enhancedCount} ready</span>
+                        )}
+                        {marketingStatuses?.[listing.id]?.status === 'completed' && (
+                          <span className="text-[10px] bg-emerald-500/80 px-1.5 py-0.5 rounded flex items-center gap-0.5">
+                            <CheckCircle className="w-2.5 h-2.5" /> Content Ready
+                          </span>
+                        )}
+                        {marketingStatuses?.[listing.id]?.status === 'processing' && (
+                          <span className="text-[10px] bg-amber-500/80 px-1.5 py-0.5 rounded">Processing</span>
+                        )}
+                      </div>
+                    </div>
+                    {/* Hover CTA */}
+                    <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/40">
+                      <span className={`${activeTab.bgColor} text-black px-3 py-1.5 rounded-lg font-semibold text-xs flex items-center gap-1.5`}>
+                        <activeTab.icon className="w-3.5 h-3.5" />
+                        {selectedTab === 'social' && 'Create Post'}
+                        {selectedTab === 'video' && 'Create Video'}
+                        {selectedTab === 'bulk' && 'Add to Bulk'}
+                        {selectedTab === 'email' && 'Create Email'}
+                      </span>
+                    </div>
+                  </div>
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      </main>
+
+      {/* Bottom Stats Band */}
+      <div className="bg-[#111] border-t border-white/5 px-6 py-3 flex-shrink-0">
+        <div className="max-w-6xl mx-auto flex items-center justify-between">
+          <div className="flex items-center gap-6">
+            <div className="flex items-center gap-2">
+              <div className="flex -space-x-1">
+                <div className="w-5 h-5 rounded bg-gradient-to-r from-purple-500 to-pink-500 flex items-center justify-center border border-black"><Instagram className="w-3 h-3" /></div>
+                <div className="w-5 h-5 rounded bg-blue-600 flex items-center justify-center border border-black"><Facebook className="w-3 h-3" /></div>
+                <div className="w-5 h-5 rounded bg-blue-700 flex items-center justify-center border border-black"><Linkedin className="w-3 h-3" /></div>
+              </div>
+              <span className="text-sm"><span className="font-bold text-white">5</span> <span className="text-white/50">Platforms</span></span>
+            </div>
+            <div className="h-4 w-px bg-white/10" />
+            <div className="text-sm">
+              <span className="font-bold text-white">6</span> <span className="text-white/50">Post Types</span>
+            </div>
+            <div className="h-4 w-px bg-white/10" />
+            <div className="text-sm">
+              <span className="font-bold text-white">150+</span> <span className="text-white/50">Templates</span>
+            </div>
+            <div className="h-4 w-px bg-white/10" />
+            <div className="flex items-center gap-1.5 text-sm">
+              <Download className="w-3.5 h-3.5 text-[#D4AF37]" />
+              <span className="text-white/50">Download & Share Anywhere</span>
             </div>
           </div>
-        </main>
+          {listings.length > 0 && (
+            <Link
+              href={`${activeTab.route}?listing=${listings[0].id}`}
+              className={`px-4 py-2 ${activeTab.bgColor} text-black rounded-lg font-semibold text-sm hover:opacity-90 transition-colors flex items-center gap-2`}
+            >
+              Start Creating <ArrowRight className="w-4 h-4" />
+            </Link>
+          )}
+        </div>
       </div>
     </div>
   )

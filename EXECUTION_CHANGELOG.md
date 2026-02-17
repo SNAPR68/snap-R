@@ -745,3 +745,98 @@ Cloudflare Worker (queue handler)
   Enables property site management from Content Studio UI.
 - Risk Level:
   Low (additive API endpoint)
+
+-------------------------------------------------------------------------------
+## 2026-02-17 — Phase 4: Dashboard UI Redesign
+-------------------------------------------------------------------------------
+
+### 1. Sidebar Extraction & Workflow-Based Navigation
+- Description:
+  Extracted inline sidebar from layout.tsx into components/dashboard-sidebar.tsx
+  client component. Restructured navigation from arbitrary tool categories to
+  workflow-based groups: OVERVIEW, CREATE, PUBLISH, MEASURE, MORE TOOLS, ACCOUNT.
+  Added active-state highlighting via usePathname(). Added collapsible "More Tools"
+  section for secondary tools (AI Descriptions, Portfolios, etc.).
+- Files Created:
+  components/dashboard-sidebar.tsx
+- Files Modified:
+  app/dashboard/layout.tsx
+- Architectural Impact:
+  Navigation now reflects automation loop: Upload → Prepare → Market → Distribute → Measure.
+  Calendar, Analytics, Auto-Post promoted from buried-in-Content-Studio to first-class sidebar items.
+  Secondary tools collapsed by default, reducing clutter.
+- Risk Level:
+  Low (layout restructure, no logic changes)
+
+### 2. Dashboard Home Page
+- Description:
+  Replaced /dashboard redirect with real home page. Server component fetches
+  metrics via 5 parallel Supabase queries. Renders DashboardHome client component
+  with: metrics row (active listings, scheduled/published posts, impressions),
+  quick actions grid, recent activity feed, processing banner for active jobs.
+- Files Created:
+  components/dashboard-home.tsx
+- Files Modified:
+  app/dashboard/page.tsx
+- Architectural Impact:
+  Users now see at-a-glance overview on /dashboard instead of redirect.
+  Metrics pulled from listings, scheduled_posts, published_posts, marketing_jobs tables.
+- Risk Level:
+  Low (new page, no existing functionality changed)
+
+### 3. Route Aliases — Calendar, Analytics, Auto-Post
+- Description:
+  Created /dashboard/calendar, /dashboard/analytics, /dashboard/auto-post as
+  re-exports of existing content-studio sub-pages. Original content-studio routes
+  remain functional (backwards compatible).
+- Files Created:
+  app/dashboard/calendar/page.tsx
+  app/dashboard/analytics/page.tsx
+  app/dashboard/auto-post/page.tsx
+- Architectural Impact:
+  Calendar, Analytics, and Auto-Post Rules accessible directly from sidebar
+  instead of buried inside Content Studio.
+- Risk Level:
+  None (additive re-exports only)
+
+### 4. Listings Page — Search, Filter, Sort
+- Description:
+  Added search bar (filter by title/address), status filter pills
+  (All/Pending/Preparing/Prepared/Marketing/Marketed/Failed), and sort dropdown
+  (Newest/Oldest/Title A-Z). Uses useMemo for client-side filtering. Dynamic
+  count display: "Showing X of Y properties". Empty search results state.
+- Files Modified:
+  app/dashboard/listings/page.tsx
+- Architectural Impact:
+  Users can find listings faster. No API changes needed — filtering is client-side.
+- Risk Level:
+  Low (additive UI, existing grid rendering untouched)
+
+### 5. Studio-to-Content-Studio Bridge
+- Description:
+  Added "Create Social Post" CTA links to marketing-results-panel.tsx footer
+  (links to /dashboard/content-studio/create-all with prefill=marketing param)
+  and "View Calendar" link. Added "Create Social Post" button in studio header
+  when marketing_status is completed.
+- Files Modified:
+  components/marketing-results-panel.tsx
+  components/studio-client.tsx
+- Architectural Impact:
+  Seamless flow from Studio (marketing completes) → Content Studio (create social post
+  with pre-filled AI content). Eliminates context-switching gap.
+- Risk Level:
+  Low (additive links only)
+
+### 6. Content Studio — Horizontal Tabs
+- Description:
+  Replaced Content Studio's redundant left sidebar (72px aside) with horizontal
+  tab bar in the header. Manage/Customize links moved to top-right quick links.
+  Eliminates confusing dual-sidebar experience (dashboard sidebar + CS sidebar).
+  Listing grid expanded to 4 columns to use full width.
+- Files Modified:
+  app/dashboard/content-studio/ContentStudioClient.tsx
+- Architectural Impact:
+  Content Studio now uses full width of main content area. Single sidebar
+  (dashboard) instead of dual-sidebar layout. More listings visible at once.
+- Risk Level:
+  Medium (layout restructure of existing component)
