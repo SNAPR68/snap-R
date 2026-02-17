@@ -34,7 +34,7 @@ interface PreparationOverlayProps {
 type Phase = 'analyzing' | 'strategizing' | 'executing' | 'verifying' | 'complete' | 'error';
 
 const PHASE_CONFIG: Record<Phase, { index: number; label: string; desc: string }> = {
-  analyzing: { index: 0, label: 'AI Analyzer', desc: 'GPT-4 Vision examining each photo' },
+  analyzing: { index: 0, label: 'AI Analyzer', desc: 'SnapR AI Vision analyzing each photo' },
   strategizing: { index: 1, label: 'Building Strategy', desc: 'Determining optimal enhancements' },
   executing: { index: 2, label: 'Applying Enhancements', desc: 'Processing with AI models' },
   verifying: { index: 3, label: 'Quality Check', desc: 'Validating results' },
@@ -386,10 +386,10 @@ export function PreparationOverlay({
           {photos.length > 0 && phase !== 'complete' && phase !== 'error' && (
             <div className="mb-5">
               <div className="flex gap-1.5 overflow-x-auto pb-2 scrollbar-hide">
-                {photos.slice(0, 8).map((photo, idx) => (
+                {photos.map((photo, idx) => (
                   <div
                     key={photo.id}
-                    className={`relative flex-shrink-0 w-14 h-14 rounded-lg overflow-hidden transition-all duration-300 ${
+                    className={`relative flex-shrink-0 w-12 h-12 rounded-lg overflow-hidden transition-all duration-300 ${
                       idx < photoProgress.current ? 'ring-2 ring-green-500' :
                       idx === photoProgress.current ? 'ring-2 ring-amber-500 animate-pulse' :
                       'opacity-40'
@@ -408,18 +408,13 @@ export function PreparationOverlay({
                     />
                     {idx < photoProgress.current && (
                       <div className="absolute inset-0 bg-green-500/30 flex items-center justify-center">
-                        <svg className="w-5 h-5 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                        <svg className="w-4 h-4 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                           <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                         </svg>
                       </div>
                     )}
                   </div>
                 ))}
-                {photos.length > 8 && (
-                  <div className="flex-shrink-0 w-14 h-14 rounded-lg bg-white/10 flex items-center justify-center text-white/50 text-xs font-medium">
-                    +{photos.length - 8}
-                  </div>
-                )}
               </div>
             </div>
           )}
