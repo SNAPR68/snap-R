@@ -1,7 +1,5 @@
 'use client'
 
-import { useState } from 'react'
-import Link from 'next/link'
 import { Heart, MessageCircle, Share2, Eye, Users, TrendingUp, Download } from 'lucide-react'
 
 export interface AnalyticsTotals {
@@ -32,26 +30,33 @@ interface AnalyticsContainerProps {
 }
 
 function MiniStat({ label, value, icon: Icon, color }: {
-  label: string; value: number; icon: any; color: string
+  label: string; value: number; icon: React.ComponentType<{ className?: string }>; color: string
 }) {
   return (
-    <div className="text-center">
-      <div className={`w-8 h-8 rounded-lg ${color} flex items-center justify-center mx-auto mb-1`}>
+    <div className="flex items-center gap-2.5 p-2.5 rounded-lg bg-white/[0.03]">
+      <div className={`w-8 h-8 rounded-lg ${color} flex items-center justify-center flex-shrink-0`}>
         <Icon className="w-3.5 h-3.5 text-white" />
       </div>
-      <p className="text-lg font-bold">{value.toLocaleString()}</p>
-      <p className="text-[10px] text-white/40">{label}</p>
+      <div className="text-left">
+        <p className="text-sm font-bold">{value.toLocaleString()}</p>
+        <p className="text-[10px] text-white/40">{label}</p>
+      </div>
     </div>
   )
 }
 
 export function AnalyticsCollapsed({ totals }: AnalyticsContainerProps) {
   return (
-    <div className="grid grid-cols-4 gap-2">
-      <MiniStat label="Posts" value={totals.posts} icon={TrendingUp} color="bg-[#D4A017]/30" />
-      <MiniStat label="Likes" value={totals.likes} icon={Heart} color="bg-red-500/30" />
-      <MiniStat label="Views" value={totals.impressions} icon={Eye} color="bg-purple-500/30" />
-      <MiniStat label="Reach" value={totals.reach} icon={Users} color="bg-orange-500/30" />
+    <div className="space-y-3">
+      <div className="grid grid-cols-2 gap-2.5">
+        <MiniStat label="Posts" value={totals.posts} icon={TrendingUp} color="bg-[#D4A017]/30" />
+        <MiniStat label="Likes" value={totals.likes} icon={Heart} color="bg-red-500/30" />
+        <MiniStat label="Impressions" value={totals.impressions} icon={Eye} color="bg-purple-500/30" />
+        <MiniStat label="Reach" value={totals.reach} icon={Users} color="bg-orange-500/30" />
+      </div>
+      <div className="pt-2 border-t border-white/5 text-center">
+        <p className="text-[10px] text-white/30">Click to view detailed analytics</p>
+      </div>
     </div>
   )
 }

@@ -33,7 +33,6 @@ function PostRow({ post }: { post: ScheduledPostItem }) {
   const Icon = PLATFORM_ICONS[post.platform] || Clock
   const colorClass = PLATFORM_COLORS[post.platform] || 'bg-white/10'
   const date = new Date(post.scheduled_for)
-  const isPast = date.getTime() < Date.now()
 
   return (
     <div className="flex items-center gap-3 py-2">
@@ -92,7 +91,7 @@ function MiniWeekStrip({ posts }: { posts: ScheduledPostItem[] }) {
 
 export function CalendarCollapsed({ scheduledPosts }: CalendarContainerProps) {
   const pending = scheduledPosts.filter(p => p.status === 'pending')
-  const upcoming = pending.slice(0, 3)
+  const upcoming = pending.slice(0, 2)
 
   return (
     <div>

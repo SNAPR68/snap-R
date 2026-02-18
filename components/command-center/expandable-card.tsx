@@ -93,11 +93,13 @@ export function ExpandableCard({
     <motion.div
       layoutId={`card-${id}`}
       onClick={onExpand}
-      className={`group cursor-pointer rounded-2xl border border-white/10 bg-white/[0.03] hover:bg-white/[0.06] hover:border-white/20 transition-colors overflow-hidden ${className}`}
+      className={`group cursor-pointer rounded-2xl border border-white/10 bg-white/[0.03] hover:bg-white/[0.06] hover:border-white/20 transition-colors overflow-hidden flex flex-col ${className}`}
       whileHover={{ scale: 1.01 }}
       whileTap={{ scale: 0.99 }}
       transition={{ duration: 0.2 }}
     >
+      {/* Colored accent line at top */}
+      <div className={`h-[2px] ${color} opacity-40`} />
       {/* Collapsed header */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-white/5">
         <div className="flex items-center gap-2.5">
@@ -111,7 +113,7 @@ export function ExpandableCard({
         )}
       </div>
       {/* Collapsed content */}
-      <div className="p-4">
+      <div className="p-4 flex-1 flex flex-col justify-center">
         {collapsedContent}
       </div>
     </motion.div>

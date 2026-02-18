@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import Image from 'next/image'
 import { Plus, ArrowRight, Image as ImageIcon } from 'lucide-react'
 import { StatusBadge } from '../status-badge'
 
@@ -25,9 +26,9 @@ function ListingCard({ listing, compact = false }: { listing: ListingItem; compa
       className="flex items-center gap-3 p-3 rounded-xl bg-white/[0.03] border border-white/5 hover:border-white/15 hover:bg-white/[0.06] transition-all"
       onClick={(e) => e.stopPropagation()}
     >
-      <div className="w-12 h-12 rounded-lg bg-white/10 flex-shrink-0 overflow-hidden">
+      <div className="relative w-12 h-12 rounded-lg bg-white/10 flex-shrink-0 overflow-hidden">
         {listing.thumbnail ? (
-          <img src={listing.thumbnail} alt="" className="w-full h-full object-cover" />
+          <Image src={listing.thumbnail} alt="" fill className="object-cover" unoptimized />
         ) : (
           <div className="w-full h-full flex items-center justify-center">
             <ImageIcon className="w-5 h-5 text-white/20" />
@@ -52,10 +53,10 @@ function ListingCard({ listing, compact = false }: { listing: ListingItem; compa
 }
 
 export function ListingsCollapsed({ listings }: ListingsContainerProps) {
-  const topListings = listings.slice(0, 3)
+  const topListings = listings.slice(0, 4)
 
   return (
-    <div className="space-y-2">
+    <div>
       {topListings.length === 0 ? (
         <div className="text-center py-4">
           <p className="text-sm text-white/40 mb-3">No listings yet</p>
@@ -68,16 +69,36 @@ export function ListingsCollapsed({ listings }: ListingsContainerProps) {
           </Link>
         </div>
       ) : (
-        <>
+        <div className="flex gap-3 overflow-hidden">
           {topListings.map(listing => (
-            <ListingCard key={listing.id} listing={listing} compact />
+            <Link
+              key={listing.id}
+              href={`/dashboard/studio?id=${listing.id}`}
+              className="flex-1 min-w-0 p-3 rounded-xl bg-white/[0.03] border border-white/5 hover:border-white/15 hover:bg-white/[0.06] transition-all"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="relative w-full aspect-[4/3] rounded-lg bg-white/10 overflow-hidden mb-2">
+                {listing.thumbnail ? (
+                  <Image src={listing.thumbnail} alt="" fill className="object-cover" unoptimized />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center">
+                    <ImageIcon className="w-6 h-6 text-white/20" />
+                  </div>
+                )}
+              </div>
+              <p className="text-xs font-medium truncate">{listing.title}</p>
+              <StatusBadge
+                preparationStatus={listing.preparation_status}
+                marketingStatus={listing.marketing_status}
+              />
+            </Link>
           ))}
-          {listings.length > 3 && (
-            <p className="text-xs text-white/30 text-center pt-1">
-              +{listings.length - 3} more
-            </p>
+          {listings.length > 4 && (
+            <div className="flex-shrink-0 flex items-center px-2">
+              <span className="text-xs text-white/30 whitespace-nowrap">+{listings.length - 4} more</span>
+            </div>
           )}
-        </>
+        </div>
       )}
     </div>
   )

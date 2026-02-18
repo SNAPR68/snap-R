@@ -203,8 +203,8 @@ export default function CommandCenter({
                 tier={setupStatus.tier}
               />
 
-              {/* Main grid */}
-              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+              {/* Main grid — 2-column magazine layout with hero card */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                 <ExpandableCard
                   id="listings"
                   title="My Listings"
@@ -216,6 +216,7 @@ export default function CommandCenter({
                   onCollapse={handleCollapse}
                   collapsedContent={<ListingsCollapsed listings={listings} />}
                   expandedContent={null}
+                  className="md:col-span-2"
                 />
 
                 <ExpandableCard
