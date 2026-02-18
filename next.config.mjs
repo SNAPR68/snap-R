@@ -1,8 +1,12 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // Disable image optimization (Cloudflare Pages cannot run it)
+  // Enable image optimization with remote patterns (deployed on Vercel)
   images: {
-    unoptimized: true,
+    remotePatterns: [
+      { protocol: 'https', hostname: '*.supabase.co' },
+      { protocol: 'https', hostname: '*.cloudinary.com' },
+      { protocol: 'https', hostname: '*.workers.dev' },
+    ],
   },
 
   // ABSOLUTELY REQUIRED — disables ESLint errors during build
@@ -17,4 +21,3 @@ const nextConfig = {
 };
 
 export default nextConfig;
-

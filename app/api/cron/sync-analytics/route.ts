@@ -12,24 +12,22 @@ export const maxDuration = 300;
 
 import { NextRequest, NextResponse } from 'next/server';
 import { adminSupabase } from '@/lib/supabase/admin';
+import { refreshAccessToken, type SocialPlatform } from '@/lib/social/oauth-config';
 
 const CRON_SECRET = process.env.CRON_SECRET;
 
 export async function GET(request: NextRequest) {
   // Auth check — same pattern as daily-digest
   const authHeader = request.headers.get('authorization');
-  if (CRON_SECRET && authHeader !== `Bearer ${CRON_SECRET}`) {
+  if (!CRON_SECRET || authHeader !== `Bearer ${CRON_SECRET}`) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
   console.log('[AnalyticsSync] Starting social analytics sync...');
   const supabase = adminSupabase();
-  const results = { synced: 0, failed: 0, skipped: 0 };
+  const results = { synced: 0, failed: 0, skipped: 0, tokensRefreshed: 0 };
 
   try {
-    // Fetch published posts that need syncing:
-    // - Have a platform_post_id (something was actually published)
-    // - Haven't been synced in the last hour (or never synced)
     const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
 
     const { data: postsToSync, error: fetchError } = await supabase
@@ -46,39 +44,74 @@ export async function GET(request: NextRequest) {
     }
 
     if (!postsToSync || postsToSync.length === 0) {
-      console.log('[AnalyticsSync] No posts need syncing');
       return NextResponse.json({ success: true, results, message: 'Nothing to sync' });
     }
 
     console.log(`[AnalyticsSync] Syncing ${postsToSync.length} post(s)`);
 
-    // Group posts by user_id to batch connection lookups
     const userIds = [...new Set(postsToSync.map(p => p.user_id))];
 
-    // Load all relevant social connections at once
+    // Load connections including token_expires_at for refresh check
     const { data: connections } = await supabase
       .from('social_connections')
-      .select('user_id, platform, access_token, default_page_id, pages, instagram_account, linkedin_urn')
+      .select('id, user_id, platform, access_token, token_expires_at, refresh_token, default_page_id, pages, instagram_account, linkedin_urn')
       .in('user_id', userIds)
       .eq('is_active', true);
 
-    const connectionMap = new Map<string, typeof connections>();
+    const connectionMap = new Map<string, any>();
     for (const conn of connections || []) {
+      // Check if token needs refresh (expired or expiring within 1 hour)
+      if (conn.token_expires_at) {
+        const expiresAt = new Date(conn.token_expires_at).getTime();
+        const oneHourFromNow = Date.now() + 60 * 60 * 1000;
+        if (expiresAt < oneHourFromNow) {
+          try {
+            // For Facebook/Instagram, pass access_token (not refresh_token) for exchange
+            const tokenToRefresh = (conn.platform === 'facebook' || conn.platform === 'instagram')
+              ? conn.access_token
+              : conn.refresh_token;
+
+            if (tokenToRefresh) {
+              const refreshed = await refreshAccessToken(conn.platform as SocialPlatform, tokenToRefresh);
+              conn.access_token = refreshed.accessToken;
+
+              // Update in database
+              const newExpiry = refreshed.expiresIn
+                ? new Date(Date.now() + refreshed.expiresIn * 1000).toISOString()
+                : undefined;
+
+              await supabase
+                .from('social_connections')
+                .update({
+                  access_token: refreshed.accessToken,
+                  ...(newExpiry && { token_expires_at: newExpiry }),
+                })
+                .eq('id', conn.id);
+
+              results.tokensRefreshed++;
+              console.log(`[AnalyticsSync] Refreshed token for ${conn.platform} user ${conn.user_id}`);
+            }
+          } catch (refreshErr: any) {
+            console.error(`[AnalyticsSync] Token refresh failed for ${conn.platform}:`, refreshErr.message);
+          }
+        }
+      }
+
       const key = `${conn.user_id}:${conn.platform}`;
-      connectionMap.set(key, conn as any);
+      connectionMap.set(key, conn);
     }
 
     for (const post of postsToSync) {
       try {
         const connKey = `${post.user_id}:${post.platform}`;
-        const connection = connectionMap.get(connKey) as any;
+        const connection = connectionMap.get(connKey);
 
         if (!connection) {
           results.skipped++;
           continue;
         }
 
-        let metrics: { likes: number; comments: number; shares: number; impressions: number; reach: number } | null = null;
+        let metrics: Metrics | null = null;
 
         switch (post.platform) {
           case 'facebook':
@@ -153,8 +186,13 @@ async function fetchFacebookMetrics(
     const page = pages.find(p => p.id === connection.default_page_id) || pages[0];
     if (!page?.access_token) return null;
 
+    // Use Authorization header instead of URL query param
     const response = await fetch(
-      `https://graph.facebook.com/v18.0/${postId}?fields=likes.summary(true),comments.summary(true),shares&access_token=${page.access_token}`
+      `https://graph.facebook.com/v18.0/${postId}?fields=likes.summary(true),comments.summary(true),shares`,
+      {
+        headers: { 'Authorization': `Bearer ${page.access_token}` },
+        signal: AbortSignal.timeout(15000),
+      }
     );
 
     if (!response.ok) {
@@ -168,8 +206,8 @@ async function fetchFacebookMetrics(
       likes: data.likes?.summary?.total_count || 0,
       comments: data.comments?.summary?.total_count || 0,
       shares: data.shares?.count || 0,
-      impressions: 0, // Requires page insights API (separate endpoint)
-      reach: 0,       // Requires page insights API (separate endpoint)
+      impressions: 0,
+      reach: 0,
     };
   } catch (error) {
     console.error('[AnalyticsSync] Facebook fetch error:', error);
@@ -186,9 +224,13 @@ async function fetchInstagramMetrics(
     const page = pages.find(p => p.id === connection.default_page_id) || pages[0];
     const accessToken = page?.access_token || connection.access_token;
 
-    // Fetch basic media fields
+    // Use Authorization header instead of URL query param
     const mediaResponse = await fetch(
-      `https://graph.facebook.com/v18.0/${mediaId}?fields=like_count,comments_count&access_token=${accessToken}`
+      `https://graph.facebook.com/v18.0/${mediaId}?fields=like_count,comments_count`,
+      {
+        headers: { 'Authorization': `Bearer ${accessToken}` },
+        signal: AbortSignal.timeout(15000),
+      }
     );
 
     let likes = 0;
@@ -200,12 +242,15 @@ async function fetchInstagramMetrics(
       comments = mediaData.comments_count || 0;
     }
 
-    // Fetch insights (impressions, reach)
     let impressions = 0;
     let reach = 0;
 
     const insightsResponse = await fetch(
-      `https://graph.facebook.com/v18.0/${mediaId}/insights?metric=impressions,reach&access_token=${accessToken}`
+      `https://graph.facebook.com/v18.0/${mediaId}/insights?metric=impressions,reach`,
+      {
+        headers: { 'Authorization': `Bearer ${accessToken}` },
+        signal: AbortSignal.timeout(15000),
+      }
     );
 
     if (insightsResponse.ok) {
@@ -228,7 +273,6 @@ async function fetchLinkedInMetrics(
   postUrn: string
 ): Promise<Metrics | null> {
   try {
-    // LinkedIn socialActions endpoint
     const response = await fetch(
       `https://api.linkedin.com/v2/socialActions/${encodeURIComponent(postUrn)}?count=0`,
       {
@@ -236,6 +280,7 @@ async function fetchLinkedInMetrics(
           'Authorization': `Bearer ${connection.access_token}`,
           'X-Restli-Protocol-Version': '2.0.0',
         },
+        signal: AbortSignal.timeout(15000),
       }
     );
 
@@ -249,8 +294,8 @@ async function fetchLinkedInMetrics(
     return {
       likes: data.likesSummary?.totalLikes || 0,
       comments: data.commentsSummary?.totalFirstLevelComments || 0,
-      shares: 0, // LinkedIn doesn't expose share count via this endpoint
-      impressions: 0, // Requires organization analytics (separate API)
+      shares: 0,
+      impressions: 0,
       reach: 0,
     };
   } catch (error) {

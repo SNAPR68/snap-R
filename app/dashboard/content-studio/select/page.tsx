@@ -79,10 +79,13 @@ export default async function SelectPlatformPage({
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-900 text-white">
       <div className="max-w-4xl mx-auto px-4 py-8">
-        <Link href="/dashboard/content-studio" className="inline-flex items-center gap-2 text-white/60 hover:text-white mb-6 transition-colors">
-          <ArrowLeft className="w-4 h-4" />
-          Back to Listings
-        </Link>
+        <nav className="flex items-center gap-2 text-sm text-white/40 mb-6">
+          <Link href="/dashboard" className="hover:text-white transition-colors">Dashboard</Link>
+          <ChevronRight className="w-3 h-3" />
+          <Link href="/dashboard/content-studio" className="hover:text-white transition-colors">Content Studio</Link>
+          <ChevronRight className="w-3 h-3" />
+          <span className="text-white">{listing.title || listing.address || 'Select Platform'}</span>
+        </nav>
 
         {/* Selected Listing Card */}
         <div className="bg-gradient-to-r from-[#D4AF37]/10 to-[#D4AF37]/5 rounded-xl border border-[#D4AF37]/30 p-6 mb-6">

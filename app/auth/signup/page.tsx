@@ -17,6 +17,21 @@ const PLAN_INFO: Record<string, { title: string; subtitle: string; features: str
     subtitle: '30 listings/month for agents & photographers.',
     features: ['30 listings/month', 'Priority 30-sec processing', 'Clean HD exports', 'All Content Studio features', 'Virtual Tours', 'Email Marketing'],
   },
+  gold: {
+    title: 'Start Your SnapR Gold Plan',
+    subtitle: 'All-in-one platform for agents & photographers.',
+    features: ['50 photos per listing', 'All 15 AI tools', 'Content Studio (150+ templates)', 'Social Media Posting', 'MLS Descriptions'],
+  },
+  platinum: {
+    title: 'Start Your SnapR Platinum Plan',
+    subtitle: 'For teams & white-label branding.',
+    features: ['75 photos per listing', 'Everything in Gold', 'White-label branding', 'Dedicated account manager', 'Priority support'],
+  },
+  enterprise: {
+    title: 'Start Your Enterprise Plan',
+    subtitle: 'Custom volume for brokerages.',
+    features: ['Custom listing volume', 'Unlimited team members', 'Custom integrations', 'SLA guarantee', 'Dedicated success manager'],
+  },
   agency: {
     title: 'Start Your Agency Plan',
     subtitle: '50 listings/month plus team collaboration.',
@@ -39,6 +54,7 @@ function SignupForm() {
   const selectedPlan = searchParams.get('plan') || 'free';
   const listings = searchParams.get('listings') || (selectedPlan === 'agency' ? '50' : '30');
   const billing = searchParams.get('billing') || 'annual';
+  const refCode = searchParams.get('ref') || null;
   
   const planInfo = PLAN_INFO[selectedPlan] || PLAN_INFO.free;
   const isPaidPlan = selectedPlan !== 'free';
@@ -53,13 +69,14 @@ function SignupForm() {
       email, 
       password, 
       options: { 
-        data: { 
+        data: {
           full_name: name,
           selected_plan: selectedPlan,
           selected_listings: listings,
           selected_billing: billing,
+          referred_by: refCode,
         },
-        emailRedirectTo: `${window.location.origin}/auth/callback?plan=${selectedPlan}&listings=${listings}&billing=${billing}`
+        emailRedirectTo: `${window.location.origin}/auth/callback?plan=${selectedPlan}&listings=${listings}&billing=${billing}${refCode ? `&ref=${refCode}` : ''}`
       } 
     });
     
@@ -75,8 +92,8 @@ function SignupForm() {
         email: data.user.email,
         full_name: name,
         subscription_tier: 'free',
-        credits: 25,
         selected_plan: selectedPlan,
+        referred_by: refCode || undefined,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
       });
@@ -96,13 +113,14 @@ function SignupForm() {
   };
 
   const handleGoogleSignup = async () => {
-    const redirectUrl = isPaidPlan 
-      ? `${window.location.origin}/auth/callback?plan=${selectedPlan}&listings=${listings}&billing=${billing}`
-      : `${window.location.origin}/auth/callback`;
-      
-    await supabase.auth.signInWithOAuth({ 
-      provider: 'google', 
-      options: { redirectTo: redirectUrl } 
+    const refParam = refCode ? `&ref=${refCode}` : '';
+    const redirectUrl = isPaidPlan
+      ? `${window.location.origin}/auth/callback?plan=${selectedPlan}&listings=${listings}&billing=${billing}${refParam}`
+      : `${window.location.origin}/auth/callback${refParam ? `?ref=${refCode}` : ''}`;
+
+    await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: { redirectTo: redirectUrl }
     });
   };
 
@@ -110,8 +128,8 @@ function SignupForm() {
     <div className="min-h-screen bg-[#0F0F0F] flex">
       <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-[#D4A017] to-[#B8860B] p-12 flex-col justify-between">
         <Link href="/" className="flex items-center gap-3">
-          <img src="/snapr-logo.png" alt="SnapR" className="w-16 h-16" />
-          <span className="text-2xl font-bold text-[#0F0F0F]">SnapR</span>
+          <div className="w-12 h-12 rounded-xl bg-[#0F0F0F]/20 flex items-center justify-center font-bold text-[#0F0F0F] text-xl">S</div>
+          <span className="text-2xl font-bold text-[#0F0F0F]">Snap<span className="text-[#0F0F0F]/80">R</span></span>
         </Link>
         
         <div>
@@ -138,14 +156,14 @@ function SignupForm() {
           )}
         </div>
         
-        <p className="text-[#0F0F0F]/50 text-sm">© 2025 SnapR</p>
+        <p className="text-[#0F0F0F]/50 text-sm">© 2026 SnapR</p>
       </div>
 
       <div className="flex-1 flex items-center justify-center p-8">
         <div className="w-full max-w-md">
           <div className="lg:hidden flex items-center justify-center gap-3 mb-8">
-            <img src="/snapr-logo.png" alt="SnapR" className="w-16 h-16" />
-            <span className="text-2xl font-bold text-[#D4A017]">SnapR</span>
+            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#D4A017] to-[#B8860B] flex items-center justify-center font-bold text-black text-xl">S</div>
+            <span className="text-2xl font-bold">Snap<span className="text-[#D4A017]">R</span></span>
           </div>
 
           <h2 className="text-3xl font-bold text-white mb-2">Create Account</h2>

@@ -1,5 +1,11 @@
 import Link from 'next/link';
 import { Instagram, Linkedin, Youtube } from 'lucide-react';
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: 'FAQ | SnapR',
+  description: 'Frequently asked questions about SnapR — AI-powered real estate photo enhancement and marketing automation platform.',
+};
 
 const faqs = [
   { 
@@ -70,7 +76,7 @@ export default function FAQPage() {
       <nav className="border-b border-white/10 bg-[#0F0F0F]">
         <div className="max-w-4xl mx-auto px-6 h-20 flex items-center">
           <Link href="/" className="flex items-center gap-2">
-            <img src="/snapr-logo.png" alt="SnapR" className="w-12 h-12" />
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#D4A017] to-[#B8860B] flex items-center justify-center font-bold text-black text-xl">S</div>
             <span className="text-xl font-bold text-white">Snap<span className="text-[#D4A017]">R</span></span>
           </Link>
         </div>
@@ -109,7 +115,7 @@ export default function FAQPage() {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-10 mb-12">
             <div className="col-span-2 md:col-span-1">
               <div className="flex items-center gap-2 mb-4">
-                <img src="/snapr-logo.png" alt="SnapR" className="w-12 h-12" />
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#D4A017] to-[#B8860B] flex items-center justify-center font-bold text-black text-xl">S</div>
                 <span className="text-xl font-bold text-white">Snap<span className="text-[#D4A017]">R</span></span>
               </div>
               <p className="text-white/60 text-sm leading-relaxed">The AI Listing OS. From photo to posted in under 2 minutes.</p>

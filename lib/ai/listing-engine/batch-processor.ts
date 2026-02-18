@@ -40,6 +40,8 @@ const CONFIG = {
   retryDelayMs: 2000,
   toolTimeoutMs: 120000,
   batchDelayMs: Number(process.env.BATCH_DELAY_MS || 350),
+  maxBatchTimeoutMs: Number(process.env.BATCH_TIMEOUT_MS || 600000), // 10 min overall
+  maxCostCentsPerJob: Number(process.env.BATCH_MAX_COST_CENTS || 500), // $5 cost ceiling
 };
 
 const PROGRESS_RANGE = {
@@ -63,7 +65,8 @@ const INPAINT = {
   minMaskArea: Number(process.env.AI_INPAINT_MIN_MASK_AREA || 1),
   requireMask: process.env.AI_REQUIRE_MASK_FOR_INPAINT !== 'false',
 };
-const ENFORCE_MASKED_TOOLS = process.env.AI_ENFORCE_MASKED_TOOLS !== 'false';
+// Default false — allow Flux Kontext fallback when mask/inpaint is unavailable
+const ENFORCE_MASKED_TOOLS = process.env.AI_ENFORCE_MASKED_TOOLS === 'true';
 
 const QUALITY_GATE = {
   enabled: process.env.AI_QUALITY_GATE === 'true',
@@ -158,12 +161,18 @@ export async function processListingBatch(
   const startTime = Date.now();
   const results: PhotoProcessingResult[] = [];
   const supabase = context.supabase || await createClient();
-  
+
   // Get signed URLs
   const photosWithUrls = await getSignedUrls(strategy.photoStrategies, supabase);
-  
+
   // Process in batches
   for (let i = 0; i < photosWithUrls.length; i += CONFIG.maxConcurrency) {
+    // Overall batch timeout check
+    if (Date.now() - startTime > CONFIG.maxBatchTimeoutMs) {
+      console.warn(`[BatchProcessor V3] Batch timeout reached (${CONFIG.maxBatchTimeoutMs}ms), stopping early`);
+      break;
+    }
+
     const batch = photosWithUrls.slice(i, i + CONFIG.maxConcurrency);
     
     // Report progress
@@ -704,27 +713,23 @@ async function runFluxTool(
       }
       if (inpaintResult?.error) {
         console.warn(`[BatchProcessor V3] Inpaint fallback: ${inpaintResult.error}`);
-        if (INPAINT.requireMask || ENFORCE_MASKED_TOOLS) {
+        if (ENFORCE_MASKED_TOOLS) {
           return { success: false, error: `Mask required: ${inpaintResult.error}`, providerUsed: 'flux-fill', modelUsed: INPAINT.provider };
         }
+        // Fall through to Flux Kontext fallback
+        console.log(`[BatchProcessor V3] Inpaint failed, falling back to Flux Kontext for ${tool}`);
       }
     }
-    
+
     switch (tool) {
       case 'sky-replacement':
-        if (ENFORCE_MASKED_TOOLS) {
-          return { success: false, error: 'Mask required: sky replacement skipped', providerUsed: 'flux-fill', modelUsed: INPAINT.provider };
-        }
         enhancedUrl = await replicate.skyReplacement(imageUrl, prompt, presetId, options);
         break;
       case 'virtual-twilight':
         enhancedUrl = await replicate.virtualTwilight(imageUrl, prompt, presetId, options);
         break;
       case 'lawn-repair':
-        if (ENFORCE_MASKED_TOOLS) {
-          return { success: false, error: 'Mask required: lawn repair skipped', providerUsed: 'flux-fill', modelUsed: INPAINT.provider };
-        }
-        enhancedUrl = await replicate.lawnRepair(imageUrl, prompt, presetId, { ...options, useMask: true, requireMask: true });
+        enhancedUrl = await replicate.lawnRepair(imageUrl, prompt, presetId, { ...options, useMask: true, requireMask: false });
         break;
       case 'declutter':
         enhancedUrl = await replicate.declutter(imageUrl, prompt, options);

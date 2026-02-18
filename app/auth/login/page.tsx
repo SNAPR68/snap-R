@@ -42,14 +42,14 @@ export default function LoginPage() {
       {/* Left Panel */}
       <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-[#D4A017] to-[#B8860B] p-12 flex-col justify-between">
         <Link href="/" className="flex items-center gap-3">
-          <img src="/snapr-logo.png" alt="SnapR" className="w-16 h-16" />
-          <span className="text-2xl font-bold text-[#0F0F0F]">SnapR</span>
+          <div className="w-12 h-12 rounded-xl bg-[#0F0F0F]/20 flex items-center justify-center font-bold text-[#0F0F0F] text-xl">S</div>
+          <span className="text-2xl font-bold text-[#0F0F0F]">Snap<span className="text-[#0F0F0F]/80">R</span></span>
         </Link>
         <div>
           <h1 className="text-4xl font-bold text-[#0F0F0F] mb-4">Welcome Back</h1>
           <p className="text-[#0F0F0F]/70 text-lg">Sign in to access your AI-enhanced real estate photos.</p>
         </div>
-        <p className="text-[#0F0F0F]/50 text-sm">© 2025 SnapR</p>
+        <p className="text-[#0F0F0F]/50 text-sm">© 2026 SnapR</p>
       </div>
 
       {/* Right Panel */}
@@ -57,8 +57,8 @@ export default function LoginPage() {
         <div className="w-full max-w-md">
           {/* Mobile Logo */}
           <div className="lg:hidden flex items-center justify-center gap-3 mb-8">
-            <img src="/snapr-logo.png" alt="SnapR" className="w-16 h-16" />
-            <span className="text-2xl font-bold text-[#D4A017]">SnapR</span>
+            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#D4A017] to-[#B8860B] flex items-center justify-center font-bold text-black text-xl">S</div>
+            <span className="text-2xl font-bold">Snap<span className="text-[#D4A017]">R</span></span>
           </div>
 
           <h2 className="text-3xl font-bold text-white mb-8">Sign In</h2>

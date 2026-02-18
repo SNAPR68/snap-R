@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
-import { ArrowLeft, Loader2, Heart, MessageCircle, Share2, Eye, Users, TrendingUp, Instagram, Facebook, Linkedin, Video, BarChart3 } from 'lucide-react'
+import { ArrowLeft, Loader2, Heart, MessageCircle, Share2, Eye, Users, TrendingUp, Instagram, Facebook, Linkedin, Video, BarChart3, Download, ChevronRight } from 'lucide-react'
 import Link from 'next/link'
 
 interface PublishedPost {
@@ -21,23 +21,63 @@ interface PublishedPost {
 const PLATFORM_ICONS: Record<string, any> = { instagram: Instagram, facebook: Facebook, linkedin: Linkedin, tiktok: Video }
 const PLATFORM_COLORS: Record<string, string> = { instagram: 'from-purple-500 to-pink-500', facebook: 'from-blue-600 to-blue-400', linkedin: 'from-blue-700 to-blue-500', tiktok: 'from-gray-800 to-black' }
 
+type DateRange = '7d' | '30d' | '90d' | 'all'
+
+function getFromDate(range: DateRange): string | null {
+  if (range === 'all') return null
+  const days = range === '7d' ? 7 : range === '30d' ? 30 : 90
+  const d = new Date()
+  d.setDate(d.getDate() - days)
+  return d.toISOString()
+}
+
 export default function PostAnalytics() {
   const [posts, setPosts] = useState<PublishedPost[]>([])
   const [totals, setTotals] = useState({ posts: 0, likes: 0, comments: 0, shares: 0, impressions: 0, reach: 0 })
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState<string | null>(null)
+  const [dateRange, setDateRange] = useState<DateRange>('30d')
 
-  useEffect(() => { fetchAnalytics() }, [filter])
+  useEffect(() => { fetchAnalytics() }, [filter, dateRange])
 
   const fetchAnalytics = async () => {
     try {
-      const url = filter ? `/api/analytics/posts?platform=${filter}` : '/api/analytics/posts'
+      const params = new URLSearchParams()
+      if (filter) params.set('platform', filter)
+      const from = getFromDate(dateRange)
+      if (from) params.set('from', from)
+      const qs = params.toString()
+      const url = `/api/analytics/posts${qs ? `?${qs}` : ''}`
       const res = await fetch(url)
       const data = await res.json()
       setPosts(data.posts || [])
       setTotals(data.totals || { posts: 0, likes: 0, comments: 0, shares: 0, impressions: 0, reach: 0 })
     } catch (e) { console.error(e) }
     finally { setLoading(false) }
+  }
+
+  const exportCSV = () => {
+    if (!posts.length) return
+    const headers = ['Platform', 'Post Type', 'Caption', 'Published At', 'Likes', 'Comments', 'Shares', 'Impressions', 'Reach']
+    const rows = posts.map(p => [
+      p.platform,
+      p.post_type || '',
+      `"${(p.caption || '').replace(/"/g, '""')}"`,
+      new Date(p.published_at).toLocaleString(),
+      p.likes ?? 0,
+      p.comments ?? 0,
+      p.shares ?? 0,
+      p.impressions ?? 0,
+      p.reach ?? 0,
+    ])
+    const csv = [headers.join(','), ...rows.map(r => r.join(','))].join('\n')
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `snapr-analytics-${dateRange}-${new Date().toISOString().slice(0, 10)}.csv`
+    a.click()
+    URL.revokeObjectURL(url)
   }
 
   const StatCard = ({ icon: Icon, label, value, color }: { icon: any, label: string, value: number, color: string }) => (
@@ -58,16 +98,42 @@ export default function PostAnalytics() {
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-900 text-white">
       <header className="border-b border-white/10 px-6 py-4">
         <div className="flex items-center justify-between">
+          <nav className="flex items-center gap-2 text-sm">
+            <Link href="/dashboard" className="text-white/40 hover:text-white transition-colors">Dashboard</Link>
+            <ChevronRight className="w-3 h-3 text-white/20" />
+            <Link href="/dashboard/content-studio" className="text-white/40 hover:text-white transition-colors">Content Studio</Link>
+            <ChevronRight className="w-3 h-3 text-white/20" />
+            <span className="text-white font-bold flex items-center gap-2"><BarChart3 className="w-4 h-4 text-[#D4AF37]" />Analytics</span>
+          </nav>
           <div className="flex items-center gap-4">
-            <Link href="/dashboard/content-studio"><Button variant="ghost" size="sm" className="text-white/60 hover:text-white"><ArrowLeft className="w-4 h-4 mr-2" />Back</Button></Link>
-            <h1 className="text-xl font-bold flex items-center gap-2"><BarChart3 className="w-5 h-5 text-[#D4AF37]" />Post Analytics</h1>
-          </div>
-          <div className="flex gap-2">
-            <Button onClick={() => setFilter(null)} variant={filter === null ? 'default' : 'ghost'} size="sm" className={filter === null ? 'bg-[#D4AF37] text-black' : ''}>All</Button>
-            {Object.keys(PLATFORM_ICONS).map(p => {
-              const Icon = PLATFORM_ICONS[p]
-              return <Button key={p} onClick={() => setFilter(p)} variant={filter === p ? 'default' : 'ghost'} size="sm" className={filter === p ? 'bg-[#D4AF37] text-black' : ''}><Icon className="w-4 h-4" /></Button>
-            })}
+            {/* Date range pills */}
+            <div className="flex gap-1 bg-white/5 rounded-lg p-1">
+              {(['7d', '30d', '90d', 'all'] as DateRange[]).map(range => (
+                <button
+                  key={range}
+                  onClick={() => setDateRange(range)}
+                  className={`px-3 py-1 rounded-md text-xs font-medium transition-colors ${
+                    dateRange === range
+                      ? 'bg-[#D4AF37] text-black'
+                      : 'text-white/60 hover:text-white hover:bg-white/10'
+                  }`}
+                >
+                  {range === 'all' ? 'All' : range}
+                </button>
+              ))}
+            </div>
+            {/* Platform filters */}
+            <div className="flex gap-2">
+              <Button onClick={() => setFilter(null)} variant={filter === null ? 'default' : 'ghost'} size="sm" className={filter === null ? 'bg-[#D4AF37] text-black' : ''}>All</Button>
+              {Object.keys(PLATFORM_ICONS).map(p => {
+                const Icon = PLATFORM_ICONS[p]
+                return <Button key={p} onClick={() => setFilter(p)} variant={filter === p ? 'default' : 'ghost'} size="sm" className={filter === p ? 'bg-[#D4AF37] text-black' : ''}><Icon className="w-4 h-4" /></Button>
+              })}
+            </div>
+            {/* CSV export */}
+            <Button onClick={exportCSV} variant="ghost" size="sm" disabled={posts.length === 0} className="text-white/60 hover:text-white">
+              <Download className="w-4 h-4 mr-1" />CSV
+            </Button>
           </div>
         </div>
       </header>

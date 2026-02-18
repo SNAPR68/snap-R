@@ -1,5 +1,11 @@
 import Link from 'next/link';
 import { ArrowLeft, FileText } from 'lucide-react';
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: 'Terms of Service | SnapR',
+  description: 'SnapR terms of service — rules and guidelines for using our platform.',
+};
 
 export default function TermsOfService() {
   return (
@@ -8,7 +14,7 @@ export default function TermsOfService() {
       <header className="border-b border-white/10 bg-[#1A1A1A]">
         <div className="max-w-4xl mx-auto px-6 py-4 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2">
-            <img src="/snapr-logo.png" alt="SnapR" className="w-12 h-12" />
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#D4A017] to-[#B8860B] flex items-center justify-center font-bold text-black text-xl">S</div>
             <span className="font-bold text-xl">Snap<span className="text-[#D4A017]">R</span></span>
           </Link>
           <Link href="/" className="flex items-center gap-2 text-white/60 hover:text-white">
@@ -226,7 +232,7 @@ export default function TermsOfService() {
       {/* Footer */}
       <footer className="border-t border-white/10 py-8 mt-12">
         <div className="max-w-4xl mx-auto px-6 text-center text-white/50 text-sm">
-          © 2025 SnapR. All rights reserved.
+          © 2026 SnapR. All rights reserved.
         </div>
       </footer>
     </div>

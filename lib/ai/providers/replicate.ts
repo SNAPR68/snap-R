@@ -430,9 +430,8 @@ export async function lawnRepair(
     console.log('[Replicate] Skipping lawn mask (batch prepare mode)');
   }
 
-  if (useMask && !skipMask && (requireMask || forceDeterministicMask)) {
-    throw new Error('Mask required for lawn repair');
-  }
+  // Mask unavailable or failed — fall through to Flux Kontext (no hard error)
+  console.log('[Replicate] Falling back to Flux Kontext for lawn repair');
 
   const result = await runFluxKontext(imageUrl, prompt, fluxOptions);
   console.log('[Replicate] === LAWN REPAIR (KONTEXT) COMPLETE ===');

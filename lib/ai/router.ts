@@ -137,7 +137,7 @@ export async function processEnhancement(
       case 'lawn-repair':
         enhancedUrl = await lawnRepair(imageUrl, options.prompt, options.preset, {
           useMask: true,
-          requireMask: true,
+          requireMask: false,
         });
         break;
 
@@ -248,7 +248,24 @@ export async function processEnhancement(
     };
   } catch (error: any) {
     const duration = Date.now() - startTime;
-    console.error(`[Router] ❌ FAILED after ${(duration / 1000).toFixed(1)}s:`, error.message);
+    console.error(`[Router] Primary provider failed after ${(duration / 1000).toFixed(1)}s:`, error.message);
+
+    // Fallback: retry with auto-enhance if the original tool failed
+    if (toolId !== 'auto-enhance') {
+      try {
+        console.warn(`[Router] Attempting auto-enhance fallback for ${toolId}`);
+        const fallbackUrl = await autoEnhance(imageUrl);
+        const fallbackDuration = Date.now() - startTime;
+        return {
+          success: true,
+          enhancedUrl: fallbackUrl,
+          provider: 'replicate-fallback',
+          duration: fallbackDuration,
+        };
+      } catch (fallbackError: any) {
+        console.error(`[Router] Fallback also failed:`, fallbackError.message);
+      }
+    }
 
     return {
       success: false,

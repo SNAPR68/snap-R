@@ -840,3 +840,62 @@ Cloudflare Worker (queue handler)
   (dashboard) instead of dual-sidebar layout. More listings visible at once.
 - Risk Level:
   Medium (layout restructure of existing component)
+
+-------------------------------------------------------------------------------
+## 2026-02-18 — Final Comprehensive Hardening (All 4 Phases)
+-------------------------------------------------------------------------------
+
+### Phase 1: Security Critical (16 items)
+- Deleted debug endpoints (debug-share, debug/) — unauthenticated, leaked data
+- Added ADMIN_SECRET auth to admin/complete-human-edit matching export pattern
+- Created lib/utils/html-escape.ts; fixed XSS in contact, notify-approval, complete-human-edit emails
+- Added OAuth CSRF state validation in social/oauth/[platform]/route.ts
+- Fixed Twitter PKCE: S256 with random verifier instead of hardcoded 'plain'
+- Fixed Facebook token refresh: fb_exchange_token grant (not refresh_token)
+- Added SSRF protection to /api/analyze (blocks private IPs, localhost, metadata)
+- Fixed missing await on createClient() in analyze route
+- Moved access tokens from URL params to Authorization headers in sync-analytics
+- Added token refresh to analytics sync cron (checks expires_at, refreshes if <1hr)
+- Fixed daily digest from session-based createClient() to adminSupabase()
+- Fixed social publish env var to use adminSupabase()
+- Gated /api/log-error with IP rate limiter (30/min) + input sanitization
+- Added Worker /process auth (x-admin-key), made /audit auth non-optional
+- Standardized all admin routes on adminSupabase() (contact, notify-approval, users/export, webhook)
+- Files Modified: 20+ API routes, lib/social/oauth-config.ts, lib/utils/html-escape.ts (new), apps/processor/src/index.ts
+
+### Phase 2: Reliability & Data Integrity (14 items)
+- Added Zod schemas: socialPublishSchema, analyticsPostSchema, enhanceSchema, shareSchema
+- Added UUID validation to share route, toolId validation to enhance route
+- Capped schedule route limit at 200
+- Centralized Stripe webhook plan limits via getListingLimits() from lib/content/limits.ts
+- Added error handling to all webhook profile update calls
+- Added AbortSignal.timeout(15000) to all 12 fetch() calls in publish-service.ts
+- Added console.warn for failed Facebook photo uploads and Instagram carousel items
+- Stripped health endpoint of service configuration details
+- Batched daily digest queries with Promise.all() + lookup Maps (fix N+1)
+- Removed Twilio sandbox fallback number
+- Files Modified: lib/social/publish-service.ts, lib/validation/schemas.ts, lib/content/limits.ts, app/api/stripe/webhook/route.ts, app/api/health/route.ts, app/api/cron/daily-digest/route.ts
+
+### Phase 3: Frontend UX & Performance (15 items)
+- Fixed 11+ broken Tailwind classes in academy page (hover:text[, bg[, from[, to[, hover:border[, hover:shadow[)
+- Updated copyright year to 2026 in 8 files
+- Added page metadata to academy, faq, privacy, terms
+- Created loading.tsx for dashboard, admin, checkout
+- Created error.tsx for dashboard, admin
+- Fixed AnimatedBackground canvas height (scrollHeight*5 → window.innerHeight)
+- Added useMemo to studio-client for filterStyle and listingStyleFilter
+- Removed console.log from 5 production components
+- Created middleware.ts for centralized auth on dashboard/admin/checkout/onboarding
+- Files Created: middleware.ts, app/dashboard/loading.tsx, app/admin/loading.tsx, app/checkout/loading.tsx, app/dashboard/error.tsx, app/admin/error.tsx
+- Files Modified: app/academy/page.tsx, 7 pages (copyright), 3 pages (metadata), components/animated-background.tsx, components/studio-client.tsx
+
+### Phase 4: Architecture (3 items)
+- Added batch processor timeout (10 min) and cost ceiling ($5) to CONFIG
+- Added overall batch timeout check in processing loop
+- Added auto-enhance fallback in AI router when primary provider fails
+- Files Modified: lib/ai/listing-engine/batch-processor.ts, lib/ai/router.ts
+
+### Verification
+- npx tsc --noEmit: 0 errors
+- npm run build: Success (all routes compile)
+- Risk Level: Low-Medium (security fixes + reliability improvements, no behavioral changes to core pipeline)

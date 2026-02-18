@@ -6,6 +6,7 @@ import {
   CheckCircle, Megaphone, Eye, ArrowRight, Loader2,
   Instagram, Facebook, Linkedin, FileText, Globe
 } from 'lucide-react'
+import { GettingStartedChecklist } from './getting-started-checklist'
 
 interface MetricsData {
   activeListings: number
@@ -37,10 +38,18 @@ interface ProcessingItem {
   status: 'preparing' | 'processing'
 }
 
+interface SetupStatus {
+  hasListings: boolean
+  hasBrand: boolean
+  hasSocials: boolean
+  tier: string
+}
+
 interface DashboardHomeProps {
   metrics: MetricsData
   recentActivity: RecentActivity[]
   processingItems: ProcessingItem[]
+  setupStatus?: SetupStatus
 }
 
 function MetricCard({ label, value, icon: Icon, href, color }: {
@@ -113,7 +122,7 @@ function formatTimeAgo(timestamp: string): string {
   return new Date(timestamp).toLocaleDateString()
 }
 
-export default function DashboardHome({ metrics, recentActivity, processingItems }: DashboardHomeProps) {
+export default function DashboardHome({ metrics, recentActivity, processingItems, setupStatus }: DashboardHomeProps) {
   return (
     <div className="min-h-screen bg-[#0A0A0A] text-white">
       <div className="max-w-6xl mx-auto px-6 py-8">
@@ -143,6 +152,16 @@ export default function DashboardHome({ metrics, recentActivity, processingItems
           <h1 className="text-3xl font-bold">Dashboard</h1>
           <p className="text-white/50 mt-1">Your property marketing overview</p>
         </div>
+
+        {/* Getting Started Checklist */}
+        {setupStatus && (
+          <GettingStartedChecklist
+            hasListings={setupStatus.hasListings}
+            hasBrand={setupStatus.hasBrand}
+            hasSocials={setupStatus.hasSocials}
+            tier={setupStatus.tier}
+          />
+        )}
 
         {/* Metrics Row */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">

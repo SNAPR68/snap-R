@@ -1,8 +1,10 @@
 export const dynamic = 'force-dynamic';
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
-import { processEnhancement, ToolId } from '@/lib/ai/router';
+import { processEnhancement, ToolId, TOOL_CREDITS } from '@/lib/ai/router';
 import { logApiCost } from '@/lib/cost-logger';
+
+const VALID_TOOL_IDS = new Set(Object.keys(TOOL_CREDITS));
 
 export const maxDuration = 180;
 
@@ -10,8 +12,11 @@ export async function POST(request: NextRequest) {
   const startTime = Date.now();
   try {
     const { imageId, toolId, options = {} } = await request.json();
-    console.log('\n[API] ========== ENHANCE ==========');    
-    console.log('[API] Tool:', toolId, 'Image:', imageId);
+
+    // Validate toolId before processing
+    if (!toolId || !VALID_TOOL_IDS.has(toolId)) {
+      return NextResponse.json({ error: `Invalid tool: ${toolId}` }, { status: 400 });
+    }
     
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();

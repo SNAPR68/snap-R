@@ -3,31 +3,13 @@
 
 import Link from 'next/link';
 
-import Image from 'next/image';
-
-
-
 export default function LandingPage() {
 
   return (
 
     <div className="min-h-screen flex flex-col items-center justify-center text-center px-6 bg-[var(--background)]">
 
-      <Image 
-
-        src="/snapr-logo.png" 
-
-        width={120} 
-
-        height={120} 
-
-        alt="SnapR Logo" 
-
-        className="mx-auto mb-8 drop-shadow-lg"
-
-        priority
-
-      />
+      <div className="w-24 h-24 rounded-2xl bg-gradient-to-br from-[#D4A017] to-[#B8860B] flex items-center justify-center font-bold text-black text-5xl mx-auto mb-8 drop-shadow-lg">S</div>
 
       <h1 className="text-5xl font-bold mb-6 text-[var(--text-main)]">
 

@@ -45,8 +45,7 @@ export default function NotificationSettingsPage() {
     setSaving(true);
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
-    // Ensure WhatsApp preferences are not saved (feature not available yet)
-    const prefsToSave = { ...prefs, whatsapp: false, dailyWhatsapp: false };
+    const prefsToSave = { ...prefs };
     await supabase.from('profiles').update({ phone, notification_preferences: prefsToSave }).eq('id', user.id);
     setSaving(false);
     setSaved(true);
@@ -72,24 +71,34 @@ export default function NotificationSettingsPage() {
               <div className="flex items-center gap-3"><Mail className="w-5 h-5 text-blue-400" /><div><p className="font-medium">Email</p><p className="text-sm text-white/50">Receive notifications via email</p></div></div>
               <input type="checkbox" checked={prefs.email} onChange={(e) => setPrefs({ ...prefs, email: e.target.checked })} className="w-5 h-5 accent-[#D4A017]" />
             </label>
-            <div className="flex items-center justify-between p-4 bg-white/5 rounded-xl opacity-60">
+            <label className="flex items-center justify-between p-4 bg-white/5 rounded-xl cursor-pointer">
               <div className="flex items-center gap-3">
                 <MessageCircle className="w-5 h-5 text-green-400" />
                 <div>
-                  <div className="flex items-center gap-2">
-                    <p className="font-medium">WhatsApp</p>
-                    <span className="px-2 py-0.5 text-xs bg-[#D4A017]/20 text-[#D4A017] rounded-full">Coming Soon</span>
-                  </div>
-                  <p className="text-sm text-white/50">Join waitlist - WhatsApp Business API approval pending</p>
+                  <p className="font-medium">WhatsApp</p>
+                  <p className="text-sm text-white/50">Receive notifications via WhatsApp</p>
                 </div>
               </div>
-              <input 
-                type="checkbox" 
-                checked={false} 
-                disabled 
-                className="w-5 h-5 accent-[#D4A017] opacity-50 cursor-not-allowed" 
+              <input
+                type="checkbox"
+                checked={prefs.whatsapp}
+                onChange={(e) => setPrefs({ ...prefs, whatsapp: e.target.checked })}
+                className="w-5 h-5 accent-[#D4A017]"
               />
-            </div>
+            </label>
+            {prefs.whatsapp && (
+              <div className="ml-8 p-4 bg-green-500/10 border border-green-500/30 rounded-xl">
+                <label className="block text-sm font-medium mb-2">WhatsApp Number</label>
+                <input
+                  type="tel"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  placeholder="+1 (555) 123-4567"
+                  className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg focus:border-green-400 outline-none"
+                />
+                <p className="text-xs text-white/40 mt-2">Include country code for WhatsApp delivery.</p>
+              </div>
+            )}
           </div>
         </section>
 
@@ -120,21 +129,29 @@ export default function NotificationSettingsPage() {
         <section className="bg-white/5 rounded-2xl border border-white/10 p-6 mb-6">
           <h2 className="text-lg font-semibold mb-4">Daily & Weekly Digests</h2>
           <div className="space-y-4">
-            <div className="flex items-center justify-between p-4 bg-white/5 rounded-xl opacity-60">
+            <label className="flex items-center justify-between p-4 bg-white/5 rounded-xl cursor-pointer">
               <div>
-                <div className="flex items-center gap-2">
-                  <p className="font-medium">Morning WhatsApp Briefing</p>
-                  <span className="px-2 py-0.5 text-xs bg-[#D4A017]/20 text-[#D4A017] rounded-full">Coming Soon</span>
-                </div>
+                <p className="font-medium">Morning WhatsApp Briefing</p>
                 <p className="text-sm text-white/50">Daily summary at your preferred time</p>
               </div>
-              <input 
-                type="checkbox" 
-                checked={false} 
-                disabled 
-                className="w-5 h-5 accent-[#D4A017] opacity-50 cursor-not-allowed" 
+              <input
+                type="checkbox"
+                checked={prefs.dailyWhatsapp}
+                onChange={(e) => setPrefs({ ...prefs, dailyWhatsapp: e.target.checked })}
+                className="w-5 h-5 accent-[#D4A017]"
               />
-            </div>
+            </label>
+            {prefs.dailyWhatsapp && (
+              <div className="ml-8 flex items-center gap-4">
+                <span className="text-sm text-white/50">Delivery time:</span>
+                <input
+                  type="time"
+                  value={prefs.dailyWhatsappTime}
+                  onChange={(e) => setPrefs({ ...prefs, dailyWhatsappTime: e.target.value })}
+                  className="px-3 py-2 bg-white/10 border border-white/20 rounded-lg"
+                />
+              </div>
+            )}
             <label className="flex items-center justify-between p-4 bg-white/5 rounded-xl cursor-pointer">
               <div><p className="font-medium">Weekly Email Report</p><p className="text-sm text-white/50">Performance summary and stats</p></div>
               <input type="checkbox" checked={prefs.weeklySummary} onChange={(e) => setPrefs({ ...prefs, weeklySummary: e.target.checked })} className="w-5 h-5 accent-[#D4A017]" />

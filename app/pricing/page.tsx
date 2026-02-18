@@ -31,10 +31,10 @@ export default function PricingPage() {
             <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#D4A017] to-[#B8860B] flex items-center justify-center font-bold text-black">S</div>
             <span className="font-bold">Snap<span className="text-[#D4A017]">R</span></span>
           </div>
-          <p className="text-white/40 text-sm">© 2025 SnapR. All rights reserved.</p>
+          <p className="text-white/40 text-sm">© 2026 SnapR. All rights reserved.</p>
           <div className="flex gap-6 text-sm text-white/40">
             <Link href="/terms" className="hover:text-white">Terms</Link>
-            <Link href="/privacy" className="hover:txt-white">Privacy</Link>
+            <Link href="/privacy" className="hover:text-white">Privacy</Link>
             <Link href="/contact" className="hover:text-white">Contact</Link>
           </div>
         </div>

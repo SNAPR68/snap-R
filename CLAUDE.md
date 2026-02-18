@@ -235,6 +235,7 @@ These migrations have been applied to the live Supabase database:
 2. `20260216_marketing_jobs_scheduled_posts.sql` — scheduled_posts_status/result columns on marketing_jobs
 3. `20260216_published_posts.sql` — published_posts table with analytics columns, RLS, service role bypass
 4. `20260216_photos_tools_applied.sql` — tools_applied text[] column on photos table
+5. `20260217_phone_and_partners.sql` — profiles.phone/referred_by/notification_preferences columns, partner_applications table with referral_code, RLS
 
 ## Environment Variables
 

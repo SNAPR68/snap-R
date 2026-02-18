@@ -62,12 +62,15 @@ export async function publishToFacebook(
                 url: imageUrl,
                 published: 'false',
               }),
+              signal: AbortSignal.timeout(15000),
             }
           );
-          
+
           if (photoResponse.ok) {
             const photoData = await photoResponse.json();
             photoIds.push(photoData.id);
+          } else {
+            console.warn('[Facebook] Photo upload failed for:', imageUrl, photoResponse.status);
           }
         }
 
@@ -84,6 +87,7 @@ export async function publishToFacebook(
         const response = await fetch(url, {
           method: 'POST',
           body: postParams,
+          signal: AbortSignal.timeout(15000),
         });
 
         if (!response.ok) {
@@ -102,6 +106,7 @@ export async function publishToFacebook(
     const response = await fetch(url, {
       method: 'POST',
       body: formData,
+      signal: AbortSignal.timeout(15000),
     });
 
     if (!response.ok) {
@@ -151,6 +156,7 @@ export async function publishToInstagram(
             image_url: content.imageUrls[0],
             caption: content.text,
           }),
+          signal: AbortSignal.timeout(15000),
         }
       );
 
@@ -169,6 +175,7 @@ export async function publishToInstagram(
             access_token: accessToken,
             creation_id: containerData.id,
           }),
+          signal: AbortSignal.timeout(15000),
         }
       );
 
@@ -177,7 +184,7 @@ export async function publishToInstagram(
       }
 
       const publishData = await publishResponse.json();
-      
+
       return {
         success: true,
         postId: publishData.id,
@@ -189,7 +196,7 @@ export async function publishToInstagram(
     if (content.imageUrls && content.imageUrls.length > 1) {
       // Create containers for each image
       const childContainers: string[] = [];
-      
+
       for (const imageUrl of content.imageUrls) {
         const response = await fetch(
           `https://graph.facebook.com/v18.0/${instagramAccountId}/media`,
@@ -200,12 +207,15 @@ export async function publishToInstagram(
               image_url: imageUrl,
               is_carousel_item: 'true',
             }),
+            signal: AbortSignal.timeout(15000),
           }
         );
 
         if (response.ok) {
           const data = await response.json();
           childContainers.push(data.id);
+        } else {
+          console.warn('[Instagram] Carousel item failed for:', imageUrl, response.status);
         }
       }
 
@@ -220,6 +230,7 @@ export async function publishToInstagram(
             caption: content.text,
             children: childContainers.join(','),
           }),
+          signal: AbortSignal.timeout(15000),
         }
       );
 
@@ -238,6 +249,7 @@ export async function publishToInstagram(
             access_token: accessToken,
             creation_id: carouselData.id,
           }),
+          signal: AbortSignal.timeout(15000),
         }
       );
 
@@ -312,6 +324,7 @@ export async function publishToLinkedIn(
                 ],
               },
             }),
+            signal: AbortSignal.timeout(15000),
           }
         );
 
@@ -323,7 +336,9 @@ export async function publishToLinkedIn(
           const asset = registerData.value.asset;
 
           // Download image and upload to LinkedIn
-          const imageResponse = await fetch(imageUrl);
+          const imageResponse = await fetch(imageUrl, {
+            signal: AbortSignal.timeout(15000),
+          });
           const imageBuffer = await imageResponse.arrayBuffer();
 
           await fetch(uploadUrl, {
@@ -332,6 +347,7 @@ export async function publishToLinkedIn(
               'Authorization': `Bearer ${accessToken}`,
             },
             body: imageBuffer,
+            signal: AbortSignal.timeout(15000),
           });
 
           mediaAssets.push(asset);
@@ -366,6 +382,7 @@ export async function publishToLinkedIn(
         'X-Restli-Protocol-Version': '2.0.0',
       },
       body: JSON.stringify(shareContent),
+      signal: AbortSignal.timeout(15000),
     });
 
     if (!response.ok) {

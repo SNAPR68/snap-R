@@ -16,7 +16,7 @@ export function AnimatedBackground() {
 
     const resize = () => {
       canvas.width = window.innerWidth;
-      canvas.height = Math.max(document.documentElement.scrollHeight, window.innerHeight * 5);
+      canvas.height = window.innerHeight;
     };
 
     resize();
@@ -44,11 +44,8 @@ export function AnimatedBackground() {
       },
     ];
 
-    // Load SnapR logo image
-    const logoImg = new Image();
-    logoImg.src = '/snapr-logo.png';
-    let logoLoaded = false;
-    logoImg.onload = () => { logoLoaded = true; };
+    // Draw gold "S" in lens center instead of image logo
+    const logoLoaded = true;
 
     const drawCamera = (x: number, y: number, size: number, flashIntensity: number) => {
       ctx.save();
@@ -94,15 +91,13 @@ export function AnimatedBackground() {
       ctx.fillStyle = '#0a0a0a';
       ctx.fill();
 
-      // Draw SnapR logo in lens - EVEN BIGGER
+      // Draw SnapR "S" in lens center
       if (logoLoaded) {
-        const logoSize = size * 0.72;
-        ctx.save();
-        ctx.beginPath();
-        ctx.arc(0, 0, size * 0.36, 0, Math.PI * 2);
-        ctx.clip();
-        ctx.drawImage(logoImg, -logoSize/2, -logoSize/2, logoSize, logoSize);
-        ctx.restore();
+        ctx.fillStyle = '#D4A017';
+        ctx.font = `bold ${size * 0.4}px sans-serif`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('S', 0, 0);
       }
 
       // Lens reflection (subtle)

@@ -10,12 +10,24 @@ export async function POST(req: NextRequest) {
     }
 
     const supabase = await createClient();
-    
+
+    // Verify user is authenticated
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    // Verify user owns the listing
     const { data: listing } = await supabase
       .from('listings')
       .select('title')
       .eq('id', listingId)
+      .eq('user_id', user.id)
       .single();
+
+    if (!listing) {
+      return NextResponse.json({ error: 'Listing not found or access denied' }, { status: 404 });
+    }
 
     const { data: photos, error } = await supabase
       .from('photos')

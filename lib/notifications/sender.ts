@@ -18,6 +18,35 @@ const TWILIO_WHATSAPP_FROM = process.env.TWILIO_WHATSAPP_FROM || 'whatsapp:+1415
 const RESEND_API_KEY = process.env.RESEND_API_KEY;
 
 // ================================================
+// NOTIFICATION LOGGER
+// ================================================
+
+async function logNotification(
+  userId: string | undefined,
+  userEmail: string,
+  type: string,
+  channel: 'email' | 'whatsapp',
+  success: boolean,
+  messageId?: string,
+  error?: string
+): Promise<void> {
+  try {
+    const { adminSupabase } = await import('@/lib/supabase/admin');
+    await adminSupabase().from('notification_logs').insert({
+      user_id: userId || null,
+      user_email: userEmail,
+      notification_type: type,
+      channel,
+      success,
+      message_id: messageId || null,
+      error: error || null,
+    });
+  } catch (e) {
+    console.error('[Notify] Failed to log notification:', e);
+  }
+}
+
+// ================================================
 // MAIN SEND FUNCTION
 // ================================================
 
@@ -55,12 +84,16 @@ export async function sendNotification(
   if (prefs.email && userEmail) {
     const emailResult = await sendEmail(userEmail, userName, payload.type, ctx);
     results.push(emailResult);
+    // Log to DB (fire-and-forget)
+    logNotification(payload.userId, userEmail, payload.type, 'email', emailResult.success, emailResult.messageId, emailResult.error).catch(() => {});
   }
 
   // Send WhatsApp
   if (prefs.whatsapp && prefs.whatsappNumber) {
     const whatsappResult = await sendWhatsApp(prefs.whatsappNumber, payload.type, ctx);
     results.push(whatsappResult);
+    // Log to DB (fire-and-forget)
+    logNotification(payload.userId, userEmail, payload.type, 'whatsapp', whatsappResult.success, whatsappResult.messageId, whatsappResult.error).catch(() => {});
   }
 
   return results;

@@ -1,20 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { Resend } from 'resend';
-import { createClient } from '@supabase/supabase-js';
-
-function getSupabase() {
-  return createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-  );
-}
+import { adminSupabase } from '@/lib/supabase/admin';
+import { escapeHtml } from '@/lib/utils/html-escape';
 
 export async function POST(req: NextRequest) {
   try {
     const resend = new Resend(process.env.RESEND_API_KEY);
     const { shareToken, clientName } = await req.json();
 
-    const { data: share } = await getSupabase()
+    const { data: share } = await adminSupabase()
       .from('shares')
       .select('*')
       .eq('token', shareToken)
@@ -24,13 +18,13 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Share not found' }, { status: 404 });
     }
 
-    const { data: listing } = await getSupabase()
+    const { data: listing } = await adminSupabase()
       .from('listings')
       .select('title')
       .eq('id', share.listing_id)
       .single();
 
-    const { data: owner } = await getSupabase()
+    const { data: owner } = await adminSupabase()
       .from('profiles')
       .select('email, full_name')
       .eq('id', share.user_id)
@@ -40,7 +34,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Owner email not found' }, { status: 404 });
     }
 
-    const { data: photos } = await getSupabase()
+    const { data: photos } = await adminSupabase()
       .from('photos')
       .select('client_approved')
       .eq('listing_id', share.listing_id)
@@ -58,11 +52,11 @@ export async function POST(req: NextRequest) {
       html: `
         <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
           <div style="text-align: center; margin-bottom: 30px;">
-            <img src="https://snap-r.com/snapr-logo.png" alt="SnapR" style="width: 60px; height: 60px;">
+            <div style="display: inline-block; width: 48px; height: 48px; border-radius: 12px; background: linear-gradient(135deg, #D4A017, #B8860B); text-align: center; line-height: 48px; font-weight: bold; color: #000; font-size: 24px;">S</div>
           </div>
           <h1 style="color: #1a1a1a; font-size: 24px; margin-bottom: 20px;">Client Review Complete!</h1>
           <p style="color: #4a4a4a; font-size: 16px; line-height: 1.6;">
-            ${clientName ? `<strong>${clientName}</strong> has` : 'Your client has'} reviewed the photos for <strong>${listingTitle}</strong>.
+            ${clientName ? `<strong>${escapeHtml(String(clientName))}</strong> has` : 'Your client has'} reviewed the photos for <strong>${escapeHtml(String(listingTitle))}</strong>.
           </p>
           <div style="background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%); border-radius: 12px; padding: 24px; margin: 24px 0;">
             <h2 style="color: #D4A017; font-size: 18px; margin: 0 0 16px 0;">Review Summary</h2>

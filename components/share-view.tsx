@@ -60,7 +60,6 @@ export function ShareView({ listing, photos, settings, shareToken }: ShareViewPr
   };
 
   const handleApproval = async (photoId: string, approved: boolean) => {
-    console.log("handleApproval called:", { photoId, approved, shareToken });
     // Allow approval with or without shareToken
     setSaving(photoId);
     try {
@@ -169,7 +168,7 @@ export function ShareView({ listing, photos, settings, shareToken }: ShareViewPr
     <div className="min-h-screen bg-[#0F0F0F] text-white">
       <header className="h-16 bg-[#1A1A1A] border-b border-white/10 flex items-center justify-between px-6">
         <div className="flex items-center gap-3">
-          <img src="/snapr-logo.png" alt="SnapR" className="w-10 h-10" />
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#D4A017] to-[#B8860B] flex items-center justify-center font-bold text-black text-xl">S</div>
           <span className="font-semibold">{listing.title}</span>
         </div>
         <div className="flex items-center gap-4">

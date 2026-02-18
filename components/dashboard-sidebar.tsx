@@ -7,8 +7,9 @@ import {
   LayoutDashboard, Home, Sparkles, Palette, Calendar, Zap,
   BarChart3, CheckSquare, FileText, FolderOpen, Images, Mic,
   ClipboardList, Users, Settings, CreditCard, LogOut,
-  ChevronDown, ChevronRight
+  ChevronDown, ChevronRight, X
 } from 'lucide-react'
+import { useSidebar } from './mobile-sidebar-provider'
 
 interface DashboardSidebarProps {
   tier: string
@@ -80,7 +81,7 @@ const NAV_SECTIONS: NavSection[] = [
   },
 ]
 
-export default function DashboardSidebar({ tier, listingsUsed, listingsLimit }: DashboardSidebarProps) {
+function SidebarContent({ tier, listingsUsed, listingsLimit, onNavClick }: DashboardSidebarProps & { onNavClick?: () => void }) {
   const pathname = usePathname()
   const [collapsedSections, setCollapsedSections] = useState<Record<string, boolean>>({
     'More Tools': true,
@@ -98,11 +99,10 @@ export default function DashboardSidebar({ tier, listingsUsed, listingsLimit }: 
   const usagePercent = Math.min((listingsUsed / listingsLimit) * 100, 100)
 
   return (
-    <aside className="w-[220px] bg-[#1A1A1A] border-r border-white/10 p-4 flex flex-col flex-shrink-0">
+    <>
       {/* Logo */}
-      <Link href="/" className="flex items-center gap-2 mb-6">
-        <img src="/snapr-logo.png" alt="SnapR" className="w-10 h-10" />
-        <span className="text-xl font-bold text-[#D4A017]">SnapR</span>
+      <Link href="/" className="flex items-center gap-2 mb-6" onClick={onNavClick}>
+        <span className="text-xl font-bold">Snap<span className="text-[#D4A017]">R</span></span>
       </Link>
 
       {/* Usage Card */}
@@ -133,7 +133,7 @@ export default function DashboardSidebar({ tier, listingsUsed, listingsLimit }: 
           />
         </div>
         {tier === 'free' && listingsUsed >= listingsLimit && (
-          <Link href="/pricing" className="block mt-2 text-xs text-[#D4A017] hover:underline">
+          <Link href="/pricing" className="block mt-2 text-xs text-[#D4A017] hover:underline" onClick={onNavClick}>
             Upgrade for more &rarr;
           </Link>
         )}
@@ -170,6 +170,7 @@ export default function DashboardSidebar({ tier, listingsUsed, listingsLimit }: 
                   <Link
                     key={item.href}
                     href={item.href}
+                    onClick={onNavClick}
                     className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors ${
                       active
                         ? 'bg-white/10 text-white'
@@ -194,6 +195,43 @@ export default function DashboardSidebar({ tier, listingsUsed, listingsLimit }: 
           </button>
         </form>
       </div>
-    </aside>
+    </>
+  )
+}
+
+export default function DashboardSidebar({ tier, listingsUsed, listingsLimit }: DashboardSidebarProps) {
+  const { isOpen, close } = useSidebar()
+
+  return (
+    <>
+      {/* Desktop sidebar */}
+      <aside className="hidden md:flex w-[220px] bg-[#1A1A1A] border-r border-white/10 p-4 flex-col flex-shrink-0">
+        <SidebarContent tier={tier} listingsUsed={listingsUsed} listingsLimit={listingsLimit} />
+      </aside>
+
+      {/* Mobile overlay */}
+      {isOpen && (
+        <div className="fixed inset-0 z-50 md:hidden">
+          {/* Backdrop */}
+          <div className="absolute inset-0 bg-black/60" onClick={close} />
+          {/* Sidebar panel */}
+          <aside className="relative w-[280px] h-full bg-[#1A1A1A] p-4 flex flex-col overflow-y-auto">
+            <button
+              onClick={close}
+              className="absolute top-4 right-4 text-white/60 hover:text-white transition-colors"
+              aria-label="Close menu"
+            >
+              <X className="w-5 h-5" />
+            </button>
+            <SidebarContent
+              tier={tier}
+              listingsUsed={listingsUsed}
+              listingsLimit={listingsLimit}
+              onNavClick={close}
+            />
+          </aside>
+        </div>
+      )}
+    </>
   )
 }

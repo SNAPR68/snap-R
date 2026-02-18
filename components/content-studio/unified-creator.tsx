@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useSearchParams } from 'next/navigation'
 import html2canvas from 'html2canvas'
 import JSZip from 'jszip'
-import { ArrowLeft, Download, Loader2, Check, Sparkles, Instagram, Facebook, Linkedin, Video, Image, Copy, Hash, ClipboardCopy, Package, MessageCircle, Images, ImageIcon, Share2, CheckCircle, Upload, ExternalLink, AlertCircle , FolderOpen } from "lucide-react"
+import { ArrowLeft, Download, Loader2, Check, Sparkles, Instagram, Facebook, Linkedin, Video, Image, Copy, Hash, ClipboardCopy, Package, MessageCircle, Images, ImageIcon, Share2, CheckCircle, Upload, ExternalLink, AlertCircle, FolderOpen, Calendar, ChevronRight } from "lucide-react"
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -12,6 +12,7 @@ import { Label } from '@/components/ui/label'
 import { TemplateRenderer, FacebookTemplateRenderer, VerticalTemplateRenderer } from './template-renderer'
 import { INSTAGRAM_POST_TEMPLATES, FACEBOOK_POST_TEMPLATES, LINKEDIN_POST_TEMPLATES, VERTICAL_TEMPLATES, TEMPLATE_CATEGORIES, TemplateDefinition } from '@/lib/content/templates'
 import { trackEvent, SnapREvents } from '@/lib/analytics'
+import { ScheduleModal } from './schedule-modal'
 import { FFmpeg } from '@ffmpeg/ffmpeg'
 import { fetchFile, toBlobURL } from '@ffmpeg/util'
 
@@ -97,6 +98,8 @@ export function UnifiedCreator() {
   const ffmpegRef = useRef<FFmpeg | null>(null)
   const [ffmpegLoaded, setFfmpegLoaded] = useState(false)
   const [videoProgress, setVideoProgress] = useState(0)
+
+  const [showScheduleModal, setShowScheduleModal] = useState(false)
 
   const [property, setProperty] = useState({ address: '', city: '', state: '', price: null as number | null, bedrooms: null as number | null, bathrooms: null as number | null, squareFeet: null as number | null, propertyType: 'House' as string })
   const [listingData, setListingData] = useState<any>(null)
@@ -311,8 +314,7 @@ export function UnifiedCreator() {
         setUploadSuccess(targetPlatform)
       } else {
         // Desktop fallback: Download image, copy caption, open platform
-        console.log('Desktop path - downloading image...')
-        
+        // Desktop fallback: download image, copy caption, open platform
         // 1. Download the image
         const link = document.createElement('a')
         link.href = URL.createObjectURL(imageBlob)
@@ -792,6 +794,37 @@ export function UnifiedCreator() {
     } catch (e) { console.error('Save error:', e) }
   }
 
+  // Schedule post for future publishing
+  const handleSchedulePost = async (scheduledAt: string) => {
+    setUploading('schedule')
+    setUploadError(null)
+    try {
+      const fullCaption = getFullCaption()
+      const schedulePlatform = platform === 'story' ? 'instagram' : platform
+      const res = await fetch('/api/schedule', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          listingId: listingId || null,
+          platform: schedulePlatform,
+          postType: headline.toLowerCase().replace(/ /g, '_'),
+          content: fullCaption,
+          imageUrls: [photoUrl],
+          scheduledFor: scheduledAt,
+        }),
+      })
+      if (!res.ok) {
+        const err = await res.json()
+        throw new Error(err.error || 'Failed to schedule')
+      }
+      setUploadSuccess('schedule')
+    } catch (e: any) {
+      setUploadError(e.message || 'Failed to schedule post')
+    } finally {
+      setUploading(null)
+    }
+  }
+
   return (
     <div className="h-screen bg-gradient-to-br from-gray-900 via-black to-gray-900 text-white flex flex-col overflow-hidden">
       {/* Hidden download */}
@@ -805,11 +838,14 @@ export function UnifiedCreator() {
 
       {/* Header */}
       <header className="flex-shrink-0 h-12 px-4 border-b border-white/10 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <Link href="/dashboard/content-studio" className="text-white/50 hover:text-white"><ArrowLeft className="w-4 h-4" /></Link>
-          <h1 className="text-sm font-semibold">{listingTitle || 'Create Content'}</h1>
-          {renovatedImageUrl && <span className="text-xs bg-green-500/20 text-green-400 px-2 py-0.5 rounded-full">Renovated</span>}
-        </div>
+        <nav className="flex items-center gap-1.5 text-xs">
+          <Link href="/dashboard" className="text-white/40 hover:text-white transition-colors">Dashboard</Link>
+          <ChevronRight className="w-3 h-3 text-white/20" />
+          <Link href="/dashboard/content-studio" className="text-white/40 hover:text-white transition-colors">Content Studio</Link>
+          <ChevronRight className="w-3 h-3 text-white/20" />
+          <span className="text-white font-medium truncate max-w-[200px]">{listingTitle || 'Create Content'}</span>
+          {renovatedImageUrl && <span className="text-xs bg-green-500/20 text-green-400 px-2 py-0.5 rounded-full ml-1.5">Renovated</span>}
+        </nav>
         <Button 
           size="sm" 
           onClick={downloadOnly}
@@ -898,15 +934,17 @@ export function UnifiedCreator() {
               <CheckCircle className="w-5 h-5 text-green-400 flex-shrink-0" />
               <div className="flex-1">
                 <p className="text-sm font-medium text-green-400">
-                  {uploadSuccess === 'download' ? 'Downloaded!' : 
+                  {uploadSuccess === 'download' ? 'Downloaded!' :
                    uploadSuccess === 'carousel' ? 'Carousel downloaded!' :
                    uploadSuccess === 'whatsapp' ? 'Shared to WhatsApp!' :
+                   uploadSuccess === 'schedule' ? 'Post Scheduled!' :
                    `Ready to upload to ${uploadSuccess}!`}
                 </p>
                 <p className="text-xs text-green-400/70">
                   {uploadSuccess === 'download' ? 'Image saved to your device' :
                    uploadSuccess === 'carousel' ? 'ZIP file saved with all slides' :
                    uploadSuccess === 'whatsapp' ? 'Image shared successfully' :
+                   uploadSuccess === 'schedule' ? 'Your post will be published automatically at the scheduled time' :
                    'Caption copied • Platform opened • Just upload the image!'}
                 </p>
               </div>
@@ -978,12 +1016,21 @@ export function UnifiedCreator() {
                 </Button>
 
                 {/* WhatsApp */}
-                <Button 
+                <Button
                   onClick={shareToWhatsApp}
                   disabled={uploading !== null}
                   className="h-11 bg-gradient-to-r from-green-600 to-green-500 hover:from-green-700 hover:to-green-600 text-white font-semibold"
                 >
                   {uploading === 'whatsapp' ? <Loader2 className="w-4 h-4 animate-spin" /> : <><MessageCircle className="w-4 h-4 mr-2" />WhatsApp</>}
+                </Button>
+
+                {/* Schedule */}
+                <Button
+                  onClick={() => setShowScheduleModal(true)}
+                  disabled={uploading !== null}
+                  className="h-11 col-span-2 bg-gradient-to-r from-amber-600 to-amber-500 hover:from-amber-700 hover:to-amber-600 text-white font-semibold"
+                >
+                  {uploading === 'schedule' ? <Loader2 className="w-4 h-4 animate-spin" /> : <><Calendar className="w-4 h-4 mr-2" />Schedule Post</>}
                 </Button>
               </div>
             )}
@@ -1136,6 +1183,13 @@ export function UnifiedCreator() {
           </div>
         )}
       </div>
+      {/* Schedule Modal */}
+      <ScheduleModal
+        isOpen={showScheduleModal}
+        onClose={() => setShowScheduleModal(false)}
+        onSchedule={handleSchedulePost}
+        platform={platform === 'story' ? 'instagram' : platform}
+      />
     </div>
   )
 }

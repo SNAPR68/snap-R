@@ -4,9 +4,10 @@ import PricingSection from '@/components/pricing-section';
 
 import { useState, useMemo } from 'react';
 import Link from 'next/link';
-import { Sparkles, Zap, Check, ArrowRight, Smartphone, Camera, Shield, Mail, Globe, Share2, Wand2, Send, Bell, Upload } from 'lucide-react';
+import { Sparkles, Zap, Check, ArrowRight, Smartphone, Camera, Shield, Mail, Globe, Share2, Wand2, Send, Bell, Upload, Menu, X } from 'lucide-react';
 import { LandingGallery } from '@/components/landing-gallery';
 import { Testimonials } from '@/components/testimonials';
+import { ProductExplainer } from '@/components/product-explainer';
 import { trackEvent, SnapREvents } from '@/lib/analytics';
 
 // Pricing data - Listing-based model (25% below Fotello)
@@ -110,7 +111,8 @@ const LoadingSpinner = () => (
 export default function HomePage() {
   const [isAnnual, setIsAnnual] = useState(true);
   const [sliderIndex, setSliderIndex] = useState(4);
-  
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
   // NEW: Pricing section state
   const [pricingSliderIndex, setPricingSliderIndex] = useState(4); // Default to 30 listings
   const [userType, setUserType] = useState<'photographer' | 'agent'>('photographer');
@@ -413,24 +415,33 @@ export default function HomePage() {
       <nav className="fixed top-0 left-0 right-0 z-50 border-b border-[#D4A017]/30 bg-[#0F0F0F]/95 backdrop-blur-md">
         <div className="max-w-6xl mx-auto px-6 py-3 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2">
-            <img src="/snapr-logo.png" alt="SnapR" className="w-10 h-10" />
             <span className="text-xl font-bold">
               <span className="text-white">Snap</span>
               <span className="text-[#D4A017]">R</span>
             </span>
           </Link>
-          
+
+          {/* Desktop nav links */}
           <div className="hidden md:flex items-center gap-8">
             <Link href="#see-demo" className="text-white/70 hover:text-[#D4A017] transition-colors text-sm">See Demo</Link>
             <Link href="/pricing" className="text-white/70 hover:text-[#D4A017] transition-colors text-sm">Pricing</Link>
             <Link href="/faq" className="text-white/70 hover:text-[#D4A017] transition-colors text-sm">FAQ</Link>
             <Link href="/academy" className="text-white/70 hover:text-[#D4A017] transition-colors text-sm">Academy</Link>
           </div>
-          
+
           <div className="flex items-center gap-3">
-            <Link href="/auth/login" className="text-white/70 hover:text-white text-sm transition-colors">Log in</Link>
-            <Link 
-              href="/auth/signup" 
+            {/* Mobile hamburger */}
+            <button
+              className="md:hidden text-white/70 hover:text-white transition-colors"
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              aria-label="Toggle menu"
+            >
+              {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+            </button>
+
+            <Link href="/auth/login" className="text-white/70 hover:text-white text-sm transition-colors hidden sm:block">Log in</Link>
+            <Link
+              href="/auth/signup"
               onClick={() => trackEvent(SnapREvents.HOMEPAGE_CTA_CLICK)}
               className="px-4 py-2 bg-gradient-to-r from-[#D4A017] to-[#B8860B] text-black font-semibold rounded-lg text-sm hover:opacity-90 transition-opacity"
             >
@@ -438,6 +449,17 @@ export default function HomePage() {
             </Link>
           </div>
         </div>
+
+        {/* Mobile nav dropdown */}
+        {mobileMenuOpen && (
+          <div className="md:hidden bg-[#0F0F0F]/98 border-t border-[#D4A017]/20 backdrop-blur-md px-6 py-4 flex flex-col gap-3">
+            <Link href="#see-demo" onClick={() => setMobileMenuOpen(false)} className="text-white/70 hover:text-[#D4A017] transition-colors text-sm py-2">See Demo</Link>
+            <Link href="/pricing" onClick={() => setMobileMenuOpen(false)} className="text-white/70 hover:text-[#D4A017] transition-colors text-sm py-2">Pricing</Link>
+            <Link href="/faq" onClick={() => setMobileMenuOpen(false)} className="text-white/70 hover:text-[#D4A017] transition-colors text-sm py-2">FAQ</Link>
+            <Link href="/academy" onClick={() => setMobileMenuOpen(false)} className="text-white/70 hover:text-[#D4A017] transition-colors text-sm py-2">Academy</Link>
+            <Link href="/auth/login" onClick={() => setMobileMenuOpen(false)} className="text-white/70 hover:text-white transition-colors text-sm py-2 sm:hidden">Log in</Link>
+          </div>
+        )}
       </nav>
 
       {/* HERO SECTION - UPDATED */}
@@ -878,51 +900,34 @@ export default function HomePage() {
         <LandingGallery />
       </section>
 
-      {/* See Demo - Video Section */}
+      {/* See Demo - Interactive Product Walkthrough */}
       <section id="see-demo" className="py-16 px-6 bg-gradient-to-b from-[#0F0F0F] to-[#1A1A1A]">
-        <div className="max-w-4xl mx-auto">
+        <div className="max-w-5xl mx-auto">
           <div className="text-center mb-8">
-            <p className="text-[#D4A017] text-xs font-semibold tracking-wider mb-2">SEE DEMO</p>
+            <p className="text-[#D4A017] text-xs font-semibold tracking-wider mb-2">SEE IT IN ACTION</p>
             <h2 className="text-2xl md:text-3xl font-bold text-white mb-3">
-              Watch SnapR in Action
+              From Photos to Published Listing
             </h2>
             <p className="text-sm text-white/60 max-w-xl mx-auto">
-              From raw photos to fully marketed listing in under 10 minutes.
+              Watch how SnapR transforms raw property photos into a fully marketed listing — automatically.
             </p>
           </div>
-          
-          {/* Video Placeholder */}
-          <div className="relative aspect-video rounded-2xl overflow-hidden border-2 border-[#D4A017]/30 bg-[#1A1A1A]">
-            {/* Placeholder Content */}
-            <div className="absolute inset-0 flex flex-col items-center justify-center">
-              {/* Play Button */}
-              <div className="w-20 h-20 rounded-full bg-gradient-to-br from-[#D4A017] to-[#B8860B] flex items-center justify-center mb-4 cursor-pointer hover:scale-110 transition-transform shadow-lg shadow-[#D4A017]/30">
-                <svg className="w-8 h-8 text-black ml-1" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M8 5v14l11-7z" />
-                </svg>
-              </div>
-              <p className="text-white/60 text-sm">Demo video coming soon</p>
-            </div>
-            
-            {/* Decorative Grid Overlay */}
-            <div className="absolute inset-0 opacity-5">
-              <div className="w-full h-full" style={{ backgroundImage: 'linear-gradient(rgba(212,160,23,0.3) 1px, transparent 1px), linear-gradient(90deg, rgba(212,160,23,0.3) 1px, transparent 1px)', backgroundSize: '40px 40px' }}></div>
-            </div>
-          </div>
-          
-          {/* Video Highlights */}
-          <div className="grid grid-cols-3 gap-4 mt-6">
+
+          <ProductExplainer />
+
+          {/* Feature highlights */}
+          <div className="grid grid-cols-3 gap-4 mt-8">
             <div className="text-center p-4 bg-white/5 rounded-xl border border-white/10">
-              <p className="text-[#D4A017] font-bold text-lg mb-1">2 min</p>
-              <p className="text-white/50 text-xs">Full walkthrough</p>
+              <p className="text-[#D4A017] font-bold text-lg mb-1">5 Steps</p>
+              <p className="text-white/50 text-xs">Fully automated</p>
             </div>
             <div className="text-center p-4 bg-white/5 rounded-xl border border-white/10">
-              <p className="text-[#D4A017] font-bold text-lg mb-1">Real listing</p>
-              <p className="text-white/50 text-xs">Live demo</p>
+              <p className="text-[#D4A017] font-bold text-lg mb-1">Under 10 min</p>
+              <p className="text-white/50 text-xs">End to end</p>
             </div>
             <div className="text-center p-4 bg-white/5 rounded-xl border border-white/10">
-              <p className="text-[#D4A017] font-bold text-lg mb-1">No fluff</p>
-              <p className="text-white/50 text-xs">Just results</p>
+              <p className="text-[#D4A017] font-bold text-lg mb-1">Zero Effort</p>
+              <p className="text-white/50 text-xs">AI handles everything</p>
             </div>
           </div>
         </div>
@@ -1136,7 +1141,7 @@ export default function HomePage() {
         <div className="max-w-5xl mx-auto">
           <div className="flex flex-col md:flex-row items-center justify-between gap-6 mb-8">
             <div className="flex items-center gap-3">
-              <img src="/snapr-logo.png" alt="SnapR" className="w-10 h-10" />
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#D4A017] to-[#B8860B] flex items-center justify-center font-bold text-black text-xl">S</div>
               <span className="text-xl font-bold"><span className="text-white">Snap</span><span className="text-[#D4A017]">R</span></span>
             </div>
             
@@ -1166,7 +1171,7 @@ export default function HomePage() {
           </div>
           
           <div className="pt-6 border-t border-white/5 flex flex-col md:flex-row items-center justify-between gap-4">
-            <p className="text-white/30 text-xs">© 2025 SnapR. All rights reserved.</p>
+            <p className="text-white/30 text-xs">© 2026 SnapR. All rights reserved.</p>
             <a href="mailto:support@snap-r.com" className="flex items-center gap-2 text-white/30 text-xs hover:text-[#D4A017] transition-colors">
               <Mail className="w-3 h-3" /> support@snap-r.com
             </a>

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { BeforeAfterSlider } from './before-after-slider';
 import { createClient } from '@/lib/supabase/client';
 import ShareGalleryModal from "./ShareGalleryModal";
@@ -12,7 +12,7 @@ import Link from 'next/link';
 import { PreparationOverlay } from './preparation-overlay';
 import { MarketingBanner, type MarketingJobData } from './marketing-banner';
 import { MarketingResultsPanel } from './marketing-results-panel';
-import { ArrowLeft, Upload, Sun, Moon, Leaf, Trash2, Sofa, Sparkles, Wand2, Loader2, ChevronDown, ChevronUp, Check, X, Download, Share2, Copy, LogOut, FileArchive, UserCheck, Flame, Tv, Lightbulb, PanelTop, Waves, Move, Circle, Palette, Brain, Snowflake, Flower2, Eraser, Zap, Rocket, CheckCircle, AlertCircle, Star, Eye, RefreshCw, History } from 'lucide-react';
+import { ArrowLeft, Upload, Sun, Moon, Leaf, Trash2, Sofa, Sparkles, Wand2, Loader2, ChevronDown, ChevronUp, Check, X, Download, Share2, Copy, LogOut, FileArchive, UserCheck, Flame, Tv, Lightbulb, PanelTop, Waves, Move, Circle, Palette, Brain, Snowflake, Flower2, Eraser, Zap, Rocket, CheckCircle, AlertCircle, Star, Eye, RefreshCw, History, Monitor } from 'lucide-react';
 
 const AI_TOOLS = [
   { id: 'sky-replacement', name: 'Sky Replacement', icon: Sun, credits: 1, category: 'EXTERIOR', hasPresets: true },
@@ -107,7 +107,7 @@ export function StudioClient({ listingId, userRole, showMlsFeatures = false, cre
   const [listingStyle, setListingStyle] = useState<{ brightness: number; contrast: number; saturation: number; warmth: number } | null>(null);
   const [zipLoading, setZipLoading] = useState(false);
 
-  const getFilterStyle = () => {
+  const filterStyle = useMemo(() => {
     const { brightness, contrast, saturation, warmth } = adjustments;
     const filters: string[] = [];
     if (brightness !== 0) filters.push(`brightness(${100 + brightness}%)`);
@@ -116,9 +116,9 @@ export function StudioClient({ listingId, userRole, showMlsFeatures = false, cre
     if (warmth > 0) filters.push(`sepia(${warmth * 0.3}%)`);
     else if (warmth < 0) filters.push(`hue-rotate(${warmth * 0.5}deg)`);
     return filters.length > 0 ? filters.join(" ") : "none";
-  };
+  }, [adjustments]);
 
-  const getListingStyleFilter = () => {
+  const listingStyleFilter = useMemo(() => {
     if (!listingStyle) return "none";
     const { brightness, contrast, saturation, warmth } = listingStyle;
     const filters: string[] = [];
@@ -128,7 +128,7 @@ export function StudioClient({ listingId, userRole, showMlsFeatures = false, cre
     if (warmth > 0) filters.push("sepia(" + (warmth * 0.3) + "%)");
     else if (warmth < 0) filters.push("hue-rotate(" + (warmth * 0.5) + "deg)");
     return filters.length > 0 ? filters.join(" ") : "none";
-  };
+  }, [listingStyle]);
 
   type PendingEnhancement = {
     storagePath?: string;
@@ -446,7 +446,7 @@ export function StudioClient({ listingId, userRole, showMlsFeatures = false, cre
         }),
       });
     } catch (e) {
-      console.log('Notification send failed:', e);
+      // Notification send failed silently
     }
   };
 
@@ -523,7 +523,20 @@ export function StudioClient({ listingId, userRole, showMlsFeatures = false, cre
   const currentPresets = selectedTool ? TOOL_PRESETS[selectedTool] : null;
 
   return (
-    <div className="h-screen bg-[#0F0F0F] text-white flex flex-col overflow-hidden">
+    <>
+    {/* Mobile gate — studio requires desktop */}
+    <div className="md:hidden flex flex-col items-center justify-center min-h-screen bg-[#0A0A0A] p-6 text-center">
+      <Monitor className="w-16 h-16 text-[#D4A017] mb-4" />
+      <h2 className="text-xl font-bold text-white mb-2">Desktop Required</h2>
+      <p className="text-white/60 mb-6 max-w-sm">
+        The photo editing studio requires a desktop or tablet screen for the best experience.
+      </p>
+      <Link href="/dashboard" className="px-6 py-3 bg-[#D4A017] text-black font-semibold rounded-lg hover:bg-[#B8860B] transition-colors">
+        Back to Dashboard
+      </Link>
+    </div>
+
+    <div className="hidden md:flex h-screen bg-[#0F0F0F] text-white flex-col overflow-hidden">
       {prepareProgress && (
         <div className="fixed inset-0 z-50 bg-black/90 backdrop-blur-sm flex items-center justify-center">
           <div className="bg-[#1A1A1A] border border-white/10 rounded-2xl p-8 max-w-md w-full mx-4 text-center">
@@ -575,11 +588,15 @@ export function StudioClient({ listingId, userRole, showMlsFeatures = false, cre
       )}
       <header className="h-14 bg-[#1A1A1A] border-b border-white/10 flex items-center justify-between px-4 flex-shrink-0">
         <div className="flex items-center gap-3">
-          <Link href="/dashboard" className="flex items-center gap-2 px-3 py-2 hover:bg-white/10 rounded-lg text-white/70 hover:text-white transition-colors"><ArrowLeft className="w-4 h-4" /><span className="text-sm">Back</span></Link>
-          <div className="h-6 w-px bg-white/20 mx-2" />
-          <Link href="/" className="flex items-center gap-2"><img src="/snapr-logo.png" alt="SnapR" className="w-10 h-10" /></Link>
-          <div className="h-6 w-px bg-white/20 mx-2" />
-          <h1 className="font-semibold truncate max-w-[200px]"><span className="text-white/50">Listing:</span> {listing?.title || 'Loading...'}</h1>
+          <Link href="/" className="flex items-center gap-2"><div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#D4A017] to-[#B8860B] flex items-center justify-center font-bold text-black text-sm">S</div></Link>
+          <div className="h-6 w-px bg-white/20 mx-1" />
+          <nav className="flex items-center gap-1 text-sm text-white/40">
+            <Link href="/dashboard" className="hover:text-white transition-colors">Dashboard</Link>
+            <span className="text-white/20">›</span>
+            <Link href="/dashboard/listings" className="hover:text-white transition-colors">Listings</Link>
+            <span className="text-white/20">›</span>
+            <span className="text-white truncate max-w-[180px]">{listing?.title || 'Studio'}</span>
+          </nav>
           {listingStyle && (
             <button onClick={() => setListingStyle(null)} className="flex items-center gap-2 ml-2 px-2 py-1 bg-[#D4A017]/20 border border-[#D4A017]/40 rounded-lg hover:bg-[#D4A017]/30 transition-colors group">
               <div className="w-2 h-2 bg-[#D4A017] rounded-full"></div>
@@ -709,7 +726,7 @@ export function StudioClient({ listingId, userRole, showMlsFeatures = false, cre
               <div className="flex-1 relative flex items-center justify-center bg-[#0A0A0A] rounded-xl overflow-hidden min-h-0">
                 {pendingEnhancement ? (
                   <div className="absolute inset-0 cursor-ew-resize select-none" onMouseDown={(e) => { const rect = e.currentTarget.getBoundingClientRect(); const updatePosition = (clientX: number) => { const x = Math.max(0, Math.min(clientX - rect.left, rect.width)); setSliderPosition((x / rect.width) * 100); }; updatePosition(e.clientX); const onMouseMove = (event: MouseEvent) => updatePosition(event.clientX); const onMouseUp = () => { window.removeEventListener('mousemove', onMouseMove); window.removeEventListener('mouseup', onMouseUp); }; window.addEventListener('mousemove', onMouseMove); window.addEventListener('mouseup', onMouseUp); }}>
-                    <img src={pendingEnhancement.enhancedUrl} alt="Enhanced" className="absolute inset-0 w-full h-full object-contain" style={{ filter: getFilterStyle(), opacity: adjustments.intensity / 100 }} draggable={false} />
+                    <img src={pendingEnhancement.enhancedUrl} alt="Enhanced" className="absolute inset-0 w-full h-full object-contain" style={{ filter: filterStyle, opacity: adjustments.intensity / 100 }} draggable={false} />
                     <div className="absolute inset-0 overflow-hidden" style={{ width: `${sliderPosition}%` }}><img src={pendingEnhancement.originalUrl} alt="Original" className="absolute inset-0 w-full h-full object-contain" style={{ maxWidth: 'none', width: `${sliderPosition === 0 ? 0 : 100 / (sliderPosition / 100)}%` }} draggable={false} /></div>
                     <div className="absolute top-0 bottom-0 w-0.5 bg-white shadow-lg" style={{ left: `${sliderPosition}%`, transform: 'translateX(-50%)' }}><div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-10 h-10 bg-white rounded-full shadow-lg flex items-center justify-center cursor-ew-resize"><span className="text-gray-600 text-sm font-bold">↔</span></div></div>
                     <div className="absolute top-4 left-4 px-3 py-1.5 bg-black/70 rounded-lg text-sm font-medium">Before</div>
@@ -731,7 +748,7 @@ export function StudioClient({ listingId, userRole, showMlsFeatures = false, cre
               <div className="flex gap-2 mt-3 overflow-x-auto py-1 flex-shrink-0">
                 {photos.map(photo => (
                   <div key={photo.id} className="relative flex-shrink-0 group">
-                    <button onClick={() => { setSelectedPhoto(photo); setPendingEnhancement(null); setAdjustments({ intensity: 100, brightness: 0, contrast: 0, saturation: 0, warmth: 0 }); }} className={`w-16 h-16 rounded-lg overflow-hidden border-2 ${selectedPhoto?.id === photo.id ? 'border-[#D4A017]' : 'border-transparent hover:border-white/30'} relative`}><img src={photo.signedRawUrl} alt="" className="w-full h-full object-cover" style={{ filter: getListingStyleFilter() }} />{listingStatus?.heroPhotoId === photo.id && <div className="absolute -top-1 -left-1 w-5 h-5 bg-[#D4A017] rounded-full flex items-center justify-center" title="AI-selected hero photo"><Star className="w-3 h-3 text-black fill-black" /></div>}</button>
+                    <button onClick={() => { setSelectedPhoto(photo); setPendingEnhancement(null); setAdjustments({ intensity: 100, brightness: 0, contrast: 0, saturation: 0, warmth: 0 }); }} className={`w-16 h-16 rounded-lg overflow-hidden border-2 ${selectedPhoto?.id === photo.id ? 'border-[#D4A017]' : 'border-transparent hover:border-white/30'} relative`}><img src={photo.signedRawUrl} alt="" className="w-full h-full object-cover" style={{ filter: listingStyleFilter }} />{listingStatus?.heroPhotoId === photo.id && <div className="absolute -top-1 -left-1 w-5 h-5 bg-[#D4A017] rounded-full flex items-center justify-center" title="AI-selected hero photo"><Star className="w-3 h-3 text-black fill-black" /></div>}</button>
                     <button onClick={e => { e.stopPropagation(); handleDeletePhoto(photo.id, photo.raw_url); }} className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 rounded-full items-center justify-center text-white hidden group-hover:flex"><X className="w-3 h-3" /></button>
                   </div>
                 ))}
@@ -819,6 +836,12 @@ export function StudioClient({ listingId, userRole, showMlsFeatures = false, cre
             setFlaggedPhotos([]);
           }
           loadData();
+          // Send WhatsApp/email notification (fire-and-forget)
+          sendPrepareNotification({
+            status: result.status || 'prepared',
+            stats: { overallConfidence: result.confidenceScore, totalPhotos: result.totalPhotos },
+            heroPhotoId: result.heroPhotoId,
+          });
         }}
         onError={(error) => {
           setShowPrepareOverlay(false);
@@ -827,5 +850,6 @@ export function StudioClient({ listingId, userRole, showMlsFeatures = false, cre
         }}
       />
     </div>
+    </>
   );
 }

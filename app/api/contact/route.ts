@@ -1,7 +1,8 @@
 export const dynamic = 'force-dynamic';
 import { NextRequest, NextResponse } from 'next/server';
 import { Resend } from 'resend';
-import { createClient } from '@supabase/supabase-js';
+import { adminSupabase } from '@/lib/supabase/admin';
+import { escapeHtml } from '@/lib/utils/html-escape';
 
 export async function POST(request: NextRequest) {
   try {
@@ -12,11 +13,8 @@ export async function POST(request: NextRequest) {
     }
 
     // Save to database
-    const supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!
-    );
-    
+    const supabase = adminSupabase();
+
     await supabase.from('contact_submissions').insert({
       name,
       email,
@@ -24,19 +22,23 @@ export async function POST(request: NextRequest) {
       status: 'new',
     });
 
-    // Send email
+    // Send email with escaped HTML to prevent XSS
+    const safeName = escapeHtml(String(name));
+    const safeEmail = escapeHtml(String(email));
+    const safeMessage = escapeHtml(String(message));
+
     const resend = new Resend(process.env.RESEND_API_KEY);
     await resend.emails.send({
       from: 'SnapR Contact <notifications@snap-r.com>',
       to: 'support@snap-r.com',
       replyTo: email,
-      subject: `New Contact: ${name}`,
+      subject: `New Contact: ${safeName}`,
       html: `
         <h2>New Contact Form Submission</h2>
-        <p><strong>Name:</strong> ${name}</p>
-        <p><strong>Email:</strong> ${email}</p>
+        <p><strong>Name:</strong> ${safeName}</p>
+        <p><strong>Email:</strong> ${safeEmail}</p>
         <p><strong>Message:</strong></p>
-        <p>${message}</p>
+        <p>${safeMessage}</p>
       `,
     });
 
