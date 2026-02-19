@@ -1,6 +1,31 @@
 # SnapR Execution Changelog
 =================================
 
+## 2026-02-19 — Fix Property Site Critical Issues
+
+### 1. Fix Nonexistent Table Query
+- Changed `listing_videos` → `video_render_jobs` in property site server component
+- Added `status = 'completed'` filter to only show finished video renders
+- Files Modified: app/p/[slug]/page.tsx
+
+### 2. Remove Hardcoded Google Maps API Key
+- Removed exposed fallback key `AIzaSyBFw0Qbyq9zTFTd-tUY6dZWTgaQzuU17R8` from client code
+- Maps API key now passed as `mapsApiKey` prop from server component via env var
+- Shows address fallback with MapPin icon when no API key configured
+- Files Modified: app/p/[slug]/page.tsx, app/p/[slug]/PropertySiteClient.tsx
+
+### 3. Fix Type Safety — Eliminate `any` Types
+- Defined `ListingPhoto` interface for photo sorting and mapping
+- Replaced `(a: any, b: any)` and `(photo: any)` with properly typed parameters
+- Added `display_order` field to shared `Photo` interface
+- Files Modified: app/p/[slug]/page.tsx, lib/types.ts
+
+### Verification
+- npx tsc --noEmit: 0 errors
+- npm run build: Success
+
+---
+
 ## 2026-02-19 — Phase 7: Additional Templates + Polish (Video Engine v1.1)
 
 ### 1. PriceDrop Template + PriceDropBadge
