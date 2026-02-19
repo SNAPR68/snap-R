@@ -2,10 +2,10 @@
 
 ## Current Position
 
-Phase: Not started (defining requirements)
+Phase: 1 (not started)
 Plan: —
-Status: Defining requirements
-Last activity: 2026-02-19 — Milestone v1.1 Video Engine started
+Status: Roadmap defined, ready for Phase 1 planning
+Last activity: 2026-02-19 — Research complete, requirements defined, roadmap created
 
 ## Project Reference
 
@@ -24,6 +24,10 @@ See: .planning/PROJECT.md (updated 2026-02-19)
 - Branch: feature/brand-polish
 - Existing marketing pipeline uses always-complete semantics
 - Free/Starter users get marketing skipped entirely
+- Research completed: STACK.md, FEATURES.md, ARCHITECTURE.md, PITFALLS.md, SUMMARY.md
+- Remotion Lambda (AWS) confirmed as only viable rendering option
+- 44 requirements defined across 8 categories (REND, COMP, AUDIO, BRAND, PIPE, PUB, UI, BILL)
+- 7-phase roadmap: Foundation → Composition → Templates → Audio → Pipeline → Branding → Polish
 
 ## Blockers
 
