@@ -59,12 +59,13 @@ interface Props {
   brand?: Brand | null
   videoUrl?: string | null
   slug: string
+  mapsApiKey?: string | null
 }
 
 // ============================================
 // MAIN COMPONENT
 // ============================================
-export default function PropertySiteClient({ photos, listing, agent, brand, videoUrl, slug }: Props) {
+export default function PropertySiteClient({ photos, listing, agent, brand, videoUrl, mapsApiKey }: Props) {
   // State
   const [currentPhoto, setCurrentPhoto] = useState(0)
   const [lightboxOpen, setLightboxOpen] = useState(false)
@@ -622,17 +623,26 @@ export default function PropertySiteClient({ photos, listing, agent, brand, vide
             {fullAddress && (
               <section>
                 <h2 className="text-2xl font-bold mb-6">Location</h2>
-                <div className="aspect-[16/9] rounded-xl overflow-hidden bg-[#1A1A1A]">
-                  <iframe
-                    width="100%"
-                    height="100%"
-                    style={{ border: 0 }}
-                    loading="lazy"
-                    allowFullScreen
-                    referrerPolicy="no-referrer-when-downgrade"
-                    src={`https://www.google.com/maps/embed/v1/place?key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_KEY || 'AIzaSyBFw0Qbyq9zTFTd-tUY6dZWTgaQzuU17R8'}&q=${encodeURIComponent(fullAddress)}`}
-                  />
-                </div>
+                {mapsApiKey ? (
+                  <div className="aspect-[16/9] rounded-xl overflow-hidden bg-[#1A1A1A]">
+                    <iframe
+                      width="100%"
+                      height="100%"
+                      style={{ border: 0 }}
+                      loading="lazy"
+                      allowFullScreen
+                      referrerPolicy="no-referrer-when-downgrade"
+                      src={`https://www.google.com/maps/embed/v1/place?key=${mapsApiKey}&q=${encodeURIComponent(fullAddress)}`}
+                    />
+                  </div>
+                ) : (
+                  <div className="aspect-[16/9] rounded-xl overflow-hidden bg-[#1A1A1A] flex items-center justify-center">
+                    <div className="text-center text-gray-400">
+                      <MapPin className="w-12 h-12 mx-auto mb-3 opacity-50" />
+                      <p className="text-lg font-medium">{fullAddress}</p>
+                    </div>
+                  </div>
+                )}
                 <a
                   href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(fullAddress)}`}
                   target="_blank"

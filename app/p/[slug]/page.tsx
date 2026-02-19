@@ -128,28 +128,38 @@ export default async function PropertySitePage({ params }: Props) {
     brandProfile = brandData
   }
   
-  // Fetch any existing video for this listing
+  // Fetch any existing completed video for this listing
   let videoUrl = null
   const { data: videoData } = await supabase
-    .from('listing_videos')
+    .from('video_render_jobs')
     .select('video_url')
     .eq('listing_id', listingId)
+    .eq('status', 'completed')
     .order('created_at', { ascending: false })
     .limit(1)
     .single()
-  
+
   if (videoData?.video_url) {
     videoUrl = videoData.video_url
   }
   
   // Sort photos by display order
-  const sortedPhotos = (listing.photos || []).sort((a: any, b: any) =>
-    (a.display_order || 0) - (b.display_order || 0)
+  interface ListingPhoto {
+    id: string
+    raw_url: string | null
+    processed_url: string | null
+    status: string
+    display_order: number | null
+  }
+
+  const sortedPhotos = (listing.photos as ListingPhoto[] || []).sort(
+    (a: ListingPhoto, b: ListingPhoto) =>
+      (a.display_order || 0) - (b.display_order || 0)
   )
-  
+
   // Get signed URLs for photos
   const photos = await Promise.all(
-    sortedPhotos.map(async (photo: any) => {
+    sortedPhotos.map(async (photo: ListingPhoto) => {
       const path = photo.processed_url || photo.raw_url
       if (!path) return null
       
@@ -253,6 +263,7 @@ export default async function PropertySitePage({ params }: Props) {
         brand={brandData}
         videoUrl={videoUrl}
         slug={slug}
+        mapsApiKey={process.env.NEXT_PUBLIC_GOOGLE_MAPS_KEY ?? null}
       />
     </>
   )
