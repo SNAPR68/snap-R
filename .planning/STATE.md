@@ -3,9 +3,9 @@
 ## Current Position
 
 Phase: 1 (in progress)
-Plan: 01-01 (completed), 01-02 (next)
-Status: Phase 1 Plan 1 complete — Remotion foundation established
-Last activity: 2026-02-19 — Remotion composition, database table, and validation schemas created
+Plan: 01-02 (completed)
+Status: Phase 1 complete — Remotion video API routes with Lambda integration
+Last activity: 2026-02-19 — Video generation and status polling API endpoints created with full error handling
 
 ## Project Reference
 
@@ -29,6 +29,10 @@ See: .planning/PROJECT.md (updated 2026-02-19)
 - 44 requirements defined across 8 categories (REND, COMP, AUDIO, BRAND, PIPE, PUB, UI, BILL)
 - 7-phase roadmap: Foundation → Composition → Templates → Audio → Pipeline → Branding → Polish
 - Phase 1 Plan 1 completed: Remotion packages installed, test composition created, video_render_jobs table migrated
+- Phase 1 Plan 2 completed: Video API routes (generate + status) with Zod validation, Lambda integration, terminal state caching
+- Video generation API ready: POST /api/video/generate triggers Remotion Lambda renders, stores jobs in DB
+- Video status API ready: GET /api/video/status polls Lambda progress, updates DB on completion/failure
+- Key decisions: terminal state caching (avoid redundant Lambda calls), 503 for missing env vars (not 500), ownership verification via adminSupabase
 
 ## Blockers
 

@@ -10,11 +10,11 @@ Requirements for the Video Engine milestone. Each maps to roadmap phases.
 ### Rendering Infrastructure (REND)
 
 - [x] **REND-01**: Remotion Lambda deployed to AWS with S3 output bucket and IAM roles configured (Partially — composition ready, Lambda deployment in Plan 01-02)
-- [ ] **REND-02**: `/api/video/generate` API route accepts listing ID, template, aspect ratio, and options — triggers Lambda render
-- [ ] **REND-03**: `/api/video/status` API route returns render progress (queued/rendering/completed/failed) with video URL on completion
+- [x] **REND-02**: `/api/video/generate` API route accepts listing ID, template, aspect ratio, and options — triggers Lambda render
+- [x] **REND-03**: `/api/video/status` API route returns render progress (queued/rendering/completed/failed) with video URL on completion
 - [ ] **REND-04**: Rendered videos copy from S3 to R2/Cloudinary for permanent CDN delivery
 - [x] **REND-05**: `video_render_jobs` database table tracks render ID, status, input props, output URL, render time, cost
-- [ ] **REND-06**: Render errors handled gracefully — failed renders don't crash pipeline, user sees actionable error message
+- [x] **REND-06**: Render errors handled gracefully — failed renders don't crash pipeline, user sees actionable error message
 
 ### Video Compositions (COMP)
 
@@ -119,11 +119,11 @@ Which phases cover which requirements. Updated during roadmap creation.
 | Requirement | Phase | Status |
 |-------------|-------|--------|
 | REND-01 | Phase 1 | Pending |
-| REND-02 | Phase 1 | Pending |
-| REND-03 | Phase 1 | Pending |
+| REND-02 | Phase 1 | Complete |
+| REND-03 | Phase 1 | Complete |
 | REND-04 | Phase 5 | Pending |
 | REND-05 | Phase 1 | Pending |
-| REND-06 | Phase 1 | Pending |
+| REND-06 | Phase 1 | Complete |
 | COMP-01 | Phase 2 | Pending |
 | COMP-02 | Phase 3 | Pending |
 | COMP-03 | Phase 3 | Pending |

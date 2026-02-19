@@ -27,7 +27,7 @@ No GSD phases — v1.0 was developed before GSD adoption. Shipped:
 - Integer phases (1, 2, 3): Planned milestone work
 - Decimal phases (2.1, 2.2): Urgent insertions (marked with INSERTED)
 
-- [ ] **Phase 1: Remotion Foundation** — Deploy Lambda rendering infrastructure and prove end-to-end video generation
+- [x] **Phase 1: Remotion Foundation** — Deploy Lambda rendering infrastructure and prove end-to-end video generation (COMPLETED 2026-02-19)
 - [ ] **Phase 2: Basic Composition + Multi-Format** — PropertyShowcase template with photo slideshow, text overlays, and 3 aspect ratios
 - [ ] **Phase 3: Lifecycle Templates** — Just Listed, Open House templates with intro cards, branding, and template selection logic
 - [ ] **Phase 4: Audio Integration** — Background music, voiceover mixing, volume ducking, audio fade in/out
@@ -51,7 +51,7 @@ No GSD phases — v1.0 was developed before GSD adoption. Shipped:
 
 Plans:
 - [x] 01-01-PLAN.md — Remotion packages, test composition, database migration, Zod schemas (COMPLETED 2026-02-19)
-- [ ] 01-02-PLAN.md — API routes (generate + status), error handling, Vercel config
+- [x] 01-02-PLAN.md — API routes (generate + status), error handling, Vercel config (COMPLETED 2026-02-19)
 
 ### Phase 2: Basic Composition + Multi-Format
 **Goal**: Build the PropertyShowcase template with photo slideshow, text overlays, and transitions — rendering correctly in all 3 aspect ratios. Migrate VideoCreator UI from FFmpeg to API calls.
