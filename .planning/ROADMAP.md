@@ -101,9 +101,9 @@ Plans:
 **Plans**: 3 plans
 
 Plans:
-- [ ] 04-01-PLAN.md — Background music library + AudioLayer composition component
-- [ ] 04-02-PLAN.md — Voiceover upload + generate API audio params
-- [ ] 04-03-PLAN.md — Wire audio UI to render pipeline
+- [x] 04-01-PLAN.md — Background music library + AudioLayer composition component (COMPLETED 2026-02-19)
+- [x] 04-02-PLAN.md — Voiceover upload + generate API audio params (COMPLETED 2026-02-19)
+- [x] 04-03-PLAN.md — Wire audio UI to render pipeline (COMPLETED 2026-02-19)
 
 ### Phase 5: Marketing Pipeline + Billing
 **Goal**: Wire video generation into the marketing pipeline as Step 6, enforce billing gates, track costs, and set up storage/CDN delivery.
@@ -170,7 +170,7 @@ Note: Phase 4 depends on Phase 2 (not Phase 3), so Phases 3 and 4 could run in p
 | 1. Remotion Foundation | v1.1 | Complete    | 2026-02-19 | - |
 | 2. Basic Composition + Multi-Format | v1.1 | 3/3 | 2026-02-19 | - |
 | 3. Lifecycle Templates | v1.1 | 3/3 | 2026-02-19 | - |
-| 4. Audio Integration | v1.1 | 0/3 | Not started | - |
+| 4. Audio Integration | v1.1 | 3/3 | 2026-02-19 | - |
 | 5. Marketing Pipeline + Billing | v1.1 | 0/3 | Not started | - |
 | 6. Agent Branding + Publishing | v1.1 | 0/3 | Not started | - |
 | 7. Additional Templates + Polish | v1.1 | 0/2 | Not started | - |

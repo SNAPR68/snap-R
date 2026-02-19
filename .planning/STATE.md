@@ -2,10 +2,10 @@
 
 ## Current Position
 
-Phase: 4 (not started)
+Phase: 5 (not started)
 Plan: None yet
-Status: Phase 3 complete — JustListed + OpenHouse templates, template selector UI
-Last activity: 2026-02-19 — Lifecycle templates with shared components, API integration, UI selector
+Status: Phase 4 complete — AudioLayer component, music library, voiceover upload, UI wiring
+Last activity: 2026-02-19 — Audio integration with ducking, fade in/out, end-to-end pipeline
 
 ## Project Reference
 
@@ -20,6 +20,11 @@ See: .planning/PROJECT.md (updated 2026-02-19)
 - VideoCreator.tsx migrated from browser-FFmpeg to Lambda API calls (Phase 2)
 - 3 production templates: PropertyShowcase (fade), JustListed (slide), OpenHouse (wipe)
 - Shared composition components: PhotoSlide, AddressOverlay, IntroCard, ClosingCard, FeatureCallout, EventBadge
+- AudioLayer component: music (looped, fade in/out), voiceover, ducking (30% when VO present), silent fallback
+- 6 placeholder music tracks in public/music/ (silent MP3s — replace with real royalty-free tracks)
+- Voiceover upload to Supabase Storage with signed URL (1hr expiry for Lambda)
+- All composition schemas extended with optional `audio` prop (musicTrack, musicVolume, voiceoverUrl, voiceoverVolume)
+- Generate API converts UI volumes (0-100) to composition volumes (0-1)
 - Template selector UI with 3 cards + conditional open house date input
 - Each template registered in 3 aspect ratios (9:16, 1:1, 16:9) = 9 compositions + TestVideo
 - Photo ordering module uses existing photoAudit room classification (zero AI cost)
@@ -30,8 +35,8 @@ See: .planning/PROJECT.md (updated 2026-02-19)
 - Existing marketing pipeline uses always-complete semantics
 - Free/Starter users get marketing skipped entirely
 - 7-phase roadmap: Foundation → Composition → Templates → Audio → Pipeline → Branding → Polish
-- Phases 1-3 complete, Phases 4-7 remaining
-- Lambda site needs redeploy with AWS credentials (local deploy failed — use CI or env vars)
+- Phases 1-4 complete, Phases 5-7 remaining
+- Lambda site needs redeploy with updated compositions (source .env.local first)
 
 ## Blockers
 
