@@ -305,7 +305,7 @@ export async function generateVoiceover(request: VoiceoverRequest): Promise<Voic
       const result = await generateAudio(script, request.voiceId);
       audioBuffer = result.audioBuffer;
       duration = result.duration;
-    } catch (elevenLabsError) {
+    } catch {
       console.log('ElevenLabs failed, falling back to OpenAI TTS');
       // Map voice to OpenAI equivalent
       const openAIVoice = request.voiceId.includes('female') ? 'nova' : 'onyx';
@@ -325,11 +325,11 @@ export async function generateVoiceover(request: VoiceoverRequest): Promise<Voic
       audioUrl,
       duration,
     };
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Voiceover generation error:', error);
     return {
       success: false,
-      error: error.message,
+      error: error instanceof Error ? error.message : 'Unknown error',
     };
   }
 }

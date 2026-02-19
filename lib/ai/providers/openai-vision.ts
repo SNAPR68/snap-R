@@ -74,7 +74,7 @@ Be accurate and concise. Only flag issues that are clearly visible.`
       const analysis = JSON.parse(cleanContent) as ImageAnalysis;
       console.log('[Vision] Analysis complete:', analysis.recommended_enhancements);
       return analysis;
-    } catch (parseError) {
+    } catch {
       console.error('[Vision] Failed to parse response:', content);
       errorMessage = 'Failed to parse OpenAI response';
       return {
@@ -93,10 +93,11 @@ Be accurate and concise. Only flag issues that are clearly visible.`
         recommended_enhancements: [],
       };
     }
-  } catch (error: any) {
+  } catch (error: unknown) {
     success = false;
-    errorMessage = error.message;
-    console.error('[Vision] API error:', error.message);
+    const msg = error instanceof Error ? error.message : 'Unknown error';
+    errorMessage = msg;
+    console.error('[Vision] API error:', msg);
     return {
       sky_replacement_needed: false,
       sky_condition: 'good',
@@ -185,10 +186,11 @@ Check for:
     } catch {
       return { score: 7, issues: [], passed: true };
     }
-  } catch (error: any) {
+  } catch (error: unknown) {
     success = false;
-    errorMessage = error.message;
-    console.error('[QC] API error:', error.message);
+    const msg = error instanceof Error ? error.message : 'Unknown error';
+    errorMessage = msg;
+    console.error('[QC] API error:', msg);
     return { score: 7, issues: [], passed: true };
   } finally {
     // Log OpenAI cost
@@ -258,10 +260,11 @@ FAIL if you see:
     } catch {
       return { passed: true, issues: [] };
     }
-  } catch (error: any) {
+  } catch (error: unknown) {
     success = false;
-    errorMessage = error.message;
-    console.error('[QC] Structural check API error:', error.message);
+    const msg = error instanceof Error ? error.message : 'Unknown error';
+    errorMessage = msg;
+    console.error('[QC] Structural check API error:', msg);
     return { passed: true, issues: [] };
   } finally {
     await logApiCost({

@@ -355,7 +355,7 @@ export async function processQueueItem(queueItemId: string): Promise<{ success: 
   const contentData = queueItem.content_data || {};
 
   try {
-    let generatedContent: any = {};
+    let generatedContent: Record<string, unknown> = {};
 
     switch (queueItem.content_type) {
       case 'social_post':

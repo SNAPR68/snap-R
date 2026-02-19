@@ -2,6 +2,13 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { adminSupabase } from '@/lib/supabase/admin';
 
+interface SocialConnection {
+  access_token: string;
+  page_access_token?: string;
+  page_id?: string;
+  platform_user_id?: string;
+}
+
 export async function POST(req: NextRequest) {
   try {
     const supabase = await createClient();
@@ -110,13 +117,14 @@ export async function POST(req: NextRequest) {
     if (libError) console.error('Content library save error:', libError);
 
     return NextResponse.json({ success: true, postId: result.postId, url: result.url });
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Failed to publish';
     console.error('Publish error:', error);
-    return NextResponse.json({ error: error.message || 'Failed to publish' }, { status: 500 });
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }
 
-async function publishToFacebook(connection: any, content: string, imageUrls: string[]) {
+async function publishToFacebook(connection: SocialConnection, content: string, imageUrls: string[]) {
   const accessToken = connection.page_access_token || connection.access_token;
   const pageId = connection.page_id;
 
@@ -169,7 +177,7 @@ async function publishToFacebook(connection: any, content: string, imageUrls: st
   return { postId, url: `https://facebook.com/${postId}` };
 }
 
-async function publishToInstagram(connection: any, content: string, imageUrls: string[]) {
+async function publishToInstagram(connection: SocialConnection, content: string, imageUrls: string[]) {
   const accessToken = connection.access_token;
   const igUserId = connection.platform_user_id;
 
@@ -219,67 +227,103 @@ async function publishToInstagram(connection: any, content: string, imageUrls: s
   return { postId: publishData.id, url: `https://instagram.com` };
 }
 
-async function publishToLinkedIn(connection: any, content: string, imageUrls: string[]) {
+async function publishToLinkedIn(connection: Record<string, string>, content: string, imageUrls: string[]) {
   const accessToken = connection.access_token;
   let personId = connection.platform_user_id;
 
   if (!personId) {
     const profileRes = await fetch('https://api.linkedin.com/v2/userinfo', {
-      headers: { 'Authorization': `Bearer ${accessToken}` }
+      headers: { 'Authorization': `Bearer ${accessToken}` },
+      signal: AbortSignal.timeout(10000),
     });
     const profile = await profileRes.json();
     personId = profile.sub;
-    
+
     if (!personId) {
       throw new Error('Could not get LinkedIn user ID');
     }
   }
 
-  console.log('[LinkedIn] Publishing for person:', personId);
+  const personUrn = `urn:li:person:${personId}`;
 
-  const postBody = {
-    author: `urn:li:person:${personId}`,
+  // Build post body using modern LinkedIn Posts API (rest/posts)
+  const postBody: Record<string, unknown> = {
+    author: personUrn,
+    commentary: content,
+    visibility: 'PUBLIC',
+    distribution: {
+      feedDistribution: 'MAIN_FEED',
+      targetEntities: [],
+      thirdPartyDistributionChannels: [],
+    },
     lifecycleState: 'PUBLISHED',
-    specificContent: {
-      'com.linkedin.ugc.ShareContent': {
-        shareCommentary: { text: content },
-        shareMediaCategory: imageUrls?.length > 0 ? 'ARTICLE' : 'NONE',
-        ...(imageUrls?.length > 0 && {
-          media: [{
-            status: 'READY',
-            originalUrl: imageUrls[0],
-          }]
-        })
-      },
-    },
-    visibility: {
-      'com.linkedin.ugc.MemberNetworkVisibility': 'PUBLIC',
-    },
   };
 
-  console.log('[LinkedIn] Request:', JSON.stringify(postBody));
+  // Upload images if provided
+  if (imageUrls?.length > 0) {
+    const uploadedImages: string[] = [];
 
-  const response = await fetch('https://api.linkedin.com/v2/ugcPosts', {
+    for (const imageUrl of imageUrls) {
+      // Initialize image upload
+      const initRes = await fetch('https://api.linkedin.com/rest/images?action=initializeUpload', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${accessToken}`,
+          'Content-Type': 'application/json',
+          'LinkedIn-Version': '202401',
+          'X-Restli-Protocol-Version': '2.0.0',
+        },
+        body: JSON.stringify({ initializeUploadRequest: { owner: personUrn } }),
+        signal: AbortSignal.timeout(15000),
+      });
+
+      if (initRes.ok) {
+        const initData = await initRes.json();
+        const uploadUrl = initData.value.uploadUrl;
+        const imageUrn = initData.value.image;
+
+        // Download and re-upload binary
+        const imgRes = await fetch(imageUrl, { signal: AbortSignal.timeout(15000) });
+        const imgBuffer = await imgRes.arrayBuffer();
+        await fetch(uploadUrl, {
+          method: 'PUT',
+          headers: { 'Authorization': `Bearer ${accessToken}` },
+          body: imgBuffer,
+          signal: AbortSignal.timeout(30000),
+        });
+
+        uploadedImages.push(imageUrn);
+      }
+    }
+
+    if (uploadedImages.length === 1) {
+      postBody.content = { media: { id: uploadedImages[0] } };
+    } else if (uploadedImages.length > 1) {
+      postBody.content = { multiImage: { images: uploadedImages.map(id => ({ id })) } };
+    }
+  }
+
+  const response = await fetch('https://api.linkedin.com/rest/posts', {
     method: 'POST',
     headers: {
       'Authorization': `Bearer ${accessToken}`,
       'Content-Type': 'application/json',
+      'LinkedIn-Version': '202401',
       'X-Restli-Protocol-Version': '2.0.0',
     },
     body: JSON.stringify(postBody),
+    signal: AbortSignal.timeout(15000),
   });
 
-  const data = await response.json();
-  console.log('[LinkedIn] Response:', response.status, JSON.stringify(data));
-
-  if (!response.ok || data.status === 422) {
-    throw new Error(data.message || `LinkedIn error: ${response.status}`);
+  if (!response.ok) {
+    const errText = await response.text();
+    throw new Error(errText || `LinkedIn error: ${response.status}`);
   }
 
-  const postUrn = data.id;
-  const postUrl = postUrn 
+  const postUrn = response.headers.get('x-restli-id') || '';
+  const postUrl = postUrn
     ? `https://www.linkedin.com/feed/update/${postUrn}`
-    : `https://www.linkedin.com/feed/`;
+    : 'https://www.linkedin.com/feed/';
 
   return { postId: postUrn || 'unknown', url: postUrl };
 }

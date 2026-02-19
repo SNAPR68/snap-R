@@ -30,7 +30,7 @@ export const SOCIAL_PLATFORMS = {
     name: 'LinkedIn',
     icon: 'Linkedin',
     color: '#0A66C2',
-    scopes: ['r_liteprofile', 'r_emailaddress', 'w_member_social'],
+    scopes: ['openid', 'profile', 'email', 'w_member_social'],
     authUrl: 'https://www.linkedin.com/oauth/v2/authorization',
     tokenUrl: 'https://www.linkedin.com/oauth/v2/accessToken',
     apiBase: 'https://api.linkedin.com/v2',
@@ -221,23 +221,22 @@ export async function refreshAccessToken(
 }
 
 // Get user profile from platform
-export async function getUserProfile(platform: SocialPlatform, accessToken: string): Promise<any> {
-  const config = SOCIAL_PLATFORMS[platform];
-
+export async function getUserProfile(platform: SocialPlatform, accessToken: string): Promise<Record<string, unknown>> {
   let url: string;
   const headers: Record<string, string> = {};
 
   switch (platform) {
     case 'facebook':
-      url = `${config.apiBase}/me?fields=id,name,picture`;
+      url = `https://graph.facebook.com/v18.0/me?fields=id,name,picture`;
       headers['Authorization'] = `Bearer ${accessToken}`;
       break;
     case 'instagram':
-      url = `${config.apiBase}/me?fields=id,username,account_type`;
+      url = `https://graph.facebook.com/v18.0/me?fields=id,username,account_type`;
       headers['Authorization'] = `Bearer ${accessToken}`;
       break;
     case 'linkedin':
-      url = `${config.apiBase}/me`;
+      // Use modern OpenID Connect userinfo endpoint
+      url = 'https://api.linkedin.com/v2/userinfo';
       headers['Authorization'] = `Bearer ${accessToken}`;
       break;
     default:
@@ -254,7 +253,7 @@ export async function getUserProfile(platform: SocialPlatform, accessToken: stri
 }
 
 // Get Facebook Pages (for publishing)
-export async function getFacebookPages(accessToken: string): Promise<any[]> {
+export async function getFacebookPages(accessToken: string): Promise<Record<string, unknown>[]> {
   const response = await fetch(
     `https://graph.facebook.com/v18.0/me/accounts`,
     {
@@ -272,7 +271,7 @@ export async function getFacebookPages(accessToken: string): Promise<any[]> {
 }
 
 // Get Instagram accounts connected to Facebook Pages
-export async function getInstagramAccounts(accessToken: string, pageId: string): Promise<any> {
+export async function getInstagramAccounts(accessToken: string, pageId: string): Promise<Record<string, unknown>> {
   const response = await fetch(
     `https://graph.facebook.com/v18.0/${pageId}?fields=instagram_business_account`,
     {

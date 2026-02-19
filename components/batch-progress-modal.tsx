@@ -1,6 +1,6 @@
 'use client';
 
-import { Loader2, Check, X, AlertCircle } from 'lucide-react';
+import { Loader2, Check, AlertCircle } from 'lucide-react';
 
 interface BatchProgressModalProps {
   isOpen: boolean;
@@ -29,7 +29,7 @@ export function BatchProgressModal({
   const isComplete = current >= total;
 
   return (
-    <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50">
+    <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50" role="dialog" aria-modal="true" aria-label={title}>
       <div className="bg-[#1A1A1A] rounded-2xl p-6 w-full max-w-md border border-white/10 shadow-2xl">
         {/* Header */}
         <div className="flex items-center gap-3 mb-6">

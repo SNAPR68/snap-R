@@ -107,7 +107,7 @@ async function sendEmail(
   to: string,
   name: string,
   type: NotificationType,
-  ctx: Record<string, any>
+  ctx: Record<string, unknown>
 ): Promise<NotificationResult> {
   if (!RESEND_API_KEY) {
     console.log('[Notify] Resend API key not configured');
@@ -143,9 +143,10 @@ async function sendEmail(
     console.log('[Notify] Email sent:', data.id);
     return { channel: 'email', success: true, messageId: data.id };
 
-  } catch (error: any) {
-    console.error('[Notify] Email error:', error.message);
-    return { channel: 'email', success: false, error: error.message };
+  } catch (error: unknown) {
+    const msg = error instanceof Error ? error.message : 'Unknown error';
+    console.error('[Notify] Email error:', msg);
+    return { channel: 'email', success: false, error: msg };
   }
 }
 
@@ -156,7 +157,7 @@ async function sendEmail(
 async function sendWhatsApp(
   phone: string,
   type: NotificationType,
-  ctx: Record<string, any>
+  ctx: Record<string, unknown>
 ): Promise<NotificationResult> {
   if (!TWILIO_ACCOUNT_SID || !TWILIO_AUTH_TOKEN) {
     console.log('[Notify] Twilio not configured');
@@ -199,9 +200,10 @@ async function sendWhatsApp(
     console.log('[Notify] WhatsApp sent:', data.sid);
     return { channel: 'whatsapp', success: true, messageId: data.sid };
 
-  } catch (error: any) {
-    console.error('[Notify] WhatsApp error:', error.message);
-    return { channel: 'whatsapp', success: false, error: error.message };
+  } catch (error: unknown) {
+    const msg = error instanceof Error ? error.message : 'Unknown error';
+    console.error('[Notify] WhatsApp error:', msg);
+    return { channel: 'whatsapp', success: false, error: msg };
   }
 }
 

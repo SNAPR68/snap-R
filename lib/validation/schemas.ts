@@ -65,7 +65,7 @@ export const shareSchema = z.object({
 
 // Helper: Parse body with schema, return typed result or error response
 export function parseBody<T>(schema: z.ZodType<T>, data: unknown):
-  { success: true; data: T } | { success: false; error: string; details: z.ZodError['flatten'] extends (...args: any[]) => infer R ? R : never } {
+  { success: true; data: T } | { success: false; error: string; details: ReturnType<z.ZodError['flatten']> } {
   const result = schema.safeParse(data)
   if (result.success) {
     return { success: true, data: result.data }

@@ -9,14 +9,12 @@ const nextConfig = {
     ],
   },
 
-  // ABSOLUTELY REQUIRED — disables ESLint errors during build
+  // Enforce ESLint and TypeScript strictness during build
   eslint: {
-    ignoreDuringBuilds: true,
+    ignoreDuringBuilds: false,
   },
-
-  // ABSOLUTELY REQUIRED — disables TS errors during build
   typescript: {
-    ignoreBuildErrors: true,
+    ignoreBuildErrors: false,
   },
 };
 

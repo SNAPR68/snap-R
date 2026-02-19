@@ -151,7 +151,7 @@ function SignupForm() {
             <div className="mt-8 p-4 bg-[#0F0F0F]/10 rounded-xl">
               <p className="text-[#0F0F0F]/60 text-sm">Selected plan</p>
               <p className="text-[#0F0F0F] font-bold text-xl capitalize">{selectedPlan} - {listings} listings/month</p>
-              <p className="text-[#0F0F0F]/60 text-sm mt-1">You'll complete payment after creating your account</p>
+              <p className="text-[#0F0F0F]/60 text-sm mt-1">You&apos;ll complete payment after creating your account</p>
             </div>
           )}
         </div>
@@ -188,11 +188,11 @@ function SignupForm() {
           </div>
 
           <form onSubmit={handleSignup} className="space-y-4">
-            <input type="text" placeholder="Full Name" value={name} onChange={(e) => setName(e.target.value)} className="w-full px-4 py-4 bg-white/5 border border-white/10 rounded-xl text-white placeholder:text-white/30 focus:outline-none focus:border-[#D4A017]" required />
-            <input type="email" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} className="w-full px-4 py-4 bg-white/5 border border-white/10 rounded-xl text-white placeholder:text-white/30 focus:outline-none focus:border-[#D4A017]" required />
+            <input type="text" placeholder="Full Name" aria-label="Full name" value={name} onChange={(e) => setName(e.target.value)} className="w-full px-4 py-4 bg-white/5 border border-white/10 rounded-xl text-white placeholder:text-white/30 focus:outline-none focus:border-[#D4A017]" required />
+            <input type="email" placeholder="Email" aria-label="Email address" value={email} onChange={(e) => setEmail(e.target.value)} className="w-full px-4 py-4 bg-white/5 border border-white/10 rounded-xl text-white placeholder:text-white/30 focus:outline-none focus:border-[#D4A017]" required />
             <div className="relative">
-              <input type={showPassword ? 'text' : 'password'} placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} className="w-full px-4 py-4 bg-white/5 border border-white/10 rounded-xl text-white placeholder:text-white/30 focus:outline-none focus:border-[#D4A017] pr-12" required minLength={6} />
-              <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-4 top-1/2 -translate-y-1/2 text-white/30 hover:text-white/60">
+              <input type={showPassword ? 'text' : 'password'} placeholder="Password" aria-label="Password" value={password} onChange={(e) => setPassword(e.target.value)} className="w-full px-4 py-4 bg-white/5 border border-white/10 rounded-xl text-white placeholder:text-white/30 focus:outline-none focus:border-[#D4A017] pr-12" required minLength={6} />
+              <button type="button" onClick={() => setShowPassword(!showPassword)} aria-label={showPassword ? 'Hide password' : 'Show password'} className="absolute right-4 top-1/2 -translate-y-1/2 text-white/30 hover:text-white/60">
                 {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
               </button>
             </div>

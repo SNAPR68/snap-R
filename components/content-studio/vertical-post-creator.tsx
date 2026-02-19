@@ -105,11 +105,11 @@ export function VerticalPostCreator({ platform }: VerticalPostCreatorProps) {
           
           if (listingData.photos && listingData.photos.length > 0) {
             const enhancedPhotos = listingData.photos
-              .filter((p: any) => p.processed_url)
-              .map((p: any) => p.signedProcessedUrl || p.processed_url)
-            
+              .filter((p: { processed_url?: string }) => p.processed_url)
+              .map((p: { signedProcessedUrl?: string; processed_url?: string }) => p.signedProcessedUrl || p.processed_url)
+
             const originalPhotos = listingData.photos
-              .map((p: any) => p.signedOriginalUrl || p.signedProcessedUrl || p.original_url)
+              .map((p: { signedOriginalUrl?: string; signedProcessedUrl?: string; original_url?: string }) => p.signedOriginalUrl || p.signedProcessedUrl || p.original_url)
               .filter(Boolean)
             
             const allPhotos = enhancedPhotos.length > 0 ? enhancedPhotos : originalPhotos

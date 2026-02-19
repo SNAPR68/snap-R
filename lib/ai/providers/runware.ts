@@ -24,9 +24,9 @@ async function fetchWithTimeout(
     });
     clearTimeout(timeoutId);
     return response;
-  } catch (error: any) {
+  } catch (error: unknown) {
     clearTimeout(timeoutId);
-    if (error.name === 'AbortError') {
+    if (error instanceof Error && error.name === 'AbortError') {
       throw new Error(`Runware request timeout after ${timeoutMs}ms`);
     }
     throw error;
@@ -111,7 +111,12 @@ async function imageToBase64WithDimensions(imageUrl: string): Promise<ImageInfo>
   };
   }
 
-async function runwareRequest(tasks: any[]): Promise<any> {
+interface RunwareResponse {
+  data?: Array<{ imageURL?: string; imageUUID?: string }>;
+  errors?: Array<{ message?: string }>;
+}
+
+async function runwareRequest(tasks: Record<string, unknown>[]): Promise<RunwareResponse> {
   console.log('[Runware] API request:', tasks[0]?.taskType);
   const response = await fetchWithTimeout(
     RUNWARE_API,
@@ -132,7 +137,7 @@ async function runwareRequest(tasks: any[]): Promise<any> {
     throw new Error(`Runware API error: ${response.status}`);
   }
 
-  const data = await response.json();
+  const data = (await response.json()) as RunwareResponse;
 
   if (data.errors && data.errors.length > 0) {
     throw new Error(`Runware error: ${data.errors[0].message || JSON.stringify(data.errors[0])}`);

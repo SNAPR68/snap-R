@@ -20,7 +20,7 @@ interface DashboardSidebarProps {
 interface NavItem {
   href: string
   label: string
-  icon: any
+  icon: React.ComponentType<{ className?: string }>
 }
 
 interface NavSection {

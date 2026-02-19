@@ -37,7 +37,9 @@ function extractUrl(output: unknown): string {
   const result = Array.isArray(output) ? output[0] : output;
   if (!result) throw new Error('Replicate returned empty result');
   if (typeof result === 'string') return result;
-  if (typeof (result as any).url === 'function') return (result as any).url();
+  if (typeof result === 'object' && result !== null && 'url' in result && typeof (result as { url: () => string }).url === 'function') {
+    return (result as { url: () => string }).url();
+  }
   return String(result);
 }
 
@@ -96,8 +98,8 @@ async function runFluxKontext(
     'Flux Kontext',
   );
       break;
-    } catch (error: any) {
-      const message = error?.message || '';
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : '';
       if (attempt === 0 && message.includes('429')) {
         const retryAfter = message.match(/retry_after\\":\\s*(\\d+)/i)?.[1];
         const waitMs = retryAfter ? Number(retryAfter) * 1000 : 8000;
@@ -131,7 +133,7 @@ export async function fluxFillInpaint(
   console.log('[Replicate] Running Flux Fill...');
   console.log('[Replicate] Model:', model);
 
-  let output: any;
+  let output: unknown;
   const maxAttempts = 2;
   for (let attempt = 1; attempt <= maxAttempts; attempt++) {
     try {
@@ -153,8 +155,8 @@ export async function fluxFillInpaint(
         'Flux Fill',
       );
       break;
-    } catch (error: any) {
-      const message = error?.message || '';
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : '';
       if (attempt < maxAttempts && message.toLowerCase().includes('timeout')) {
         console.warn('[Replicate] Flux Fill timeout, retrying...');
         continue;
@@ -252,8 +254,8 @@ export async function skyReplacement(
       if (maskResult.success) {
         console.warn('[Replicate] Sky mask too small (' + maskResult.area.toFixed(1) + '%), falling back to Kontext');
       }
-    } catch (maskError: any) {
-      console.warn('[Replicate] Sky mask failed, falling back to Kontext:', maskError?.message);
+    } catch (maskError: unknown) {
+      console.warn('[Replicate] Sky mask failed, falling back to Kontext:', maskError instanceof Error ? maskError.message : 'Unknown error');
     }
   } else {
     console.log('[Replicate] Skipping SAM mask (batch prepare mode)');
@@ -395,7 +397,7 @@ export async function lawnRepair(
     }
   }
 
-  const { useMask = true, requireMask = false, skipMask = false, ...fluxOverrides } = options || {};
+  const { useMask = true, skipMask = false, ...fluxOverrides } = options || {};
   const fluxOptions = withFluxDefaults({ guidance: 2.5, steps: 25 }, fluxOverrides);
   const forceDeterministicMask = String(process.env.AI_LAWN_MASK_FORCE_DETERMINISTIC || '').toLowerCase() === 'true';
 
@@ -423,8 +425,8 @@ export async function lawnRepair(
           `[Replicate] Lawn mask rejected (area ${maskResult.area.toFixed(1)}%, confidence ${maskResult.confidence.toFixed(2)})`
         );
       }
-    } catch (error: any) {
-      console.warn('[Replicate] Lawn mask failed:', error?.message);
+    } catch (error: unknown) {
+      console.warn('[Replicate] Lawn mask failed:', error instanceof Error ? error.message : 'Unknown error');
     }
   } else if (skipMask) {
     console.log('[Replicate] Skipping lawn mask (batch prepare mode)');

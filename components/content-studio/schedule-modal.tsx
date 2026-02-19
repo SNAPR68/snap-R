@@ -27,7 +27,7 @@ export function ScheduleModal({ isOpen, onClose, onSchedule, platform }: Schedul
       const scheduledAt = new Date(`${date}T${time}`).toISOString()
       await onSchedule(scheduledAt)
       onClose()
-    } catch (e) {
+    } catch {
       setError('Failed to schedule post')
     } finally {
       setScheduling(false)
@@ -37,7 +37,7 @@ export function ScheduleModal({ isOpen, onClose, onSchedule, platform }: Schedul
   const minDate = new Date().toISOString().split('T')[0]
 
   return (
-    <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
+    <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50" role="dialog" aria-modal="true" aria-label="Schedule post">
       <div className="bg-gray-900 rounded-2xl p-6 w-full max-w-md border border-white/10">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-lg font-bold text-white flex items-center gap-2">

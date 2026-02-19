@@ -22,9 +22,9 @@ interface StylePromptModalProps {
   onApplyToAll: (style: { name: string; brightness: number; contrast: number; saturation: number; warmth: number }) => void;
 }
 
-export function StylePromptModal({ adjustments, onJustThisPhoto, onApplyToAll }: StylePromptModalProps) {
+export function StylePromptModal({ onJustThisPhoto, onApplyToAll }: StylePromptModalProps) {
   return (
-    <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
+    <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50" role="dialog" aria-modal="true" aria-label="Choose photo style">
       <div className="bg-[#1A1A1A] rounded-2xl p-6 w-full max-w-lg border border-white/10 shadow-2xl">
         {/* Success Icon */}
         <div className="flex justify-center mb-3">

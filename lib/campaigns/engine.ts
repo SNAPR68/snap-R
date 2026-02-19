@@ -29,7 +29,7 @@ interface QueueItem {
   content_type: 'social_post' | 'email' | 'video' | 'property_site_update';
   platform?: string;
   scheduled_for: Date;
-  content_data: Record<string, any>;
+  content_data: Record<string, unknown>;
 }
 
 // Main function: Trigger a campaign when listing status changes
@@ -66,7 +66,6 @@ export async function triggerCampaign({
 
       // Use default template with default settings
       return await createCampaignWithTemplate({
-        supabase,
         userId,
         listingId,
         newStatus,
@@ -84,10 +83,9 @@ export async function triggerCampaign({
     }
 
     // Use user's configured trigger
-    const template = trigger.campaign_templates || await getDefaultTemplate(supabase, newStatus);
+    const template = trigger.campaign_templates || await getDefaultTemplate(newStatus);
     
     return await createCampaignWithTemplate({
-      supabase,
       userId,
       listingId,
       newStatus,
@@ -108,7 +106,8 @@ export async function triggerCampaign({
   }
 }
 
-async function getDefaultTemplate(supabase: any, status: string) {
+async function getDefaultTemplate(status: string) {
+  const supabase = createClient(supabaseUrl, supabaseServiceKey);
   const { data } = await supabase
     .from('campaign_templates')
     .select('*')
@@ -119,7 +118,6 @@ async function getDefaultTemplate(supabase: any, status: string) {
 }
 
 async function createCampaignWithTemplate({
-  supabase,
   userId,
   listingId,
   newStatus,
@@ -127,12 +125,11 @@ async function createCampaignWithTemplate({
   template,
   settings,
 }: {
-  supabase: any;
   userId: string;
   listingId: string;
   newStatus: string;
   previousStatus?: string;
-  template: any;
+  template: Record<string, unknown> | null;
   settings: {
     auto_approve: boolean;
     generate_social: boolean;
@@ -142,6 +139,8 @@ async function createCampaignWithTemplate({
     platforms: string[];
   };
 }) {
+  const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
   // 1. Get listing data
   const { data: listing, error: listingError } = await supabase
     .from('listings')

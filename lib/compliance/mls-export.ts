@@ -177,8 +177,8 @@ export async function generateMlsExportPackage(
       processedCount++;
       console.log('[MLS Export] Photo', i + 1, 'complete');
       
-    } catch (err: any) {
-      const errMsg = 'Error processing ' + photo.filename + ': ' + (err.message || String(err));
+    } catch (err: unknown) {
+      const errMsg = 'Error processing ' + photo.filename + ': ' + (err instanceof Error ? err.message : String(err));
       console.error('[MLS Export]', errMsg);
       errors.push(errMsg);
     }

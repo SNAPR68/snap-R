@@ -4,8 +4,8 @@ interface LogErrorOptions {
   stack?: string;
   code?: string;
   endpoint?: string;
-  requestData?: any;
-  responseData?: any;
+  requestData?: Record<string, unknown>;
+  responseData?: Record<string, unknown>;
   severity?: 'warning' | 'error' | 'critical';
   userId?: string;
 }

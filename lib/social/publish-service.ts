@@ -1,7 +1,7 @@
 // Social Media Publishing Service
 // Actually publish content to connected platforms
 
-import { SOCIAL_PLATFORMS, SocialPlatform } from './oauth-config';
+import { type SocialPlatform } from './oauth-config';
 
 interface PublishRequest {
   platform: SocialPlatform;
@@ -120,11 +120,12 @@ export async function publishToFacebook(
       postId: data.id || data.post_id,
       postUrl: `https://facebook.com/${data.id || data.post_id}`,
     };
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Unknown Facebook error';
     console.error('Facebook publish error:', error);
     return {
       success: false,
-      error: error.message,
+      error: message,
     };
   }
 }
@@ -266,122 +267,146 @@ export async function publishToInstagram(
     }
 
     return { success: false, error: 'Invalid content for Instagram' };
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Unknown Instagram error';
     console.error('Instagram publish error:', error);
     return {
       success: false,
-      error: error.message,
+      error: message,
     };
   }
 }
 
-// Publish to LinkedIn
+// Upload an image to LinkedIn and return the image URN
+async function uploadImageToLinkedIn(
+  accessToken: string,
+  personUrn: string,
+  imageUrl: string
+): Promise<string | null> {
+  try {
+    // Step 1: Initialize image upload
+    const initResponse = await fetch(
+      'https://api.linkedin.com/rest/images?action=initializeUpload',
+      {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${accessToken}`,
+          'Content-Type': 'application/json',
+          'LinkedIn-Version': '202401',
+          'X-Restli-Protocol-Version': '2.0.0',
+        },
+        body: JSON.stringify({
+          initializeUploadRequest: {
+            owner: personUrn,
+          },
+        }),
+        signal: AbortSignal.timeout(15000),
+      }
+    );
+
+    if (!initResponse.ok) {
+      console.warn('[LinkedIn] Image upload init failed:', initResponse.status);
+      return null;
+    }
+
+    const initData = await initResponse.json();
+    const uploadUrl = initData.value.uploadUrl;
+    const imageUrn = initData.value.image;
+
+    // Step 2: Download image from source
+    const imageResponse = await fetch(imageUrl, {
+      signal: AbortSignal.timeout(15000),
+    });
+    const imageBuffer = await imageResponse.arrayBuffer();
+
+    // Step 3: Upload binary to LinkedIn
+    const uploadResponse = await fetch(uploadUrl, {
+      method: 'PUT',
+      headers: {
+        'Authorization': `Bearer ${accessToken}`,
+      },
+      body: imageBuffer,
+      signal: AbortSignal.timeout(30000),
+    });
+
+    if (!uploadResponse.ok) {
+      console.warn('[LinkedIn] Image binary upload failed:', uploadResponse.status);
+      return null;
+    }
+
+    return imageUrn;
+  } catch (err) {
+    console.warn('[LinkedIn] Image upload error:', err);
+    return null;
+  }
+}
+
+// Publish to LinkedIn (using modern rest/posts API)
 export async function publishToLinkedIn(
   accessToken: string,
   personUrn: string, // Format: "urn:li:person:xxx"
   content: { text: string; imageUrls?: string[]; link?: string }
 ): Promise<PublishResult> {
   try {
-    const shareContent: any = {
+    // Build the post body using the modern LinkedIn Posts API
+    const postBody: Record<string, unknown> = {
       author: personUrn,
+      commentary: content.text,
+      visibility: 'PUBLIC',
+      distribution: {
+        feedDistribution: 'MAIN_FEED',
+        targetEntities: [],
+        thirdPartyDistributionChannels: [],
+      },
       lifecycleState: 'PUBLISHED',
-      specificContent: {
-        'com.linkedin.ugc.ShareContent': {
-          shareCommentary: {
-            text: content.text,
-          },
-          shareMediaCategory: 'NONE',
-        },
-      },
-      visibility: {
-        'com.linkedin.ugc.MemberNetworkVisibility': 'PUBLIC',
-      },
     };
 
     // If there are images, upload them first
     if (content.imageUrls && content.imageUrls.length > 0) {
-      const mediaAssets: string[] = [];
-      
+      const uploadedImages: string[] = [];
+
       for (const imageUrl of content.imageUrls) {
-        // Register upload
-        const registerResponse = await fetch(
-          'https://api.linkedin.com/v2/assets?action=registerUpload',
-          {
-            method: 'POST',
-            headers: {
-              'Authorization': `Bearer ${accessToken}`,
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              registerUploadRequest: {
-                recipes: ['urn:li:digitalmediaRecipe:feedshare-image'],
-                owner: personUrn,
-                serviceRelationships: [
-                  {
-                    relationshipType: 'OWNER',
-                    identifier: 'urn:li:userGeneratedContent',
-                  },
-                ],
-              },
-            }),
-            signal: AbortSignal.timeout(15000),
-          }
-        );
-
-        if (registerResponse.ok) {
-          const registerData = await registerResponse.json();
-          const uploadUrl = registerData.value.uploadMechanism[
-            'com.linkedin.digitalmedia.uploading.MediaUploadHttpRequest'
-          ].uploadUrl;
-          const asset = registerData.value.asset;
-
-          // Download image and upload to LinkedIn
-          const imageResponse = await fetch(imageUrl, {
-            signal: AbortSignal.timeout(15000),
-          });
-          const imageBuffer = await imageResponse.arrayBuffer();
-
-          await fetch(uploadUrl, {
-            method: 'PUT',
-            headers: {
-              'Authorization': `Bearer ${accessToken}`,
-            },
-            body: imageBuffer,
-            signal: AbortSignal.timeout(15000),
-          });
-
-          mediaAssets.push(asset);
+        const imageUrn = await uploadImageToLinkedIn(accessToken, personUrn, imageUrl);
+        if (imageUrn) {
+          uploadedImages.push(imageUrn);
         }
       }
 
-      if (mediaAssets.length > 0) {
-        shareContent.specificContent['com.linkedin.ugc.ShareContent'].shareMediaCategory = 'IMAGE';
-        shareContent.specificContent['com.linkedin.ugc.ShareContent'].media = mediaAssets.map(asset => ({
-          status: 'READY',
-          media: asset,
-        }));
+      if (uploadedImages.length === 1) {
+        // Single image post
+        postBody.content = {
+          media: {
+            id: uploadedImages[0],
+          },
+        };
+      } else if (uploadedImages.length > 1) {
+        // Multi-image post
+        postBody.content = {
+          multiImage: {
+            images: uploadedImages.map(id => ({ id })),
+          },
+        };
       }
     }
 
-    // If there's a link
+    // If there's a link (and no images)
     if (content.link && !content.imageUrls?.length) {
-      shareContent.specificContent['com.linkedin.ugc.ShareContent'].shareMediaCategory = 'ARTICLE';
-      shareContent.specificContent['com.linkedin.ugc.ShareContent'].media = [
-        {
-          status: 'READY',
-          originalUrl: content.link,
+      postBody.content = {
+        article: {
+          source: content.link,
         },
-      ];
+      };
     }
 
-    const response = await fetch('https://api.linkedin.com/v2/ugcPosts', {
+    const response = await fetch('https://api.linkedin.com/rest/posts', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${accessToken}`,
         'Content-Type': 'application/json',
+        'LinkedIn-Version': '202401',
         'X-Restli-Protocol-Version': '2.0.0',
       },
-      body: JSON.stringify(shareContent),
+      body: JSON.stringify(postBody),
       signal: AbortSignal.timeout(15000),
     });
 
@@ -389,17 +414,22 @@ export async function publishToLinkedIn(
       throw new Error(await response.text());
     }
 
-    const data = await response.json();
-    
+    // The Posts API returns the post URN in the x-restli-id header
+    const postUrn = response.headers.get('x-restli-id') || '';
+
     return {
       success: true,
-      postId: data.id,
+      postId: postUrn,
+      postUrl: postUrn
+        ? `https://www.linkedin.com/feed/update/${postUrn}`
+        : undefined,
     };
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Unknown LinkedIn error';
     console.error('LinkedIn publish error:', error);
     return {
       success: false,
-      error: error.message,
+      error: message,
     };
   }
 }

@@ -60,9 +60,10 @@ export async function GET(
     }
 
     return NextResponse.redirect(`${redirectUrl}?error=Unsupported platform`);
-  } catch (err: any) {
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : 'Connection failed';
     console.error('OAuth callback error:', err);
-    return NextResponse.redirect(`${redirectUrl}?error=${encodeURIComponent(err.message || 'Connection failed')}`);
+    return NextResponse.redirect(`${redirectUrl}?error=${encodeURIComponent(message)}`);
   }
 }
 
@@ -151,14 +152,14 @@ async function handleFacebookOAuth(
   const expiresAt = new Date(Date.now() + expiresInSeconds * 1000).toISOString();
 
   // Upsert connection
-  const connectionData: any = {
+  const connectionData: Record<string, unknown> = {
     user_id: userId,
     platform,
     platform_user_id: platform === 'instagram' ? instagramAccount?.id : userData.id,
     platform_username: platform === 'instagram' ? instagramAccount?.username : userData.name,
     access_token: platform === 'instagram' ? instagramAccount?.page_access_token : longLivedToken,
     token_expires_at: expiresAt,
-    pages: pages.map((p: any) => ({ id: p.id, name: p.name, access_token: p.access_token })),
+    pages: pages.map((p: { id: string; name: string; access_token: string }) => ({ id: p.id, name: p.name, access_token: p.access_token })),
     instagram_account: instagramAccount ? {
       id: instagramAccount.id,
       username: instagramAccount.username,
@@ -233,8 +234,8 @@ async function handleLinkedInOAuth(
 
   const accessToken = tokenData.access_token;
 
-  // Get user profile
-  const profileResponse = await fetch('https://api.linkedin.com/v2/me', {
+  // Get user profile using modern OpenID Connect userinfo endpoint
+  const profileResponse = await fetch('https://api.linkedin.com/v2/userinfo', {
     headers: { Authorization: `Bearer ${accessToken}` },
   });
   const profileData = await profileResponse.json();
@@ -243,16 +244,16 @@ async function handleLinkedInOAuth(
   const linkedInExpiresIn = tokenData.expires_in || 5184000; // default 60 days
   const linkedInExpiresAt = new Date(Date.now() + linkedInExpiresIn * 1000).toISOString();
 
-  // Upsert connection
-  const connectionData: any = {
+  // Upsert connection — userinfo returns { sub, name, given_name, family_name, email, picture }
+  const connectionData: Record<string, unknown> = {
     user_id: userId,
     platform: 'linkedin',
-    platform_user_id: profileData.id,
-    platform_username: `${profileData.localizedFirstName} ${profileData.localizedLastName}`,
+    platform_user_id: profileData.sub,
+    platform_username: profileData.name || `${profileData.given_name || ''} ${profileData.family_name || ''}`.trim(),
     access_token: accessToken,
     refresh_token: tokenData.refresh_token || null,
     token_expires_at: linkedInExpiresAt,
-    linkedin_urn: `urn:li:person:${profileData.id}`,
+    linkedin_urn: `urn:li:person:${profileData.sub}`,
     is_active: true,
     connected_at: new Date().toISOString(),
   };
