@@ -151,7 +151,7 @@ export async function analyzePhotosForDescription(photoUrls: string[], client?: 
 
     return {
       features: result.detectedFeatures || {},
-      analysis: (result.roomAnalysis || []).map((r: any, i: number) => ({
+      analysis: (result.roomAnalysis || []).map((r: { roomType?: string; keyFeatures?: string[]; atmosphere?: string }, i: number) => ({
         photoIndex: i,
         roomType: r.roomType || 'unknown',
         keyFeatures: r.keyFeatures || [],
@@ -161,8 +161,8 @@ export async function analyzePhotosForDescription(photoUrls: string[], client?: 
       condition: result.condition || 'well-maintained',
       atmosphere: result.atmosphere || 'inviting',
     };
-  } catch (error: any) {
-    console.error('[Description Generator] Photo analysis error:', error.message);
+  } catch (error: unknown) {
+    console.error('[Description Generator] Photo analysis error:', error instanceof Error ? error.message : 'Unknown error');
     return {
       features: {},
       analysis: [],
@@ -286,9 +286,10 @@ RESPOND IN THIS EXACT JSON FORMAT:
       characterCount: description.length,
       wordCount: description.split(/\s+/).filter(Boolean).length,
     };
-  } catch (error: any) {
-    console.error('[Description Generator] Generation error:', error.message);
-    throw new Error(`Failed to generate description: ${error.message}`);
+  } catch (error: unknown) {
+    const msg = error instanceof Error ? error.message : 'Unknown error';
+    console.error('[Description Generator] Generation error:', msg);
+    throw new Error(`Failed to generate description: ${msg}`);
   }
 }
 

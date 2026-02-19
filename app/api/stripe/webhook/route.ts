@@ -1,7 +1,8 @@
 export const dynamic = 'force-dynamic';
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
 import Stripe from 'stripe';
+import { adminSupabase } from '@/lib/supabase/admin';
+import { normalizeTier, getListingLimits } from '@/lib/content/limits';
 
 function getStripe() {
   return new Stripe(process.env.STRIPE_SECRET_KEY!, {
@@ -9,34 +10,9 @@ function getStripe() {
   });
 }
 
-function getSupabase() {
-  return createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-  );
-}
-
-// Listings limits per plan
-const PLAN_LIMITS: Record<string, { listings: number; photos: number }> = {
-  // Free
-  'free': { listings: 3, photos: 30 },
-  // Photographer plans
-  'photographer-ultimate': { listings: 0, photos: 75 }, // 0 = use purchased listings
-  'photographer-complete': { listings: 0, photos: 75 },
-  // Agent plans
-  'agent-starter': { listings: 0, photos: 60 },
-  'agent-complete': { listings: 0, photos: 75 },
-  // Legacy plans (for existing users)
-  'starter': { listings: 10, photos: 50 },
-  'professional': { listings: 30, photos: 75 },
-  'agency': { listings: 50, photos: 75 },
-  'pro': { listings: 30, photos: 75 },
-  'team': { listings: 50, photos: 75 },
-};
-
 export async function POST(request: NextRequest) {
   const stripe = getStripe();
-  const supabase = getSupabase();
+  const supabase = adminSupabase();
   const body = await request.text();
   const signature = request.headers.get('stripe-signature')!;
 
@@ -53,6 +29,25 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Invalid signature' }, { status: 400 });
   }
 
+  // Idempotency check
+  const { data: existing } = await supabase
+    .from('processed_webhook_events')
+    .select('event_id')
+    .eq('event_id', event.id)
+    .maybeSingle();
+
+  if (existing) {
+    return NextResponse.json({ received: true, duplicate: true });
+  }
+
+  try {
+    await supabase
+      .from('processed_webhook_events')
+      .insert({ event_id: event.id, event_type: event.type });
+  } catch {
+    // Ignore constraint violation from race condition
+  }
+
   try {
     switch (event.type) {
       case 'checkout.session.completed': {
@@ -60,7 +55,6 @@ export async function POST(request: NextRequest) {
         const metadata = session.metadata || {};
         const { userId, role, plan, planKey, listings, type, photoId, isUrgent, instructions } = metadata;
 
-        // Handle human edit orders
         if (type === 'human_edit') {
           await supabase.from('human_edit_orders').insert({
             user_id: userId,
@@ -73,7 +67,6 @@ export async function POST(request: NextRequest) {
           break;
         }
 
-        // Handle add-on purchases
         if (metadata.addonType) {
           await supabase.from('addon_purchases').insert({
             user_id: userId,
@@ -86,15 +79,15 @@ export async function POST(request: NextRequest) {
           break;
         }
 
-        // Handle subscription
+        // Handle subscription — use centralized limits from lib/content/limits.ts
         if (plan && userId) {
-          const effectivePlanKey = planKey || plan;
-          const limits = PLAN_LIMITS[effectivePlanKey] || PLAN_LIMITS['free'];
+          const normalizedPlan = normalizeTier(planKey || plan);
+          const limits = getListingLimits(normalizedPlan);
           const listingsLimit = limits.listings > 0 ? limits.listings : parseInt(listings || '10');
-          
-          await supabase.from('profiles').update({
-            plan: effectivePlanKey,
-            subscription_tier: effectivePlanKey,
+
+          const { error: updateError } = await supabase.from('profiles').update({
+            plan: normalizedPlan,
+            subscription_tier: normalizedPlan,
             role: role || 'photographer',
             listings_limit: listingsLimit,
             photos_per_listing: limits.photos,
@@ -103,6 +96,10 @@ export async function POST(request: NextRequest) {
             billing_cycle: metadata.billing || 'monthly',
             updated_at: new Date().toISOString(),
           }).eq('id', userId);
+
+          if (updateError) {
+            console.error(`[Webhook] Profile update failed for ${userId}:`, updateError.message);
+          }
         }
         break;
       }
@@ -110,8 +107,7 @@ export async function POST(request: NextRequest) {
       case 'invoice.payment_succeeded': {
         const invoice = event.data.object as Stripe.Invoice;
         const customerId = invoice.customer as string;
-        
-        // Reset monthly usage on successful payment
+
         const { data: profile } = await supabase
           .from('profiles')
           .select('id, plan')
@@ -119,51 +115,80 @@ export async function POST(request: NextRequest) {
           .single();
 
         if (profile) {
-          await supabase.from('profiles').update({
+          const { error: updateError } = await supabase.from('profiles').update({
             listings_used_this_month: 0,
             subscription_status: 'active',
             last_payment_date: new Date().toISOString(),
           }).eq('id', profile.id);
+
+          if (updateError) {
+            console.error(`[Webhook] Usage reset failed for ${profile.id}:`, updateError.message);
+          }
         }
         break;
       }
 
       case 'invoice.payment_failed': {
         const invoice = event.data.object as Stripe.Invoice;
-        const customerId = invoice.customer as string;
-
-        await supabase.from('profiles').update({
+        const { error: updateError } = await supabase.from('profiles').update({
           subscription_status: 'past_due',
-        }).eq('stripe_customer_id', customerId);
+        }).eq('stripe_customer_id', invoice.customer as string);
+
+        if (updateError) {
+          console.error(`[Webhook] past_due update failed:`, updateError.message);
+        }
         break;
       }
 
       case 'customer.subscription.updated': {
         const subscription = event.data.object as Stripe.Subscription;
         const customerId = subscription.customer as string;
-        
-        const status = subscription.status === 'active' ? 'active' 
+
+        const status = subscription.status === 'active' ? 'active'
           : subscription.status === 'past_due' ? 'past_due'
           : subscription.status === 'canceled' ? 'canceled'
           : 'inactive';
 
-        await supabase.from('profiles').update({
+        const updateData: Record<string, any> = {
           subscription_status: status,
-        }).eq('stripe_customer_id', customerId);
+          updated_at: new Date().toISOString(),
+        };
+
+        const subMeta = subscription.metadata || {};
+        if (subMeta.plan || subMeta.planKey) {
+          const normalizedPlan = normalizeTier(subMeta.planKey || subMeta.plan);
+          updateData.plan = normalizedPlan;
+          updateData.subscription_tier = normalizedPlan;
+          const limits = getListingLimits(normalizedPlan);
+          updateData.listings_limit = limits.listings;
+          updateData.photos_per_listing = limits.photos;
+        }
+
+        const { error: updateError } = await supabase.from('profiles').update(updateData)
+          .eq('stripe_customer_id', customerId);
+
+        if (updateError) {
+          console.error(`[Webhook] Subscription update failed for ${customerId}:`, updateError.message);
+        }
         break;
       }
 
       case 'customer.subscription.deleted': {
         const subscription = event.data.object as Stripe.Subscription;
-        
-        // Downgrade to free plan
-        await supabase.from('profiles').update({
+
+        const { error: updateError } = await supabase.from('profiles').update({
           plan: 'free',
+          subscription_tier: 'free',
           role: 'photographer',
           listings_limit: 3,
           photos_per_listing: 30,
           subscription_status: 'canceled',
+          updated_at: new Date().toISOString(),
         }).eq('stripe_customer_id', subscription.customer as string);
+
+        if (updateError) {
+          console.error(`[Webhook] Downgrade failed:`, updateError.message);
+        }
         break;
       }
     }

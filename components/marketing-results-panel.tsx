@@ -5,16 +5,50 @@ import Link from 'next/link';
 import {
   FileText, MessageSquare, FileArchive, Globe, Calendar,
   CheckCircle, AlertCircle, Copy, Check, ExternalLink,
-  Download, X, ChevronDown, ChevronUp, Clock, Loader2,
+  X, ChevronDown, ChevronUp, Clock, Loader2,
   Facebook, Instagram, Linkedin, Sparkles,
 } from 'lucide-react';
-import type { MarketingJobData } from './marketing-banner';
+import type { MarketingJobData, MarketingStepResult } from './marketing-banner';
+
+interface ScheduledPost {
+  platform?: string;
+  scheduledFor?: string;
+}
 
 type MarketingResultsPanelProps = {
   marketingJob: MarketingJobData;
   listingId: string;
   onClose: () => void;
 };
+
+/** Safely extract a string field from a record-type result */
+function getRecordField(result: Record<string, unknown>, ...keys: string[]): string {
+  for (const key of keys) {
+    const val = result[key];
+    if (typeof val === 'string') return val;
+  }
+  return '';
+}
+
+/** Get display text from a MarketingStepResult */
+function getDisplayText(result: MarketingStepResult, ...keys: string[]): string {
+  if (typeof result === 'string') return result;
+  if (typeof result === 'object' && result !== null) {
+    const found = getRecordField(result, ...keys);
+    if (found) return found;
+    return JSON.stringify(result);
+  }
+  return '';
+}
+
+/** Get copyable text from a MarketingStepResult */
+function getCopyText(result: MarketingStepResult, ...keys: string[]): string {
+  if (typeof result === 'string') return result;
+  if (typeof result === 'object' && result !== null) {
+    return getRecordField(result, ...keys);
+  }
+  return '';
+}
 
 // Platform icon helper
 function PlatformIcon({ platform, className }: { platform: string; className?: string }) {
@@ -61,7 +95,7 @@ function CollapsibleSection({
   children,
 }: {
   title: string;
-  icon: any;
+  icon: React.ComponentType<{ className?: string }>;
   status: string;
   defaultOpen?: boolean;
   children: React.ReactNode;
@@ -116,16 +150,10 @@ export function MarketingResultsPanel({ marketingJob, listingId, onClose }: Mark
           {marketingJob.description.status === 'completed' && marketingJob.description.result ? (
             <div>
               <p className="text-xs text-white/70 leading-relaxed line-clamp-6 mb-2">
-                {typeof marketingJob.description.result === 'string'
-                  ? marketingJob.description.result
-                  : marketingJob.description.result?.description || JSON.stringify(marketingJob.description.result)}
+                {getDisplayText(marketingJob.description.result, 'description')}
               </p>
               <CopyButton
-                text={
-                  typeof marketingJob.description.result === 'string'
-                    ? marketingJob.description.result
-                    : marketingJob.description.result?.description || ''
-                }
+                text={getCopyText(marketingJob.description.result, 'description')}
               />
             </div>
           ) : marketingJob.description.status === 'processing' ? (
@@ -147,12 +175,14 @@ export function MarketingResultsPanel({ marketingJob, listingId, onClose }: Mark
             <div className="space-y-2.5">
               {(() => {
                 const captions = marketingJob.captions.result;
-                const platforms = typeof captions === 'object' ? Object.entries(captions) : [];
+                const platforms = typeof captions === 'object' && captions !== null ? Object.entries(captions) : [];
                 if (platforms.length === 0) return <p className="text-xs text-white/30">No captions generated</p>;
 
-                return platforms.map(([platform, data]: [string, any]) => {
-                  const captionText = typeof data === 'string' ? data : data?.caption || data?.text || '';
-                  const hashtags = typeof data === 'object' ? data?.hashtags : null;
+                return platforms.map(([platform, data]) => {
+                  const dataObj = typeof data === 'object' && data !== null ? data as Record<string, unknown> : null;
+                  const captionText = typeof data === 'string' ? data : (dataObj ? getRecordField(dataObj, 'caption', 'text') : '');
+                  const rawHashtags = dataObj?.hashtags;
+                  const hashtags = typeof rawHashtags === 'string' ? rawHashtags : (Array.isArray(rawHashtags) ? rawHashtags.join(' ') : null);
 
                   return (
                     <div key={platform} className="bg-white/5 rounded-lg p-2">
@@ -165,11 +195,11 @@ export function MarketingResultsPanel({ marketingJob, listingId, onClose }: Mark
                       </p>
                       {hashtags && (
                         <p className="text-[10px] text-blue-400/70 mb-1.5">
-                          {Array.isArray(hashtags) ? hashtags.join(' ') : hashtags}
+                          {hashtags}
                         </p>
                       )}
                       <CopyButton
-                        text={captionText + (hashtags ? '\n' + (Array.isArray(hashtags) ? hashtags.join(' ') : hashtags) : '')}
+                        text={captionText + (hashtags ? '\n' + hashtags : '')}
                       />
                     </div>
                   );
@@ -195,7 +225,7 @@ export function MarketingResultsPanel({ marketingJob, listingId, onClose }: Mark
             <div className="space-y-2">
               {(() => {
                 const mls = marketingJob.mls.result;
-                const fields = typeof mls === 'object' ? Object.entries(mls) : [];
+                const fields = typeof mls === 'object' && mls !== null ? Object.entries(mls) : [];
                 if (fields.length === 0) return <p className="text-xs text-white/30">No MLS data</p>;
 
                 // Show key fields as a mini table
@@ -238,7 +268,7 @@ export function MarketingResultsPanel({ marketingJob, listingId, onClose }: Mark
             <div className="space-y-2">
               {(() => {
                 const site = marketingJob.propertySite.result;
-                const slug = typeof site === 'string' ? site : site?.slug || site?.url;
+                const slug = typeof site === 'string' ? site : (typeof site === 'object' && site !== null ? getRecordField(site, 'slug', 'url') : '');
                 if (!slug) return <p className="text-xs text-white/30">No site data</p>;
 
                 const siteUrl = slug.startsWith('http') ? slug : `/p/${slug}`;
@@ -279,8 +309,10 @@ export function MarketingResultsPanel({ marketingJob, listingId, onClose }: Mark
             <div className="space-y-2">
               {(() => {
                 const posts = marketingJob.scheduledPosts.result;
-                const postList = Array.isArray(posts) ? posts : posts?.posts || [];
-                const count = typeof posts === 'object' && !Array.isArray(posts) ? posts?.count : postList.length;
+                const postsObj = typeof posts === 'object' && posts !== null && !Array.isArray(posts) ? posts : null;
+                const rawPostList = Array.isArray(posts) ? posts : (postsObj ? postsObj.posts : null);
+                const postList: ScheduledPost[] = Array.isArray(rawPostList) ? rawPostList : [];
+                const count = (postsObj?.count as number | undefined) ?? postList.length;
 
                 return (
                   <>
@@ -288,7 +320,7 @@ export function MarketingResultsPanel({ marketingJob, listingId, onClose }: Mark
                       <Calendar className="w-3 h-3" />
                       <span>{count || postList.length} post(s) scheduled</span>
                     </div>
-                    {postList.slice(0, 3).map((post: any, i: number) => (
+                    {postList.slice(0, 3).map((post: ScheduledPost, i: number) => (
                       <div key={i} className="flex items-center gap-2 px-2 py-1.5 bg-white/5 rounded text-[11px]">
                         <PlatformIcon platform={post.platform || 'unknown'} className="w-3 h-3 text-white/40" />
                         <span className="text-white/60 flex-1 truncate">{post.platform || 'Platform'}</span>

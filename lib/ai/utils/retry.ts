@@ -3,7 +3,7 @@ export async function withRetry<T>(
   options: {
     maxRetries?: number;
     baseDelay?: number;
-    onRetry?: (attempt: number, error: any) => void;
+    onRetry?: (attempt: number, error: unknown) => void;
   } = {}
 ): Promise<T> {
   const { maxRetries = 3, baseDelay = 1000, onRetry } = options;

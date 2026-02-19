@@ -3,7 +3,7 @@ export async function api(path: string, options: RequestInit = {}) {
   const baseUrl = process.env.NEXT_PUBLIC_API_URL || '/api';
   const url = `${baseUrl}${path}`;
 
-  const headers: any = {
+  const headers: Record<string, string> = {
     'Content-Type': 'application/json',
   };
 

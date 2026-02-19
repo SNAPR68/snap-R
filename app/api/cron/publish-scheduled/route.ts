@@ -16,13 +16,14 @@ import {
   publishToInstagram,
   publishToLinkedIn,
 } from '@/lib/social/publish-service';
+import { refreshAccessToken, type SocialPlatform } from '@/lib/social/oauth-config';
 
 const CRON_SECRET = process.env.CRON_SECRET;
 
 export async function GET(request: NextRequest) {
   // Auth check — same pattern as daily-digest
   const authHeader = request.headers.get('authorization');
-  if (CRON_SECRET && authHeader !== `Bearer ${CRON_SECRET}`) {
+  if (!CRON_SECRET || authHeader !== `Bearer ${CRON_SECRET}`) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
@@ -57,7 +58,7 @@ export async function GET(request: NextRequest) {
         // Load the social connection for this user + platform
         const { data: connection, error: connError } = await supabase
           .from('social_connections')
-          .select('id, platform, access_token, default_page_id, instagram_account, linkedin_urn, pages')
+          .select('id, platform, access_token, refresh_token, expires_at, default_page_id, instagram_account, linkedin_urn, pages')
           .eq('user_id', post.user_id)
           .eq('platform', post.platform)
           .eq('is_active', true)
@@ -68,6 +69,45 @@ export async function GET(request: NextRequest) {
           await markPostFailed(supabase, post.id, 'Platform disconnected — no active social connection');
           results.failed++;
           continue;
+        }
+
+        // Token refresh: check if token expires within 24 hours
+        if (connection.expires_at) {
+          const expiresAt = new Date(connection.expires_at).getTime();
+          const buffer24h = Date.now() + 24 * 60 * 60 * 1000;
+          if (expiresAt < buffer24h && connection.refresh_token) {
+            try {
+              console.log(`[PublishCron] Token expiring soon for ${post.platform}, refreshing...`);
+              const refreshed = await refreshAccessToken(
+                post.platform as SocialPlatform,
+                connection.refresh_token
+              );
+              // Update the connection in DB
+              const newExpiresAt = refreshed.expiresIn
+                ? new Date(Date.now() + refreshed.expiresIn * 1000).toISOString()
+                : null;
+              await supabase
+                .from('social_connections')
+                .update({
+                  access_token: refreshed.accessToken,
+                  ...(newExpiresAt ? { expires_at: newExpiresAt } : {}),
+                })
+                .eq('id', connection.id);
+              // Update in-memory connection for this publish cycle
+              connection.access_token = refreshed.accessToken;
+              console.log(`[PublishCron] Token refreshed for ${post.platform}`);
+            } catch (refreshErr: any) {
+              console.error(`[PublishCron] Token refresh failed for ${post.platform}:`, refreshErr.message);
+              await markPostFailed(supabase, post.id, 'Token expired — please reconnect your account');
+              results.failed++;
+              continue;
+            }
+          } else if (expiresAt < Date.now()) {
+            // Token already expired and no refresh token available
+            await markPostFailed(supabase, post.id, 'Token expired — please reconnect your account');
+            results.failed++;
+            continue;
+          }
         }
 
         // Billing gate: check if user's plan allows auto-publishing

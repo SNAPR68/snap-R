@@ -1,7 +1,7 @@
 // Floor Plan Service
 // Handles AI generation via CubiCasa and manual order processing
 
-import { calculateCredits, getEstimatedDelivery } from './config';
+import { getEstimatedDelivery } from './config';
 
 const CUBICASA_API_KEY = process.env.CUBICASA_API_KEY;
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
@@ -33,7 +33,7 @@ interface FloorPlanResult {
   success: boolean;
   imageUrl?: string;
   pdfUrl?: string;
-  rooms?: any[];
+  rooms?: { name: string; type: string; estimatedSqft?: number; floor?: number; features?: string[] }[];
   error?: string;
   processingMethod?: string;
 }
@@ -82,7 +82,7 @@ async function generateWithCubiCasa(photos: string[]): Promise<FloorPlanResult |
 }
 
 // AI-assisted floor plan generation using GPT-4 Vision
-async function analyzePhotosForLayout(photos: string[]): Promise<any> {
+async function analyzePhotosForLayout(photos: string[]): Promise<{ rooms?: { name: string; type: string; estimatedSqft?: number; floor?: number; features?: string[] }[]; totalSqft?: number; floors?: number; bedrooms?: number; bathrooms?: number; layout?: string; notes?: string } | null> {
   if (!OPENAI_API_KEY || photos.length === 0) return null;
 
   try {
@@ -157,7 +157,7 @@ Return as JSON:
 }
 
 // Generate a simple SVG floor plan from room data
-function generateSimpleFloorPlan(rooms: any[], options: any): string {
+function generateSimpleFloorPlan(rooms: { name: string; type: string; estimatedSqft?: number; floor?: number; features?: string[] }[], options: { showDimensions: boolean; showFurniture: boolean; showRoomNames: boolean; showSqft: boolean; includeBranding: boolean; brandLogoUrl?: string }): string {
   const width = 800;
   const height = 600;
   const padding = 40;
@@ -246,7 +246,8 @@ export async function createManualOrder(
   listingId: string,
   planType: string,
   rush: boolean,
-  instructions: string
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  _instructions: string
 ): Promise<{ orderId: string; estimatedDelivery: Date; price: number }> {
   const { calculatePrice } = await import('./config');
   
@@ -266,7 +267,8 @@ export async function createManualOrder(
 // Upload a floor plan (for photographers who have their own)
 export async function uploadFloorPlan(
   file: File,
-  metadata: {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  _metadata: {
     listingId?: string;
     sqft?: number;
     bedrooms?: number;

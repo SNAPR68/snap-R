@@ -2,293 +2,20 @@
 
 import PricingSection from '@/components/pricing-section';
 
-import { useState, useMemo } from 'react';
+import { useState } from 'react';
 import Link from 'next/link';
-import { Sparkles, Zap, Check, ArrowRight, Smartphone, Camera, Shield, Mail, Globe, Share2, Wand2, Send, Bell, Upload } from 'lucide-react';
+import { Sparkles, Zap, Check, Camera, Mail, Bell, Menu, X } from 'lucide-react';
 import { LandingGallery } from '@/components/landing-gallery';
 import { Testimonials } from '@/components/testimonials';
+import { ProductExplainer } from '@/components/product-explainer';
 import { trackEvent, SnapREvents } from '@/lib/analytics';
 
-// Pricing data - Listing-based model (25% below Fotello)
-const PRO_TIERS = [
-  { listings: 10, perListing: 9, perListingAnnual: 7 },
-  { listings: 20, perListing: 8.5, perListingAnnual: 6.75 },
-  { listings: 30, perListing: 8, perListingAnnual: 6.5 },
-  { listings: 50, perListing: 7.5, perListingAnnual: 6 },
-  { listings: 75, perListing: 7, perListingAnnual: 5.5 },
-  { listings: 100, perListing: null, perListingAnnual: null, enterprise: true },
-] as const;
-const AGENCY_PREMIUM = 2; // +$2/listing over Pro
-const FREE_LISTINGS = 3;
-const TEAM_OPTIONS = [
-  { users: 5, monthly: 199, annual: 149 },
-] as const;
-
-// NEW: Pricing slider options
-const LISTING_OPTIONS = [10, 15, 20, 25, 30, 40, 50];
-
-// Volume discount function
-const getVolumeDiscount = (listings: number): number => {
-  if (listings >= 50) return 3.00;
-  if (listings >= 40) return 2.50;
-  if (listings >= 30) return 2.00;
-  if (listings >= 25) return 1.50;
-  if (listings >= 20) return 1.00;
-  if (listings >= 15) return 0.50;
-  return 0;
-};
-
-// UPDATED: Corrected pricing - Property Gallery FREE, Virtual Renovation $15/$25/$50, AI Voiceover $2, CMA FREE, White Label in Platinum
-const ADDONS = [
-  { id: 'property_gallery', name: 'Property Gallery', price: 'FREE', icon: 'eye', tooltip: 'Shareable photo galleries with contact form for every listing - included free' },
-  { id: 'virtual_renovation', name: 'Virtual Renovation', price: '$15 / $25 / $50', icon: 'brush', tooltip: 'Digitally remodel kitchens, bathrooms, flooring & more to show potential' },
-  { id: 'ai_voiceover', name: 'AI Voiceovers', price: '$2 flat', icon: 'mic', tooltip: 'Professional AI-generated narration for property videos - flat rate regardless of length' },
-  { id: 'cma_report', name: 'CMA Reports', price: 'FREE', icon: 'file', tooltip: 'Comparative Market Analysis reports with your photos & branding - included free' },
-  { id: 'human_editing', name: 'Human Editing', price: 'From $5/image', icon: 'user', tooltip: 'Complex edits by professionals: object removal, compositing, retouching' },
-] as const;
-
-const GOLD = '#D4A017';
-
-const CheckIcon = () => (
-  <svg className="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke={GOLD} strokeWidth={2}>
-    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-  </svg>
-);
-
-const AddonIcon = ({ type }: { type: string }) => {
-  if (type === 'grid') return (
-    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke={GOLD} strokeWidth={1.5}>
-      <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z" />
-    </svg>
-  );
-  if (type === 'eye') return (
-    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke={GOLD} strokeWidth={1.5}>
-      <path strokeLinecap="round" strokeLinejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" />
-      <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-    </svg>
-  );
-  if (type === 'brush') return (
-    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke={GOLD} strokeWidth={1.5}>
-      <path strokeLinecap="round" strokeLinejoin="round" d="M9.53 16.122a3 3 0 00-5.78 1.128 2.25 2.25 0 01-2.4 2.245 4.5 4.5 0 008.4-2.245c0-.399-.078-.78-.22-1.128zm0 0a15.998 15.998 0 003.388-1.62m-5.043-.025a15.994 15.994 0 011.622-3.395m3.42 3.42a15.995 15.995 0 004.764-4.648l3.876-5.814a1.151 1.151 0 00-1.597-1.597L14.146 6.32a15.996 15.996 0 00-4.649 4.763m3.42 3.42a6.776 6.776 0 00-3.42-3.42" />
-    </svg>
-  );
-  if (type === 'mic') return (
-    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke={GOLD} strokeWidth={1.5}>
-      <path strokeLinecap="round" strokeLinejoin="round" d="M12 18.75a6 6 0 006-6v-1.5m-6 7.5a6 6 0 01-6-6v-1.5m6 7.5v3.75m-3.75 0h7.5M12 15.75a3 3 0 01-3-3V4.5a3 3 0 116 0v8.25a3 3 0 01-3 3z" />
-    </svg>
-  );
-  if (type === 'file') return (
-    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke={GOLD} strokeWidth={1.5}>
-      <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
-    </svg>
-  );
-  if (type === 'zap') return (
-    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke={GOLD} strokeWidth={1.5}>
-      <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z" />
-    </svg>
-  );
-  if (type === 'tag') return (
-    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke={GOLD} strokeWidth={1.5}>
-      <path strokeLinecap="round" strokeLinejoin="round" d="M9.568 3H5.25A2.25 2.25 0 003 5.25v4.318c0 .597.237 1.17.659 1.591l9.581 9.581c.699.699 1.78.872 2.121.332a11.203 11.203 0 001.719-4.72l-3.75-3.75a3 3 0 00-4.243-4.243l-3.75-3.75z" />
-    </svg>
-  );
-  if (type === 'user') return (
-    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke={GOLD} strokeWidth={1.5}>
-      <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
-    </svg>
-  );
-  return null;
-};
-
-const LoadingSpinner = () => (
-  <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
-    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-  </svg>
-);
-
 export default function HomePage() {
-  const [isAnnual, setIsAnnual] = useState(true);
-  const [sliderIndex, setSliderIndex] = useState(4);
-  
-  // NEW: Pricing section state
-  const [pricingSliderIndex, setPricingSliderIndex] = useState(4); // Default to 30 listings
-  const [userType, setUserType] = useState<'photographer' | 'agent'>('photographer');
-  
-  // Listings slider for pricing
-  const [listings, setListings] = useState(30);
-  const calculatePrice = (listingCount: number, annual: boolean) => {
-    const basePrice = 49;
-    const pricePerExtra = 6;
-    const monthlyPrice = basePrice + (listingCount - 5) * pricePerExtra;
-    return annual ? Math.round(monthlyPrice * 0.75) : monthlyPrice;
-  };
-  const sliderPrice = calculatePrice(listings, isAnnual);
-  const sliderPerListing = (sliderPrice / listings).toFixed(2);
-  const savingsVsBase = Math.round((1 - (sliderPrice / listings) / 9.80) * 100);
-  const [teamSizeIndex, setTeamSizeIndex] = useState(0);
-  const [selectedPlan, setSelectedPlan] = useState<'free' | 'pro' | 'team'>('pro');
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [showSnapEnhanceModal, setShowSnapEnhanceModal] = useState(false);
   const [showIOSNotifyModal, setShowIOSNotifyModal] = useState(false);
   const [notifyEmail, setNotifyEmail] = useState('');
   const [notifySubmitted, setNotifySubmitted] = useState(false);
-
-  const currentTier = PRO_TIERS[sliderIndex];
-  const isEnterprise = (currentTier as any).enterprise === true;
-  // Agency = Pro + $2/listing
-  const proCalc = useMemo(() => {
-    if (isEnterprise) return { price: null, total: null, savings: 0, firstMonth: null };
-    const perListing = isAnnual ? (currentTier as any).perListingAnnual : (currentTier as any).perListing;
-    const listings = typeof currentTier.listings === "number" ? currentTier.listings : 0;
-    const total = perListing ? listings * perListing : 0;
-    const monthlyTotal = (currentTier as any).perListing ? listings * (currentTier as any).perListing : 0;
-    const savings = isAnnual ? monthlyTotal : 0;
-    const firstMonth = Math.round(total * 0.75);
-    return { price: perListing, total, savings, firstMonth };
-  }, [currentTier, isAnnual, isEnterprise]);
-
-  const teamCalc = useMemo(() => {
-    if (isEnterprise) return { price: null, total: null };
-    const perListing = isAnnual ? (currentTier as any).perListingAnnual : (currentTier as any).perListing;
-    const agencyPerListing = perListing ? perListing + AGENCY_PREMIUM : null;
-    const listings = typeof currentTier.listings === "number" ? currentTier.listings : 0;
-    const total = agencyPerListing ? listings * agencyPerListing : 0;
-    return { price: agencyPerListing, total };
-  }, [currentTier, isAnnual, isEnterprise]);
-  
-  // NEW: Pricing calculator
-  const pricingListings = LISTING_OPTIONS[pricingSliderIndex];
-  const calculateTierPrice = (basePrice: number) => {
-    if (basePrice === 0) return 0;
-    const volumeDiscount = getVolumeDiscount(pricingListings);
-    const afterVolume = basePrice - volumeDiscount;
-    const annualDiscount = isAnnual ? 0.20 : 0;
-    const afterAnnual = afterVolume * (1 - annualDiscount);
-    return Math.max(afterAnnual, basePrice * 0.5);
-  };
-  
-  const photographerPrices = {
-    ultimate: calculateTierPrice(12),
-    complete: calculateTierPrice(14),
-  };
-  
-  const agentPrices = {
-    starter: calculateTierPrice(14),
-    complete: calculateTierPrice(18),
-  };
-  
-  const handleCheckout = async () => {
-    if (selectedPlan === 'free') {
-      trackEvent(SnapREvents.HOMEPAGE_CTA_CLICK, { plan: 'free' });
-      window.location.href = '/auth/signup';
-      return;
-    }
-
-    if (isEnterprise) {
-      window.location.href = '/contact';
-      return;
-    }
-
-    trackEvent(SnapREvents.CHECKOUT_STARTED, { plan: selectedPlan });
-    setLoading(true);
-    setError(null);
-
-    try {
-      const response = await fetch('/api/stripe/checkout', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          plan: selectedPlan,
-          billing: isAnnual ? 'annual' : 'monthly',
-          listings: currentTier.listings as number,
-          teamSize: selectedPlan === 'team' ? TEAM_OPTIONS[teamSizeIndex].users : undefined,
-        }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Checkout failed');
-      }
-
-      window.location.href = data.url;
-    } catch (err: any) {
-      setError(err.message);
-      setLoading(false);
-    }
-  };
-
-  const handleAddonPurchase = async (addonId: string) => {
-    setLoading(true);
-    setError(null);
-
-    try {
-      const response = await fetch('/api/stripe/addon-purchase', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ addonType: addonId }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Purchase failed');
-      }
-
-      window.location.href = data.url;
-    } catch (err: any) {
-      setError(err.message);
-      setLoading(false);
-    }
-  };
-
-  const getCardStyle = (plan: 'free' | 'pro' | 'team') => {
-    const isSelected = selectedPlan === plan;
-    if (isSelected) {
-      return {
-        backgroundColor: plan === 'pro' ? undefined : 'rgba(255,255,255,0.02)',
-        background: plan === 'pro' ? 'linear-gradient(180deg, rgba(212,160,23,0.1) 0%, rgba(212,160,23,0.03) 50%, transparent 100%)' : undefined,
-        border: `2px solid ${GOLD}`,
-        boxShadow: '0 0 40px rgba(212, 160, 23, 0.2)',
-      };
-    }
-    return {
-      backgroundColor: 'rgba(255,255,255,0.02)',
-      border: '1px solid rgba(255,255,255,0.1)',
-    };
-  };
-
-  const getCtaStyle = (plan: 'free' | 'pro' | 'team') => {
-    const isSelected = selectedPlan === plan;
-    if (isSelected) {
-      return { backgroundColor: GOLD, color: '#000' };
-    }
-    return { backgroundColor: 'rgba(255,255,255,0.1)', color: '#fff' };
-  };
-
-  const getBonusStyle = (plan: 'pro' | 'team') => {
-    const isSelected = selectedPlan === plan;
-    if (isSelected) {
-      return { backgroundColor: 'rgba(0,0,0,0.2)', color: '#000' };
-    }
-    return { backgroundColor: 'rgba(212,160,23,0.2)', color: GOLD };
-  };
-
-  const ctaText = isEnterprise ? 'Contact Sales' : 'Get started';
-  const bonusText = isAnnual ? '+1 month free' : '+1 week free';
-
-  const sliderStyles: React.CSSProperties = {
-    WebkitAppearance: 'none',
-    appearance: 'none',
-    width: '128px',
-    height: '6px',
-    borderRadius: '3px',
-    background: 'rgba(255,255,255,0.1)',
-    outline: 'none',
-    cursor: 'pointer',
-  };
 
   const handleNotifySubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -413,24 +140,33 @@ export default function HomePage() {
       <nav className="fixed top-0 left-0 right-0 z-50 border-b border-[#D4A017]/30 bg-[#0F0F0F]/95 backdrop-blur-md">
         <div className="max-w-6xl mx-auto px-6 py-3 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2">
-            <img src="/snapr-logo.png" alt="SnapR" className="w-10 h-10" />
             <span className="text-xl font-bold">
               <span className="text-white">Snap</span>
               <span className="text-[#D4A017]">R</span>
             </span>
           </Link>
-          
+
+          {/* Desktop nav links */}
           <div className="hidden md:flex items-center gap-8">
             <Link href="#see-demo" className="text-white/70 hover:text-[#D4A017] transition-colors text-sm">See Demo</Link>
             <Link href="/pricing" className="text-white/70 hover:text-[#D4A017] transition-colors text-sm">Pricing</Link>
             <Link href="/faq" className="text-white/70 hover:text-[#D4A017] transition-colors text-sm">FAQ</Link>
             <Link href="/academy" className="text-white/70 hover:text-[#D4A017] transition-colors text-sm">Academy</Link>
           </div>
-          
+
           <div className="flex items-center gap-3">
-            <Link href="/auth/login" className="text-white/70 hover:text-white text-sm transition-colors">Log in</Link>
-            <Link 
-              href="/auth/signup" 
+            {/* Mobile hamburger */}
+            <button
+              className="md:hidden text-white/70 hover:text-white transition-colors"
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              aria-label="Toggle menu"
+            >
+              {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+            </button>
+
+            <Link href="/auth/login" className="text-white/70 hover:text-white text-sm transition-colors hidden sm:block">Log in</Link>
+            <Link
+              href="/auth/signup"
               onClick={() => trackEvent(SnapREvents.HOMEPAGE_CTA_CLICK)}
               className="px-4 py-2 bg-gradient-to-r from-[#D4A017] to-[#B8860B] text-black font-semibold rounded-lg text-sm hover:opacity-90 transition-opacity"
             >
@@ -438,6 +174,17 @@ export default function HomePage() {
             </Link>
           </div>
         </div>
+
+        {/* Mobile nav dropdown */}
+        {mobileMenuOpen && (
+          <div className="md:hidden bg-[#0F0F0F]/98 border-t border-[#D4A017]/20 backdrop-blur-md px-6 py-4 flex flex-col gap-3">
+            <Link href="#see-demo" onClick={() => setMobileMenuOpen(false)} className="text-white/70 hover:text-[#D4A017] transition-colors text-sm py-2">See Demo</Link>
+            <Link href="/pricing" onClick={() => setMobileMenuOpen(false)} className="text-white/70 hover:text-[#D4A017] transition-colors text-sm py-2">Pricing</Link>
+            <Link href="/faq" onClick={() => setMobileMenuOpen(false)} className="text-white/70 hover:text-[#D4A017] transition-colors text-sm py-2">FAQ</Link>
+            <Link href="/academy" onClick={() => setMobileMenuOpen(false)} className="text-white/70 hover:text-[#D4A017] transition-colors text-sm py-2">Academy</Link>
+            <Link href="/auth/login" onClick={() => setMobileMenuOpen(false)} className="text-white/70 hover:text-white transition-colors text-sm py-2 sm:hidden">Log in</Link>
+          </div>
+        )}
       </nav>
 
       {/* HERO SECTION - UPDATED */}
@@ -453,7 +200,7 @@ export default function HomePage() {
             {/* Platform Badge */}
             <div className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-[#D4A017]/20 to-[#D4A017]/10 border border-[#D4A017]/40 rounded-full mb-6">
               <span className="text-[#D4A017] text-xs md:text-sm font-semibold tracking-wide uppercase">
-                World's First AI-Powered Real Estate Media & Marketing Platform
+                World&apos;s First AI-Powered Real Estate Media & Marketing Platform
               </span>
             </div>
             
@@ -826,7 +573,7 @@ export default function HomePage() {
                   <h3 className="text-lg font-bold">Review & Publish</h3>
                   <span className="px-3 py-1 bg-[#D4A017]/10 text-[#D4A017] text-xs rounded-full border border-[#D4A017]/30">5 seconds</span>
                 </div>
-                <p className="text-white/60 mb-4">Everything's ready. Just approve and publish everywhere.</p>
+                <p className="text-white/60 mb-4">Everything&apos;s ready. Just approve and publish everywhere.</p>
                 
                 {/* What's Ready - HIGHLIGHTED MOAT */}
                 <div className="grid grid-cols-4 gap-2">
@@ -878,51 +625,34 @@ export default function HomePage() {
         <LandingGallery />
       </section>
 
-      {/* See Demo - Video Section */}
+      {/* See Demo - Interactive Product Walkthrough */}
       <section id="see-demo" className="py-16 px-6 bg-gradient-to-b from-[#0F0F0F] to-[#1A1A1A]">
-        <div className="max-w-4xl mx-auto">
+        <div className="max-w-5xl mx-auto">
           <div className="text-center mb-8">
-            <p className="text-[#D4A017] text-xs font-semibold tracking-wider mb-2">SEE DEMO</p>
+            <p className="text-[#D4A017] text-xs font-semibold tracking-wider mb-2">SEE IT IN ACTION</p>
             <h2 className="text-2xl md:text-3xl font-bold text-white mb-3">
-              Watch SnapR in Action
+              From Photos to Published Listing
             </h2>
             <p className="text-sm text-white/60 max-w-xl mx-auto">
-              From raw photos to fully marketed listing in under 10 minutes.
+              Watch how SnapR transforms raw property photos into a fully marketed listing — automatically.
             </p>
           </div>
-          
-          {/* Video Placeholder */}
-          <div className="relative aspect-video rounded-2xl overflow-hidden border-2 border-[#D4A017]/30 bg-[#1A1A1A]">
-            {/* Placeholder Content */}
-            <div className="absolute inset-0 flex flex-col items-center justify-center">
-              {/* Play Button */}
-              <div className="w-20 h-20 rounded-full bg-gradient-to-br from-[#D4A017] to-[#B8860B] flex items-center justify-center mb-4 cursor-pointer hover:scale-110 transition-transform shadow-lg shadow-[#D4A017]/30">
-                <svg className="w-8 h-8 text-black ml-1" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M8 5v14l11-7z" />
-                </svg>
-              </div>
-              <p className="text-white/60 text-sm">Demo video coming soon</p>
-            </div>
-            
-            {/* Decorative Grid Overlay */}
-            <div className="absolute inset-0 opacity-5">
-              <div className="w-full h-full" style={{ backgroundImage: 'linear-gradient(rgba(212,160,23,0.3) 1px, transparent 1px), linear-gradient(90deg, rgba(212,160,23,0.3) 1px, transparent 1px)', backgroundSize: '40px 40px' }}></div>
-            </div>
-          </div>
-          
-          {/* Video Highlights */}
-          <div className="grid grid-cols-3 gap-4 mt-6">
+
+          <ProductExplainer />
+
+          {/* Feature highlights */}
+          <div className="grid grid-cols-3 gap-4 mt-8">
             <div className="text-center p-4 bg-white/5 rounded-xl border border-white/10">
-              <p className="text-[#D4A017] font-bold text-lg mb-1">2 min</p>
-              <p className="text-white/50 text-xs">Full walkthrough</p>
+              <p className="text-[#D4A017] font-bold text-lg mb-1">5 Steps</p>
+              <p className="text-white/50 text-xs">Fully automated</p>
             </div>
             <div className="text-center p-4 bg-white/5 rounded-xl border border-white/10">
-              <p className="text-[#D4A017] font-bold text-lg mb-1">Real listing</p>
-              <p className="text-white/50 text-xs">Live demo</p>
+              <p className="text-[#D4A017] font-bold text-lg mb-1">Under 10 min</p>
+              <p className="text-white/50 text-xs">End to end</p>
             </div>
             <div className="text-center p-4 bg-white/5 rounded-xl border border-white/10">
-              <p className="text-[#D4A017] font-bold text-lg mb-1">No fluff</p>
-              <p className="text-white/50 text-xs">Just results</p>
+              <p className="text-[#D4A017] font-bold text-lg mb-1">Zero Effort</p>
+              <p className="text-white/50 text-xs">AI handles everything</p>
             </div>
           </div>
         </div>
@@ -1136,7 +866,7 @@ export default function HomePage() {
         <div className="max-w-5xl mx-auto">
           <div className="flex flex-col md:flex-row items-center justify-between gap-6 mb-8">
             <div className="flex items-center gap-3">
-              <img src="/snapr-logo.png" alt="SnapR" className="w-10 h-10" />
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#D4A017] to-[#B8860B] flex items-center justify-center font-bold text-black text-xl">S</div>
               <span className="text-xl font-bold"><span className="text-white">Snap</span><span className="text-[#D4A017]">R</span></span>
             </div>
             
@@ -1166,7 +896,7 @@ export default function HomePage() {
           </div>
           
           <div className="pt-6 border-t border-white/5 flex flex-col md:flex-row items-center justify-between gap-4">
-            <p className="text-white/30 text-xs">© 2025 SnapR. All rights reserved.</p>
+            <p className="text-white/30 text-xs">© 2026 SnapR. All rights reserved.</p>
             <a href="mailto:support@snap-r.com" className="flex items-center gap-2 text-white/30 text-xs hover:text-[#D4A017] transition-colors">
               <Mail className="w-3 h-3" /> support@snap-r.com
             </a>
@@ -1226,8 +956,8 @@ export default function HomePage() {
                 <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-green-500/20 flex items-center justify-center">
                   <Check className="w-8 h-8 text-green-500" />
                 </div>
-                <h3 className="text-2xl font-bold text-white mb-2">You're on the list!</h3>
-                <p className="text-white/60">We'll notify you when the iOS app launches.</p>
+                <h3 className="text-2xl font-bold text-white mb-2">You&apos;re on the list!</h3>
+                <p className="text-white/60">We&apos;ll notify you when the iOS app launches.</p>
               </div>
             ) : (
               <>
@@ -1262,7 +992,7 @@ export default function HomePage() {
                 </form>
                 
                 <div className="mt-6 pt-6 border-t border-white/10 text-center">
-                  <p className="text-white/40 text-sm mb-2">Can't wait?</p>
+                  <p className="text-white/40 text-sm mb-2">Can&apos;t wait?</p>
                   <Link 
                     href="/auth/signup"
                     onClick={() => setShowIOSNotifyModal(false)}

@@ -6,7 +6,13 @@ import { createClient } from '@/lib/supabase/server';
 export async function POST(request: NextRequest) {
   try {
     const { listingId, options = {} } = await request.json();
-    
+
+    // Validate listingId is a UUID
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (!listingId || typeof listingId !== 'string' || !uuidRegex.test(listingId)) {
+      return NextResponse.json({ error: 'Invalid listing ID' }, { status: 400 });
+    }
+
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
     

@@ -1,10 +1,20 @@
-import { createClient } from '@/lib/supabase/server';
+import { createClient } from '@supabase/supabase-js';
 import { notFound } from 'next/navigation';
 import { ShareView } from '@/components/share-view';
 
+export const dynamic = 'force-dynamic';
+
+// Use service role to bypass RLS — share pages are viewed by unauthenticated clients
+function getSupabase() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY!
+  );
+}
+
 export default async function SharePage({ params }: { params: Promise<{ token: string }> }) {
   const { token } = await params;
-  const supabase = await createClient();
+  const supabase = getSupabase();
   
   // First, try to find the share by token
   const { data: share } = await supabase

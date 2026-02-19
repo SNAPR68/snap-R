@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { schedulePostSchema } from '@/lib/validation/schemas'
 
 // GET - Fetch scheduled posts
 export async function GET(request: Request) {
@@ -10,7 +11,7 @@ export async function GET(request: Request) {
 
     const url = new URL(request.url)
     const status = url.searchParams.get('status') || 'pending'
-    const limit = parseInt(url.searchParams.get('limit') || '100')
+    const limit = Math.min(parseInt(url.searchParams.get('limit') || '100') || 100, 200)
 
     let query = supabase
       .from('scheduled_posts')
@@ -45,19 +46,12 @@ export async function POST(request: Request) {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-    const body = await request.json()
-    const {
-      listingId,
-      platform,
-      postType,
-      content,
-      imageUrls,
-      scheduledFor,
-    } = body
-
-    if (!platform || !scheduledFor) {
-      return NextResponse.json({ error: 'Platform and scheduledFor required' }, { status: 400 })
+    const rawBody = await request.json()
+    const parsed = schedulePostSchema.safeParse(rawBody)
+    if (!parsed.success) {
+      return NextResponse.json({ error: 'Invalid request', details: parsed.error.flatten() }, { status: 400 })
     }
+    const { listingId, platform, postType, content, imageUrls, scheduledFor } = parsed.data
 
     const { data: post, error } = await supabase
       .from('scheduled_posts')

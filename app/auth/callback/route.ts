@@ -5,6 +5,7 @@ export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url);
   const code = searchParams.get('code');
   const next = searchParams.get('next');
+  const ref = searchParams.get('ref');
 
   if (code) {
     const supabase = await createClient();
@@ -27,6 +28,7 @@ export async function GET(request: Request) {
           avatar_url: data.user.user_metadata?.avatar_url || data.user.user_metadata?.picture || null,
           subscription_tier: 'free',
           listings_limit: 3,
+          referred_by: ref || null,
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
         });
@@ -34,8 +36,22 @@ export async function GET(request: Request) {
         return NextResponse.redirect(origin + '/onboarding');
       }
 
-      // Profile exists = existing user - go straight to dashboard
-      // Even if they didn't complete onboarding before, don't force them
+      // Profile exists — check if onboarding was completed
+      if (!profile.onboarded_at) {
+        // Incomplete onboarding — send back to finish it (preserve plan params if present)
+        const plan = searchParams.get('plan');
+        const listings = searchParams.get('listings');
+        const billing = searchParams.get('billing');
+        const onboardParams = [
+          plan && `plan=${plan}`,
+          listings && `listings=${listings}`,
+          billing && `billing=${billing}`,
+        ].filter(Boolean).join('&');
+        const onboardUrl = onboardParams ? `/onboarding?${onboardParams}` : '/onboarding';
+        return NextResponse.redirect(origin + onboardUrl);
+      }
+
+      // Fully onboarded user — go to dashboard
       return NextResponse.redirect(origin + (next || '/dashboard'));
     }
   }

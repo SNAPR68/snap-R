@@ -73,6 +73,12 @@ npm run preview         # Local Worker testing (wrangler dev)
 - **Styling**: Tailwind CSS, dark theme (bg-[#0A0A0A] / bg-[#0F0F0F] / bg-[#1A1A1A]), gold accent (#D4A017)
 - **Imports**: Named imports preferred, path aliases required
 - **Error handling**: Always-complete semantics in pipelines (one step failing doesn't block others)
+- **Type safety**: No `any` types — use `unknown` for catch blocks, define interfaces for complex objects, use `Record<string, unknown>` instead of `Record<string, any>`
+- **Catch blocks**: `catch (error: unknown)` with `error instanceof Error` guard; empty catch uses `catch {` (no variable binding)
+- **Null coercion**: Supabase returns `null` for missing fields; coerce to `undefined` at data boundaries with `?? undefined` when passing to React component props
+- **Input validation**: All API routes validate inputs with Zod schemas (`lib/validation/schemas.ts`) before processing
+- **Network calls**: All external API fetches use `AbortSignal.timeout(15000)` to prevent hanging requests
+- **Accessibility**: Modals use `role="dialog"` + `aria-modal="true"` + `aria-label`; forms use `aria-label` on inputs; pages use semantic HTML (`<nav>`, `<section>`, `<footer>`)
 
 ## Database
 
@@ -173,8 +179,17 @@ The async processing worker handles both photo enhancement and marketing automat
 - `publishToFacebook(pageAccessToken, pageId, content)` → `PublishResult`
 - `publishToInstagram(accessToken, igAccountId, content)` → `PublishResult`
 - `publishToLinkedIn(accessToken, personUrn, content)` → `PublishResult`
+  - Uses LinkedIn Community Management API v2 (`/rest/posts`)
+  - Headers: `LinkedIn-Version: 202401`, `X-Restli-Protocol-Version: 2.0.0`
+  - Image upload: 3-step flow (initializeUpload → download → PUT binary)
+  - Post URN returned in `x-restli-id` response header
 
 `PublishResult` = `{ success, postId?, postUrl?, error? }`
+
+**OAuth scopes** (`lib/social/oauth-config.ts`):
+- LinkedIn: `openid`, `profile`, `email`, `w_member_social`
+- Twitter: Uses PKCE (S256) with code verifier embedded in state
+- Facebook: Long-lived token exchange via `fb_exchange_token` grant
 
 ## Vercel Crons
 
@@ -227,13 +242,15 @@ Each tool has presets (e.g., sky-replacement: Clear Blue, Sunset, Dramatic Cloud
 | `/api/download-all` | POST | ZIP download of enhanced photos |
 | `/api/analytics/posts` | GET | Published posts analytics |
 
-## Pending Migrations (not yet applied to remote)
+## Applied Migrations (Feb 2026)
 
-These were created but Supabase is offline (billing issue). Apply when back:
+These migrations have been applied to the live Supabase database:
 
-1. `20260216_marketing_jobs.sql` — marketing_jobs table
-2. `20260216_marketing_jobs_scheduled_posts.sql` — scheduled_posts columns on marketing_jobs
-3. `20260216_published_posts.sql` — published_posts table with analytics + RLS + service role bypass
+1. `20260216_marketing_jobs.sql` — marketing_jobs table with per-step status, JSONB artifacts, cost tracking, RLS
+2. `20260216_marketing_jobs_scheduled_posts.sql` — scheduled_posts_status/result columns on marketing_jobs
+3. `20260216_published_posts.sql` — published_posts table with analytics columns, RLS, service role bypass
+4. `20260216_photos_tools_applied.sql` — tools_applied text[] column on photos table
+5. `20260217_phone_and_partners.sql` — profiles.phone/referred_by/notification_preferences columns, partner_applications table with referral_code, RLS
 
 ## Environment Variables
 
@@ -264,13 +281,63 @@ These were created but Supabase is offline (billing issue). Apply when back:
 Default:       100 req/min
 ```
 
+## Security
+
+- **OAuth CSRF validation**: State parameter verified against `user.id` in callback (`app/api/social/oauth/[platform]/route.ts`)
+- **Twitter PKCE**: S256 code challenge with `crypto.createHash('sha256')` (`lib/social/oauth-config.ts`)
+- **Facebook token refresh**: Short-lived tokens exchanged for long-lived tokens via `fb_exchange_token`
+- **Centralized auth middleware**: `middleware.ts` protects `/dashboard/*`, `/admin/*`, `/checkout/*`, `/onboarding/*` — redirects unauthenticated users with `?redirect=` param
+- **Zod validation**: All API inputs parsed through Zod schemas before processing (`lib/validation/schemas.ts`)
+
+## Hardening Patterns
+
+These patterns were established during quality hardening and must be followed:
+
+### Error Handling
+```typescript
+// Correct
+catch (error: unknown) {
+  const message = error instanceof Error ? error.message : 'Unknown error';
+}
+
+// Correct — empty catch (no variable needed)
+catch {
+  // silently ignore
+}
+
+// Wrong — never use these
+catch (error: any) { ... }
+catch (e) { ... }  // unused variable lint error
+```
+
+### Null to Undefined Coercion
+```typescript
+// At Supabase data boundaries, coerce null to undefined for React props
+const photo: StudioPhoto = {
+  signedRawUrl: signedUrl ?? undefined,      // Supabase returns null
+  signedProcessedUrl: processedUrl ?? undefined,
+};
+```
+
+### Typed State (no `any` in useState)
+```typescript
+// Correct
+const [listing, setListing] = useState<StudioListing | null>(null);
+const [photos, setPhotos] = useState<StudioPhoto[]>([]);
+
+// Wrong
+const [listing, setListing] = useState<any>(null);
+```
+
 ## Important Notes
 
 1. **Node Version**: 20 (see .nvmrc)
 2. **No test framework** currently configured
 3. **Image Pipeline**: Raw → Supabase Storage → Worker → R2 → CDN (Cloudinary)
 4. **Deploy**: Next.js to Vercel, Worker to Cloudflare via wrangler
-5. **Supabase project**: `asoiwonhqoesbvcilqwd.supabase.co` (currently NXDOMAIN — billing issue)
+5. **Supabase project**: `asoiwonhqoesbvcilqwd.supabase.co` (South Asia / Mumbai region)
 6. **Always run `npx tsc --noEmit` before considering any change complete**
 7. **Marketing pipeline uses always-complete semantics** — each step is independent; one failing doesn't block others
 8. **Free-tier users are gated** at both marketing handler (skipped) and cron publisher (canPublish: false)
+9. **Build strictness enforced**: `next.config.mjs` sets `typescript.ignoreBuildErrors: false` and `eslint.ignoreDuringBuilds: false` — builds fail on any TS error or ESLint violation
+10. **ESLint enforces no-any**: `.eslintrc.json` has `@typescript-eslint/no-explicit-any: "warn"` — any `any` usage shows warnings in IDE and CI

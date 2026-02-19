@@ -3,7 +3,11 @@
 import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
-import { Camera, Home, Building2, Users, Briefcase, Loader2, Globe, ChevronRight, ChevronLeft, Upload, Sparkles, CheckCircle, Share2, MessageCircle, Phone } from 'lucide-react';
+import {
+  Camera, Home, Building2, Users, Briefcase, Loader2, Globe,
+  ChevronRight, ChevronLeft, Upload, Sparkles, CheckCircle, Share2,
+  MessageCircle, Phone, Palette, Mail, Link2, Building
+} from 'lucide-react';
 
 const REGIONS = [
   { id: 'us', label: 'United States', flag: '🇺🇸' },
@@ -24,39 +28,42 @@ const ROLES = [
   { id: 'property-owner', label: 'Property Owner', icon: Briefcase, description: 'I own properties to sell/rent' },
 ];
 
-const VOLUME_OPTIONS = [
-  { id: '1-5', label: '1-5 listings', recommended: 'Free' },
-  { id: '6-20', label: '6-20 listings', recommended: 'Pro' },
-  { id: '21-50', label: '21-50 listings', recommended: 'Pro' },
-  { id: '50+', label: '50+ listings', recommended: 'Agency' },
-];
+const TOTAL_STEPS = 6;
 
 function OnboardingContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const supabase = createClient();
-  
-  // Read URL params from pricing page
+
+  // Read URL params from pricing page / Stripe success
   const roleFromUrl = searchParams.get('role');
   const planFromUrl = searchParams.get('plan');
   const listingsFromUrl = searchParams.get('listings');
   const priceFromUrl = searchParams.get('price');
   const billingFromUrl = searchParams.get('billing');
-  
+  const checkoutSuccess = searchParams.get('checkout') === 'success';
+
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [checkingAuth, setCheckingAuth] = useState(true);
-  
+
   // Step 1: Profile
   const [name, setName] = useState('');
   const [company, setCompany] = useState('');
   const [selectedRegion, setSelectedRegion] = useState<string | null>(null);
   const [selectedRole, setSelectedRole] = useState<string | null>(null);
-  
+
   // Step 2: Volume
   const [listingsPerMonth, setListingsPerMonth] = useState('');
-  
-  // Step 4: WhatsApp (optional)
+
+  // Step 4: Brand Profile
+  const [brandName, setBrandName] = useState('');
+  const [brandPhone, setBrandPhone] = useState('');
+  const [brandEmail, setBrandEmail] = useState('');
+  const [brandWebsite, setBrandWebsite] = useState('');
+  const [brokerageName, setBrokerageName] = useState('');
+
+  // Step 5: WhatsApp (optional)
   const [phone, setPhone] = useState('');
   const [wantsWhatsApp, setWantsWhatsApp] = useState(false);
 
@@ -69,6 +76,9 @@ function OnboardingContent() {
       }
       if (user.user_metadata?.full_name) {
         setName(user.user_metadata.full_name);
+      }
+      if (user.email) {
+        setBrandEmail(user.email);
       }
       setCheckingAuth(false);
     }
@@ -89,12 +99,12 @@ function OnboardingContent() {
     }
   }, [roleFromUrl, listingsFromUrl, selectedRole, listingsPerMonth]);
 
-  const handleComplete = async () => {
+  const handleComplete = async (redirectTo: string = '/listings/new') => {
     setLoading(true);
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
 
-    // Save profile with plan info from pricing page
+    // Save profile with plan info
     await supabase.from('profiles').upsert({
       id: user.id,
       full_name: name,
@@ -118,6 +128,7 @@ function OnboardingContent() {
       onboarded_at: new Date().toISOString(),
     });
 
+    // Update auth user metadata
     await supabase.auth.updateUser({
       data: {
         full_name: name,
@@ -128,7 +139,29 @@ function OnboardingContent() {
       }
     });
 
-    router.push('/listings/new');
+    // Save brand profile if any brand data was entered
+    if (brandName || brandPhone || brandEmail || brandWebsite || brokerageName) {
+      await fetch('/api/brand', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          business_name: brandName || name,
+          phone: brandPhone,
+          email: brandEmail,
+          website: brandWebsite,
+          brokerage_name: brokerageName,
+          primary_color: '#D4AF37',
+          secondary_color: '#1A1A1A',
+          tagline: '',
+          logo_url: '',
+          brokerage_logo_url: '',
+          license_number: '',
+          social_handles: {},
+        }),
+      });
+    }
+
+    router.push(redirectTo);
   };
 
   if (checkingAuth) {
@@ -143,15 +176,15 @@ function OnboardingContent() {
     <div className="min-h-screen bg-[#0A0A0A] text-white flex flex-col">
       {/* Progress Bar */}
       <div className="w-full h-1 bg-white/10">
-        <div 
+        <div
           className="h-full bg-gradient-to-r from-[#D4A017] to-[#B8860B] transition-all duration-500"
-          style={{ width: `${(step / 5) * 100}%` }}
+          style={{ width: `${(step / TOTAL_STEPS) * 100}%` }}
         />
       </div>
 
       <div className="flex-1 flex items-center justify-center p-6">
         <div className="w-full max-w-xl">
-          
+
           {/* STEP 1: Profile */}
           {step === 1 && (
             <div className="animate-fadeIn">
@@ -161,14 +194,27 @@ function OnboardingContent() {
                 <p className="text-white/60">Let&apos;s set up your account</p>
               </div>
 
-              {/* Show selected plan from pricing page */}
-              {planFromUrl && (
+              {/* Checkout success banner */}
+              {checkoutSuccess && planFromUrl && (
+                <div className="mb-6 p-4 bg-green-500/10 border border-green-500/30 rounded-xl flex items-center gap-3">
+                  <CheckCircle className="w-5 h-5 text-green-400 flex-shrink-0" />
+                  <div>
+                    <p className="font-medium text-green-400">Payment confirmed!</p>
+                    <p className="text-sm text-white/60 capitalize">
+                      {planFromUrl} plan — {listingsFromUrl} listings/mo ({billingFromUrl} billing)
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {/* Show selected plan from pricing page (non-checkout) */}
+              {!checkoutSuccess && planFromUrl && planFromUrl !== 'free' && (
                 <div className="mb-6 p-4 bg-[#D4A017]/10 border border-[#D4A017]/30 rounded-xl">
                   <p className="text-sm text-white/60">Your Selected Plan</p>
                   <p className="font-bold text-[#D4A017] capitalize">
-                    {planFromUrl} — {listingsFromUrl} listings/mo @ ${priceFromUrl}/listing
+                    {planFromUrl} — {listingsFromUrl} listings/mo {priceFromUrl ? `@ $${priceFromUrl}/listing` : ''}
                   </p>
-                  <p className="text-xs text-white/40 capitalize">{billingFromUrl} billing</p>
+                  {billingFromUrl && <p className="text-xs text-white/40 capitalize">{billingFromUrl} billing</p>}
                 </div>
               )}
 
@@ -197,14 +243,14 @@ function OnboardingContent() {
 
                 <div>
                   <label className="block text-sm text-white/60 mb-2">Your Region</label>
-                  <div className="grid grid-cols-4 gap-2">
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
                     {REGIONS.map(region => (
                       <button
                         key={region.id}
                         onClick={() => setSelectedRegion(region.id)}
                         className={`p-3 rounded-xl border text-center transition-all ${
-                          selectedRegion === region.id 
-                            ? 'border-[#D4A017] bg-[#D4A017]/10' 
+                          selectedRegion === region.id
+                            ? 'border-[#D4A017] bg-[#D4A017]/10'
                             : 'border-white/10 hover:border-white/30'
                         }`}
                       >
@@ -243,8 +289,8 @@ function OnboardingContent() {
                       key={role.id}
                       onClick={() => setSelectedRole(role.id)}
                       className={`w-full p-4 rounded-xl border text-left transition-all flex items-center gap-4 ${
-                        selectedRole === role.id 
-                          ? 'border-[#D4A017] bg-[#D4A017]/10' 
+                        selectedRole === role.id
+                          ? 'border-[#D4A017] bg-[#D4A017]/10'
                           : 'border-white/10 hover:border-white/30'
                       }`}
                     >
@@ -353,8 +399,118 @@ function OnboardingContent() {
             </div>
           )}
 
-          {/* STEP 4: WhatsApp (Optional) */}
+          {/* STEP 4: Brand Profile (NEW) */}
           {step === 4 && (
+            <div className="animate-fadeIn">
+              <div className="text-center mb-8">
+                <div className="w-16 h-16 bg-[#D4A017]/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Palette className="w-8 h-8 text-[#D4A017]" />
+                </div>
+                <h1 className="text-3xl font-bold mb-2">Set Up Your Brand</h1>
+                <p className="text-white/60">This info appears on your marketing content, social posts, and property sites</p>
+              </div>
+
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm text-white/60 mb-2">Business / Agent Name</label>
+                  <div className="relative">
+                    <Building className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-white/40" />
+                    <input
+                      type="text"
+                      value={brandName}
+                      onChange={(e) => setBrandName(e.target.value)}
+                      placeholder={name || 'Your Name or Company'}
+                      className="w-full pl-12 pr-4 py-3 rounded-xl bg-white/5 border border-white/10 focus:border-[#D4A017] outline-none"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm text-white/60 mb-2">Phone</label>
+                    <div className="relative">
+                      <Phone className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-white/40" />
+                      <input
+                        type="tel"
+                        value={brandPhone}
+                        onChange={(e) => setBrandPhone(e.target.value)}
+                        placeholder="(555) 123-4567"
+                        className="w-full pl-12 pr-4 py-3 rounded-xl bg-white/5 border border-white/10 focus:border-[#D4A017] outline-none"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm text-white/60 mb-2">Email</label>
+                    <div className="relative">
+                      <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-white/40" />
+                      <input
+                        type="email"
+                        value={brandEmail}
+                        onChange={(e) => setBrandEmail(e.target.value)}
+                        placeholder="you@company.com"
+                        className="w-full pl-12 pr-4 py-3 rounded-xl bg-white/5 border border-white/10 focus:border-[#D4A017] outline-none"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm text-white/60 mb-2">Website (optional)</label>
+                  <div className="relative">
+                    <Link2 className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-white/40" />
+                    <input
+                      type="url"
+                      value={brandWebsite}
+                      onChange={(e) => setBrandWebsite(e.target.value)}
+                      placeholder="https://yourwebsite.com"
+                      className="w-full pl-12 pr-4 py-3 rounded-xl bg-white/5 border border-white/10 focus:border-[#D4A017] outline-none"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm text-white/60 mb-2">Brokerage (optional)</label>
+                  <div className="relative">
+                    <Building2 className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-white/40" />
+                    <input
+                      type="text"
+                      value={brokerageName}
+                      onChange={(e) => setBrokerageName(e.target.value)}
+                      placeholder="Keller Williams, Compass, etc."
+                      className="w-full pl-12 pr-4 py-3 rounded-xl bg-white/5 border border-white/10 focus:border-[#D4A017] outline-none"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <p className="text-xs text-white/30 mt-4 text-center">
+                You can upload your logo and customize colors later in Brand Profile settings.
+              </p>
+
+              <div className="flex gap-3 mt-6">
+                <button onClick={() => setStep(3)} className="px-6 py-4 bg-white/10 rounded-xl flex items-center gap-2">
+                  <ChevronLeft className="w-5 h-5" /> Back
+                </button>
+                <button
+                  onClick={() => setStep(5)}
+                  className="flex-1 py-4 bg-gradient-to-r from-[#D4A017] to-[#B8860B] rounded-xl text-black font-semibold flex items-center justify-center gap-2"
+                >
+                  Continue <ChevronRight className="w-5 h-5" />
+                </button>
+              </div>
+
+              <button
+                onClick={() => setStep(5)}
+                className="w-full mt-2 py-2 text-white/40 hover:text-white/60 text-sm transition-colors"
+              >
+                Skip for now
+              </button>
+            </div>
+          )}
+
+          {/* STEP 5: WhatsApp (Optional) */}
+          {step === 5 && (
             <div className="animate-fadeIn">
               <div className="text-center mb-8">
                 <div className="w-16 h-16 bg-green-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -407,11 +563,11 @@ function OnboardingContent() {
               </div>
 
               <div className="flex gap-3 mt-6">
-                <button onClick={() => setStep(3)} className="px-6 py-4 bg-white/10 rounded-xl flex items-center gap-2">
+                <button onClick={() => setStep(4)} className="px-6 py-4 bg-white/10 rounded-xl flex items-center gap-2">
                   <ChevronLeft className="w-5 h-5" /> Back
                 </button>
                 <button
-                  onClick={() => setStep(5)}
+                  onClick={() => setStep(6)}
                   className="flex-1 py-4 bg-gradient-to-r from-[#D4A017] to-[#B8860B] rounded-xl text-black font-semibold flex items-center justify-center gap-2"
                 >
                   {wantsWhatsApp ? 'Continue' : 'Skip for now'} <ChevronRight className="w-5 h-5" />
@@ -420,31 +576,30 @@ function OnboardingContent() {
             </div>
           )}
 
-          {/* STEP 5: Get Started */}
-          {step === 5 && (
+          {/* STEP 6: Get Started */}
+          {step === 6 && (
             <div className="animate-fadeIn text-center">
               <div className="w-20 h-20 bg-gradient-to-br from-[#D4A017] to-[#B8860B] rounded-full flex items-center justify-center mx-auto mb-6">
                 <CheckCircle className="w-10 h-10 text-black" />
               </div>
-              
+
               <h1 className="text-3xl font-bold mb-2">You&apos;re All Set, {name.split(' ')[0]}!</h1>
               <p className="text-white/60 mb-8">Let&apos;s prepare your first listing</p>
 
               <div className="p-6 bg-white/5 rounded-2xl border border-white/10 mb-6">
                 <h3 className="font-semibold text-lg mb-4">
-                  {planFromUrl ? `Your ${planFromUrl.charAt(0).toUpperCase() + planFromUrl.slice(1)} Plan Includes:` : 'Your Free Plan Includes:'}
+                  {planFromUrl && planFromUrl !== 'free'
+                    ? `Your ${planFromUrl.charAt(0).toUpperCase() + planFromUrl.slice(1)} Plan Includes:`
+                    : 'Your Free Plan Includes:'}
                 </h3>
                 <ul className="space-y-3 text-left">
-                  {planFromUrl ? (
+                  {planFromUrl && planFromUrl !== 'free' ? (
                     <>
                       <li className="flex items-center gap-3"><CheckCircle className="w-5 h-5 text-green-400" /> <span>{listingsFromUrl} listings per month</span></li>
                       <li className="flex items-center gap-3"><CheckCircle className="w-5 h-5 text-green-400" /> <span>Full AI preparation (all 15 tools)</span></li>
                       <li className="flex items-center gap-3"><CheckCircle className="w-5 h-5 text-green-400" /> <span>Unlimited human revision on photos</span></li>
-                      <li className="flex items-center gap-3"><CheckCircle className="w-5 h-5 text-green-400" /> <span>Content Studio & Email Marketing</span></li>
+                      <li className="flex items-center gap-3"><CheckCircle className="w-5 h-5 text-green-400" /> <span>Content Studio &amp; Email Marketing</span></li>
                       <li className="flex items-center gap-3"><CheckCircle className="w-5 h-5 text-green-400" /> <span>Social Publishing (5 platforms)</span></li>
-                      {(planFromUrl === 'pro' || planFromUrl === 'agency') && (
-                        <li className="flex items-center gap-3"><CheckCircle className="w-5 h-5 text-green-400" /> <span>Virtual Tours & AI Voiceovers</span></li>
-                      )}
                     </>
                   ) : (
                     <>
@@ -459,7 +614,7 @@ function OnboardingContent() {
               </div>
 
               <button
-                onClick={handleComplete}
+                onClick={() => handleComplete()}
                 disabled={loading}
                 className="w-full py-4 bg-gradient-to-r from-[#D4A017] to-[#B8860B] rounded-xl text-black font-bold text-lg disabled:opacity-50 flex items-center justify-center gap-2"
               >
@@ -467,7 +622,7 @@ function OnboardingContent() {
               </button>
 
               <button
-                onClick={() => { handleComplete(); router.push('/dashboard'); }}
+                onClick={() => { handleComplete('/dashboard'); }}
                 className="w-full mt-3 py-3 text-white/50 hover:text-white text-sm"
               >
                 Or explore the dashboard first

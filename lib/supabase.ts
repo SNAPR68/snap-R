@@ -35,7 +35,7 @@ export function getSupabaseAdmin(): SupabaseClient {
 function createLazyExport<T extends object>(getter: () => T): T {
   return new Proxy({} as T, {
     get(_target, prop) {
-      return (getter() as any)[prop];
+      return (getter() as Record<string | symbol, unknown>)[prop];
     },
   });
 }

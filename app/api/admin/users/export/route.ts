@@ -1,16 +1,14 @@
 import { NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
+import { adminSupabase } from '@/lib/supabase/admin';
 
-function getSupabase() {
-  return createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-  );
-}
+export async function GET(request: Request) {
+  const authHeader = request.headers.get('authorization');
+  if (!process.env.ADMIN_SECRET || authHeader !== `Bearer ${process.env.ADMIN_SECRET}`) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
 
-export async function GET() {
   try {
-    const { data: users } = await getSupabase()
+    const { data: users } = await adminSupabase()
       .from('profiles')
       .select('id, email, full_name, plan, credits, created_at')
       .order('created_at', { ascending: false });

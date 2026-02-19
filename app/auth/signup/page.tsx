@@ -17,6 +17,21 @@ const PLAN_INFO: Record<string, { title: string; subtitle: string; features: str
     subtitle: '30 listings/month for agents & photographers.',
     features: ['30 listings/month', 'Priority 30-sec processing', 'Clean HD exports', 'All Content Studio features', 'Virtual Tours', 'Email Marketing'],
   },
+  gold: {
+    title: 'Start Your SnapR Gold Plan',
+    subtitle: 'All-in-one platform for agents & photographers.',
+    features: ['50 photos per listing', 'All 15 AI tools', 'Content Studio (150+ templates)', 'Social Media Posting', 'MLS Descriptions'],
+  },
+  platinum: {
+    title: 'Start Your SnapR Platinum Plan',
+    subtitle: 'For teams & white-label branding.',
+    features: ['75 photos per listing', 'Everything in Gold', 'White-label branding', 'Dedicated account manager', 'Priority support'],
+  },
+  enterprise: {
+    title: 'Start Your Enterprise Plan',
+    subtitle: 'Custom volume for brokerages.',
+    features: ['Custom listing volume', 'Unlimited team members', 'Custom integrations', 'SLA guarantee', 'Dedicated success manager'],
+  },
   agency: {
     title: 'Start Your Agency Plan',
     subtitle: '50 listings/month plus team collaboration.',
@@ -39,6 +54,7 @@ function SignupForm() {
   const selectedPlan = searchParams.get('plan') || 'free';
   const listings = searchParams.get('listings') || (selectedPlan === 'agency' ? '50' : '30');
   const billing = searchParams.get('billing') || 'annual';
+  const refCode = searchParams.get('ref') || null;
   
   const planInfo = PLAN_INFO[selectedPlan] || PLAN_INFO.free;
   const isPaidPlan = selectedPlan !== 'free';
@@ -53,13 +69,14 @@ function SignupForm() {
       email, 
       password, 
       options: { 
-        data: { 
+        data: {
           full_name: name,
           selected_plan: selectedPlan,
           selected_listings: listings,
           selected_billing: billing,
+          referred_by: refCode,
         },
-        emailRedirectTo: `${window.location.origin}/auth/callback?plan=${selectedPlan}&listings=${listings}&billing=${billing}`
+        emailRedirectTo: `${window.location.origin}/auth/callback?plan=${selectedPlan}&listings=${listings}&billing=${billing}${refCode ? `&ref=${refCode}` : ''}`
       } 
     });
     
@@ -75,8 +92,8 @@ function SignupForm() {
         email: data.user.email,
         full_name: name,
         subscription_tier: 'free',
-        credits: 25,
         selected_plan: selectedPlan,
+        referred_by: refCode || undefined,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
       });
@@ -96,13 +113,14 @@ function SignupForm() {
   };
 
   const handleGoogleSignup = async () => {
-    const redirectUrl = isPaidPlan 
-      ? `${window.location.origin}/auth/callback?plan=${selectedPlan}&listings=${listings}&billing=${billing}`
-      : `${window.location.origin}/auth/callback`;
-      
-    await supabase.auth.signInWithOAuth({ 
-      provider: 'google', 
-      options: { redirectTo: redirectUrl } 
+    const refParam = refCode ? `&ref=${refCode}` : '';
+    const redirectUrl = isPaidPlan
+      ? `${window.location.origin}/auth/callback?plan=${selectedPlan}&listings=${listings}&billing=${billing}${refParam}`
+      : `${window.location.origin}/auth/callback${refParam ? `?ref=${refCode}` : ''}`;
+
+    await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: { redirectTo: redirectUrl }
     });
   };
 
@@ -110,8 +128,8 @@ function SignupForm() {
     <div className="min-h-screen bg-[#0F0F0F] flex">
       <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-[#D4A017] to-[#B8860B] p-12 flex-col justify-between">
         <Link href="/" className="flex items-center gap-3">
-          <img src="/snapr-logo.png" alt="SnapR" className="w-16 h-16" />
-          <span className="text-2xl font-bold text-[#0F0F0F]">SnapR</span>
+          <div className="w-12 h-12 rounded-xl bg-[#0F0F0F]/20 flex items-center justify-center font-bold text-[#0F0F0F] text-xl">S</div>
+          <span className="text-2xl font-bold text-[#0F0F0F]">Snap<span className="text-[#0F0F0F]/80">R</span></span>
         </Link>
         
         <div>
@@ -133,19 +151,19 @@ function SignupForm() {
             <div className="mt-8 p-4 bg-[#0F0F0F]/10 rounded-xl">
               <p className="text-[#0F0F0F]/60 text-sm">Selected plan</p>
               <p className="text-[#0F0F0F] font-bold text-xl capitalize">{selectedPlan} - {listings} listings/month</p>
-              <p className="text-[#0F0F0F]/60 text-sm mt-1">You'll complete payment after creating your account</p>
+              <p className="text-[#0F0F0F]/60 text-sm mt-1">You&apos;ll complete payment after creating your account</p>
             </div>
           )}
         </div>
         
-        <p className="text-[#0F0F0F]/50 text-sm">© 2025 SnapR</p>
+        <p className="text-[#0F0F0F]/50 text-sm">© 2026 SnapR</p>
       </div>
 
       <div className="flex-1 flex items-center justify-center p-8">
         <div className="w-full max-w-md">
           <div className="lg:hidden flex items-center justify-center gap-3 mb-8">
-            <img src="/snapr-logo.png" alt="SnapR" className="w-16 h-16" />
-            <span className="text-2xl font-bold text-[#D4A017]">SnapR</span>
+            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#D4A017] to-[#B8860B] flex items-center justify-center font-bold text-black text-xl">S</div>
+            <span className="text-2xl font-bold">Snap<span className="text-[#D4A017]">R</span></span>
           </div>
 
           <h2 className="text-3xl font-bold text-white mb-2">Create Account</h2>
@@ -170,11 +188,11 @@ function SignupForm() {
           </div>
 
           <form onSubmit={handleSignup} className="space-y-4">
-            <input type="text" placeholder="Full Name" value={name} onChange={(e) => setName(e.target.value)} className="w-full px-4 py-4 bg-white/5 border border-white/10 rounded-xl text-white placeholder:text-white/30 focus:outline-none focus:border-[#D4A017]" required />
-            <input type="email" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} className="w-full px-4 py-4 bg-white/5 border border-white/10 rounded-xl text-white placeholder:text-white/30 focus:outline-none focus:border-[#D4A017]" required />
+            <input type="text" placeholder="Full Name" aria-label="Full name" value={name} onChange={(e) => setName(e.target.value)} className="w-full px-4 py-4 bg-white/5 border border-white/10 rounded-xl text-white placeholder:text-white/30 focus:outline-none focus:border-[#D4A017]" required />
+            <input type="email" placeholder="Email" aria-label="Email address" value={email} onChange={(e) => setEmail(e.target.value)} className="w-full px-4 py-4 bg-white/5 border border-white/10 rounded-xl text-white placeholder:text-white/30 focus:outline-none focus:border-[#D4A017]" required />
             <div className="relative">
-              <input type={showPassword ? 'text' : 'password'} placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} className="w-full px-4 py-4 bg-white/5 border border-white/10 rounded-xl text-white placeholder:text-white/30 focus:outline-none focus:border-[#D4A017] pr-12" required minLength={6} />
-              <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-4 top-1/2 -translate-y-1/2 text-white/30 hover:text-white/60">
+              <input type={showPassword ? 'text' : 'password'} placeholder="Password" aria-label="Password" value={password} onChange={(e) => setPassword(e.target.value)} className="w-full px-4 py-4 bg-white/5 border border-white/10 rounded-xl text-white placeholder:text-white/30 focus:outline-none focus:border-[#D4A017] pr-12" required minLength={6} />
+              <button type="button" onClick={() => setShowPassword(!showPassword)} aria-label={showPassword ? 'Hide password' : 'Show password'} className="absolute right-4 top-1/2 -translate-y-1/2 text-white/30 hover:text-white/60">
                 {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
               </button>
             </div>

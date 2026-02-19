@@ -34,23 +34,51 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     .single()
   
   if (!listing) return { title: 'Property Not Found' }
-  
+
   const title = listing.title || listing.address || 'Property For Sale'
   const description = listing.description?.slice(0, 160) ||
     `${listing.bedrooms || ''}bd ${listing.bathrooms || ''}ba ${listing.square_feet ? listing.square_feet.toLocaleString() + ' sqft' : ''} - ${[listing.address, listing.city, listing.state].filter(Boolean).join(', ')}`
-  
+
+  // Fetch hero photo for OG image
+  const { data: heroPhoto } = await supabase
+    .from('photos')
+    .select('raw_url, processed_url')
+    .eq('listing_id', listingId)
+    .eq('status', 'completed')
+    .order('display_order', { ascending: true })
+    .limit(1)
+    .single()
+
+  let ogImageUrl: string | undefined
+  if (heroPhoto) {
+    const path = heroPhoto.processed_url || heroPhoto.raw_url
+    if (path?.startsWith('http')) {
+      ogImageUrl = path
+    } else if (path) {
+      const { data: signed } = await supabase.storage
+        .from('raw-images')
+        .createSignedUrl(path, 86400)
+      ogImageUrl = signed?.signedUrl
+    }
+  }
+
   return {
     title: `${title} | Property Details`,
     description,
+    alternates: {
+      canonical: `https://snap-r.com/p/${slug}`,
+    },
     openGraph: {
       title,
       description,
       type: 'website',
+      images: ogImageUrl ? [{ url: ogImageUrl, width: 1200, height: 630 }] : [],
     },
     twitter: {
       card: 'summary_large_image',
       title,
       description,
+      images: ogImageUrl ? [ogImageUrl] : [],
     },
   }
 }
@@ -62,12 +90,10 @@ export default async function PropertySitePage({ params }: Props) {
   // Extract full UUID from slug
   const uuidMatch = slug.match(/([a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12})$/i)
   if (!uuidMatch) {
-    console.log('[PropertySite] No UUID found in slug:', slug)
     notFound()
   }
-  
+
   const listingId = uuidMatch[1]
-  console.log('[PropertySite] Looking for listing:', listingId)
   
   // Fetch listing with photos
   const { data: listing, error } = await supabase
@@ -183,14 +209,51 @@ export default async function PropertySitePage({ params }: Props) {
     tagline: brandProfile.tagline,
   } : null
   
+  // Build JSON-LD structured data for SEO
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'RealEstateListing',
+    name: listingData.title || listingData.address || 'Property Listing',
+    description: listingData.description?.slice(0, 300),
+    url: `https://snap-r.com/p/${slug}`,
+    ...(listingData.price && {
+      offers: {
+        '@type': 'Offer',
+        price: listingData.price,
+        priceCurrency: 'USD',
+      },
+    }),
+    address: {
+      '@type': 'PostalAddress',
+      streetAddress: listingData.address,
+      addressLocality: listingData.city,
+      addressRegion: listingData.state,
+      postalCode: listingData.postal_code,
+    },
+    ...(validPhotos.length > 0 && { image: validPhotos.slice(0, 5) }),
+    ...(listingData.latitude && listingData.longitude && {
+      geo: {
+        '@type': 'GeoCoordinates',
+        latitude: listingData.latitude,
+        longitude: listingData.longitude,
+      },
+    }),
+  }
+
   return (
-    <PropertySiteClient
-      listing={listingData}
-      photos={validPhotos}
-      agent={agentData}
-      brand={brandData}
-      videoUrl={videoUrl}
-      slug={slug}
-    />
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
+      <PropertySiteClient
+        listing={listingData}
+        photos={validPhotos}
+        agent={agentData}
+        brand={brandData}
+        videoUrl={videoUrl}
+        slug={slug}
+      />
+    </>
   )
 }

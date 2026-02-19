@@ -1,18 +1,20 @@
 'use client';
 
 import Link from 'next/link';
-import { FileText, MessageSquare, FileArchive, Globe, Calendar, CheckCircle, Loader2, ChevronRight, AlertCircle, Megaphone, Lock, Sparkles } from 'lucide-react';
+import { FileText, MessageSquare, FileArchive, Globe, Calendar, CheckCircle, ChevronRight, AlertCircle, Megaphone, Lock, Sparkles } from 'lucide-react';
+
+export type MarketingStepResult = string | Record<string, unknown> | null;
 
 export type MarketingJobData = {
   id: string;
   status: string;
-  description: { status: string; result: any };
-  captions: { status: string; result: any };
-  mls: { status: string; result: any };
-  propertySite: { status: string; result: any };
-  scheduledPosts: { status: string; result: any };
+  description: { status: string; result: MarketingStepResult };
+  captions: { status: string; result: MarketingStepResult };
+  mls: { status: string; result: MarketingStepResult };
+  propertySite: { status: string; result: MarketingStepResult };
+  scheduledPosts: { status: string; result: MarketingStepResult };
   totalCostCents: number;
-  costBreakdown: any;
+  costBreakdown: Record<string, unknown> | null;
   startedAt: string;
   completedAt: string;
   error: string | null;
@@ -33,8 +35,11 @@ const STEPS = [
 ] as const;
 
 function getStepStatus(job: MarketingJobData, key: string): string {
-  const step = (job as any)[key];
-  return step?.status || 'pending';
+  const step = job[key as keyof MarketingJobData];
+  if (typeof step === 'object' && step !== null && 'status' in step) {
+    return (step as { status: string }).status || 'pending';
+  }
+  return 'pending';
 }
 
 function countCompleted(job: MarketingJobData): number {

@@ -208,7 +208,7 @@ export function HashtagDisplay({
     }
   }
   
-  const categories: { key: keyof GeneratedHashtags; label: string; icon: any; color: string }[] = [
+  const categories: { key: keyof GeneratedHashtags; label: string; icon: React.ComponentType<{ className?: string }>; color: string }[] = [
     { key: 'postType', label: 'Post Type', icon: Sparkles, color: 'text-[#D4AF37]' },
     { key: 'location', label: 'Location', icon: MapPin, color: 'text-blue-400' },
     { key: 'property', label: 'Property', icon: Home, color: 'text-green-400' },

@@ -128,8 +128,8 @@ export async function analyzePhoto(photoUrl: string, photoIndex: number, client?
       enhancementPotential: analysis.enhancementPotential || 30,
       aiFeedback: analysis.aiFeedback || 'Analysis completed',
     };
-  } catch (error: any) {
-    console.error(`[Listing Intelligence] Error analyzing photo ${photoIndex}:`, error.message);
+  } catch (error: unknown) {
+    console.error(`[Listing Intelligence] Error analyzing photo ${photoIndex}:`, error instanceof Error ? error.message : error);
     return {
       photoIndex, photoUrl, overallScore: 50, lightingScore: 50, compositionScore: 50,
       clarityScore: 50, appealScore: 50, roomType: 'unknown', isExterior: false,

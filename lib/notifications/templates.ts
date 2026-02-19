@@ -322,40 +322,52 @@ export function getEmailHtml(type: NotificationType, ctx: TemplateContext): stri
     <tr>
       <td align="center">
         <table width="100%" cellpadding="0" cellspacing="0" style="max-width: 500px; background-color: #1a1a1a; border-radius: 16px; border: 1px solid ${accentColor}33; overflow: hidden;">
+          <!-- Accent bar -->
+          <tr>
+            <td style="height: 4px; background: linear-gradient(90deg, transparent, ${accentColor}, transparent);"></td>
+          </tr>
+
           <!-- Header -->
           <tr>
-            <td style="padding: 32px 32px 24px; text-align: center; border-bottom: 1px solid rgba(255,255,255,0.1);">
-              <img src="${BASE_URL}/snapr-logo.png" alt="SnapR" style="height: 48px; margin-bottom: 16px;">
+            <td style="padding: 28px 32px 20px; text-align: center; border-bottom: 1px solid rgba(255,255,255,0.1);">
+              <div style="font-size: 28px; font-weight: 800; letter-spacing: 1px;">
+                <span style="color: #ffffff;">Snap</span><span style="color: #D4A017;">R</span>
+              </div>
+              <p style="color: #666; font-size: 11px; margin: 4px 0 0; letter-spacing: 1px; text-transform: uppercase;">AI-Powered Real Estate Media</p>
             </td>
           </tr>
-          
+
           <!-- Content -->
           <tr>
             <td style="padding: 32px;">
-              <h1 style="color: ${accentColor}; font-size: 24px; font-weight: 700; margin: 0 0 16px; line-height: 1.3;">
+              <h1 style="color: ${accentColor}; font-size: 22px; font-weight: 700; margin: 0 0 16px; line-height: 1.3;">
                 ${template.subject}
               </h1>
               <div style="color: #cccccc; font-size: 15px; line-height: 1.6;">
                 ${template.emailText.replace(/\n/g, '<br>')}
               </div>
-              
+
               ${ctx.listingId ? `
-              <a href="${BASE_URL}/dashboard/studio?id=${ctx.listingId}" 
+              <a href="${BASE_URL}/dashboard/studio?id=${ctx.listingId}"
                  style="display: inline-block; margin-top: 24px; padding: 14px 28px; background: linear-gradient(135deg, #D4A017, #B8860B); color: #000; text-decoration: none; border-radius: 12px; font-weight: 600; font-size: 14px;">
-                View in SnapR →
+                View in SnapR &rarr;
               </a>
               ` : ''}
             </td>
           </tr>
-          
+
           <!-- Footer -->
           <tr>
             <td style="padding: 24px 32px; background-color: rgba(0,0,0,0.3); border-top: 1px solid rgba(255,255,255,0.1);">
               <p style="color: #666666; font-size: 12px; margin: 0; text-align: center;">
-                © ${new Date().getFullYear()} SnapR. The AI-powered real estate photo platform.
+                <a href="${BASE_URL}" style="color: #D4A017; text-decoration: none;">Visit SnapR</a>
+                &nbsp;&middot;&nbsp;
+                <a href="${BASE_URL}/dashboard/settings/notifications" style="color: #888888; text-decoration: none;">Notification Settings</a>
+                &nbsp;&middot;&nbsp;
+                <a href="${BASE_URL}/dashboard/settings/notifications" style="color: #888888; text-decoration: none;">Unsubscribe</a>
               </p>
-              <p style="color: #666666; font-size: 12px; margin: 8px 0 0; text-align: center;">
-                <a href="${BASE_URL}/settings" style="color: #888888;">Manage notification preferences</a>
+              <p style="color: #555555; font-size: 11px; margin: 12px 0 0; text-align: center;">
+                &copy; ${new Date().getFullYear()} SnapR. AI-powered real estate media &amp; marketing.
               </p>
             </td>
           </tr>

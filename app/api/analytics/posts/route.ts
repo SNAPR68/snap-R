@@ -10,6 +10,8 @@ export async function GET(request: Request) {
 
     const url = new URL(request.url)
     const platform = url.searchParams.get('platform')
+    const from = url.searchParams.get('from')
+    const to = url.searchParams.get('to')
     const limit = parseInt(url.searchParams.get('limit') || '50')
 
     let query = supabase
@@ -20,6 +22,8 @@ export async function GET(request: Request) {
       .limit(limit)
 
     if (platform) query = query.eq('platform', platform)
+    if (from) query = query.gte('published_at', from)
+    if (to) query = query.lte('published_at', to)
 
     const { data: posts, error } = await query
 

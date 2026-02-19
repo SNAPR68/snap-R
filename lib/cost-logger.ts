@@ -72,7 +72,7 @@ export async function logApiCost({
   actualCost?: number;
   processingTimeMs?: number;
   creditsCharged?: number;
-  requestMetadata?: Record<string, any>;
+  requestMetadata?: Record<string, unknown>;
 }) {
   const providerCosts = COST_ESTIMATES[provider] || {};
   const costCents = actualCost || providerCosts[toolId || 'default'] || providerCosts['default'] || 4;
@@ -106,8 +106,8 @@ export async function logApiCost({
     } else {
       console.log(`[CostLogger] ✓ ${provider}/${toolId}: ${costCents}¢ (${success ? 'success' : 'failed'})`);
     }
-  } catch (e: any) {
-    console.error('[CostLogger] Exception:', e.message);
+  } catch (e: unknown) {
+    console.error('[CostLogger] Exception:', e instanceof Error ? e.message : 'Unknown error');
   }
 }
 
@@ -120,7 +120,7 @@ export async function logSystemEvent({
   level: 'info' | 'warn' | 'error' | 'critical';
   source: string;
   message: string;
-  metadata?: any;
+  metadata?: Record<string, unknown>;
 }) {
   try {
     const supabase = getSupabase();
@@ -144,12 +144,12 @@ export async function logSystemEvent({
     if (level === 'critical') {
       await sendCriticalAlert(source, message, metadata);
     }
-  } catch (e: any) {
-    console.error('[SystemLog] Exception:', e.message);
+  } catch (e: unknown) {
+    console.error('[SystemLog] Exception:', e instanceof Error ? e.message : 'Unknown error');
   }
 }
 
-async function sendCriticalAlert(source: string, message: string, metadata?: any) {
+async function sendCriticalAlert(source: string, message: string, metadata?: Record<string, unknown>) {
   try {
     if (!process.env.RESEND_API_KEY) return;
     

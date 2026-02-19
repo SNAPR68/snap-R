@@ -104,7 +104,7 @@ export class ImagenAIClient {
       }),
     });
     
-    return result.data.files_list.map((f: any) => ({
+    return result.data.files_list.map((f: { file_name: string; upload_link: string }) => ({
       fileName: f.file_name,
       uploadLink: f.upload_link,
     }));
@@ -176,7 +176,7 @@ export class ImagenAIClient {
       method: 'GET',
     });
     
-    return result.data.files_list.map((f: any) => ({
+    return result.data.files_list.map((f: { file_name: string; download_link: string }) => ({
       fileName: f.file_name,
       downloadLink: f.download_link,
     }));
@@ -277,14 +277,15 @@ export async function processWithImagen(
       cost,
     };
 
-  } catch (error: any) {
-    console.error(`[Imagen] Error:`, error.message);
+  } catch (error: unknown) {
+    const msg = error instanceof Error ? error.message : 'Unknown error';
+    console.error(`[Imagen] Error:`, msg);
     return {
       success: false,
       provider: 'imagen',
       processingTimeMs: Date.now() - startTime,
       cost: 0,
-      error: error.message,
+      error: msg,
     };
   }
 }
@@ -338,6 +339,7 @@ export async function processHDRBracket(
 
 export async function processLocalHDR(
   bracket: BracketGroup,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   options?: HDRProcessingOptions
 ): Promise<HDRResult> {
   const startTime = Date.now();
@@ -372,13 +374,13 @@ export async function processLocalHDR(
       cost: 0,
     };
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     return {
       success: false,
       provider: 'local',
       processingTimeMs: Date.now() - startTime,
       cost: 0,
-      error: error.message,
+      error: error instanceof Error ? error.message : 'Unknown error',
     };
   }
 }
@@ -436,7 +438,7 @@ export class HDRProcessor {
       enableHDRMerge: options.hdr?.enabled ?? true,
       enableWindowPull: options.windowBalance?.enabled ?? true,
       enablePerspective: options.perspective?.enabled ?? true,
-      toneMapping: options.hdr?.toneMapping as any,
+      toneMapping: options.hdr?.toneMapping as HDRProcessingOptions['toneMapping'],
     });
 
     if (!result.success || !result.outputBuffer) {
@@ -483,13 +485,13 @@ export class HDRProcessor {
         perspectiveCorrected: result.perspectiveCorrected,
         cost: result.cost,
       };
-    } catch (error: any) {
+    } catch (error: unknown) {
       return {
         success: false,
         provider: 'local',
         processingTimeMs: Date.now() - startTime,
         cost: 0,
-        error: error.message,
+        error: error instanceof Error ? error.message : 'Unknown error',
       };
     }
   }

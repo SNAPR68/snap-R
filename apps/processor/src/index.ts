@@ -53,7 +53,6 @@ function updateProcessEnv(env: Env) {
     SUPABASE_SERVICE_KEY: env.SUPABASE_SERVICE_KEY || '',
     NEXT_PUBLIC_SUPABASE_URL: env.SUPABASE_URL || '',
     SUPABASE_SERVICE_ROLE_KEY: env.SUPABASE_SERVICE_KEY || '',
-    NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY: env.SUPABASE_SERVICE_KEY || '',
     ANALYSIS_PROVIDER: (env as any).ANALYSIS_PROVIDER || '',
     ANALYSIS_REPLICATE_MODEL: (env as any).ANALYSIS_REPLICATE_MODEL || '',
     AI_ANALYSIS_FAIL_OPEN: (env as any).AI_ANALYSIS_FAIL_OPEN || '',
@@ -1066,7 +1065,7 @@ export default {
       }
 
       const adminKey = request.headers.get('x-admin-key');
-      if (env.WORKER_ADMIN_KEY && adminKey !== env.WORKER_ADMIN_KEY) {
+      if (!env.WORKER_ADMIN_KEY || adminKey !== env.WORKER_ADMIN_KEY) {
         return Response.json({ error: 'Unauthorized' }, { status: 401 });
       }
 
@@ -1085,6 +1084,12 @@ export default {
     
     
     if (url.pathname === '/process' && request.method === 'POST') {
+      // Auth check — require WORKER_ADMIN_KEY
+      const processAdminKey = request.headers.get('x-admin-key');
+      if (!env.WORKER_ADMIN_KEY || processAdminKey !== env.WORKER_ADMIN_KEY) {
+        return Response.json({ error: 'Unauthorized' }, { status: 401 });
+      }
+
       try {
         const body = await request.json();
         console.log(`[HTTP] Enqueuing job ${body.jobId}`);

@@ -2,6 +2,8 @@ export const dynamic = 'force-dynamic';
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import Stripe from 'stripe';
+import { normalizeTier } from '@/lib/content/limits';
+import { stripeCheckoutSchema } from '@/lib/validation/schemas';
 
 function getStripe() {
   return new Stripe(process.env.STRIPE_SECRET_KEY!, {
@@ -31,7 +33,14 @@ function calculateProPrice(listings: number, isAnnual: boolean): { base: number;
 export async function POST(request: NextRequest) {
   try {
     const stripe = getStripe();
-    const { plan, listings, billing } = await request.json();
+    const rawBody = await request.json();
+    const parsed = stripeCheckoutSchema.safeParse(rawBody);
+    if (!parsed.success) {
+      return NextResponse.json({ error: 'Invalid request', details: parsed.error.flatten() }, { status: 400 });
+    }
+    const plan = normalizeTier(parsed.data.plan);
+    const listings = parsed.data.listings;
+    const billing = parsed.data.billing;
 
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
@@ -68,6 +77,8 @@ export async function POST(request: NextRequest) {
     const productName = `SnapR Pro - ${listingCount} listings/mo`;
     const description = `$${base.toFixed(0)} base + $${PRO_PER_LISTING}/listing | ${isAnnual ? 'Annual' : 'Monthly'} billing`;
 
+    const billingStr = billing || 'monthly';
+
     const session = await stripe.checkout.sessions.create({
       mode: 'subscription',
       payment_method_types: ['card'],
@@ -87,7 +98,7 @@ export async function POST(request: NextRequest) {
           quantity: 1,
         },
       ],
-      success_url: `${process.env.NEXT_PUBLIC_BASE_URL || 'https://snap-r.com'}/dashboard?checkout=success`,
+      success_url: `${process.env.NEXT_PUBLIC_BASE_URL || 'https://snap-r.com'}/onboarding?checkout=success&plan=${plan}&listings=${listingCount}&billing=${billingStr}`,
       cancel_url: `${process.env.NEXT_PUBLIC_BASE_URL || 'https://snap-r.com'}/pricing`,
       customer_email: user.email,
       subscription_data: {
@@ -95,7 +106,7 @@ export async function POST(request: NextRequest) {
         metadata: {
           userId: user.id,
           plan: 'pro',
-          billing,
+          billing: billingStr,
           listings: String(listingCount),
           basePrice: String(base),
           perListing: String(PRO_PER_LISTING),
@@ -105,7 +116,7 @@ export async function POST(request: NextRequest) {
       metadata: {
         userId: user.id,
         plan: 'pro',
-        billing,
+        billing: billingStr,
         listings: String(listingCount),
       },
     });

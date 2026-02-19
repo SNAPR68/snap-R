@@ -2,12 +2,12 @@
 
 declare global {
   interface Window {
-    hj?: (method: string, ...args: any[]) => void;
-    _uxa?: any[];
+    hj?: (method: string, ...args: unknown[]) => void;
+    _uxa?: Array<[string, ...unknown[]]>;
   }
 }
 
-export const trackEvent = (eventName: string, eventData?: Record<string, any>) => {
+export const trackEvent = (eventName: string, eventData?: Record<string, unknown>) => {
   // Hotjar event
   if (typeof window !== 'undefined' && window.hj) {
     window.hj('event', eventName);
@@ -24,7 +24,7 @@ export const trackEvent = (eventName: string, eventData?: Record<string, any>) =
   }
 };
 
-export const identifyUser = (userId: string, traits?: Record<string, any>) => {
+export const identifyUser = (userId: string, traits?: Record<string, unknown>) => {
   if (typeof window !== 'undefined' && window.hj) {
     window.hj('identify', userId, traits || {});
   }

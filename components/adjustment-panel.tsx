@@ -1,7 +1,6 @@
 'use client';
 
 import { ChevronDown, ChevronUp, RotateCcw, SlidersHorizontal, X, Check } from 'lucide-react';
-import { useState } from 'react';
 
 interface AdjustmentPanelProps {
   adjustments: {
@@ -11,7 +10,13 @@ interface AdjustmentPanelProps {
     saturation: number;
     warmth: number;
   };
-  setAdjustments: (adjustments: any) => void;
+  setAdjustments: (adjustments: {
+    intensity: number;
+    brightness: number;
+    contrast: number;
+    saturation: number;
+    warmth: number;
+  }) => void;
   showFineTune: boolean;
   setShowFineTune: (show: boolean) => void;
   onDiscard: () => void;

@@ -1,6 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
-import DashboardHome from '@/components/dashboard-home'
+import CommandCenter from '@/components/command-center/command-center'
 
 export const dynamic = 'force-dynamic'
 
@@ -9,74 +9,161 @@ export default async function DashboardPage() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/auth/login')
 
-  // Parallel queries for dashboard metrics
+  // Parallel queries for Command Center data
   const [
     listingsResult,
     scheduledResult,
     publishedResult,
-    marketingResult,
+    marketingJobsResult,
     processingResult,
+    brandResult,
+    socialsResult,
+    profileResult,
   ] = await Promise.all([
-    // Active listings
+    // All listings with photos for thumbnails
     supabase
       .from('listings')
-      .select('id, title, preparation_status, marketing_status, updated_at')
+      .select('id, title, address, preparation_status, marketing_status, hero_photo_id, updated_at, photos!photos_listing_id_fkey(id, raw_url, processed_url)')
       .eq('user_id', user.id)
       .order('updated_at', { ascending: false })
-      .limit(10),
-
-    // Scheduled posts (pending)
-    supabase
-      .from('scheduled_posts')
-      .select('id, platform, content, scheduled_for, status', { count: 'exact' })
-      .eq('user_id', user.id)
-      .eq('status', 'pending')
-      .order('scheduled_for', { ascending: true })
-      .limit(5),
-
-    // Published posts with metrics
-    supabase
-      .from('published_posts')
-      .select('id, platform, impressions, reach, published_at', { count: 'exact' })
-      .eq('user_id', user.id)
-      .order('published_at', { ascending: false })
       .limit(20),
 
-    // Recent marketing completions
+    // All scheduled posts (all statuses for calendar view)
+    supabase
+      .from('scheduled_posts')
+      .select('id, platform, content, scheduled_for, status')
+      .eq('user_id', user.id)
+      .order('scheduled_for', { ascending: true })
+      .limit(50),
+
+    // Published posts with full analytics
+    supabase
+      .from('published_posts')
+      .select('id, platform, post_type, caption, published_at, likes, comments, shares, impressions, reach')
+      .eq('user_id', user.id)
+      .order('published_at', { ascending: false })
+      .limit(50),
+
+    // Marketing jobs for all user listings
     supabase
       .from('marketing_jobs')
-      .select('id, listing_id, status, created_at')
-      .eq('user_id', user.id)
-      .eq('status', 'completed')
-      .order('created_at', { ascending: false })
-      .limit(5),
+      .select('listing_id, status, description_status, captions_status, property_site_status, scheduled_posts_status, created_at')
+      .eq('user_id', user.id),
 
-    // Currently processing listings
+    // Currently processing listings (with photos for thumbnails)
     supabase
       .from('listings')
-      .select('id, title, preparation_status, marketing_status')
+      .select('id, title, preparation_status, marketing_status, photos!photos_listing_id_fkey(id, raw_url, processed_url)')
       .eq('user_id', user.id)
       .or('preparation_status.eq.preparing,marketing_status.eq.processing'),
+
+    // Brand profile exists?
+    supabase
+      .from('brand_profiles')
+      .select('id', { count: 'exact', head: true })
+      .eq('user_id', user.id),
+
+    // Social connections exist?
+    supabase
+      .from('social_connections')
+      .select('id', { count: 'exact', head: true })
+      .eq('user_id', user.id)
+      .eq('is_active', true),
+
+    // User tier
+    supabase
+      .from('profiles')
+      .select('subscription_tier, plan')
+      .eq('id', user.id)
+      .single(),
   ])
 
-  const listings = listingsResult.data || []
+  const rawListings = listingsResult.data || []
   const scheduledPosts = scheduledResult.data || []
   const publishedPosts = publishedResult.data || []
-  const marketingJobs = marketingResult.data || []
+  const marketingJobs = marketingJobsResult.data || []
   const processingListings = processingResult.data || []
 
-  // Calculate metrics
-  const totalImpressions = publishedPosts.reduce((sum, p) => sum + ((p.impressions as number) || 0), 0)
+  // Resolve thumbnails for listings
+  const listings = await Promise.all(
+    rawListings.map(async (listing: any) => {
+      const photos = listing.photos || []
+      let thumbnailUrl: string | null = null
 
-  const metrics = {
-    activeListings: listings.length,
-    scheduledPosts: scheduledResult.count || scheduledPosts.length,
-    publishedPosts: publishedResult.count || publishedPosts.length,
-    totalImpressions,
+      // Try hero photo first, then first photo with processed_url, then first photo
+      const heroPhoto = listing.hero_photo_id
+        ? photos.find((p: any) => p.id === listing.hero_photo_id)
+        : null
+      const firstPhoto = heroPhoto || photos.find((p: any) => p.processed_url) || photos[0]
+
+      if (firstPhoto) {
+        const photoPath = firstPhoto.processed_url || firstPhoto.raw_url
+        if (photoPath && !photoPath.startsWith('http')) {
+          const { data } = await supabase.storage.from('raw-images').createSignedUrl(photoPath, 3600)
+          thumbnailUrl = data?.signedUrl || null
+        } else {
+          thumbnailUrl = photoPath || null
+        }
+      }
+
+      return {
+        id: listing.id,
+        title: listing.title || listing.address || 'Untitled',
+        address: listing.address || undefined,
+        thumbnail: thumbnailUrl,
+        preparation_status: listing.preparation_status,
+        marketing_status: listing.marketing_status,
+        photoCount: photos.length,
+      }
+    })
+  )
+
+  // Build marketing status map
+  const marketingStatuses: Record<string, {
+    status: string
+    hasDescription: boolean
+    hasCaptions: boolean
+    hasSite: boolean
+    hasScheduledPosts: boolean
+  }> = {}
+  for (const job of marketingJobs) {
+    if (!marketingStatuses[job.listing_id]) {
+      marketingStatuses[job.listing_id] = {
+        status: job.status,
+        hasDescription: job.description_status === 'completed',
+        hasCaptions: job.captions_status === 'completed',
+        hasSite: job.property_site_status === 'completed',
+        hasScheduledPosts: job.scheduled_posts_status === 'completed',
+      }
+    }
   }
 
-  // Build recent activity feed (combine + sort by timestamp)
-  type ActivityItem = {
+  // Calculate analytics totals
+  const analyticsTotals = {
+    posts: publishedPosts.length,
+    likes: publishedPosts.reduce((sum, p) => sum + ((p.likes as number) || 0), 0),
+    comments: publishedPosts.reduce((sum, p) => sum + ((p.comments as number) || 0), 0),
+    shares: publishedPosts.reduce((sum, p) => sum + ((p.shares as number) || 0), 0),
+    impressions: publishedPosts.reduce((sum, p) => sum + ((p.impressions as number) || 0), 0),
+    reach: publishedPosts.reduce((sum, p) => sum + ((p.reach as number) || 0), 0),
+  }
+
+  // Build analytics posts with proper types
+  const analyticsPosts = publishedPosts.map(p => ({
+    id: p.id,
+    platform: p.platform as string,
+    post_type: (p.post_type as string) || undefined,
+    caption: (p.caption as string) || undefined,
+    published_at: p.published_at as string,
+    likes: (p.likes as number) || 0,
+    comments: (p.comments as number) || 0,
+    shares: (p.shares as number) || 0,
+    impressions: (p.impressions as number) || 0,
+    reach: (p.reach as number) || 0,
+  }))
+
+  // Build recent activity feed
+  type ActivityItemType = {
     type: 'listing_prepared' | 'marketing_completed' | 'post_scheduled' | 'post_published'
     title: string
     subtitle: string
@@ -85,7 +172,7 @@ export default async function DashboardPage() {
     icon: 'listing' | 'marketing' | 'calendar' | 'analytics'
   }
 
-  const activities: ActivityItem[] = []
+  const activities: ActivityItemType[] = []
 
   // Recent prepared listings
   listings
@@ -94,54 +181,122 @@ export default async function DashboardPage() {
     .forEach(l => {
       activities.push({
         type: 'listing_prepared',
-        title: l.title || 'Untitled Listing',
+        title: l.title,
         subtitle: 'Photos enhanced and ready',
-        timestamp: l.updated_at,
+        timestamp: rawListings.find(r => r.id === l.id)?.updated_at || new Date().toISOString(),
         href: `/dashboard/studio?id=${l.id}`,
         icon: 'listing',
       })
     })
 
   // Recent marketing completions
-  marketingJobs.slice(0, 3).forEach(j => {
-    const listing = listings.find(l => l.id === j.listing_id)
-    activities.push({
-      type: 'marketing_completed',
-      title: listing?.title || 'Listing',
-      subtitle: 'Marketing content generated',
-      timestamp: j.created_at,
-      href: `/dashboard/studio?id=${j.listing_id}`,
-      icon: 'marketing',
+  marketingJobs
+    .filter(j => j.status === 'completed')
+    .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+    .slice(0, 3)
+    .forEach(j => {
+      const listing = listings.find(l => l.id === j.listing_id)
+      activities.push({
+        type: 'marketing_completed',
+        title: listing?.title || 'Listing',
+        subtitle: 'Marketing content generated',
+        timestamp: j.created_at,
+        href: `/dashboard/studio?id=${j.listing_id}`,
+        icon: 'marketing',
+      })
     })
-  })
 
   // Upcoming scheduled posts
-  scheduledPosts.slice(0, 3).forEach(p => {
+  scheduledPosts
+    .filter(p => p.status === 'pending')
+    .slice(0, 3)
+    .forEach(p => {
+      activities.push({
+        type: 'post_scheduled',
+        title: `${((p.platform as string) || 'social').charAt(0).toUpperCase() + ((p.platform as string) || 'social').slice(1)} post scheduled`,
+        subtitle: p.content ? (p.content as string).slice(0, 60) + '...' : 'Scheduled for publishing',
+        timestamp: p.scheduled_for as string,
+        href: '/dashboard/calendar',
+        icon: 'calendar',
+      })
+    })
+
+  // Recent published posts
+  publishedPosts.slice(0, 3).forEach(p => {
     activities.push({
-      type: 'post_scheduled',
-      title: `${(p.platform || 'social').charAt(0).toUpperCase() + (p.platform || 'social').slice(1)} post scheduled`,
-      subtitle: p.content ? (p.content as string).slice(0, 60) + '...' : 'Scheduled for publishing',
-      timestamp: p.scheduled_for as string,
-      href: '/dashboard/calendar',
-      icon: 'calendar',
+      type: 'post_published',
+      title: `${((p.platform as string) || 'post').charAt(0).toUpperCase() + ((p.platform as string) || 'post').slice(1)} post published`,
+      subtitle: p.caption ? (p.caption as string).slice(0, 60) + '...' : 'Published successfully',
+      timestamp: p.published_at as string,
+      href: '/dashboard/content-studio/analytics',
+      icon: 'analytics',
     })
   })
 
   // Sort all activities by timestamp (most recent first)
   activities.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
 
-  // Processing items
-  const processingItems = processingListings.map(l => ({
-    id: l.id,
-    title: l.title || 'Untitled',
-    status: (l.preparation_status === 'preparing' ? 'preparing' : 'processing') as 'preparing' | 'processing',
+  // Resolve thumbnails for processing items
+  const processingItems = await Promise.all(
+    processingListings.map(async (listing: any) => {
+      const photos = listing.photos || []
+      let thumbnailUrl: string | null = null
+      const firstPhoto = photos.find((p: any) => p.processed_url) || photos[0]
+
+      if (firstPhoto) {
+        const photoPath = firstPhoto.processed_url || firstPhoto.raw_url
+        if (photoPath && !photoPath.startsWith('http')) {
+          const { data } = await supabase.storage.from('raw-images').createSignedUrl(photoPath, 3600)
+          thumbnailUrl = data?.signedUrl || null
+        } else {
+          thumbnailUrl = photoPath || null
+        }
+      }
+
+      return {
+        id: listing.id,
+        title: listing.title || 'Untitled',
+        thumbnail: thumbnailUrl,
+        preparation_status: listing.preparation_status as string | null,
+        marketing_status: listing.marketing_status as string | null,
+      }
+    })
+  )
+
+  // Setup status for getting-started checklist
+  const hasPrepared = listings.some(l => l.preparation_status === 'prepared')
+  const hasMarketing = Object.values(marketingStatuses).some(m => m.status === 'completed')
+
+  const setupStatus = {
+    hasListings: listings.length > 0,
+    hasBrand: (brandResult.count || 0) > 0,
+    hasSocials: (socialsResult.count || 0) > 0,
+    hasPrepared,
+    hasMarketing,
+    tier: profileResult.data?.subscription_tier || profileResult.data?.plan || 'free',
+  }
+
+  // Format scheduled posts for calendar container
+  const calendarPosts = scheduledPosts.map(p => ({
+    id: p.id,
+    platform: p.platform as string,
+    content: (p.content as string) || undefined,
+    scheduled_for: p.scheduled_for as string,
+    status: p.status as string,
   }))
 
   return (
-    <DashboardHome
-      metrics={metrics}
-      recentActivity={activities.slice(0, 8)}
+    <CommandCenter
+      listings={listings}
+      scheduledPosts={calendarPosts}
+      analytics={{
+        totals: analyticsTotals,
+        posts: analyticsPosts,
+      }}
+      recentActivity={activities.slice(0, 10)}
       processingItems={processingItems}
+      setupStatus={setupStatus}
+      marketingStatuses={marketingStatuses}
     />
   )
 }

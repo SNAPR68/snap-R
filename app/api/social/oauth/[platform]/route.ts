@@ -1,13 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
-import { createClient as createServiceClient } from '@supabase/supabase-js';
-
-function getServiceSupabase() {
-  return createServiceClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-  );
-}
+import { adminSupabase } from '@/lib/supabase/admin';
 
 export async function GET(
   req: NextRequest,
@@ -16,6 +9,7 @@ export async function GET(
   const platform = params.platform;
   const searchParams = req.nextUrl.searchParams;
   const code = searchParams.get('code');
+  const state = searchParams.get('state');
   const error = searchParams.get('error');
   const errorDescription = searchParams.get('error_description');
 
@@ -39,6 +33,26 @@ export async function GET(
       return NextResponse.redirect(`${redirectUrl}?error=Not authenticated`);
     }
 
+    // CSRF state validation: state should match the user's ID
+    // This prevents attackers from linking their social account to a victim's SnapR profile
+    if (!state) {
+      return NextResponse.redirect(`${redirectUrl}?error=Missing OAuth state parameter`);
+    }
+
+    // State may be JSON (Twitter PKCE) or plain user ID
+    let stateUserId: string;
+    try {
+      const parsed = JSON.parse(state);
+      stateUserId = parsed.csrf || state;
+    } catch {
+      stateUserId = state;
+    }
+
+    if (stateUserId !== user.id) {
+      console.error('OAuth CSRF mismatch:', { stateUserId, userId: user.id });
+      return NextResponse.redirect(`${redirectUrl}?error=OAuth state mismatch. Please try connecting again.`);
+    }
+
     if (platform === 'facebook' || platform === 'instagram') {
       return handleFacebookOAuth(code, user.id, platform, baseUrl, redirectUrl);
     } else if (platform === 'linkedin') {
@@ -46,9 +60,10 @@ export async function GET(
     }
 
     return NextResponse.redirect(`${redirectUrl}?error=Unsupported platform`);
-  } catch (err: any) {
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : 'Connection failed';
     console.error('OAuth callback error:', err);
-    return NextResponse.redirect(`${redirectUrl}?error=${encodeURIComponent(err.message || 'Connection failed')}`);
+    return NextResponse.redirect(`${redirectUrl}?error=${encodeURIComponent(message)}`);
   }
 }
 
@@ -59,7 +74,7 @@ async function handleFacebookOAuth(
   baseUrl: string,
   redirectUrl: string
 ) {
-  const serviceSupabase = getServiceSupabase();
+  const serviceSupabase = adminSupabase();
   const appId = process.env.NEXT_PUBLIC_FACEBOOK_APP_ID;
   const appSecret = process.env.FACEBOOK_APP_SECRET;
   const callbackUrl = `${baseUrl}/api/social/oauth/${platform}`;
@@ -132,14 +147,25 @@ async function handleFacebookOAuth(
     }
   }
 
+  // Calculate token expiry (long-lived FB tokens last ~60 days)
+  const expiresInSeconds = longLivedData.expires_in || 5184000; // default 60 days
+  const expiresAt = new Date(Date.now() + expiresInSeconds * 1000).toISOString();
+
   // Upsert connection
-  const connectionData: any = {
+  const connectionData: Record<string, unknown> = {
     user_id: userId,
     platform,
     platform_user_id: platform === 'instagram' ? instagramAccount?.id : userData.id,
     platform_username: platform === 'instagram' ? instagramAccount?.username : userData.name,
     access_token: platform === 'instagram' ? instagramAccount?.page_access_token : longLivedToken,
-    pages: pages.map((p: any) => ({ id: p.id, name: p.name })),
+    token_expires_at: expiresAt,
+    pages: pages.map((p: { id: string; name: string; access_token: string }) => ({ id: p.id, name: p.name, access_token: p.access_token })),
+    instagram_account: instagramAccount ? {
+      id: instagramAccount.id,
+      username: instagramAccount.username,
+      page_id: instagramAccount.page_id,
+      page_access_token: instagramAccount.page_access_token,
+    } : null,
     is_active: true,
     connected_at: new Date().toISOString(),
   };
@@ -182,7 +208,7 @@ async function handleLinkedInOAuth(
   baseUrl: string,
   redirectUrl: string
 ) {
-  const serviceSupabase = getServiceSupabase();
+  const serviceSupabase = adminSupabase();
   const clientId = process.env.NEXT_PUBLIC_LINKEDIN_CLIENT_ID;
   const clientSecret = process.env.LINKEDIN_CLIENT_SECRET;
   const callbackUrl = `${baseUrl}/api/social/oauth/linkedin`;
@@ -208,19 +234,26 @@ async function handleLinkedInOAuth(
 
   const accessToken = tokenData.access_token;
 
-  // Get user profile
-  const profileResponse = await fetch('https://api.linkedin.com/v2/me', {
+  // Get user profile using modern OpenID Connect userinfo endpoint
+  const profileResponse = await fetch('https://api.linkedin.com/v2/userinfo', {
     headers: { Authorization: `Bearer ${accessToken}` },
   });
   const profileData = await profileResponse.json();
 
-  // Upsert connection
-  const connectionData = {
+  // Calculate token expiry (LinkedIn tokens last ~60 days typically)
+  const linkedInExpiresIn = tokenData.expires_in || 5184000; // default 60 days
+  const linkedInExpiresAt = new Date(Date.now() + linkedInExpiresIn * 1000).toISOString();
+
+  // Upsert connection — userinfo returns { sub, name, given_name, family_name, email, picture }
+  const connectionData: Record<string, unknown> = {
     user_id: userId,
     platform: 'linkedin',
-    platform_user_id: profileData.id,
-    platform_username: `${profileData.localizedFirstName} ${profileData.localizedLastName}`,
+    platform_user_id: profileData.sub,
+    platform_username: profileData.name || `${profileData.given_name || ''} ${profileData.family_name || ''}`.trim(),
     access_token: accessToken,
+    refresh_token: tokenData.refresh_token || null,
+    token_expires_at: linkedInExpiresAt,
+    linkedin_urn: `urn:li:person:${profileData.sub}`,
     is_active: true,
     connected_at: new Date().toISOString(),
   };

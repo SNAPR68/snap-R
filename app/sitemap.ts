@@ -1,9 +1,14 @@
 import { MetadataRoute } from 'next';
+import { createClient } from '@supabase/supabase-js';
 
-export default function sitemap(): MetadataRoute.Sitemap {
+export const dynamic = 'force-dynamic';
+export const revalidate = 3600; // Regenerate sitemap every hour
+
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = 'https://snap-r.com';
-  
-  return [
+
+  // Static routes
+  const staticRoutes: MetadataRoute.Sitemap = [
     {
       url: baseUrl,
       lastModified: new Date(),
@@ -21,6 +26,12 @@ export default function sitemap(): MetadataRoute.Sitemap {
       lastModified: new Date(),
       changeFrequency: 'monthly',
       priority: 0.8,
+    },
+    {
+      url: `${baseUrl}/partners`,
+      lastModified: new Date(),
+      changeFrequency: 'monthly',
+      priority: 0.7,
     },
     {
       url: `${baseUrl}/academy`,
@@ -53,4 +64,31 @@ export default function sitemap(): MetadataRoute.Sitemap {
       priority: 0.3,
     },
   ];
+
+  // Dynamic property pages
+  try {
+    const supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY!
+    );
+
+    const { data: sites } = await supabase
+      .from('property_sites')
+      .select('slug, updated_at')
+      .eq('is_published', true)
+      .order('updated_at', { ascending: false })
+      .limit(500);
+
+    const propertyRoutes: MetadataRoute.Sitemap = (sites || []).map((site) => ({
+      url: `${baseUrl}/p/${site.slug}`,
+      lastModified: new Date(site.updated_at),
+      changeFrequency: 'weekly' as const,
+      priority: 0.7,
+    }));
+
+    return [...staticRoutes, ...propertyRoutes];
+  } catch (error) {
+    console.error('[Sitemap] Error fetching property sites:', error);
+    return staticRoutes;
+  }
 }

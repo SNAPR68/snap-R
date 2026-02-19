@@ -1,6 +1,8 @@
 // Social Media OAuth Configuration
 // Facebook, Instagram, LinkedIn integration
 
+import { randomBytes, createHash } from 'crypto';
+
 export const SOCIAL_PLATFORMS = {
   facebook: {
     id: 'facebook',
@@ -28,7 +30,7 @@ export const SOCIAL_PLATFORMS = {
     name: 'LinkedIn',
     icon: 'Linkedin',
     color: '#0A66C2',
-    scopes: ['r_liteprofile', 'r_emailaddress', 'w_member_social'],
+    scopes: ['openid', 'profile', 'email', 'w_member_social'],
     authUrl: 'https://www.linkedin.com/oauth/v2/authorization',
     tokenUrl: 'https://www.linkedin.com/oauth/v2/accessToken',
     apiBase: 'https://api.linkedin.com/v2',
@@ -81,11 +83,20 @@ export const SOCIAL_CREDENTIALS = {
   },
 } as const;
 
+// PKCE helpers for Twitter OAuth 2.0
+function generateCodeVerifier(): string {
+  return randomBytes(32).toString('base64url');
+}
+
+function generateCodeChallenge(verifier: string): string {
+  return createHash('sha256').update(verifier).digest('base64url');
+}
+
 // Generate OAuth URL
 export function getOAuthUrl(platform: SocialPlatform, redirectUri: string, state: string): string {
   const config = SOCIAL_PLATFORMS[platform];
   const credentials = SOCIAL_CREDENTIALS[platform];
-  
+
   const params = new URLSearchParams({
     client_id: credentials.clientId,
     redirect_uri: redirectUri,
@@ -103,8 +114,13 @@ export function getOAuthUrl(platform: SocialPlatform, redirectUri: string, state
     params.append('response_type', 'code');
   } else if (platform === 'twitter') {
     params.append('scope', config.scopes.join(' '));
-    params.append('code_challenge', 'challenge'); // Simplified, should use PKCE
-    params.append('code_challenge_method', 'plain');
+    // Proper PKCE with S256 method
+    const verifier = generateCodeVerifier();
+    const challenge = generateCodeChallenge(verifier);
+    params.append('code_challenge', challenge);
+    params.append('code_challenge_method', 'S256');
+    // Embed verifier in state so callback can use it for token exchange
+    params.set('state', JSON.stringify({ csrf: state, code_verifier: verifier }));
   }
 
   return `${config.authUrl}?${params.toString()}`;
@@ -114,7 +130,8 @@ export function getOAuthUrl(platform: SocialPlatform, redirectUri: string, state
 export async function exchangeCodeForToken(
   platform: SocialPlatform,
   code: string,
-  redirectUri: string
+  redirectUri: string,
+  codeVerifier?: string
 ): Promise<{
   accessToken: string;
   refreshToken?: string;
@@ -132,12 +149,18 @@ export async function exchangeCodeForToken(
     grant_type: 'authorization_code',
   });
 
+  // Include PKCE verifier for Twitter
+  if (platform === 'twitter' && codeVerifier) {
+    params.append('code_verifier', codeVerifier);
+  }
+
   const response = await fetch(config.tokenUrl, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/x-www-form-urlencoded',
     },
     body: params.toString(),
+    signal: AbortSignal.timeout(10000),
   });
 
   if (!response.ok) {
@@ -155,31 +178,72 @@ export async function exchangeCodeForToken(
   };
 }
 
-// Get user profile from platform
-export async function getUserProfile(platform: SocialPlatform, accessToken: string): Promise<any> {
+// Refresh an expired access token
+export async function refreshAccessToken(
+  platform: SocialPlatform,
+  tokenOrRefreshToken: string
+): Promise<{ accessToken: string; expiresIn?: number }> {
   const config = SOCIAL_PLATFORMS[platform];
+  const credentials = SOCIAL_CREDENTIALS[platform];
 
+  if (platform === 'facebook' || platform === 'instagram') {
+    // Facebook/Instagram: exchange current access_token for a new long-lived token.
+    // Note: Facebook does NOT use refresh_token — you pass the current access_token
+    // with the fb_exchange_token grant type to get a new long-lived token.
+    const params = new URLSearchParams({
+      grant_type: 'fb_exchange_token',
+      client_id: credentials.clientId,
+      client_secret: credentials.clientSecret,
+      fb_exchange_token: tokenOrRefreshToken,
+    });
+    const res = await fetch(`${config.tokenUrl}?${params}`, { signal: AbortSignal.timeout(10000) });
+    if (!res.ok) throw new Error(`FB token refresh failed: ${await res.text()}`);
+    const data = await res.json();
+    return { accessToken: data.access_token, expiresIn: data.expires_in };
+  }
+
+  // LinkedIn and others: standard refresh_token grant
+  const params = new URLSearchParams({
+    grant_type: 'refresh_token',
+    refresh_token: tokenOrRefreshToken,
+    client_id: credentials.clientId,
+    client_secret: credentials.clientSecret,
+  });
+  const res = await fetch(config.tokenUrl, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: params.toString(),
+    signal: AbortSignal.timeout(10000),
+  });
+  if (!res.ok) throw new Error(`Token refresh failed: ${await res.text()}`);
+  const data = await res.json();
+  return { accessToken: data.access_token, expiresIn: data.expires_in };
+}
+
+// Get user profile from platform
+export async function getUserProfile(platform: SocialPlatform, accessToken: string): Promise<Record<string, unknown>> {
   let url: string;
-  let headers: Record<string, string> = {};
+  const headers: Record<string, string> = {};
 
   switch (platform) {
     case 'facebook':
-      url = `${config.apiBase}/me?fields=id,name,picture`;
+      url = `https://graph.facebook.com/v18.0/me?fields=id,name,picture`;
       headers['Authorization'] = `Bearer ${accessToken}`;
       break;
     case 'instagram':
-      url = `${config.apiBase}/me?fields=id,username,account_type`;
+      url = `https://graph.facebook.com/v18.0/me?fields=id,username,account_type`;
       headers['Authorization'] = `Bearer ${accessToken}`;
       break;
     case 'linkedin':
-      url = `${config.apiBase}/me`;
+      // Use modern OpenID Connect userinfo endpoint
+      url = 'https://api.linkedin.com/v2/userinfo';
       headers['Authorization'] = `Bearer ${accessToken}`;
       break;
     default:
       throw new Error(`Profile fetch not implemented for ${platform}`);
   }
 
-  const response = await fetch(url, { headers });
+  const response = await fetch(url, { headers, signal: AbortSignal.timeout(10000) });
 
   if (!response.ok) {
     throw new Error(`Failed to fetch profile: ${await response.text()}`);
@@ -189,9 +253,13 @@ export async function getUserProfile(platform: SocialPlatform, accessToken: stri
 }
 
 // Get Facebook Pages (for publishing)
-export async function getFacebookPages(accessToken: string): Promise<any[]> {
+export async function getFacebookPages(accessToken: string): Promise<Record<string, unknown>[]> {
   const response = await fetch(
-    `https://graph.facebook.com/v18.0/me/accounts?access_token=${accessToken}`
+    `https://graph.facebook.com/v18.0/me/accounts`,
+    {
+      headers: { 'Authorization': `Bearer ${accessToken}` },
+      signal: AbortSignal.timeout(10000),
+    }
   );
 
   if (!response.ok) {
@@ -203,9 +271,13 @@ export async function getFacebookPages(accessToken: string): Promise<any[]> {
 }
 
 // Get Instagram accounts connected to Facebook Pages
-export async function getInstagramAccounts(accessToken: string, pageId: string): Promise<any> {
+export async function getInstagramAccounts(accessToken: string, pageId: string): Promise<Record<string, unknown>> {
   const response = await fetch(
-    `https://graph.facebook.com/v18.0/${pageId}?fields=instagram_business_account&access_token=${accessToken}`
+    `https://graph.facebook.com/v18.0/${pageId}?fields=instagram_business_account`,
+    {
+      headers: { 'Authorization': `Bearer ${accessToken}` },
+      signal: AbortSignal.timeout(10000),
+    }
   );
 
   if (!response.ok) {

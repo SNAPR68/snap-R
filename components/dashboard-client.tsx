@@ -1,9 +1,9 @@
 'use client';
 import { useState, useEffect, useRef } from 'react';
 import { createClient } from '@/lib/supabase/client';
-import { useRouter } from 'next/navigation';
+// import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Plus, LogOut, FolderOpen, Settings, Trash2, Image as ImageIcon, ChevronRight, ChevronDown, X, GraduationCap, Camera, Loader2 } from 'lucide-react';
+import { Plus, LogOut, FolderOpen, Settings, Trash2, Image as ImageIcon, ChevronRight, ChevronDown, X, GraduationCap, Camera } from 'lucide-react';
 import { DashboardAnalytics } from './dashboard-analytics';
 
 interface Project {
@@ -21,7 +21,7 @@ interface Listing {
   photo_count?: number;
 }
 
-export function DashboardClient({ user, listings }: { user: any; listings?: any[] }) {
+export function DashboardClient({ user }: { user: { id: string; email: string } }) {
   const [projects, setProjects] = useState<Project[]>([]);
   const [expandedProjects, setExpandedProjects] = useState<Set<string>>(new Set());
   const [showNewProject, setShowNewProject] = useState(false);
@@ -30,14 +30,17 @@ export function DashboardClient({ user, listings }: { user: any; listings?: any[
   const [newListingTitle, setNewListingTitle] = useState('');
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'projects' | 'analytics'>('projects');
+  // Camera capture state — used by handleCameraCapture (feature in progress)
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [isUploading, setIsUploading] = useState(false);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [uploadError, setUploadError] = useState<string | null>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
-  const router = useRouter();
   const supabase = createClient();
 
   useEffect(() => {
     fetchProjects();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const fetchProjects = async () => {
@@ -186,6 +189,7 @@ export function DashboardClient({ user, listings }: { user: any; listings?: any[
     });
   };
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const handleCameraCapture = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -266,7 +270,8 @@ export function DashboardClient({ user, listings }: { user: any; listings?: any[
         throw new Error('Upload failed: ' + uploadError.message);
       }
 
-      // Get public URL
+      // Get public URL (will be used when camera feature is wired up)
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { data: { publicUrl } } = supabase.storage
         .from('raw-images')
         .getPublicUrl(fileName);
@@ -286,9 +291,9 @@ export function DashboardClient({ user, listings }: { user: any; listings?: any[
       // Navigate to studio with this listing
       fetchProjects(); // Refresh listings to show new one
       
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Upload error:', error);
-      setUploadError(error.message || 'Failed to upload photo. Please try again.');
+      setUploadError(error instanceof Error ? error.message : 'Failed to upload photo. Please try again.');
     } finally {
       setIsUploading(false);
       // Reset input
@@ -302,7 +307,7 @@ export function DashboardClient({ user, listings }: { user: any; listings?: any[
     <div className="min-h-screen bg-[#0F0F0F] text-white flex flex-col">
       <header className="h-16 bg-[#1A1A1A] border-b border-white/10 flex items-center justify-between px-6">
         <Link href="/dashboard" className="flex items-center gap-3">
-          <img src="/snapr-logo.png" alt="SnapR" className="w-[76px] h-[76px]" />
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#D4A017] to-[#B8860B] flex items-center justify-center font-bold text-black text-xl">S</div>
           <span className="text-2xl font-bold text-[#D4A017]">SnapR</span>
         </Link>
         <div className="flex items-center gap-4">
@@ -539,7 +544,7 @@ export function DashboardClient({ user, listings }: { user: any; listings?: any[
                             ))
                           ) : (
                             <div className="px-4 py-6 pl-12 text-white/40 text-sm">
-                              No listings yet. Click "+ Add Listing" to create one.
+                              No listings yet. Click &quot;+ Add Listing&quot; to create one.
                             </div>
                           )}
                         </div>

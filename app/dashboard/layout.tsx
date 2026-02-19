@@ -2,6 +2,8 @@ import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { FeedbackButton } from '@/components/feedback-button'
 import DashboardSidebar from '@/components/dashboard-sidebar'
+import { MobileSidebarProvider } from '@/components/mobile-sidebar-provider'
+import { MobileDashboardHeader } from '@/components/mobile-dashboard-header'
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createClient()
@@ -11,9 +13,14 @@ export default async function DashboardLayout({ children }: { children: React.Re
   // Fetch profile for usage info
   const { data: profile } = await supabase
     .from('profiles')
-    .select('subscription_tier, plan, listings_per_month')
+    .select('subscription_tier, plan, listings_per_month, onboarded_at')
     .eq('id', user.id)
     .single()
+
+  // Enforce onboarding — redirect if user hasn't completed it
+  if (!profile?.onboarded_at) {
+    redirect('/onboarding')
+  }
 
   // Count actual listings created this month
   const now = new Date()
@@ -32,12 +39,15 @@ export default async function DashboardLayout({ children }: { children: React.Re
   const listingsLimit = profile?.listings_per_month || tierDefaults[tier] || 3
 
   return (
-    <div className="min-h-screen bg-[#0F0F0F] text-white flex">
-      <DashboardSidebar tier={tier} listingsUsed={listingsUsed} listingsLimit={listingsLimit} />
-      <main className="flex-1 overflow-auto">
-        {children}
-      </main>
-      <FeedbackButton />
-    </div>
+    <MobileSidebarProvider>
+      <div className="min-h-screen bg-[#0F0F0F] text-white flex flex-col md:flex-row">
+        <MobileDashboardHeader />
+        <DashboardSidebar tier={tier} listingsUsed={listingsUsed} listingsLimit={listingsLimit} />
+        <main className="flex-1 overflow-auto">
+          {children}
+        </main>
+        <FeedbackButton />
+      </div>
+    </MobileSidebarProvider>
   )
 }

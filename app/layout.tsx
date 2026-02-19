@@ -1,11 +1,18 @@
 import Script from 'next/script';
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import { Inter } from 'next/font/google';
 import './globals.css';
 import { CookieConsent } from '@/components/cookie-consent';
 import { AIChatbot } from '@/components/ai-chatbot';
+import { ToastProvider } from '@/components/toast';
 
 const inter = Inter({ subsets: ['latin'] });
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 5,
+};
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://snap-r.com'),
@@ -22,6 +29,9 @@ export const metadata: Metadata = {
     index: true,
     follow: true,
   },
+  alternates: {
+    canonical: '/',
+  },
   openGraph: {
     type: 'website',
     locale: 'en_US',
@@ -29,20 +39,11 @@ export const metadata: Metadata = {
     siteName: 'SnapR',
     title: 'SnapR - AI Real Estate Photo Enhancement',
     description: 'Transform ordinary property listings into luxury showcases in seconds. AI-powered photo enhancement for real estate professionals.',
-    images: [
-      {
-        url: '/og-image.png',
-        width: 1200,
-        height: 630,
-        alt: 'SnapR - AI Real Estate Photo Enhancement',
-      },
-    ],
   },
   twitter: {
     card: 'summary_large_image',
     title: 'SnapR - AI Real Estate Photo Enhancement',
     description: 'Transform ordinary property listings into luxury showcases in seconds.',
-    images: ['/og-image.png'],
   },
   icons: {
     icon: '/favicon.ico',
@@ -59,25 +60,56 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
-        <link rel="canonical" href="https://snap-r.com" />
+        {/* Organization structured data */}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              '@context': 'https://schema.org',
+              '@type': 'SoftwareApplication',
+              name: 'SnapR',
+              applicationCategory: 'BusinessApplication',
+              description: 'AI-powered real estate photo enhancement and marketing automation platform',
+              url: 'https://snap-r.com',
+              operatingSystem: 'Web',
+              offers: {
+                '@type': 'Offer',
+                price: '0',
+                priceCurrency: 'USD',
+                description: 'Free tier with 3 listings per month',
+              },
+              publisher: {
+                '@type': 'Organization',
+                name: 'SnapR',
+                url: 'https://snap-r.com',
+              },
+            }),
+          }}
+        />
       </head>
       <body className={inter.className}>
+        <ToastProvider>
         {children}
+        </ToastProvider>
         <CookieConsent />
         <AIChatbot />
         <Script src="https://t.contentsquare.net/uxa/72ac82fa71720.js" strategy="afterInteractive" id="contentsquare" />
-        <Script
-          src="https://www.googletagmanager.com/gtag/js?id=G-XXXXXXXXXX"
-          strategy="afterInteractive"
-        />
-        <Script id="google-analytics" strategy="afterInteractive">
-          {`
-            window.dataLayer = window.dataLayer || [];
-            function gtag(){dataLayer.push(arguments);}
-            gtag('js', new Date());
-            gtag('config', 'G-XXXXXXXXXX');
-          `}
-        </Script>
+        {process.env.NEXT_PUBLIC_GA_ID && (
+          <>
+            <Script
+              src={`https://www.googletagmanager.com/gtag/js?id=${process.env.NEXT_PUBLIC_GA_ID}`}
+              strategy="afterInteractive"
+            />
+            <Script id="google-analytics" strategy="afterInteractive">
+              {`
+                window.dataLayer = window.dataLayer || [];
+                function gtag(){dataLayer.push(arguments);}
+                gtag('js', new Date());
+                gtag('config', '${process.env.NEXT_PUBLIC_GA_ID}');
+              `}
+            </Script>
+          </>
+        )}
       </body>
     </html>
   );

@@ -23,7 +23,7 @@ interface PhotoScore {
   heroPotential: number;
   enhancementPotential: number;
   aiFeedback: string;
-  recommendations: any[];
+  recommendations: { toolId: string; toolName: string; priority: number; impactEstimate: number; impactDescription: string; reason: string }[];
 }
 
 interface Recommendation {
@@ -146,8 +146,8 @@ export default function ListingIntelligenceDashboard({ onApplyEnhancement, onApp
       });
       setPhotoScores(data.result.photoScores);
       setRecommendations(data.result.topRecommendations);
-    } catch (err: any) {
-      setError(err.message || 'Failed to analyze photos');
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Failed to analyze photos');
     } finally {
       setIsAnalyzing(false);
     }

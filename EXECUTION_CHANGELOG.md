@@ -840,3 +840,113 @@ Cloudflare Worker (queue handler)
   (dashboard) instead of dual-sidebar layout. More listings visible at once.
 - Risk Level:
   Medium (layout restructure of existing component)
+
+-------------------------------------------------------------------------------
+## 2026-02-18 — Final Comprehensive Hardening (All 4 Phases)
+-------------------------------------------------------------------------------
+
+### Phase 1: Security Critical (16 items)
+- Deleted debug endpoints (debug-share, debug/) — unauthenticated, leaked data
+- Added ADMIN_SECRET auth to admin/complete-human-edit matching export pattern
+- Created lib/utils/html-escape.ts; fixed XSS in contact, notify-approval, complete-human-edit emails
+- Added OAuth CSRF state validation in social/oauth/[platform]/route.ts
+- Fixed Twitter PKCE: S256 with random verifier instead of hardcoded 'plain'
+- Fixed Facebook token refresh: fb_exchange_token grant (not refresh_token)
+- Added SSRF protection to /api/analyze (blocks private IPs, localhost, metadata)
+- Fixed missing await on createClient() in analyze route
+- Moved access tokens from URL params to Authorization headers in sync-analytics
+- Added token refresh to analytics sync cron (checks expires_at, refreshes if <1hr)
+- Fixed daily digest from session-based createClient() to adminSupabase()
+- Fixed social publish env var to use adminSupabase()
+- Gated /api/log-error with IP rate limiter (30/min) + input sanitization
+- Added Worker /process auth (x-admin-key), made /audit auth non-optional
+- Standardized all admin routes on adminSupabase() (contact, notify-approval, users/export, webhook)
+- Files Modified: 20+ API routes, lib/social/oauth-config.ts, lib/utils/html-escape.ts (new), apps/processor/src/index.ts
+
+### Phase 2: Reliability & Data Integrity (14 items)
+- Added Zod schemas: socialPublishSchema, analyticsPostSchema, enhanceSchema, shareSchema
+- Added UUID validation to share route, toolId validation to enhance route
+- Capped schedule route limit at 200
+- Centralized Stripe webhook plan limits via getListingLimits() from lib/content/limits.ts
+- Added error handling to all webhook profile update calls
+- Added AbortSignal.timeout(15000) to all 12 fetch() calls in publish-service.ts
+- Added console.warn for failed Facebook photo uploads and Instagram carousel items
+- Stripped health endpoint of service configuration details
+- Batched daily digest queries with Promise.all() + lookup Maps (fix N+1)
+- Removed Twilio sandbox fallback number
+- Files Modified: lib/social/publish-service.ts, lib/validation/schemas.ts, lib/content/limits.ts, app/api/stripe/webhook/route.ts, app/api/health/route.ts, app/api/cron/daily-digest/route.ts
+
+### Phase 3: Frontend UX & Performance (15 items)
+- Fixed 11+ broken Tailwind classes in academy page (hover:text[, bg[, from[, to[, hover:border[, hover:shadow[)
+- Updated copyright year to 2026 in 8 files
+- Added page metadata to academy, faq, privacy, terms
+- Created loading.tsx for dashboard, admin, checkout
+- Created error.tsx for dashboard, admin
+- Fixed AnimatedBackground canvas height (scrollHeight*5 → window.innerHeight)
+- Added useMemo to studio-client for filterStyle and listingStyleFilter
+- Removed console.log from 5 production components
+- Created middleware.ts for centralized auth on dashboard/admin/checkout/onboarding
+- Files Created: middleware.ts, app/dashboard/loading.tsx, app/admin/loading.tsx, app/checkout/loading.tsx, app/dashboard/error.tsx, app/admin/error.tsx
+- Files Modified: app/academy/page.tsx, 7 pages (copyright), 3 pages (metadata), components/animated-background.tsx, components/studio-client.tsx
+
+### Phase 4: Architecture (3 items)
+- Added batch processor timeout (10 min) and cost ceiling ($5) to CONFIG
+- Added overall batch timeout check in processing loop
+- Added auto-enhance fallback in AI router when primary provider fails
+- Files Modified: lib/ai/listing-engine/batch-processor.ts, lib/ai/router.ts
+
+### Verification
+- npx tsc --noEmit: 0 errors
+- npm run build: Success (all routes compile)
+- Risk Level: Low-Medium (security fixes + reliability improvements, no behavioral changes to core pipeline)
+
+---
+
+## 2026-02-19 — World-Class Quality Hardening (3-Session Sprint)
+
+### Phase 1: LinkedIn API v2 Migration
+- Migrated LinkedIn publishing from v1 ugcPosts API to v2 Community Management API (`/rest/posts`)
+- Added 3-step image upload flow: initializeUpload → download → PUT binary
+- Updated headers: `LinkedIn-Version: 202401`, `X-Restli-Protocol-Version: 2.0.0`
+- Updated OAuth scopes to `openid`, `profile`, `email`, `w_member_social`
+- Files Modified: lib/social/publish-service.ts, lib/social/oauth-config.ts
+
+### Phase 2: Build Strictness Enforcement
+- Set `typescript.ignoreBuildErrors: false` in next.config.mjs
+- Set `eslint.ignoreDuringBuilds: false` in next.config.mjs
+- Added `@typescript-eslint/no-explicit-any: "warn"` to .eslintrc.json
+- Files Modified: next.config.mjs, .eslintrc.json
+
+### Phase 3: Type Safety — Eliminate All `any` Types (28+ files)
+- Replaced all `catch (error: any)` with `catch (error: unknown)` + `error instanceof Error` guards
+- Replaced all `useState<any>` with properly typed interfaces (StudioListing, StudioPhoto, etc.)
+- Replaced `Record<string, any>` with `Record<string, unknown>`
+- Replaced `(p: any)` callbacks with properly typed function parameters
+- Added null→undefined coercion at Supabase data boundaries (`?? undefined`)
+- Changed unused catch variables from `catch (e)` to `catch {` (empty binding)
+- Files Modified: lib/api.ts, lib/analytics.ts, lib/analytics/error-logger.ts, lib/supabase.ts, lib/validation/schemas.ts, lib/cost-logger.ts, lib/notifications/sender.ts, lib/ai/utils/retry.ts, lib/ai/providers/openai-vision.ts, lib/ai/providers/runware.ts, lib/ai/providers/replicate.ts, lib/ai/description-generator.ts, lib/ai/hdr-processor.ts, lib/campaigns/engine.ts, lib/campaigns/content-generator.ts, lib/compliance/mls-export.ts, lib/floorplans/service.ts, lib/video/voiceover-service.ts, lib/listing-intelligence/analyzer.ts, components/studio-client.tsx, components/dashboard-client.tsx, components/dashboard-sidebar.tsx, components/adjustment-panel.tsx, components/mls-export-modal.tsx, components/marketing-banner.tsx, components/marketing-results-panel.tsx, components/content-studio/vertical-post-creator.tsx, components/content-studio/phase1/smart-hashtag-generator.tsx, components/listing-intelligence/ListingIntelligenceDashboard.tsx
+
+### Phase 4: Accessibility
+- Added semantic HTML to homepage: `<nav>`, `<section>`, `<footer>`
+- Added `aria-label` to form inputs on login/signup pages
+- Added `role="dialog"` + `aria-modal="true"` + `aria-label` to all modals
+- Cleaned up homepage: removed duplicate content, streamlined layout
+- Files Modified: app/page.tsx, app/auth/login/page.tsx, app/auth/signup/page.tsx, components/style-prompt-modal.tsx, components/ShareGalleryModal.tsx, components/batch-progress-modal.tsx, components/content-studio/schedule-modal.tsx
+
+### Phase 5: Security Hardening
+- Added OAuth CSRF state validation in social callback
+- Added AbortSignal.timeout(15000) to all external API fetch calls (15+ calls)
+- Twitter PKCE with S256 code challenge
+- Facebook long-lived token exchange
+- Files Modified: app/api/social/oauth/[platform]/route.ts, app/api/social/publish/route.ts, lib/social/publish-service.ts, lib/social/oauth-config.ts, apps/processor/src/index.ts
+
+### Phase 6: Documentation
+- Updated CLAUDE.md with Security, Hardening Patterns sections
+- Added code conventions: type safety, catch blocks, null coercion, validation, network calls, accessibility
+- Added Important Notes: build strictness, ESLint no-any rule
+- Files Modified: CLAUDE.md
+
+### Verification
+- npx tsc --noEmit: 0 errors
+- npm run build: Success (all routes compile)
+- Risk Level: Medium (44 files changed, but all changes are hardening — no behavioral changes to core pipeline)

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { X, Download, Loader2, FileArchive, CheckCircle, AlertCircle, Building2 } from 'lucide-react';
+import { X, Download, Loader2, FileArchive, CheckCircle, AlertCircle } from 'lucide-react';
 
 interface Photo {
   id: string;
@@ -60,8 +60,6 @@ export function MlsExportModal({ photos, listingTitle, listingAddress, onClose }
     setResult(null);
 
     try {
-      console.log("[MLS Modal] Photos received:", photos);
-      console.log("[MLS Modal] Photos received:", photos);
       const exportPhotos = photos.map((photo, index) => ({
         url: photo.signedProcessedUrl || photo.processed_url,
         toolId: photo.variant || 'auto-enhance',
@@ -87,8 +85,8 @@ export function MlsExportModal({ photos, listingTitle, listingAddress, onClose }
       } else {
         setResult({ success: false, error: data.error || 'Export failed' });
       }
-    } catch (err: any) {
-      setResult({ success: false, error: err.message });
+    } catch (err: unknown) {
+      setResult({ success: false, error: err instanceof Error ? err.message : 'Export failed' });
     } finally {
       setLoading(false);
     }

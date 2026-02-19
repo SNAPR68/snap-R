@@ -1,7 +1,7 @@
 import { createClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
-import { ArrowLeft, User, Shield, Bell, CreditCard, Building2 } from 'lucide-react';
+import { ArrowLeft, User, Shield, Bell, CreditCard, Building2, Share2, ChevronRight } from 'lucide-react';
 import { DataPrivacyActions } from './data-actions';
 import { ComplianceSettings } from '@/components/compliance-settings';
 
@@ -52,8 +52,8 @@ export default async function SettingsPage() {
               <p className="text-white capitalize">{profile?.plan || 'Free'}</p>
             </div>
             <div>
-              <label className="block text-white/50 text-sm mb-1">Credits</label>
-              <p className="text-[#D4A017] font-semibold">{profile?.credits || 0}</p>
+              <label className="block text-white/50 text-sm mb-1">Region</label>
+              <p className="text-white capitalize">{profile?.region || 'Not set'}</p>
             </div>
           </div>
         </section>
@@ -69,7 +69,35 @@ export default async function SettingsPage() {
           </Link>
         </section>
 
-        {/* MLS Compliance Section - NEW */}
+        {/* Social Connections */}
+        <section className="bg-[#1A1A1A] border border-white/10 rounded-xl p-6 mb-6">
+          <div className="flex items-center gap-3 mb-4">
+            <Share2 className="w-6 h-6 text-[#D4A017]" />
+            <h2 className="text-xl font-semibold">Social Connections</h2>
+          </div>
+          <p className="text-white/60 text-sm mb-4">
+            Connect your Facebook, Instagram, and LinkedIn accounts to publish posts directly from SnapR.
+          </p>
+          <Link href="/dashboard/settings/social" className="inline-flex items-center gap-2 px-4 py-2 bg-white/10 border border-white/20 rounded-lg hover:bg-white/20 text-sm">
+            Manage Connections <ChevronRight className="w-4 h-4" />
+          </Link>
+        </section>
+
+        {/* Notification Preferences */}
+        <section className="bg-[#1A1A1A] border border-white/10 rounded-xl p-6 mb-6">
+          <div className="flex items-center gap-3 mb-4">
+            <Bell className="w-6 h-6 text-[#D4A017]" />
+            <h2 className="text-xl font-semibold">Notification Preferences</h2>
+          </div>
+          <p className="text-white/60 text-sm mb-4">
+            Manage your email and WhatsApp notification settings, quiet hours, and daily briefings.
+          </p>
+          <Link href="/dashboard/settings/notifications" className="inline-flex items-center gap-2 px-4 py-2 bg-white/10 border border-white/20 rounded-lg hover:bg-white/20 text-sm">
+            Manage Notifications <ChevronRight className="w-4 h-4" />
+          </Link>
+        </section>
+
+        {/* MLS Compliance Section */}
         <section className="bg-[#1A1A1A] border border-white/10 rounded-xl p-6 mb-6">
           <div className="flex items-center gap-3 mb-6">
             <Building2 className="w-6 h-6 text-[#D4A017]" />

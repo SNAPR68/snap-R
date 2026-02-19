@@ -18,6 +18,35 @@ const TWILIO_WHATSAPP_FROM = process.env.TWILIO_WHATSAPP_FROM || 'whatsapp:+1415
 const RESEND_API_KEY = process.env.RESEND_API_KEY;
 
 // ================================================
+// NOTIFICATION LOGGER
+// ================================================
+
+async function logNotification(
+  userId: string | undefined,
+  userEmail: string,
+  type: string,
+  channel: 'email' | 'whatsapp',
+  success: boolean,
+  messageId?: string,
+  error?: string
+): Promise<void> {
+  try {
+    const { adminSupabase } = await import('@/lib/supabase/admin');
+    await adminSupabase().from('notification_logs').insert({
+      user_id: userId || null,
+      user_email: userEmail,
+      notification_type: type,
+      channel,
+      success,
+      message_id: messageId || null,
+      error: error || null,
+    });
+  } catch (e) {
+    console.error('[Notify] Failed to log notification:', e);
+  }
+}
+
+// ================================================
 // MAIN SEND FUNCTION
 // ================================================
 
@@ -55,12 +84,16 @@ export async function sendNotification(
   if (prefs.email && userEmail) {
     const emailResult = await sendEmail(userEmail, userName, payload.type, ctx);
     results.push(emailResult);
+    // Log to DB (fire-and-forget)
+    logNotification(payload.userId, userEmail, payload.type, 'email', emailResult.success, emailResult.messageId, emailResult.error).catch(() => {});
   }
 
   // Send WhatsApp
   if (prefs.whatsapp && prefs.whatsappNumber) {
     const whatsappResult = await sendWhatsApp(prefs.whatsappNumber, payload.type, ctx);
     results.push(whatsappResult);
+    // Log to DB (fire-and-forget)
+    logNotification(payload.userId, userEmail, payload.type, 'whatsapp', whatsappResult.success, whatsappResult.messageId, whatsappResult.error).catch(() => {});
   }
 
   return results;
@@ -74,7 +107,7 @@ async function sendEmail(
   to: string,
   name: string,
   type: NotificationType,
-  ctx: Record<string, any>
+  ctx: Record<string, unknown>
 ): Promise<NotificationResult> {
   if (!RESEND_API_KEY) {
     console.log('[Notify] Resend API key not configured');
@@ -110,9 +143,10 @@ async function sendEmail(
     console.log('[Notify] Email sent:', data.id);
     return { channel: 'email', success: true, messageId: data.id };
 
-  } catch (error: any) {
-    console.error('[Notify] Email error:', error.message);
-    return { channel: 'email', success: false, error: error.message };
+  } catch (error: unknown) {
+    const msg = error instanceof Error ? error.message : 'Unknown error';
+    console.error('[Notify] Email error:', msg);
+    return { channel: 'email', success: false, error: msg };
   }
 }
 
@@ -123,7 +157,7 @@ async function sendEmail(
 async function sendWhatsApp(
   phone: string,
   type: NotificationType,
-  ctx: Record<string, any>
+  ctx: Record<string, unknown>
 ): Promise<NotificationResult> {
   if (!TWILIO_ACCOUNT_SID || !TWILIO_AUTH_TOKEN) {
     console.log('[Notify] Twilio not configured');
@@ -166,9 +200,10 @@ async function sendWhatsApp(
     console.log('[Notify] WhatsApp sent:', data.sid);
     return { channel: 'whatsapp', success: true, messageId: data.sid };
 
-  } catch (error: any) {
-    console.error('[Notify] WhatsApp error:', error.message);
-    return { channel: 'whatsapp', success: false, error: error.message };
+  } catch (error: unknown) {
+    const msg = error instanceof Error ? error.message : 'Unknown error';
+    console.error('[Notify] WhatsApp error:', msg);
+    return { channel: 'whatsapp', success: false, error: msg };
   }
 }
 
