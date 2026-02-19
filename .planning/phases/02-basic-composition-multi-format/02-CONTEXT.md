@@ -34,9 +34,12 @@ Build the PropertyShowcase video template with photo slideshow, text overlays, K
 - Auto-use all listing photos by default, but allow user to deselect/reorder if they want
 - Photo selection: default to all enhanced photos, with option to customize
 
+### Photo Ordering
+- Smart photo ordering using AI room detection — classify each photo (exterior, living room, kitchen, bedroom, bathroom, backyard, etc.) and auto-order for walkthrough flow: Exterior → Entryway → Living → Kitchen → Dining → Bedrooms → Bathrooms → Outdoor
+- User can still manually reorder after AI suggestion if they want
+
 ### Claude's Discretion
 - Intro card presence (whether to show brief intro card before photos or jump straight into slideshow)
-- Photo ordering strategy (smart MLS-order vs upload order)
 - Ken Burns motion variety (alternate zoom in/out, random pan, or consistent)
 - Font style, text casing (uppercase vs title case), and readability approach (gradient backdrop vs text shadow)
 - Text overlay positioning per aspect ratio
@@ -67,7 +70,7 @@ Build the PropertyShowcase video template with photo slideshow, text overlays, K
 ## Deferred Ideas
 
 - Interactive virtual tour (Matterport-style 3D walkthrough) — entirely different technology, future milestone
-- Smart photo ordering by AI room detection — could enhance the walkthrough feel but adds AI complexity, consider for later phase
+- Smart photo ordering by AI room detection — MOVED TO PHASE 2 (no longer deferred)
 
 </deferred>
 
