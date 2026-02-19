@@ -2,10 +2,10 @@
 
 ## Current Position
 
-Phase: 3 (not started)
+Phase: 4 (not started)
 Plan: None yet
-Status: Phase 2 complete — PropertyShowcase composition, multi-format, photo ordering, VideoCreator migration
-Last activity: 2026-02-19 — VideoCreator migrated from FFmpeg to Lambda API rendering
+Status: Phase 3 complete — JustListed + OpenHouse templates, template selector UI
+Last activity: 2026-02-19 — Lifecycle templates with shared components, API integration, UI selector
 
 ## Project Reference
 
@@ -17,23 +17,21 @@ See: .planning/PROJECT.md (updated 2026-02-19)
 ## Accumulated Context
 
 - SnapR has a working 5-step marketing pipeline (description → captions → MLS → property site → scheduled posts)
-- VideoCreator.tsx migrated from browser-FFmpeg to Lambda API calls (Phase 2 complete)
-- PropertyShowcase composition renders in 3 aspect ratios (9:16, 1:1, 16:9) with TransitionSeries crossfades, Ken Burns, address overlay, closing card
-- Photo ordering module uses existing photoAudit room classification for walkthrough sequence (zero AI cost)
+- VideoCreator.tsx migrated from browser-FFmpeg to Lambda API calls (Phase 2)
+- 3 production templates: PropertyShowcase (fade), JustListed (slide), OpenHouse (wipe)
+- Shared composition components: PhotoSlide, AddressOverlay, IntroCard, ClosingCard, FeatureCallout, EventBadge
+- Template selector UI with 3 cards + conditional open house date input
+- Each template registered in 3 aspect ratios (9:16, 1:1, 16:9) = 9 compositions + TestVideo
+- Photo ordering module uses existing photoAudit room classification (zero AI cost)
 - publish-video API route exists for Facebook/Instagram, LinkedIn returns 501
 - Voiceover generator works at $2/each with 6 voices
 - GSD, ClaudeKit, and Remotion skill installed in project
 - Branch: feature/brand-polish
 - Existing marketing pipeline uses always-complete semantics
 - Free/Starter users get marketing skipped entirely
-- Research completed: STACK.md, FEATURES.md, ARCHITECTURE.md, PITFALLS.md, SUMMARY.md
-- Remotion Lambda (AWS) confirmed as only viable rendering option
-- 44 requirements defined across 8 categories (REND, COMP, AUDIO, BRAND, PIPE, PUB, UI, BILL)
 - 7-phase roadmap: Foundation → Composition → Templates → Audio → Pipeline → Branding → Polish
-- Phase 1 completed: Remotion packages, test composition, video_render_jobs migration, API routes
-- Phase 2 completed: PropertyShowcase composition, ClosingCard, multi-format registration, photo ordering, generate route mapping, VideoCreator UI migration
-- Lambda site deployed with PropertyShowcase compositions at all 3 aspect ratios
-- Key architectural decisions: terminal state caching, composition ID mapping (template+aspectRatio), percentage-based sizing for multi-format
+- Phases 1-3 complete, Phases 4-7 remaining
+- Lambda site needs redeploy with AWS credentials (local deploy failed — use CI or env vars)
 
 ## Blockers
 

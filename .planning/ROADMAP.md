@@ -29,7 +29,7 @@ No GSD phases — v1.0 was developed before GSD adoption. Shipped:
 
 - [x] **Phase 1: Remotion Foundation** — Deploy Lambda rendering infrastructure and prove end-to-end video generation (COMPLETED 2026-02-19)
 - [x] **Phase 2: Basic Composition + Multi-Format** — PropertyShowcase template with photo slideshow, text overlays, and 3 aspect ratios (COMPLETED 2026-02-19)
-- [ ] **Phase 3: Lifecycle Templates** — Just Listed, Open House templates with intro cards, branding, and template selection logic
+- [x] **Phase 3: Lifecycle Templates** — Just Listed, Open House templates with intro cards, branding, and template selection logic (COMPLETED 2026-02-19)
 - [ ] **Phase 4: Audio Integration** — Background music, voiceover mixing, volume ducking, audio fade in/out
 - [ ] **Phase 5: Marketing Pipeline + Billing** — Auto-trigger video as Step 6, billing gates, cost tracking, storage/CDN delivery
 - [ ] **Phase 6: Agent Branding + Publishing** — Branding configuration, end cards, video publishing to social platforms
@@ -83,9 +83,9 @@ Plans:
 **Plans**: TBD
 
 Plans:
-- [ ] 03-01: JustListed template (intro card, feature callouts, end card)
-- [ ] 03-02: OpenHouse template (date/time urgency, event details)
-- [ ] 03-03: Template selection logic and UI selector
+- [x] 03-01: JustListed template (intro card, feature callouts, end card) (COMPLETED 2026-02-19)
+- [x] 03-02: OpenHouse template (date/time urgency, event details) (COMPLETED 2026-02-19)
+- [x] 03-03: Template selection logic and UI selector (COMPLETED 2026-02-19)
 
 ### Phase 4: Audio Integration
 **Goal**: Add background music library and voiceover integration with proper volume ducking, so videos sound professional.
@@ -169,7 +169,7 @@ Note: Phase 4 depends on Phase 2 (not Phase 3), so Phases 3 and 4 could run in p
 |-------|-----------|----------------|--------|-----------|
 | 1. Remotion Foundation | v1.1 | Complete    | 2026-02-19 | - |
 | 2. Basic Composition + Multi-Format | v1.1 | 3/3 | 2026-02-19 | - |
-| 3. Lifecycle Templates | v1.1 | 0/3 | Not started | - |
+| 3. Lifecycle Templates | v1.1 | 3/3 | 2026-02-19 | - |
 | 4. Audio Integration | v1.1 | 0/3 | Not started | - |
 | 5. Marketing Pipeline + Billing | v1.1 | 0/3 | Not started | - |
 | 6. Agent Branding + Publishing | v1.1 | 0/3 | Not started | - |
