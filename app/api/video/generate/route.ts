@@ -17,6 +17,7 @@ interface ListingWithPhotos {
   beds: number;
   baths: number;
   sqft: number | null;
+  features: string[] | null;
   preparation_metadata: Record<string, unknown> | null;
   photos: Array<{ id: string; processed_url: string | null }>;
 }
@@ -28,11 +29,17 @@ interface RenderResponse {
 
 // Map template + aspectRatio to Remotion composition ID
 function getCompositionId(template: string, aspectRatio: string): string {
-  if (template === 'property-showcase') {
-    const ratioKey = aspectRatio.replace(':', 'x');
-    return `PropertyShowcase-${ratioKey}`;
+  const ratioKey = aspectRatio.replace(':', 'x');
+  switch (template) {
+    case 'property-showcase':
+      return `PropertyShowcase-${ratioKey}`;
+    case 'just-listed':
+      return `JustListed-${ratioKey}`;
+    case 'open-house':
+      return `OpenHouse-${ratioKey}`;
+    default:
+      return 'TestVideo';
   }
-  return 'TestVideo';
 }
 
 export async function POST(request: NextRequest) {
@@ -72,7 +79,7 @@ export async function POST(request: NextRequest) {
     const admin = adminSupabase();
     const { data: listing, error: listingError } = await admin
       .from('listings')
-      .select('id, address, price, beds, baths, sqft, preparation_metadata, photos(id, processed_url)')
+      .select('id, address, price, beds, baths, sqft, features, preparation_metadata, photos(id, processed_url)')
       .eq('id', validatedInput.listingId)
       .eq('user_id', user.id)
       .single<ListingWithPhotos>();
@@ -136,23 +143,38 @@ export async function POST(request: NextRequest) {
       validatedInput.aspectRatio
     );
 
+    // Build template-specific input props
+    const listingProps: Record<string, unknown> = {
+      address: listing.address,
+      price: listing.price,
+      beds: listing.beds,
+      baths: listing.baths,
+      sqft: listing.sqft ?? undefined,
+      photos: orderedPhotoUrls,
+    };
+
+    // JustListed needs features
+    if (validatedInput.template === 'just-listed' && listing.features) {
+      listingProps.features = listing.features;
+    }
+
+    const inputProps: Record<string, unknown> = {
+      listing: listingProps,
+      aspectRatio: validatedInput.aspectRatio,
+    };
+
+    // OpenHouse needs date
+    if (validatedInput.template === 'open-house' && validatedInput.openHouseDate) {
+      inputProps.openHouseDate = validatedInput.openHouseDate;
+    }
+
     // Trigger Lambda render
     const renderResponse = await renderMediaOnLambda({
       region: process.env.REMOTION_AWS_REGION as AwsRegion,
       functionName: process.env.REMOTION_LAMBDA_FUNCTION_NAME!,
       serveUrl: process.env.REMOTION_LAMBDA_SERVE_URL!,
       composition: compositionId,
-      inputProps: {
-        listing: {
-          address: listing.address,
-          price: listing.price,
-          beds: listing.beds,
-          baths: listing.baths,
-          sqft: listing.sqft ?? undefined,
-          photos: orderedPhotoUrls,
-        },
-        aspectRatio: validatedInput.aspectRatio,
-      },
+      inputProps,
       codec: 'h264',
       imageFormat: 'jpeg',
       maxRetries: 3,

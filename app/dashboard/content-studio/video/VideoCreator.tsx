@@ -23,6 +23,13 @@ type VoiceId = 'professional-male' | 'professional-female' | 'luxury-male' | 'lu
 type ScriptStyle = 'professional' | 'luxury' | 'friendly' | 'firstTimeBuyer'
 
 type RenderStatus = 'idle' | 'triggering' | 'rendering' | 'completed' | 'failed'
+type VideoTemplate = 'property-showcase' | 'just-listed' | 'open-house'
+
+const VIDEO_TEMPLATES: Record<VideoTemplate, { name: string; desc: string; duration: string }> = {
+  'property-showcase': { name: 'Showcase', desc: 'Cinematic slideshow with crossfades', duration: '~4.5s/photo' },
+  'just-listed': { name: 'Just Listed', desc: 'Intro card + slide transitions + features', duration: '~5s/photo' },
+  'open-house': { name: 'Open House', desc: 'Urgency pacing with event date badge', duration: '~3.5s/photo' },
+}
 
 interface ListingData {
   address: string
@@ -90,7 +97,9 @@ export default function VideoCreatorClient() {
   const [listingData, setListingData] = useState<ListingData | null>(null)
 
   // Video settings
+  const [template, setTemplate] = useState<VideoTemplate>('property-showcase')
   const [aspectRatio, setAspectRatio] = useState<AspectRatio>('9:16')
+  const [openHouseDate, setOpenHouseDate] = useState('')
 
   // Audio settings
   const [enableVoiceover, setEnableVoiceover] = useState(false)
@@ -328,7 +337,8 @@ export default function VideoCreatorClient() {
         body: JSON.stringify({
           listingId,
           aspectRatio,
-          template: 'property-showcase',
+          template,
+          ...(template === 'open-house' && openHouseDate ? { openHouseDate } : {}),
         }),
         signal: AbortSignal.timeout(30000),
       })
@@ -615,18 +625,63 @@ export default function VideoCreatorClient() {
                   </div>
                 </div>
 
+                {/* Template Selector */}
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2 text-white/50 text-sm">
+                    <Sparkles className="w-4 h-4" />
+                    <span className="font-medium">Template</span>
+                  </div>
+                  <div className="space-y-2">
+                    {(Object.keys(VIDEO_TEMPLATES) as VideoTemplate[]).map((tmpl) => {
+                      const config = VIDEO_TEMPLATES[tmpl]
+                      return (
+                        <button
+                          key={tmpl}
+                          onClick={() => setTemplate(tmpl)}
+                          disabled={isGenerating}
+                          className={`w-full p-3 rounded-lg border transition-all text-left ${
+                            template === tmpl
+                              ? 'bg-[#D4A017]/15 border-[#D4A017] text-white'
+                              : 'bg-white/5 border-white/10 text-white/50 hover:bg-white/10'
+                          } disabled:opacity-50 disabled:cursor-not-allowed`}
+                        >
+                          <div className="font-bold text-sm">{config.name}</div>
+                          <div className="text-xs opacity-70">{config.desc}</div>
+                        </button>
+                      )
+                    })}
+                  </div>
+                </div>
+
+                {/* Open House Date (conditional) */}
+                {template === 'open-house' && (
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2 text-white/50 text-sm">
+                      <Calendar className="w-4 h-4" />
+                      <span className="font-medium">Event Date & Time</span>
+                    </div>
+                    <input
+                      type="text"
+                      value={openHouseDate}
+                      onChange={(e) => setOpenHouseDate(e.target.value)}
+                      placeholder="e.g. Saturday, March 1st · 1-4 PM"
+                      disabled={isGenerating}
+                      className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white text-sm placeholder:text-white/30 focus:outline-none focus:border-[#D4A017] disabled:opacity-50"
+                    />
+                  </div>
+                )}
+
                 {/* Video Info */}
                 <div className="p-4 bg-white/5 rounded-xl border border-white/10 space-y-2">
                   <div className="flex items-center gap-2 text-white/50 text-sm">
-                    <Sparkles className="w-4 h-4 text-pink-400" />
-                    <span className="font-medium">PropertyShowcase</span>
+                    <Clock className="w-4 h-4 text-pink-400" />
+                    <span className="font-medium">{VIDEO_TEMPLATES[template].name}</span>
                   </div>
                   <div className="text-xs text-white/40 space-y-1">
                     <div className="flex items-center gap-2">
                       <Clock className="w-3 h-3" />
-                      <span>~{Math.round(selectedPhotos.length * 4.5 + 3)}s total ({selectedPhotos.length} photos)</span>
+                      <span>{VIDEO_TEMPLATES[template].duration} · {selectedPhotos.length} photos</span>
                     </div>
-                    <div>4.5s per photo with cinematic crossfade</div>
                     <div>Ken Burns zoom/pan effect</div>
                     <div>Closing card with property details</div>
                   </div>

@@ -1143,3 +1143,101 @@ Cloudflare Worker (queue handler)
   Yes — Phase 2 Plan 02-03: VideoCreator UI migration.
 - Risk Level:
   Medium (major UI refactor, but old FFmpeg code was non-functional)
+
+-------------------------------------------------------------------------------
+## 2026-02-19 — Phase 3: Lifecycle Templates (Video Engine v1.1)
+-------------------------------------------------------------------------------
+
+### 1. Shared Composition Components
+- Description:
+  Extracted PhotoSlide, AddressOverlay, font loading, and timing constants from
+  PropertyShowcase into shared.tsx. Refactored PropertyShowcase and ClosingCard
+  to import from shared module. Added INTRO_CARD_FRAMES constant (75 frames / 2.5s).
+- Files Created:
+  remotion/compositions/shared.tsx
+- Files Modified:
+  remotion/compositions/PropertyShowcase.tsx
+  remotion/compositions/ClosingCard.tsx
+- Architectural Impact:
+  All compositions share the same PhotoSlide (Ken Burns), AddressOverlay, and font.
+  Eliminates duplication. New compositions only need to import from shared.tsx.
+- Blueprint Alignment:
+  Yes — Phase 3 Plan 03-01: Shared component extraction.
+- Risk Level:
+  Low (refactor, no behavioral change)
+
+### 2. JustListed Composition
+- Description:
+  Created JustListed template with IntroCard ("JUST LISTED" with gold accent line
+  animation), slide transitions (alternating from-left/from-right), FeatureCallout
+  overlays on photos, and ClosingCard. IntroCard has scale+fade title animation
+  with gold line reveal. FeatureCallout shows property features as semi-transparent
+  pills with gold left border.
+- Files Created:
+  remotion/compositions/JustListed.tsx
+  remotion/compositions/IntroCard.tsx
+  remotion/compositions/FeatureCallout.tsx
+- Architectural Impact:
+  Second production template. Uses slide transitions from @remotion/transitions
+  for visual differentiation from PropertyShowcase (which uses fade). Features
+  overlay adds value for listings with rich feature data.
+- Blueprint Alignment:
+  Yes — Phase 3 Plan 03-01: JustListed composition (COMP-02).
+- Risk Level:
+  Low (additive composition files)
+
+### 3. OpenHouse Composition
+- Description:
+  Created OpenHouse template with faster pacing (3.5s/photo vs 4.5s), wipe
+  transitions for urgency feel, EventBadge date overlay (gold background with
+  calendar emoji), and IntroCard with date subtitle. EventBadge persists
+  throughout slideshow at top of frame.
+- Files Created:
+  remotion/compositions/OpenHouse.tsx
+  remotion/compositions/EventBadge.tsx
+- Architectural Impact:
+  Third production template. Wipe transitions + shorter photo duration create
+  urgency appropriate for time-sensitive open house events. EventBadge adds
+  persistent date/time context.
+- Blueprint Alignment:
+  Yes — Phase 3 Plan 03-02: OpenHouse composition (COMP-03).
+- Risk Level:
+  Low (additive composition files)
+
+### 4. Composition Registration + API Integration
+- Description:
+  Registered JustListed and OpenHouse compositions in Root.tsx (3 aspect ratios
+  each = 6 new compositions). Extended getCompositionId() with switch statement
+  for just-listed and open-house templates. Added features field to listing query.
+  Template-specific inputProps: features for JustListed, openHouseDate for OpenHouse.
+  Expanded template enum to include 'just-listed' and 'open-house'. Added
+  openHouseDate optional field to generate schema.
+- Files Modified:
+  remotion/Root.tsx
+  app/api/video/generate/route.ts
+  lib/validation/schemas.ts
+- Architectural Impact:
+  API now supports 4 templates (test, property-showcase, just-listed, open-house).
+  Each template gets correct composition ID and template-specific props.
+- Blueprint Alignment:
+  Yes — Phase 3 Plans 03-01/03-02/03-03: Registration + API.
+- Risk Level:
+  Low (backwards-compatible, existing templates unchanged)
+
+### 5. Template Selector UI
+- Description:
+  Added template selector to VideoCreator.tsx with 3 clickable cards (Showcase,
+  Just Listed, Open House) using gold (#D4A017) border for active selection.
+  Conditional date/time input appears when Open House template selected.
+  Video info box dynamically shows selected template name and duration.
+  Template and openHouseDate passed to generate API call.
+- Files Modified:
+  app/dashboard/content-studio/video/VideoCreator.tsx
+- Architectural Impact:
+  Users can now choose between 3 video templates in the UI. Open House template
+  supports optional event date input. Template selection wired end-to-end from
+  UI → API → Lambda → composition.
+- Blueprint Alignment:
+  Yes — Phase 3 Plan 03-03: Template selector UI (UI-03).
+- Risk Level:
+  Low (UI additions, existing functionality preserved)
