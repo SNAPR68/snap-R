@@ -1122,3 +1122,24 @@ Cloudflare Worker (queue handler)
   main project compilation on feature/brand-polish branch.
 - Risk Level:
   Low (build config only)
+
+### 6. VideoCreator UI Migration — FFmpeg → Lambda
+- Description:
+  Major refactor of VideoCreator.tsx. Removed all FFmpeg-based browser rendering
+  (~300 lines of canvas, mergeAudioWithVideo, ffmpegRef). Replaced with Lambda
+  API integration: POST /api/video/generate triggers render, recursive setTimeout
+  polling at 3s intervals to GET /api/video/status tracks progress. Added
+  isMountedRef cleanup pattern. New UI: progress spinner with percentage bar,
+  HTML5 video player with poster image, aspect ratio visual selector (3 formats),
+  photo reorder with up/down arrows, download + regenerate buttons.
+- Files Modified:
+  app/dashboard/content-studio/video/VideoCreator.tsx
+- Architectural Impact:
+  Eliminates unreliable browser-side FFmpeg. All video rendering now happens on
+  AWS Lambda via Remotion. Aspect ratios reduced to 3 (9:16, 1:1, 16:9) matching
+  registered Remotion compositions. Template hardcoded to 'property-showcase'.
+  Voiceover generation and music selection UI preserved for future audio mixing.
+- Blueprint Alignment:
+  Yes — Phase 2 Plan 02-03: VideoCreator UI migration.
+- Risk Level:
+  Medium (major UI refactor, but old FFmpeg code was non-functional)
