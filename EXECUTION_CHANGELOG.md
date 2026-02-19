@@ -996,3 +996,31 @@ Cloudflare Worker (queue handler)
   Yes — Phase 1 Plan 1: Database and validation infrastructure.
 - Risk Level:
   Low (additive schema only, no existing tables modified)
+
+### 3. Video API Routes & Vercel Function Configuration
+- Description:
+  Created POST /api/video/generate endpoint for triggering Remotion Lambda
+  renders and GET /api/video/status endpoint for polling render progress.
+  Generate route authenticates user, validates input with Zod, fetches
+  listing with photos, checks Remotion env vars, triggers Lambda render
+  via renderMediaOnLambda, and stores job in video_render_jobs. Status
+  route validates renderId, authenticates user, verifies ownership,
+  queries Lambda progress via getRenderProgress, updates database on
+  completion/failure, and returns structured status. All error paths
+  return structured JSON with appropriate status codes. Updated vercel.json
+  with function configs (60s/1024MB for generate, 30s/512MB for status).
+- Files Created:
+  app/api/video/generate/route.ts
+  app/api/video/status/route.ts
+- Files Modified:
+  vercel.json
+- Architectural Impact:
+  Complete video generation API layer. Generate route serves as entry
+  point for all video renders from UI. Status route enables real-time
+  progress polling. Both routes follow existing SnapR patterns:
+  createClient() auth, adminSupabase() service operations, Zod validation,
+  always-complete semantics with structured error responses. No any types.
+- Blueprint Alignment:
+  Yes — Phase 1 Plan 2: Video API routes with full error handling.
+- Risk Level:
+  Low (additive API routes, follows established patterns)
