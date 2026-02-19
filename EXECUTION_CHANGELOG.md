@@ -997,30 +997,43 @@ Cloudflare Worker (queue handler)
 - Risk Level:
   Low (additive schema only, no existing tables modified)
 
-### 3. Video API Routes & Vercel Function Configuration
+### 3. Video Generation API Route
 - Description:
   Created POST /api/video/generate endpoint for triggering Remotion Lambda
-  renders and GET /api/video/status endpoint for polling render progress.
-  Generate route authenticates user, validates input with Zod, fetches
-  listing with photos, checks Remotion env vars, triggers Lambda render
-  via renderMediaOnLambda, and stores job in video_render_jobs. Status
-  route validates renderId, authenticates user, verifies ownership,
-  queries Lambda progress via getRenderProgress, updates database on
-  completion/failure, and returns structured status. All error paths
-  return structured JSON with appropriate status codes. Updated vercel.json
-  with function configs (60s/1024MB for generate, 30s/512MB for status).
+  renders. Authenticates user, validates input with Zod, fetches listing
+  with photos, checks Remotion env vars, triggers Lambda render via
+  renderMediaOnLambda, and stores job in video_render_jobs. All error
+  paths return structured JSON with appropriate status codes.
 - Files Created:
   app/api/video/generate/route.ts
+- Architectural Impact:
+  Entry point for all video renders from UI. Follows existing SnapR
+  patterns: createClient() auth, adminSupabase() service operations,
+  Zod validation, always-complete semantics with structured error
+  responses. No any types.
+- Blueprint Alignment:
+  Yes — Phase 1 Plan 2: Video generation API endpoint.
+- Risk Level:
+  Low (additive API route, follows established patterns)
+
+### 4. Video Status API Route & Vercel Function Configuration
+- Description:
+  Created GET /api/video/status endpoint for polling render progress.
+  Validates renderId, authenticates user, verifies ownership, queries
+  Lambda progress via getRenderProgress, updates database on
+  completion/failure, and returns structured status. Returns cached
+  results for terminal states (completed/failed) to avoid unnecessary
+  AWS API calls. Updated vercel.json with function configs: 60s/1024MB
+  for generate route, 30s/512MB for status route.
+- Files Created:
   app/api/video/status/route.ts
 - Files Modified:
   vercel.json
 - Architectural Impact:
-  Complete video generation API layer. Generate route serves as entry
-  point for all video renders from UI. Status route enables real-time
-  progress polling. Both routes follow existing SnapR patterns:
-  createClient() auth, adminSupabase() service operations, Zod validation,
-  always-complete semantics with structured error responses. No any types.
+  Enables real-time progress polling for video renders. Optimization:
+  caches terminal states in database to reduce Lambda API calls. Vercel
+  function configs ensure appropriate timeouts and memory allocation.
 - Blueprint Alignment:
-  Yes — Phase 1 Plan 2: Video API routes with full error handling.
+  Yes — Phase 1 Plan 2: Video status polling with optimization.
 - Risk Level:
-  Low (additive API routes, follows established patterns)
+  Low (additive API route + function config)

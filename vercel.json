@@ -19,6 +19,14 @@
     "app/api/cron/sync-analytics/route.ts": {
       "maxDuration": 300,
       "memory": 1024
+    },
+    "app/api/video/generate/route.ts": {
+      "maxDuration": 60,
+      "memory": 1024
+    },
+    "app/api/video/status/route.ts": {
+      "maxDuration": 30,
+      "memory": 512
     }
   },
   "routes": [
