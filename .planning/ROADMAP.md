@@ -47,11 +47,11 @@ No GSD phases — v1.0 was developed before GSD adoption. Shipped:
   3. A 30-second test video (static images, no audio) renders successfully in under 90 seconds
   4. Render failures return structured error response (not 500 crash)
   5. `video_render_jobs` table tracks render lifecycle (queued → rendering → completed/failed)
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 01-01: Remotion packages, Lambda deployment, S3 bucket setup
-- [ ] 01-02: API routes (generate + status), database table, error handling
+- [ ] 01-01-PLAN.md — Remotion packages, test composition, database migration, Zod schemas
+- [ ] 01-02-PLAN.md — API routes (generate + status), error handling, Vercel config
 
 ### Phase 2: Basic Composition + Multi-Format
 **Goal**: Build the PropertyShowcase template with photo slideshow, text overlays, and transitions — rendering correctly in all 3 aspect ratios. Migrate VideoCreator UI from FFmpeg to API calls.
