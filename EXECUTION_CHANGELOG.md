@@ -1037,3 +1037,88 @@ Cloudflare Worker (queue handler)
   Yes — Phase 1 Plan 2: Video status polling with optimization.
 - Risk Level:
   Low (additive API route + function config)
+
+-------------------------------------------------------------------------------
+## 2026-02-19 — Phase 2: PropertyShowcase Composition + Multi-Format (Video Engine v1.1)
+-------------------------------------------------------------------------------
+
+### 1. PropertyShowcase Composition
+- Description:
+  Created cinematic property walkthrough composition using TransitionSeries
+  with crossfade transitions (1.5s fade), Ken Burns zoom/pan effect on each
+  photo (alternating zoom in/out with subtle translateX), persistent address
+  overlay with dark gradient backdrop, and animated closing card with gold
+  price, staggered fade-in for address/price/details.
+- Files Created:
+  remotion/compositions/PropertyShowcase.tsx
+  remotion/compositions/ClosingCard.tsx
+- Architectural Impact:
+  Production-ready video composition replacing TestVideo. Percentage-based
+  sizing handles all aspect ratios from single component. Uses @remotion/transitions
+  TransitionSeries, @remotion/google-fonts Inter, Remotion Img component.
+- Blueprint Alignment:
+  Yes — Phase 2 Plan 02-01: PropertyShowcase composition.
+- Risk Level:
+  Low (additive composition files)
+
+### 2. Multi-Format Registration with calculateMetadata
+- Description:
+  Registered 3 PropertyShowcase compositions in Root.tsx for each aspect ratio:
+  PropertyShowcase-9x16 (1080x1920), PropertyShowcase-1x1 (1080x1080),
+  PropertyShowcase-16x9 (1920x1080). Uses calculateMetadata to dynamically
+  compute durationInFrames from photo count. Duration formula accounts for
+  TransitionSeries overlap (N*90 + 90 frames).
+- Files Modified:
+  remotion/Root.tsx
+- Architectural Impact:
+  Lambda can render any aspect ratio by targeting the correct composition ID.
+  Duration auto-calculated — no hardcoded frame counts.
+- Blueprint Alignment:
+  Yes — Phase 2 Plan 02-01: Multi-format registration.
+- Risk Level:
+  Low (composition registration)
+
+### 3. Photo Ordering Module (AI Room Classification)
+- Description:
+  Created smart photo ordering using existing photoType data from preparation
+  pipeline. Orders photos in walkthrough sequence: exterior_front → interior_living
+  → kitchen → dining → bedrooms → bathrooms → back → drone → detail. Falls back
+  to original order when no preparation metadata available. Zero additional AI cost.
+- Files Created:
+  lib/video/photo-ordering.ts
+- Architectural Impact:
+  Reuses photo-intelligence.ts classification data. No new AI calls needed.
+  Walkthrough ordering makes videos feel like a guided property tour.
+- Blueprint Alignment:
+  Yes — Phase 2 Plan 02-02: Photo ordering module.
+- Risk Level:
+  Low (pure sorting logic)
+
+### 4. Generate Route — Composition Mapping + Photo Ordering
+- Description:
+  Updated /api/video/generate to map template+aspectRatio to composition ID
+  (property-showcase + 9:16 → PropertyShowcase-9x16). Fetches preparation_metadata
+  and photo IDs for smart ordering. Added sqft to listing query. Expanded
+  template enum to include 'property-showcase'.
+- Files Modified:
+  app/api/video/generate/route.ts
+  lib/validation/schemas.ts
+- Architectural Impact:
+  API now supports both test and property-showcase templates. Photo ordering
+  integrates seamlessly — ordered URLs passed directly to Lambda inputProps.
+- Blueprint Alignment:
+  Yes — Phase 2 Plans 02-01/02-02: API integration.
+- Risk Level:
+  Low (backwards-compatible, test template still works)
+
+### 5. tsconfig — Exclude apps/mobile
+- Description:
+  Added apps/mobile/**/* to tsconfig exclude list to prevent cross-branch
+  TypeScript errors from untracked mobile app files.
+- Files Modified:
+  tsconfig.json
+- Architectural Impact:
+  Prevents mobile app (feature/mobile-app branch) from interfering with
+  main project compilation on feature/brand-polish branch.
+- Risk Level:
+  Low (build config only)

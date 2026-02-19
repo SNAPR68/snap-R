@@ -7,6 +7,7 @@ import type { AwsRegion } from '@remotion/lambda';
 import { createClient } from '@/lib/supabase/server';
 import { adminSupabase } from '@/lib/supabase/admin';
 import { generateVideoSchema } from '@/lib/validation/schemas';
+import { orderPhotosForWalkthrough } from '@/lib/video/photo-ordering';
 import { ZodError } from 'zod';
 
 interface ListingWithPhotos {
@@ -15,12 +16,23 @@ interface ListingWithPhotos {
   price: number;
   beds: number;
   baths: number;
-  photos: Array<{ processed_url: string }>;
+  sqft: number | null;
+  preparation_metadata: Record<string, unknown> | null;
+  photos: Array<{ id: string; processed_url: string | null }>;
 }
 
 interface RenderResponse {
   renderId: string;
   bucketName: string;
+}
+
+// Map template + aspectRatio to Remotion composition ID
+function getCompositionId(template: string, aspectRatio: string): string {
+  if (template === 'property-showcase') {
+    const ratioKey = aspectRatio.replace(':', 'x');
+    return `PropertyShowcase-${ratioKey}`;
+  }
+  return 'TestVideo';
 }
 
 export async function POST(request: NextRequest) {
@@ -56,11 +68,11 @@ export async function POST(request: NextRequest) {
       throw error;
     }
 
-    // Fetch listing with photos
+    // Fetch listing with photos + preparation metadata for smart ordering
     const admin = adminSupabase();
     const { data: listing, error: listingError } = await admin
       .from('listings')
-      .select('id, address, price, beds, baths, photos(processed_url)')
+      .select('id, address, price, beds, baths, sqft, preparation_metadata, photos(id, processed_url)')
       .eq('id', validatedInput.listingId)
       .eq('user_id', user.id)
       .single<ListingWithPhotos>();
@@ -105,23 +117,39 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Trigger Lambda render
-    const processedPhotos = listing.photos
-      .map((p) => p.processed_url)
-      .filter(Boolean);
+    // Order photos using AI room classification (zero additional cost)
+    const orderedPhotoUrls = orderPhotosForWalkthrough(
+      listing.photos,
+      listing.preparation_metadata as Record<string, unknown> | null
+    );
 
+    if (orderedPhotoUrls.length === 0) {
+      return NextResponse.json(
+        { error: 'No processed photos available' },
+        { status: 400 }
+      );
+    }
+
+    // Resolve composition ID from template + aspect ratio
+    const compositionId = getCompositionId(
+      validatedInput.template,
+      validatedInput.aspectRatio
+    );
+
+    // Trigger Lambda render
     const renderResponse = await renderMediaOnLambda({
       region: process.env.REMOTION_AWS_REGION as AwsRegion,
       functionName: process.env.REMOTION_LAMBDA_FUNCTION_NAME!,
       serveUrl: process.env.REMOTION_LAMBDA_SERVE_URL!,
-      composition: 'TestVideo',
+      composition: compositionId,
       inputProps: {
         listing: {
           address: listing.address,
           price: listing.price,
           beds: listing.beds,
           baths: listing.baths,
-          photos: processedPhotos,
+          sqft: listing.sqft ?? undefined,
+          photos: orderedPhotoUrls,
         },
         aspectRatio: validatedInput.aspectRatio,
       },
@@ -146,8 +174,6 @@ export async function POST(request: NextRequest) {
 
     if (insertError) {
       console.error('[video/generate] Database insert failed:', insertError);
-      // Don't fail the request - render is already triggered
-      // Just log the error and continue
     }
 
     // Return success response

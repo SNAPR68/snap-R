@@ -67,7 +67,7 @@ export const shareSchema = z.object({
 export const generateVideoSchema = z.object({
   listingId: z.string().uuid(),
   aspectRatio: z.enum(['9:16', '1:1', '16:9']),
-  template: z.enum(['test']),
+  template: z.enum(['test', 'property-showcase']),
 })
 
 // Video status check
