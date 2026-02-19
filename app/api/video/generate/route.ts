@@ -168,6 +168,16 @@ export async function POST(request: NextRequest) {
       inputProps.openHouseDate = validatedInput.openHouseDate;
     }
 
+    // Audio params (UI sends 0-100, compositions expect 0-1)
+    if (validatedInput.audio) {
+      inputProps.audio = {
+        musicTrack: validatedInput.audio.musicTrack,
+        musicVolume: (validatedInput.audio.musicVolume ?? 30) / 100,
+        voiceoverUrl: validatedInput.audio.voiceoverUrl,
+        voiceoverVolume: (validatedInput.audio.voiceoverVolume ?? 100) / 100,
+      };
+    }
+
     // Trigger Lambda render
     const renderResponse = await renderMediaOnLambda({
       region: process.env.REMOTION_AWS_REGION as AwsRegion,

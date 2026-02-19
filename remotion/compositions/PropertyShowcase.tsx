@@ -3,6 +3,7 @@ import { TransitionSeries, linearTiming } from '@remotion/transitions';
 import { fade } from '@remotion/transitions/fade';
 import { z } from 'zod';
 import { ClosingCard } from './ClosingCard';
+import { AudioLayer, audioSchema } from './AudioLayer';
 import {
   PhotoSlide,
   AddressOverlay,
@@ -25,6 +26,7 @@ export const propertyShowcaseSchema = z.object({
     photos: z.array(z.string()).min(1),
   }),
   aspectRatio: z.enum(['9:16', '1:1', '16:9']),
+  audio: audioSchema.optional(),
 });
 
 export type PropertyShowcaseProps = z.infer<typeof propertyShowcaseSchema>;
@@ -48,6 +50,7 @@ export function calculateDuration(photoCount: number): number {
 
 export const PropertyShowcase: React.FC<PropertyShowcaseProps> = ({
   listing,
+  audio,
 }) => {
   return (
     <AbsoluteFill style={{ backgroundColor: '#0A0A0A' }}>
@@ -87,6 +90,9 @@ export const PropertyShowcase: React.FC<PropertyShowcaseProps> = ({
       >
         <AddressOverlay address={listing.address} />
       </Sequence>
+
+      {/* Audio layer: music, voiceover, silent fallback */}
+      <AudioLayer audio={audio} />
     </AbsoluteFill>
   );
 };

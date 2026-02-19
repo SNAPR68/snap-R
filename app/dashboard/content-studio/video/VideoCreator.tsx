@@ -108,7 +108,7 @@ export default function VideoCreatorClient() {
   const [script, setScript] = useState('')
   const [generatingScript, setGeneratingScript] = useState(false)
   const [generatingVoiceover, setGeneratingVoiceover] = useState(false)
-  const [voiceoverAudio, setVoiceoverAudio] = useState<Blob | null>(null)
+  const [voiceoverUrl, setVoiceoverUrl] = useState<string | null>(null)
 
   const [enableMusic, setEnableMusic] = useState(false)
   const [selectedMusic, setSelectedMusic] = useState('none')
@@ -238,13 +238,14 @@ export default function VideoCreatorClient() {
   }
 
   const generateVoiceover = async () => {
-    if (!script) {
+    if (!script || !listingId) {
       alert('Please generate or enter a script first')
       return
     }
     setGeneratingVoiceover(true)
 
     try {
+      // Step 1: Generate audio (returns base64)
       const res = await fetch('/api/video/voiceover', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -256,16 +257,24 @@ export default function VideoCreatorClient() {
       })
 
       const data = await res.json()
-      if (data.audioUrl) {
-        const audioData = data.audioUrl.split(',')[1]
-        const byteCharacters = atob(audioData)
-        const byteNumbers = new Array(byteCharacters.length)
-        for (let i = 0; i < byteCharacters.length; i++) {
-          byteNumbers[i] = byteCharacters.charCodeAt(i)
+      if (data.audioBase64) {
+        // Step 2: Upload to storage and get signed URL
+        const uploadRes = await fetch('/api/video/voiceover', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action: 'upload-audio',
+            audioBase64: data.audioBase64,
+            listingId,
+          })
+        })
+
+        const uploadData = await uploadRes.json()
+        if (uploadData.voiceoverUrl) {
+          setVoiceoverUrl(uploadData.voiceoverUrl)
+        } else {
+          alert('Failed to upload voiceover: ' + (uploadData.error || 'Unknown error'))
         }
-        const byteArray = new Uint8Array(byteNumbers)
-        const audioBlob = new Blob([byteArray], { type: 'audio/mpeg' })
-        setVoiceoverAudio(audioBlob)
       } else if (data.error) {
         alert('Failed to generate voiceover: ' + data.error)
       }
@@ -339,6 +348,14 @@ export default function VideoCreatorClient() {
           aspectRatio,
           template,
           ...(template === 'open-house' && openHouseDate ? { openHouseDate } : {}),
+          ...((enableMusic || voiceoverUrl) ? {
+            audio: {
+              musicTrack: enableMusic && selectedMusic !== 'none' ? selectedMusic : undefined,
+              musicVolume: enableMusic ? musicVolume : undefined,
+              voiceoverUrl: voiceoverUrl ?? undefined,
+              voiceoverVolume: enableVoiceover ? voiceoverVolume : undefined,
+            }
+          } : {}),
         }),
         signal: AbortSignal.timeout(30000),
       })
@@ -795,7 +812,7 @@ export default function VideoCreatorClient() {
                             <Loader2 className="w-4 h-4 animate-spin" />
                             Generating...
                           </>
-                        ) : voiceoverAudio ? (
+                        ) : voiceoverUrl ? (
                           <>
                             <Check className="w-4 h-4 text-green-400" />
                             Voiceover Ready
@@ -808,9 +825,10 @@ export default function VideoCreatorClient() {
                         )}
                       </button>
 
-                      {/* Voiceover Volume */}
-                      {voiceoverAudio && (
+                      {/* Voiceover preview + volume */}
+                      {voiceoverUrl && (
                         <div className="space-y-2">
+                          <audio src={voiceoverUrl} controls className="w-full h-8" />
                           <div className="flex items-center justify-between">
                             <label className="text-xs text-white/50">Voiceover Volume</label>
                             <span className="text-xs text-white/70">{voiceoverVolume}%</span>
@@ -894,13 +912,16 @@ export default function VideoCreatorClient() {
                   )}
                 </div>
 
-                {/* Coming soon note for audio */}
-                <div className="p-3 bg-yellow-500/10 border border-yellow-500/20 rounded-lg">
-                  <p className="text-xs text-yellow-200/70">
-                    Audio features (voiceover + music) will be mixed into the final video in a future update.
-                    Currently, videos are rendered with the PropertyShowcase visual composition only.
-                  </p>
-                </div>
+                {/* Audio status indicator */}
+                {(enableMusic || voiceoverUrl) && (
+                  <div className="p-3 bg-green-500/10 border border-green-500/20 rounded-lg">
+                    <p className="text-xs text-green-200/70">
+                      {enableMusic && voiceoverUrl ? 'Music + voiceover will be mixed into the video (music ducks under narration).' :
+                       enableMusic ? 'Background music will be included in the video.' :
+                       'Voiceover narration will be included in the video.'}
+                    </p>
+                  </div>
+                )}
               </>
             )}
 
@@ -1032,7 +1053,7 @@ export default function VideoCreatorClient() {
               </button>
             </div>
             <p className="text-white/70 text-sm">
-              Your {aspectRatio} PropertyShowcase video has been rendered.
+              Your {aspectRatio} {VIDEO_TEMPLATES[template].name} video has been rendered.
             </p>
             <div className="space-y-2">
               <button

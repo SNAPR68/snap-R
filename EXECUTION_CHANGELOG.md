@@ -1241,3 +1241,65 @@ Cloudflare Worker (queue handler)
   Yes — Phase 3 Plan 03-03: Template selector UI (UI-03).
 - Risk Level:
   Low (UI additions, existing functionality preserved)
+
+## 2026-02-19 — Phase 4 Audio Integration
+
+### 1. AudioLayer Composition Component + Music Library
+- Created `remotion/compositions/AudioLayer.tsx` — reusable audio component for
+  all compositions. Handles background music (looped, with fade in/out), voiceover
+  playback, volume ducking (music ducks to 30% when voiceover present), and silent
+  fallback track for platform compatibility.
+- Created `public/music/` with 6 placeholder MP3 files (upbeat, elegant, cinematic,
+  ambient, corporate, silent) generated via ffmpeg. Silent placeholders for dev —
+  will be replaced with real royalty-free tracks.
+- Integrated AudioLayer into PropertyShowcase, JustListed, OpenHouse compositions.
+  Extended all Zod schemas with optional `audio` prop. Updated Root.tsx default props.
+- Files Created:
+  remotion/compositions/AudioLayer.tsx, public/music/*.mp3
+- Files Modified:
+  remotion/compositions/PropertyShowcase.tsx, JustListed.tsx, OpenHouse.tsx, Root.tsx
+- Architectural Impact:
+  All compositions now support optional audio (music + voiceover). Audio is rendered
+  server-side by Lambda, not in the browser.
+- Blueprint Alignment:
+  Yes — Phase 4 Plan 04-01 (AUDIO-01, AUDIO-02, AUDIO-03, AUDIO-04, AUDIO-05).
+- Risk Level:
+  Low (additive, audio is optional — compositions work identically without it)
+
+### 2. Voiceover Upload + Generate API Audio Params
+- Added `upload-audio` action to voiceover API route. Uploads base64 MP3 to Supabase
+  Storage (`raw-images/voiceovers/` prefix), returns signed URL (1hr expiry) for Lambda.
+- Fixed all `any` types in voiceover route — typed interfaces for request bodies,
+  `catch (error: unknown)` with guards, added AbortSignal.timeout to all fetches.
+- Extended `generateVideoSchema` with optional `audio` object (musicTrack, musicVolume,
+  voiceoverUrl, voiceoverVolume). UI sends 0-100, API converts to 0-1 for compositions.
+- Updated generate route to pass audio params through to Lambda inputProps.
+- Files Modified:
+  app/api/video/voiceover/route.ts, lib/validation/schemas.ts,
+  app/api/video/generate/route.ts
+- Architectural Impact:
+  Voiceover audio now persists in Supabase Storage with signed URLs. Audio params
+  flow end-to-end: UI → generate API → Lambda → composition AudioLayer.
+- Blueprint Alignment:
+  Yes — Phase 4 Plan 04-02 (AUDIO-01, AUDIO-03, UI-05, UI-06).
+- Risk Level:
+  Low (existing render flow unchanged, audio is optional)
+
+### 3. Wire Audio UI to Render Pipeline
+- Updated VideoCreator voiceover flow: generate audio → upload to storage → get URL.
+  Replaced `voiceoverAudio: Blob` state with `voiceoverUrl: string` (URL from storage).
+- Wired audio params into generateVideo(): musicTrack, musicVolume, voiceoverUrl,
+  voiceoverVolume passed to generate API when audio is enabled.
+- Removed yellow "coming soon" banner. Added green audio status indicator showing
+  which audio features will be mixed into the video.
+- Added voiceover audio preview player (HTML5 audio element).
+- Fixed share modal to show actual template name instead of hardcoded "PropertyShowcase".
+- Files Modified:
+  app/dashboard/content-studio/video/VideoCreator.tsx
+- Architectural Impact:
+  Audio tab is now fully functional — voiceover and music settings flow through to
+  Lambda rendering. The audio pipeline is complete end-to-end.
+- Blueprint Alignment:
+  Yes — Phase 4 Plan 04-03 (UI-05, UI-06).
+- Risk Level:
+  Low (UI changes, existing video generation preserved)

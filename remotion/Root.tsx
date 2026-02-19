@@ -39,9 +39,16 @@ const sampleListing = {
 // DEFAULT PROPS
 // ============================================
 
+const defaultAudio = {
+  musicTrack: 'elegant',
+  musicVolume: 0.3,
+  voiceoverVolume: 1.0,
+};
+
 const showcaseDefaultProps: PropertyShowcaseProps = {
   listing: sampleListing,
   aspectRatio: '9:16',
+  audio: defaultAudio,
 };
 
 const justListedDefaultProps: JustListedProps = {
@@ -50,12 +57,14 @@ const justListedDefaultProps: JustListedProps = {
     features: ['Heated Pool & Spa', 'Chef\'s Kitchen', 'Home Theater', 'Wine Cellar'],
   },
   aspectRatio: '9:16',
+  audio: defaultAudio,
 };
 
 const openHouseDefaultProps: OpenHouseProps = {
   listing: sampleListing,
   aspectRatio: '9:16',
   openHouseDate: 'Saturday, March 1st · 1-4 PM',
+  audio: defaultAudio,
 };
 
 // ============================================

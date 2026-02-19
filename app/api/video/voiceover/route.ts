@@ -3,6 +3,7 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { adminSupabase } from '@/lib/supabase/admin'
 
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY
 const ELEVENLABS_API_KEY = process.env.ELEVENLABS_API_KEY
@@ -25,33 +26,67 @@ const STYLE_PROMPTS: Record<string, string> = {
   firstTimeBuyer: 'Write for first-time home buyers. Be helpful, informative, and reassuring. Highlight practical features and value.',
 }
 
+interface PropertyDetails {
+  address?: string
+  price?: string
+  bedrooms?: number
+  bathrooms?: number
+  sqft?: number
+  neighborhood?: string
+  features?: string[]
+}
+
+interface GenerateScriptBody {
+  action: 'generate-script'
+  propertyDetails: PropertyDetails
+  style: string
+  duration: number
+}
+
+interface GenerateAudioBody {
+  action: 'generate-audio'
+  script: string
+  voiceId: string
+}
+
+interface UploadAudioBody {
+  action: 'upload-audio'
+  audioBase64: string
+  listingId: string
+}
+
+type RequestBody = GenerateScriptBody | GenerateAudioBody | UploadAudioBody
+
 export async function POST(request: NextRequest) {
   try {
     // Verify authentication
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
-    
+
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const body = await request.json()
+    const body = await request.json() as RequestBody
     const { action } = body
 
     if (action === 'generate-script') {
-      return handleGenerateScript(body)
+      return handleGenerateScript(body as GenerateScriptBody)
     } else if (action === 'generate-audio') {
-      return handleGenerateAudio(body)
+      return handleGenerateAudio(body as GenerateAudioBody)
+    } else if (action === 'upload-audio') {
+      return handleUploadAudio(body as UploadAudioBody, user.id)
     } else {
       return NextResponse.json({ error: 'Invalid action' }, { status: 400 })
     }
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Server error'
     console.error('Voiceover API error:', error)
-    return NextResponse.json({ error: error.message || 'Server error' }, { status: 500 })
+    return NextResponse.json({ error: message }, { status: 500 })
   }
 }
 
-async function handleGenerateScript(body: any) {
+async function handleGenerateScript(body: GenerateScriptBody) {
   const { propertyDetails, style, duration } = body
 
   if (!OPENAI_API_KEY) {
@@ -104,24 +139,26 @@ Write the script now:`
         max_tokens: 500,
         temperature: 0.7,
       }),
+      signal: AbortSignal.timeout(15000),
     })
 
     if (!response.ok) {
-      const error = await response.text()
-      throw new Error(`OpenAI API error: ${error}`)
+      const errorText = await response.text()
+      throw new Error(`OpenAI API error: ${errorText}`)
     }
 
     const data = await response.json()
     const script = data.choices[0]?.message?.content || ''
 
     return NextResponse.json({ script })
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Script generation failed'
     console.error('Script generation error:', error)
-    return NextResponse.json({ error: error.message }, { status: 500 })
+    return NextResponse.json({ error: message }, { status: 500 })
   }
 }
 
-async function handleGenerateAudio(body: any) {
+async function handleGenerateAudio(body: GenerateAudioBody) {
   const { script, voiceId } = body
 
   if (!script) {
@@ -152,6 +189,7 @@ async function handleGenerateAudio(body: any) {
               use_speaker_boost: true,
             },
           }),
+          signal: AbortSignal.timeout(15000),
         }
       )
 
@@ -162,15 +200,15 @@ async function handleGenerateAudio(body: any) {
         const estimatedDuration = Math.round((wordCount / 130) * 60)
 
         return NextResponse.json({
-          audioUrl: `data:audio/mpeg;base64,${base64}`,
+          audioBase64: base64,
           duration: estimatedDuration,
           provider: 'elevenlabs',
         })
       }
-      
+
       console.log('ElevenLabs failed, falling back to OpenAI TTS')
-    } catch (e) {
-      console.log('ElevenLabs error, falling back to OpenAI TTS:', e)
+    } catch {
+      console.log('ElevenLabs error, falling back to OpenAI TTS')
     }
   }
 
@@ -192,6 +230,7 @@ async function handleGenerateAudio(body: any) {
         voice: voiceConfig.openAIVoice,
         response_format: 'mp3',
       }),
+      signal: AbortSignal.timeout(15000),
     })
 
     if (!response.ok) {
@@ -204,12 +243,51 @@ async function handleGenerateAudio(body: any) {
     const estimatedDuration = Math.round((wordCount / 130) * 60)
 
     return NextResponse.json({
-      audioUrl: `data:audio/mpeg;base64,${base64}`,
+      audioBase64: base64,
       duration: estimatedDuration,
       provider: 'openai',
     })
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'TTS generation failed'
     console.error('OpenAI TTS error:', error)
-    return NextResponse.json({ error: error.message }, { status: 500 })
+    return NextResponse.json({ error: message }, { status: 500 })
   }
+}
+
+async function handleUploadAudio(body: UploadAudioBody, userId: string) {
+  const { audioBase64, listingId } = body
+
+  if (!audioBase64 || !listingId) {
+    return NextResponse.json({ error: 'audioBase64 and listingId are required' }, { status: 400 })
+  }
+
+  const admin = adminSupabase()
+  const buffer = Buffer.from(audioBase64, 'base64')
+  const fileName = `voiceovers/${userId}/${listingId}-${Date.now()}.mp3`
+
+  const { error: uploadError } = await admin.storage
+    .from('raw-images')
+    .upload(fileName, buffer, {
+      contentType: 'audio/mpeg',
+      upsert: false,
+    })
+
+  if (uploadError) {
+    console.error('Voiceover upload error:', uploadError)
+    return NextResponse.json({ error: 'Failed to upload voiceover' }, { status: 500 })
+  }
+
+  // Create a signed URL (1 hour — enough for Lambda render)
+  const { data: signedData, error: signedError } = await admin.storage
+    .from('raw-images')
+    .createSignedUrl(fileName, 3600)
+
+  if (signedError || !signedData?.signedUrl) {
+    console.error('Signed URL error:', signedError)
+    return NextResponse.json({ error: 'Failed to create signed URL' }, { status: 500 })
+  }
+
+  return NextResponse.json({
+    voiceoverUrl: signedData.signedUrl,
+  })
 }

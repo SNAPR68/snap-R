@@ -6,6 +6,7 @@ import { z } from 'zod';
 import { ClosingCard } from './ClosingCard';
 import { IntroCard } from './IntroCard';
 import { FeatureCallout } from './FeatureCallout';
+import { AudioLayer, audioSchema } from './AudioLayer';
 import {
   PhotoSlide,
   AddressOverlay,
@@ -30,6 +31,7 @@ export const justListedSchema = z.object({
     features: z.array(z.string()).optional(),
   }),
   aspectRatio: z.enum(['9:16', '1:1', '16:9']),
+  audio: audioSchema.optional(),
 });
 
 export type JustListedProps = z.infer<typeof justListedSchema>;
@@ -67,7 +69,7 @@ export function calculateJustListedDuration(photoCount: number): number {
 // MAIN COMPOSITION
 // ============================================
 
-export const JustListed: React.FC<JustListedProps> = ({ listing }) => {
+export const JustListed: React.FC<JustListedProps> = ({ listing, audio }) => {
   const features = listing.features ?? [];
   const slideshowDuration =
     listing.photos.length * PHOTO_DISPLAY_FRAMES -
@@ -154,6 +156,9 @@ export const JustListed: React.FC<JustListedProps> = ({ listing }) => {
             </Sequence>
           );
         })}
+
+      {/* Audio layer: music, voiceover, silent fallback */}
+      <AudioLayer audio={audio} />
     </AbsoluteFill>
   );
 };

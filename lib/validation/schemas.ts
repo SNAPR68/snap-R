@@ -69,6 +69,12 @@ export const generateVideoSchema = z.object({
   aspectRatio: z.enum(['9:16', '1:1', '16:9']),
   template: z.enum(['test', 'property-showcase', 'just-listed', 'open-house']),
   openHouseDate: z.string().max(100).optional(),
+  audio: z.object({
+    musicTrack: z.string().max(50).optional(),
+    musicVolume: z.number().min(0).max(100).optional(),
+    voiceoverUrl: z.string().url().optional(),
+    voiceoverVolume: z.number().min(0).max(100).optional(),
+  }).optional(),
 })
 
 // Video status check

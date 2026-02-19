@@ -6,6 +6,7 @@ import { z } from 'zod';
 import { ClosingCard } from './ClosingCard';
 import { IntroCard } from './IntroCard';
 import { EventBadge } from './EventBadge';
+import { AudioLayer, audioSchema } from './AudioLayer';
 import {
   PhotoSlide,
   AddressOverlay,
@@ -29,6 +30,7 @@ export const openHouseSchema = z.object({
   }),
   aspectRatio: z.enum(['9:16', '1:1', '16:9']),
   openHouseDate: z.string().optional(),
+  audio: audioSchema.optional(),
 });
 
 export type OpenHouseProps = z.infer<typeof openHouseSchema>;
@@ -64,6 +66,7 @@ export function calculateOpenHouseDuration(photoCount: number): number {
 export const OpenHouse: React.FC<OpenHouseProps> = ({
   listing,
   openHouseDate,
+  audio,
 }) => {
   const dateText = openHouseDate || 'Open House This Weekend';
   const slideshowDuration =
@@ -142,6 +145,9 @@ export const OpenHouse: React.FC<OpenHouseProps> = ({
       >
         <EventBadge dateText={dateText} />
       </Sequence>
+
+      {/* Audio layer: music, voiceover, silent fallback */}
+      <AudioLayer audio={audio} />
     </AbsoluteFill>
   );
 };
