@@ -1,6 +1,37 @@
 # SnapR Execution Changelog
 =================================
 
+## 2026-02-19 — Mobile App Phase 1: Project Scaffolding + Auth
+
+### 1. Initialized Expo Mobile App (`apps/mobile/`)
+- Created React Native app with Expo 54, TypeScript strict mode
+- Configured for iOS (com.snapr.app) and Android with camera permissions
+- Dark theme matching web app (#0A0A0A background, #D4A017 gold accent)
+
+### 2. Created Shared Types Package (`packages/shared/`)
+- Extracted Photo, Listing, Job, PhotoType, PhotoAnalysis, ToolId from web app
+- Extracted billing limits (PlanType, PLAN_LIMITS, LISTING_LIMITS)
+- Added mobile-specific types: RoomChecklistItem, FrameAnalysis, CapturedPhoto
+
+### 3. Supabase Auth Integration
+- Supabase client with expo-secure-store for secure token persistence
+- AuthContext provider with session management, profile fetching
+- Login + Signup screens with email/password auth
+
+### 4. Navigation Structure (React Navigation)
+- RootNavigator: Auth-gated switching between Auth stack and Main tabs
+- AuthStack: Login, Signup screens
+- MainTabs: Dashboard, AI Director (Camera), Listings, Content Studio, Settings
+
+### 5. REST API Client
+- Wrapper for all Next.js backend endpoints with auth headers
+- Covers listings, upload, prepare, marketing, analytics, social, share
+
+### 6. Root tsconfig.json Updated
+- Excluded `apps/mobile/` and `packages/` to prevent React Native type conflicts
+
+---
+
 ## 2026-02-12 — Phase 1 Billing Hardening
 
 ### 1. Fixed Tailwind Build Failure
