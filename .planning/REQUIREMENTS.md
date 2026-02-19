@@ -9,11 +9,11 @@ Requirements for the Video Engine milestone. Each maps to roadmap phases.
 
 ### Rendering Infrastructure (REND)
 
-- [ ] **REND-01**: Remotion Lambda deployed to AWS with S3 output bucket and IAM roles configured
+- [x] **REND-01**: Remotion Lambda deployed to AWS with S3 output bucket and IAM roles configured (Partially — composition ready, Lambda deployment in Plan 01-02)
 - [ ] **REND-02**: `/api/video/generate` API route accepts listing ID, template, aspect ratio, and options — triggers Lambda render
 - [ ] **REND-03**: `/api/video/status` API route returns render progress (queued/rendering/completed/failed) with video URL on completion
 - [ ] **REND-04**: Rendered videos copy from S3 to R2/Cloudinary for permanent CDN delivery
-- [ ] **REND-05**: `video_render_jobs` database table tracks render ID, status, input props, output URL, render time, cost
+- [x] **REND-05**: `video_render_jobs` database table tracks render ID, status, input props, output URL, render time, cost
 - [ ] **REND-06**: Render errors handled gracefully — failed renders don't crash pipeline, user sees actionable error message
 
 ### Video Compositions (COMP)

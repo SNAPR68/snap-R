@@ -50,7 +50,7 @@ No GSD phases — v1.0 was developed before GSD adoption. Shipped:
 **Plans**: 2 plans
 
 Plans:
-- [ ] 01-01-PLAN.md — Remotion packages, test composition, database migration, Zod schemas
+- [x] 01-01-PLAN.md — Remotion packages, test composition, database migration, Zod schemas (COMPLETED 2026-02-19)
 - [ ] 01-02-PLAN.md — API routes (generate + status), error handling, Vercel config
 
 ### Phase 2: Basic Composition + Multi-Format
@@ -167,7 +167,7 @@ Note: Phase 4 depends on Phase 2 (not Phase 3), so Phases 3 and 4 could run in p
 
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
-| 1. Remotion Foundation | v1.1 | 0/2 | Not started | - |
+| 1. Remotion Foundation | v1.1 | 1/2 | In progress | - |
 | 2. Basic Composition + Multi-Format | v1.1 | 0/3 | Not started | - |
 | 3. Lifecycle Templates | v1.1 | 0/3 | Not started | - |
 | 4. Audio Integration | v1.1 | 0/3 | Not started | - |
