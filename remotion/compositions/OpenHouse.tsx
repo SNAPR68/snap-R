@@ -7,6 +7,7 @@ import { ClosingCard } from './ClosingCard';
 import { IntroCard } from './IntroCard';
 import { EventBadge } from './EventBadge';
 import { AudioLayer, audioSchema } from './AudioLayer';
+import { BrandWatermark, BrandFooter, brandSchema } from './BrandOverlay';
 import {
   PhotoSlide,
   AddressOverlay,
@@ -31,6 +32,7 @@ export const openHouseSchema = z.object({
   aspectRatio: z.enum(['9:16', '1:1', '16:9']),
   openHouseDate: z.string().optional(),
   audio: audioSchema.optional(),
+  brand: brandSchema.optional(),
 });
 
 export type OpenHouseProps = z.infer<typeof openHouseSchema>;
@@ -67,11 +69,14 @@ export const OpenHouse: React.FC<OpenHouseProps> = ({
   listing,
   openHouseDate,
   audio,
+  brand,
 }) => {
   const dateText = openHouseDate || 'Open House This Weekend';
+  const slideshowStart = INTRO_CARD_FRAMES - INTRO_TRANSITION_FRAMES;
   const slideshowDuration =
     listing.photos.length * OH_PHOTO_FRAMES -
     (listing.photos.length - 1) * OH_WIPE_FRAMES;
+  const closingStart = slideshowStart + slideshowDuration;
 
   return (
     <AbsoluteFill style={{ backgroundColor: '#0A0A0A' }}>
@@ -126,24 +131,38 @@ export const OpenHouse: React.FC<OpenHouseProps> = ({
             beds={listing.beds}
             baths={listing.baths}
             sqft={listing.sqft}
+            primaryColor={brand?.primaryColor}
           />
         </TransitionSeries.Sequence>
       </TransitionSeries>
 
       {/* Persistent address overlay during slideshow */}
       <Sequence
-        from={INTRO_CARD_FRAMES - INTRO_TRANSITION_FRAMES}
+        from={slideshowStart}
         durationInFrames={slideshowDuration}
       >
         <AddressOverlay address={listing.address} />
       </Sequence>
 
+      {/* Brand watermark (logo) during slideshow */}
+      <Sequence
+        from={slideshowStart}
+        durationInFrames={slideshowDuration}
+      >
+        <BrandWatermark brand={brand} />
+      </Sequence>
+
       {/* Event date badge at top during slideshow */}
       <Sequence
-        from={INTRO_CARD_FRAMES - INTRO_TRANSITION_FRAMES}
+        from={slideshowStart}
         durationInFrames={slideshowDuration}
       >
         <EventBadge dateText={dateText} />
+      </Sequence>
+
+      {/* Brand footer on closing card */}
+      <Sequence from={closingStart} durationInFrames={CLOSING_CARD_FRAMES}>
+        <BrandFooter brand={brand} />
       </Sequence>
 
       {/* Audio layer: music, voiceover, silent fallback */}

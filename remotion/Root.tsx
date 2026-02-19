@@ -45,10 +45,20 @@ const defaultAudio = {
   voiceoverVolume: 1.0,
 };
 
+const defaultBrand = {
+  businessName: 'Luxe Realty Group',
+  primaryColor: '#D4AF37',
+  secondaryColor: '#1A1A1A',
+  phone: '(310) 555-0100',
+  website: 'luxerealtygroup.com',
+  tagline: 'Luxury Living, Elevated',
+};
+
 const showcaseDefaultProps: PropertyShowcaseProps = {
   listing: sampleListing,
   aspectRatio: '9:16',
   audio: defaultAudio,
+  brand: defaultBrand,
 };
 
 const justListedDefaultProps: JustListedProps = {
@@ -58,6 +68,7 @@ const justListedDefaultProps: JustListedProps = {
   },
   aspectRatio: '9:16',
   audio: defaultAudio,
+  brand: defaultBrand,
 };
 
 const openHouseDefaultProps: OpenHouseProps = {
@@ -65,6 +76,7 @@ const openHouseDefaultProps: OpenHouseProps = {
   aspectRatio: '9:16',
   openHouseDate: 'Saturday, March 1st · 1-4 PM',
   audio: defaultAudio,
+  brand: defaultBrand,
 };
 
 // ============================================

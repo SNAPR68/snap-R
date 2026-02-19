@@ -2,10 +2,10 @@
 
 ## Current Position
 
-Phase: 6 (not started)
+Phase: 7 (not started)
 Plan: None yet
-Status: Phase 5 complete — Video generation as marketing Step 6, billing gates, fire-and-forget rendering
-Last activity: 2026-02-19 — Marketing pipeline integration with internal API, Results Panel video card
+Status: Phase 6 complete — Agent branding in video compositions, video publishing in cron
+Last activity: 2026-02-19 — BrandOverlay components, brand data injection, cron video publishing
 
 ## Project Reference
 
@@ -24,22 +24,30 @@ See: .planning/PROJECT.md (updated 2026-02-19)
 - Marketing Banner has 6 progress dots (was 5)
 - VideoCreator.tsx migrated from browser-FFmpeg to Lambda API calls (Phase 2)
 - 3 production templates: PropertyShowcase (fade), JustListed (slide), OpenHouse (wipe)
-- Shared composition components: PhotoSlide, AddressOverlay, IntroCard, ClosingCard, FeatureCallout, EventBadge
+- Shared composition components: PhotoSlide, AddressOverlay, IntroCard, ClosingCard, FeatureCallout, EventBadge, BrandWatermark, BrandFooter
 - AudioLayer component: music (looped, fade in/out), voiceover, ducking (30% when VO present), silent fallback
 - 6 placeholder music tracks in public/music/ (silent MP3s — replace with real royalty-free tracks)
 - Voiceover upload to Supabase Storage with signed URL (1hr expiry for Lambda)
-- All composition schemas extended with optional `audio` prop
+- All composition schemas extended with optional `audio` and `brand` props
+- Brand data (logo, colors, contact, tagline) fetched from `brand_profiles` table and injected into compositions
+- BrandWatermark: agent logo in top-right corner during slideshow (fade-in, 85% opacity)
+- BrandFooter: tagline + business name + phone/website + brokerage logo on closing card
+- ClosingCard price color uses agent's primary_color (defaults to gold #D4AF37)
+- Internal video-generate API fetches brand_profiles and passes brand prop to Lambda render
 - Template selector UI with 3 cards + conditional open house date input
 - Each template registered in 3 aspect ratios (9:16, 1:1, 16:9) = 9 compositions + TestVideo
 - Photo ordering module uses existing photoAudit room classification (zero AI cost)
-- publish-video API route exists for Facebook/Instagram, LinkedIn returns 501
+- Cron publisher now handles video posts (video_url column on scheduled_posts)
+- Facebook video: /videos endpoint with file_url
+- Instagram video: Reels container → poll status → publish (3-step)
+- LinkedIn video: Not yet implemented (returns error)
+- All catch blocks in cron publisher fixed: `catch (error: any)` → `catch (error: unknown)`
+- publish-video API route exists for manual Facebook/Instagram publishing
 - Agent branding infrastructure (brand_profiles DB, settings UI, logo uploader) exists on main
-- Brand data NOT yet integrated into video compositions (Phase 6)
-- Video publishing NOT yet wired into cron publisher (Phase 6)
 - Branch: feature/brand-polish
 - 7-phase roadmap: Foundation → Composition → Templates → Audio → Pipeline → Branding → Polish
-- Phases 1-5 complete, Phases 6-7 remaining
-- Worker needs NEXT_PUBLIC_BASE_URL and CRON_SECRET env vars for video trigger
+- Phases 1-6 complete, Phase 7 remaining
+- Worker NEXT_PUBLIC_BASE_URL and CRON_SECRET secrets set
 - `canGenerateVideo` billing helper added to lib/content/limits.ts
 
 ## Blockers
@@ -49,5 +57,4 @@ None
 ## Pending Todos
 
 - Replace placeholder music tracks with real royalty-free tracks
-- Set NEXT_PUBLIC_BASE_URL and CRON_SECRET as Worker secrets (wrangler secret put)
-- Apply marketing_jobs_video migration to live Supabase DB
+- Apply scheduled_posts_video_url migration to live Supabase DB

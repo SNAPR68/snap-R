@@ -1,6 +1,45 @@
 # SnapR Execution Changelog
 =================================
 
+## 2026-02-19 — Phase 6: Agent Branding + Video Publishing (Video Engine v1.1)
+
+### 1. BrandOverlay Shared Component
+- Created `remotion/compositions/BrandOverlay.tsx` with Zod `brandSchema` and two components.
+- `BrandWatermark`: Agent logo overlay in top-right during photo slideshow (fade-in, 85% opacity).
+- `BrandFooter`: Tagline + business name + phone/website + brokerage logo on closing card
+  with staggered entrance animations.
+- All brand fields optional — compositions render identically without brand data.
+
+### 2. Brand Integration in All Templates
+- Added `brand: brandSchema.optional()` to PropertyShowcase, JustListed, OpenHouse schemas.
+- Each template now renders BrandWatermark during slideshow and BrandFooter on closing card.
+- ClosingCard accepts `primaryColor` prop (defaults to '#D4A017'), replaces hardcoded gold.
+- Updated Root.tsx with `defaultBrand` sample data for Remotion Studio preview.
+- Files Modified:
+  remotion/compositions/PropertyShowcase.tsx, JustListed.tsx, OpenHouse.tsx,
+  ClosingCard.tsx, Root.tsx
+
+### 3. Internal Video Generate API — Brand Data Injection
+- Updated `app/api/internal/video-generate/route.ts` to fetch `brand_profiles` from DB.
+- Uses `adminSupabase().from('brand_profiles').maybeSingle()` (bypasses RLS).
+- Maps snake_case DB columns to camelCase composition props with `?? undefined` coercion.
+- Brand data injected as `inputProps.brand` for Lambda render — videos are now branded.
+
+### 4. Video Publishing in Cron Publisher
+- Rewrote `app/api/cron/publish-scheduled/route.ts` with video publishing support.
+- Checks `post.video_url` to route to video-specific publishing functions.
+- Facebook video: `POST /v18.0/${pageId}/videos` with `file_url` param.
+- Instagram Reels: 3-step flow (create REELS container → poll status → publish).
+- LinkedIn video: returns "coming soon" error (requires complex upload flow).
+- Fixed all `catch (error: any)` → `catch (error: unknown)` with instanceof guards.
+- Added AbortSignal.timeout to all fetch calls (15-30s).
+
+### 5. Database Migration — scheduled_posts video_url
+- Created `supabase/migrations/20260219_scheduled_posts_video_url.sql`.
+- Adds `video_url TEXT` column to `scheduled_posts` table for video post routing.
+
+---
+
 ## 2026-02-19 — Phase 5: Marketing Pipeline + Billing (Video Engine v1.1)
 
 ### 1. Video Generation as Marketing Step 6

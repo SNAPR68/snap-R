@@ -4,6 +4,7 @@ import { fade } from '@remotion/transitions/fade';
 import { z } from 'zod';
 import { ClosingCard } from './ClosingCard';
 import { AudioLayer, audioSchema } from './AudioLayer';
+import { BrandWatermark, BrandFooter, brandSchema } from './BrandOverlay';
 import {
   PhotoSlide,
   AddressOverlay,
@@ -27,6 +28,7 @@ export const propertyShowcaseSchema = z.object({
   }),
   aspectRatio: z.enum(['9:16', '1:1', '16:9']),
   audio: audioSchema.optional(),
+  brand: brandSchema.optional(),
 });
 
 export type PropertyShowcaseProps = z.infer<typeof propertyShowcaseSchema>;
@@ -51,7 +53,10 @@ export function calculateDuration(photoCount: number): number {
 export const PropertyShowcase: React.FC<PropertyShowcaseProps> = ({
   listing,
   audio,
+  brand,
 }) => {
+  const slideshowDuration = calculateDuration(listing.photos.length) - CLOSING_CARD_FRAMES;
+
   return (
     <AbsoluteFill style={{ backgroundColor: '#0A0A0A' }}>
       <TransitionSeries>
@@ -78,17 +83,24 @@ export const PropertyShowcase: React.FC<PropertyShowcaseProps> = ({
             beds={listing.beds}
             baths={listing.baths}
             sqft={listing.sqft}
+            primaryColor={brand?.primaryColor}
           />
         </TransitionSeries.Sequence>
       </TransitionSeries>
 
       {/* Persistent address overlay on top of slideshow (not on closing card) */}
-      <Sequence
-        durationInFrames={
-          calculateDuration(listing.photos.length) - CLOSING_CARD_FRAMES
-        }
-      >
+      <Sequence durationInFrames={slideshowDuration}>
         <AddressOverlay address={listing.address} />
+      </Sequence>
+
+      {/* Brand watermark (logo) during slideshow */}
+      <Sequence durationInFrames={slideshowDuration}>
+        <BrandWatermark brand={brand} />
+      </Sequence>
+
+      {/* Brand footer on closing card */}
+      <Sequence from={slideshowDuration} durationInFrames={CLOSING_CARD_FRAMES}>
+        <BrandFooter brand={brand} />
       </Sequence>
 
       {/* Audio layer: music, voiceover, silent fallback */}

@@ -7,6 +7,7 @@ import { ClosingCard } from './ClosingCard';
 import { IntroCard } from './IntroCard';
 import { FeatureCallout } from './FeatureCallout';
 import { AudioLayer, audioSchema } from './AudioLayer';
+import { BrandWatermark, BrandFooter, brandSchema } from './BrandOverlay';
 import {
   PhotoSlide,
   AddressOverlay,
@@ -32,6 +33,7 @@ export const justListedSchema = z.object({
   }),
   aspectRatio: z.enum(['9:16', '1:1', '16:9']),
   audio: audioSchema.optional(),
+  brand: brandSchema.optional(),
 });
 
 export type JustListedProps = z.infer<typeof justListedSchema>;
@@ -69,11 +71,13 @@ export function calculateJustListedDuration(photoCount: number): number {
 // MAIN COMPOSITION
 // ============================================
 
-export const JustListed: React.FC<JustListedProps> = ({ listing, audio }) => {
+export const JustListed: React.FC<JustListedProps> = ({ listing, audio, brand }) => {
   const features = listing.features ?? [];
+  const slideshowStart = INTRO_CARD_FRAMES - INTRO_TRANSITION_FRAMES;
   const slideshowDuration =
     listing.photos.length * PHOTO_DISPLAY_FRAMES -
     (listing.photos.length - 1) * SLIDE_TRANSITION_FRAMES;
+  const closingStart = slideshowStart + slideshowDuration;
 
   return (
     <AbsoluteFill style={{ backgroundColor: '#0A0A0A' }}>
@@ -126,16 +130,25 @@ export const JustListed: React.FC<JustListedProps> = ({ listing, audio }) => {
             beds={listing.beds}
             baths={listing.baths}
             sqft={listing.sqft}
+            primaryColor={brand?.primaryColor}
           />
         </TransitionSeries.Sequence>
       </TransitionSeries>
 
       {/* Persistent address overlay during slideshow (after intro, before closing) */}
       <Sequence
-        from={INTRO_CARD_FRAMES - INTRO_TRANSITION_FRAMES}
+        from={slideshowStart}
         durationInFrames={slideshowDuration}
       >
         <AddressOverlay address={listing.address} />
+      </Sequence>
+
+      {/* Brand watermark (logo) during slideshow */}
+      <Sequence
+        from={slideshowStart}
+        durationInFrames={slideshowDuration}
+      >
+        <BrandWatermark brand={brand} />
       </Sequence>
 
       {/* Feature callouts overlaid on photos (one feature per photo) */}
@@ -143,8 +156,7 @@ export const JustListed: React.FC<JustListedProps> = ({ listing, audio }) => {
         listing.photos.map((_, index) => {
           const feature = features[index % features.length];
           const photoStart =
-            INTRO_CARD_FRAMES -
-            INTRO_TRANSITION_FRAMES +
+            slideshowStart +
             index * (PHOTO_DISPLAY_FRAMES - SLIDE_TRANSITION_FRAMES);
           return (
             <Sequence
@@ -156,6 +168,11 @@ export const JustListed: React.FC<JustListedProps> = ({ listing, audio }) => {
             </Sequence>
           );
         })}
+
+      {/* Brand footer on closing card */}
+      <Sequence from={closingStart} durationInFrames={CLOSING_CARD_FRAMES}>
+        <BrandFooter brand={brand} />
+      </Sequence>
 
       {/* Audio layer: music, voiceover, silent fallback */}
       <AudioLayer audio={audio} />

@@ -38,6 +38,17 @@ interface ListingWithPhotos {
   photos: Array<{ id: string; processed_url: string | null }>;
 }
 
+interface BrandProfile {
+  business_name: string | null;
+  logo_url: string | null;
+  brokerage_logo_url: string | null;
+  primary_color: string | null;
+  secondary_color: string | null;
+  phone: string | null;
+  website: string | null;
+  tagline: string | null;
+}
+
 interface RenderResponse {
   renderId: string;
   bucketName: string;
@@ -135,6 +146,13 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Fetch agent brand profile (optional — videos work without branding)
+    const { data: brandProfile } = await admin
+      .from('brand_profiles')
+      .select('business_name, logo_url, brokerage_logo_url, primary_color, secondary_color, phone, website, tagline')
+      .eq('user_id', userId)
+      .maybeSingle<BrandProfile>();
+
     // Resolve composition ID
     const compositionId = getCompositionId(template, aspectRatio);
 
@@ -156,6 +174,20 @@ export async function POST(request: NextRequest) {
       listing: listingProps,
       aspectRatio,
     };
+
+    // Inject brand data if agent has a brand profile
+    if (brandProfile) {
+      inputProps.brand = {
+        businessName: brandProfile.business_name ?? undefined,
+        logoUrl: brandProfile.logo_url ?? undefined,
+        brokerageLogoUrl: brandProfile.brokerage_logo_url ?? undefined,
+        primaryColor: brandProfile.primary_color || '#D4AF37',
+        secondaryColor: brandProfile.secondary_color || '#1A1A1A',
+        phone: brandProfile.phone ?? undefined,
+        website: brandProfile.website ?? undefined,
+        tagline: brandProfile.tagline ?? undefined,
+      };
+    }
 
     // Trigger Lambda render
     const renderResponse = await renderMediaOnLambda({

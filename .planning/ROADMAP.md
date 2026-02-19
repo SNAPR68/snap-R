@@ -32,7 +32,7 @@ No GSD phases — v1.0 was developed before GSD adoption. Shipped:
 - [x] **Phase 3: Lifecycle Templates** — Just Listed, Open House templates with intro cards, branding, and template selection logic (COMPLETED 2026-02-19)
 - [x] **Phase 4: Audio Integration** — Background music, voiceover mixing, volume ducking, audio fade in/out (COMPLETED 2026-02-19)
 - [x] **Phase 5: Marketing Pipeline + Billing** — Auto-trigger video as Step 6, billing gates, cost tracking, fire-and-forget rendering (COMPLETED 2026-02-19)
-- [ ] **Phase 6: Agent Branding + Publishing** — Branding configuration, end cards, video publishing to social platforms
+- [x] **Phase 6: Agent Branding + Publishing** — Brand data in compositions, end cards, video publishing to social platforms (COMPLETED 2026-02-19)
 - [ ] **Phase 7: Additional Templates + Polish** — Price Drop, Sold templates, UI refinements
 
 ## Phase Details
@@ -137,12 +137,10 @@ Plans:
   5. Video publishes to Facebook Feed/Reels
   6. Video publishes to LinkedIn (501 stub replaced with working implementation)
   7. Cron publisher handles video scheduled posts with billing gates
-**Plans**: TBD
+**Plans**: 1 plan (consolidated — branding + publishing done together)
 
 Plans:
-- [ ] 06-01: Agent branding configuration (settings page, DB storage, composition integration)
-- [ ] 06-02: End card template with branding
-- [ ] 06-03: Video publishing (Instagram Reels, Facebook, LinkedIn implementation)
+- [x] 06-01: Agent branding in compositions + video publishing in cron (COMPLETED 2026-02-19)
 
 ### Phase 7: Additional Templates + Polish
 **Goal**: Complete lifecycle template coverage with Price Drop and Sold templates. Polish UI and video quality.
@@ -172,5 +170,5 @@ Note: Phase 4 depends on Phase 2 (not Phase 3), so Phases 3 and 4 could run in p
 | 3. Lifecycle Templates | v1.1 | 3/3 | 2026-02-19 | - |
 | 4. Audio Integration | v1.1 | 3/3 | 2026-02-19 | - |
 | 5. Marketing Pipeline + Billing | v1.1 | 3/3 | 2026-02-19 | - |
-| 6. Agent Branding + Publishing | v1.1 | 0/3 | Not started | - |
+| 6. Agent Branding + Publishing | v1.1 | 1/1 | 2026-02-19 | - |
 | 7. Additional Templates + Polish | v1.1 | 0/2 | Not started | - |

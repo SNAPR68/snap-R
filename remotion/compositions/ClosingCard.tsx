@@ -17,6 +17,7 @@ interface ClosingCardProps {
   beds: number;
   baths: number;
   sqft?: number;
+  primaryColor?: string;
 }
 
 // ============================================
@@ -29,6 +30,7 @@ export const ClosingCard: React.FC<ClosingCardProps> = ({
   beds,
   baths,
   sqft,
+  primaryColor = '#D4A017',
 }) => {
   const frame = useCurrentFrame();
   const { height } = useVideoConfig();
@@ -110,7 +112,7 @@ export const ClosingCard: React.FC<ClosingCardProps> = ({
         style={{
           fontSize: priceSize,
           fontWeight: 800,
-          color: '#D4A017',
+          color: primaryColor,
           opacity: priceOpacity,
           transform: `translateY(${priceTranslateY}px)`,
           textAlign: 'center',
