@@ -3,7 +3,7 @@
 ## Milestones
 
 - ✅ **v1.0 Foundation** — Pre-GSD development (shipped)
-- 🚧 **v1.1 Video Engine** — Phases 1-7 (in progress)
+- ✅ **v1.1 Video Engine** — Phases 1-7 (complete)
 
 ## Phases
 
@@ -19,7 +19,7 @@ No GSD phases — v1.0 was developed before GSD adoption. Shipped:
 
 </details>
 
-### 🚧 v1.1 Video Engine (In Progress)
+### ✅ v1.1 Video Engine (Complete)
 
 **Milestone Goal:** Add server-rendered property video generation to the marketing pipeline, replacing the broken browser-FFmpeg approach with Remotion Lambda, including industry-standard templates, multi-format export, agent branding, and auto-publishing.
 
@@ -33,7 +33,7 @@ No GSD phases — v1.0 was developed before GSD adoption. Shipped:
 - [x] **Phase 4: Audio Integration** — Background music, voiceover mixing, volume ducking, audio fade in/out (COMPLETED 2026-02-19)
 - [x] **Phase 5: Marketing Pipeline + Billing** — Auto-trigger video as Step 6, billing gates, cost tracking, fire-and-forget rendering (COMPLETED 2026-02-19)
 - [x] **Phase 6: Agent Branding + Publishing** — Brand data in compositions, end cards, video publishing to social platforms (COMPLETED 2026-02-19)
-- [ ] **Phase 7: Additional Templates + Polish** — Price Drop, Sold templates, UI refinements
+- [x] **Phase 7: Additional Templates + Polish** — Price Drop, Sold templates, UI refinements (COMPLETED 2026-02-19)
 
 ## Phase Details
 
@@ -151,11 +151,10 @@ Plans:
   2. Sold template renders celebration styling with "Sold in X days" social proof
   3. Both templates render correctly in all 3 aspect ratios
   4. Template auto-selection correctly routes price drops and sold listings
-**Plans**: TBD
+**Plans**: 1 plan (consolidated — both templates done together)
 
 Plans:
-- [ ] 07-01: PriceDrop template (price animation, urgency styling)
-- [ ] 07-02: Sold template (celebration, social proof)
+- [x] 07-01: PriceDrop + Sold templates, auto-selection, UI integration (COMPLETED 2026-02-19)
 
 ## Progress
 
@@ -171,4 +170,4 @@ Note: Phase 4 depends on Phase 2 (not Phase 3), so Phases 3 and 4 could run in p
 | 4. Audio Integration | v1.1 | 3/3 | 2026-02-19 | - |
 | 5. Marketing Pipeline + Billing | v1.1 | 3/3 | 2026-02-19 | - |
 | 6. Agent Branding + Publishing | v1.1 | 1/1 | 2026-02-19 | - |
-| 7. Additional Templates + Polish | v1.1 | 0/2 | Not started | - |
+| 7. Additional Templates + Polish | v1.1 | 1/1 | 2026-02-19 | - |

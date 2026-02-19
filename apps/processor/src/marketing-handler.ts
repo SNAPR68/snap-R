@@ -610,18 +610,30 @@ export async function handleMarketingJob(
         throw new Error('NEXT_PUBLIC_BASE_URL or CRON_SECRET not configured for video generation');
       }
 
+      // Template auto-selection: use message hint, default to property-showcase
+      const videoTemplate = message.videoTemplate || 'property-showcase';
+      const videoBody: Record<string, unknown> = {
+        listingId,
+        userId,
+        template: videoTemplate,
+        aspectRatio: '9:16',
+      };
+
+      // Inject template-specific params
+      if (videoTemplate === 'price-drop' && message.previousPrice) {
+        videoBody.previousPrice = message.previousPrice;
+      }
+      if (videoTemplate === 'sold' && message.daysOnMarket !== undefined) {
+        videoBody.daysOnMarket = message.daysOnMarket;
+      }
+
       const videoResponse = await fetch(`${baseUrl}/api/internal/video-generate`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${cronSecret}`,
         },
-        body: JSON.stringify({
-          listingId,
-          userId,
-          template: 'property-showcase',
-          aspectRatio: '9:16',
-        }),
+        body: JSON.stringify(videoBody),
       });
 
       if (!videoResponse.ok) {
@@ -646,7 +658,7 @@ export async function handleMarketingJob(
           video_result: {
             renderId: videoData.renderId,
             bucketName: videoData.bucketName,
-            template: 'property-showcase',
+            template: videoTemplate,
             aspectRatio: '9:16',
             triggered: true,
           },

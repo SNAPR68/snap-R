@@ -37,6 +37,10 @@ function getCompositionId(template: string, aspectRatio: string): string {
       return `JustListed-${ratioKey}`;
     case 'open-house':
       return `OpenHouse-${ratioKey}`;
+    case 'price-drop':
+      return `PriceDrop-${ratioKey}`;
+    case 'sold':
+      return `Sold-${ratioKey}`;
     default:
       return 'TestVideo';
   }
@@ -166,6 +170,16 @@ export async function POST(request: NextRequest) {
     // OpenHouse needs date
     if (validatedInput.template === 'open-house' && validatedInput.openHouseDate) {
       inputProps.openHouseDate = validatedInput.openHouseDate;
+    }
+
+    // PriceDrop needs previousPrice
+    if (validatedInput.template === 'price-drop' && validatedInput.previousPrice) {
+      listingProps.previousPrice = validatedInput.previousPrice;
+    }
+
+    // Sold needs daysOnMarket
+    if (validatedInput.template === 'sold' && validatedInput.daysOnMarket !== undefined) {
+      listingProps.daysOnMarket = validatedInput.daysOnMarket;
     }
 
     // Audio params (UI sends 0-100, compositions expect 0-1)

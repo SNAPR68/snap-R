@@ -23,12 +23,14 @@ type VoiceId = 'professional-male' | 'professional-female' | 'luxury-male' | 'lu
 type ScriptStyle = 'professional' | 'luxury' | 'friendly' | 'firstTimeBuyer'
 
 type RenderStatus = 'idle' | 'triggering' | 'rendering' | 'completed' | 'failed'
-type VideoTemplate = 'property-showcase' | 'just-listed' | 'open-house'
+type VideoTemplate = 'property-showcase' | 'just-listed' | 'open-house' | 'price-drop' | 'sold'
 
 const VIDEO_TEMPLATES: Record<VideoTemplate, { name: string; desc: string; duration: string }> = {
   'property-showcase': { name: 'Showcase', desc: 'Cinematic slideshow with crossfades', duration: '~4.5s/photo' },
   'just-listed': { name: 'Just Listed', desc: 'Intro card + slide transitions + features', duration: '~5s/photo' },
   'open-house': { name: 'Open House', desc: 'Urgency pacing with event date badge', duration: '~3.5s/photo' },
+  'price-drop': { name: 'Price Drop', desc: 'Price reduced badge with urgency pacing', duration: '~3.5s/photo' },
+  'sold': { name: 'Sold', desc: 'Celebration styling with social proof', duration: '~4.5s/photo' },
 }
 
 interface ListingData {
@@ -100,6 +102,8 @@ export default function VideoCreatorClient() {
   const [template, setTemplate] = useState<VideoTemplate>('property-showcase')
   const [aspectRatio, setAspectRatio] = useState<AspectRatio>('9:16')
   const [openHouseDate, setOpenHouseDate] = useState('')
+  const [previousPrice, setPreviousPrice] = useState('')
+  const [daysOnMarket, setDaysOnMarket] = useState('')
 
   // Audio settings
   const [enableVoiceover, setEnableVoiceover] = useState(false)
@@ -340,6 +344,9 @@ export default function VideoCreatorClient() {
     // renderId cleared
 
     try {
+      const parsedPreviousPrice = previousPrice ? parseFloat(previousPrice) : undefined
+      const parsedDaysOnMarket = daysOnMarket ? parseInt(daysOnMarket, 10) : undefined
+
       const res = await fetch('/api/video/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -348,6 +355,8 @@ export default function VideoCreatorClient() {
           aspectRatio,
           template,
           ...(template === 'open-house' && openHouseDate ? { openHouseDate } : {}),
+          ...(template === 'price-drop' && parsedPreviousPrice ? { previousPrice: parsedPreviousPrice } : {}),
+          ...(template === 'sold' && parsedDaysOnMarket ? { daysOnMarket: parsedDaysOnMarket } : {}),
           ...((enableMusic || voiceoverUrl) ? {
             audio: {
               musicTrack: enableMusic && selectedMusic !== 'none' ? selectedMusic : undefined,
@@ -685,6 +694,42 @@ export default function VideoCreatorClient() {
                       disabled={isGenerating}
                       className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white text-sm placeholder:text-white/30 focus:outline-none focus:border-[#D4A017] disabled:opacity-50"
                     />
+                  </div>
+                )}
+
+                {/* Price Drop: Previous Price (conditional) */}
+                {template === 'price-drop' && (
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2 text-white/50 text-sm">
+                      <span className="font-medium">Original Price</span>
+                    </div>
+                    <input
+                      type="number"
+                      value={previousPrice}
+                      onChange={(e) => setPreviousPrice(e.target.value)}
+                      placeholder="e.g. 2500000"
+                      disabled={isGenerating}
+                      className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white text-sm placeholder:text-white/30 focus:outline-none focus:border-[#D4A017] disabled:opacity-50"
+                    />
+                    <p className="text-xs text-white/40">Enter the original listing price before the reduction</p>
+                  </div>
+                )}
+
+                {/* Sold: Days on Market (conditional) */}
+                {template === 'sold' && (
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2 text-white/50 text-sm">
+                      <span className="font-medium">Days on Market</span>
+                    </div>
+                    <input
+                      type="number"
+                      value={daysOnMarket}
+                      onChange={(e) => setDaysOnMarket(e.target.value)}
+                      placeholder="e.g. 12"
+                      disabled={isGenerating}
+                      className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white text-sm placeholder:text-white/30 focus:outline-none focus:border-[#D4A017] disabled:opacity-50"
+                    />
+                    <p className="text-xs text-white/40">Optional — shows social proof in the video</p>
                   </div>
                 )}
 

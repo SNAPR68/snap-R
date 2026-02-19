@@ -2,10 +2,10 @@
 
 ## Current Position
 
-Phase: 7 (not started)
-Plan: None yet
-Status: Phase 6 complete — Agent branding in video compositions, video publishing in cron
-Last activity: 2026-02-19 — BrandOverlay components, brand data injection, cron video publishing
+Phase: 7 (COMPLETE — Milestone v1.1 finished)
+Plan: Executed directly (no formal plan files)
+Status: Phase 7 complete — PriceDrop + Sold templates, marketing handler auto-selection
+Last activity: 2026-02-19 — PriceDrop/Sold compositions, template auto-selection, VideoCreator UI
 
 ## Project Reference
 
@@ -23,7 +23,7 @@ See: .planning/PROJECT.md (updated 2026-02-19)
 - Marketing Results Panel shows video player, download button, rendering spinner, or upgrade prompt
 - Marketing Banner has 6 progress dots (was 5)
 - VideoCreator.tsx migrated from browser-FFmpeg to Lambda API calls (Phase 2)
-- 3 production templates: PropertyShowcase (fade), JustListed (slide), OpenHouse (wipe)
+- 5 production templates: PropertyShowcase (fade), JustListed (slide), OpenHouse (wipe), PriceDrop (slide, urgency), Sold (fade, celebration)
 - Shared composition components: PhotoSlide, AddressOverlay, IntroCard, ClosingCard, FeatureCallout, EventBadge, BrandWatermark, BrandFooter
 - AudioLayer component: music (looped, fade in/out), voiceover, ducking (30% when VO present), silent fallback
 - 6 placeholder music tracks in public/music/ (silent MP3s — replace with real royalty-free tracks)
@@ -34,8 +34,8 @@ See: .planning/PROJECT.md (updated 2026-02-19)
 - BrandFooter: tagline + business name + phone/website + brokerage logo on closing card
 - ClosingCard price color uses agent's primary_color (defaults to gold #D4AF37)
 - Internal video-generate API fetches brand_profiles and passes brand prop to Lambda render
-- Template selector UI with 3 cards + conditional open house date input
-- Each template registered in 3 aspect ratios (9:16, 1:1, 16:9) = 9 compositions + TestVideo
+- Template selector UI with 5 cards + conditional inputs (open house date, original price, days on market)
+- Each template registered in 3 aspect ratios (9:16, 1:1, 16:9) = 15 compositions + TestVideo
 - Photo ordering module uses existing photoAudit room classification (zero AI cost)
 - Cron publisher now handles video posts (video_url column on scheduled_posts)
 - Facebook video: /videos endpoint with file_url
@@ -46,7 +46,10 @@ See: .planning/PROJECT.md (updated 2026-02-19)
 - Agent branding infrastructure (brand_profiles DB, settings UI, logo uploader) exists on main
 - Branch: feature/brand-polish
 - 7-phase roadmap: Foundation → Composition → Templates → Audio → Pipeline → Branding → Polish
-- Phases 1-6 complete, Phase 7 remaining
+- All 7 phases complete — v1.1 Video Engine milestone finished
+- PriceDrop: red urgency styling, percentage drop badge, previous price strikethrough
+- Sold: purple celebration styling, "Sold in X Days" social proof badge
+- MarketingJobMessage extended with videoTemplate hint + template-specific params
 - Worker NEXT_PUBLIC_BASE_URL and CRON_SECRET secrets set
 - `canGenerateVideo` billing helper added to lib/content/limits.ts
 

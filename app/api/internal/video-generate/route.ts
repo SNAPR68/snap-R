@@ -24,6 +24,8 @@ interface InternalGenerateBody {
   userId: string;
   template?: string;
   aspectRatio?: string;
+  previousPrice?: number;
+  daysOnMarket?: number;
 }
 
 interface ListingWithPhotos {
@@ -63,6 +65,10 @@ function getCompositionId(template: string, aspectRatio: string): string {
       return `JustListed-${ratioKey}`;
     case 'open-house':
       return `OpenHouse-${ratioKey}`;
+    case 'price-drop':
+      return `PriceDrop-${ratioKey}`;
+    case 'sold':
+      return `Sold-${ratioKey}`;
     default:
       return `PropertyShowcase-${ratioKey}`;
   }
@@ -168,6 +174,16 @@ export async function POST(request: NextRequest) {
 
     if (template === 'just-listed' && listing.features) {
       listingProps.features = listing.features;
+    }
+
+    // PriceDrop needs previousPrice
+    if (template === 'price-drop' && body.previousPrice) {
+      listingProps.previousPrice = body.previousPrice;
+    }
+
+    // Sold needs daysOnMarket
+    if (template === 'sold' && body.daysOnMarket !== undefined) {
+      listingProps.daysOnMarket = body.daysOnMarket;
     }
 
     const inputProps: Record<string, unknown> = {

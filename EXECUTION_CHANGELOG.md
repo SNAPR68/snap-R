@@ -1,6 +1,62 @@
 # SnapR Execution Changelog
 =================================
 
+## 2026-02-19 — Phase 7: Additional Templates + Polish (Video Engine v1.1)
+
+### 1. PriceDrop Template + PriceDropBadge
+- Created `remotion/compositions/PriceDrop.tsx` — urgency-paced template (3.5s/photo, 1s slide
+  transitions). IntroCard shows "Price Reduced" with savings subtitle. Uses slide transitions
+  from @remotion/transitions for visual differentiation.
+- Created `remotion/compositions/PriceDropBadge.tsx` — red badge (#EF4444) showing percentage
+  drop, previous price with strikethrough, and new price in green (#22C55E). Persists at top
+  of frame during slideshow. Fade-in animation over first 20 frames.
+- Zod schema: `priceDropSchema` with optional `listing.previousPrice`.
+- Duration: `calculatePriceDropDuration()` — urgency pacing at 105 frames/photo.
+
+### 2. Sold Template + SoldBadge
+- Created `remotion/compositions/Sold.tsx` — celebration-style template with standard pacing
+  (4.5s/photo), crossfade transitions. IntroCard shows "Sold" with social proof subtitle.
+  Purple closing card (#8B5CF6) instead of gold.
+- Created `remotion/compositions/SoldBadge.tsx` — purple badge (#8B5CF6) with party emoji,
+  optional "Sold in X Days" social proof text. Fade-in animation.
+- Zod schema: `soldSchema` with optional `listing.daysOnMarket`.
+- Duration: `calculateSoldDuration()` — standard pacing at 135 frames/photo.
+
+### 3. Root.tsx Registration — 6 New Compositions
+- Registered PriceDrop and Sold in 3 aspect ratios each (9:16, 1:1, 16:9) = 6 new compositions.
+- Total compositions: 16 (TestVideo + 5 templates × 3 ratios).
+- Added default props with sample data: `priceDropDefaultProps` (previousPrice: 2500000),
+  `soldDefaultProps` (daysOnMarket: 12).
+- Files Modified: remotion/Root.tsx
+
+### 4. API Route Updates — Composition ID Routing
+- Updated `app/api/video/generate/route.ts` (user-facing): added `price-drop` and `sold`
+  cases to getCompositionId(), template-specific prop injection for previousPrice/daysOnMarket.
+- Updated `app/api/internal/video-generate/route.ts` (internal/marketing): same composition
+  ID cases, expanded InternalGenerateBody interface with previousPrice/daysOnMarket.
+- Updated `lib/validation/schemas.ts`: added 'price-drop' and 'sold' to template enum,
+  added previousPrice (number.positive) and daysOnMarket (int 0-9999) optional fields.
+
+### 5. VideoCreator UI — Template Selector + Inputs
+- Added PriceDrop and Sold to VIDEO_TEMPLATES constant with descriptions and icons.
+- Added conditional UI controls: "Original Price" input for PriceDrop, "Days on Market"
+  input for Sold. Values passed to generate API as template-specific params.
+- Files Modified: app/dashboard/content-studio/video/VideoCreator.tsx
+
+### 6. Marketing Handler — Template Auto-Selection
+- Extended `MarketingJobMessage` in types.ts with optional `videoTemplate`, `previousPrice`,
+  `daysOnMarket` fields for template hinting from upstream triggers.
+- Updated `marketing-handler.ts` to use `message.videoTemplate` (defaults to 'property-showcase').
+  Template-specific params injected into internal API call body.
+- Video result recording now stores actual template name (was hardcoded to 'property-showcase').
+- Files Modified: apps/processor/src/types.ts, apps/processor/src/marketing-handler.ts
+
+### Verification
+- npx tsc --noEmit: 0 errors
+- npm run build: Success
+
+---
+
 ## 2026-02-19 — Phase 6: Agent Branding + Video Publishing (Video Engine v1.1)
 
 ### 1. BrandOverlay Shared Component

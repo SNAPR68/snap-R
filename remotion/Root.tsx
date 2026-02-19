@@ -18,6 +18,18 @@ import {
   type OpenHouseProps,
   calculateOpenHouseDuration,
 } from './compositions/OpenHouse';
+import {
+  PriceDrop,
+  priceDropSchema,
+  type PriceDropProps,
+  calculatePriceDropDuration,
+} from './compositions/PriceDrop';
+import {
+  Sold,
+  soldSchema,
+  type SoldProps,
+  calculateSoldDuration,
+} from './compositions/Sold';
 
 // Shared sample photos
 const samplePhotos = [
@@ -79,6 +91,27 @@ const openHouseDefaultProps: OpenHouseProps = {
   brand: defaultBrand,
 };
 
+const priceDropDefaultProps: PriceDropProps = {
+  listing: {
+    ...sampleListing,
+    price: 2250000,
+    previousPrice: 2500000,
+  },
+  aspectRatio: '9:16',
+  audio: defaultAudio,
+  brand: defaultBrand,
+};
+
+const soldDefaultProps: SoldProps = {
+  listing: {
+    ...sampleListing,
+    daysOnMarket: 12,
+  },
+  aspectRatio: '9:16',
+  audio: defaultAudio,
+  brand: defaultBrand,
+};
+
 // ============================================
 // CALCULATE METADATA
 // ============================================
@@ -99,6 +132,18 @@ const openHouseMetadata: CalculateMetadataFunction<OpenHouseProps> = ({
   props,
 }) => ({
   durationInFrames: calculateOpenHouseDuration(props.listing.photos.length),
+});
+
+const priceDropMetadata: CalculateMetadataFunction<PriceDropProps> = ({
+  props,
+}) => ({
+  durationInFrames: calculatePriceDropDuration(props.listing.photos.length),
+});
+
+const soldMetadata: CalculateMetadataFunction<SoldProps> = ({
+  props,
+}) => ({
+  durationInFrames: calculateSoldDuration(props.listing.photos.length),
 });
 
 // Aspect ratio dimension configs
@@ -214,6 +259,76 @@ export const RemotionRoot: React.FC = () => {
         schema={openHouseSchema}
         defaultProps={{ ...openHouseDefaultProps, aspectRatio: '16:9' as const }}
         calculateMetadata={openHouseMetadata}
+      />
+
+      {/* PriceDrop — 3 aspect ratios */}
+      <Composition
+        id="PriceDrop-9x16"
+        component={PriceDrop}
+        durationInFrames={300}
+        fps={30}
+        width={ASPECT_CONFIGS['9:16'].width}
+        height={ASPECT_CONFIGS['9:16'].height}
+        schema={priceDropSchema}
+        defaultProps={{ ...priceDropDefaultProps, aspectRatio: '9:16' as const }}
+        calculateMetadata={priceDropMetadata}
+      />
+      <Composition
+        id="PriceDrop-1x1"
+        component={PriceDrop}
+        durationInFrames={300}
+        fps={30}
+        width={ASPECT_CONFIGS['1:1'].width}
+        height={ASPECT_CONFIGS['1:1'].height}
+        schema={priceDropSchema}
+        defaultProps={{ ...priceDropDefaultProps, aspectRatio: '1:1' as const }}
+        calculateMetadata={priceDropMetadata}
+      />
+      <Composition
+        id="PriceDrop-16x9"
+        component={PriceDrop}
+        durationInFrames={300}
+        fps={30}
+        width={ASPECT_CONFIGS['16:9'].width}
+        height={ASPECT_CONFIGS['16:9'].height}
+        schema={priceDropSchema}
+        defaultProps={{ ...priceDropDefaultProps, aspectRatio: '16:9' as const }}
+        calculateMetadata={priceDropMetadata}
+      />
+
+      {/* Sold — 3 aspect ratios */}
+      <Composition
+        id="Sold-9x16"
+        component={Sold}
+        durationInFrames={300}
+        fps={30}
+        width={ASPECT_CONFIGS['9:16'].width}
+        height={ASPECT_CONFIGS['9:16'].height}
+        schema={soldSchema}
+        defaultProps={{ ...soldDefaultProps, aspectRatio: '9:16' as const }}
+        calculateMetadata={soldMetadata}
+      />
+      <Composition
+        id="Sold-1x1"
+        component={Sold}
+        durationInFrames={300}
+        fps={30}
+        width={ASPECT_CONFIGS['1:1'].width}
+        height={ASPECT_CONFIGS['1:1'].height}
+        schema={soldSchema}
+        defaultProps={{ ...soldDefaultProps, aspectRatio: '1:1' as const }}
+        calculateMetadata={soldMetadata}
+      />
+      <Composition
+        id="Sold-16x9"
+        component={Sold}
+        durationInFrames={300}
+        fps={30}
+        width={ASPECT_CONFIGS['16:9'].width}
+        height={ASPECT_CONFIGS['16:9'].height}
+        schema={soldSchema}
+        defaultProps={{ ...soldDefaultProps, aspectRatio: '16:9' as const }}
+        calculateMetadata={soldMetadata}
       />
 
       {/* Test composition (Phase 1) */}
