@@ -950,3 +950,49 @@ Cloudflare Worker (queue handler)
 - npx tsc --noEmit: 0 errors
 - npm run build: Success (all routes compile)
 - Risk Level: Medium (44 files changed, but all changes are hardening — no behavioral changes to core pipeline)
+
+-------------------------------------------------------------------------------
+## 2026-02-19 — Phase 1: Remotion Foundation (Video Engine v1.1)
+-------------------------------------------------------------------------------
+
+### 1. Remotion Test Composition & Configuration
+- Description:
+  Created Remotion project structure with test video composition,
+  configuration, and root registration. TestVideo composition renders
+  listing photo with fade-in animation and text overlay (address, price,
+  beds/baths). All Remotion packages at matching version 4.0.424.
+  Config sets h264 codec with yuv420p pixel format for Safari/QuickTime
+  compatibility.
+- Files Created:
+  remotion/Root.tsx
+  remotion/compositions/TestVideo.tsx
+  remotion/remotion.config.ts
+- Architectural Impact:
+  Foundation for Remotion Lambda rendering. TestVideo composition is
+  the template that API routes will invoke for video generation.
+  Uses Zod schema inference for type safety.
+- Blueprint Alignment:
+  Yes — Phase 1 Plan 1: Remotion foundation artifacts.
+- Risk Level:
+  Low (additive files only, no integration yet)
+
+### 2. Video Render Jobs Table & Validation Schemas
+- Description:
+  Created video_render_jobs table for tracking Remotion Lambda render
+  jobs with full lifecycle (queued/rendering/completed/failed), cost
+  tracking, error logging, and render metadata. Added Zod validation
+  schemas (generateVideoSchema, videoStatusSchema) for API input
+  validation.
+- Files Created:
+  supabase/migrations/20260219_video_render_jobs.sql
+- Files Modified:
+  lib/validation/schemas.ts
+- Architectural Impact:
+  Database layer ready for video rendering pipeline. RLS policies allow
+  users to view their own render jobs, service role has full access for
+  worker inserts/updates. Indexes optimize queries by user, listing,
+  render ID, status, and creation time.
+- Blueprint Alignment:
+  Yes — Phase 1 Plan 1: Database and validation infrastructure.
+- Risk Level:
+  Low (additive schema only, no existing tables modified)
