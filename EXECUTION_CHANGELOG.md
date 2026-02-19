@@ -1,6 +1,141 @@
 # SnapR Execution Changelog
 =================================
 
+## 2026-02-19 — Phase 7: Additional Templates + Polish (Video Engine v1.1)
+
+### 1. PriceDrop Template + PriceDropBadge
+- Created `remotion/compositions/PriceDrop.tsx` — urgency-paced template (3.5s/photo, 1s slide
+  transitions). IntroCard shows "Price Reduced" with savings subtitle. Uses slide transitions
+  from @remotion/transitions for visual differentiation.
+- Created `remotion/compositions/PriceDropBadge.tsx` — red badge (#EF4444) showing percentage
+  drop, previous price with strikethrough, and new price in green (#22C55E). Persists at top
+  of frame during slideshow. Fade-in animation over first 20 frames.
+- Zod schema: `priceDropSchema` with optional `listing.previousPrice`.
+- Duration: `calculatePriceDropDuration()` — urgency pacing at 105 frames/photo.
+
+### 2. Sold Template + SoldBadge
+- Created `remotion/compositions/Sold.tsx` — celebration-style template with standard pacing
+  (4.5s/photo), crossfade transitions. IntroCard shows "Sold" with social proof subtitle.
+  Purple closing card (#8B5CF6) instead of gold.
+- Created `remotion/compositions/SoldBadge.tsx` — purple badge (#8B5CF6) with party emoji,
+  optional "Sold in X Days" social proof text. Fade-in animation.
+- Zod schema: `soldSchema` with optional `listing.daysOnMarket`.
+- Duration: `calculateSoldDuration()` — standard pacing at 135 frames/photo.
+
+### 3. Root.tsx Registration — 6 New Compositions
+- Registered PriceDrop and Sold in 3 aspect ratios each (9:16, 1:1, 16:9) = 6 new compositions.
+- Total compositions: 16 (TestVideo + 5 templates × 3 ratios).
+- Added default props with sample data: `priceDropDefaultProps` (previousPrice: 2500000),
+  `soldDefaultProps` (daysOnMarket: 12).
+- Files Modified: remotion/Root.tsx
+
+### 4. API Route Updates — Composition ID Routing
+- Updated `app/api/video/generate/route.ts` (user-facing): added `price-drop` and `sold`
+  cases to getCompositionId(), template-specific prop injection for previousPrice/daysOnMarket.
+- Updated `app/api/internal/video-generate/route.ts` (internal/marketing): same composition
+  ID cases, expanded InternalGenerateBody interface with previousPrice/daysOnMarket.
+- Updated `lib/validation/schemas.ts`: added 'price-drop' and 'sold' to template enum,
+  added previousPrice (number.positive) and daysOnMarket (int 0-9999) optional fields.
+
+### 5. VideoCreator UI — Template Selector + Inputs
+- Added PriceDrop and Sold to VIDEO_TEMPLATES constant with descriptions and icons.
+- Added conditional UI controls: "Original Price" input for PriceDrop, "Days on Market"
+  input for Sold. Values passed to generate API as template-specific params.
+- Files Modified: app/dashboard/content-studio/video/VideoCreator.tsx
+
+### 6. Marketing Handler — Template Auto-Selection
+- Extended `MarketingJobMessage` in types.ts with optional `videoTemplate`, `previousPrice`,
+  `daysOnMarket` fields for template hinting from upstream triggers.
+- Updated `marketing-handler.ts` to use `message.videoTemplate` (defaults to 'property-showcase').
+  Template-specific params injected into internal API call body.
+- Video result recording now stores actual template name (was hardcoded to 'property-showcase').
+- Files Modified: apps/processor/src/types.ts, apps/processor/src/marketing-handler.ts
+
+### Verification
+- npx tsc --noEmit: 0 errors
+- npm run build: Success
+
+---
+
+## 2026-02-19 — Phase 6: Agent Branding + Video Publishing (Video Engine v1.1)
+
+### 1. BrandOverlay Shared Component
+- Created `remotion/compositions/BrandOverlay.tsx` with Zod `brandSchema` and two components.
+- `BrandWatermark`: Agent logo overlay in top-right during photo slideshow (fade-in, 85% opacity).
+- `BrandFooter`: Tagline + business name + phone/website + brokerage logo on closing card
+  with staggered entrance animations.
+- All brand fields optional — compositions render identically without brand data.
+
+### 2. Brand Integration in All Templates
+- Added `brand: brandSchema.optional()` to PropertyShowcase, JustListed, OpenHouse schemas.
+- Each template now renders BrandWatermark during slideshow and BrandFooter on closing card.
+- ClosingCard accepts `primaryColor` prop (defaults to '#D4A017'), replaces hardcoded gold.
+- Updated Root.tsx with `defaultBrand` sample data for Remotion Studio preview.
+- Files Modified:
+  remotion/compositions/PropertyShowcase.tsx, JustListed.tsx, OpenHouse.tsx,
+  ClosingCard.tsx, Root.tsx
+
+### 3. Internal Video Generate API — Brand Data Injection
+- Updated `app/api/internal/video-generate/route.ts` to fetch `brand_profiles` from DB.
+- Uses `adminSupabase().from('brand_profiles').maybeSingle()` (bypasses RLS).
+- Maps snake_case DB columns to camelCase composition props with `?? undefined` coercion.
+- Brand data injected as `inputProps.brand` for Lambda render — videos are now branded.
+
+### 4. Video Publishing in Cron Publisher
+- Rewrote `app/api/cron/publish-scheduled/route.ts` with video publishing support.
+- Checks `post.video_url` to route to video-specific publishing functions.
+- Facebook video: `POST /v18.0/${pageId}/videos` with `file_url` param.
+- Instagram Reels: 3-step flow (create REELS container → poll status → publish).
+- LinkedIn video: returns "coming soon" error (requires complex upload flow).
+- Fixed all `catch (error: any)` → `catch (error: unknown)` with instanceof guards.
+- Added AbortSignal.timeout to all fetch calls (15-30s).
+
+### 5. Database Migration — scheduled_posts video_url
+- Created `supabase/migrations/20260219_scheduled_posts_video_url.sql`.
+- Adds `video_url TEXT` column to `scheduled_posts` table for video post routing.
+
+---
+
+## 2026-02-19 — Phase 5: Marketing Pipeline + Billing (Video Engine v1.1)
+
+### 1. Video Generation as Marketing Step 6
+- Added Step 6 (video generation) to the 5-step marketing pipeline in `marketing-handler.ts`.
+- Fire-and-forget: triggers Remotion Lambda render via internal API, doesn't block other steps.
+- Always-complete semantics: video failure doesn't block marketing completion.
+- Billing gate: Free/Starter tiers get `video_status: 'skipped'`, Pro/Agency get full generation.
+
+### 2. Internal Video Generate API
+- Created `app/api/internal/video-generate/route.ts` for Worker-to-API communication.
+- Uses CRON_SECRET bearer auth (same pattern as Vercel cron jobs).
+- Fetches listing + photos via adminSupabase, orders photos, triggers Lambda render.
+- Returns `{ renderId, bucketName }` to marketing handler.
+
+### 3. Database Migration
+- Created `supabase/migrations/20260219_marketing_jobs_video.sql`.
+- Adds `video_status` (TEXT, default 'pending') and `video_result` (JSONB) to `marketing_jobs`.
+
+### 4. Marketing Status API — Video Resolution
+- Updated `app/api/marketing/status/route.ts` to include video step data.
+- Resolves actual `videoUrl` by joining `video_render_jobs` when `video_result.renderId` exists.
+- Fixed `catch (error: any)` → `catch (error: unknown)`.
+
+### 5. Marketing Banner — 6 Steps
+- Updated `components/marketing-banner.tsx` with Video in STEPS array (6 progress dots).
+- Added "Video ready" indicator in completed state banner.
+
+### 6. Marketing Results Panel — Video Card
+- Added 6th CollapsibleSection for "Property Video" in `components/marketing-results-panel.tsx`.
+- Shows video player with download button when render complete.
+- Shows rendering spinner while in progress.
+- Shows upgrade prompt for skipped (billing gate).
+
+### 7. Billing Limits — canGenerateVideo
+- Added `canGenerateVideo` to all tiers in `lib/content/limits.ts`.
+- Free/Starter: false, Pro/Agency: true.
+- Added `canGenerateVideo()` convenience function export.
+
+---
+
 ## 2026-02-12 — Phase 1 Billing Hardening
 
 ### 1. Fixed Tailwind Build Failure
@@ -950,3 +1085,356 @@ Cloudflare Worker (queue handler)
 - npx tsc --noEmit: 0 errors
 - npm run build: Success (all routes compile)
 - Risk Level: Medium (44 files changed, but all changes are hardening — no behavioral changes to core pipeline)
+
+-------------------------------------------------------------------------------
+## 2026-02-19 — Phase 1: Remotion Foundation (Video Engine v1.1)
+-------------------------------------------------------------------------------
+
+### 1. Remotion Test Composition & Configuration
+- Description:
+  Created Remotion project structure with test video composition,
+  configuration, and root registration. TestVideo composition renders
+  listing photo with fade-in animation and text overlay (address, price,
+  beds/baths). All Remotion packages at matching version 4.0.424.
+  Config sets h264 codec with yuv420p pixel format for Safari/QuickTime
+  compatibility.
+- Files Created:
+  remotion/Root.tsx
+  remotion/compositions/TestVideo.tsx
+  remotion/remotion.config.ts
+- Architectural Impact:
+  Foundation for Remotion Lambda rendering. TestVideo composition is
+  the template that API routes will invoke for video generation.
+  Uses Zod schema inference for type safety.
+- Blueprint Alignment:
+  Yes — Phase 1 Plan 1: Remotion foundation artifacts.
+- Risk Level:
+  Low (additive files only, no integration yet)
+
+### 2. Video Render Jobs Table & Validation Schemas
+- Description:
+  Created video_render_jobs table for tracking Remotion Lambda render
+  jobs with full lifecycle (queued/rendering/completed/failed), cost
+  tracking, error logging, and render metadata. Added Zod validation
+  schemas (generateVideoSchema, videoStatusSchema) for API input
+  validation.
+- Files Created:
+  supabase/migrations/20260219_video_render_jobs.sql
+- Files Modified:
+  lib/validation/schemas.ts
+- Architectural Impact:
+  Database layer ready for video rendering pipeline. RLS policies allow
+  users to view their own render jobs, service role has full access for
+  worker inserts/updates. Indexes optimize queries by user, listing,
+  render ID, status, and creation time.
+- Blueprint Alignment:
+  Yes — Phase 1 Plan 1: Database and validation infrastructure.
+- Risk Level:
+  Low (additive schema only, no existing tables modified)
+
+### 3. Video Generation API Route
+- Description:
+  Created POST /api/video/generate endpoint for triggering Remotion Lambda
+  renders. Authenticates user, validates input with Zod, fetches listing
+  with photos, checks Remotion env vars, triggers Lambda render via
+  renderMediaOnLambda, and stores job in video_render_jobs. All error
+  paths return structured JSON with appropriate status codes.
+- Files Created:
+  app/api/video/generate/route.ts
+- Architectural Impact:
+  Entry point for all video renders from UI. Follows existing SnapR
+  patterns: createClient() auth, adminSupabase() service operations,
+  Zod validation, always-complete semantics with structured error
+  responses. No any types.
+- Blueprint Alignment:
+  Yes — Phase 1 Plan 2: Video generation API endpoint.
+- Risk Level:
+  Low (additive API route, follows established patterns)
+
+### 4. Video Status API Route & Vercel Function Configuration
+- Description:
+  Created GET /api/video/status endpoint for polling render progress.
+  Validates renderId, authenticates user, verifies ownership, queries
+  Lambda progress via getRenderProgress, updates database on
+  completion/failure, and returns structured status. Returns cached
+  results for terminal states (completed/failed) to avoid unnecessary
+  AWS API calls. Updated vercel.json with function configs: 60s/1024MB
+  for generate route, 30s/512MB for status route.
+- Files Created:
+  app/api/video/status/route.ts
+- Files Modified:
+  vercel.json
+- Architectural Impact:
+  Enables real-time progress polling for video renders. Optimization:
+  caches terminal states in database to reduce Lambda API calls. Vercel
+  function configs ensure appropriate timeouts and memory allocation.
+- Blueprint Alignment:
+  Yes — Phase 1 Plan 2: Video status polling with optimization.
+- Risk Level:
+  Low (additive API route + function config)
+
+-------------------------------------------------------------------------------
+## 2026-02-19 — Phase 2: PropertyShowcase Composition + Multi-Format (Video Engine v1.1)
+-------------------------------------------------------------------------------
+
+### 1. PropertyShowcase Composition
+- Description:
+  Created cinematic property walkthrough composition using TransitionSeries
+  with crossfade transitions (1.5s fade), Ken Burns zoom/pan effect on each
+  photo (alternating zoom in/out with subtle translateX), persistent address
+  overlay with dark gradient backdrop, and animated closing card with gold
+  price, staggered fade-in for address/price/details.
+- Files Created:
+  remotion/compositions/PropertyShowcase.tsx
+  remotion/compositions/ClosingCard.tsx
+- Architectural Impact:
+  Production-ready video composition replacing TestVideo. Percentage-based
+  sizing handles all aspect ratios from single component. Uses @remotion/transitions
+  TransitionSeries, @remotion/google-fonts Inter, Remotion Img component.
+- Blueprint Alignment:
+  Yes — Phase 2 Plan 02-01: PropertyShowcase composition.
+- Risk Level:
+  Low (additive composition files)
+
+### 2. Multi-Format Registration with calculateMetadata
+- Description:
+  Registered 3 PropertyShowcase compositions in Root.tsx for each aspect ratio:
+  PropertyShowcase-9x16 (1080x1920), PropertyShowcase-1x1 (1080x1080),
+  PropertyShowcase-16x9 (1920x1080). Uses calculateMetadata to dynamically
+  compute durationInFrames from photo count. Duration formula accounts for
+  TransitionSeries overlap (N*90 + 90 frames).
+- Files Modified:
+  remotion/Root.tsx
+- Architectural Impact:
+  Lambda can render any aspect ratio by targeting the correct composition ID.
+  Duration auto-calculated — no hardcoded frame counts.
+- Blueprint Alignment:
+  Yes — Phase 2 Plan 02-01: Multi-format registration.
+- Risk Level:
+  Low (composition registration)
+
+### 3. Photo Ordering Module (AI Room Classification)
+- Description:
+  Created smart photo ordering using existing photoType data from preparation
+  pipeline. Orders photos in walkthrough sequence: exterior_front → interior_living
+  → kitchen → dining → bedrooms → bathrooms → back → drone → detail. Falls back
+  to original order when no preparation metadata available. Zero additional AI cost.
+- Files Created:
+  lib/video/photo-ordering.ts
+- Architectural Impact:
+  Reuses photo-intelligence.ts classification data. No new AI calls needed.
+  Walkthrough ordering makes videos feel like a guided property tour.
+- Blueprint Alignment:
+  Yes — Phase 2 Plan 02-02: Photo ordering module.
+- Risk Level:
+  Low (pure sorting logic)
+
+### 4. Generate Route — Composition Mapping + Photo Ordering
+- Description:
+  Updated /api/video/generate to map template+aspectRatio to composition ID
+  (property-showcase + 9:16 → PropertyShowcase-9x16). Fetches preparation_metadata
+  and photo IDs for smart ordering. Added sqft to listing query. Expanded
+  template enum to include 'property-showcase'.
+- Files Modified:
+  app/api/video/generate/route.ts
+  lib/validation/schemas.ts
+- Architectural Impact:
+  API now supports both test and property-showcase templates. Photo ordering
+  integrates seamlessly — ordered URLs passed directly to Lambda inputProps.
+- Blueprint Alignment:
+  Yes — Phase 2 Plans 02-01/02-02: API integration.
+- Risk Level:
+  Low (backwards-compatible, test template still works)
+
+### 5. tsconfig — Exclude apps/mobile
+- Description:
+  Added apps/mobile/**/* to tsconfig exclude list to prevent cross-branch
+  TypeScript errors from untracked mobile app files.
+- Files Modified:
+  tsconfig.json
+- Architectural Impact:
+  Prevents mobile app (feature/mobile-app branch) from interfering with
+  main project compilation on feature/brand-polish branch.
+- Risk Level:
+  Low (build config only)
+
+### 6. VideoCreator UI Migration — FFmpeg → Lambda
+- Description:
+  Major refactor of VideoCreator.tsx. Removed all FFmpeg-based browser rendering
+  (~300 lines of canvas, mergeAudioWithVideo, ffmpegRef). Replaced with Lambda
+  API integration: POST /api/video/generate triggers render, recursive setTimeout
+  polling at 3s intervals to GET /api/video/status tracks progress. Added
+  isMountedRef cleanup pattern. New UI: progress spinner with percentage bar,
+  HTML5 video player with poster image, aspect ratio visual selector (3 formats),
+  photo reorder with up/down arrows, download + regenerate buttons.
+- Files Modified:
+  app/dashboard/content-studio/video/VideoCreator.tsx
+- Architectural Impact:
+  Eliminates unreliable browser-side FFmpeg. All video rendering now happens on
+  AWS Lambda via Remotion. Aspect ratios reduced to 3 (9:16, 1:1, 16:9) matching
+  registered Remotion compositions. Template hardcoded to 'property-showcase'.
+  Voiceover generation and music selection UI preserved for future audio mixing.
+- Blueprint Alignment:
+  Yes — Phase 2 Plan 02-03: VideoCreator UI migration.
+- Risk Level:
+  Medium (major UI refactor, but old FFmpeg code was non-functional)
+
+-------------------------------------------------------------------------------
+## 2026-02-19 — Phase 3: Lifecycle Templates (Video Engine v1.1)
+-------------------------------------------------------------------------------
+
+### 1. Shared Composition Components
+- Description:
+  Extracted PhotoSlide, AddressOverlay, font loading, and timing constants from
+  PropertyShowcase into shared.tsx. Refactored PropertyShowcase and ClosingCard
+  to import from shared module. Added INTRO_CARD_FRAMES constant (75 frames / 2.5s).
+- Files Created:
+  remotion/compositions/shared.tsx
+- Files Modified:
+  remotion/compositions/PropertyShowcase.tsx
+  remotion/compositions/ClosingCard.tsx
+- Architectural Impact:
+  All compositions share the same PhotoSlide (Ken Burns), AddressOverlay, and font.
+  Eliminates duplication. New compositions only need to import from shared.tsx.
+- Blueprint Alignment:
+  Yes — Phase 3 Plan 03-01: Shared component extraction.
+- Risk Level:
+  Low (refactor, no behavioral change)
+
+### 2. JustListed Composition
+- Description:
+  Created JustListed template with IntroCard ("JUST LISTED" with gold accent line
+  animation), slide transitions (alternating from-left/from-right), FeatureCallout
+  overlays on photos, and ClosingCard. IntroCard has scale+fade title animation
+  with gold line reveal. FeatureCallout shows property features as semi-transparent
+  pills with gold left border.
+- Files Created:
+  remotion/compositions/JustListed.tsx
+  remotion/compositions/IntroCard.tsx
+  remotion/compositions/FeatureCallout.tsx
+- Architectural Impact:
+  Second production template. Uses slide transitions from @remotion/transitions
+  for visual differentiation from PropertyShowcase (which uses fade). Features
+  overlay adds value for listings with rich feature data.
+- Blueprint Alignment:
+  Yes — Phase 3 Plan 03-01: JustListed composition (COMP-02).
+- Risk Level:
+  Low (additive composition files)
+
+### 3. OpenHouse Composition
+- Description:
+  Created OpenHouse template with faster pacing (3.5s/photo vs 4.5s), wipe
+  transitions for urgency feel, EventBadge date overlay (gold background with
+  calendar emoji), and IntroCard with date subtitle. EventBadge persists
+  throughout slideshow at top of frame.
+- Files Created:
+  remotion/compositions/OpenHouse.tsx
+  remotion/compositions/EventBadge.tsx
+- Architectural Impact:
+  Third production template. Wipe transitions + shorter photo duration create
+  urgency appropriate for time-sensitive open house events. EventBadge adds
+  persistent date/time context.
+- Blueprint Alignment:
+  Yes — Phase 3 Plan 03-02: OpenHouse composition (COMP-03).
+- Risk Level:
+  Low (additive composition files)
+
+### 4. Composition Registration + API Integration
+- Description:
+  Registered JustListed and OpenHouse compositions in Root.tsx (3 aspect ratios
+  each = 6 new compositions). Extended getCompositionId() with switch statement
+  for just-listed and open-house templates. Added features field to listing query.
+  Template-specific inputProps: features for JustListed, openHouseDate for OpenHouse.
+  Expanded template enum to include 'just-listed' and 'open-house'. Added
+  openHouseDate optional field to generate schema.
+- Files Modified:
+  remotion/Root.tsx
+  app/api/video/generate/route.ts
+  lib/validation/schemas.ts
+- Architectural Impact:
+  API now supports 4 templates (test, property-showcase, just-listed, open-house).
+  Each template gets correct composition ID and template-specific props.
+- Blueprint Alignment:
+  Yes — Phase 3 Plans 03-01/03-02/03-03: Registration + API.
+- Risk Level:
+  Low (backwards-compatible, existing templates unchanged)
+
+### 5. Template Selector UI
+- Description:
+  Added template selector to VideoCreator.tsx with 3 clickable cards (Showcase,
+  Just Listed, Open House) using gold (#D4A017) border for active selection.
+  Conditional date/time input appears when Open House template selected.
+  Video info box dynamically shows selected template name and duration.
+  Template and openHouseDate passed to generate API call.
+- Files Modified:
+  app/dashboard/content-studio/video/VideoCreator.tsx
+- Architectural Impact:
+  Users can now choose between 3 video templates in the UI. Open House template
+  supports optional event date input. Template selection wired end-to-end from
+  UI → API → Lambda → composition.
+- Blueprint Alignment:
+  Yes — Phase 3 Plan 03-03: Template selector UI (UI-03).
+- Risk Level:
+  Low (UI additions, existing functionality preserved)
+
+## 2026-02-19 — Phase 4 Audio Integration
+
+### 1. AudioLayer Composition Component + Music Library
+- Created `remotion/compositions/AudioLayer.tsx` — reusable audio component for
+  all compositions. Handles background music (looped, with fade in/out), voiceover
+  playback, volume ducking (music ducks to 30% when voiceover present), and silent
+  fallback track for platform compatibility.
+- Created `public/music/` with 6 placeholder MP3 files (upbeat, elegant, cinematic,
+  ambient, corporate, silent) generated via ffmpeg. Silent placeholders for dev —
+  will be replaced with real royalty-free tracks.
+- Integrated AudioLayer into PropertyShowcase, JustListed, OpenHouse compositions.
+  Extended all Zod schemas with optional `audio` prop. Updated Root.tsx default props.
+- Files Created:
+  remotion/compositions/AudioLayer.tsx, public/music/*.mp3
+- Files Modified:
+  remotion/compositions/PropertyShowcase.tsx, JustListed.tsx, OpenHouse.tsx, Root.tsx
+- Architectural Impact:
+  All compositions now support optional audio (music + voiceover). Audio is rendered
+  server-side by Lambda, not in the browser.
+- Blueprint Alignment:
+  Yes — Phase 4 Plan 04-01 (AUDIO-01, AUDIO-02, AUDIO-03, AUDIO-04, AUDIO-05).
+- Risk Level:
+  Low (additive, audio is optional — compositions work identically without it)
+
+### 2. Voiceover Upload + Generate API Audio Params
+- Added `upload-audio` action to voiceover API route. Uploads base64 MP3 to Supabase
+  Storage (`raw-images/voiceovers/` prefix), returns signed URL (1hr expiry) for Lambda.
+- Fixed all `any` types in voiceover route — typed interfaces for request bodies,
+  `catch (error: unknown)` with guards, added AbortSignal.timeout to all fetches.
+- Extended `generateVideoSchema` with optional `audio` object (musicTrack, musicVolume,
+  voiceoverUrl, voiceoverVolume). UI sends 0-100, API converts to 0-1 for compositions.
+- Updated generate route to pass audio params through to Lambda inputProps.
+- Files Modified:
+  app/api/video/voiceover/route.ts, lib/validation/schemas.ts,
+  app/api/video/generate/route.ts
+- Architectural Impact:
+  Voiceover audio now persists in Supabase Storage with signed URLs. Audio params
+  flow end-to-end: UI → generate API → Lambda → composition AudioLayer.
+- Blueprint Alignment:
+  Yes — Phase 4 Plan 04-02 (AUDIO-01, AUDIO-03, UI-05, UI-06).
+- Risk Level:
+  Low (existing render flow unchanged, audio is optional)
+
+### 3. Wire Audio UI to Render Pipeline
+- Updated VideoCreator voiceover flow: generate audio → upload to storage → get URL.
+  Replaced `voiceoverAudio: Blob` state with `voiceoverUrl: string` (URL from storage).
+- Wired audio params into generateVideo(): musicTrack, musicVolume, voiceoverUrl,
+  voiceoverVolume passed to generate API when audio is enabled.
+- Removed yellow "coming soon" banner. Added green audio status indicator showing
+  which audio features will be mixed into the video.
+- Added voiceover audio preview player (HTML5 audio element).
+- Fixed share modal to show actual template name instead of hardcoded "PropertyShowcase".
+- Files Modified:
+  app/dashboard/content-studio/video/VideoCreator.tsx
+- Architectural Impact:
+  Audio tab is now fully functional — voiceover and music settings flow through to
+  Lambda rendering. The audio pipeline is complete end-to-end.
+- Blueprint Alignment:
+  Yes — Phase 4 Plan 04-03 (UI-05, UI-06).
+- Risk Level:
+  Low (UI changes, existing video generation preserved)

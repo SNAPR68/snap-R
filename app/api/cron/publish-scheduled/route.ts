@@ -3,6 +3,7 @@
  * =========================================
  * Runs every 15 minutes via Vercel Cron.
  * Picks up due `scheduled_posts` and publishes via platform APIs.
+ * Supports both image posts and video posts (from marketing pipeline Step 6).
  */
 
 export const dynamic = 'force-dynamic';
@@ -19,6 +20,13 @@ import {
 import { refreshAccessToken, type SocialPlatform } from '@/lib/social/oauth-config';
 
 const CRON_SECRET = process.env.CRON_SECRET;
+
+interface PublishResult {
+  success: boolean;
+  postId?: string;
+  postUrl?: string;
+  error?: string;
+}
 
 export async function GET(request: NextRequest) {
   // Auth check — same pattern as daily-digest
@@ -96,8 +104,9 @@ export async function GET(request: NextRequest) {
               // Update in-memory connection for this publish cycle
               connection.access_token = refreshed.accessToken;
               console.log(`[PublishCron] Token refreshed for ${post.platform}`);
-            } catch (refreshErr: any) {
-              console.error(`[PublishCron] Token refresh failed for ${post.platform}:`, refreshErr.message);
+            } catch (refreshErr: unknown) {
+              const refreshMsg = refreshErr instanceof Error ? refreshErr.message : 'Unknown refresh error';
+              console.error(`[PublishCron] Token refresh failed for ${post.platform}:`, refreshMsg);
               await markPostFailed(supabase, post.id, 'Token expired — please reconnect your account');
               results.failed++;
               continue;
@@ -124,78 +133,99 @@ export async function GET(request: NextRequest) {
           continue;
         }
 
+        // Determine if this is a video post or image post
+        const videoUrl = post.video_url as string | null;
+        const isVideoPost = !!videoUrl;
+
         // Prepare content
         const content = {
           text: post.content,
           imageUrls: post.image_urls || [],
+          videoUrl: videoUrl ?? undefined,
         };
 
-        let publishResult;
+        let publishResult: PublishResult;
 
-        switch (post.platform) {
-          case 'facebook': {
-            // Get page access token from pages array
-            const pages = (connection.pages || []) as Array<{ id: string; access_token: string }>;
-            const page = pages.find((p: { id: string }) => p.id === connection.default_page_id) || pages[0];
+        if (isVideoPost) {
+          // === VIDEO PUBLISHING ===
+          publishResult = await publishVideoPost(
+            post.platform,
+            connection,
+            content,
+            supabase,
+            post.id,
+            results
+          );
 
-            if (!page?.access_token || !page?.id) {
-              await markPostFailed(supabase, post.id, 'No Facebook page configured');
-              results.failed++;
-              continue;
+          // publishVideoPost returns a sentinel result if it handled the error internally
+          if (!publishResult) continue;
+        } else {
+          // === IMAGE PUBLISHING ===
+          switch (post.platform) {
+            case 'facebook': {
+              // Get page access token from pages array
+              const pages = (connection.pages || []) as Array<{ id: string; access_token: string }>;
+              const page = pages.find((p: { id: string }) => p.id === connection.default_page_id) || pages[0];
+
+              if (!page?.access_token || !page?.id) {
+                await markPostFailed(supabase, post.id, 'No Facebook page configured');
+                results.failed++;
+                continue;
+              }
+
+              publishResult = await publishToFacebook(
+                page.access_token,
+                page.id,
+                content
+              );
+              break;
             }
 
-            publishResult = await publishToFacebook(
-              page.access_token,
-              page.id,
-              content
-            );
-            break;
-          }
+            case 'instagram': {
+              const igAccount = connection.instagram_account as { id?: string } | null;
+              const igAccountId = igAccount?.id;
 
-          case 'instagram': {
-            const igAccount = connection.instagram_account as { id?: string } | null;
-            const igAccountId = igAccount?.id;
+              if (!igAccountId) {
+                await markPostFailed(supabase, post.id, 'No Instagram business account linked');
+                results.failed++;
+                continue;
+              }
 
-            if (!igAccountId) {
-              await markPostFailed(supabase, post.id, 'No Instagram business account linked');
-              results.failed++;
-              continue;
+              // Instagram needs the page access token (via Facebook Graph API)
+              const pages = (connection.pages || []) as Array<{ id: string; access_token: string }>;
+              const page = pages.find((p: { id: string }) => p.id === connection.default_page_id) || pages[0];
+              const accessToken = page?.access_token || connection.access_token;
+
+              publishResult = await publishToInstagram(
+                accessToken,
+                igAccountId,
+                content
+              );
+              break;
             }
 
-            // Instagram needs the page access token (via Facebook Graph API)
-            const pages = (connection.pages || []) as Array<{ id: string; access_token: string }>;
-            const page = pages.find((p: { id: string }) => p.id === connection.default_page_id) || pages[0];
-            const accessToken = page?.access_token || connection.access_token;
+            case 'linkedin': {
+              const personUrn = connection.linkedin_urn;
 
-            publishResult = await publishToInstagram(
-              accessToken,
-              igAccountId,
-              content
-            );
-            break;
-          }
+              if (!personUrn) {
+                await markPostFailed(supabase, post.id, 'No LinkedIn person URN');
+                results.failed++;
+                continue;
+              }
 
-          case 'linkedin': {
-            const personUrn = connection.linkedin_urn;
-
-            if (!personUrn) {
-              await markPostFailed(supabase, post.id, 'No LinkedIn person URN');
-              results.failed++;
-              continue;
+              publishResult = await publishToLinkedIn(
+                connection.access_token,
+                personUrn,
+                content
+              );
+              break;
             }
 
-            publishResult = await publishToLinkedIn(
-              connection.access_token,
-              personUrn,
-              content
-            );
-            break;
-          }
-
-          default: {
-            await markPostFailed(supabase, post.id, `Platform ${post.platform} not yet supported`);
-            results.skipped++;
-            continue;
+            default: {
+              await markPostFailed(supabase, post.id, `Platform ${post.platform} not yet supported`);
+              results.skipped++;
+              continue;
+            }
           }
         }
 
@@ -226,25 +256,232 @@ export async function GET(request: NextRequest) {
               published_at: publishedAt,
             });
 
-          console.log(`[PublishCron] Published ${post.platform} post ${post.id} → ${publishResult.postId}`);
+          console.log(`[PublishCron] Published ${post.platform} ${isVideoPost ? 'video' : 'post'} ${post.id} → ${publishResult.postId}`);
           results.published++;
         } else {
           await markPostFailed(supabase, post.id, publishResult.error || 'Unknown publish error');
           results.failed++;
         }
 
-      } catch (postError: any) {
-        console.error(`[PublishCron] Error publishing post ${post.id}:`, postError.message);
-        await markPostFailed(supabase, post.id, postError.message);
+      } catch (postError: unknown) {
+        const postMsg = postError instanceof Error ? postError.message : 'Unknown error';
+        console.error(`[PublishCron] Error publishing post ${post.id}:`, postMsg);
+        await markPostFailed(supabase, post.id, postMsg);
         results.failed++;
       }
     }
 
     console.log('[PublishCron] Complete:', results);
     return NextResponse.json({ success: true, results });
-  } catch (error: any) {
-    console.error('[PublishCron] Fatal error:', error.message);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Unknown error';
+    console.error('[PublishCron] Fatal error:', message);
+    return NextResponse.json({ error: message }, { status: 500 });
+  }
+}
+
+// ============================================
+// VIDEO PUBLISHING HELPERS
+// ============================================
+
+interface ConnectionData {
+  access_token: string;
+  default_page_id: string | null;
+  instagram_account: unknown;
+  linkedin_urn: string | null;
+  pages: unknown;
+}
+
+/**
+ * Publish a video post to a social platform.
+ * Facebook: Upload via Page Videos API
+ * Instagram: Create Reels container → poll → publish
+ * LinkedIn: Not yet supported (returns 501-equivalent failure)
+ */
+async function publishVideoPost(
+  platform: string,
+  connection: ConnectionData,
+  content: { text: string; videoUrl?: string },
+  supabase: ReturnType<typeof adminSupabase>,
+  postId: string,
+  results: { published: number; failed: number; skipped: number }
+): Promise<PublishResult> {
+  const videoUrl = content.videoUrl;
+
+  if (!videoUrl) {
+    await markPostFailed(supabase, postId, 'Video URL missing from scheduled post');
+    results.failed++;
+    return { success: false, error: 'Video URL missing' };
+  }
+
+  switch (platform) {
+    case 'facebook': {
+      const pages = (connection.pages || []) as Array<{ id: string; access_token: string }>;
+      const page = pages.find((p: { id: string }) => p.id === connection.default_page_id) || pages[0];
+
+      if (!page?.access_token || !page?.id) {
+        await markPostFailed(supabase, postId, 'No Facebook page configured');
+        results.failed++;
+        return { success: false, error: 'No Facebook page' };
+      }
+
+      return publishVideoToFacebook(page.access_token, page.id, videoUrl, content.text);
+    }
+
+    case 'instagram': {
+      const igAccount = connection.instagram_account as { id?: string } | null;
+      const igAccountId = igAccount?.id;
+
+      if (!igAccountId) {
+        await markPostFailed(supabase, postId, 'No Instagram business account linked');
+        results.failed++;
+        return { success: false, error: 'No Instagram account' };
+      }
+
+      const pages = (connection.pages || []) as Array<{ id: string; access_token: string }>;
+      const page = pages.find((p: { id: string }) => p.id === connection.default_page_id) || pages[0];
+      const accessToken = page?.access_token || connection.access_token;
+
+      return publishVideoToInstagram(accessToken, igAccountId, videoUrl, content.text);
+    }
+
+    case 'linkedin': {
+      // LinkedIn video publishing requires registerUpload → upload binary → create post
+      // Complex flow — defer to future phase
+      return { success: false, error: 'LinkedIn video publishing coming soon' };
+    }
+
+    default:
+      return { success: false, error: `Video publishing not supported for ${platform}` };
+  }
+}
+
+/**
+ * Facebook Video Publishing via Graph API /videos endpoint
+ */
+async function publishVideoToFacebook(
+  pageAccessToken: string,
+  pageId: string,
+  videoUrl: string,
+  caption: string
+): Promise<PublishResult> {
+  try {
+    const response = await fetch(
+      `https://graph.facebook.com/v18.0/${pageId}/videos`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          access_token: pageAccessToken,
+          file_url: videoUrl,
+          description: caption,
+          published: true,
+        }),
+        signal: AbortSignal.timeout(30000),
+      }
+    );
+
+    const result = await response.json();
+
+    if (result.error) {
+      return { success: false, error: result.error.message };
+    }
+
+    return {
+      success: true,
+      postId: result.id,
+      postUrl: `https://facebook.com/${result.id}`,
+    };
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Unknown Facebook video error';
+    console.error('[PublishCron] Facebook video error:', message);
+    return { success: false, error: message };
+  }
+}
+
+/**
+ * Instagram Reels Publishing via Graph API
+ * 3-step: create container → poll status → publish
+ */
+async function publishVideoToInstagram(
+  accessToken: string,
+  igAccountId: string,
+  videoUrl: string,
+  caption: string
+): Promise<PublishResult> {
+  try {
+    // Step 1: Create Reels container
+    const containerResponse = await fetch(
+      `https://graph.facebook.com/v18.0/${igAccountId}/media`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          access_token: accessToken,
+          media_type: 'REELS',
+          video_url: videoUrl,
+          caption,
+        }),
+        signal: AbortSignal.timeout(15000),
+      }
+    );
+
+    const container = await containerResponse.json();
+
+    if (container.error) {
+      return { success: false, error: container.error.message };
+    }
+
+    // Step 2: Poll for video processing completion
+    let status = 'IN_PROGRESS';
+    let attempts = 0;
+    const maxAttempts = 30; // 30 × 2s = 60s max wait
+
+    while (status === 'IN_PROGRESS' && attempts < maxAttempts) {
+      await new Promise(r => setTimeout(r, 2000));
+
+      const statusResponse = await fetch(
+        `https://graph.facebook.com/v18.0/${container.id}?fields=status_code&access_token=${accessToken}`,
+        { signal: AbortSignal.timeout(10000) }
+      );
+      const statusData = await statusResponse.json();
+      status = statusData.status_code;
+      attempts++;
+    }
+
+    if (status !== 'FINISHED') {
+      return { success: false, error: `Video processing ${status === 'ERROR' ? 'failed' : 'timed out'}` };
+    }
+
+    // Step 3: Publish the container
+    const publishResponse = await fetch(
+      `https://graph.facebook.com/v18.0/${igAccountId}/media_publish`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          access_token: accessToken,
+          creation_id: container.id,
+        }),
+        signal: AbortSignal.timeout(15000),
+      }
+    );
+
+    const publishData = await publishResponse.json();
+
+    if (publishData.error) {
+      return { success: false, error: publishData.error.message };
+    }
+
+    return {
+      success: true,
+      postId: publishData.id,
+      postUrl: `https://instagram.com/reel/${publishData.id}`,
+    };
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Unknown Instagram video error';
+    console.error('[PublishCron] Instagram video error:', message);
+    return { success: false, error: message };
   }
 }
 
