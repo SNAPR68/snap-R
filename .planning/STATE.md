@@ -59,5 +59,9 @@ None
 
 ## Pending Todos
 
-- Replace placeholder music tracks with real royalty-free tracks
-- Apply scheduled_posts_video_url migration to live Supabase DB
+- ~~Replace placeholder music tracks with real royalty-free tracks~~ DONE
+- ~~Apply scheduled_posts_video_url migration to live Supabase DB~~ DONE
+- All 7 video migrations applied to live Supabase DB
+- Remotion Lambda site deployed with 16 compositions
+- Cloudflare Worker deployed with template auto-selection
+- Consider upgrading to production royalty-free tracks from Pixabay/Uppbeat (current tracks are ffmpeg-synthesized)
