@@ -2,10 +2,10 @@
 
 ## Current Position
 
-Phase: 1 (in progress)
-Plan: 01-02 (completed)
-Status: Phase 1 complete — Remotion video API routes with Lambda integration
-Last activity: 2026-02-19 — Video generation and status polling API endpoints created with full error handling
+Phase: 3 (not started)
+Plan: None yet
+Status: Phase 2 complete — PropertyShowcase composition, multi-format, photo ordering, VideoCreator migration
+Last activity: 2026-02-19 — VideoCreator migrated from FFmpeg to Lambda API rendering
 
 ## Project Reference
 
@@ -17,7 +17,9 @@ See: .planning/PROJECT.md (updated 2026-02-19)
 ## Accumulated Context
 
 - SnapR has a working 5-step marketing pipeline (description → captions → MLS → property site → scheduled posts)
-- VideoCreator.tsx exists with full UI but broken browser-FFmpeg backend
+- VideoCreator.tsx migrated from browser-FFmpeg to Lambda API calls (Phase 2 complete)
+- PropertyShowcase composition renders in 3 aspect ratios (9:16, 1:1, 16:9) with TransitionSeries crossfades, Ken Burns, address overlay, closing card
+- Photo ordering module uses existing photoAudit room classification for walkthrough sequence (zero AI cost)
 - publish-video API route exists for Facebook/Instagram, LinkedIn returns 501
 - Voiceover generator works at $2/each with 6 voices
 - GSD, ClaudeKit, and Remotion skill installed in project
@@ -28,11 +30,10 @@ See: .planning/PROJECT.md (updated 2026-02-19)
 - Remotion Lambda (AWS) confirmed as only viable rendering option
 - 44 requirements defined across 8 categories (REND, COMP, AUDIO, BRAND, PIPE, PUB, UI, BILL)
 - 7-phase roadmap: Foundation → Composition → Templates → Audio → Pipeline → Branding → Polish
-- Phase 1 Plan 1 completed: Remotion packages installed, test composition created, video_render_jobs table migrated
-- Phase 1 Plan 2 completed: Video API routes (generate + status) with Zod validation, Lambda integration, terminal state caching
-- Video generation API ready: POST /api/video/generate triggers Remotion Lambda renders, stores jobs in DB
-- Video status API ready: GET /api/video/status polls Lambda progress, updates DB on completion/failure
-- Key decisions: terminal state caching (avoid redundant Lambda calls), 503 for missing env vars (not 500), ownership verification via adminSupabase
+- Phase 1 completed: Remotion packages, test composition, video_render_jobs migration, API routes
+- Phase 2 completed: PropertyShowcase composition, ClosingCard, multi-format registration, photo ordering, generate route mapping, VideoCreator UI migration
+- Lambda site deployed with PropertyShowcase compositions at all 3 aspect ratios
+- Key architectural decisions: terminal state caching, composition ID mapping (template+aspectRatio), percentage-based sizing for multi-format
 
 ## Blockers
 
