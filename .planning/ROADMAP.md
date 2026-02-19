@@ -98,12 +98,12 @@ Plans:
   4. Audio fades in at start and out at end (no abrupt cuts)
   5. Videos without music/voiceover still have silent audio track (platform compatibility)
   6. Music selector and voiceover toggle visible in VideoCreator UI
-**Plans**: TBD
+**Plans**: 3 plans
 
 Plans:
-- [ ] 04-01: Background music library (royalty-free tracks, audio component)
-- [ ] 04-02: Voiceover integration and volume ducking
-- [ ] 04-03: Music/voiceover UI controls
+- [ ] 04-01-PLAN.md — Background music library + AudioLayer composition component
+- [ ] 04-02-PLAN.md — Voiceover upload + generate API audio params
+- [ ] 04-03-PLAN.md — Wire audio UI to render pipeline
 
 ### Phase 5: Marketing Pipeline + Billing
 **Goal**: Wire video generation into the marketing pipeline as Step 6, enforce billing gates, track costs, and set up storage/CDN delivery.
