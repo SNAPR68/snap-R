@@ -69,7 +69,7 @@ Build the PropertyShowcase video template with photo slideshow, text overlays, K
 <deferred>
 ## Deferred Ideas
 
-- Interactive virtual tour (Matterport-style 3D walkthrough) — entirely different technology, future milestone
+- Interactive virtual tour — if agent uploads 360°/3D photos, offer interactive walkthrough (WebGL/Three.js viewer). Conditional feature: regular photos get cinematic video, 360° photos unlock virtual tour. Future milestone (v1.2+)
 - Smart photo ordering by AI room detection — MOVED TO PHASE 2 (no longer deferred)
 
 </deferred>
