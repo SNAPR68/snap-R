@@ -30,25 +30,29 @@ export const PLAN_LIMITS = {
     contentPosts: 0,
     aiCaptions: 0,
     canPublish: false,
-    canAccessContentStudio: false
+    canAccessContentStudio: false,
+    canGenerateVideo: false,
   },
   starter: {
     contentPosts: 5,
     aiCaptions: 10,
     canPublish: false,
-    canAccessContentStudio: true
+    canAccessContentStudio: true,
+    canGenerateVideo: false,
   },
   pro: {
     contentPosts: 30,
     aiCaptions: 50,
     canPublish: true,
-    canAccessContentStudio: true
+    canAccessContentStudio: true,
+    canGenerateVideo: true,
   },
   agency: {
     contentPosts: Infinity,
     aiCaptions: Infinity,
     canPublish: true,
-    canAccessContentStudio: true
+    canAccessContentStudio: true,
+    canGenerateVideo: true,
   }
 } as const
 
@@ -86,6 +90,10 @@ export function getRemainingPosts(plan: string, used: number): number | 'unlimit
   const limits = getPlanLimits(plan)
   if (limits.contentPosts === Infinity) return 'unlimited'
   return Math.max(0, limits.contentPosts - used)
+}
+
+export function canGenerateVideo(plan: string): boolean {
+  return getPlanLimits(plan).canGenerateVideo
 }
 
 // Listing/photo limits per plan (used by Stripe webhook)

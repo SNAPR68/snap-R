@@ -30,8 +30,8 @@ No GSD phases — v1.0 was developed before GSD adoption. Shipped:
 - [x] **Phase 1: Remotion Foundation** — Deploy Lambda rendering infrastructure and prove end-to-end video generation (COMPLETED 2026-02-19)
 - [x] **Phase 2: Basic Composition + Multi-Format** — PropertyShowcase template with photo slideshow, text overlays, and 3 aspect ratios (COMPLETED 2026-02-19)
 - [x] **Phase 3: Lifecycle Templates** — Just Listed, Open House templates with intro cards, branding, and template selection logic (COMPLETED 2026-02-19)
-- [ ] **Phase 4: Audio Integration** — Background music, voiceover mixing, volume ducking, audio fade in/out
-- [ ] **Phase 5: Marketing Pipeline + Billing** — Auto-trigger video as Step 6, billing gates, cost tracking, storage/CDN delivery
+- [x] **Phase 4: Audio Integration** — Background music, voiceover mixing, volume ducking, audio fade in/out (COMPLETED 2026-02-19)
+- [x] **Phase 5: Marketing Pipeline + Billing** — Auto-trigger video as Step 6, billing gates, cost tracking, fire-and-forget rendering (COMPLETED 2026-02-19)
 - [ ] **Phase 6: Agent Branding + Publishing** — Branding configuration, end cards, video publishing to social platforms
 - [ ] **Phase 7: Additional Templates + Polish** — Price Drop, Sold templates, UI refinements
 
@@ -118,12 +118,12 @@ Plans:
   6. Marketing Results Panel shows video alongside existing 5 results
   7. Video render cost tracked in billing breakdown
   8. Generated video auto-scheduled for social publishing
-**Plans**: TBD
+**Plans**: 3 plans
 
 Plans:
-- [ ] 05-01: Marketing handler Step 6 (auto-trigger, template selection, always-complete semantics)
-- [ ] 05-02: Storage cascade (S3 → R2 → Cloudinary CDN), billing gates, cost tracking
-- [ ] 05-03: Marketing Results Panel video card, auto-scheduling to published posts
+- [x] 05-01-PLAN.md — Marketing handler Step 6 + DB migration + billing gate + internal API (COMPLETED 2026-02-19)
+- [x] 05-02-PLAN.md — Marketing status API + Results Panel video card (COMPLETED 2026-02-19)
+- [x] 05-03-PLAN.md — Billing helper + banner polish (COMPLETED 2026-02-19)
 
 ### Phase 6: Agent Branding + Publishing
 **Goal**: Add agent branding configuration (logo, colors, contact) with end card, and enable video publishing to Facebook, Instagram, and LinkedIn.
@@ -171,6 +171,6 @@ Note: Phase 4 depends on Phase 2 (not Phase 3), so Phases 3 and 4 could run in p
 | 2. Basic Composition + Multi-Format | v1.1 | 3/3 | 2026-02-19 | - |
 | 3. Lifecycle Templates | v1.1 | 3/3 | 2026-02-19 | - |
 | 4. Audio Integration | v1.1 | 3/3 | 2026-02-19 | - |
-| 5. Marketing Pipeline + Billing | v1.1 | 0/3 | Not started | - |
+| 5. Marketing Pipeline + Billing | v1.1 | 3/3 | 2026-02-19 | - |
 | 6. Agent Branding + Publishing | v1.1 | 0/3 | Not started | - |
 | 7. Additional Templates + Polish | v1.1 | 0/2 | Not started | - |

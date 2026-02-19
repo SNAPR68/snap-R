@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { FileText, MessageSquare, FileArchive, Globe, Calendar, CheckCircle, ChevronRight, AlertCircle, Megaphone, Lock, Sparkles } from 'lucide-react';
+import { FileText, MessageSquare, FileArchive, Globe, Calendar, CheckCircle, ChevronRight, AlertCircle, Megaphone, Lock, Sparkles, Video } from 'lucide-react';
 
 export type MarketingStepResult = string | Record<string, unknown> | null;
 
@@ -13,6 +13,7 @@ export type MarketingJobData = {
   mls: { status: string; result: MarketingStepResult };
   propertySite: { status: string; result: MarketingStepResult };
   scheduledPosts: { status: string; result: MarketingStepResult };
+  video: { status: string; result: MarketingStepResult };
   totalCostCents: number;
   costBreakdown: Record<string, unknown> | null;
   startedAt: string;
@@ -32,6 +33,7 @@ const STEPS = [
   { key: 'mls', label: 'MLS Package', icon: FileArchive },
   { key: 'propertySite', label: 'Property Site', icon: Globe },
   { key: 'scheduledPosts', label: 'Social Posts', icon: Calendar },
+  { key: 'video', label: 'Video', icon: Video },
 ] as const;
 
 function getStepStatus(job: MarketingJobData, key: string): string {
@@ -139,6 +141,7 @@ export function MarketingBanner({ marketingStatus, marketingJob, onViewResults }
     const completed = marketingJob ? countCompleted(marketingJob) : STEPS.length;
     const hasSite = marketingJob?.propertySite?.status === 'completed' && marketingJob?.propertySite?.result;
     const hasPosts = marketingJob?.scheduledPosts?.status === 'completed';
+    const hasVideo = marketingJob?.video?.status === 'completed';
 
     return (
       <div className="bg-gradient-to-r from-emerald-500/10 via-emerald-500/5 to-transparent border-b border-emerald-500/20 px-4 py-2.5 flex items-center gap-3 flex-shrink-0">
@@ -161,6 +164,13 @@ export function MarketingBanner({ marketingStatus, marketingJob, onViewResults }
               <span className="text-white/20">|</span>
               <Calendar className="w-3 h-3 text-blue-400" />
               <span className="text-blue-300">Posts scheduled</span>
+            </>
+          )}
+          {hasVideo && (
+            <>
+              <span className="text-white/20">|</span>
+              <Video className="w-3 h-3 text-pink-400" />
+              <span className="text-pink-300">Video ready</span>
             </>
           )}
         </div>

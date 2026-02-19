@@ -3,9 +3,9 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import {
-  FileText, MessageSquare, FileArchive, Globe, Calendar,
-  CheckCircle, AlertCircle, Copy, Check, ExternalLink,
-  X, ChevronDown, ChevronUp, Clock, Loader2,
+  FileText, MessageSquare, FileArchive, Globe, Calendar, Video,
+  CheckCircle, AlertCircle, Copy, Check, ExternalLink, Download,
+  X, ChevronDown, ChevronUp, Clock, Loader2, Lock,
   Facebook, Instagram, Linkedin, Sparkles,
 } from 'lucide-react';
 import type { MarketingJobData, MarketingStepResult } from './marketing-banner';
@@ -120,6 +120,24 @@ function CollapsibleSection({
       )}
     </div>
   );
+}
+
+/** Extract video URL from marketing video result */
+function getVideoUrl(result: MarketingStepResult): string | null {
+  if (typeof result === 'object' && result !== null) {
+    const videoUrl = result.videoUrl;
+    if (typeof videoUrl === 'string' && videoUrl.length > 0) return videoUrl;
+  }
+  return null;
+}
+
+/** Extract render status from marketing video result */
+function getVideoRenderStatus(result: MarketingStepResult): string | null {
+  if (typeof result === 'object' && result !== null) {
+    const status = result.renderStatus;
+    if (typeof status === 'string') return status;
+  }
+  return null;
 }
 
 export function MarketingResultsPanel({ marketingJob, listingId, onClose }: MarketingResultsPanelProps) {
@@ -342,6 +360,120 @@ export function MarketingResultsPanel({ marketingJob, listingId, onClose }: Mark
           ) : (
             <p className="text-xs text-white/30">Pending</p>
           )}
+        </CollapsibleSection>
+
+        {/* 6. Property Video */}
+        <CollapsibleSection
+          title="Property Video"
+          icon={Video}
+          status={marketingJob.video.status}
+        >
+          {(() => {
+            const videoStatus = marketingJob.video.status;
+            const videoResult = marketingJob.video.result;
+            const videoUrl = getVideoUrl(videoResult);
+            const renderStatus = getVideoRenderStatus(videoResult);
+
+            // Completed: render was triggered
+            if (videoStatus === 'completed' && videoResult) {
+              // If video render is still in progress, show rendering state
+              if (renderStatus === 'rendering' || (!videoUrl && renderStatus !== 'failed')) {
+                return (
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2 text-xs text-amber-400/70">
+                      <Loader2 className="w-3 h-3 animate-spin" />
+                      <span>Rendering video...</span>
+                    </div>
+                    <p className="text-[10px] text-white/30">
+                      This may take 30-90 seconds. Refresh to check progress.
+                    </p>
+                  </div>
+                );
+              }
+
+              // Video render failed
+              if (renderStatus === 'failed') {
+                return (
+                  <div className="space-y-1.5">
+                    <p className="text-xs text-red-400/70">Video render failed</p>
+                    <p className="text-[10px] text-white/30">
+                      You can generate a new video from the Video Creator.
+                    </p>
+                  </div>
+                );
+              }
+
+              // Video ready — show player + download
+              if (videoUrl) {
+                return (
+                  <div className="space-y-2">
+                    <video
+                      src={videoUrl}
+                      controls
+                      className="w-full rounded-lg bg-black"
+                      preload="metadata"
+                    />
+                    <a
+                      href={videoUrl}
+                      download
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center justify-center gap-1.5 w-full py-1.5 bg-pink-500/10 hover:bg-pink-500/20 border border-pink-500/20 rounded-lg text-xs text-pink-300 transition-colors"
+                    >
+                      <Download className="w-3 h-3" />
+                      Download Video
+                    </a>
+                  </div>
+                );
+              }
+
+              // Fallback: render triggered but no URL yet
+              return (
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2 text-xs text-amber-400/70">
+                    <Loader2 className="w-3 h-3 animate-spin" />
+                    <span>Video rendering in progress...</span>
+                  </div>
+                </div>
+              );
+            }
+
+            // Processing: step is actively running
+            if (videoStatus === 'processing') {
+              return (
+                <div className="flex items-center gap-2 text-xs text-amber-400/70">
+                  <Loader2 className="w-3 h-3 animate-spin" />
+                  <span>Triggering video generation...</span>
+                </div>
+              );
+            }
+
+            // Skipped: billing gate
+            if (videoStatus === 'skipped') {
+              return (
+                <div className="space-y-2">
+                  <div className="flex items-center gap-1.5 text-xs text-white/40">
+                    <Lock className="w-3 h-3" />
+                    <span>Upgrade to Pro for auto-generated videos</span>
+                  </div>
+                  <Link
+                    href="/dashboard/billing"
+                    className="flex items-center justify-center gap-1 w-full py-1.5 bg-[#D4A017]/10 hover:bg-[#D4A017]/20 border border-[#D4A017]/20 rounded-lg text-[10px] text-[#D4A017] font-medium transition-colors"
+                  >
+                    Upgrade Plan
+                  </Link>
+                </div>
+              );
+            }
+
+            // Failed
+            if (videoStatus === 'failed') {
+              return <p className="text-xs text-red-400/70">Video generation failed</p>;
+            }
+
+            // Pending
+            return <p className="text-xs text-white/30">Pending</p>;
+          })()}
         </CollapsibleSection>
       </div>
 

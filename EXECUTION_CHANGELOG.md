@@ -1,6 +1,46 @@
 # SnapR Execution Changelog
 =================================
 
+## 2026-02-19 — Phase 5: Marketing Pipeline + Billing (Video Engine v1.1)
+
+### 1. Video Generation as Marketing Step 6
+- Added Step 6 (video generation) to the 5-step marketing pipeline in `marketing-handler.ts`.
+- Fire-and-forget: triggers Remotion Lambda render via internal API, doesn't block other steps.
+- Always-complete semantics: video failure doesn't block marketing completion.
+- Billing gate: Free/Starter tiers get `video_status: 'skipped'`, Pro/Agency get full generation.
+
+### 2. Internal Video Generate API
+- Created `app/api/internal/video-generate/route.ts` for Worker-to-API communication.
+- Uses CRON_SECRET bearer auth (same pattern as Vercel cron jobs).
+- Fetches listing + photos via adminSupabase, orders photos, triggers Lambda render.
+- Returns `{ renderId, bucketName }` to marketing handler.
+
+### 3. Database Migration
+- Created `supabase/migrations/20260219_marketing_jobs_video.sql`.
+- Adds `video_status` (TEXT, default 'pending') and `video_result` (JSONB) to `marketing_jobs`.
+
+### 4. Marketing Status API — Video Resolution
+- Updated `app/api/marketing/status/route.ts` to include video step data.
+- Resolves actual `videoUrl` by joining `video_render_jobs` when `video_result.renderId` exists.
+- Fixed `catch (error: any)` → `catch (error: unknown)`.
+
+### 5. Marketing Banner — 6 Steps
+- Updated `components/marketing-banner.tsx` with Video in STEPS array (6 progress dots).
+- Added "Video ready" indicator in completed state banner.
+
+### 6. Marketing Results Panel — Video Card
+- Added 6th CollapsibleSection for "Property Video" in `components/marketing-results-panel.tsx`.
+- Shows video player with download button when render complete.
+- Shows rendering spinner while in progress.
+- Shows upgrade prompt for skipped (billing gate).
+
+### 7. Billing Limits — canGenerateVideo
+- Added `canGenerateVideo` to all tiers in `lib/content/limits.ts`.
+- Free/Starter: false, Pro/Agency: true.
+- Added `canGenerateVideo()` convenience function export.
+
+---
+
 ## 2026-02-12 — Phase 1 Billing Hardening
 
 ### 1. Fixed Tailwind Build Failure
