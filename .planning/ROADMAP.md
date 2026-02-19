@@ -63,12 +63,12 @@ Plans:
   3. Video renders correctly in 9:16, 1:1, and 16:9 without layout breaks
   4. VideoCreator.tsx calls `/api/video/generate` instead of browser FFmpeg
   5. UI shows render progress (polling status endpoint) and plays completed video
-**Plans**: TBD
+**Plans**: 3 plans
 
 Plans:
-- [ ] 02-01: PropertyShowcase composition with photo slideshow, text overlays, transitions
-- [ ] 02-02: Multi-format rendering (aspect ratio abstraction, percentage-based sizing)
-- [ ] 02-03: VideoCreator UI migration (remove FFmpeg, add API calls, progress polling, video player)
+- [ ] 02-01-PLAN.md — PropertyShowcase composition + multi-format registration (TransitionSeries, Ken Burns, ClosingCard, 3 aspect ratios)
+- [ ] 02-02-PLAN.md — Photo ordering module (walkthrough sort using existing photoAudit data)
+- [ ] 02-03-PLAN.md — VideoCreator UI migration (remove FFmpeg, API calls, progress polling, video player)
 
 ### Phase 3: Lifecycle Templates
 **Goal**: Build JustListed and OpenHouse templates with intro cards, feature callouts, and template selection logic. Add slide and zoom transitions.
