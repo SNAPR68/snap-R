@@ -200,6 +200,16 @@ export async function POST(request: NextRequest) {
       };
     }
 
+    // Log pre-render diagnostics
+    console.log('[video/generate] Pre-render:', {
+      compositionId,
+      photoCount: orderedPhotoUrls.length,
+      hasAudio: !!validatedInput.audio,
+      region: process.env.REMOTION_AWS_REGION,
+      functionName: process.env.REMOTION_LAMBDA_FUNCTION_NAME,
+      serveUrlPrefix: process.env.REMOTION_LAMBDA_SERVE_URL?.substring(0, 50),
+    });
+
     // Trigger Lambda render
     const renderResponse = await renderMediaOnLambda({
       region: process.env.REMOTION_AWS_REGION as AwsRegion,
@@ -241,12 +251,21 @@ export async function POST(request: NextRequest) {
     );
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Unknown error';
-    console.error('[video/generate]', error);
+    const stack = error instanceof Error ? error.stack : undefined;
+    const errorName = error instanceof Error ? error.name : typeof error;
+    console.error('[video/generate] Full error:', {
+      name: errorName,
+      message,
+      stack,
+      raw: String(error),
+    });
 
     return NextResponse.json(
       {
         error: message,
         code: 'RENDER_TRIGGER_FAILED',
+        errorName,
+        stack: stack?.split('\n').slice(0, 15).join('\n'),
       },
       { status: 500 }
     );
