@@ -40,15 +40,12 @@
         { "key": "Cache-Control", "value": "no-store, must-revalidate" },
         { "key": "CDN-Cache-Control", "value": "no-store" }
       ]
-    }
-  ],
-  "routes": [
+    },
     {
-      "src": "/api/upload",
-      "methods": ["POST"],
-      "headers": {
-        "x-vercel-proxy-body-size": "52428800"
-      }
+      "source": "/api/upload",
+      "headers": [
+        { "key": "x-vercel-proxy-body-size", "value": "52428800" }
+      ]
     }
   ],
   "crons": [
