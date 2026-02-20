@@ -24,7 +24,8 @@ Upload → Prepare → Market → Distribute → Measure → Loop
 - **Frontend**: Next.js 14 (App Router), React 18, TypeScript, Tailwind CSS, shadcn/ui
 - **Backend**: Supabase (PostgreSQL + Auth + RLS), Cloudflare Workers, Vercel Serverless Functions
 - **Storage**: Supabase Storage (raw images), Cloudflare R2 (processed images), Cloudinary (CDN)
-- **AI Services**: OpenAI (GPT-4o for descriptions, GPT-4o-mini for captions), Replicate, Runware, AutoEnhance
+- **AI Services**: OpenAI (GPT-4o for descriptions/voiceover scripts, GPT-4o-mini for captions), Replicate, Runware, AutoEnhance
+- **Video**: Remotion 4.0.424 (React-based video), AWS Lambda (rendering), ElevenLabs + OpenAI TTS (voiceover)
 - **Payments**: Stripe (subscription tiers)
 - **Email**: Resend
 - **Monitoring**: Sentry, OpenTelemetry
@@ -45,6 +46,11 @@ Upload → Prepare → Market → Distribute → Measure → Loop
 /lib/supabase/          - Database clients (client.ts, server.ts, admin.ts)
 /lib/content/           - Content/billing utilities (limits.ts)
 /lib/social/            - Social publishing service (publish-service.ts)
+/lib/video/             - Video utilities (photo-ordering.ts, voiceover-service.ts)
+/lib/validation/        - Zod schemas for API input validation (schemas.ts)
+/remotion/              - Remotion video compositions and config
+/remotion/compositions/ - Video templates (PropertyShowcase, JustListed, OpenHouse, PriceDrop, Sold)
+/remotion/components/   - Shared video components (AudioLayer, ClosingCard, etc.)
 /components             - React components
 /supabase/migrations/   - Database migrations (32 files)
 /database               - Supabase schema reference
@@ -63,7 +69,7 @@ npm run preview         # Local Worker testing (wrangler dev)
 
 ## Current Branch
 
-`feature/phase1-hardening-clean`
+`main`
 
 ## Code Conventions
 
@@ -99,6 +105,9 @@ Supabase PostgreSQL with RLS. Key tables:
 - `published_posts` - Published posts with analytics columns (likes, comments, shares, impressions, reach, engagement_rate, last_synced_at)
 - `social_connections` - OAuth connections to Facebook/Instagram/LinkedIn (access_token, pages, instagram_account, linkedin_urn)
 - `property_sites` - Public property site configurations (slug, theme, brand)
+
+### Video
+- `video_render_jobs` - Lambda render tracking (render_id, bucket_name, status, input_props, output_url)
 
 ### Other
 - `content_library`, `post_drafts`, `auto_post_rules` - Content studio
@@ -191,6 +200,75 @@ The async processing worker handles both photo enhancement and marketing automat
 - Twitter: Uses PKCE (S256) with code verifier embedded in state
 - Facebook: Long-lived token exchange via `fb_exchange_token` grant
 
+## Video Generation (Remotion Lambda)
+
+Property showcase videos rendered via Remotion on AWS Lambda.
+
+### Architecture
+```
+VideoCreator UI → /api/video/generate → renderMediaOnLambda() → AWS Lambda → S3 → public MP4 URL
+                → /api/video/status (polls every 3s via getRenderProgress)
+```
+
+### Lambda Function
+- **Name**: `remotion-render-4-0-424-mem3008mb-disk2048mb-900sec`
+- **Config**: 3GB RAM, 2GB disk, 900s (15 min) timeout
+- **Region**: `us-east-1`
+- **S3 Bucket**: `remotionlambda-useast1-64vfat1kzg`
+- **Serve URL**: Deployed via `npx remotion lambda sites create --site-name=snapr-video remotion/index.ts`
+- **Single-lambda rendering**: `framesPerLambda: 20000` forces all frames onto one Lambda (AWS account has low concurrency limit)
+
+### Remotion Commands
+```bash
+# Deploy Lambda site (after composition changes)
+export $(grep -E '^REMOTION_AWS' .env.local | xargs) && npx remotion lambda sites create --site-name=snapr-video remotion/index.ts
+
+# Deploy Lambda function (after timeout/memory changes)
+export $(grep -E '^REMOTION_AWS' .env.local | xargs) && npx remotion lambda functions deploy --memory=3008 --disk=2048 --timeout=900
+
+# List functions
+export $(grep -E '^REMOTION_AWS' .env.local | xargs) && npx remotion lambda functions ls
+
+# Test local render
+npx remotion render PropertyShowcase-9x16
+
+# Test Lambda render from CLI
+export $(grep -E '^REMOTION_AWS' .env.local | xargs) && npx remotion lambda render <serve-url> PropertyShowcase-9x16 --frames-per-lambda=20000
+```
+
+### Video Compositions (5 templates × 3 aspect ratios)
+- **PropertyShowcase** — Ken Burns zoom/pan with closing card
+- **JustListed** — Urgency pacing with event date badge
+- **OpenHouse** — Urgency pacing with open house date
+- **PriceDrop** — Price reduced badge with urgency
+- **Sold** — Celebration styling with social proof
+
+Each has 3 variants: `9x16` (vertical), `16x9` (landscape), `1x1` (square)
+
+### Key Files
+- `remotion/compositions/PropertyShowcase.tsx` — Main composition with Zod schema
+- `remotion/components/AudioLayer.tsx` — Music + voiceover mixing (music ducks to 30% under voiceover)
+- `remotion/components/ClosingCard.tsx` — End card with property details
+- `lib/video/photo-ordering.ts` — Smart photo ordering using `decisionAudit` from preparation pipeline
+- `lib/video/voiceover-service.ts` — GPT-4o script generation + ElevenLabs/OpenAI TTS
+- `app/api/video/generate/route.ts` — Trigger Lambda render
+- `app/api/video/status/route.ts` — Poll render progress
+- `app/api/video/voiceover/route.ts` — 3-action voiceover flow (generate-script → generate-audio → upload-audio)
+- `app/dashboard/content-studio/video/VideoCreator.tsx` — Video creator UI
+
+### Database Table
+- `video_render_jobs` — Tracks render jobs (render_id, bucket_name, status, input_props)
+
+### Voiceover Pipeline
+1. **Script generation** (GPT-4o): Personalized to listing (address, price, beds, baths, sqft, description)
+2. **4 script styles**: Professional, Luxury, Friendly, FirstTimeBuyer — each has a different system prompt tone
+3. **6 voice options**: 3 male + 3 female across professional/luxury/friendly (ElevenLabs voice IDs)
+4. **TTS**: ElevenLabs primary (`eleven_monolingual_v1`), OpenAI TTS HD fallback (`tts-1-hd`)
+5. **Duration**: Calculated from photo count × 4.5s, converted to word count at 130 words/min
+
+### Critical Data Structure Note
+`preparation_metadata.photoAudit` is a **Record<string, object>** (NOT an array). Photo type classification lives in `preparation_metadata.decisionAudit[photoId].photoType`. The `photo-ordering.ts` utility reads from `decisionAudit`, not `photoAudit`.
+
 ## Vercel Crons
 
 Defined in `vercel.json`:
@@ -241,6 +319,10 @@ Each tool has presets (e.g., sky-replacement: Clear Blue, Sunset, Dramatic Cloud
 | `/api/share` | POST | Generate share gallery link |
 | `/api/download-all` | POST | ZIP download of enhanced photos |
 | `/api/analytics/posts` | GET | Published posts analytics |
+| `/api/video/generate` | POST | Trigger Remotion Lambda video render |
+| `/api/video/status` | GET | Poll video render progress |
+| `/api/video/voiceover` | POST | Generate script / audio / upload (3 actions) |
+| `/api/internal/video-generate` | POST | Marketing pipeline internal video trigger |
 
 ## Applied Migrations (Feb 2026)
 
@@ -264,6 +346,9 @@ These migrations have been applied to the live Supabase database:
 - `RESEND_API_KEY`, `CLOUDFLARE_API_TOKEN`
 - `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET`
 - `CRON_SECRET` (for Vercel Cron auth)
+- `REMOTION_AWS_REGION`, `REMOTION_AWS_ACCESS_KEY_ID`, `REMOTION_AWS_SECRET_ACCESS_KEY`
+- `REMOTION_LAMBDA_FUNCTION_NAME`, `REMOTION_LAMBDA_SERVE_URL`, `REMOTION_S3_BUCKET_NAME`
+- `ELEVENLABS_API_KEY` (voiceover TTS)
 
 **Worker (Cloudflare):**
 - `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `SUPABASE_JWT_SECRET`
@@ -329,6 +414,13 @@ const [photos, setPhotos] = useState<StudioPhoto[]>([]);
 const [listing, setListing] = useState<any>(null);
 ```
 
+## Next.js Config (`next.config.mjs`)
+
+Key settings:
+- `typescript.ignoreBuildErrors: false` — builds fail on TS errors
+- `eslint.ignoreDuringBuilds: false` — builds fail on ESLint violations
+- `serverExternalPackages: ['@remotion/lambda', '@remotion/lambda-client', '@remotion/serverless']` — prevents Next.js webpack from re-bundling Remotion's pre-built AWS SDK bundle (causes runtime errors if re-bundled)
+
 ## Important Notes
 
 1. **Node Version**: 20 (see .nvmrc)
@@ -341,3 +433,9 @@ const [listing, setListing] = useState<any>(null);
 8. **Free-tier users are gated** at both marketing handler (skipped) and cron publisher (canPublish: false)
 9. **Build strictness enforced**: `next.config.mjs` sets `typescript.ignoreBuildErrors: false` and `eslint.ignoreDuringBuilds: false` — builds fail on any TS error or ESLint violation
 10. **ESLint enforces no-any**: `.eslintrc.json` has `@typescript-eslint/no-explicit-any: "warn"` — any `any` usage shows warnings in IDE and CI
+11. **Zod version**: Pinned to `3.22.3` (Remotion 4.0.424 requires this exact version; Zod v4 breaks Remotion internals)
+12. **Remotion Lambda requires `serverExternalPackages`** in `next.config.mjs` — the `@remotion/lambda-client` is a 76K-line pre-built bundle containing the AWS SDK; re-bundling by webpack breaks `.map()` calls
+13. **AWS Lambda concurrency limit is low** — always use `framesPerLambda: 20000` to force single-lambda rendering; splitting across multiple concurrent lambdas causes `TooManyRequestsException`
+14. **`preparation_metadata` data structures**: `photoAudit` is a `Record<string, object>` (NOT an array); `decisionAudit` is a `Record<string, { photoType, ... }>` — always use `Object.entries()` to iterate, never `.map()` directly
+15. **Remotion Lambda env vars** must be set on both Vercel and `.env.local` — function name includes memory/timeout in the name (e.g., `remotion-render-4-0-424-mem3008mb-disk2048mb-900sec`)
+16. **When deploying new Lambda functions**, update `REMOTION_LAMBDA_FUNCTION_NAME` in both `.env.local` and Vercel environment variables
