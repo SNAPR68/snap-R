@@ -36,20 +36,19 @@ interface PhotoWithUrl {
   processed_url: string | null;
 }
 
-interface PhotoAuditEntry {
-  photoId: string;
-  photoType: PhotoType;
-}
-
+/**
+ * preparation_metadata.decisionAudit is a Record<string, { photoType, ... }>
+ * keyed by photoId, produced by listing-engine/index.ts.
+ */
 interface PreparationMetadata {
-  photoAudit?: PhotoAuditEntry[];
+  decisionAudit?: Record<string, { photoType?: string }>;
 }
 
 /**
  * Order photos for a cinematic walkthrough video.
  *
  * @param photos - Array of photo records from the database
- * @param preparationMetadata - Optional preparation_metadata from the listing (contains photoAudit)
+ * @param preparationMetadata - Optional preparation_metadata from the listing (contains decisionAudit)
  * @returns Photo URLs in walkthrough order
  */
 export function orderPhotosForWalkthrough(
@@ -64,16 +63,30 @@ export function orderPhotosForWalkthrough(
 
   if (validPhotos.length === 0) return [];
 
-  // If no preparation metadata or no photoAudit, return in original order
-  const photoAudit = preparationMetadata?.photoAudit;
-  if (!photoAudit || photoAudit.length === 0) {
+  // decisionAudit has photoType per photoId (Record keyed by photoId)
+  const decisionAudit = preparationMetadata?.decisionAudit;
+  if (
+    !decisionAudit ||
+    typeof decisionAudit !== 'object' ||
+    Object.keys(decisionAudit).length === 0
+  ) {
     return validPhotos.map((p) => p.processed_url);
   }
 
-  // Build a map of photoId → photoType from the audit
+  // Build a map of photoId → photoType from the decision audit Record
   const typeMap = new Map<string, PhotoType>(
-    photoAudit.map((entry) => [entry.photoId, entry.photoType])
+    Object.entries(decisionAudit)
+      .filter(
+        (entry): entry is [string, { photoType: string }] =>
+          typeof entry[1]?.photoType === 'string'
+      )
+      .map(([id, data]) => [id, data.photoType as PhotoType])
   );
+
+  // If no valid photoType entries found, return in original order
+  if (typeMap.size === 0) {
+    return validPhotos.map((p) => p.processed_url);
+  }
 
   // Sort photos by walkthrough order
   const sorted = [...validPhotos].sort((a, b) => {
