@@ -310,8 +310,9 @@ async function processPhoto(
             if (!qualityPassed) {
               console.warn(`[BatchProcessor V3] ⚠ Quality gate failed for ${tool} (score ${qc.score})`);
             }
-          } catch (qcError: any) {
-            console.warn(`[BatchProcessor V3] ⚠ Quality gate error for ${tool}: ${qcError?.message || qcError}`);
+          } catch (qcError: unknown) {
+            const message = qcError instanceof Error ? qcError.message : 'Processing failed';
+            console.warn(`[BatchProcessor V3] ⚠ Quality gate error for ${tool}: ${message || qcError}`);
             if (!QUALITY_GATE.failOpen) {
               qualityPassed = false;
             }
@@ -324,8 +325,9 @@ async function processPhoto(
             if (!structurePassed) {
               console.warn(`[BatchProcessor V3] ⚠ Structure check failed for ${tool}`);
             }
-          } catch (structError: any) {
-            console.warn(`[BatchProcessor V3] ⚠ Structure check error for ${tool}: ${structError?.message || structError}`);
+          } catch (structError: unknown) {
+            const message = structError instanceof Error ? structError.message : 'Processing failed';
+            console.warn(`[BatchProcessor V3] ⚠ Structure check error for ${tool}: ${message || structError}`);
             if (!QUALITY_GATE.failOpen) {
               structurePassed = false;
               structureIssues = ['Structure check failed to run'];
@@ -366,9 +368,10 @@ async function processPhoto(
                     qualityPassed = false;
                     console.warn(`[BatchProcessor V3] ⚠ Brightness recovery failed for ${tool}`);
                   }
-                } catch (recoveryError: any) {
+                } catch (recoveryError: unknown) {
+                  const message = recoveryError instanceof Error ? recoveryError.message : 'Processing failed';
                   qualityPassed = false;
-                  console.warn(`[BatchProcessor V3] ⚠ Brightness recovery error for ${tool}: ${recoveryError?.message || recoveryError}`);
+                  console.warn(`[BatchProcessor V3] ⚠ Brightness recovery error for ${tool}: ${message || recoveryError}`);
                 }
               } else {
                 qualityPassed = false;
@@ -377,8 +380,9 @@ async function processPhoto(
                 );
               }
             }
-          } catch (brightnessError: any) {
-            console.warn(`[BatchProcessor V3] ⚠ Brightness guard error for ${tool}: ${brightnessError?.message || brightnessError}`);
+          } catch (brightnessError: unknown) {
+            const message = brightnessError instanceof Error ? brightnessError.message : 'Processing failed';
+            console.warn(`[BatchProcessor V3] ⚠ Brightness guard error for ${tool}: ${message || brightnessError}`);
             if (!QUALITY_GATE.failOpen) {
               qualityPassed = false;
             }
@@ -413,8 +417,9 @@ async function processPhoto(
                 }
               }
             }
-          } catch (retryError: any) {
-            console.warn(`[BatchProcessor V3] ⚠ Retry failed for ${tool}: ${retryError?.message || retryError}`);
+          } catch (retryError: unknown) {
+            const message = retryError instanceof Error ? retryError.message : 'Processing failed';
+            console.warn(`[BatchProcessor V3] ⚠ Retry failed for ${tool}: ${message || retryError}`);
           }
         }
 
@@ -454,16 +459,17 @@ async function processPhoto(
         lastError = result.error;
         console.log(`[BatchProcessor V3] ✗ ${tool}: ${result.error}`);
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Internal server error';
       toolsSkipped.push(tool);
       toolResults[tool] = {
         success: false,
         provider: config.provider,
         duration: Date.now() - toolStart,
-        error: error.message,
+        error: message,
       };
-      lastError = error.message;
-      console.error(`[BatchProcessor V3] ✗ ${tool} error:`, error.message);
+      lastError = message;
+      console.error(`[BatchProcessor V3] ✗ ${tool} error:`, message);
     }
   }
   
@@ -477,8 +483,9 @@ async function processPhoto(
       currentUrl = upscaled;
       postProcessing.push(`upscale-${HERO_UPSCALE.scale}x`);
       console.log(`[BatchProcessor V3] ✓ hero upscale (${HERO_UPSCALE.scale}x)`);
-    } catch (error: any) {
-      console.warn(`[BatchProcessor V3] ⚠ hero upscale failed: ${error?.message || error}`);
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Processing failed';
+      console.warn(`[BatchProcessor V3] ⚠ hero upscale failed: ${message || error}`);
     }
   }
   
@@ -498,8 +505,9 @@ async function processPhoto(
             baseBuffer = enhanced.buffer;
             postProcessing.push('base-normalize');
           }
-        } catch (error: any) {
-          console.warn(`[BatchProcessor V3] ⚠ base enhance failed: ${error?.message || error}`);
+        } catch (error: unknown) {
+          const message = error instanceof Error ? error.message : 'Processing failed';
+          console.warn(`[BatchProcessor V3] ⚠ base enhance failed: ${message || error}`);
         }
       }
 
@@ -511,8 +519,9 @@ async function processPhoto(
         supabase,
         baseBuffer
       );
-    } catch (error: any) {
-      console.error(`[BatchProcessor V3] Save error:`, error.message);
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Processing failed';
+      console.error(`[BatchProcessor V3] Save error:`, message);
     }
   }
   
@@ -560,7 +569,7 @@ async function processToolWithRouting(
         glowIntensity: 'medium',
       });
       return { success: result.success, enhancedUrl: result.url, providerUsed: 'flux-multipass', modelUsed: 'black-forest-labs/flux-kontext-dev' };
-    } catch (error: any) {
+    } catch (error: unknown) {
       // Fallback to single-pass
       console.log('[BatchProcessor V3] Multi-pass failed, trying single-pass');
     }
@@ -571,8 +580,9 @@ async function processToolWithRouting(
     try {
       const result = await balanceWindowExposure(imageUrl, { showOutdoorView: true });
       return { success: result.balanced, enhancedUrl: result.url, providerUsed: 'sam-flux', modelUsed: 'sam2+black-forest-labs/flux-kontext-dev' };
-    } catch (error: any) {
-      return { success: false, error: error.message, providerUsed: 'sam-flux', modelUsed: 'sam2+black-forest-labs/flux-kontext-dev' };
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Internal server error';
+      return { success: false, error: message, providerUsed: 'sam-flux', modelUsed: 'sam2+black-forest-labs/flux-kontext-dev' };
     }
   }
   
@@ -629,8 +639,9 @@ async function runAutoEnhanceTool(
     
     const enhancedUrl = await runAutoEnhance(imageUrl, options);
     return { success: true, enhancedUrl, providerUsed: 'autoenhance', modelUsed: 'autoenhance' };
-  } catch (error: any) {
-    return { success: false, error: error.message, providerUsed: 'autoenhance', modelUsed: 'autoenhance' };
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Processing failed';
+    return { success: false, error: message, providerUsed: 'autoenhance', modelUsed: 'autoenhance' };
   }
 }
 
@@ -778,8 +789,9 @@ async function runFluxTool(
     }
     
     return { success: true, enhancedUrl, providerUsed: 'flux-kontext', modelUsed: 'black-forest-labs/flux-kontext-dev' };
-  } catch (error: any) {
-    return { success: false, error: error.message, providerUsed: 'flux-kontext', modelUsed: 'black-forest-labs/flux-kontext-dev' };
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Internal server error';
+    return { success: false, error: message, providerUsed: 'flux-kontext', modelUsed: 'black-forest-labs/flux-kontext-dev' };
   }
 }
 
@@ -848,8 +860,9 @@ async function recoverTwilightBrightness(imageUrl: string): Promise<string | nul
   try {
     const prompt = 'Slightly brighten the overall exposure (about 10-15%) while preserving the twilight sky colors and window glow. Do NOT change any structures, trees, lawn, or composition.';
     return await replicate.colorBalance(imageUrl, prompt, { guidance: 1.6, steps: 16 });
-  } catch (error: any) {
-    console.warn('[BatchProcessor V3] Twilight brightness recovery failed:', error?.message || error);
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Processing failed';
+    console.warn('[BatchProcessor V3] Twilight brightness recovery failed:', message || error);
     return null;
   }
 }
@@ -879,8 +892,9 @@ async function runSDXLTool(
     }
     
     return { success: true, enhancedUrl, providerUsed: 'sdxl-lightning', modelUsed: 'bytedance/sdxl-lightning-4step' };
-  } catch (error: any) {
-    return { success: false, error: error.message, providerUsed: 'sdxl-lightning', modelUsed: 'bytedance/sdxl-lightning-4step' };
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Internal server error';
+    return { success: false, error: message, providerUsed: 'sdxl-lightning', modelUsed: 'bytedance/sdxl-lightning-4step' };
   }
 }
 

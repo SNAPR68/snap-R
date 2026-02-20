@@ -91,8 +91,9 @@ export async function GET(request: NextRequest) {
               results.tokensRefreshed++;
               console.log(`[AnalyticsSync] Refreshed token for ${conn.platform} user ${conn.user_id}`);
             }
-          } catch (refreshErr: any) {
-            console.error(`[AnalyticsSync] Token refresh failed for ${conn.platform}:`, refreshErr.message);
+          } catch (refreshErr: unknown) {
+            const message = refreshErr instanceof Error ? refreshErr.message : 'Internal server error';
+            console.error(`[AnalyticsSync] Token refresh failed for ${conn.platform}:`, message);
           }
         }
       }
@@ -151,17 +152,19 @@ export async function GET(request: NextRequest) {
         } else {
           results.skipped++;
         }
-      } catch (postError: any) {
-        console.error(`[AnalyticsSync] Error syncing post ${post.id}:`, postError.message);
+      } catch (postError: unknown) {
+        const message = postError instanceof Error ? postError.message : 'Internal server error';
+        console.error(`[AnalyticsSync] Error syncing post ${post.id}:`, message);
         results.failed++;
       }
     }
 
     console.log('[AnalyticsSync] Complete:', results);
     return NextResponse.json({ success: true, results });
-  } catch (error: any) {
-    console.error('[AnalyticsSync] Fatal error:', error.message);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Internal server error';
+    console.error('[AnalyticsSync] Fatal error:', message);
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }
 

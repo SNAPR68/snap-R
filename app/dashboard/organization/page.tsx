@@ -249,6 +249,7 @@ export default function OrganizationPage() {
         setSuccess('Organization created! Enable White-Label to go live.');
       }
     } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Request failed';
       setError(err instanceof Error ? err.message : 'An error occurred');
     } finally {
       setSaving(false);
@@ -280,6 +281,7 @@ export default function OrganizationPage() {
       // Redirect to Stripe Checkout
       window.location.href = data.url;
     } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Processing failed';
       setError(err instanceof Error ? err.message : 'Checkout failed');
       setCheckingOut(false);
     }

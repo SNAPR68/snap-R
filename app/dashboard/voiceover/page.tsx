@@ -347,8 +347,9 @@ function VoiceoverGenerator() {
 
       setGeneratedScript(data.script);
       setCustomScript(data.script);
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Generation failed';
+      setError(message);
     } finally {
       setProcessing(false);
     }
@@ -388,8 +389,9 @@ function VoiceoverGenerator() {
       setGeneratedScript(data.script);
       setAudioUrl(data.audioUrl);
       setStep('result');
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Generation failed';
+      setError(message);
     } finally {
       setProcessing(false);
     }

@@ -138,8 +138,9 @@ export async function validateResult(
     const validation = JSON.parse(cleanContent);
     
     return normalizeValidation(result.photoId, validation);
-  } catch (error: any) {
-    console.error(`[Validator] Validation failed:`, error.message);
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Processing failed';
+    console.error(`[Validator] Validation failed:`, message);
     
     // On error, use confidence from processing result
     return {

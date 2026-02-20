@@ -50,7 +50,8 @@ export async function POST(request: NextRequest) {
 
     await supabase.from("listings").update({ updated_at: new Date().toISOString() }).eq("id", listingId);
     return NextResponse.json({ success: true, uploaded: uploadedPhotos.length, photos: uploadedPhotos });
-  } catch (error: any) {
-    return NextResponse.json({ error: error.message || "Upload failed" }, { status: 500 });
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Upload failed';
+    return NextResponse.json({ error: message || "Upload failed" }, { status: 500 });
   }
 }

@@ -77,9 +77,10 @@ export default function UploadPage() {
       if (data.length > 0) {
         setSelectedListing(data[0].id);
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Request failed';
       console.error(error);
-      setError(error?.message || "Failed to load listings");
+      setError(error instanceof Error ? error.message : "Failed to load listings");
     } finally {
       setListingLoading(false);
     }
@@ -116,8 +117,9 @@ export default function UploadPage() {
       setNewListing({ title: "", address: "", description: "" });
       await fetchListings();
       setSuccess("Listing created successfully. You can now upload photos.");
-    } catch (error: any) {
-      setError(error?.message || "Failed to create listing");
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Upload failed';
+      setError(error instanceof Error ? error.message : "Failed to create listing");
     } finally {
       setCreatingListing(false);
     }
@@ -152,9 +154,10 @@ export default function UploadPage() {
 
       const json = await response.json();
       router.push(`/jobs/${json.jobId}`);
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Upload failed';
       console.error(error);
-      setError(error?.message || "Upload failed");
+      setError(error instanceof Error ? error.message : "Upload failed");
     } finally {
       setLoading(false);
     }

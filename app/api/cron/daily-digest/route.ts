@@ -93,16 +93,18 @@ export async function GET(request: NextRequest) {
         await sendWhatsApp(user.phone, message);
         results.sent++;
 
-      } catch (e: any) {
-        console.error(`[DailyDigest] Error for ${user.id}:`, e.message);
+      } catch (e: unknown) {
+        const message = e instanceof Error ? e.message : 'Internal server error';
+        console.error(`[DailyDigest] Error for ${user.id}:`, message);
         results.failed++;
       }
     }
 
     console.log('[DailyDigest] Complete:', results);
     return NextResponse.json({ success: true, results });
-  } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Internal server error';
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }
 

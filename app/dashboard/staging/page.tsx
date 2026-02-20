@@ -245,8 +245,9 @@ function VirtualStagingStudio({
 
       setResult(data);
       setGenerationCount(prev => prev + 1);
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Download failed';
+      setError(message);
     } finally {
       setProcessing(false);
       setRegenerating(false);

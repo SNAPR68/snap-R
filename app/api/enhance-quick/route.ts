@@ -93,10 +93,11 @@ export async function POST(request: NextRequest) {
       },
       timings: { downloadMs, enhanceMs, uploadMs, totalMs },
     });
-  } catch (error: any) {
-    console.error(`[enhance-quick] Error for ${photoId}:`, error?.message);
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Processing failed';
+    console.error(`[enhance-quick] Error for ${photoId}:`, message);
     return NextResponse.json(
-      { error: error?.message || 'Enhancement failed' },
+      { error: message },
       { status: 500 }
     );
   }

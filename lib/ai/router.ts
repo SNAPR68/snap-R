@@ -246,9 +246,10 @@ export async function processEnhancement(
       provider: 'replicate',
       duration,
     };
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Internal server error';
     const duration = Date.now() - startTime;
-    console.error(`[Router] Primary provider failed after ${(duration / 1000).toFixed(1)}s:`, error.message);
+    console.error(`[Router] Primary provider failed after ${(duration / 1000).toFixed(1)}s:`, message);
 
     // Fallback: retry with auto-enhance if the original tool failed
     if (toolId !== 'auto-enhance') {
@@ -262,14 +263,15 @@ export async function processEnhancement(
           provider: 'replicate-fallback',
           duration: fallbackDuration,
         };
-      } catch (fallbackError: any) {
-        console.error(`[Router] Fallback also failed:`, fallbackError.message);
+      } catch (fallbackError: unknown) {
+        const message = fallbackError instanceof Error ? fallbackError.message : 'Processing failed';
+        console.error(`[Router] Fallback also failed:`, message);
       }
     }
 
     return {
       success: false,
-      error: error.message || 'Enhancement failed',
+      error: message,
       duration,
     };
   }

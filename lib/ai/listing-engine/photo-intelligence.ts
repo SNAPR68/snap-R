@@ -307,8 +307,8 @@ export async function analyzePhoto(
           temperature: 0.3,
         });
         break;
-      } catch (error: any) {
-        const message = error?.message || '';
+      } catch (error: unknown) {
+        const message = error instanceof Error ? error.message : '';
         if (attempt === 0 && (message.includes('429') || message.toLowerCase().includes('rate limit'))) {
           const retryAfter = message.match(/retry_after[^0-9]*([0-9.]+)/i)?.[1];
           const waitMs = retryAfter ? Number(retryAfter) * 1000 : 6000;
@@ -351,15 +351,16 @@ export async function analyzePhoto(
     // Validate and normalize the response
     return normalizeAnalysis(photoId, photoUrl, analysis);
 
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Internal server error';
     const duration = Date.now() - startTime;
-    console.error(`[PhotoIntelligence V3] Analysis failed after ${duration}ms:`, error.message);
+    console.error(`[PhotoIntelligence V3] Analysis failed after ${duration}ms:`, message);
 
-    if (failOpen || String(error?.message || '').includes('429')) {
-      return getFailOpenAnalysis(photoId, photoUrl, error.message);
+    if (failOpen || message.includes('429')) {
+      return getFailOpenAnalysis(photoId, photoUrl, message);
     }
     // Return a conservative default analysis on failure
-    return getDefaultAnalysis(photoId, photoUrl, error.message);
+    return getDefaultAnalysis(photoId, photoUrl, message);
   }
 }
 

@@ -95,8 +95,9 @@ export async function POST(request: NextRequest) {
       manifest: result.manifest,
       errors: result.errors,
     });
-  } catch (error: any) {
-    console.error('[MLS Export] Error:', error.message);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Internal server error';
+    console.error('[MLS Export] Error:', message);
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }

@@ -283,8 +283,9 @@ function CMAGenerator() {
       setReportHtml(data.html);
       setReportData(data);
       setStep('result');
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Download failed';
+      setError(message);
     } finally {
       setProcessing(false);
     }
@@ -350,9 +351,10 @@ function CMAGenerator() {
       pdf.save(filename);
       console.log('[CMA] PDF saved:', filename);
       
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Generation failed';
       console.error('[CMA] PDF generation error:', err);
-      setError(`Failed to generate PDF: ${err.message || 'Unknown error'}. Please try again.`);
+      setError(`Failed to generate PDF: ${message || 'Unknown error'}. Please try again.`);
     } finally {
       if (container && container.parentNode) {
         document.body.removeChild(container);

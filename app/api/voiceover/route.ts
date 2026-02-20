@@ -112,10 +112,11 @@ export async function POST(request: NextRequest) {
       pricing,
     });
 
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Internal server error';
     console.error('Voiceover API error:', error);
     return NextResponse.json(
-      { error: error.message || 'Internal server error' },
+      { error: message || 'Internal server error' },
       { status: 500 }
     );
   }

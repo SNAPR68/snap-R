@@ -180,9 +180,10 @@ export default function CameraPage() {
       setResult(enhanceData.enhancedUrl);
       setStep('result');
 
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Download failed';
       console.error('Process error:', err);
-      setError(err.message || 'Something went wrong');
+      setError(message || 'Something went wrong');
       setStep('tools');
     } finally {
       setProcessing(false);

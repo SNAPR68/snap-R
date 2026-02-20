@@ -40,10 +40,11 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json(scenes || []);
 
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Internal server error';
     console.error('Scenes GET error:', error);
     return NextResponse.json(
-      { error: error.message || 'Internal server error' },
+      { error: message || 'Internal server error' },
       { status: 500 }
     );
   }
@@ -137,10 +138,11 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ success: true, scene });
 
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Internal server error';
     console.error('Scenes POST error:', error);
     return NextResponse.json(
-      { error: error.message || 'Internal server error' },
+      { error: message || 'Internal server error' },
       { status: 500 }
     );
   }
@@ -215,10 +217,11 @@ export async function PATCH(request: NextRequest) {
 
     return NextResponse.json({ success: true, scene: updated });
 
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Internal server error';
     console.error('Scenes PATCH error:', error);
     return NextResponse.json(
-      { error: error.message || 'Internal server error' },
+      { error: message || 'Internal server error' },
       { status: 500 }
     );
   }
@@ -268,10 +271,11 @@ export async function DELETE(request: NextRequest) {
 
     return NextResponse.json({ success: true });
 
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Internal server error';
     console.error('Scenes DELETE error:', error);
     return NextResponse.json(
-      { error: error.message || 'Internal server error' },
+      { error: message || 'Internal server error' },
       { status: 500 }
     );
   }

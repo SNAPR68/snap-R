@@ -52,10 +52,11 @@ export async function GET(request: NextRequest) {
       },
     });
 
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Download failed';
     console.error('Download proxy error:', error);
     return NextResponse.json(
-      { error: error.message || 'Download failed' },
+      { error: message || 'Download failed' },
       { status: 500 }
     );
   }

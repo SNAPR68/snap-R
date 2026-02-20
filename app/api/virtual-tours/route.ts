@@ -64,10 +64,11 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json(tours || []);
 
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Internal server error';
     console.error('Virtual tours GET error:', error);
     return NextResponse.json(
-      { error: error.message || 'Internal server error' },
+      { error: message || 'Internal server error' },
       { status: 500 }
     );
   }
@@ -160,10 +161,11 @@ export async function POST(request: NextRequest) {
       tour: completeTour || tour,
     });
 
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Internal server error';
     console.error('Virtual tours POST error:', error);
     return NextResponse.json(
-      { error: error.message || 'Internal server error' },
+      { error: message || 'Internal server error' },
       { status: 500 }
     );
   }
@@ -231,10 +233,11 @@ export async function PATCH(request: NextRequest) {
 
     return NextResponse.json({ success: true, tour });
 
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Internal server error';
     console.error('Virtual tours PATCH error:', error);
     return NextResponse.json(
-      { error: error.message || 'Internal server error' },
+      { error: message || 'Internal server error' },
       { status: 500 }
     );
   }
@@ -270,10 +273,11 @@ export async function DELETE(request: NextRequest) {
 
     return NextResponse.json({ success: true });
 
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Internal server error';
     console.error('Virtual tours DELETE error:', error);
     return NextResponse.json(
-      { error: error.message || 'Internal server error' },
+      { error: message || 'Internal server error' },
       { status: 500 }
     );
   }

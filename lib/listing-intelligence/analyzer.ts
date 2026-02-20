@@ -129,6 +129,7 @@ export async function analyzePhoto(photoUrl: string, photoIndex: number, client?
       aiFeedback: analysis.aiFeedback || 'Analysis completed',
     };
   } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Unknown error';
     console.error(`[Listing Intelligence] Error analyzing photo ${photoIndex}:`, error instanceof Error ? error.message : error);
     return {
       photoIndex, photoUrl, overallScore: 50, lightingScore: 50, compositionScore: 50,

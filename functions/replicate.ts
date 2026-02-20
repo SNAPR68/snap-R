@@ -379,8 +379,9 @@ export async function upscale(
 
   try {
     return await realEsrganUpscale(imageUrl, scale);
-  } catch (error: any) {
-    if (error.message?.includes('greater than the max size')) {
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Internal server error';
+    if (message?.includes('greater than the max size')) {
       throw new Error('Image is already high resolution. Upscaling not needed.');
     }
     throw error;

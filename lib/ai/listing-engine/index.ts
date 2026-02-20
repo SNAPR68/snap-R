@@ -395,8 +395,9 @@ export async function prepareListing(
       completedAt: new Date().toISOString(),
     };
     
-  } catch (error: any) {
-    console.error(`[ListingEngine] FAILED:`, error.message);
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Processing failed';
+    console.error(`[ListingEngine] FAILED:`, message);
     
     await updateListingStatus(supabase, listingId, 'failed');
     
@@ -422,7 +423,7 @@ export async function prepareListing(
       },
       startedAt: new Date(startTime).toISOString(),
       completedAt: new Date().toISOString(),
-      error: error.message,
+      error: message,
     };
   }
 }

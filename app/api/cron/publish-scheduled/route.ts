@@ -105,6 +105,7 @@ export async function GET(request: NextRequest) {
               connection.access_token = refreshed.accessToken;
               console.log(`[PublishCron] Token refreshed for ${post.platform}`);
             } catch (refreshErr: unknown) {
+              const message = refreshErr instanceof Error ? refreshErr.message : 'Unknown error';
               const refreshMsg = refreshErr instanceof Error ? refreshErr.message : 'Unknown refresh error';
               console.error(`[PublishCron] Token refresh failed for ${post.platform}:`, refreshMsg);
               await markPostFailed(supabase, post.id, 'Token expired — please reconnect your account');
@@ -264,6 +265,7 @@ export async function GET(request: NextRequest) {
         }
 
       } catch (postError: unknown) {
+        const message = postError instanceof Error ? postError.message : 'Unknown error';
         const postMsg = postError instanceof Error ? postError.message : 'Unknown error';
         console.error(`[PublishCron] Error publishing post ${post.id}:`, postMsg);
         await markPostFailed(supabase, post.id, postMsg);
