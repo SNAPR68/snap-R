@@ -1,6 +1,17 @@
 # SnapR Execution Changelog
 =================================
 
+## 2026-02-20 — Fix "s.map is not a function" in Video Generation
+
+- Root cause: `lib/video/photo-ordering.ts` assumed `preparation_metadata.photoAudit` was an array and called `.map()` on it
+- Actual data: `photoAudit` is a `Record<string, object>` (keyed by photoId), produced by `listing-engine/index.ts`
+- Additionally, `photoType` lives in `decisionAudit`, not `photoAudit`
+- Fix: Rewrote `orderPhotosForWalkthrough()` to read `decisionAudit` as a Record, using `Object.entries()` instead of `.map()`
+- Added guards for missing/empty/non-object data with fallback to original photo order
+- File: `lib/video/photo-ordering.ts`
+
+---
+
 ## 2026-02-20 — Fix Remotion Lambda Bundling for Vercel
 
 - Added `serverExternalPackages` to `next.config.mjs` for `@remotion/lambda`, `@remotion/lambda-client`, `@remotion/serverless`
