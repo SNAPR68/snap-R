@@ -1,6 +1,15 @@
 # SnapR Execution Changelog
 =================================
 
+## 2026-02-20 — Force Single-Lambda Video Rendering
+
+- Increased `framesPerLambda` from 200 to 20000 in both video generate routes
+- With 31 photos (~900 frames), `framesPerLambda: 200` spawned ~5 concurrent lambdas exceeding AWS concurrency limit
+- `framesPerLambda: 20000` forces all rendering onto a single lambda (2GB RAM, 240s timeout — sufficient)
+- Files: `app/api/video/generate/route.ts`, `app/api/internal/video-generate/route.ts`
+
+---
+
 ## 2026-02-20 — Fix "s.map is not a function" in Video Generation
 
 - Root cause: `lib/video/photo-ordering.ts` assumed `preparation_metadata.photoAudit` was an array and called `.map()` on it

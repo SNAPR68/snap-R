@@ -221,7 +221,7 @@ export async function POST(request: NextRequest) {
       imageFormat: 'jpeg',
       maxRetries: 3,
       privacy: 'public',
-      framesPerLambda: 200,
+      framesPerLambda: 20000,
       outName: `${validatedInput.listingId}-${validatedInput.aspectRatio.replace(':', 'x')}-${Date.now()}.mp4`,
     }) as RenderResponse;
 
