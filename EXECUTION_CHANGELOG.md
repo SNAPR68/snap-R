@@ -1,6 +1,30 @@
 # SnapR Execution Changelog
 =================================
 
+## 2026-02-20 — Fix Video Generate "Listing not found" & Voiceover Failure
+
+### 1. Video Generate API — Non-existent Column Query
+- **Root cause:** `/api/video/generate` queried `price, beds, baths, sqft, features` columns that don't exist on the `listings` table. Supabase returns null for the entire query, triggering "Listing not found" error.
+- Replaced with actual columns: `title, address, city, state, description, preparation_metadata`
+- Updated `ListingWithPhotos` interface and `listingProps` construction
+- Files Modified: `app/api/video/generate/route.ts`
+
+### 2. Internal Video Generate API — Same Fix
+- `/api/internal/video-generate` (called by Cloudflare Worker marketing pipeline) had the exact same non-existent column query
+- Same fix applied: replaced phantom columns with real ones
+- Files Modified: `app/api/internal/video-generate/route.ts`
+
+### 3. Voiceover Unblocked
+- The voiceover API (`/api/video/voiceover`) was working correctly — it generates scripts via OpenAI and audio via ElevenLabs/OpenAI TTS
+- Voiceover appeared broken because after generating audio, clicking "Generate Video" called `/api/video/generate` which immediately failed
+- With the query fix, the full flow (voiceover → video render) now works end-to-end
+
+### Verification
+- `npx tsc --noEmit`: 0 errors
+- `npm run build`: Success
+
+---
+
 ## 2026-02-20 — Pipeline Gap Fixes: TikTok Captions, Video→Post Bridge, Video Status
 
 ### 1. TikTok Caption Generation
