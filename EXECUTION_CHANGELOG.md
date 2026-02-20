@@ -1,6 +1,14 @@
 # SnapR Execution Changelog
 =================================
 
+## 2026-02-20 — Prevent CDN Caching of Property Site 404s
+
+- Added `no-store` Cache-Control + CDN-Cache-Control headers for `/p/*` routes in `vercel.json`
+- Added `export const revalidate = 0` to `app/p/[slug]/page.tsx`
+- Prevents Vercel edge from caching stale 404 responses
+
+---
+
 ## 2026-02-20 — Fix Ambiguous photos FK (PGRST201) Across Codebase
 
 ### Root Cause

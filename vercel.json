@@ -33,6 +33,15 @@
       "memory": 1024
     }
   },
+  "headers": [
+    {
+      "source": "/p/(.*)",
+      "headers": [
+        { "key": "Cache-Control", "value": "no-store, must-revalidate" },
+        { "key": "CDN-Cache-Control", "value": "no-store" }
+      ]
+    }
+  ],
   "routes": [
     {
       "src": "/api/upload",
