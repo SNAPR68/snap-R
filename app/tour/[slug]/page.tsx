@@ -115,8 +115,9 @@ export default function TourViewerPage() {
       setTour(data);
       const startIdx = data.tour_scenes.findIndex((s: Scene) => s.is_start_scene);
       setCurrentIndex(startIdx >= 0 ? startIdx : 0);
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Internal server error';
+      setError(message);
     } finally {
       setLoading(false);
     }

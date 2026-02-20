@@ -51,10 +51,11 @@ export async function onRequestGet(context: any) {
       job,
       photos: photos || [],
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Fetch failed';
     console.error('Job status error:', error);
     return Response.json(
-      { error: error.message || 'Failed to fetch job status' },
+      { error: message || 'Failed to fetch job status' },
       { status: 500 }
     );
   }

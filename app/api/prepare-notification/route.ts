@@ -61,9 +61,10 @@ export async function POST(request: NextRequest) {
       results.map((r: any) => `${r.channel}: ${r.success}`));
 
     return NextResponse.json({ success: true, results });
-  } catch (error: any) {
-    console.error('[PrepareNotification] Error:', error.message);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Internal server error';
+    console.error('[PrepareNotification] Error:', message);
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }
 

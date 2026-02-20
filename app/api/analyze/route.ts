@@ -51,10 +51,11 @@ export async function POST(request: NextRequest) {
       success: true,
       analysis,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Internal server error';
     console.error('[API/Analyze] Error:', error);
     return NextResponse.json({
-      error: error.message || 'Analysis failed'
+      error: message || 'Analysis failed'
     }, { status: 500 });
   }
 }

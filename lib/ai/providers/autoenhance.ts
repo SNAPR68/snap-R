@@ -32,9 +32,9 @@ class AutoEnhanceProvider {
       }
       imageBuffer = await imageResponse.arrayBuffer();
     console.log('[AutoEnhance] Downloaded:', (imageBuffer.byteLength / 1024).toFixed(0), 'KB');
-    } catch (error: any) {
+    } catch (error: unknown) {
       clearTimeout(downloadTimeout);
-      if (error.name === 'AbortError') {
+      if (error instanceof Error && error.name === 'AbortError') {
         throw new Error('AutoEnhance: Image download timeout');
       }
       throw error;

@@ -1,6 +1,30 @@
 # SnapR Execution Changelog
 =================================
 
+## 2026-02-20 — Error Handling Hardening
+
+### Summary
+Replaced all `catch (error: any)` with `catch (error: unknown)` across 83 source files (128 catch blocks), per CLAUDE.md convention. Uses `error instanceof Error` guards with proper message extraction.
+
+### Standard Pattern
+- `catch (error: any)` → `catch (error: unknown)` with `const message = error instanceof Error ? error.message : 'fallback';`
+- All `error.message` and `error?.message` references replaced with guarded `message` variable
+
+### Special Cases (5 blocks)
+- `error.name === 'AbortError'` — guarded with `error instanceof Error &&` (autoenhance.ts, index.ts, preparation-overlay.tsx)
+- `error.code === 'insufficient_quota'` — guarded with `instanceof Error && 'code' in error` (generate-caption/route.ts)
+- `error.stack` — guarded with `error instanceof Error ? error.stack : undefined` (listing/prepare/route.ts)
+
+### Files Modified
+83 files across API routes (44), lib/AI pipeline (12), dashboard pages (7), components (6), authenticated pages (2), public pages (3), worker (1), functions (2), and other modules (6).
+
+### Verification
+- `npx tsc --noEmit`: 0 errors
+- `npm run build`: Success
+- `grep -rn "catch.*: any"`: 0 results in source files
+
+---
+
 ## 2026-02-20 — Product Readiness: Critical User-Facing Fixes
 
 ### 1. Waitlist Email Submission (Phase 2A)

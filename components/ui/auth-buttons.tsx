@@ -24,8 +24,9 @@ export default function AuthButtons() {
       });
       if (error) setStatus("Error: " + error.message);
       else setStatus("Magic link sent — check your email.");
-    } catch (err: any) {
-      setStatus("Unexpected error: " + (err?.message || err));
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Unknown error';
+      setStatus("Unexpected error: " + (message || err));
     } finally {
       setLoading(false);
     }
@@ -42,8 +43,9 @@ export default function AuthButtons() {
         },
       });
       if (error) setStatus("OAuth error: " + error.message);
-    } catch (err: any) {
-      setStatus("Unexpected error: " + (err?.message || err));
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Unknown error';
+      setStatus("Unexpected error: " + (message || err));
     } finally {
       setLoading(false);
     }

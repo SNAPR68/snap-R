@@ -255,6 +255,7 @@ export async function skyReplacement(
         console.warn('[Replicate] Sky mask too small (' + maskResult.area.toFixed(1) + '%), falling back to Kontext');
       }
     } catch (maskError: unknown) {
+      const message = maskError instanceof Error ? maskError.message : 'Unknown error';
       console.warn('[Replicate] Sky mask failed, falling back to Kontext:', maskError instanceof Error ? maskError.message : 'Unknown error');
     }
   } else {
@@ -426,6 +427,7 @@ export async function lawnRepair(
         );
       }
     } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Unknown error';
       console.warn('[Replicate] Lawn mask failed:', error instanceof Error ? error.message : 'Unknown error');
     }
   } else if (skipMask) {

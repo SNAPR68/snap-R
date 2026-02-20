@@ -42,8 +42,9 @@ export async function GET(request: NextRequest) {
       appliedAt: application.created_at,
       referralCount,
     });
-  } catch (error: any) {
-    console.error('[Partners] Status error:', error.message);
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Internal server error';
+    console.error('[Partners] Status error:', message);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

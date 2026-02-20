@@ -326,6 +326,7 @@ export async function generateVoiceover(request: VoiceoverRequest): Promise<Voic
       duration,
     };
   } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Unknown error';
     console.error('Voiceover generation error:', error);
     return {
       success: false,

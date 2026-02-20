@@ -65,8 +65,9 @@ export async function detectWindows(imageUrl: string): Promise<WindowMask | null
       }] : [],
     };
     
-  } catch (error: any) {
-    console.error('[WindowMasking] SAM detection failed:', error.message);
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Processing failed';
+    console.error('[WindowMasking] SAM detection failed:', message);
     return await fallbackWindowDetection(imageUrl);
   }
 }
@@ -152,8 +153,9 @@ Professional real estate photography with balanced exposure.`;
       balanced: true,
     };
     
-  } catch (error: any) {
-    console.error('[WindowMasking] Balance failed:', error.message);
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Internal server error';
+    console.error('[WindowMasking] Balance failed:', message);
     
     // Return original on failure
     return {
@@ -206,8 +208,9 @@ export async function enhanceWindowsOnly(
     const resultUrl = normalizeOutputUrl(output);
     return resultUrl || imageUrl;
     
-  } catch (error: any) {
-    console.error('[WindowMasking] Enhancement failed:', error.message);
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Processing failed';
+    console.error('[WindowMasking] Enhancement failed:', message);
     return imageUrl;
   }
 }

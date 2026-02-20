@@ -195,7 +195,7 @@ export async function POST(request: NextRequest) {
         processingTime: result.processingTime,
       });
 
-    } catch (analysisError: any) {
+    } catch (analysisError: unknown) {
       await supabase
         .from('cull_sessions')
         .update({ status: 'failed' })
@@ -203,10 +203,11 @@ export async function POST(request: NextRequest) {
       throw analysisError;
     }
 
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Internal server error';
     console.error('[Photo Culling] Error:', error);
     return NextResponse.json({ 
-      error: error.message || 'Culling failed' 
+      error: message || 'Culling failed' 
     }, { status: 500 });
   }
 }
@@ -271,8 +272,9 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json(sessions || []);
 
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Internal server error';
     console.error('[Photo Culling] GET Error:', error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }

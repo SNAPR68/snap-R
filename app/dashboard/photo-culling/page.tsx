@@ -489,8 +489,9 @@ function CullingInterface({
       }
 
       setResult(data);
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Processing failed';
+      setError(message);
     } finally {
       setProcessing(false);
     }

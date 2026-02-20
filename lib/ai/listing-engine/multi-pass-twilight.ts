@@ -117,8 +117,9 @@ export async function multiPassTwilight(
     
     return { url: pass2Url, passes: 2, success: true };
     
-  } catch (error: any) {
-    console.error('[MultiPassTwilight] Error:', error.message);
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Processing failed';
+    console.error('[MultiPassTwilight] Error:', message);
     throw error;
   }
 }

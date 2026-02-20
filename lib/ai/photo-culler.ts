@@ -173,8 +173,9 @@ export async function analyzePhotosForCulling(
         allDuplicateGroups.push(...adjustedGroups);
       }
       
-    } catch (error: any) {
-      console.error(`[Photo Culling] Error in chunk ${Math.floor(i / chunkSize) + 1}:`, error.message);
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Internal server error';
+      console.error(`[Photo Culling] Error in chunk ${Math.floor(i / chunkSize) + 1}:`, message);
       // Generate default scores for failed chunk
       chunk.forEach((url, idx) => {
         allScores.push({

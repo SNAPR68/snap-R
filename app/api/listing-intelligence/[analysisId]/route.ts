@@ -87,9 +87,10 @@ export async function GET(
       })) || [],
     });
 
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Internal server error';
     console.error('[Listing Intelligence] Get Error:', error);
-    return NextResponse.json({ error: error.message || 'Failed to get analysis' }, { status: 500 });
+    return NextResponse.json({ error: message || 'Failed to get analysis' }, { status: 500 });
   }
 }
 
@@ -131,7 +132,8 @@ export async function PATCH(
 
     return NextResponse.json({ success: true });
 
-  } catch (error: any) {
-    return NextResponse.json({ error: error.message || 'Failed to update' }, { status: 500 });
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Internal server error';
+    return NextResponse.json({ error: message || 'Failed to update' }, { status: 500 });
   }
 }

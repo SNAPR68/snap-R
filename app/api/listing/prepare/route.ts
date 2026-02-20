@@ -206,7 +206,7 @@ export async function POST(request: NextRequest) {
           timestamp: now,
         }),
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       await admin
         .from('listings')
         .update({
@@ -214,11 +214,12 @@ export async function POST(request: NextRequest) {
           processing_started_at: null,
         })
         .eq('id', listingId);
-      console.error('[Prepare] Worker fetch failed:', error?.message || error);
+      const workerMsg = error instanceof Error ? error.message : 'unknown';
+      console.error('[Prepare] Worker fetch failed:', workerMsg);
       return NextResponse.json(
         {
           success: false,
-          error: `Worker fetch failed: ${error?.message || 'unknown'}`,
+          error: `Worker fetch failed: ${workerMsg}`,
           workerUrl,
           jobId: job.id,
         },
@@ -246,12 +247,14 @@ export async function POST(request: NextRequest) {
       jobId: job.id,
       message: 'Job queued and worker triggered. Poll /api/listing/status for completion.',
     });
-  } catch (error: any) {
-    console.error('[Prepare] Error:', error.message, error.stack);
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Failed to prepare listing';
+    const stack = error instanceof Error ? error.stack : undefined;
+    console.error('[Prepare] Error:', message, stack);
     return NextResponse.json(
       {
         success: false,
-        error: error.message || 'Failed to prepare listing',
+        error: message,
       },
       { status: 500 }
     );

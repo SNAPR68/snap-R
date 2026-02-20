@@ -144,6 +144,7 @@ async function sendEmail(
     return { channel: 'email', success: true, messageId: data.id };
 
   } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Unknown error';
     const msg = error instanceof Error ? error.message : 'Unknown error';
     console.error('[Notify] Email error:', msg);
     return { channel: 'email', success: false, error: msg };
@@ -201,6 +202,7 @@ async function sendWhatsApp(
     return { channel: 'whatsapp', success: true, messageId: data.sid };
 
   } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Unknown error';
     const msg = error instanceof Error ? error.message : 'Unknown error';
     console.error('[Notify] WhatsApp error:', msg);
     return { channel: 'whatsapp', success: false, error: msg };

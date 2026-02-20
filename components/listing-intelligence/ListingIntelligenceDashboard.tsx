@@ -147,6 +147,7 @@ export default function ListingIntelligenceDashboard({ onApplyEnhancement, onApp
       setPhotoScores(data.result.photoScores);
       setRecommendations(data.result.topRecommendations);
     } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Processing failed';
       setError(err instanceof Error ? err.message : 'Failed to analyze photos');
     } finally {
       setIsAnalyzing(false);

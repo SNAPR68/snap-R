@@ -185,11 +185,12 @@ export function PreparationOverlay({
         } else {
           throw new Error(data.error || 'Preparation failed to start');
         }
-      } catch (err: any) {
-        if (err.name !== 'AbortError') {
-          setError(err.message || 'Preparation failed');
+      } catch (err: unknown) {
+        if (!(err instanceof Error && err.name === 'AbortError')) {
+          const message = err instanceof Error ? err.message : 'Preparation failed';
+          setError(message);
           setPhase('error');
-          onError(err.message);
+          onError(message);
         }
       }
     };

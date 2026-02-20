@@ -81,8 +81,9 @@ export default function PartnersPage() {
       }
 
       setSubmitted(true);
-    } catch (err: any) {
-      setError(err.message || 'Failed to submit application');
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Processing failed';
+      setError(message || 'Failed to submit application');
     } finally {
       setSubmitting(false);
     }

@@ -175,8 +175,9 @@ function DescriptionGenerator({
       }
 
       setResult(data);
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Internal server error';
+      setError(message);
     } finally {
       setGenerating(false);
     }
