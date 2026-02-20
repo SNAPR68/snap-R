@@ -1,6 +1,15 @@
 # SnapR Execution Changelog
 =================================
 
+## 2026-02-20 — Fix Lambda Concurrency Limit for Video Rendering
+
+- Added `framesPerLambda: 200` to `renderMediaOnLambda` calls in both video generate routes
+- Root cause: AWS account has low Lambda concurrency limit; default Remotion splits renders across ~9 parallel lambdas causing `TooManyRequestsException` (surfaced as "s.map is not a function")
+- Confirmed via CLI: single-lambda render succeeds, multi-lambda render fails with rate limit
+- Files: `app/api/video/generate/route.ts`, `app/api/internal/video-generate/route.ts`
+
+---
+
 ## 2026-02-20 — Fix Video Render Crash, Property Site 404, Voiceover Details
 
 ### 1. Video Render "s.map is not a function" Fix
