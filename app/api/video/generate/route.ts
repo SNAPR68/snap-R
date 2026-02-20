@@ -222,6 +222,7 @@ export async function POST(request: NextRequest) {
       maxRetries: 3,
       privacy: 'public',
       framesPerLambda: 20000,
+      timeoutInMilliseconds: 900000,
       outName: `${validatedInput.listingId}-${validatedInput.aspectRatio.replace(':', 'x')}-${Date.now()}.mp4`,
     }) as RenderResponse;
 
