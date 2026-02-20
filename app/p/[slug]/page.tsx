@@ -97,20 +97,41 @@ export default async function PropertySitePage({ params }: Props) {
   // Look up property site by slug, then fetch listing via listing_id
   const { data: site, error: siteError } = await supabase
     .from('property_sites')
-    .select('listing_id')
+    .select('listing_id, slug')
     .eq('slug', slug)
     .single()
 
   if (siteError) {
-    console.error('[PropertySite] Site lookup error:', siteError, 'slug:', slug)
+    console.error('[PropertySite] Site lookup error:', {
+      error: siteError.message,
+      code: siteError.code,
+      slug,
+    })
   }
 
-  if (!site?.listing_id) {
+  // Fallback: if slug lookup fails, try treating slug as a listing_id
+  let resolvedSite = site
+  if (!resolvedSite?.listing_id) {
+    const { data: fallbackSite } = await supabase
+      .from('property_sites')
+      .select('listing_id, slug')
+      .eq('listing_id', slug)
+      .limit(1)
+      .single()
+
+    if (fallbackSite) {
+      console.log('[PropertySite] Resolved via listing_id fallback:', slug)
+      resolvedSite = fallbackSite
+    }
+  }
+
+  if (!resolvedSite?.listing_id) {
+    console.error('[PropertySite] No property site found for slug:', slug)
     notFound()
   }
 
-  const listingId = site.listing_id
-  
+  const listingId = resolvedSite.listing_id
+
   // Fetch listing with photos
   const { data: listing, error } = await supabase
     .from('listings')

@@ -13,9 +13,9 @@ import { fontFamily } from './shared';
 
 interface ClosingCardProps {
   address: string;
-  price: number;
-  beds: number;
-  baths: number;
+  price?: number;
+  beds?: number;
+  baths?: number;
   sqft?: number;
   primaryColor?: string;
 }
@@ -67,14 +67,15 @@ export const ClosingCard: React.FC<ClosingCardProps> = ({
     extrapolateRight: 'clamp',
   });
 
-  const formattedPrice = `$${price.toLocaleString()}`;
+  const formattedPrice = price ? `$${price.toLocaleString()}` : undefined;
 
   // Build details string
-  const details = [
-    `${beds} Bed${beds !== 1 ? 's' : ''}`,
-    `${baths} Bath${baths !== 1 ? 's' : ''}`,
+  const detailParts = [
+    ...(beds != null ? [`${beds} Bed${beds !== 1 ? 's' : ''}`] : []),
+    ...(baths != null ? [`${baths} Bath${baths !== 1 ? 's' : ''}`] : []),
     ...(sqft ? [`${sqft.toLocaleString()} Sq Ft`] : []),
-  ].join('  ·  ');
+  ];
+  const details = detailParts.length > 0 ? detailParts.join('  ·  ') : undefined;
 
   // Percentage-based sizing
   const addressSize = height * 0.035;
@@ -108,34 +109,38 @@ export const ClosingCard: React.FC<ClosingCardProps> = ({
       </div>
 
       {/* Price in gold */}
-      <div
-        style={{
-          fontSize: priceSize,
-          fontWeight: 800,
-          color: primaryColor,
-          opacity: priceOpacity,
-          transform: `translateY(${priceTranslateY}px)`,
-          textAlign: 'center',
-          marginBottom: gap,
-        }}
-      >
-        {formattedPrice}
-      </div>
+      {formattedPrice && (
+        <div
+          style={{
+            fontSize: priceSize,
+            fontWeight: 800,
+            color: primaryColor,
+            opacity: priceOpacity,
+            transform: `translateY(${priceTranslateY}px)`,
+            textAlign: 'center',
+            marginBottom: gap,
+          }}
+        >
+          {formattedPrice}
+        </div>
+      )}
 
       {/* Details: beds · baths · sqft */}
-      <div
-        style={{
-          fontSize: detailsSize,
-          fontWeight: 400,
-          color: 'rgba(255, 255, 255, 0.8)',
-          opacity: detailsOpacity,
-          transform: `translateY(${detailsTranslateY}px)`,
-          textAlign: 'center',
-          letterSpacing: '0.05em',
-        }}
-      >
-        {details}
-      </div>
+      {details && (
+        <div
+          style={{
+            fontSize: detailsSize,
+            fontWeight: 400,
+            color: 'rgba(255, 255, 255, 0.8)',
+            opacity: detailsOpacity,
+            transform: `translateY(${detailsTranslateY}px)`,
+            textAlign: 'center',
+            letterSpacing: '0.05em',
+          }}
+        >
+          {details}
+        </div>
+      )}
     </AbsoluteFill>
   );
 };
