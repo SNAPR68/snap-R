@@ -13,6 +13,11 @@
 - Added 6 `REMOTION_*` env vars to Vercel (Production, Preview, Development) — video generation was returning 503 because these were only in `.env.local`
 - Added `OPENAI_API_KEY` to Preview and Development environments (was only on Production)
 
+### 3. Property Site 404 Fix
+- Replaced fragile inline `getSupabase()` with shared `adminSupabase()` helper in `app/p/[slug]/page.tsx`
+- Updated all `property_sites` rows to `is_published: true` (were incorrectly `false` from old Worker code)
+- Added error logging for property_sites slug lookup failures
+
 ---
 
 ## 2026-02-20 — Property Details: Migration, Form, Marketing, Video, Property Sites
