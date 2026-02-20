@@ -1,6 +1,53 @@
 # SnapR Execution Changelog
 =================================
 
+## 2026-02-20 — Marketing Pipeline → Content Studio Integration
+
+### 1. Content Studio Dashboard — Marketing-Aware Routing (Phase 1A)
+- Listings with completed marketing now show gold "AI Content Ready" badge with Sparkles icon
+- Processing listings show animated "Generating" badge
+- Click on listing auto-appends `&prefill=marketing` to route when marketing is completed
+- Hover CTA changes to "Create with AI Content" and shows "Captions & hashtags auto-loaded" hint
+- "Start Creating" footer link also passes prefill param
+- Cleaned up unused imports (ArrowLeft, Calendar, Settings, ChevronRight, Hash, BarChart3, CheckCircle)
+- Files Modified: app/dashboard/content-studio/ContentStudioClient.tsx
+
+### 2. Auto-Populate Create Post from Marketing Captions (Phase 1C)
+- Removed `?prefill=marketing` URL param requirement — now auto-detects marketing content when any listing is selected
+- Captions and hashtags auto-load from marketing_jobs table for completed marketing listings
+- Added "Auto-generated captions loaded from marketing pipeline" banner (only shown when not manually edited)
+- Fixed all 9 `any` types → proper interfaces (ListingPhoto, ListingRecord, ListingData)
+- Fixed all `catch (e: any)` → `catch (e: unknown)` with Error type guards
+- Fixed `mp4Data as any` → safe ArrayBuffer copy pattern
+- Cleaned up unused imports and added eslint-disable for intentionally unused vars
+- Files Modified: components/content-studio/unified-creator.tsx
+
+### 3. Video Creator — Auto-Load Existing Renders (Phase 1D)
+- Added useEffect to check `/api/marketing/status` for existing video renders when listing loads
+- If marketing pipeline already rendered a video, auto-sets videoUrl and shows completed state
+- Users see previously rendered video immediately with download/re-render options
+- Files Modified: app/dashboard/content-studio/video/VideoCreator.tsx
+
+### 4. Email Marketing — Pre-fill from AI Description (Phase 1E)
+- Added marketing description fetch when listing is selected
+- AI-generated description from marketing pipeline used as primary source in email body
+- Falls back to user-entered listing description when no marketing description exists
+- Both HTML and text email templates updated to prefer AI description
+- Fixed `any` types: propertySites forEach and listingsData map
+- Cleaned up unused imports (Send, Image, X)
+- Files Modified: app/dashboard/content-studio/email/EmailMarketing.tsx
+
+### 5. Scheduled Posts Visibility (Phase 1F)
+- Verified: auto-scheduled posts from marketing pipeline already appear in calendar and scheduled list views
+- Both views query the same `scheduled_posts` table that the Worker writes to
+- No code changes needed — integration already works
+
+### Verification
+- npx tsc --noEmit: 0 errors
+- npm run build: Success
+
+---
+
 ## 2026-02-20 — Conversion & Onboarding Polish
 
 ### 1. Real Music Tracks

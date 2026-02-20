@@ -154,6 +154,27 @@ export default function VideoCreatorClient() {
   // Load photos
   useEffect(() => { if (listingId) loadPhotos(listingId) }, [listingId])
 
+  // Check for existing video from marketing pipeline
+  useEffect(() => {
+    if (!listingId || videoUrl) return
+    const checkExistingVideo = async () => {
+      try {
+        const res = await fetch(`/api/marketing/status?listingId=${listingId}`)
+        if (!res.ok) return
+        const data = await res.json()
+        const video = data.marketingJob?.video
+        if (video?.result?.videoUrl && video?.result?.renderStatus === 'completed') {
+          setVideoUrl(video.result.videoUrl)
+          setRenderStatus('completed')
+          setRenderProgress(100)
+        }
+      } catch {
+        // Silently ignore — marketing video is optional
+      }
+    }
+    checkExistingVideo()
+  }, [listingId, videoUrl])
+
   // Preview cycling
   useEffect(() => {
     const selectedPhotos = photos.filter(p => p.selected)
