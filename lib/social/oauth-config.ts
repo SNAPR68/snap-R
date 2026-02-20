@@ -239,8 +239,16 @@ export async function getUserProfile(platform: SocialPlatform, accessToken: stri
       url = 'https://api.linkedin.com/v2/userinfo';
       headers['Authorization'] = `Bearer ${accessToken}`;
       break;
-    default:
-      throw new Error(`Profile fetch not implemented for ${platform}`);
+    case 'tiktok':
+      // TikTok User Info endpoint
+      url = 'https://open.tiktokapis.com/v2/user/info/?fields=open_id,union_id,avatar_url,display_name';
+      headers['Authorization'] = `Bearer ${accessToken}`;
+      break;
+    case 'twitter':
+      // Twitter/X v2 user lookup
+      url = 'https://api.twitter.com/2/users/me?user.fields=id,name,username,profile_image_url';
+      headers['Authorization'] = `Bearer ${accessToken}`;
+      break;
   }
 
   const response = await fetch(url, { headers, signal: AbortSignal.timeout(10000) });

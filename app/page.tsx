@@ -48,9 +48,18 @@ export default function HomePage() {
     }
   };
 
-  const handleNotifySubmit = (e: React.FormEvent) => {
+  const handleNotifySubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // TODO: Add email to waitlist (Supabase)
+    if (!notifyEmail) return;
+    try {
+      await fetch('/api/notify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: notifyEmail }),
+      });
+    } catch {
+      // silently ignore — still show success UI
+    }
     setNotifySubmitted(true);
     setTimeout(() => {
       setShowIOSNotifyModal(false);

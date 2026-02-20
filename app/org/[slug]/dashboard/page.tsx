@@ -6,10 +6,9 @@ import { createClient } from '@/lib/supabase/client';
 import Link from 'next/link';
 import {
   Home, Zap, Users, Hammer, LayoutGrid, Image, Palette, FileText,
-  Settings, CheckSquare, Camera, Mic, Sparkles, CreditCard, BookOpen,
+  Settings, CheckSquare, Camera, Mic, Sparkles, CreditCard,
   LogOut, Building2, BarChart3, Loader2
 } from 'lucide-react';
-
 interface Organization {
   id: string;
   name: string;
@@ -24,7 +23,7 @@ interface Organization {
 
 interface NavLinkProps {
   href: string;
-  icon: any;
+  icon: React.ComponentType<{ className?: string }>;
   children: React.ReactNode;
   primaryColor: string;
   currentPath: string;
@@ -64,6 +63,7 @@ export default function BrandedDashboardPage() {
   useEffect(() => {
     loadOrgAndVerifyAccess();
     setCurrentPath(window.location.pathname);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [slug]);
 
   const loadOrgAndVerifyAccess = async () => {
@@ -90,11 +90,19 @@ export default function BrandedDashboardPage() {
     }
 
     // Verify user has access (is owner or member)
-    // For now, we'll check if user is the owner
     if (orgData.owner_id !== user.id) {
-      // TODO: Check organization_members table for membership
-      router.push('/dashboard');
-      return;
+      // Check organization_members table for membership
+      const { data: membership } = await supabase
+        .from('organization_members')
+        .select('id')
+        .eq('organization_id', orgData.id)
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+      if (!membership) {
+        router.push('/dashboard');
+        return;
+      }
     }
 
     setOrg(orgData);
@@ -123,9 +131,10 @@ export default function BrandedDashboardPage() {
         {/* Logo */}
         <Link href={`/org/${slug}/dashboard`} className="flex items-center gap-2 mb-8">
           {logo_url ? (
+            // eslint-disable-next-line @next/next/no-img-element
             <img src={logo_url} alt={platform_name || ''} className="w-10 h-10 object-contain" />
           ) : (
-            <div 
+            <div
               className="w-10 h-10 rounded-lg flex items-center justify-center text-white font-bold"
               style={{ backgroundColor: primary_color }}
             >
