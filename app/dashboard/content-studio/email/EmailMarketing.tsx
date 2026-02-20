@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
-import { ArrowLeft, Mail, Sparkles, Download, Copy, Check, Home, Loader2, ChevronDown, Eye, Code, Send, Image, X, ExternalLink } from 'lucide-react'
+import { ArrowLeft, Mail, Sparkles, Download, Copy, Check, Home, Loader2, ChevronDown, Eye, Code, ExternalLink } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 
 interface ListingPhoto {
@@ -71,16 +71,38 @@ export default function EmailMarketingClient() {
     }
   }, [])
   
-  useEffect(() => { 
-    if (listingId && listings.length > 0) { 
+  // Marketing AI description from pipeline
+  const [marketingDescription, setMarketingDescription] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (listingId && listings.length > 0) {
       const l = listings.find(x => x.id === listingId)
       if (l) {
         setSelectedListing(l)
         // Auto-select first 5 photos
         setSelectedPhotos(l.photos.slice(0, MAX_PHOTOS).map(p => p.url))
       }
-    } 
+    }
   }, [listingId, listings])
+
+  // Auto-fetch marketing description when listing is selected
+  useEffect(() => {
+    if (!selectedListing) return
+    const fetchMarketingDescription = async () => {
+      try {
+        const res = await fetch(`/api/marketing/status?listingId=${selectedListing.id}`)
+        if (!res.ok) return
+        const data = await res.json()
+        const desc = data.marketingJob?.description?.result
+        if (desc && typeof desc === 'string') {
+          setMarketingDescription(desc)
+        }
+      } catch {
+        // Silently ignore — marketing description is optional
+      }
+    }
+    fetchMarketingDescription()
+  }, [selectedListing])
 
   const loadListings = async () => {
     setLoading(true)
@@ -111,13 +133,13 @@ export default function EmailMarketingClient() {
       // Create a map of listing_id -> slug
       const siteSlugMap: Record<string, string> = {}
       if (propertySites) {
-        propertySites.forEach((site: any) => {
+        propertySites.forEach((site: { listing_id: string; slug: string }) => {
           siteSlugMap[site.listing_id] = site.slug
         })
       }
       
       if (listingsData) {
-        const processed = await Promise.all(listingsData.map(async (listing: any) => {
+        const processed = await Promise.all(listingsData.map(async (listing: Omit<Listing, 'photos' | 'thumbnail' | 'propertySiteSlug'> & { photos?: Array<{ id: string; processed_url?: string; raw_url?: string }> }) => {
           const photos = listing.photos || []
           
           // Load ALL photos (up to 10 for selection, display up to 5)
@@ -171,12 +193,12 @@ export default function EmailMarketingClient() {
     setGenerating(true)
     setGeneratedEmail(null)
     await new Promise(r => setTimeout(r, 800))
-    const email = createProfessionalEmail(selectedListing, emailType, tone, selectedPhotos)
+    const email = createProfessionalEmail(selectedListing, emailType, tone, selectedPhotos, marketingDescription)
     setGeneratedEmail(email)
     setGenerating(false)
   }
 
-  const createProfessionalEmail = (listing: Listing, type: EmailType, t: Tone, photos: string[]) => {
+  const createProfessionalEmail = (listing: Listing, type: EmailType, t: Tone, photos: string[], aiDescription?: string | null) => {
     const priceStr = listing.price ? '$' + listing.price.toLocaleString() : 'Contact for Price'
     const location = [listing.city, listing.state].filter(Boolean).join(', ')
     const fullAddress = [listing.address, listing.city, listing.state, listing.postal_code].filter(Boolean).join(', ')
@@ -340,7 +362,7 @@ ${priceStr}
 
 ${features.join(' • ')}
 
-${listing.description || ''}
+${aiDescription || listing.description || ''}
 
 ${type === 'open-house' ? `Open House Details:\nDate: ${openHouseDate || 'This Weekend'}\nTime: ${openHouseTime || '1:00 PM - 4:00 PM'}\n` : ''}
 
@@ -439,12 +461,12 @@ ${agentEmail}
               <!-- Introduction -->
               <p style="margin:0 0 25px;font-size:16px;color:#444;line-height:1.8;">${intros[type][t]}</p>
               
-              <!-- Description -->
-              ${listing.description ? `
+              <!-- Description (prefer AI-generated from marketing pipeline) -->
+              ${(aiDescription || listing.description) ? `
               <div style="margin-bottom:30px;padding:25px;background:#f8f9fa;border-radius:10px;border-left:4px solid ${colors.secondary};">
                 <h3 style="margin:0 0 12px;font-size:18px;color:${colors.primary};">Property Description</h3>
-                <p style="margin:0;font-size:15px;color:#555;line-height:1.7;">${listing.description.substring(0, 500)}${listing.description.length > 500 ? '...' : ''}</p>
-                ${hasPropertySite && listing.description.length > 500 ? `<p style="margin:15px 0 0;"><a href="${ctaUrl}" style="color:${colors.secondary};font-weight:600;text-decoration:none;">Read full description →</a></p>` : ''}
+                <p style="margin:0;font-size:15px;color:#555;line-height:1.7;">${(aiDescription || listing.description || '').substring(0, 500)}${(aiDescription || listing.description || '').length > 500 ? '...' : ''}</p>
+                ${hasPropertySite && (aiDescription || listing.description || '').length > 500 ? `<p style="margin:15px 0 0;"><a href="${ctaUrl}" style="color:${colors.secondary};font-weight:600;text-decoration:none;">Read full description →</a></p>` : ''}
               </div>
               ` : ''}
               
