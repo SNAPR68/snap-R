@@ -16,7 +16,7 @@ export default async function ListingsPage() {
       id,
       title,
       created_at,
-      photos:photos(
+      photos:photos!photos_listing_id_fkey(
         id,
         raw_url,
         processed_url
