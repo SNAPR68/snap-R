@@ -144,7 +144,7 @@ async function createCampaignWithTemplate({
   // 1. Get listing data
   const { data: listing, error: listingError } = await supabase
     .from('listings')
-    .select('*, photos(*)')
+    .select('*, photos!photos_listing_id_fkey(*)')
     .eq('id', listingId)
     .single();
 

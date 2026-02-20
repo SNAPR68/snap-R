@@ -1,6 +1,26 @@
 # SnapR Execution Changelog
 =================================
 
+## 2026-02-20 — Fix Ambiguous photos FK (PGRST201) Across Codebase
+
+### Root Cause
+The `listings` table has TWO foreign key paths to `photos`:
+1. `photos.listing_id → listings.id` (one-to-many — the one we want)
+2. `listings.hero_photo_id → photos.id` (many-to-one — for hero photo)
+
+PostgREST returns PGRST201 "Could not embed because more than one relationship was found" for any query using `photos(...)` on listings. This caused the video generate endpoint to return "Listing not found" (the entire query returned null).
+
+### Files Fixed (6 files)
+- `app/api/video/generate/route.ts` — `photos(...)` → `photos!photos_listing_id_fkey(...)`
+- `app/api/internal/video-generate/route.ts` — same fix
+- `app/p/[slug]/page.tsx` — same fix
+- `components/dashboard-client.tsx` — same fix
+- `lib/campaigns/engine.ts` — same fix
+- `app/(authenticated)/listings/page.tsx` — same fix
+- `app/(authenticated)/listings/[id]/page.tsx` — same fix
+
+---
+
 ## 2026-02-20 — Voiceover Timeout Fix + Remotion Env Vars on Vercel
 
 ### 1. Voiceover TTS Timeout Fix

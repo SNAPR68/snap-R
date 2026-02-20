@@ -56,7 +56,7 @@ export function DashboardClient({ user }: { user: { id: string; email: string } 
         projectsData.map(async (project) => {
           const { data: listings } = await supabase
             .from('listings')
-            .select('*, photos(count)')
+            .select('*, photos!photos_listing_id_fkey(count)')
             .eq('project_id', project.id)
             .order('created_at', { ascending: false });
 

@@ -101,7 +101,7 @@ export async function POST(request: NextRequest) {
     const admin = adminSupabase();
     const { data: listing, error: listingError } = await admin
       .from('listings')
-      .select('id, title, address, city, state, description, price, bedrooms, bathrooms, square_feet, preparation_metadata, photos(id, processed_url)')
+      .select('id, title, address, city, state, description, price, bedrooms, bathrooms, square_feet, preparation_metadata, photos!photos_listing_id_fkey(id, processed_url)')
       .eq('id', listingId)
       .eq('user_id', userId)
       .single<ListingWithPhotos>();

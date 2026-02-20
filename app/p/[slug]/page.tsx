@@ -113,7 +113,7 @@ export default async function PropertySitePage({ params }: Props) {
   // Fetch listing with photos
   const { data: listing, error } = await supabase
     .from('listings')
-    .select('*, photos(id, raw_url, processed_url, status, display_order)')
+    .select('*, photos!photos_listing_id_fkey(id, raw_url, processed_url, status, display_order)')
     .eq('id', listingId)
     .single()
   

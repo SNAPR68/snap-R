@@ -64,7 +64,7 @@ export default async function ListingDetailPage({ params }: { params: { id: stri
     .from("listings")
     .select(
       `id,title,address,description,created_at,
-       photos:photos(id, raw_url, processed_url, status, variant, error, created_at, processed_at)`
+       photos:photos!photos_listing_id_fkey(id, raw_url, processed_url, status, variant, error, created_at, processed_at)`
     )
     .eq("id", params.id)
     .eq("user_id", user.id)
