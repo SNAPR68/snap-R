@@ -1,6 +1,55 @@
 # SnapR Execution Changelog
 =================================
 
+## 2026-02-20 — Product Readiness: Critical User-Facing Fixes
+
+### 1. Waitlist Email Submission (Phase 2A)
+- `handleNotifySubmit` now calls `/api/notify` API to save email and send confirmation
+- Previously showed success UI without actually saving the email
+- Files Modified: app/page.tsx
+
+### 2. Calendly URL Configuration (Phase 2B)
+- Replaced hardcoded Calendly URLs with `NEXT_PUBLIC_CALENDLY_URL` env var + fallback
+- Files Modified: app/contact/page.tsx, app/why-snapr/page.tsx
+
+### 3. Revision Notification Emails (Phase 2C)
+- POST: Editors notified via Resend when new revision requested (support@snap-r.com)
+- PATCH: Users notified via Resend when their revision is completed
+- Added `notifyEditorsOfRevision()` and `notifyUserOfCompletion()` helpers
+- Both use try/catch to prevent email failures from blocking API responses
+- Fixed all `catch (error: any)` to `catch (error: unknown)` with proper type guards
+- Added `RevisionUpdateData` interface replacing inline any type
+- Files Modified: app/api/renovation/revision/route.ts
+
+### 4. Organization Membership Check (Phase 2D)
+- Added `organization_members` table query when user is not the org owner
+- Uses `maybeSingle()` for optional membership lookup
+- Non-members redirected to `/dashboard` instead of seeing empty page
+- Files Modified: app/org/[slug]/dashboard/page.tsx
+
+### 5. Team Size from Database (Phase 2E)
+- Replaced hardcoded `isTeam25 = false` with actual count from `organization_members`
+- Queries member count + 1 (for owner) to determine if team has 25+ members
+- Files Modified: app/dashboard/organization/page.tsx
+
+### 6. OAuth Profile Fetch — TikTok & Twitter (Phase 2F)
+- Added `case 'tiktok'` using TikTok v2 User Info API
+- Added `case 'twitter'` using Twitter/X v2 users/me endpoint
+- Removed dead `default: throw` since all 5 platforms now handled
+- Files Modified: lib/social/oauth-config.ts
+
+### 7. Error Handling & Lint Fixes
+- Fixed `catch (error: any)` → `catch (error: unknown)` in notify/route.ts
+- Fixed unescaped JSX entities across 3 files (contact, why-snapr, organization)
+- Removed unused imports (BookOpen, Eye, Zap, BarChart3)
+- Added eslint-disable for intentional img elements
+
+### Verification
+- npx tsc --noEmit: 0 errors
+- npm run build: Success
+
+---
+
 ## 2026-02-20 — Marketing Pipeline → Content Studio Integration
 
 ### 1. Content Studio Dashboard — Marketing-Aware Routing (Phase 1A)
