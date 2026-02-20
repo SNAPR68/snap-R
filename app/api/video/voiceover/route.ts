@@ -1,6 +1,8 @@
 // app/api/video/voiceover/route.ts
 // AI Voiceover Generation API
 
+export const maxDuration = 60;
+
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { adminSupabase } from '@/lib/supabase/admin'
@@ -189,7 +191,7 @@ async function handleGenerateAudio(body: GenerateAudioBody) {
               use_speaker_boost: true,
             },
           }),
-          signal: AbortSignal.timeout(15000),
+          signal: AbortSignal.timeout(45000),
         }
       )
 
@@ -230,7 +232,7 @@ async function handleGenerateAudio(body: GenerateAudioBody) {
         voice: voiceConfig.openAIVoice,
         response_format: 'mp3',
       }),
-      signal: AbortSignal.timeout(15000),
+      signal: AbortSignal.timeout(45000),
     })
 
     if (!response.ok) {

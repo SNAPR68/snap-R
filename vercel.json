@@ -27,6 +27,10 @@
     "app/api/video/status/route.ts": {
       "maxDuration": 30,
       "memory": 512
+    },
+    "app/api/video/voiceover/route.ts": {
+      "maxDuration": 60,
+      "memory": 1024
     }
   },
   "routes": [

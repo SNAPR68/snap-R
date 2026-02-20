@@ -1,6 +1,20 @@
 # SnapR Execution Changelog
 =================================
 
+## 2026-02-20 — Voiceover Timeout Fix + Remotion Env Vars on Vercel
+
+### 1. Voiceover TTS Timeout Fix
+- Increased `AbortSignal.timeout` from 15s to 45s for both ElevenLabs and OpenAI TTS calls
+- Added `export const maxDuration = 60` to voiceover route
+- Added voiceover route to `vercel.json` with `maxDuration: 60` and `memory: 1024`
+- Root cause: TTS generation for 130+ word property narration scripts regularly exceeds 15s
+
+### 2. Vercel Environment Variables Added
+- Added 6 `REMOTION_*` env vars to Vercel (Production, Preview, Development) — video generation was returning 503 because these were only in `.env.local`
+- Added `OPENAI_API_KEY` to Preview and Development environments (was only on Production)
+
+---
+
 ## 2026-02-20 — Property Details: Migration, Form, Marketing, Video, Property Sites
 
 ### 1. Database Migration — `20260220_listing_property_details.sql`
