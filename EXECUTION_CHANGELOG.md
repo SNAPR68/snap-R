@@ -1,6 +1,41 @@
 # SnapR Execution Changelog
 =================================
 
+## 2026-02-20 — Critical Bug Fixes: Property Site, Video Reel, Studio, Content Visibility
+
+### 1. Property Site 404 Fix
+- **Root cause:** `/p/[slug]` page extracted UUID from slug via regex, but marketing handler generates address-based slugs with random suffix (no UUID). Regex never matched, causing 404.
+- Rewrote slug lookup to query `property_sites` table by slug, then fetch listing via `listing_id`
+- Changed marketing handler to set `is_published: true` so pages are live immediately
+- Removed non-existent columns from metadata query (bedrooms, bathrooms, square_feet)
+- Files Modified: `app/p/[slug]/page.tsx`, `apps/processor/src/marketing-handler.ts`
+
+### 2. Video Reel Photos Not Loading
+- **Root cause:** VideoCreator queried 5 non-existent columns (price, bedrooms, bathrooms, square_feet, features) from listings table, causing the entire Supabase query to fail silently.
+- Fixed query to only select existing columns (title, address, city, state, description)
+- Updated ListingData interface to match actual schema
+- Removed price/bedrooms references from script generation and fallback
+- Files Modified: `app/dashboard/content-studio/video/VideoCreator.tsx`
+
+### 3. Studio Marketing Panel Auto-Show
+- **Root cause:** Marketing results panel only appeared after clicking "View Results" button, which itself only showed when marketing_status was 'completed'. Users never discovered the panel.
+- Auto-show marketing results panel when marketing status is 'completed'
+- Fixed unused variable lint warning in catch block
+- Files Modified: `components/studio-client.tsx`
+
+### 4. Content Studio Generated Content Visibility
+- **Root cause:** marketing_jobs query only fetched status columns, not result/artifact columns. UI showed "AI Content Ready" badge but never displayed actual generated content.
+- Expanded marketing_jobs query to include description_result, captions_result, property_site_result
+- Added content preview below each listing card: description preview, caption count, property site link
+- Fixed pre-existing `any` types in listing/photo mapping
+- Files Modified: `app/dashboard/content-studio/page.tsx`, `app/dashboard/content-studio/ContentStudioClient.tsx`
+
+### Verification
+- `npx tsc --noEmit`: 0 errors
+- `npm run build`: Success
+
+---
+
 ## 2026-02-20 — Error Handling Hardening
 
 ### Summary

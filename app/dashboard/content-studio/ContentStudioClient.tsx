@@ -27,6 +27,9 @@ interface MarketingStatus {
   hasCaptions: boolean
   hasSite: boolean
   hasScheduledPosts: boolean
+  descriptionPreview: string | null
+  captionPlatforms: string[]
+  propertySiteSlug: string | null
 }
 
 export default function ContentStudioClient({
@@ -216,6 +219,7 @@ export default function ContentStudioClient({
                 >
                   <div className="aspect-[4/3] relative">
                     {listing.thumbnail ? (
+                      // eslint-disable-next-line @next/next/no-img-element
                       <img src={listing.thumbnail} alt="" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
                     ) : (
                       <div className="w-full h-full bg-white/5 flex items-center justify-center">
@@ -256,6 +260,28 @@ export default function ContentStudioClient({
                       )}
                     </div>
                   </div>
+                  {/* Generated Content Preview */}
+                  {marketingStatuses?.[listing.id]?.status === 'completed' && (
+                    <div className="px-2.5 py-2 border-t border-white/5 space-y-1.5">
+                      {marketingStatuses[listing.id].descriptionPreview && (
+                        <p className="text-[10px] text-white/50 line-clamp-2 leading-relaxed">
+                          {marketingStatuses[listing.id].descriptionPreview}...
+                        </p>
+                      )}
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        {marketingStatuses[listing.id].captionPlatforms.length > 0 && (
+                          <span className="text-[10px] bg-white/5 text-white/60 px-1.5 py-0.5 rounded">
+                            {marketingStatuses[listing.id].captionPlatforms.length} captions
+                          </span>
+                        )}
+                        {marketingStatuses[listing.id].propertySiteSlug && (
+                          <span className="text-[10px] bg-white/5 text-white/60 px-1.5 py-0.5 rounded flex items-center gap-0.5">
+                            <Globe className="w-2.5 h-2.5" /> Site live
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  )}
                 </button>
               ))}
             </div>

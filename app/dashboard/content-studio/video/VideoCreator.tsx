@@ -34,14 +34,11 @@ const VIDEO_TEMPLATES: Record<VideoTemplate, { name: string; desc: string; durat
 }
 
 interface ListingData {
-  address: string
-  price: number | null
-  bedrooms: number | null
-  bathrooms: number | null
-  square_feet: number | null
+  title: string | null
+  address: string | null
   city: string | null
   state: string | null
-  features: string[]
+  description: string | null
   photos: Array<{
     id: string
     raw_url: string | null
@@ -191,13 +188,13 @@ export default function VideoCreatorClient() {
     const supabase = createClient()
     const { data: listing } = await supabase
       .from('listings')
-      .select('address, price, bedrooms, bathrooms, square_feet, city, state, features, photos!photos_listing_id_fkey(id, raw_url, processed_url, status, display_order)')
+      .select('title, address, city, state, description, photos!photos_listing_id_fkey(id, raw_url, processed_url, status, display_order)')
       .eq('id', id)
       .single()
 
     if (listing) {
-      setListingTitle(listing.address || 'Property')
-      setListingPrice(listing.price)
+      setListingTitle(listing.address || listing.title || 'Property')
+      setListingPrice(null)
       setListingData(listing as unknown as ListingData)
 
       const sortedPhotos = (listing.photos || []).sort(
@@ -234,12 +231,8 @@ export default function VideoCreatorClient() {
           action: 'generate-script',
           propertyDetails: {
             address: listingData.address,
-            price: listingData.price ? `$${listingData.price.toLocaleString()}` : undefined,
-            bedrooms: listingData.bedrooms,
-            bathrooms: listingData.bathrooms,
-            sqft: listingData.square_feet,
             neighborhood: listingData.city,
-            features: listingData.features || [],
+            description: listingData.description,
           },
           style: scriptStyle,
           duration: selectedPhotos.length * 4.5,
@@ -254,9 +247,7 @@ export default function VideoCreatorClient() {
       }
     } catch {
       // Fallback script
-      const fallbackScript = `Welcome to ${listingData.address || 'this beautiful property'}. ${
-        listingData.price ? `Priced at $${listingData.price.toLocaleString()}, this` : 'This'
-      } stunning home offers exceptional living space. Contact us today to schedule your private showing.`
+      const fallbackScript = `Welcome to ${listingData.address || 'this beautiful property'}. This stunning home offers exceptional living space. Contact us today to schedule your private showing.`
       setScript(fallbackScript)
     }
     setGeneratingScript(false)
