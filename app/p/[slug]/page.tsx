@@ -1,17 +1,9 @@
-import { createClient } from '@supabase/supabase-js'
 import { notFound } from 'next/navigation'
 import PropertySiteClient from './PropertySiteClient'
 import { Metadata } from 'next'
+import { adminSupabase } from '@/lib/supabase/admin'
 
 export const dynamic = 'force-dynamic'
-
-// Use service role to bypass RLS for public property pages
-function getSupabase() {
-  return createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY!
-  );
-}
 
 interface Props {
   params: Promise<{ slug: string }>
@@ -19,14 +11,18 @@ interface Props {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params
-  const supabase = getSupabase()
+  const supabase = adminSupabase()
 
   // Look up property site by slug, then fetch listing via listing_id
-  const { data: site } = await supabase
+  const { data: site, error: siteError } = await supabase
     .from('property_sites')
     .select('listing_id')
     .eq('slug', slug)
     .single()
+
+  if (siteError) {
+    console.error('[PropertySite] Metadata site lookup error:', siteError)
+  }
 
   if (!site?.listing_id) return { title: 'Property Not Found' }
   const listingId = site.listing_id
@@ -95,14 +91,18 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function PropertySitePage({ params }: Props) {
   const { slug } = await params
-  const supabase = getSupabase()
+  const supabase = adminSupabase()
   
   // Look up property site by slug, then fetch listing via listing_id
-  const { data: site } = await supabase
+  const { data: site, error: siteError } = await supabase
     .from('property_sites')
     .select('listing_id')
     .eq('slug', slug)
     .single()
+
+  if (siteError) {
+    console.error('[PropertySite] Site lookup error:', siteError, 'slug:', slug)
+  }
 
   if (!site?.listing_id) {
     notFound()
