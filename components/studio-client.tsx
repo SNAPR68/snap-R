@@ -330,7 +330,6 @@ export function StudioClient({ listingId, userRole, showMlsFeatures = false, cre
         alert(data.error || 'Enhancement failed — please try again');
       }
     } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : 'Download failed';
       console.error('Enhancement failed:', error);
       alert(error instanceof Error && error.message?.includes('abort') ? 'Enhancement timed out — try a simpler preset' : 'Enhancement failed — check your connection and try again');
     }
@@ -450,6 +449,11 @@ export function StudioClient({ listingId, userRole, showMlsFeatures = false, cre
 
         setMarketingListingStatus(data.marketingStatus || null);
         setMarketingJobData(data.marketingJob || null);
+
+        // Auto-show marketing results panel when marketing completes
+        if (data.marketingStatus === 'completed' && data.marketingJob) {
+          setShowMarketingPanel(true);
+        }
 
         // Stop polling if no marketing job or terminal state
         const mStatus = data.marketingStatus;

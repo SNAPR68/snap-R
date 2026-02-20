@@ -20,16 +20,20 @@ interface Props {
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params
   const supabase = getSupabase()
-  
-  // Extract UUID from slug - full UUID at the end
-  const uuidMatch = slug.match(/([a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12})$/i)
-  if (!uuidMatch) return { title: 'Property Not Found' }
-  
-  const listingId = uuidMatch[1]
-  
+
+  // Look up property site by slug, then fetch listing via listing_id
+  const { data: site } = await supabase
+    .from('property_sites')
+    .select('listing_id')
+    .eq('slug', slug)
+    .single()
+
+  if (!site?.listing_id) return { title: 'Property Not Found' }
+  const listingId = site.listing_id
+
   const { data: listing } = await supabase
     .from('listings')
-    .select('title, address, city, state, price, bedrooms, bathrooms, square_feet, description')
+    .select('title, address, city, state, description')
     .eq('id', listingId)
     .single()
   
@@ -37,7 +41,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
   const title = listing.title || listing.address || 'Property For Sale'
   const description = listing.description?.slice(0, 160) ||
-    `${listing.bedrooms || ''}bd ${listing.bathrooms || ''}ba ${listing.square_feet ? listing.square_feet.toLocaleString() + ' sqft' : ''} - ${[listing.address, listing.city, listing.state].filter(Boolean).join(', ')}`
+    [listing.address, listing.city, listing.state].filter(Boolean).join(', ')
 
   // Fetch hero photo for OG image
   const { data: heroPhoto } = await supabase
@@ -87,13 +91,18 @@ export default async function PropertySitePage({ params }: Props) {
   const { slug } = await params
   const supabase = getSupabase()
   
-  // Extract full UUID from slug
-  const uuidMatch = slug.match(/([a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12})$/i)
-  if (!uuidMatch) {
+  // Look up property site by slug, then fetch listing via listing_id
+  const { data: site } = await supabase
+    .from('property_sites')
+    .select('listing_id')
+    .eq('slug', slug)
+    .single()
+
+  if (!site?.listing_id) {
     notFound()
   }
 
-  const listingId = uuidMatch[1]
+  const listingId = site.listing_id
   
   // Fetch listing with photos
   const { data: listing, error } = await supabase

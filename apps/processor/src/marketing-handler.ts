@@ -385,7 +385,7 @@ export async function handleMarketingJob(
           listing_id: listingId,
           slug,
           template: 'modern',
-          is_published: false, // Draft — user publishes manually
+          is_published: true, // Auto-publish when marketing completes
         })
         .select('id, slug')
         .single();
