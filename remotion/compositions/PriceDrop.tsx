@@ -23,9 +23,9 @@ import {
 export const priceDropSchema = z.object({
   listing: z.object({
     address: z.string(),
-    price: z.number(),
-    beds: z.number(),
-    baths: z.number(),
+    price: z.number().optional(),
+    beds: z.number().optional(),
+    baths: z.number().optional(),
     sqft: z.number().optional(),
     photos: z.array(z.string()).min(1),
     previousPrice: z.number().optional(),
@@ -74,14 +74,15 @@ export const PriceDrop: React.FC<PriceDropProps> = ({ listing, audio, brand }) =
   const closingStart = slideshowStart + slideshowDuration;
 
   // Calculate savings for badge
+  const currentPrice = listing.price ?? 0;
   const savings =
-    previousPrice && previousPrice > listing.price
-      ? previousPrice - listing.price
+    previousPrice && currentPrice && previousPrice > currentPrice
+      ? previousPrice - currentPrice
       : undefined;
 
   // Build intro subtitle with price drop info
-  const introSubtitle = savings
-    ? `Now $${listing.price.toLocaleString()} · Save $${savings.toLocaleString()}`
+  const introSubtitle = savings && currentPrice
+    ? `Now $${currentPrice.toLocaleString()} · Save $${savings.toLocaleString()}`
     : listing.address;
 
   return (
@@ -155,7 +156,7 @@ export const PriceDrop: React.FC<PriceDropProps> = ({ listing, audio, brand }) =
       {/* Price drop badge at top during slideshow */}
       <Sequence from={slideshowStart} durationInFrames={slideshowDuration}>
         <PriceDropBadge
-          currentPrice={listing.price}
+          currentPrice={currentPrice}
           previousPrice={previousPrice}
         />
       </Sequence>

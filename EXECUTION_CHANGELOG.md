@@ -1,6 +1,27 @@
 # SnapR Execution Changelog
 =================================
 
+## 2026-02-20 — Fix Video Render Crash, Property Site 404, Voiceover Details
+
+### 1. Video Render "s.map is not a function" Fix
+- Made `price`, `beds`, `baths` optional in all 5 Remotion composition Zod schemas
+- Root cause: API sends `undefined` for missing listing fields, but Zod schemas required `z.number()` — validation failure on Lambda produced minified error
+- Updated ClosingCard to conditionally render price/details only when present
+- Fixed PriceDrop composition to guard optional `listing.price`
+- Files: `remotion/compositions/{PropertyShowcase,JustListed,OpenHouse,PriceDrop,Sold,ClosingCard}.tsx`
+
+### 2. Property Site 404 Fallback
+- Added listing_id fallback lookup when slug lookup fails in `app/p/[slug]/page.tsx`
+- Added structured diagnostic logging with error code, message, and slug
+
+### 3. VideoCreator Property Details for Voiceover
+- Added `price`, `bedrooms`, `bathrooms`, `square_feet` to Supabase query in VideoCreator
+- Passes full property details to voiceover API for richer script generation
+- Displays listing price in VideoCreator preview
+- File: `app/dashboard/content-studio/video/VideoCreator.tsx`
+
+---
+
 ## 2026-02-20 — Prevent CDN Caching of Property Site 404s
 
 - Added `no-store` Cache-Control + CDN-Cache-Control headers for `/p/*` routes in `vercel.json`

@@ -24,9 +24,9 @@ import {
 export const soldSchema = z.object({
   listing: z.object({
     address: z.string(),
-    price: z.number(),
-    beds: z.number(),
-    baths: z.number(),
+    price: z.number().optional(),
+    beds: z.number().optional(),
+    baths: z.number().optional(),
     sqft: z.number().optional(),
     photos: z.array(z.string()).min(1),
     daysOnMarket: z.number().optional(),

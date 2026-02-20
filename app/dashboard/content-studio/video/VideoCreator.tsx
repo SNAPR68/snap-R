@@ -39,6 +39,10 @@ interface ListingData {
   city: string | null
   state: string | null
   description: string | null
+  price: number | null
+  bedrooms: number | null
+  bathrooms: number | null
+  square_feet: number | null
   photos: Array<{
     id: string
     raw_url: string | null
@@ -188,13 +192,13 @@ export default function VideoCreatorClient() {
     const supabase = createClient()
     const { data: listing } = await supabase
       .from('listings')
-      .select('title, address, city, state, description, photos!photos_listing_id_fkey(id, raw_url, processed_url, status, display_order)')
+      .select('title, address, city, state, description, price, bedrooms, bathrooms, square_feet, photos!photos_listing_id_fkey(id, raw_url, processed_url, status, display_order)')
       .eq('id', id)
       .single()
 
     if (listing) {
       setListingTitle(listing.address || listing.title || 'Property')
-      setListingPrice(null)
+      setListingPrice(listing.price ?? null)
       setListingData(listing as unknown as ListingData)
 
       const sortedPhotos = (listing.photos || []).sort(
@@ -233,6 +237,10 @@ export default function VideoCreatorClient() {
             address: listingData.address,
             neighborhood: listingData.city,
             description: listingData.description,
+            price: listingData.price?.toString() ?? undefined,
+            bedrooms: listingData.bedrooms ?? undefined,
+            bathrooms: listingData.bathrooms ?? undefined,
+            sqft: listingData.square_feet ?? undefined,
           },
           style: scriptStyle,
           duration: selectedPhotos.length * 4.5,
