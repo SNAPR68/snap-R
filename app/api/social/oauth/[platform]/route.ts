@@ -14,7 +14,21 @@ export async function GET(
   const errorDescription = searchParams.get('error_description');
 
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL || req.nextUrl.origin;
-  const redirectUrl = `${baseUrl}/dashboard/settings/social`;
+  const defaultRedirect = `${baseUrl}/dashboard/settings/social`;
+
+  // Extract returnTo from state (JSON) for post-OAuth redirect
+  let redirectUrl = defaultRedirect;
+  if (state) {
+    try {
+      const parsed = JSON.parse(state);
+      if (parsed.returnTo && typeof parsed.returnTo === 'string'
+        && parsed.returnTo.startsWith('/') && !parsed.returnTo.startsWith('//')) {
+        redirectUrl = `${baseUrl}${parsed.returnTo}`;
+      }
+    } catch {
+      // State is not JSON (plain user ID), use default redirect
+    }
+  }
 
   if (error) {
     console.error('OAuth error:', error, errorDescription);
@@ -199,7 +213,8 @@ async function handleFacebookOAuth(
       .insert(connectionData);
   }
 
-  return NextResponse.redirect(`${redirectUrl}?connected=${platform}`);
+  const separator = redirectUrl.includes('?') ? '&' : '?';
+  return NextResponse.redirect(`${redirectUrl}${separator}connected=${platform}`);
 }
 
 async function handleLinkedInOAuth(
@@ -276,5 +291,6 @@ async function handleLinkedInOAuth(
       .insert(connectionData);
   }
 
-  return NextResponse.redirect(`${redirectUrl}?connected=linkedin`);
+  const separator = redirectUrl.includes('?') ? '&' : '?';
+  return NextResponse.redirect(`${redirectUrl}${separator}connected=linkedin`);
 }
