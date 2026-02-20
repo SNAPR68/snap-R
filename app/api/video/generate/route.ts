@@ -12,12 +12,11 @@ import { ZodError } from 'zod';
 
 interface ListingWithPhotos {
   id: string;
-  address: string;
-  price: number;
-  beds: number;
-  baths: number;
-  sqft: number | null;
-  features: string[] | null;
+  title: string | null;
+  address: string | null;
+  city: string | null;
+  state: string | null;
+  description: string | null;
   preparation_metadata: Record<string, unknown> | null;
   photos: Array<{ id: string; processed_url: string | null }>;
 }
@@ -83,7 +82,7 @@ export async function POST(request: NextRequest) {
     const admin = adminSupabase();
     const { data: listing, error: listingError } = await admin
       .from('listings')
-      .select('id, address, price, beds, baths, sqft, features, preparation_metadata, photos(id, processed_url)')
+      .select('id, title, address, city, state, description, preparation_metadata, photos(id, processed_url)')
       .eq('id', validatedInput.listingId)
       .eq('user_id', user.id)
       .single<ListingWithPhotos>();
@@ -150,17 +149,12 @@ export async function POST(request: NextRequest) {
     // Build template-specific input props
     const listingProps: Record<string, unknown> = {
       address: listing.address,
-      price: listing.price,
-      beds: listing.beds,
-      baths: listing.baths,
-      sqft: listing.sqft ?? undefined,
+      title: listing.title ?? undefined,
+      city: listing.city ?? undefined,
+      state: listing.state ?? undefined,
+      description: listing.description ?? undefined,
       photos: orderedPhotoUrls,
     };
-
-    // JustListed needs features
-    if (validatedInput.template === 'just-listed' && listing.features) {
-      listingProps.features = listing.features;
-    }
 
     const inputProps: Record<string, unknown> = {
       listing: listingProps,
