@@ -1,6 +1,48 @@
 # SnapR Execution Changelog
 =================================
 
+## 2026-02-20 — Conversion & Onboarding Polish
+
+### 1. Real Music Tracks
+- Replaced 5 silent placeholder MP3s with synthesized background music (45s each, 128kbps stereo)
+- Added LICENSES.md documenting track origins
+- Files Modified: public/music/upbeat.mp3, elegant.mp3, cinematic.mp3, ambient.mp3, corporate.mp3, LICENSES.md
+
+### 2. Landing Page Conversion
+- Added trust section with brokerage logos and trust badges (Shield, Lock, CheckCircle)
+- Updated hero social proof line with "Join 500+ professionals"
+- Added mobile sticky CTA bar using IntersectionObserver
+- Added footer lead capture form (email for marketing guide)
+- Files Modified: app/page.tsx
+
+### 3. Onboarding Social Connect (Step 5)
+- Inserted new Step 5: Connect Social Accounts (Facebook, Instagram, LinkedIn OAuth)
+- Renumbered old Step 5 (WhatsApp) → Step 6, old Step 6 (Get Started) → Step 7
+- OAuth state carries returnTo URL for post-redirect restoration
+- Files Modified: app/onboarding/page.tsx
+
+### 4. OAuth Callback returnTo Support
+- Extract returnTo from JSON state with open-redirect prevention (validates path starts with / not //)
+- Use correct query param separator when redirectUrl already has params
+- Files Modified: app/api/social/oauth/[platform]/route.ts
+
+### 5. Guided First Listing
+- 3-step tooltip system on new listing page (title → photos → submit) with auto-advance
+- Studio guided tooltip on "Prepare Listing" button with localStorage persistence
+- Onboarding "Create Your First Listing" redirects to /listings/new?guided=true
+- Files Modified: app/listings/new/page.tsx, app/dashboard/studio/page.tsx, components/studio-client.tsx
+
+### 6. Gitignore Cleanup
+- node_modules now ignored globally (was /node_modules only)
+- Added ignore rules for .agent/, .agents/, .claude/, .cursor/, .planning/, .env.vercel-*, *.docx, *.pptx
+- Files Modified: .gitignore
+
+### Verification
+- npx tsc --noEmit: 0 errors
+- npm run build: Success
+
+---
+
 ## 2026-02-19 — Fix Property Site Critical Issues
 
 ### 1. Fix Nonexistent Table Query

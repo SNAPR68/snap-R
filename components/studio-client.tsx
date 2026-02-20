@@ -124,7 +124,7 @@ interface PrepareNotificationData {
 }
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-export function StudioClient({ listingId, userRole, showMlsFeatures = false, credits = 0 }: { listingId: string; userRole?: string; showMlsFeatures?: boolean; credits?: number }) {
+export function StudioClient({ listingId, userRole, showMlsFeatures = false, credits = 0, guided = false }: { listingId: string; userRole?: string; showMlsFeatures?: boolean; credits?: number; guided?: boolean }) {
   const supabase = createClient();
   const [listing, setListing] = useState<StudioListing | null>(null);
   const [photos, setPhotos] = useState<StudioPhoto[]>([]);
@@ -211,6 +211,7 @@ export function StudioClient({ listingId, userRole, showMlsFeatures = false, cre
   const [showMarketingPanel, setShowMarketingPanel] = useState(false);
   const [marketingJobData, setMarketingJobData] = useState<MarketingJobData | null>(null);
   const [marketingListingStatus, setMarketingListingStatus] = useState<string | null>(null);
+  const [showGuidedTip, setShowGuidedTip] = useState(guided);
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { loadData(); }, [listingId]);
@@ -671,10 +672,28 @@ export function StudioClient({ listingId, userRole, showMlsFeatures = false, cre
               <Eye className="w-3 h-3 opacity-60" />
             </button>
           ) : (
-            <button onClick={handlePrepareListing} disabled={preparingListing || photos.length === 0} className="flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 rounded-lg text-sm text-white font-medium disabled:opacity-50 disabled:cursor-not-allowed">
-              {preparingListing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Rocket className="w-4 h-4" />}
-              {preparingListing ? 'Preparing...' : 'Prepare Listing'}
-            </button>
+            <div className="relative">
+              {showGuidedTip && !preparingListing && photos.length > 0 && (
+                <div className="absolute -top-2 left-1/2 -translate-x-1/2 -translate-y-full z-20 w-64">
+                  <div className="bg-gradient-to-r from-[#D4A017] to-[#B8860B] text-black rounded-xl p-3 shadow-lg shadow-[#D4A017]/20 relative">
+                    <div className="flex items-start gap-2">
+                      <Sparkles className="w-4 h-4 mt-0.5 flex-shrink-0" />
+                      <p className="text-sm font-medium">Click here to AI-prepare your listing — it enhances all photos automatically!</p>
+                    </div>
+                    <button onClick={() => { setShowGuidedTip(false); if (typeof window !== 'undefined') localStorage.setItem('guided_completed', 'true'); }} className="absolute top-1 right-1 p-0.5 hover:bg-black/10 rounded">
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                    <div className="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-full">
+                      <div className="w-0 h-0 border-l-[8px] border-l-transparent border-r-[8px] border-r-transparent border-t-[8px] border-t-[#B8860B]" />
+                    </div>
+                  </div>
+                </div>
+              )}
+              <button onClick={() => { handlePrepareListing(); setShowGuidedTip(false); }} disabled={preparingListing || photos.length === 0} className={`flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 rounded-lg text-sm text-white font-medium disabled:opacity-50 disabled:cursor-not-allowed ${showGuidedTip && photos.length > 0 ? 'ring-2 ring-[#D4A017]/50 ring-offset-1 ring-offset-[#0A0A0A]' : ''}`}>
+                {preparingListing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Rocket className="w-4 h-4" />}
+                {preparingListing ? 'Preparing...' : 'Prepare Listing'}
+              </button>
+            </div>
           )}
           <select 
             value={marketingStatus || ''} 
