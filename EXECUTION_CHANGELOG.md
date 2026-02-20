@@ -1,6 +1,38 @@
 # SnapR Execution Changelog
 =================================
 
+## 2026-02-20 — Property Details: Migration, Form, Marketing, Video, Property Sites
+
+### 1. Database Migration — `20260220_listing_property_details.sql`
+- Added 13 columns to `listings` table: `price`, `bedrooms`, `bathrooms`, `square_feet`, `property_type`, `year_built`, `lot_size`, `parking`, `features` (JSONB), `mls_number`, `hoa_fees`, `latitude`, `longitude`
+- Added indexes for `property_type`, `price`, `mls_number`
+- **MUST BE APPLIED** to Supabase before deploying this code
+
+### 2. Listing Creation Form — `app/listings/new/page.tsx`
+- Added city/state/ZIP fields, price/beds/baths/sqft row, description
+- Added collapsible "additional details" section: property type, year built, lot size, parking, MLS number, HOA fees
+- Updated insert query to save all new fields to the database
+
+### 3. Marketing Handler — `apps/processor/src/marketing-handler.ts`
+- Expanded listing query to fetch all property detail columns
+- Step 1 (Description): Now passes `price`, `beds`, `baths`, `sqft`, `propertyType` to GPT-4o
+- Step 2 (Captions): Now passes `price`, `bedrooms`, `bathrooms`, `squareFeet`, `propertyType` to GPT-4o-mini
+- Richer AI-generated content with real property data
+
+### 4. Video Generate APIs
+- Both `/api/video/generate` and `/api/internal/video-generate` now fetch and pass `price`, `beds`, `baths`, `sqft` to Remotion compositions
+- Video overlays can now display real property details
+
+### 5. Property Site Metadata — `app/p/[slug]/page.tsx`
+- Enhanced OG tags with price and specs (beds/baths/sqft)
+- Property site pages will now show full details (price, bedrooms, etc.) since `select('*')` picks up the new columns
+
+### Verification
+- `npx tsc --noEmit`: 0 errors
+- `npm run build`: Success
+
+---
+
 ## 2026-02-20 — Fix Video Generate "Listing not found" & Voiceover Failure
 
 ### 1. Video Generate API — Non-existent Column Query

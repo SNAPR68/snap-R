@@ -17,6 +17,10 @@ interface ListingWithPhotos {
   city: string | null;
   state: string | null;
   description: string | null;
+  price: number | null;
+  bedrooms: number | null;
+  bathrooms: number | null;
+  square_feet: number | null;
   preparation_metadata: Record<string, unknown> | null;
   photos: Array<{ id: string; processed_url: string | null }>;
 }
@@ -82,7 +86,7 @@ export async function POST(request: NextRequest) {
     const admin = adminSupabase();
     const { data: listing, error: listingError } = await admin
       .from('listings')
-      .select('id, title, address, city, state, description, preparation_metadata, photos(id, processed_url)')
+      .select('id, title, address, city, state, description, price, bedrooms, bathrooms, square_feet, preparation_metadata, photos(id, processed_url)')
       .eq('id', validatedInput.listingId)
       .eq('user_id', user.id)
       .single<ListingWithPhotos>();
@@ -153,6 +157,10 @@ export async function POST(request: NextRequest) {
       city: listing.city ?? undefined,
       state: listing.state ?? undefined,
       description: listing.description ?? undefined,
+      price: listing.price ?? undefined,
+      beds: listing.bedrooms ?? undefined,
+      baths: listing.bathrooms ?? undefined,
+      sqft: listing.square_feet ?? undefined,
       photos: orderedPhotoUrls,
     };
 

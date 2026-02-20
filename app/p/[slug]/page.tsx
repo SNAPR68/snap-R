@@ -33,15 +33,21 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
   const { data: listing } = await supabase
     .from('listings')
-    .select('title, address, city, state, description')
+    .select('title, address, city, state, description, price, bedrooms, bathrooms, square_feet')
     .eq('id', listingId)
     .single()
-  
+
   if (!listing) return { title: 'Property Not Found' }
 
   const title = listing.title || listing.address || 'Property For Sale'
+  const priceStr = listing.price ? ` | $${Number(listing.price).toLocaleString()}` : ''
+  const specs = [
+    listing.bedrooms ? `${listing.bedrooms} bed` : null,
+    listing.bathrooms ? `${listing.bathrooms} bath` : null,
+    listing.square_feet ? `${Number(listing.square_feet).toLocaleString()} sqft` : null,
+  ].filter(Boolean).join(', ')
   const description = listing.description?.slice(0, 160) ||
-    [listing.address, listing.city, listing.state].filter(Boolean).join(', ')
+    [specs, listing.address, listing.city, listing.state].filter(Boolean).join(' | ') + priceStr
 
   // Fetch hero photo for OG image
   const { data: heroPhoto } = await supabase

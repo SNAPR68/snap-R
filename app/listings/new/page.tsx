@@ -4,7 +4,7 @@
 import { useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
-import { ArrowLeft, Upload, Loader2, X, Image as ImageIcon, Sparkles } from 'lucide-react';
+import { ArrowLeft, Upload, Loader2, X, Image as ImageIcon, Sparkles, ChevronUp, ChevronDown } from 'lucide-react';
 import Link from 'next/link';
 
 function GuidedTooltip({ text, step, onDismiss }: { text: string; step: number; onDismiss: () => void }) {
@@ -40,7 +40,21 @@ function NewListingContent() {
 
   const [title, setTitle] = useState('');
   const [address, setAddress] = useState('');
+  const [city, setCity] = useState('');
+  const [state, setState] = useState('');
+  const [postalCode, setPostalCode] = useState('');
   const [description, setDescription] = useState('');
+  const [price, setPrice] = useState('');
+  const [bedrooms, setBedrooms] = useState('');
+  const [bathrooms, setBathrooms] = useState('');
+  const [squareFeet, setSquareFeet] = useState('');
+  const [propertyType, setPropertyType] = useState('');
+  const [yearBuilt, setYearBuilt] = useState('');
+  const [lotSize, setLotSize] = useState('');
+  const [parking, setParking] = useState('');
+  const [mlsNumber, setMlsNumber] = useState('');
+  const [hoaFees, setHoaFees] = useState('');
+  const [showDetails, setShowDetails] = useState(false);
   const [files, setFiles] = useState<File[]>([]);
   const [previews, setPreviews] = useState<string[]>([]);
   const [uploading, setUploading] = useState(false);
@@ -104,7 +118,26 @@ function NewListingContent() {
         throw new Error('You have reached your limit of ' + limit + ' listings this month. Upgrade to Pro for more.');
       }
 
-      const { data: listing, error: listingError } = await supabase.from('listings').insert({ user_id: user.id, title: title.trim(), address: address.trim() || null, description: description.trim() || null, marketing_status: 'Active' }).select('id').single();
+      const { data: listing, error: listingError } = await supabase.from('listings').insert({
+        user_id: user.id,
+        title: title.trim(),
+        address: address.trim() || null,
+        city: city.trim() || null,
+        state: state.trim() || null,
+        postal_code: postalCode.trim() || null,
+        description: description.trim() || null,
+        price: price ? parseFloat(price) : null,
+        bedrooms: bedrooms ? parseInt(bedrooms, 10) : null,
+        bathrooms: bathrooms ? parseFloat(bathrooms) : null,
+        square_feet: squareFeet ? parseInt(squareFeet, 10) : null,
+        property_type: propertyType || null,
+        year_built: yearBuilt ? parseInt(yearBuilt, 10) : null,
+        lot_size: lotSize.trim() || null,
+        parking: parking.trim() || null,
+        mls_number: mlsNumber.trim() || null,
+        hoa_fees: hoaFees ? parseFloat(hoaFees) : null,
+        marketing_status: 'Active',
+      }).select('id').single();
       if (listingError) throw new Error('Listing error: ' + listingError.message);
 
       // Usage tracking: count-based from listings table (no counter column needed)
@@ -170,10 +203,95 @@ function NewListingContent() {
             <label className="block text-sm font-medium text-white/70 mb-2">Address</label>
             <input type="text" value={address} onChange={(e) => setAddress(e.target.value)} placeholder="Full property address" className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder:text-white/30 focus:outline-none focus:border-[#D4A017]" />
           </div>
+          {/* City / State / ZIP row */}
+          <div className="grid grid-cols-3 gap-3">
+            <div>
+              <label className="block text-sm font-medium text-white/70 mb-2">City</label>
+              <input type="text" value={city} onChange={(e) => setCity(e.target.value)} placeholder="City" className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder:text-white/30 focus:outline-none focus:border-[#D4A017]" />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-white/70 mb-2">State</label>
+              <input type="text" value={state} onChange={(e) => setState(e.target.value)} placeholder="State" className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder:text-white/30 focus:outline-none focus:border-[#D4A017]" />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-white/70 mb-2">ZIP Code</label>
+              <input type="text" value={postalCode} onChange={(e) => setPostalCode(e.target.value)} placeholder="ZIP" className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder:text-white/30 focus:outline-none focus:border-[#D4A017]" />
+            </div>
+          </div>
+
+          {/* Price / Beds / Baths / SqFt row */}
+          <div className="grid grid-cols-4 gap-3">
+            <div>
+              <label className="block text-sm font-medium text-white/70 mb-2">Price ($)</label>
+              <input type="number" value={price} onChange={(e) => setPrice(e.target.value)} placeholder="499000" className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder:text-white/30 focus:outline-none focus:border-[#D4A017]" />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-white/70 mb-2">Beds</label>
+              <input type="number" value={bedrooms} onChange={(e) => setBedrooms(e.target.value)} placeholder="3" className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder:text-white/30 focus:outline-none focus:border-[#D4A017]" />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-white/70 mb-2">Baths</label>
+              <input type="number" step="0.5" value={bathrooms} onChange={(e) => setBathrooms(e.target.value)} placeholder="2.5" className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder:text-white/30 focus:outline-none focus:border-[#D4A017]" />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-white/70 mb-2">Sq Ft</label>
+              <input type="number" value={squareFeet} onChange={(e) => setSquareFeet(e.target.value)} placeholder="2400" className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder:text-white/30 focus:outline-none focus:border-[#D4A017]" />
+            </div>
+          </div>
+
           <div>
             <label className="block text-sm font-medium text-white/70 mb-2">Description</label>
-            <textarea value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Property description (optional)" rows={3} className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder:text-white/30 focus:outline-none focus:border-[#D4A017] resize-none" />
+            <textarea value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Property description (optional — AI will generate one if blank)" rows={3} className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder:text-white/30 focus:outline-none focus:border-[#D4A017] resize-none" />
           </div>
+
+          {/* Expandable: More Details */}
+          <button type="button" onClick={() => setShowDetails(!showDetails)} className="flex items-center gap-2 text-sm text-[#D4A017] hover:text-[#D4A017]/80 transition-colors">
+            {showDetails ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+            {showDetails ? 'Hide' : 'Show'} additional details
+          </button>
+
+          {showDetails && (
+            <div className="space-y-4 border border-white/10 rounded-xl p-4 bg-white/[0.02]">
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-sm font-medium text-white/70 mb-2">Property Type</label>
+                  <select value={propertyType} onChange={(e) => setPropertyType(e.target.value)} className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:border-[#D4A017]">
+                    <option value="">Select type</option>
+                    <option value="single_family">Single Family</option>
+                    <option value="condo">Condo</option>
+                    <option value="townhouse">Townhouse</option>
+                    <option value="multi_family">Multi Family</option>
+                    <option value="land">Land</option>
+                    <option value="commercial">Commercial</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-white/70 mb-2">Year Built</label>
+                  <input type="number" value={yearBuilt} onChange={(e) => setYearBuilt(e.target.value)} placeholder="2005" className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder:text-white/30 focus:outline-none focus:border-[#D4A017]" />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-sm font-medium text-white/70 mb-2">Lot Size</label>
+                  <input type="text" value={lotSize} onChange={(e) => setLotSize(e.target.value)} placeholder="0.25 acres" className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder:text-white/30 focus:outline-none focus:border-[#D4A017]" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-white/70 mb-2">Parking</label>
+                  <input type="text" value={parking} onChange={(e) => setParking(e.target.value)} placeholder="2-car garage" className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder:text-white/30 focus:outline-none focus:border-[#D4A017]" />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-sm font-medium text-white/70 mb-2">MLS Number</label>
+                  <input type="text" value={mlsNumber} onChange={(e) => setMlsNumber(e.target.value)} placeholder="MLS-12345" className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder:text-white/30 focus:outline-none focus:border-[#D4A017]" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-white/70 mb-2">HOA Fees ($/mo)</label>
+                  <input type="number" value={hoaFees} onChange={(e) => setHoaFees(e.target.value)} placeholder="250" className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder:text-white/30 focus:outline-none focus:border-[#D4A017]" />
+                </div>
+              </div>
+            </div>
+          )}
           <div className="relative">
             {guidedStep === 2 && (
               <GuidedTooltip

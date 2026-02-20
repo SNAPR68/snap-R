@@ -75,7 +75,7 @@ export async function handleMarketingJob(
   // Load listing data
   const { data: listing, error: listingError } = await supabase
     .from('listings')
-    .select('id, title, address, description, hero_photo_id, preparation_metadata')
+    .select('id, title, address, city, state, description, price, bedrooms, bathrooms, square_feet, property_type, year_built, lot_size, parking, features, mls_number, hero_photo_id, preparation_metadata')
     .eq('id', listingId)
     .single();
 
@@ -165,8 +165,13 @@ export async function handleMarketingJob(
       {
         title: listing.title || undefined,
         address: listing.address || undefined,
-        city: addressParts.city,
-        state: addressParts.state,
+        city: listing.city || addressParts.city,
+        state: listing.state || addressParts.state,
+        price: listing.price || undefined,
+        beds: listing.bedrooms || undefined,
+        baths: listing.bathrooms || undefined,
+        sqft: listing.square_feet || undefined,
+        propertyType: listing.property_type || undefined,
       },
       'professional',
       'medium',
@@ -222,9 +227,13 @@ export async function handleMarketingJob(
         const caption = await generateCaption(
           {
             address: listing.address || undefined,
-            city: addressParts.city,
-            state: addressParts.state,
-            propertyType: 'residential',
+            city: listing.city || addressParts.city,
+            state: listing.state || addressParts.state,
+            propertyType: listing.property_type || 'residential',
+            price: listing.price || undefined,
+            bedrooms: listing.bedrooms || undefined,
+            bathrooms: listing.bathrooms || undefined,
+            squareFeet: listing.square_feet || undefined,
           },
           {
             platform,
@@ -239,8 +248,9 @@ export async function handleMarketingJob(
         const hashtags = await generateHashtags(
           {
             address: listing.address || undefined,
-            city: addressParts.city,
-            state: addressParts.state,
+            city: listing.city || addressParts.city,
+            state: listing.state || addressParts.state,
+            propertyType: listing.property_type || undefined,
           },
           platform,
           15,
