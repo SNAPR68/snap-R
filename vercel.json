@@ -33,13 +33,19 @@
       "memory": 1024
     }
   },
-  "routes": [
+  "headers": [
     {
-      "src": "/api/upload",
-      "methods": ["POST"],
-      "headers": {
-        "x-vercel-proxy-body-size": "52428800"
-      }
+      "source": "/p/(.*)",
+      "headers": [
+        { "key": "Cache-Control", "value": "no-store, must-revalidate" },
+        { "key": "CDN-Cache-Control", "value": "no-store" }
+      ]
+    },
+    {
+      "source": "/api/upload",
+      "headers": [
+        { "key": "x-vercel-proxy-body-size", "value": "52428800" }
+      ]
     }
   ],
   "crons": [

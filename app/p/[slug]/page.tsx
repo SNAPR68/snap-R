@@ -4,6 +4,7 @@ import { Metadata } from 'next'
 import { adminSupabase } from '@/lib/supabase/admin'
 
 export const dynamic = 'force-dynamic'
+export const revalidate = 0
 
 interface Props {
   params: Promise<{ slug: string }>
