@@ -254,11 +254,20 @@ export async function POST(request: NextRequest) {
     const message = error instanceof Error ? error.message : 'Unknown error';
     const stack = error instanceof Error ? error.stack : undefined;
     const errorName = error instanceof Error ? error.name : typeof error;
+
+    // Extract AWS SDK metadata if present (e.g. httpStatusCode for 403/permission errors)
+    const awsMeta = (error as Record<string, unknown>)?.$metadata as Record<string, unknown> | undefined;
+    const httpStatusCode = awsMeta?.httpStatusCode;
+
     console.error('[video/generate] Full error:', {
       name: errorName,
       message,
       stack,
       raw: String(error),
+      awsHttpStatus: httpStatusCode,
+      functionName: process.env.REMOTION_LAMBDA_FUNCTION_NAME,
+      hasAccessKey: !!process.env.REMOTION_AWS_ACCESS_KEY_ID,
+      accessKeyPrefix: process.env.REMOTION_AWS_ACCESS_KEY_ID?.substring(0, 8),
     });
 
     return NextResponse.json(
@@ -266,6 +275,7 @@ export async function POST(request: NextRequest) {
         error: message,
         code: 'RENDER_TRIGGER_FAILED',
         errorName,
+        awsHttpStatus: httpStatusCode,
         stack: stack?.split('\n').slice(0, 15).join('\n'),
       },
       { status: 500 }

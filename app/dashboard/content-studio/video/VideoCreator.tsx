@@ -398,7 +398,14 @@ export default function VideoCreatorClient() {
         if (data.errorName) {
           console.error('[VideoCreator] Error type:', data.errorName)
         }
-        throw new Error(data.error || `Request failed: ${res.status}`)
+        if (data.awsHttpStatus) {
+          console.error('[VideoCreator] AWS HTTP status:', data.awsHttpStatus)
+        }
+        // Build descriptive error message
+        const errParts = [data.error || `Request failed: ${res.status}`]
+        if (data.errorName && data.errorName !== data.error) errParts.push(`[${data.errorName}]`)
+        if (data.awsHttpStatus) errParts.push(`(AWS ${data.awsHttpStatus})`)
+        throw new Error(errParts.join(' '))
       }
 
       const data = await res.json()

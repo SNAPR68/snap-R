@@ -1,6 +1,16 @@
 # SnapR Execution Changelog
 =================================
 
+## 2026-02-20 — Add AWS Error Diagnostics to Video Pipeline
+
+- Production showed "UnknownError" after Lambda upgrade — no DB rows created, so error is in generate route
+- AWS SDK errors include `$metadata.httpStatusCode` (403 = permission, 429 = throttle) not exposed before
+- Enhanced error catch blocks in generate, internal-generate, and status routes to extract AWS metadata
+- VideoCreator now surfaces `errorName` and `awsHttpStatus` in the UI error display
+- Files: `app/api/video/generate/route.ts`, `app/api/internal/video-generate/route.ts`, `app/api/video/status/route.ts`, `VideoCreator.tsx`
+
+---
+
 ## 2026-02-20 — Upgrade Lambda to 3GB RAM / 900s Timeout
 
 - Redeployed Lambda function: `remotion-render-4-0-424-mem3008mb-disk2048mb-900sec`

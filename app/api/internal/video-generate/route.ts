@@ -253,7 +253,14 @@ export async function POST(request: NextRequest) {
     });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Unknown error';
-    console.error('[internal/video-generate]', error);
+    const awsMeta = (error as Record<string, unknown>)?.$metadata as Record<string, unknown> | undefined;
+    console.error('[internal/video-generate] Full error:', {
+      name: error instanceof Error ? error.name : typeof error,
+      message,
+      awsHttpStatus: awsMeta?.httpStatusCode,
+      functionName: process.env.REMOTION_LAMBDA_FUNCTION_NAME,
+      stack: error instanceof Error ? error.stack?.split('\n').slice(0, 10).join('\n') : undefined,
+    });
     return NextResponse.json(
       { error: message, code: 'INTERNAL_RENDER_FAILED' },
       { status: 500 }

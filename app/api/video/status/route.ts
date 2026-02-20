@@ -147,7 +147,19 @@ export async function GET(request: NextRequest) {
 
     // Handle failure
     if (progress.fatalErrorEncountered === true) {
-      const errorMessage = progress.errors?.[0]?.message ?? 'Render failed with unknown error';
+      const firstError = progress.errors?.[0];
+      const errorMessage = firstError?.message ?? 'Render failed with unknown error';
+      const errorType = (firstError as Record<string, unknown>)?.type as string | undefined;
+      const errorName = (firstError as Record<string, unknown>)?.name as string | undefined;
+
+      console.error('[video/status] Fatal render error:', {
+        renderId: validatedInput.renderId,
+        errorMessage,
+        errorType,
+        errorName,
+        errorCount: progress.errors?.length ?? 0,
+        progress: progress.overallProgress,
+      });
 
       await admin
         .from('video_render_jobs')
