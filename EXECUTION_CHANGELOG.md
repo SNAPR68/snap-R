@@ -1,6 +1,33 @@
 # SnapR Execution Changelog
 =================================
 
+## 2026-02-20 — Pipeline Gap Fixes: TikTok Captions, Video→Post Bridge, Video Status
+
+### 1. TikTok Caption Generation
+- Added `'tiktok'` to marketing handler Step 2 platforms array
+- gpt-copy provider already supported TikTok in its type signature — just needed the call
+- Content Studio unified-creator auto-fills TikTok captions from `captions_result.tiktok`
+- Files Modified: `apps/processor/src/marketing-handler.ts`
+
+### 2. Video → Scheduled Post Bridge
+- Marketing Step 6 fires Remotion Lambda but never linked the video URL back to scheduled posts
+- Added video URL backfill in `publish-scheduled` cron: queries `video_render_jobs` for completed renders, updates matching `scheduled_posts.video_url`
+- Runs every 15 min before the publish loop, so videos get linked before publishing
+- Fixed pre-existing duplicate `const message` lint warnings in catch blocks
+- Files Modified: `app/api/cron/publish-scheduled/route.ts`
+
+### 3. Correct Video Status After Trigger
+- Marketing handler was setting `video_status: 'completed'` immediately after triggering the render, but the video was still rendering on Lambda
+- Changed to `video_status: 'processing'` with `status: 'rendering'` flag in result
+- Actual completion is tracked by `/api/video/status` polling and cron backfill
+- Files Modified: `apps/processor/src/marketing-handler.ts`
+
+### Verification
+- `npx tsc --noEmit`: 0 errors
+- `npm run build`: Success
+
+---
+
 ## 2026-02-20 — Critical Bug Fixes: Property Site, Video Reel, Studio, Content Visibility
 
 ### 1. Property Site 404 Fix

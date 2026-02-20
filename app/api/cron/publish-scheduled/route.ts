@@ -39,6 +39,52 @@ export async function GET(request: NextRequest) {
   const supabase = adminSupabase();
   const results = { published: 0, failed: 0, skipped: 0 };
 
+  // ── Video URL backfill ──────────────────────────────────────────
+  // Marketing Step 6 fires-and-forgets video renders to Remotion Lambda.
+  // The render completes async and video_render_jobs.video_url gets set
+  // by the /api/video/status polling endpoint. This backfill links
+  // completed video URLs to their pending scheduled posts.
+  try {
+    const { data: pendingPosts } = await supabase
+      .from('scheduled_posts')
+      .select('id, listing_id')
+      .is('video_url', null)
+      .eq('status', 'pending');
+
+    if (pendingPosts && pendingPosts.length > 0) {
+      const listingIds = [...new Set(pendingPosts.map((p: { listing_id: string }) => p.listing_id).filter(Boolean))];
+      if (listingIds.length > 0) {
+        const { data: completedVideos } = await supabase
+          .from('video_render_jobs')
+          .select('listing_id, video_url')
+          .in('listing_id', listingIds)
+          .eq('status', 'completed')
+          .not('video_url', 'is', null);
+
+        if (completedVideos && completedVideos.length > 0) {
+          const videoMap = new Map(completedVideos.map((v: { listing_id: string; video_url: string }) => [v.listing_id, v.video_url]));
+          let backfilled = 0;
+          for (const post of pendingPosts) {
+            const videoUrl = videoMap.get(post.listing_id);
+            if (videoUrl) {
+              await supabase
+                .from('scheduled_posts')
+                .update({ video_url: videoUrl })
+                .eq('id', post.id);
+              backfilled++;
+            }
+          }
+          if (backfilled > 0) {
+            console.log(`[PublishCron] Backfilled video_url for ${backfilled} scheduled post(s)`);
+          }
+        }
+      }
+    }
+  } catch (backfillError: unknown) {
+    // Non-critical — log and continue with publishing
+    console.warn('[PublishCron] Video URL backfill error:', backfillError instanceof Error ? backfillError.message : backfillError);
+  }
+
   try {
     // Fetch due posts: scheduled_for <= now AND status = 'pending'
     const { data: duePosts, error: fetchError } = await supabase
@@ -105,7 +151,6 @@ export async function GET(request: NextRequest) {
               connection.access_token = refreshed.accessToken;
               console.log(`[PublishCron] Token refreshed for ${post.platform}`);
             } catch (refreshErr: unknown) {
-              const message = refreshErr instanceof Error ? refreshErr.message : 'Unknown error';
               const refreshMsg = refreshErr instanceof Error ? refreshErr.message : 'Unknown refresh error';
               console.error(`[PublishCron] Token refresh failed for ${post.platform}:`, refreshMsg);
               await markPostFailed(supabase, post.id, 'Token expired — please reconnect your account');
@@ -265,7 +310,6 @@ export async function GET(request: NextRequest) {
         }
 
       } catch (postError: unknown) {
-        const message = postError instanceof Error ? postError.message : 'Unknown error';
         const postMsg = postError instanceof Error ? postError.message : 'Unknown error';
         console.error(`[PublishCron] Error publishing post ${post.id}:`, postMsg);
         await markPostFailed(supabase, post.id, postMsg);

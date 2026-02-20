@@ -213,7 +213,7 @@ export async function handleMarketingJob(
       '../../../lib/ai/providers/gpt-copy.js'
     );
 
-    const platforms = ['instagram', 'facebook', 'linkedin'] as const;
+    const platforms = ['instagram', 'facebook', 'linkedin', 'tiktok'] as const;
     const captionsResult: Record<string, unknown> = {};
     let captionCost = 0;
 
@@ -654,13 +654,13 @@ export async function handleMarketingJob(
       await supabase
         .from('marketing_jobs')
         .update({
-          video_status: 'completed',
+          video_status: 'processing',
           video_result: {
             renderId: videoData.renderId,
             bucketName: videoData.bucketName,
             template: videoTemplate,
             aspectRatio: '9:16',
-            triggered: true,
+            status: 'rendering',
           },
           updated_at: new Date().toISOString(),
         })
