@@ -1,6 +1,16 @@
 # SnapR Execution Changelog
 =================================
 
+## 2026-02-20 — Upgrade Lambda to 3GB RAM / 900s Timeout
+
+- Redeployed Lambda function: `remotion-render-4-0-424-mem3008mb-disk2048mb-900sec`
+- Previous function (2GB/240s) timed out on 31-photo videos (~4200 frames)
+- Added `timeoutInMilliseconds: 900000` to both `renderMediaOnLambda` calls
+- Requires Vercel env var update: `REMOTION_LAMBDA_FUNCTION_NAME`
+- Files: `app/api/video/generate/route.ts`, `app/api/internal/video-generate/route.ts`
+
+---
+
 ## 2026-02-20 — Force Single-Lambda Video Rendering
 
 - Increased `framesPerLambda` from 200 to 20000 in both video generate routes
