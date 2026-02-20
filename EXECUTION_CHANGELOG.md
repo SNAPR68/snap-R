@@ -1,6 +1,17 @@
 # SnapR Execution Changelog
 =================================
 
+## 2026-02-20 — Fix Remotion Lambda Bundling for Vercel
+
+- Added `serverExternalPackages` to `next.config.mjs` for `@remotion/lambda`, `@remotion/lambda-client`, `@remotion/serverless`
+- Root cause: Next.js webpack re-bundles the Remotion Lambda client (76K-line pre-built bundle containing AWS SDK), breaking internal `.map()` calls and producing minified "s.map is not a function" error
+- `serverExternalPackages` tells Next.js to use native `require()` instead of webpack bundling for these packages
+- Confirmed: `renderMediaOnLambda` works perfectly via CLI (native Node.js) but fails from Vercel serverless functions (webpack-bundled)
+- Added diagnostic logging to video generate route for future debugging
+- Files: `next.config.mjs`, `app/api/video/generate/route.ts`, `app/dashboard/content-studio/video/VideoCreator.tsx`
+
+---
+
 ## 2026-02-20 — Fix Lambda Concurrency Limit for Video Rendering
 
 - Added `framesPerLambda: 200` to `renderMediaOnLambda` calls in both video generate routes

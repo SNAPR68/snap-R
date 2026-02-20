@@ -391,6 +391,13 @@ export default function VideoCreatorClient() {
 
       if (!res.ok) {
         const data = await res.json()
+        // Log full error details for debugging
+        if (data.stack) {
+          console.error('[VideoCreator] Server error stack:', data.stack)
+        }
+        if (data.errorName) {
+          console.error('[VideoCreator] Error type:', data.errorName)
+        }
         throw new Error(data.error || `Request failed: ${res.status}`)
       }
 
