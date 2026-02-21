@@ -1,6 +1,19 @@
 # SnapR Execution Changelog
 =================================
 
+## 2026-02-21 — Video Pipeline: Signed URLs + Faster Pacing + New Endpoints
+
+- Video generate routes now resolve Supabase storage paths to signed URLs before passing to Lambda (fixes broken renders with relative paths)
+- Added `/api/video/health` endpoint — checks Remotion env var config before render attempt
+- Added `/api/video/watch` proxy endpoint — streams completed videos without exposing S3 URLs
+- Reduced photo display from 4.5s to 3s per photo, crossfade from 1.5s to 1s (all compositions)
+- VideoCreator checks `/api/video/health` on mount, shows config errors in UI
+- Marketing status route now returns proxy URLs via `/api/video/watch`
+- Updated CLAUDE.md voiceover duration from 4.5s to 3s per photo
+- Files: `app/api/video/generate/route.ts`, `app/api/internal/video-generate/route.ts`, `app/api/video/status/route.ts`, `app/api/video/health/route.ts`, `app/api/video/watch/route.ts`, `app/api/marketing/status/route.ts`, `VideoCreator.tsx`, `remotion/compositions/shared.tsx`, all composition files
+
+---
+
 ## 2026-02-21 — Auto-Campaigns: Database Schema + Bug Fixes
 
 - Created 4 new tables: `campaigns`, `campaign_queue`, `campaign_triggers`, `campaign_history`
