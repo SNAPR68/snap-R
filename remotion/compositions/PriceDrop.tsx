@@ -41,8 +41,8 @@ export type PriceDropProps = z.infer<typeof priceDropSchema>;
 // CONSTANTS — Urgency pacing (same as OpenHouse)
 // ============================================
 
-const PD_PHOTO_FRAMES = 105; // 3.5s per photo (urgency)
-const PD_SLIDE_FRAMES = 30; // 1s slide transitions
+const PD_PHOTO_FRAMES = 75; // 2.5s per photo (urgency)
+const PD_SLIDE_FRAMES = 20; // 0.67s slide transitions
 const INTRO_TRANSITION_FRAMES = 30;
 
 // ============================================

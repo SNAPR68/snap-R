@@ -264,7 +264,7 @@ Each has 3 variants: `9x16` (vertical), `16x9` (landscape), `1x1` (square)
 2. **4 script styles**: Professional, Luxury, Friendly, FirstTimeBuyer — each has a different system prompt tone
 3. **6 voice options**: 3 male + 3 female across professional/luxury/friendly (ElevenLabs voice IDs)
 4. **TTS**: ElevenLabs primary (`eleven_monolingual_v1`), OpenAI TTS HD fallback (`tts-1-hd`)
-5. **Duration**: Calculated from photo count × 4.5s, converted to word count at 130 words/min
+5. **Duration**: Calculated from photo count × 3s, converted to word count at 130 words/min
 
 ### Critical Data Structure Note
 `preparation_metadata.photoAudit` is a **Record<string, object>** (NOT an array). Photo type classification lives in `preparation_metadata.decisionAudit[photoId].photoType`. The `photo-ordering.ts` utility reads from `decisionAudit`, not `photoAudit`.

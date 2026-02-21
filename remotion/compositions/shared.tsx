@@ -21,8 +21,8 @@ export const { fontFamily } = loadFont('normal', {
 // TIMING CONSTANTS
 // ============================================
 
-export const PHOTO_DISPLAY_FRAMES = 135; // 4.5s per photo
-export const CROSSFADE_FRAMES = 45; // 1.5s crossfade/transition
+export const PHOTO_DISPLAY_FRAMES = 90; // 3s per photo
+export const CROSSFADE_FRAMES = 30; // 1s crossfade/transition
 export const CLOSING_CARD_FRAMES = 90; // 3s closing card
 export const INTRO_CARD_FRAMES = 75; // 2.5s intro card
 

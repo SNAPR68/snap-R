@@ -131,22 +131,43 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         {
           error: 'Video rendering not configured',
-          details: `Missing: ${missingEnvVars.join(', ')}`,
+          code: 'MISSING_ENV',
+          missingVars: missingEnvVars,
+          hint: 'Set REMOTION_* vars in Vercel Environment Variables',
         },
         { status: 503 }
       );
     }
 
     // Order photos using AI room classification (zero additional cost)
-    const orderedPhotoUrls = orderPhotosForWalkthrough(
+    const orderedStoragePaths = orderPhotosForWalkthrough(
       listing.photos,
       listing.preparation_metadata as Record<string, unknown> | null
     );
 
-    if (orderedPhotoUrls.length === 0) {
+    if (orderedStoragePaths.length === 0) {
       return NextResponse.json(
         { error: 'No processed photos available' },
         { status: 400 }
+      );
+    }
+
+    // Resolve storage paths to signed URLs accessible by Lambda
+    const orderedPhotoUrls = await Promise.all(
+      orderedStoragePaths.map(async (path) => {
+        if (path.startsWith('http')) return path;
+        const { data } = await admin.storage
+          .from('raw-images')
+          .createSignedUrl(path, 7200);
+        return data?.signedUrl ?? null;
+      })
+    );
+    const validPhotoUrls = orderedPhotoUrls.filter(Boolean) as string[];
+
+    if (validPhotoUrls.length === 0) {
+      return NextResponse.json(
+        { error: 'Could not resolve photo URLs' },
+        { status: 500 }
       );
     }
 
@@ -167,7 +188,7 @@ export async function POST(request: NextRequest) {
       beds: listing.bedrooms ?? undefined,
       baths: listing.bathrooms ?? undefined,
       sqft: listing.square_feet ?? undefined,
-      photos: orderedPhotoUrls,
+      photos: validPhotoUrls,
     };
 
     const inputProps: Record<string, unknown> = {
@@ -203,7 +224,7 @@ export async function POST(request: NextRequest) {
     // Log pre-render diagnostics
     console.log('[video/generate] Pre-render:', {
       compositionId,
-      photoCount: orderedPhotoUrls.length,
+      photoCount: validPhotoUrls.length,
       hasAudio: !!validatedInput.audio,
       region: process.env.REMOTION_AWS_REGION,
       functionName: process.env.REMOTION_LAMBDA_FUNCTION_NAME,
@@ -251,32 +272,40 @@ export async function POST(request: NextRequest) {
       { status: 200 }
     );
   } catch (error: unknown) {
+    const errorObj = error as Record<string, unknown> | undefined;
     const message = error instanceof Error ? error.message : 'Unknown error';
     const stack = error instanceof Error ? error.stack : undefined;
     const errorName = error instanceof Error ? error.name : typeof error;
 
-    // Extract AWS SDK metadata if present (e.g. httpStatusCode for 403/permission errors)
-    const awsMeta = (error as Record<string, unknown>)?.$metadata as Record<string, unknown> | undefined;
-    const httpStatusCode = awsMeta?.httpStatusCode;
+    // Extract AWS SDK metadata (httpStatusCode, requestId, etc.)
+    const awsMeta = errorObj?.$metadata as Record<string, unknown> | undefined;
+    const httpStatusCode = awsMeta?.httpStatusCode as number | undefined;
+    const requestId = (awsMeta?.requestId ?? errorObj?.requestId) as string | undefined;
+
+    // Check for wrapped cause (e.g. AWS SDK wraps inner errors)
+    const causeMsg = error instanceof Error && error.cause instanceof Error
+      ? error.cause.message
+      : undefined;
+    const displayMessage = causeMsg ? `${message} — ${causeMsg}` : message;
 
     console.error('[video/generate] Full error:', {
       name: errorName,
-      message,
-      stack,
-      raw: String(error),
+      message: displayMessage,
       awsHttpStatus: httpStatusCode,
+      requestId,
       functionName: process.env.REMOTION_LAMBDA_FUNCTION_NAME,
       hasAccessKey: !!process.env.REMOTION_AWS_ACCESS_KEY_ID,
       accessKeyPrefix: process.env.REMOTION_AWS_ACCESS_KEY_ID?.substring(0, 8),
+      stack: stack?.split('\n').slice(0, 10).join('\n'),
     });
 
     return NextResponse.json(
       {
-        error: message,
+        error: displayMessage,
         code: 'RENDER_TRIGGER_FAILED',
         errorName,
         awsHttpStatus: httpStatusCode,
-        stack: stack?.split('\n').slice(0, 15).join('\n'),
+        requestId,
       },
       { status: 500 }
     );

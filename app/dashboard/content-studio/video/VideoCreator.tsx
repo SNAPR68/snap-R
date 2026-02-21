@@ -26,11 +26,11 @@ type RenderStatus = 'idle' | 'triggering' | 'rendering' | 'completed' | 'failed'
 type VideoTemplate = 'property-showcase' | 'just-listed' | 'open-house' | 'price-drop' | 'sold'
 
 const VIDEO_TEMPLATES: Record<VideoTemplate, { name: string; desc: string; duration: string }> = {
-  'property-showcase': { name: 'Showcase', desc: 'Cinematic slideshow with crossfades', duration: '~4.5s/photo' },
-  'just-listed': { name: 'Just Listed', desc: 'Intro card + slide transitions + features', duration: '~5s/photo' },
-  'open-house': { name: 'Open House', desc: 'Urgency pacing with event date badge', duration: '~3.5s/photo' },
-  'price-drop': { name: 'Price Drop', desc: 'Price reduced badge with urgency pacing', duration: '~3.5s/photo' },
-  'sold': { name: 'Sold', desc: 'Celebration styling with social proof', duration: '~4.5s/photo' },
+  'property-showcase': { name: 'Showcase', desc: 'Cinematic slideshow with crossfades', duration: '~3s/photo' },
+  'just-listed': { name: 'Just Listed', desc: 'Intro card + slide transitions + features', duration: '~3s/photo' },
+  'open-house': { name: 'Open House', desc: 'Urgency pacing with event date badge', duration: '~2.5s/photo' },
+  'price-drop': { name: 'Price Drop', desc: 'Price reduced badge with urgency pacing', duration: '~2.5s/photo' },
+  'sold': { name: 'Sold', desc: 'Celebration styling with social proof', duration: '~3s/photo' },
 }
 
 interface ListingData {
@@ -126,6 +126,10 @@ export default function VideoCreatorClient() {
   const [renderError, setRenderError] = useState<string | null>(null)
   const [videoUrl, setVideoUrl] = useState<string | null>(null)
 
+  // Video config state
+  const [videoConfigured, setVideoConfigured] = useState<boolean | null>(null)
+  const [videoConfigError, setVideoConfigError] = useState<string | null>(null)
+
   // UI state
   const [currentPreview, setCurrentPreview] = useState(0)
   const [showShareModal, setShowShareModal] = useState(false)
@@ -146,6 +150,24 @@ export default function VideoCreatorClient() {
       if (pollingRef.current) clearTimeout(pollingRef.current)
       if (previewIntervalRef.current) clearInterval(previewIntervalRef.current)
     }
+  }, [])
+
+  // Check video rendering config on mount
+  useEffect(() => {
+    fetch('/api/video/health')
+      .then(async (res) => {
+        if (res.ok) {
+          setVideoConfigured(true)
+        } else {
+          const data = await res.json().catch(() => ({}))
+          setVideoConfigured(false)
+          setVideoConfigError(data.missing ? `Missing: ${data.missing.join(', ')}` : 'Video rendering not configured')
+        }
+      })
+      .catch(() => {
+        setVideoConfigured(false)
+        setVideoConfigError('Could not reach video config endpoint')
+      })
   }, [])
 
   // ============================================
@@ -182,7 +204,7 @@ export default function VideoCreatorClient() {
     if (selectedPhotos.length > 0 && !videoUrl) {
       previewIntervalRef.current = setInterval(() => {
         setCurrentPreview(prev => (prev + 1) % selectedPhotos.length)
-      }, 4500) // Match PropertyShowcase 4.5s per photo
+      }, 3000)
     }
     return () => { if (previewIntervalRef.current) clearInterval(previewIntervalRef.current) }
   }, [photos, videoUrl])
@@ -243,7 +265,7 @@ export default function VideoCreatorClient() {
             sqft: listingData.square_feet ?? undefined,
           },
           style: scriptStyle,
-          duration: selectedPhotos.length * 4.5,
+          duration: selectedPhotos.length * 3,
         })
       })
 
@@ -390,8 +412,12 @@ export default function VideoCreatorClient() {
       })
 
       if (!res.ok) {
-        const data = await res.json()
-        // Log full error details for debugging
+        let data: Record<string, unknown> = {}
+        try {
+          data = await res.json()
+        } catch {
+          throw new Error(`Server error ${res.status}: ${res.statusText || 'non-JSON response'}`)
+        }
         if (data.stack) {
           console.error('[VideoCreator] Server error stack:', data.stack)
         }
@@ -401,10 +427,10 @@ export default function VideoCreatorClient() {
         if (data.awsHttpStatus) {
           console.error('[VideoCreator] AWS HTTP status:', data.awsHttpStatus)
         }
-        // Build descriptive error message
-        const errParts = [data.error || `Request failed: ${res.status}`]
+        const errParts = [data.error || `Request failed: ${res.status}`] as string[]
         if (data.errorName && data.errorName !== data.error) errParts.push(`[${data.errorName}]`)
         if (data.awsHttpStatus) errParts.push(`(AWS ${data.awsHttpStatus})`)
+        if (data.code === 'MISSING_ENV') errParts.push('— video rendering not configured on server')
         throw new Error(errParts.join(' '))
       }
 
@@ -523,7 +549,7 @@ export default function VideoCreatorClient() {
             <Video className="w-4 h-4" />
           </div>
           <span className="font-bold">Video Creator</span>
-          <span className="text-xs text-green-500 bg-green-500/10 px-2 py-0.5 rounded">Lambda</span>
+          <span className="text-xs text-green-500 bg-green-500/10 px-2 py-0.5 rounded">SnapR</span>
         </div>
         <div className="ml-auto flex items-center gap-3">
           {videoUrl && (
@@ -563,7 +589,7 @@ export default function VideoCreatorClient() {
                   </div>
                   <div className="text-sm text-white/50 mt-1">
                     {renderStatus === 'triggering'
-                      ? 'Triggering Lambda render...'
+                      ? 'Starting SnapR render...'
                       : 'Rendering your video...'}
                   </div>
                 </div>
@@ -1004,10 +1030,18 @@ export default function VideoCreatorClient() {
               </>
             )}
 
+            {/* Video config warning */}
+            {videoConfigured === false && (
+              <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-lg text-xs text-red-300 space-y-1">
+                <div className="font-semibold">Video rendering not configured</div>
+                <div className="text-red-300/70">{videoConfigError}</div>
+              </div>
+            )}
+
             {/* Generate Button (always visible) */}
             <button
               onClick={videoUrl ? regenerateVideo : generateVideo}
-              disabled={isGenerating || selectedPhotos.length === 0}
+              disabled={isGenerating || selectedPhotos.length === 0 || videoConfigured === false}
               className="w-full py-4 bg-gradient-to-r from-pink-500 to-purple-600 rounded-xl font-bold text-white hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed flex flex-col items-center justify-center gap-1"
             >
               {isGenerating ? (
@@ -1018,7 +1052,7 @@ export default function VideoCreatorClient() {
                       {renderStatus === 'triggering' ? 'Starting...' : `Rendering ${renderProgress}%`}
                     </span>
                   </div>
-                  <span className="text-xs opacity-70">Cloud rendering via AWS Lambda</span>
+                  <span className="text-xs opacity-70">Rendering via SnapR Cloud</span>
                 </>
               ) : videoUrl ? (
                 <>

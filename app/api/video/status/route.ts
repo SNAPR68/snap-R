@@ -82,11 +82,12 @@ export async function GET(request: NextRequest) {
 
     // If job already in terminal state, return cached result
     if (job.status === 'completed') {
+      const proxyUrl = `${request.nextUrl.origin}/api/video/watch?id=${job.render_id}`;
       return NextResponse.json({
         renderId: job.render_id,
         status: 'completed',
         progress: 1,
-        videoUrl: job.video_url,
+        videoUrl: proxyUrl,
         renderTime: job.render_time_ms,
         error: null,
       });
@@ -135,11 +136,12 @@ export async function GET(request: NextRequest) {
         })
         .eq('render_id', validatedInput.renderId);
 
+      const proxyUrl = `${request.nextUrl.origin}/api/video/watch?id=${validatedInput.renderId}`;
       return NextResponse.json({
         renderId: validatedInput.renderId,
         status: 'completed',
         progress: 1,
-        videoUrl: progress.outputFile,
+        videoUrl: proxyUrl,
         renderTime: progress.timeToFinish ?? null,
         error: null,
       });

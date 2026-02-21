@@ -78,7 +78,9 @@ export async function GET(request: NextRequest) {
         .single<VideoRenderJob>();
 
       if (renderJob) {
-        videoUrl = renderJob.video_url;
+        videoUrl = renderJob.video_url && renderJob.status === 'completed'
+          ? `${request.nextUrl.origin}/api/video/watch?id=${videoResult.renderId as string}`
+          : renderJob.video_url;
         videoRenderStatus = renderJob.status;
       }
     }

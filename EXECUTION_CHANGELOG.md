@@ -10,7 +10,7 @@
 - VideoCreator checks `/api/video/health` on mount, shows config errors in UI
 - Marketing status route now returns proxy URLs via `/api/video/watch`
 - Updated CLAUDE.md voiceover duration from 4.5s to 3s per photo
-- Files: `app/api/video/generate/route.ts`, `app/api/internal/video-generate/route.ts`, `app/api/video/status/route.ts`, `app/api/video/health/route.ts`, `app/api/video/watch/route.ts`, `app/api/marketing/status/route.ts`, `VideoCreator.tsx`, `remotion/compositions/shared.tsx`, all composition files
+- Files: `app/api/video/{generate,status,health,watch}/route.ts`, `app/api/internal/video-generate/route.ts`, `app/api/marketing/status/route.ts`, `VideoCreator.tsx`, `remotion/compositions/shared.tsx`, all composition files
 
 ---
 

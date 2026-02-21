@@ -137,21 +137,45 @@ export async function POST(request: NextRequest) {
     if (missingEnvVars.length > 0) {
       console.error('[internal/video-generate] Missing env vars:', missingEnvVars);
       return NextResponse.json(
-        { error: 'Video rendering not configured' },
+        {
+          error: 'Video rendering not configured',
+          code: 'MISSING_ENV',
+          missingVars: missingEnvVars,
+          hint: 'Set REMOTION_* vars in Vercel Environment Variables',
+        },
         { status: 503 }
       );
     }
 
     // Order photos using AI room classification
-    const orderedPhotoUrls = orderPhotosForWalkthrough(
+    const orderedStoragePaths = orderPhotosForWalkthrough(
       listing.photos,
       listing.preparation_metadata
     );
 
-    if (orderedPhotoUrls.length === 0) {
+    if (orderedStoragePaths.length === 0) {
       return NextResponse.json(
         { error: 'No processed photos available' },
         { status: 400 }
+      );
+    }
+
+    // Resolve storage paths to signed URLs accessible by Lambda
+    const resolvedUrls = await Promise.all(
+      orderedStoragePaths.map(async (path) => {
+        if (path.startsWith('http')) return path;
+        const { data } = await admin.storage
+          .from('raw-images')
+          .createSignedUrl(path, 7200);
+        return data?.signedUrl ?? null;
+      })
+    );
+    const orderedPhotoUrls = resolvedUrls.filter(Boolean) as string[];
+
+    if (orderedPhotoUrls.length === 0) {
+      return NextResponse.json(
+        { error: 'Could not resolve photo URLs' },
+        { status: 500 }
       );
     }
 
@@ -252,17 +276,35 @@ export async function POST(request: NextRequest) {
       bucketName: renderResponse.bucketName,
     });
   } catch (error: unknown) {
+    const errorObj = error as Record<string, unknown> | undefined;
     const message = error instanceof Error ? error.message : 'Unknown error';
-    const awsMeta = (error as Record<string, unknown>)?.$metadata as Record<string, unknown> | undefined;
+    const errorName = error instanceof Error ? error.name : typeof error;
+
+    const awsMeta = errorObj?.$metadata as Record<string, unknown> | undefined;
+    const httpStatusCode = awsMeta?.httpStatusCode as number | undefined;
+    const requestId = (awsMeta?.requestId ?? errorObj?.requestId) as string | undefined;
+
+    const causeMsg = error instanceof Error && error.cause instanceof Error
+      ? error.cause.message
+      : undefined;
+    const displayMessage = causeMsg ? `${message} — ${causeMsg}` : message;
+
     console.error('[internal/video-generate] Full error:', {
-      name: error instanceof Error ? error.name : typeof error,
-      message,
-      awsHttpStatus: awsMeta?.httpStatusCode,
+      name: errorName,
+      message: displayMessage,
+      awsHttpStatus: httpStatusCode,
+      requestId,
       functionName: process.env.REMOTION_LAMBDA_FUNCTION_NAME,
       stack: error instanceof Error ? error.stack?.split('\n').slice(0, 10).join('\n') : undefined,
     });
     return NextResponse.json(
-      { error: message, code: 'INTERNAL_RENDER_FAILED' },
+      {
+        error: displayMessage,
+        code: 'INTERNAL_RENDER_FAILED',
+        errorName,
+        awsHttpStatus: httpStatusCode,
+        requestId,
+      },
       { status: 500 }
     );
   }
