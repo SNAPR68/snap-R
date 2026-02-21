@@ -43,7 +43,7 @@ export type JustListedProps = z.infer<typeof justListedSchema>;
 // ============================================
 
 const INTRO_TRANSITION_FRAMES = 30; // 1s transition from intro to slideshow
-const SLIDE_TRANSITION_FRAMES = CROSSFADE_FRAMES; // 1.5s slide transitions
+const SLIDE_TRANSITION_FRAMES = CROSSFADE_FRAMES; // 1s slide transitions
 
 // ============================================
 // DURATION CALCULATION
@@ -55,7 +55,7 @@ const SLIDE_TRANSITION_FRAMES = CROSSFADE_FRAMES; // 1.5s slide transitions
  * IntroCard: INTRO_CARD_FRAMES (75)
  * Transition into slideshow: INTRO_TRANSITION_FRAMES (30) — overlaps
  * N photos with slide transitions: N * PHOTO_DISPLAY_FRAMES - (N-1) * SLIDE_TRANSITION_FRAMES
- * Transition into closing: CROSSFADE_FRAMES (45) — overlaps
+ * Transition into closing: CROSSFADE_FRAMES (30) — overlaps
  * ClosingCard: CLOSING_CARD_FRAMES (90)
  */
 export function calculateJustListedDuration(photoCount: number): number {

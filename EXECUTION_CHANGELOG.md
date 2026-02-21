@@ -1,6 +1,42 @@
 # SnapR Execution Changelog
 =================================
 
+## 2026-02-21 — Video Pipeline: Signed URLs + Faster Pacing + New Endpoints
+
+- Video generate routes now resolve Supabase storage paths to signed URLs before passing to Lambda (fixes broken renders with relative paths)
+- Added `/api/video/health` endpoint — checks Remotion env var config before render attempt
+- Added `/api/video/watch` proxy endpoint — streams completed videos without exposing S3 URLs
+- Reduced photo display from 4.5s to 3s per photo, crossfade from 1.5s to 1s (all compositions)
+- VideoCreator checks `/api/video/health` on mount, shows config errors in UI
+- Marketing status route now returns proxy URLs via `/api/video/watch`
+- Updated CLAUDE.md voiceover duration from 4.5s to 3s per photo
+- Files: `app/api/video/{generate,status,health,watch}/route.ts`, `app/api/internal/video-generate/route.ts`, `app/api/marketing/status/route.ts`, `VideoCreator.tsx`, `remotion/compositions/shared.tsx`, all composition files
+
+---
+
+## 2026-02-21 — Auto-Campaigns: Database Schema + Bug Fixes
+
+- Created 4 new tables: `campaigns`, `campaign_queue`, `campaign_triggers`, `campaign_history`
+- Added 4 columns to existing `campaign_templates`: `is_default`, `social_schedule`, `email_subject_template`, `email_template`
+- All tables have RLS policies (user + service_role) and indexes
+- Fixed `content-generator.ts`: wrong column names (`zip`→`postal_code`, `sqft`→`square_feet`, `url`→`raw_url`, `enhanced_url`→`processed_url`)
+- Fixed `campaigns/route.ts`: same photo column name fix in PostgREST join
+- Seeded existing campaign_templates with `is_default = true`
+- **Migration must be applied to Supabase** before feature works (SQL editor or `npx supabase db push`)
+- Files: `supabase/migrations/20260221_campaign_tables.sql`, `lib/campaigns/content-generator.ts`, `app/api/campaigns/route.ts`
+
+---
+
+## 2026-02-20 — Add AWS Error Diagnostics to Video Pipeline
+
+- Production showed "UnknownError" after Lambda upgrade — no DB rows created, so error is in generate route
+- AWS SDK errors include `$metadata.httpStatusCode` (403 = permission, 429 = throttle) not exposed before
+- Enhanced error catch blocks in generate, internal-generate, and status routes to extract AWS metadata
+- VideoCreator now surfaces `errorName` and `awsHttpStatus` in the UI error display
+- Files: `app/api/video/generate/route.ts`, `app/api/internal/video-generate/route.ts`, `app/api/video/status/route.ts`, `VideoCreator.tsx`
+
+---
+
 ## 2026-02-20 — Upgrade Lambda to 3GB RAM / 900s Timeout
 
 - Redeployed Lambda function: `remotion-render-4-0-424-mem3008mb-disk2048mb-900sec`

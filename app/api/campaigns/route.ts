@@ -40,7 +40,7 @@ export async function GET(request: NextRequest) {
           .from('campaigns')
           .select(`
             *,
-            listings (id, address, city, state, photos (url, enhanced_url)),
+            listings (id, address, city, state, photos!photos_listing_id_fkey(raw_url, processed_url)),
             campaign_templates (name)
           `)
           .eq('user_id', userId)

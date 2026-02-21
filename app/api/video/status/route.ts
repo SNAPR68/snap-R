@@ -82,11 +82,12 @@ export async function GET(request: NextRequest) {
 
     // If job already in terminal state, return cached result
     if (job.status === 'completed') {
+      const proxyUrl = `${request.nextUrl.origin}/api/video/watch?id=${job.render_id}`;
       return NextResponse.json({
         renderId: job.render_id,
         status: 'completed',
         progress: 1,
-        videoUrl: job.video_url,
+        videoUrl: proxyUrl,
         renderTime: job.render_time_ms,
         error: null,
       });
@@ -135,11 +136,12 @@ export async function GET(request: NextRequest) {
         })
         .eq('render_id', validatedInput.renderId);
 
+      const proxyUrl = `${request.nextUrl.origin}/api/video/watch?id=${validatedInput.renderId}`;
       return NextResponse.json({
         renderId: validatedInput.renderId,
         status: 'completed',
         progress: 1,
-        videoUrl: progress.outputFile,
+        videoUrl: proxyUrl,
         renderTime: progress.timeToFinish ?? null,
         error: null,
       });
@@ -147,7 +149,19 @@ export async function GET(request: NextRequest) {
 
     // Handle failure
     if (progress.fatalErrorEncountered === true) {
-      const errorMessage = progress.errors?.[0]?.message ?? 'Render failed with unknown error';
+      const firstError = progress.errors?.[0];
+      const errorMessage = firstError?.message ?? 'Render failed with unknown error';
+      const errorType = (firstError as Record<string, unknown>)?.type as string | undefined;
+      const errorName = (firstError as Record<string, unknown>)?.name as string | undefined;
+
+      console.error('[video/status] Fatal render error:', {
+        renderId: validatedInput.renderId,
+        errorMessage,
+        errorType,
+        errorName,
+        errorCount: progress.errors?.length ?? 0,
+        progress: progress.overallProgress,
+      });
 
       await admin
         .from('video_render_jobs')

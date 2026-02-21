@@ -42,8 +42,8 @@ export type SoldProps = z.infer<typeof soldSchema>;
 // CONSTANTS — Standard pacing (celebratory, not urgent)
 // ============================================
 
-const SOLD_PHOTO_FRAMES = PHOTO_DISPLAY_FRAMES; // 4.5s per photo (leisurely pace)
-const SOLD_TRANSITION_FRAMES = CROSSFADE_FRAMES; // 1.5s slide transitions
+const SOLD_PHOTO_FRAMES = PHOTO_DISPLAY_FRAMES; // 3s per photo
+const SOLD_TRANSITION_FRAMES = CROSSFADE_FRAMES; // 1s slide transitions
 const INTRO_TRANSITION_FRAMES = 30;
 
 // ============================================

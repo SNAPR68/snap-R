@@ -41,8 +41,8 @@ export type OpenHouseProps = z.infer<typeof openHouseSchema>;
 // CONSTANTS — Faster pacing for urgency
 // ============================================
 
-const OH_PHOTO_FRAMES = 105; // 3.5s per photo (vs 4.5s in Showcase)
-const OH_WIPE_FRAMES = 30; // 1s wipe transitions (vs 1.5s)
+const OH_PHOTO_FRAMES = 75; // 2.5s per photo (urgency pacing)
+const OH_WIPE_FRAMES = 20; // 0.67s wipe transitions
 const INTRO_TRANSITION_FRAMES = 30;
 
 // ============================================
