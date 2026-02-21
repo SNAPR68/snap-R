@@ -1,6 +1,19 @@
 # SnapR Execution Changelog
 =================================
 
+## 2026-02-21 — Auto-Campaigns: Database Schema + Bug Fixes
+
+- Created 4 new tables: `campaigns`, `campaign_queue`, `campaign_triggers`, `campaign_history`
+- Added 4 columns to existing `campaign_templates`: `is_default`, `social_schedule`, `email_subject_template`, `email_template`
+- All tables have RLS policies (user + service_role) and indexes
+- Fixed `content-generator.ts`: wrong column names (`zip`→`postal_code`, `sqft`→`square_feet`, `url`→`raw_url`, `enhanced_url`→`processed_url`)
+- Fixed `campaigns/route.ts`: same photo column name fix in PostgREST join
+- Seeded existing campaign_templates with `is_default = true`
+- **Migration must be applied to Supabase** before feature works (SQL editor or `npx supabase db push`)
+- Files: `supabase/migrations/20260221_campaign_tables.sql`, `lib/campaigns/content-generator.ts`, `app/api/campaigns/route.ts`
+
+---
+
 ## 2026-02-20 — Add AWS Error Diagnostics to Video Pipeline
 
 - Production showed "UnknownError" after Lambda upgrade — no DB rows created, so error is in generate route
