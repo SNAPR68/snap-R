@@ -1,6 +1,17 @@
 # SnapR Execution Changelog
 =================================
 
+## 2026-02-22 — Privacy Policy Update for Platform Approvals
+
+- Added Section 5: Social Media Platform Data (Facebook, Instagram, LinkedIn, TikTok data handling)
+- Added Section 6: Data Deletion & Disconnection procedures
+- Renumbered existing sections 5-9 → 7-11
+- Updated "Last updated" date to February 22, 2026
+- Required for Facebook App Review submission
+- File: `app/privacy/page.tsx`
+
+---
+
 ## 2026-02-22 — Gated Property Sites + Lead Capture Dashboard
 
 - Created `property_leads` table with UTM attribution columns, RLS policies, public INSERT policy for visitors
