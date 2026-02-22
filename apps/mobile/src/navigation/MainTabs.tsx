@@ -7,7 +7,7 @@ import React from 'react';
 import { StyleSheet } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import DashboardScreen from '../screens/dashboard/DashboardScreen';
-import AiDirectorScreen from '../screens/camera/AiDirectorScreen';
+import CameraStack from './CameraStack';
 import ListingsScreen from '../screens/listings/ListingsScreen';
 import ContentStudioScreen from '../screens/content/ContentStudioScreen';
 import SettingsScreen from '../screens/settings/SettingsScreen';
@@ -47,9 +47,10 @@ export default function MainTabs() {
       />
       <Tab.Screen
         name="Camera"
-        component={AiDirectorScreen}
+        component={CameraStack}
         options={{
           title: 'AI Director',
+          headerShown: false,
           tabBarLabel: 'Capture',
         }}
       />

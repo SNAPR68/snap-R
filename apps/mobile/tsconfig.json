@@ -3,7 +3,7 @@
   "compilerOptions": {
     "strict": true,
     "paths": {
-      "@snapr/shared": ["../../packages/shared/src"],
+      "@snapr/shared": ["../../packages/shared/src/index"],
       "@/*": ["./src/*"]
     }
   },

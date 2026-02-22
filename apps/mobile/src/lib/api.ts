@@ -98,3 +98,62 @@ export const apiPatch = <T>(path: string, body?: Record<string, unknown>) =>
 
 export const apiDelete = <T>(path: string) =>
   api<T>(path, { method: 'DELETE' });
+
+// --- Typed API client ---
+
+interface ListingItem {
+  id: string;
+  title: string;
+  address: string | null;
+  city: string | null;
+  state: string | null;
+  created_at: string;
+}
+
+interface CreateListingPayload {
+  title: string;
+  address?: string;
+}
+
+interface AnalyzeFrameResult {
+  roomType: string;
+  roomConfidence: number;
+  compositionScore: number;
+  lightingScore: number;
+  overallScore: number;
+  tips: string[];
+  captureRecommended: boolean;
+}
+
+export const apiClient = {
+  /** Fetch user's listings */
+  async getListings(): Promise<ListingItem[]> {
+    const { data } = await apiGet<ListingItem[]>('/api/listings');
+    return data ?? [];
+  },
+
+  /** Create a new listing */
+  async createListing(
+    payload: CreateListingPayload
+  ): Promise<ListingItem | null> {
+    const { data } = await apiPost<ListingItem>('/api/listings', payload as unknown as Record<string, unknown>);
+    return data;
+  },
+
+  /** Analyze a camera frame via GPT-4o Vision */
+  async analyzeFrame(imageUri: string): Promise<AnalyzeFrameResult | null> {
+    const formData = new FormData();
+    formData.append('image', {
+      uri: imageUri,
+      type: 'image/jpeg',
+      name: 'frame.jpg',
+    } as unknown as Blob);
+
+    const { data } = await api<AnalyzeFrameResult>('/api/mobile/analyze-frame', {
+      method: 'POST',
+      body: formData,
+      timeout: 20000,
+    });
+    return data;
+  },
+};

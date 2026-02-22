@@ -1,6 +1,46 @@
 # SnapR Execution Changelog
 =================================
 
+## 2026-02-22 — Mobile App Phase 2: AI Director Camera
+
+### 1. AI Director Engine Modules
+- **checklist.ts**: Room checklist system with property-type defaults (house/apartment/condo/townhouse/commercial), progress tracking, auto-mark on capture
+- **composition-scorer.ts**: Rule-of-thirds + horizon level + symmetry scoring with weighted tips
+- **lighting-analyzer.ts**: Ambient light assessment for interior/exterior with lux-based scoring
+- **voice-coach.ts**: expo-speech TTS wrapper with priority queue, score coaching, room transitions
+
+### 2. Camera UI Components
+- **CompositionGrid.tsx**: Rule-of-thirds overlay with grid lines + center dot
+- **ScoreRing.tsx**: Circular quality indicator (green 80+, yellow 50-79, red <50)
+- **GuidanceOverlay.tsx**: Animated tip list with fade-in/out
+- **RoomBadge.tsx**: Detected room type pill with confidence percentage
+- **PhotoChecklist.tsx**: Slide-in panel with progress bar, room list, required badges
+
+### 3. AI Director Screen (AiDirectorScreen.tsx)
+- Full camera integration with expo-camera CameraView
+- Real-time composition + lighting scoring (2s interval)
+- Voice coaching on score threshold crossing
+- Photo capture with haptic feedback + checklist auto-update
+- Controls: flash, grid, voice, checklist toggle, capture button
+
+### 4. Supporting Screens
+- **SelectListingScreen.tsx**: Property type selector, create listing form, existing listings FlatList
+- **CaptureReviewScreen.tsx**: Full-screen photo preview with score, room badge, keep/retake actions
+
+### 5. Server-Side API Endpoint
+- **app/api/mobile/analyze-frame/route.ts**: GPT-4o Vision frame analysis (detail: 'low' for speed), returns room type, scores, tips, capture recommendation
+
+### 6. Navigation + API Client
+- **CameraStack.tsx**: Stack navigator (SelectListing → AiDirector → CaptureReview)
+- **MainTabs.tsx**: Updated Camera tab to use CameraStack
+- **api.ts**: Added apiClient with getListings, createListing, analyzeFrame methods
+
+### Verification
+- npx tsc --noEmit: 0 errors (root + mobile)
+- Risk Level: Low (all new files, no existing code modified except MainTabs)
+
+---
+
 ## 2026-02-19 — Mobile App Phase 1: Project Scaffolding + Auth
 
 ### 1. Initialized Expo Mobile App (`apps/mobile/`)
