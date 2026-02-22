@@ -1,9 +1,10 @@
 /**
  * Settings Screen
- * Account, subscription, social connections, notifications
+ * Account, subscription, social connections, notifications.
+ * Fetches real social connection status from API.
  */
 
-import React from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import {
   View,
   Text,
@@ -11,12 +12,62 @@ import {
   ScrollView,
   TouchableOpacity,
   Alert,
+  Linking,
+  RefreshControl,
 } from 'react-native';
 import { useAuth } from '../../contexts/AuthContext';
+import { apiClient } from '../../lib/api';
 import { colors, spacing, fontSize, borderRadius } from '../../constants/theme';
+import { API_BASE_URL } from '../../constants/config';
+
+interface SocialConnectionStatus {
+  platform: string;
+  connected: boolean;
+  displayName?: string;
+}
 
 export default function SettingsScreen() {
   const { profile, signOut, user } = useAuth();
+  const [connections, setConnections] = useState<SocialConnectionStatus[]>([
+    { platform: 'Facebook', connected: false },
+    { platform: 'Instagram', connected: false },
+    { platform: 'LinkedIn', connected: false },
+    { platform: 'TikTok', connected: false },
+  ]);
+  const [refreshing, setRefreshing] = useState(false);
+
+  const fetchConnections = useCallback(async () => {
+    try {
+      const data = await apiClient.getSocialConnections();
+      if (data.length > 0) {
+        const platforms = ['Facebook', 'Instagram', 'LinkedIn', 'TikTok'];
+        setConnections(
+          platforms.map(p => {
+            const conn = data.find(
+              (c: { platform: string }) => c.platform.toLowerCase() === p.toLowerCase()
+            );
+            return {
+              platform: p,
+              connected: !!conn,
+              displayName: conn?.display_name ?? undefined,
+            };
+          })
+        );
+      }
+    } catch {
+      // Keep defaults
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchConnections();
+  }, [fetchConnections]);
+
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await fetchConnections();
+    setRefreshing(false);
+  }, [fetchConnections]);
 
   const handleSignOut = () => {
     Alert.alert('Sign Out', 'Are you sure you want to sign out?', [
@@ -25,10 +76,28 @@ export default function SettingsScreen() {
     ]);
   };
 
-  return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      <Text style={styles.title}>Settings</Text>
+  const handleManageSubscription = () => {
+    Linking.openURL(`${API_BASE_URL}/dashboard/billing`);
+  };
 
+  const handleConnectPlatform = (platform: string) => {
+    Linking.openURL(
+      `${API_BASE_URL}/dashboard/settings?connect=${platform.toLowerCase()}`
+    );
+  };
+
+  return (
+    <ScrollView
+      style={styles.container}
+      contentContainerStyle={styles.content}
+      refreshControl={
+        <RefreshControl
+          refreshing={refreshing}
+          onRefresh={onRefresh}
+          tintColor={colors.gold}
+        />
+      }
+    >
       {/* Profile Section */}
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Account</Text>
@@ -50,7 +119,10 @@ export default function SettingsScreen() {
               {(profile?.subscription_tier ?? 'free').toUpperCase()}
             </Text>
           </View>
-          <TouchableOpacity style={styles.upgradeButton}>
+          <TouchableOpacity
+            style={styles.upgradeButton}
+            onPress={handleManageSubscription}
+          >
             <Text style={styles.upgradeButtonText}>Manage Subscription</Text>
           </TouchableOpacity>
         </View>
@@ -60,9 +132,42 @@ export default function SettingsScreen() {
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Social Connections</Text>
         <View style={styles.card}>
-          <SocialRow platform="Facebook" connected={false} />
-          <SocialRow platform="Instagram" connected={false} />
-          <SocialRow platform="LinkedIn" connected={false} />
+          {connections.map(conn => (
+            <TouchableOpacity
+              key={conn.platform}
+              style={styles.socialRow}
+              onPress={() =>
+                !conn.connected && handleConnectPlatform(conn.platform)
+              }
+            >
+              <Text style={styles.rowLabel}>{conn.platform}</Text>
+              <View
+                style={[
+                  styles.statusDot,
+                  conn.connected ? styles.connected : styles.disconnected,
+                ]}
+              />
+              <Text
+                style={[
+                  styles.statusText,
+                  conn.connected ? styles.connectedText : styles.disconnectedText,
+                ]}
+              >
+                {conn.connected
+                  ? conn.displayName ?? 'Connected'
+                  : 'Connect'}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+      </View>
+
+      {/* Notifications */}
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Notifications</Text>
+        <View style={styles.card}>
+          <SettingsRow label="Push Notifications" value="Coming soon" />
+          <SettingsRow label="Email Digest" value="Coming soon" />
         </View>
       </View>
 
@@ -85,18 +190,6 @@ function SettingsRow({ label, value }: { label: string; value: string }) {
   );
 }
 
-function SocialRow({ platform, connected }: { platform: string; connected: boolean }) {
-  return (
-    <View style={styles.socialRow}>
-      <Text style={styles.rowLabel}>{platform}</Text>
-      <View style={[styles.statusDot, connected ? styles.connected : styles.disconnected]} />
-      <Text style={[styles.statusText, connected ? styles.connectedText : styles.disconnectedText]}>
-        {connected ? 'Connected' : 'Not connected'}
-      </Text>
-    </View>
-  );
-}
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -105,12 +198,6 @@ const styles = StyleSheet.create({
   content: {
     padding: spacing.lg,
     paddingBottom: spacing.xxxl,
-  },
-  title: {
-    fontSize: fontSize.xxl,
-    fontWeight: '700',
-    color: colors.textPrimary,
-    marginBottom: spacing.xl,
   },
   section: {
     marginBottom: spacing.xl,
@@ -202,7 +289,7 @@ const styles = StyleSheet.create({
     color: colors.success,
   },
   disconnectedText: {
-    color: colors.textMuted,
+    color: colors.gold,
   },
   signOutButton: {
     backgroundColor: 'rgba(239, 68, 68, 0.1)',

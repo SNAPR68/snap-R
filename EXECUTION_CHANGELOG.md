@@ -1,6 +1,28 @@
 # SnapR Execution Changelog
 =================================
 
+## 2026-02-23 — Mobile App Phase 4: Content Studio + Settings
+
+### 1. Content Studio (Data-Driven)
+- Stats row: scheduled, published, total impressions
+- Tab switcher: Scheduled / Published posts
+- Platform color-coded badges (Facebook blue, Instagram pink, LinkedIn blue, TikTok cyan)
+- Post cards with content preview, date, engagement metrics
+- Pull-to-refresh
+
+### 2. Settings (Enhanced)
+- Real social connection status fetched from API
+- "Connect" action opens web dashboard OAuth flow via Linking
+- "Manage Subscription" opens web billing page
+- Notifications section (placeholder for Phase 5)
+- Pull-to-refresh for connection status
+
+### 3. API Client Extensions
+- Added getScheduledPosts, getPublishedPosts, getContentStats, getSocialConnections
+
+### Verification
+- npx tsc --noEmit: 0 errors (root + mobile)
+
 ## 2026-02-22 — Mobile App Phase 3: Photo Upload + Dashboard Mirror
 
 ### 1. Upload Queue with Offline Support

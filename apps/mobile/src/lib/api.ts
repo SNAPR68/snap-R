@@ -181,6 +181,36 @@ interface MarketingResultsResponse {
   scheduled_posts_count: number;
 }
 
+interface ScheduledPostItem {
+  id: string;
+  platform: string;
+  content: string;
+  scheduled_for: string;
+  status: string;
+  listing_title?: string;
+}
+
+interface PublishedPostItem {
+  id: string;
+  platform: string;
+  content: string;
+  published_at: string;
+  likes: number;
+  comments: number;
+  shares: number;
+}
+
+interface ContentStatsResponse {
+  scheduledCount: number;
+  publishedCount: number;
+  totalImpressions: number;
+}
+
+interface SocialConnectionItem {
+  platform: string;
+  display_name?: string;
+}
+
 export const apiClient = {
   /** Fetch user's listings */
   async getListings(): Promise<ListingItem[]> {
@@ -255,5 +285,31 @@ export const apiClient = {
   async getMarketingResults(listingId: string): Promise<MarketingResultsResponse | null> {
     const { data } = await apiGet<MarketingResultsResponse>('/api/marketing/status', { listingId });
     return data;
+  },
+
+  // --- Phase 4: Content Studio + Settings ---
+
+  /** Fetch scheduled posts */
+  async getScheduledPosts(): Promise<ScheduledPostItem[]> {
+    const { data } = await apiGet<ScheduledPostItem[]>('/api/schedule', { status: 'pending' });
+    return data ?? [];
+  },
+
+  /** Fetch published posts with engagement */
+  async getPublishedPosts(): Promise<PublishedPostItem[]> {
+    const { data } = await apiGet<PublishedPostItem[]>('/api/analytics/posts');
+    return data ?? [];
+  },
+
+  /** Fetch content stats summary */
+  async getContentStats(): Promise<ContentStatsResponse | null> {
+    const { data } = await apiGet<ContentStatsResponse>('/api/mobile/content-stats');
+    return data;
+  },
+
+  /** Fetch social connections status */
+  async getSocialConnections(): Promise<SocialConnectionItem[]> {
+    const { data } = await apiGet<SocialConnectionItem[]>('/api/social/connections');
+    return data ?? [];
   },
 };
