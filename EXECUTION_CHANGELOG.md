@@ -1,6 +1,18 @@
 # SnapR Execution Changelog
 =================================
 
+## 2026-02-22 — Token Refresh Cron + Publish Cron Bug Fix
+
+- Created `app/api/cron/refresh-tokens/route.ts` — proactive token refresh every 4 hours
+- Refreshes all tokens expiring within 48 hours (critical for TikTok's 24h tokens)
+- Facebook/Instagram correctly use `access_token` with `fb_exchange_token` grant; others use `refresh_token`
+- Logs refresh failures to `last_error` on the social_connection for visibility
+- Registered in `vercel.json` at `0 */4 * * *` with 300s/1024MB config
+- Fixed bug in publish cron: was passing `refresh_token` for Facebook/Instagram refresh, now correctly passes `access_token`
+- Files: `app/api/cron/refresh-tokens/route.ts` (NEW), `vercel.json`, `app/api/cron/publish-scheduled/route.ts`
+
+---
+
 ## 2026-02-22 — UTM Tracking + TikTok Publishing Integration
 
 - Added UTM campaign tracking to all scheduled social post captions (utm_source, utm_medium, utm_campaign, utm_content)

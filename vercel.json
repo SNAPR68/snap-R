@@ -20,6 +20,10 @@
       "maxDuration": 300,
       "memory": 1024
     },
+    "app/api/cron/refresh-tokens/route.ts": {
+      "maxDuration": 300,
+      "memory": 1024
+    },
     "app/api/video/generate/route.ts": {
       "maxDuration": 60,
       "memory": 1024
@@ -56,6 +60,10 @@
     {
       "path": "/api/cron/sync-analytics",
       "schedule": "0 */6 * * *"
+    },
+    {
+      "path": "/api/cron/refresh-tokens",
+      "schedule": "0 */4 * * *"
     }
   ]
 }
