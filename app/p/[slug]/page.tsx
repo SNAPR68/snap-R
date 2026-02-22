@@ -2,6 +2,7 @@ import { notFound } from 'next/navigation'
 import PropertySiteClient from './PropertySiteClient'
 import { Metadata } from 'next'
 import { adminSupabase } from '@/lib/supabase/admin'
+import { normalizeTier, PLAN_LIMITS } from '@/lib/content/limits'
 
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
@@ -93,11 +94,11 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function PropertySitePage({ params }: Props) {
   const { slug } = await params
   const supabase = adminSupabase()
-  
+
   // Look up property site by slug, then fetch listing via listing_id
   const { data: site, error: siteError } = await supabase
     .from('property_sites')
-    .select('listing_id, slug')
+    .select('id, listing_id, slug')
     .eq('slug', slug)
     .single()
 
@@ -114,7 +115,7 @@ export default async function PropertySitePage({ params }: Props) {
   if (!resolvedSite?.listing_id) {
     const { data: fallbackSite } = await supabase
       .from('property_sites')
-      .select('listing_id, slug')
+      .select('id, listing_id, slug')
       .eq('listing_id', slug)
       .limit(1)
       .single()
@@ -131,6 +132,7 @@ export default async function PropertySitePage({ params }: Props) {
   }
 
   const listingId = resolvedSite.listing_id
+  const propertySiteId = resolvedSite.id
 
   // Fetch listing with photos
   const { data: listing, error } = await supabase
@@ -138,24 +140,26 @@ export default async function PropertySitePage({ params }: Props) {
     .select('*, photos!photos_listing_id_fkey(id, raw_url, processed_url, status, display_order)')
     .eq('id', listingId)
     .single()
-  
+
   if (error || !listing) {
     console.error('[PropertySite] Error:', error)
     notFound()
   }
-  
+
   // Fetch profile separately if user_id exists
   let profile = null
   let brandProfile = null
-  
+  let ownerTier = 'free'
+
   if (listing.user_id) {
     const { data: profileData } = await supabase
       .from('profiles')
-      .select('full_name, email, phone, avatar_url, company, title')
+      .select('full_name, email, phone, avatar_url, company, title, subscription_tier')
       .eq('id', listing.user_id)
       .single()
     profile = profileData
-    
+    ownerTier = profileData?.subscription_tier || 'free'
+
     // Fetch brand profile for agent branding
     const { data: brandData } = await supabase
       .from('brand_profiles')
@@ -164,7 +168,11 @@ export default async function PropertySitePage({ params }: Props) {
       .single()
     brandProfile = brandData
   }
-  
+
+  // Determine if property site should be gated (pro/agency tiers only)
+  const normalizedTier = normalizeTier(ownerTier)
+  const isGated = PLAN_LIMITS[normalizedTier].canCaptureLeads
+
   // Fetch any existing completed video for this listing
   let videoUrl = null
   const { data: videoData } = await supabase
@@ -179,7 +187,7 @@ export default async function PropertySitePage({ params }: Props) {
   if (videoData?.video_url) {
     videoUrl = videoData.video_url
   }
-  
+
   // Sort photos by display order
   interface ListingPhoto {
     id: string
@@ -199,19 +207,19 @@ export default async function PropertySitePage({ params }: Props) {
     sortedPhotos.map(async (photo: ListingPhoto) => {
       const path = photo.processed_url || photo.raw_url
       if (!path) return null
-      
+
       // If already a full URL, return as-is
       if (path.startsWith('http')) return path
-      
+
       const { data } = await supabase.storage
         .from('raw-images')
         .createSignedUrl(path, 86400) // 24 hours
       return data?.signedUrl
     })
   )
-  
+
   const validPhotos = photos.filter(Boolean) as string[]
-  
+
   // Build listing data object
   const listingData = {
     id: listing.id,
@@ -236,7 +244,7 @@ export default async function PropertySitePage({ params }: Props) {
     latitude: listing.latitude,
     longitude: listing.longitude,
   }
-  
+
   // Build agent data object
   const agentData = profile ? {
     name: profile.full_name || 'Agent',
@@ -246,7 +254,7 @@ export default async function PropertySitePage({ params }: Props) {
     company: profile.company,
     title: profile.title,
   } : null
-  
+
   // Build brand data object
   const brandData = brandProfile ? {
     logo: brandProfile.logo_url,
@@ -255,7 +263,7 @@ export default async function PropertySitePage({ params }: Props) {
     website: brandProfile.website,
     tagline: brandProfile.tagline,
   } : null
-  
+
   // Build JSON-LD structured data for SEO
   const jsonLd = {
     '@context': 'https://schema.org',
@@ -301,6 +309,9 @@ export default async function PropertySitePage({ params }: Props) {
         videoUrl={videoUrl}
         slug={slug}
         mapsApiKey={process.env.NEXT_PUBLIC_GOOGLE_MAPS_KEY ?? null}
+        isGated={isGated}
+        propertySiteId={propertySiteId}
+        userId={listing.user_id}
       />
     </>
   )

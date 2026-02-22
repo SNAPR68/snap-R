@@ -32,6 +32,7 @@ export const PLAN_LIMITS = {
     canPublish: false,
     canAccessContentStudio: false,
     canGenerateVideo: false,
+    canCaptureLeads: false,
   },
   starter: {
     contentPosts: 5,
@@ -39,6 +40,7 @@ export const PLAN_LIMITS = {
     canPublish: false,
     canAccessContentStudio: true,
     canGenerateVideo: false,
+    canCaptureLeads: false,
   },
   pro: {
     contentPosts: 30,
@@ -46,6 +48,7 @@ export const PLAN_LIMITS = {
     canPublish: true,
     canAccessContentStudio: true,
     canGenerateVideo: true,
+    canCaptureLeads: true,
   },
   agency: {
     contentPosts: Infinity,
@@ -53,6 +56,7 @@ export const PLAN_LIMITS = {
     canPublish: true,
     canAccessContentStudio: true,
     canGenerateVideo: true,
+    canCaptureLeads: true,
   }
 } as const
 
