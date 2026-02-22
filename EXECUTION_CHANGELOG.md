@@ -1,6 +1,48 @@
 # SnapR Execution Changelog
 =================================
 
+## 2026-02-22 — Mobile App Phase 3: Photo Upload + Dashboard Mirror
+
+### 1. Upload Queue with Offline Support
+- **upload-queue.ts**: Persistent queue using expo-file-system (legacy API)
+- Photos copied to queue directory, uploaded in batches of 3 concurrent
+- Max 3 retries with status tracking (pending/uploading/completed/failed)
+- Progress callback for real-time UI updates
+
+### 2. Dashboard Screen (Data-Driven)
+- Fetches real stats (listings, photos, published posts) from API
+- Recent listings with status dots and photo counts
+- Auto-refresh every 30s + pull-to-refresh
+- "Start AI Capture Session" CTA navigates to Camera tab
+
+### 3. Listings Screen with Search/Filter
+- Full listing list with search by title/address
+- Status filter pills (All/Pending/Preparing/Prepared/Marketing/Marketed/Failed)
+- Client-side filtering with useMemo
+- Status badges with color-coded dots
+
+### 4. Listing Detail Screen
+- Preparation + marketing status display with polling
+- Photo grid with "Enhanced" badges on processed photos
+- Actions: Prepare Listing, Add Photos (navigates to AI Director)
+- Processing banner while preparation in progress
+
+### 5. Marketing Results Screen
+- Property description with copy-to-clipboard
+- Per-platform social captions with copy buttons
+- MLS summary, property site link, scheduled posts count
+- Uses expo-clipboard for native clipboard access
+
+### 6. Navigation + API Updates
+- **ListingsStack.tsx**: Stack navigator (ListingsList → ListingDetail → MarketingResults)
+- MainTabs updated to use ListingsStack
+- **api.ts**: Added getDashboardStats, getRecentListings, getAllListings, getListingDetail, getListingPhotos, prepareListing, getMarketingResults
+
+### Verification
+- npx tsc --noEmit: 0 errors (root + mobile)
+
+---
+
 ## 2026-02-22 — Mobile App Phase 2: AI Director Camera
 
 ### 1. AI Director Engine Modules

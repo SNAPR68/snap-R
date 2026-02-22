@@ -8,7 +8,7 @@ import { StyleSheet } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import DashboardScreen from '../screens/dashboard/DashboardScreen';
 import CameraStack from './CameraStack';
-import ListingsScreen from '../screens/listings/ListingsScreen';
+import ListingsStack from './ListingsStack';
 import ContentStudioScreen from '../screens/content/ContentStudioScreen';
 import SettingsScreen from '../screens/settings/SettingsScreen';
 import { colors, fontSize } from '../constants/theme';
@@ -56,9 +56,10 @@ export default function MainTabs() {
       />
       <Tab.Screen
         name="Listings"
-        component={ListingsScreen}
+        component={ListingsStack}
         options={{
           title: 'Listings',
+          headerShown: false,
         }}
       />
       <Tab.Screen

@@ -125,6 +125,62 @@ interface AnalyzeFrameResult {
   captureRecommended: boolean;
 }
 
+interface DashboardStats {
+  totalListings: number;
+  totalPhotos: number;
+  publishedPosts: number;
+}
+
+interface RecentListingItem {
+  id: string;
+  title: string;
+  address: string | null;
+  preparation_status: string | null;
+  photo_count: number;
+}
+
+interface FullListingItem {
+  id: string;
+  title: string;
+  address: string | null;
+  city: string | null;
+  state: string | null;
+  preparation_status: string | null;
+  marketing_status: string | null;
+  photo_count: number;
+  created_at: string;
+}
+
+interface ListingDetailResponse {
+  id: string;
+  title: string;
+  address: string | null;
+  city: string | null;
+  state: string | null;
+  zip: string | null;
+  preparation_status: string | null;
+  marketing_status: string | null;
+  hero_photo_id: string | null;
+  created_at: string;
+}
+
+interface PhotoItemResponse {
+  id: string;
+  raw_url: string | null;
+  processed_url: string | null;
+  status: string;
+  variant: string;
+  signed_url?: string;
+}
+
+interface MarketingResultsResponse {
+  description: string | null;
+  captions: Record<string, string> | null;
+  mls_summary: string | null;
+  property_site_url: string | null;
+  scheduled_posts_count: number;
+}
+
 export const apiClient = {
   /** Fetch user's listings */
   async getListings(): Promise<ListingItem[]> {
@@ -154,6 +210,50 @@ export const apiClient = {
       body: formData,
       timeout: 20000,
     });
+    return data;
+  },
+
+  // --- Phase 3: Dashboard + Listings ---
+
+  /** Fetch dashboard stats */
+  async getDashboardStats(): Promise<DashboardStats | null> {
+    const { data } = await apiGet<DashboardStats>('/api/mobile/dashboard-stats');
+    return data;
+  },
+
+  /** Fetch recent listings (last 5) */
+  async getRecentListings(): Promise<RecentListingItem[]> {
+    const { data } = await apiGet<RecentListingItem[]>('/api/listings', { limit: '5', sort: 'newest' });
+    return data ?? [];
+  },
+
+  /** Fetch all listings with photo counts */
+  async getAllListings(): Promise<FullListingItem[]> {
+    const { data } = await apiGet<FullListingItem[]>('/api/listings', { limit: '100' });
+    return data ?? [];
+  },
+
+  /** Fetch single listing detail */
+  async getListingDetail(listingId: string): Promise<ListingDetailResponse | null> {
+    const { data } = await apiGet<ListingDetailResponse>(`/api/listing/status`, { listingId });
+    return data;
+  },
+
+  /** Fetch photos for a listing */
+  async getListingPhotos(listingId: string): Promise<PhotoItemResponse[]> {
+    const { data } = await apiGet<PhotoItemResponse[]>(`/api/listings/${listingId}/photos`);
+    return data ?? [];
+  },
+
+  /** Trigger listing preparation */
+  async prepareListing(listingId: string): Promise<void> {
+    const { error } = await apiPost('/api/listing/prepare', { listingId });
+    if (error) throw new Error(error);
+  },
+
+  /** Fetch marketing results for a listing */
+  async getMarketingResults(listingId: string): Promise<MarketingResultsResponse | null> {
+    const { data } = await apiGet<MarketingResultsResponse>('/api/marketing/status', { listingId });
     return data;
   },
 };
