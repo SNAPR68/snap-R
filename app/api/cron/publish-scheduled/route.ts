@@ -131,12 +131,16 @@ export async function GET(request: NextRequest) {
         if (connection.expires_at) {
           const expiresAt = new Date(connection.expires_at).getTime();
           const buffer24h = Date.now() + 24 * 60 * 60 * 1000;
-          if (expiresAt < buffer24h && connection.refresh_token) {
+          // Facebook/Instagram: pass access_token (fb_exchange_token grant)
+          // Others: pass refresh_token (standard refresh_token grant)
+          const isFbFamily = post.platform === 'facebook' || post.platform === 'instagram';
+          const tokenToRefresh = isFbFamily ? connection.access_token : connection.refresh_token;
+          if (expiresAt < buffer24h && tokenToRefresh) {
             try {
               console.log(`[PublishCron] Token expiring soon for ${post.platform}, refreshing...`);
               const refreshed = await refreshAccessToken(
                 post.platform as SocialPlatform,
-                connection.refresh_token
+                tokenToRefresh
               );
               // Update the connection in DB
               const newExpiresAt = refreshed.expiresIn
