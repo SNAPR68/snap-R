@@ -46,7 +46,19 @@
         }
       ],
       "expo-secure-store",
-      "expo-speech"
-    ]
+      "expo-speech",
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/notification-icon.png",
+          "color": "#D4A017"
+        }
+      ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "snapr-mobile"
+      }
+    }
   }
 }

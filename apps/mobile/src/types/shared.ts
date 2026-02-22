@@ -24,6 +24,7 @@ export type {
   SocialConnection,
   ScheduledPost,
   PublishedPost,
+  PlanType,
 } from '@snapr/shared';
 
 export {

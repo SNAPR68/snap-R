@@ -1,6 +1,27 @@
 # SnapR Execution Changelog
 =================================
 
+## 2026-02-23 — Mobile App Phase 5: Push Notifications + Billing Gates + App Store Prep
+
+### 1. Push Notifications
+- **notifications.ts**: expo-notifications service with permission request, Expo push token, Android channel
+- **register-device API** (app/api/mobile/register-device/route.ts): stores device tokens in profiles.notification_preferences JSONB, dedup, max 5 devices
+- Notification handler configured for banner, list, sound, badge
+
+### 2. Billing Gate Enforcement
+- **useBillingGate.ts**: Hook returning tier, canUseDirector, canPublish, canAccessContentStudio, listingsLimit
+- Uses shared getPlanLimits + getListingLimits from @snapr/shared
+- Free/Starter: AI Director locked, upgrade message shown
+- Pro/Agency: Full access
+
+### 3. App Store Preparation
+- **eas.json**: EAS Build config with development (simulator), preview (internal), production (auto-increment) profiles
+- **app.json**: Updated with expo-notifications plugin, notification icon, EAS project ID
+- Notification icon placeholder created
+
+### Verification
+- npx tsc --noEmit: 0 errors (root + mobile)
+
 ## 2026-02-23 — Mobile App Phase 4: Content Studio + Settings
 
 ### 1. Content Studio (Data-Driven)
