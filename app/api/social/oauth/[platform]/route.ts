@@ -71,6 +71,8 @@ export async function GET(
       return handleFacebookOAuth(code, user.id, platform, baseUrl, redirectUrl);
     } else if (platform === 'linkedin') {
       return handleLinkedInOAuth(code, user.id, baseUrl, redirectUrl);
+    } else if (platform === 'tiktok') {
+      return handleTikTokOAuth(code, user.id, baseUrl, redirectUrl);
     }
 
     return NextResponse.redirect(`${redirectUrl}?error=Unsupported platform`);
@@ -293,4 +295,88 @@ async function handleLinkedInOAuth(
 
   const separator = redirectUrl.includes('?') ? '&' : '?';
   return NextResponse.redirect(`${redirectUrl}${separator}connected=linkedin`);
+}
+
+async function handleTikTokOAuth(
+  code: string,
+  userId: string,
+  baseUrl: string,
+  redirectUrl: string
+) {
+  const serviceSupabase = adminSupabase();
+  const clientKey = process.env.TIKTOK_CLIENT_KEY;
+  const clientSecret = process.env.TIKTOK_CLIENT_SECRET;
+  const callbackUrl = `${baseUrl}/api/social/oauth/tiktok`;
+
+  // Exchange code for access token (TikTok v2 uses JSON body)
+  const tokenResponse = await fetch('https://open.tiktokapis.com/v2/oauth/token/', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      client_key: clientKey,
+      client_secret: clientSecret,
+      code,
+      grant_type: 'authorization_code',
+      redirect_uri: callbackUrl,
+    }),
+    signal: AbortSignal.timeout(10000),
+  });
+
+  const tokenData = await tokenResponse.json();
+
+  if (tokenData.error || !tokenData.access_token) {
+    throw new Error(tokenData.error_description || tokenData.error || 'Failed to get TikTok access token');
+  }
+
+  const accessToken = tokenData.access_token;
+  const openId = tokenData.open_id;
+
+  // Get user profile
+  const profileResponse = await fetch(
+    'https://open.tiktokapis.com/v2/user/info/?fields=open_id,union_id,avatar_url,display_name',
+    {
+      headers: { 'Authorization': `Bearer ${accessToken}` },
+      signal: AbortSignal.timeout(10000),
+    }
+  );
+  const profileData = await profileResponse.json();
+  const userInfo = profileData.data?.user || {};
+
+  // Calculate token expiry (TikTok tokens last ~24 hours, refresh tokens ~365 days)
+  const tiktokExpiresIn = tokenData.expires_in || 86400; // default 24 hours
+  const tiktokExpiresAt = new Date(Date.now() + tiktokExpiresIn * 1000).toISOString();
+
+  // Upsert connection
+  const connectionData: Record<string, unknown> = {
+    user_id: userId,
+    platform: 'tiktok',
+    platform_user_id: openId,
+    platform_username: userInfo.display_name || openId,
+    access_token: accessToken,
+    refresh_token: tokenData.refresh_token || null,
+    token_expires_at: tiktokExpiresAt,
+    is_active: true,
+    connected_at: new Date().toISOString(),
+  };
+
+  const { data: existing } = await serviceSupabase
+    .from('social_connections')
+    .select('id')
+    .eq('user_id', userId)
+    .eq('platform', 'tiktok')
+    .single();
+
+  if (existing) {
+    await serviceSupabase
+      .from('social_connections')
+      .update(connectionData)
+      .eq('id', existing.id);
+  } else {
+    await serviceSupabase
+      .from('social_connections')
+      .insert(connectionData);
+  }
+
+  const separator = redirectUrl.includes('?') ? '&' : '?';
+  return NextResponse.redirect(`${redirectUrl}${separator}connected=tiktok`);
 }

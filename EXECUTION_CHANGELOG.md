@@ -1,6 +1,22 @@
 # SnapR Execution Changelog
 =================================
 
+## 2026-02-22 — UTM Tracking + TikTok Publishing Integration
+
+- Added UTM campaign tracking to all scheduled social post captions (utm_source, utm_medium, utm_campaign, utm_content)
+- Property site URLs with UTM params appended in marketing handler Step 5 for traffic attribution
+- Created `lib/social/utm.ts` standalone utility for UTM param appending
+- TikTok OAuth v2 callback handler with `client_key` auth, `open_id` storage, 24h/365d token lifecycle
+- TikTok video publishing via Content Posting API (`PULL_FROM_URL` — TikTok fetches from our S3 URL)
+- TikTok photo carousel publishing via Photo Posting API (`DIRECT_POST` mode)
+- Wired TikTok into cron publisher for both image and video post types
+- Updated `oauth-config.ts`: TikTok v2 endpoints, scopes (`video.upload`), JSON body token exchange/refresh
+- Unaudited TikTok apps default to `privacy_level: 'SELF_ONLY'` (private posts until app audit)
+- Updated CLAUDE.md with TikTok publishing docs, UTM tracking, OAuth specifics
+- Files: `lib/social/utm.ts` (NEW), `apps/processor/src/marketing-handler.ts`, `lib/social/oauth-config.ts`, `app/api/social/oauth/[platform]/route.ts`, `lib/social/publish-service.ts`, `app/api/cron/publish-scheduled/route.ts`, `CLAUDE.md`
+
+---
+
 ## 2026-02-21 — Video Pipeline: Signed URLs + Faster Pacing + New Endpoints
 
 - Video generate routes now resolve Supabase storage paths to signed URLs before passing to Lambda (fixes broken renders with relative paths)

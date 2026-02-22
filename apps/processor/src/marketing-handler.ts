@@ -490,14 +490,15 @@ export async function handleMarketingJob(
           .eq('id', jobId);
         console.log(`[Marketing] Scheduled posts skipped — no social connections`);
       } else {
-        // Get captions result from the job we just updated
+        // Get captions + property site result from the job we just updated
         const { data: jobData } = await supabase
           .from('marketing_jobs')
-          .select('captions_result')
+          .select('captions_result, property_site_result')
           .eq('id', jobId)
           .single();
 
         const captionsResult = (jobData?.captions_result || {}) as Record<string, { caption?: string; hashtags?: string }>;
+        const propertySiteResult = jobData?.property_site_result as { slug?: string } | null;
 
         // Get hero photo URL for the post image
         const heroPhoto = listing.hero_photo_id
@@ -519,10 +520,21 @@ export async function handleMarketingJob(
             continue;
           }
 
-          // Combine caption + hashtags
-          const content = platformCaption.hashtags
+          // Combine caption + hashtags + property site link with UTM tracking
+          let content = platformCaption.hashtags
             ? `${platformCaption.caption}\n\n${platformCaption.hashtags}`
             : platformCaption.caption;
+
+          // Append UTM-tagged property site link if available
+          if (propertySiteResult?.slug) {
+            const baseUrl = env.NEXT_PUBLIC_BASE_URL || 'https://snapr.pro';
+            const siteUrl = new URL(`/p/${propertySiteResult.slug}`, baseUrl);
+            siteUrl.searchParams.set('utm_source', platformKey as string);
+            siteUrl.searchParams.set('utm_medium', 'social');
+            siteUrl.searchParams.set('utm_campaign', 'just_listed');
+            siteUrl.searchParams.set('utm_content', listingId);
+            content += `\n\n${siteUrl.toString()}`;
+          }
 
           const { data: post, error: postError } = await supabase
             .from('scheduled_posts')
