@@ -16,6 +16,8 @@ import {
   publishToFacebook,
   publishToInstagram,
   publishToLinkedIn,
+  publishVideoToTikTok,
+  publishPhotoToTikTok,
 } from '@/lib/social/publish-service';
 import { refreshAccessToken, type SocialPlatform } from '@/lib/social/oauth-config';
 
@@ -267,6 +269,21 @@ export async function GET(request: NextRequest) {
               break;
             }
 
+            case 'tiktok': {
+              if (!content.imageUrls?.length) {
+                await markPostFailed(supabase, post.id, 'TikTok requires images or video');
+                results.failed++;
+                continue;
+              }
+
+              publishResult = await publishPhotoToTikTok(
+                connection.access_token,
+                content.imageUrls,
+                content.text
+              );
+              break;
+            }
+
             default: {
               await markPostFailed(supabase, post.id, `Platform ${post.platform} not yet supported`);
               results.skipped++;
@@ -395,6 +412,10 @@ async function publishVideoPost(
       // LinkedIn video publishing requires registerUpload → upload binary → create post
       // Complex flow — defer to future phase
       return { success: false, error: 'LinkedIn video publishing coming soon' };
+    }
+
+    case 'tiktok': {
+      return publishVideoToTikTok(connection.access_token, videoUrl, content.text);
     }
 
     default:

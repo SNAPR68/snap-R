@@ -15,7 +15,7 @@ Upload → Prepare → Market → Distribute → Measure → Loop
 - **Upload**: Photos go to Supabase Storage
 - **Prepare**: AI enhancement pipeline (sky replacement, staging, twilight, etc.) via Cloudflare Worker
 - **Market**: 5-step marketing pipeline auto-triggers after preparation (description → captions → MLS → property site → scheduled posts)
-- **Distribute**: Cron publisher posts to Facebook/Instagram/LinkedIn every 15 min
+- **Distribute**: Cron publisher posts to Facebook/Instagram/LinkedIn/TikTok every 15 min
 - **Measure**: Analytics sync cron fetches engagement metrics every 6 hours
 - **Loop**: Status changes (price drop, open house) can re-trigger marketing
 
@@ -45,7 +45,7 @@ Upload → Prepare → Market → Distribute → Measure → Loop
 /lib/ai/                - AI enhancement pipeline (listing-engine, decision-engine, providers)
 /lib/supabase/          - Database clients (client.ts, server.ts, admin.ts)
 /lib/content/           - Content/billing utilities (limits.ts)
-/lib/social/            - Social publishing service (publish-service.ts)
+/lib/social/            - Social publishing service (publish-service.ts, oauth-config.ts, utm.ts)
 /lib/video/             - Video utilities (photo-ordering.ts, voiceover-service.ts)
 /lib/validation/        - Zod schemas for API input validation (schemas.ts)
 /remotion/              - Remotion video compositions and config
@@ -103,7 +103,7 @@ Supabase PostgreSQL with RLS. Key tables:
   - `total_cost_cents`, `cost_breakdown` (JSON)
 - `scheduled_posts` - Posts queued for auto-publishing (content, platform, scheduled_for, status)
 - `published_posts` - Published posts with analytics columns (likes, comments, shares, impressions, reach, engagement_rate, last_synced_at)
-- `social_connections` - OAuth connections to Facebook/Instagram/LinkedIn (access_token, pages, instagram_account, linkedin_urn)
+- `social_connections` - OAuth connections to Facebook/Instagram/LinkedIn/TikTok (access_token, pages, instagram_account, linkedin_urn, platform_user_id for TikTok open_id)
 - `property_sites` - Public property site configurations (slug, theme, brand)
 
 ### Video
@@ -176,7 +176,7 @@ The async processing worker handles both photo enhancement and marketing automat
 | 2. Captions | Platform-specific social captions + hashtags | GPT-4o-mini | ~3c/platform |
 | 3. MLS Package | Photo manifest + property metadata | None (metadata) | 0c |
 | 4. Property Site | Insert draft into `property_sites` table | None (DB) | 0c |
-| 5. Scheduled Posts | Auto-schedule posts for connected platforms | None (DB) | 0c |
+| 5. Scheduled Posts | Auto-schedule posts with UTM-tagged property site links | None (DB) | 0c |
 
 **Auto-trigger:** Marketing fires automatically when `listings.preparation_status` transitions to `'prepared'` (via webhook/trigger in the preparation flow).
 
@@ -192,13 +192,32 @@ The async processing worker handles both photo enhancement and marketing automat
   - Headers: `LinkedIn-Version: 202401`, `X-Restli-Protocol-Version: 2.0.0`
   - Image upload: 3-step flow (initializeUpload → download → PUT binary)
   - Post URN returned in `x-restli-id` response header
+- `publishVideoToTikTok(accessToken, videoUrl, caption)` → `PublishResult`
+  - Uses TikTok Content Posting API v2 (`PULL_FROM_URL` method)
+  - TikTok fetches video from our S3/CDN URL
+  - Unaudited apps default to `privacy_level: 'SELF_ONLY'` (private posts)
+- `publishPhotoToTikTok(accessToken, imageUrls, caption)` → `PublishResult`
+  - Uses TikTok Photo Posting API (creates photo carousel)
 
 `PublishResult` = `{ success, postId?, postUrl?, error? }`
 
+**UTM Tracking** (`lib/social/utm.ts`):
+- `appendUtmParams(url, { platform, postType, listingId })` → URL with UTM query params
+- Marketing handler Step 5 auto-appends UTM-tagged property site link to every scheduled post caption
+- Params: `utm_source` (platform), `utm_medium` (social), `utm_campaign` (post type), `utm_content` (listing ID)
+
 **OAuth scopes** (`lib/social/oauth-config.ts`):
 - LinkedIn: `openid`, `profile`, `email`, `w_member_social`
+- TikTok: `user.info.basic`, `video.publish`, `video.upload` (v2 API, uses `client_key` not `client_id`)
 - Twitter: Uses PKCE (S256) with code verifier embedded in state
 - Facebook: Long-lived token exchange via `fb_exchange_token` grant
+
+**TikTok OAuth specifics:**
+- Auth URL: `https://www.tiktok.com/v2/auth/authorize/`
+- Token URL: `https://open.tiktokapis.com/v2/oauth/token/` (JSON body, not form-urlencoded)
+- Token exchange returns `open_id` (stored as `platform_user_id` in `social_connections`)
+- Access tokens last ~24 hours; refresh tokens ~365 days
+- Refresh uses JSON body with `client_key` param
 
 ## Video Generation (Remotion Lambda)
 
@@ -349,6 +368,7 @@ These migrations have been applied to the live Supabase database:
 - `REMOTION_AWS_REGION`, `REMOTION_AWS_ACCESS_KEY_ID`, `REMOTION_AWS_SECRET_ACCESS_KEY`
 - `REMOTION_LAMBDA_FUNCTION_NAME`, `REMOTION_LAMBDA_SERVE_URL`, `REMOTION_S3_BUCKET_NAME`
 - `ELEVENLABS_API_KEY` (voiceover TTS)
+- `TIKTOK_CLIENT_KEY`, `TIKTOK_CLIENT_SECRET` (TikTok OAuth)
 
 **Worker (Cloudflare):**
 - `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `SUPABASE_JWT_SECRET`
@@ -371,6 +391,7 @@ Default:       100 req/min
 - **OAuth CSRF validation**: State parameter verified against `user.id` in callback (`app/api/social/oauth/[platform]/route.ts`)
 - **Twitter PKCE**: S256 code challenge with `crypto.createHash('sha256')` (`lib/social/oauth-config.ts`)
 - **Facebook token refresh**: Short-lived tokens exchanged for long-lived tokens via `fb_exchange_token`
+- **TikTok token refresh**: 24-hour access tokens auto-refreshed via cron publisher; refresh tokens last ~365 days
 - **Centralized auth middleware**: `middleware.ts` protects `/dashboard/*`, `/admin/*`, `/checkout/*`, `/onboarding/*` — redirects unauthenticated users with `?redirect=` param
 - **Zod validation**: All API inputs parsed through Zod schemas before processing (`lib/validation/schemas.ts`)
 
@@ -439,3 +460,6 @@ Key settings:
 14. **`preparation_metadata` data structures**: `photoAudit` is a `Record<string, object>` (NOT an array); `decisionAudit` is a `Record<string, { photoType, ... }>` — always use `Object.entries()` to iterate, never `.map()` directly
 15. **Remotion Lambda env vars** must be set on both Vercel and `.env.local` — function name includes memory/timeout in the name (e.g., `remotion-render-4-0-424-mem3008mb-disk2048mb-900sec`)
 16. **When deploying new Lambda functions**, update `REMOTION_LAMBDA_FUNCTION_NAME` in both `.env.local` and Vercel environment variables
+17. **TikTok unaudited app limitation**: Posts default to `SELF_ONLY` (private). Must apply for TikTok app audit to enable public posting. Video must be H.264 MP4, max 4GB, 1080x1920 recommended (Remotion output matches)
+18. **TikTok API uses `client_key`** not `client_id` — all TikTok OAuth/token calls use JSON body format, not form-urlencoded like other platforms
+19. **UTM tracking is automatic**: Marketing handler Step 5 appends UTM-tagged property site URL to every scheduled post caption. The UTM utility (`lib/social/utm.ts`) is also available for standalone use
