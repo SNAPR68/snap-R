@@ -1,6 +1,21 @@
 # SnapR Execution Changelog
 =================================
 
+## 2026-02-22 — Gated Property Sites + Lead Capture Dashboard
+
+- Created `property_leads` table with UTM attribution columns, RLS policies, public INSERT policy for visitors
+- Lead gate on property sites: Pro/Agency users' sites show first 4 photos, then a capture form to unlock all photos + video
+- `/api/leads` route: POST (public lead capture), GET (dashboard fetch with filters), PATCH (status update)
+- `/dashboard/leads` page: lead list with status filters, expandable details, UTM attribution, status management, CSV export
+- Added `canCaptureLeads` to plan limits (pro/agency = true, free/starter = false)
+- Property site server component now fetches owner tier, passes `isGated`, `propertySiteId`, `userId` to client
+- PropertySiteClient captures UTM params from URL on mount, sends with lead submission
+- Existing `property-inquiry` route also persists sidebar contact form submissions to `property_leads` table
+- Added "Leads" nav item to dashboard sidebar under Measure section
+- Files: `supabase/migrations/20260222_property_leads.sql` (NEW), `app/api/leads/route.ts` (NEW), `app/dashboard/leads/page.tsx` (NEW), `app/p/[slug]/page.tsx`, `app/p/[slug]/PropertySiteClient.tsx`, `app/api/property-inquiry/route.ts`, `components/dashboard-sidebar.tsx`, `lib/content/limits.ts`
+
+---
+
 ## 2026-02-22 — Token Refresh Cron + Publish Cron Bug Fix
 
 - Created `app/api/cron/refresh-tokens/route.ts` — proactive token refresh every 4 hours

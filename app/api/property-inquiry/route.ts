@@ -1,20 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { Resend } from 'resend'
+import { adminSupabase } from '@/lib/supabase/admin'
 
 export async function POST(request: NextRequest) {
   const resend = new Resend(process.env.RESEND_API_KEY)
-  
+
   try {
     const body = await request.json()
     const { name, email, phone, message, listingId, listingAddress, agentEmail } = body
-    
+
     if (!name || !email || !message) {
       return NextResponse.json(
         { error: 'Name, email, and message are required' },
         { status: 400 }
       )
     }
-    
+
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
     if (!emailRegex.test(email)) {
       return NextResponse.json(
@@ -22,9 +23,36 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       )
     }
-    
+
     const recipientEmail = agentEmail || process.env.DEFAULT_NOTIFICATION_EMAIL || 'support@snap-r.com'
-    
+
+    // Persist lead to database (best-effort — don't block on failure)
+    if (listingId) {
+      try {
+        const supabase = adminSupabase()
+        const { data: listing } = await supabase
+          .from('listings')
+          .select('user_id')
+          .eq('id', listingId)
+          .single()
+
+        if (listing?.user_id) {
+          await supabase.from('property_leads').insert({
+            user_id: listing.user_id,
+            listing_id: listingId,
+            name,
+            email,
+            phone: phone || null,
+            message,
+            status: 'new',
+          })
+        }
+      } catch (dbError: unknown) {
+        const dbMsg = dbError instanceof Error ? dbError.message : 'Unknown DB error'
+        console.error('[Property Inquiry] DB persist error (non-blocking):', dbMsg)
+      }
+    }
+
     const { data, error } = await resend.emails.send({
       from: 'SnapR Property Inquiries <noreply@snap-r.com>',
       to: [recipientEmail],
@@ -91,12 +119,12 @@ export async function POST(request: NextRequest) {
         </html>
       `,
     })
-    
+
     if (error) {
       console.error('[Property Inquiry] Email error:', error)
       return NextResponse.json({ error: 'Failed to send email' }, { status: 500 })
     }
-    
+
     try {
       await resend.emails.send({
         from: 'SnapR <noreply@snap-r.com>',
@@ -128,15 +156,16 @@ export async function POST(request: NextRequest) {
           </html>
         `,
       })
-    } catch (confirmError) {
-      console.error('[Property Inquiry] Confirmation email error:', confirmError)
+    } catch {
+      console.error('[Property Inquiry] Confirmation email failed')
     }
-    
+
     console.log('[Property Inquiry] Email sent successfully:', data?.id)
     return NextResponse.json({ success: true })
-    
-  } catch (error) {
-    console.error('[Property Inquiry] Error:', error)
+
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Unknown error'
+    console.error('[Property Inquiry] Error:', message)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
