@@ -1,6 +1,25 @@
 # SnapR Execution Changelog
 =================================
 
+## 2026-02-23 — Mobile App: Billing Gate UI + Notifications Integration + Mobile API Endpoints
+
+### 1. Billing Gate UI Enforcement
+- **AiDirectorScreen**: Blocks free/starter users with upgrade message before camera loads
+- **ContentStudioScreen**: Blocks free-tier users from content studio, skips data fetch when gated
+- Gate checks placed after all hooks (React rules-of-hooks compliant)
+
+### 2. Push Notification Integration
+- **App.tsx**: Registers for push notifications on login, stores device token via backend API
+- Foreground notification listener + notification tap listener with cleanup
+- Inner AppContent component pattern for auth-aware notification setup
+
+### 3. Mobile API Endpoints
+- **GET /api/mobile/dashboard-stats**: Returns totalListings, totalPhotos, publishedPosts counts
+- **GET /api/mobile/content-stats**: Returns scheduledCount, publishedCount, totalImpressions
+
+### Verification
+- npx tsc --noEmit: 0 errors (root + mobile)
+
 ## 2026-02-23 — Mobile App Phase 5: Push Notifications + Billing Gates + App Store Prep
 
 ### 1. Push Notifications

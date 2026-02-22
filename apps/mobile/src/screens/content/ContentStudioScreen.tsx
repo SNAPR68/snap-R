@@ -15,6 +15,7 @@ import {
 } from 'react-native';
 import { apiClient } from '../../lib/api';
 import { colors, spacing, fontSize, borderRadius } from '../../constants/theme';
+import { useBillingGate } from '../../hooks/useBillingGate';
 
 interface ScheduledPost {
   id: string;
@@ -45,6 +46,7 @@ const TABS = ['Scheduled', 'Published'] as const;
 type TabName = (typeof TABS)[number];
 
 export default function ContentStudioScreen() {
+  const { canAccessContentStudio, upgradeMessage } = useBillingGate();
   const [activeTab, setActiveTab] = useState<TabName>('Scheduled');
   const [scheduled, setScheduled] = useState<ScheduledPost[]>([]);
   const [published, setPublished] = useState<PublishedPost[]>([]);
@@ -57,6 +59,7 @@ export default function ContentStudioScreen() {
   const [refreshing, setRefreshing] = useState(false);
 
   const fetchData = useCallback(async () => {
+    if (!canAccessContentStudio) return;
     try {
       const [schedData, pubData, statsData] = await Promise.all([
         apiClient.getScheduledPosts(),
@@ -71,11 +74,15 @@ export default function ContentStudioScreen() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [canAccessContentStudio]);
 
   useEffect(() => {
+    if (!canAccessContentStudio) {
+      setLoading(false);
+      return;
+    }
     fetchData();
-  }, [fetchData]);
+  }, [fetchData, canAccessContentStudio]);
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -112,6 +119,16 @@ export default function ContentStudioScreen() {
     return (
       <View style={[styles.container, styles.centered]}>
         <ActivityIndicator size="large" color={colors.gold} />
+      </View>
+    );
+  }
+
+  // Billing gate: block free-tier users from Content Studio
+  if (!canAccessContentStudio) {
+    return (
+      <View style={[styles.container, styles.centered]}>
+        <Text style={styles.gateTitle}>Content Studio</Text>
+        <Text style={styles.gateText}>{upgradeMessage}</Text>
       </View>
     );
   }
@@ -386,5 +403,18 @@ const styles = StyleSheet.create({
     color: colors.textMuted,
     marginTop: spacing.xs,
     textAlign: 'center',
+  },
+  gateTitle: {
+    fontSize: fontSize.xxl,
+    fontWeight: '700',
+    color: colors.textPrimary,
+    marginBottom: spacing.md,
+  },
+  gateText: {
+    fontSize: fontSize.md,
+    color: colors.textSecondary,
+    textAlign: 'center',
+    paddingHorizontal: spacing.xxl,
+    lineHeight: 22,
   },
 });

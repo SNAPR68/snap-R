@@ -41,6 +41,7 @@ import ScoreRing from '../../components/camera/ScoreRing';
 import GuidanceOverlay from '../../components/camera/GuidanceOverlay';
 import RoomBadge from '../../components/camera/RoomBadge';
 import PhotoChecklist from '../../components/camera/PhotoChecklist';
+import { useBillingGate } from '../../hooks/useBillingGate';
 
 interface AiDirectorScreenProps {
   route?: {
@@ -58,6 +59,7 @@ interface AiDirectorScreenProps {
 export default function AiDirectorScreen({ route, navigation }: AiDirectorScreenProps) {
   const [permission, requestPermission] = useCameraPermissions();
   const cameraRef = useRef<CameraView>(null);
+  const { canUseDirector, upgradeMessage } = useBillingGate();
 
   // AI Director state
   const [detectedRoom, setDetectedRoom] = useState<PhotoType>('exterior_front');
@@ -202,6 +204,22 @@ export default function AiDirectorScreen({ route, navigation }: AiDirectorScreen
         </Text>
         <TouchableOpacity style={styles.permissionButton} onPress={requestPermission}>
           <Text style={styles.permissionButtonText}>Grant Camera Access</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
+
+  // Billing gate: block free/starter users from AI Director
+  if (!canUseDirector) {
+    return (
+      <View style={styles.permissionContainer}>
+        <Text style={styles.permissionTitle}>AI Director</Text>
+        <Text style={styles.permissionText}>{upgradeMessage}</Text>
+        <TouchableOpacity
+          style={styles.permissionButton}
+          onPress={() => navigation?.goBack()}
+        >
+          <Text style={styles.permissionButtonText}>Go Back</Text>
         </TouchableOpacity>
       </View>
     );
