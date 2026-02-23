@@ -18,8 +18,9 @@ export const rateLimiter = new Ratelimit({
 });
 */
 
-// Current in-memory implementation (works for single instance)
+// Current in-memory implementation (works for single instance / edge runtime)
 const rateLimit = new Map<string, { count: number; resetTime: number }>();
+let lastCleanup = Date.now();
 
 export function checkRateLimit(
   identifier: string,
@@ -27,6 +28,17 @@ export function checkRateLimit(
   windowMs: number = 60000
 ): { success: boolean; remaining: number } {
   const now = Date.now();
+
+  // Lazy cleanup: purge expired entries every 60s (edge-runtime safe)
+  if (now - lastCleanup > 60000) {
+    lastCleanup = now;
+    for (const [key, value] of rateLimit.entries()) {
+      if (now > value.resetTime) {
+        rateLimit.delete(key);
+      }
+    }
+  }
+
   const record = rateLimit.get(identifier);
 
   if (!record || now > record.resetTime) {
@@ -41,13 +53,3 @@ export function checkRateLimit(
   record.count++;
   return { success: true, remaining: limit - record.count };
 }
-
-// Cleanup old entries periodically
-setInterval(() => {
-  const now = Date.now();
-  for (const [key, value] of rateLimit.entries()) {
-    if (now > value.resetTime) {
-      rateLimit.delete(key);
-    }
-  }
-}, 60000);
