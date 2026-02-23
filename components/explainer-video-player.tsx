@@ -5,11 +5,11 @@ import { useRef, useState } from 'react';
 // The rendered explainer video URL — env var override or Cloudinary default
 const EXPLAINER_VIDEO_URL =
   process.env.NEXT_PUBLIC_EXPLAINER_VIDEO_URL ||
-  'https://res.cloudinary.com/drie9liyn/video/upload/v1771823926/snapr-explainer-video.mp4';
+  'https://res.cloudinary.com/drie9liyn/video/upload/v1771843733/snapr-explainer-video.mp4';
 
-// Cloudinary auto-generated poster from a visible frame (4 seconds in)
+// Cloudinary auto-generated poster from a visible frame (5 seconds in — after intro card)
 const EXPLAINER_POSTER_URL =
-  'https://res.cloudinary.com/drie9liyn/video/upload/so_4,f_jpg,q_80,w_1920/v1771823926/snapr-explainer-video.jpg';
+  'https://res.cloudinary.com/drie9liyn/video/upload/so_5,f_jpg,q_80,w_1920/v1771843733/snapr-explainer-video.jpg';
 
 export function ExplainerVideoPlayer() {
   const videoRef = useRef<HTMLVideoElement>(null);
