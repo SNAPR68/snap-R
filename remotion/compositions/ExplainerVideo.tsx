@@ -33,7 +33,7 @@ export const explainerVideoSchema = z.object({
 export type ExplainerVideoProps = z.infer<typeof explainerVideoSchema>;
 
 // ============================================
-// FRAME DEFINITIONS
+// FRAME DEFINITIONS — synced to v2 capture (51 frames: 0000-0050)
 // ============================================
 
 interface SceneConfig {
@@ -50,7 +50,19 @@ interface SceneConfig {
   };
 }
 
-// All captured screenshot frames, organized by scene
+// Voiceover timing plan:
+//   Intro card:         0-3s    (no voiceover — music intro)
+//   Homepage hero:      3-14s   → "Meet SnapR — the AI-powered platform..."
+//   Features/gallery:   14-23s  → "Scroll through stunning before-and-after..."
+//   AI tools:           23-30s  → "Sky replacement, virtual twilight..."
+//   Pricing:            30-38s  → "Choose the plan that fits..."
+//   Signup:             38-43s  → "Getting started takes under a minute..."
+//   Login+Dashboard:    43-55s  → "Sign in and your dashboard gives you..."
+//   Listings+Studio:    55-68s  → "Browse your listings, then open the AI Studio..."
+//   Content Studio:     68-78s  → "Once your photos are ready, head to..."
+//   Analytics+Brand:    78-85s  → "Track performance in Analytics..."
+//   Closing CTA:        85-92s  → "SnapR — from photos to published listing..."
+
 const SCENES: SceneConfig[] = [
   {
     id: 'homepage-hero',
@@ -62,141 +74,141 @@ const SCENES: SceneConfig[] = [
       '0002_homepage_scroll_1.png',
       '0003_homepage_scroll_2.png',
       '0004_homepage_scroll_3.png',
-      '0005_homepage_scroll_4.png',
-      '0006_homepage_scroll_5.png',
     ],
     durationSec: 11,
-    kenBurns: { startScale: 1.05, endScale: 1.0, panX: 0, panY: -15 },
+    kenBurns: { startScale: 1.05, endScale: 1.0, panX: 0, panY: -12 },
   },
   {
-    id: 'features',
-    label: 'Features & Gallery',
-    caption: 'Fifteen AI enhancement tools at your fingertips',
+    id: 'features-gallery',
+    label: 'Before & After',
+    caption: 'Stunning transformations that sell faster',
     frames: [
-      '0007_homepage_features_scroll_0.png',
-      '0008_homepage_features_scroll_1.png',
-      '0009_homepage_features_scroll_2.png',
-      '0010_homepage_features_scroll_3.png',
-      '0011_homepage_features_scroll_4.png',
-      '0012_homepage_features_scroll_5.png',
-      '0013_homepage_features_scroll_6.png',
-      '0014_homepage_features_scroll_7.png',
-      '0015_homepage_demo_scroll_0.png',
-      '0016_homepage_demo_scroll_1.png',
-      '0017_homepage_demo_scroll_2.png',
-      '0018_homepage_demo_scroll_3.png',
-      '0019_homepage_demo_scroll_4.png',
-      '0020_homepage_demo_scroll_5.png',
-      '0021_homepage_demo_scroll_6.png',
-      '0022_homepage_demo_scroll_7.png',
-      '0023_homepage_demo_scroll_8.png',
-      '0024_homepage_demo_scroll_9.png',
+      '0005_features_scroll_0.png',
+      '0006_features_scroll_1.png',
+      '0007_features_scroll_2.png',
+      '0008_features_scroll_3.png',
+      '0009_features_scroll_4.png',
+      '0010_gallery_scroll_0.png',
+      '0011_gallery_scroll_1.png',
+      '0012_gallery_scroll_2.png',
+      '0013_gallery_scroll_3.png',
+      '0014_gallery_scroll_4.png',
+      '0015_gallery_scroll_5.png',
+    ],
+    durationSec: 9,
+    kenBurns: { startScale: 1.0, endScale: 1.04, panX: 0, panY: 10 },
+  },
+  {
+    id: 'ai-tools',
+    label: 'AI Tools',
+    caption: 'Fifteen professional tools at your fingertips',
+    frames: [
+      '0016_tools_scroll_0.png',
+      '0017_tools_scroll_1.png',
+      '0018_tools_scroll_2.png',
+      '0019_tools_scroll_3.png',
     ],
     durationSec: 7,
-    kenBurns: { startScale: 1.0, endScale: 1.05, panX: 0, panY: 10 },
+    kenBurns: { startScale: 1.02, endScale: 1.0, panX: -3, panY: 5 },
   },
   {
     id: 'pricing',
     label: 'Pricing',
-    caption: 'Choose the plan that fits your business',
+    caption: 'Every plan includes all fifteen AI tools',
     frames: [
-      '0025_pricing_section.png',
-      '0026_pricing_scroll_0.png',
-      '0027_pricing_scroll_1.png',
-      '0028_pricing_scroll_2.png',
-      '0029_pricing_scroll_3.png',
+      '0020_pricing_top.png',
+      '0021_pricing_scroll_0.png',
+      '0022_pricing_scroll_1.png',
+      '0023_pricing_scroll_2.png',
     ],
-    durationSec: 6,
+    durationSec: 8,
     kenBurns: { startScale: 1.0, endScale: 1.03, panX: 0, panY: -5 },
   },
   {
     id: 'signup',
     label: 'Getting Started',
-    caption: 'Set up your brand in under a minute',
+    caption: 'Create your account in under a minute',
     frames: [
-      '0030_signup_page.png',
-      '0031_signup_typing.png',
+      '0024_signup_page.png',
     ],
-    durationSec: 7,
+    durationSec: 5,
     kenBurns: { startScale: 1.02, endScale: 1.0, panX: 0, panY: 0 },
   },
   {
-    id: 'dashboard',
+    id: 'login-dashboard',
     label: 'Dashboard',
-    caption: 'Your complete view of every listing',
+    caption: 'Your complete command center for every listing',
     frames: [
-      '0053_login_clean.png',
-      '0054_login_filled.png',
-      '0055_dashboard_main.png',
-      '0056_dashboard_scroll_0.png',
-      '0057_dashboard_scroll_1.png',
-      '0058_dashboard_scroll_2.png',
-      '0059_dashboard_scroll_3.png',
-      '0060_dashboard_scroll_4.png',
+      '0025_login_clean.png',
+      '0026_login_filled.png',
+      '0027_dashboard_main.png',
+      '0028_dashboard_scroll_0.png',
+      '0029_dashboard_scroll_1.png',
+      '0030_dashboard_scroll_2.png',
+      '0031_dashboard_scroll_3.png',
     ],
-    durationSec: 10,
-    kenBurns: { startScale: 1.0, endScale: 1.04, panX: 5, panY: 8 },
+    durationSec: 12,
+    kenBurns: { startScale: 1.0, endScale: 1.04, panX: 4, panY: 6 },
   },
   {
-    id: 'studio',
+    id: 'listings-studio',
     label: 'AI Studio',
-    caption: 'Sky replacement, virtual twilight, staging — fifteen tools',
+    caption: 'Sky replacement, staging, twilight — in seconds',
     frames: [
-      '0061_listings_page.png',
-      '0062_listings_scroll_0.png',
-      '0063_listings_scroll_1.png',
-      '0064_listings_scroll_2.png',
-      '0065_studio_main.png',
-      '0066_studio_scroll_0.png',
-      '0067_studio_scroll_1.png',
-      '0068_studio_scroll_2.png',
+      '0032_listings_page.png',
+      '0033_listings_scroll_0.png',
+      '0034_listings_scroll_1.png',
+      '0035_studio_main.png',
+      '0036_studio_scroll_0.png',
+      '0037_studio_scroll_1.png',
+      '0038_studio_scroll_2.png',
     ],
-    durationSec: 15,
-    kenBurns: { startScale: 1.03, endScale: 1.0, panX: -5, panY: 5 },
+    durationSec: 13,
+    kenBurns: { startScale: 1.03, endScale: 1.0, panX: -4, panY: 4 },
   },
   {
-    id: 'marketing',
-    label: 'Marketing & Content Studio',
-    caption: 'AI generates descriptions, captions, and property websites',
+    id: 'content-studio',
+    label: 'Content Studio',
+    caption: 'AI generates descriptions, captions, and posts',
     frames: [
-      '0069_content_studio.png',
-      '0070_content_studio_scroll_0.png',
-      '0071_content_studio_scroll_1.png',
-      '0072_content_studio_scroll_2.png',
+      '0039_content_studio_select.png',
+      '0040_content_studio_listing.png',
+      '0041_content_studio_scroll_0.png',
+      '0042_content_studio_scroll_1.png',
+      '0043_content_studio_scroll_2.png',
+      '0044_content_library.png',
+      '0045_content_calendar.png',
     ],
     durationSec: 10,
-    kenBurns: { startScale: 1.0, endScale: 1.04, panX: 0, panY: -8 },
+    kenBurns: { startScale: 1.0, endScale: 1.04, panX: 0, panY: -6 },
   },
   {
-    id: 'analytics',
-    label: 'Analytics',
-    caption: 'Schedule, publish, and track performance',
+    id: 'analytics-brand',
+    label: 'Analytics & Brand',
+    caption: 'Track performance and customize your brand',
     frames: [
-      '0073_analytics.png',
-      '0074_analytics_scroll_0.png',
-      '0075_analytics_scroll_1.png',
-      '0076_analytics_scroll_2.png',
-      '0077_campaigns.png',
-      '0078_campaigns_scroll_0.png',
-      '0079_campaigns_scroll_1.png',
+      '0046_analytics.png',
+      '0047_analytics_scroll_0.png',
+      '0048_analytics_scroll_1.png',
+      '0049_brand_profile.png',
     ],
-    durationSec: 10,
-    kenBurns: { startScale: 1.02, endScale: 1.0, panX: 5, panY: -5 },
+    durationSec: 7,
+    kenBurns: { startScale: 1.02, endScale: 1.0, panX: 3, panY: -3 },
   },
   {
     id: 'closing',
     label: 'Start Free Trial',
     caption: 'From photos to published listing in under ten minutes',
     frames: [
-      '0052_final_cta.png',
+      '0050_final_cta.png',
     ],
-    durationSec: 8,
-    kenBurns: { startScale: 1.0, endScale: 1.08, panX: 0, panY: 0 },
+    durationSec: 7,
+    kenBurns: { startScale: 1.0, endScale: 1.06, panX: 0, panY: 0 },
   },
 ];
 
 const FPS = 30;
-const TRANSITION_FRAMES = 15;
+const TRANSITION_FRAMES = 18; // 0.6s crossfade — smoother than 0.5s
 const INTRO_DURATION = 3 * FPS;
 const CLOSING_CARD_DURATION = 5 * FPS;
 
@@ -253,10 +265,10 @@ const SlideshowScene: React.FC<{
     Math.floor(frame / framesPerShot),
   );
 
-  // Crossfade between consecutive screenshots
+  // Smooth crossfade between consecutive screenshots
   const positionInShot = frame - currentFrameIndex * framesPerShot;
   const nextFrameIndex = Math.min(frames.length - 1, currentFrameIndex + 1);
-  const crossfadeDuration = Math.min(8, framesPerShot * 0.3);
+  const crossfadeDuration = Math.min(10, framesPerShot * 0.35);
   const crossfadeProgress =
     currentFrameIndex < frames.length - 1
       ? interpolate(
@@ -267,15 +279,15 @@ const SlideshowScene: React.FC<{
         )
       : 0;
 
-  // Caption animation
+  // Caption animation — fade in and out with the scene
   const captionOpacity = interpolate(
     frame,
-    [10, 25, totalFrames - 15, totalFrames],
+    [12, 28, totalFrames - 20, totalFrames],
     [0, 1, 1, 0],
     { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' },
   );
 
-  const captionY = interpolate(frame, [10, 25], [20, 0], {
+  const captionY = interpolate(frame, [12, 28], [15, 0], {
     easing: Easing.out(Easing.quad),
     extrapolateLeft: 'clamp',
     extrapolateRight: 'clamp',
@@ -333,7 +345,7 @@ const SlideshowScene: React.FC<{
           display: 'flex',
           alignItems: 'center',
           gap: 10,
-          opacity: interpolate(frame, [0, 12], [0, 1], {
+          opacity: interpolate(frame, [0, 15], [0, 1], {
             extrapolateRight: 'clamp',
           }),
           zIndex: 10,
