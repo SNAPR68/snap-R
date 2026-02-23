@@ -1,6 +1,54 @@
 # SnapR Execution Changelog
 =================================
 
+## 2026-02-23 — Production Hardening: Rate Limiting, Security Headers, Sentry Fix
+
+### 1. Rate Limiting Enabled in Middleware
+- Merged disabled rate limiting logic into active `middleware.ts`
+- Per-endpoint limits: `/api/enhance` 10/min, `/api/analyze` 20/min, `/api/upload` 30/min, `/api/contact` 3/min, `/api/auth` 5/min, default 100/min
+- Returns 429 with `Retry-After` + `X-RateLimit-*` headers when exceeded
+- Bot pattern blocking: `.env`, `.git`, `wp-admin`, `.php` requests → 404
+- IP extraction via `x-forwarded-for` header
+- Cron endpoints excluded (they use CRON_SECRET auth)
+- Refactored `lib/rate-limit.ts`: replaced `setInterval` cleanup with lazy cleanup (edge-runtime safe)
+
+### 2. Sentry Configuration Fixed
+- **DSN moved to env var** — `NEXT_PUBLIC_SENTRY_DSN` (previously hardcoded in 3 files)
+- **Trace sampling reduced** — `1.0` → `0.1` in production (90% cost reduction)
+- **PII sending disabled** — `sendDefaultPii: false` (was `true`, leaking user data to Sentry)
+- **Environment tagging** — `VERCEL_ENV` or `NODE_ENV` added for filtering in Sentry dashboard
+- Files: `sentry.server.config.ts`, `sentry.edge.config.ts`, `instrumentation-client.ts`
+
+### 3. Security Headers Added
+- `X-Content-Type-Options: nosniff` — prevents MIME sniffing
+- `X-Frame-Options: DENY` — prevents clickjacking
+- `X-XSS-Protection: 1; mode=block` — legacy XSS protection
+- `Referrer-Policy: strict-origin-when-cross-origin` — limits referrer leakage
+- `Permissions-Policy: camera=(), microphone=(), geolocation=()` — blocks unnecessary browser APIs
+- `Content-Security-Policy` — allowlists for self, supabase, cloudinary, stripe, sentry, googleapis, tiktok, openai
+
+### 4. Health Check Enhanced
+- `/api/health` now checks Supabase DB connectivity with latency measurement
+- Returns `{ status: 'ok', timestamp, version, checks: { database: { status, latencyMs } } }`
+- Returns 503 when DB is unreachable (for uptime monitoring alerts)
+
+### Modified Files
+- `middleware.ts` — rate limiting + bot blocking + auth (merged)
+- `lib/rate-limit.ts` — edge-runtime safe cleanup
+- `sentry.server.config.ts` — DSN env var, sampling, PII
+- `sentry.edge.config.ts` — DSN env var, sampling, PII
+- `instrumentation-client.ts` — DSN env var, sampling, PII
+- `next.config.mjs` — security headers
+- `app/api/health/route.ts` — DB connectivity check
+
+### Verification
+- `npx tsc --noEmit`: 0 errors
+
+### Environment Variable Required
+- `NEXT_PUBLIC_SENTRY_DSN` — set on Vercel (Production/Preview/Development) with the Sentry DSN value: `https://4959cf03062f6e1eb46c182711422f34@o4510685962240000.ingest.us.sentry.io/4510685964795904`
+
+---
+
 ## 2026-02-23 — Campaign Queue → Publishing Bridge (Close the Automation Loop)
 
 ### Problem
