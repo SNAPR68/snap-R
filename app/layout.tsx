@@ -93,7 +93,9 @@ export default function RootLayout({
         </ToastProvider>
         <CookieConsent />
         <AIChatbot />
+        {/* Contentsquare disabled — its overlay blocks video controls from receiving clicks
         <Script src="https://t.contentsquare.net/uxa/72ac82fa71720.js" strategy="afterInteractive" id="contentsquare" />
+        */}
         {process.env.NEXT_PUBLIC_GA_ID && (
           <>
             <Script
