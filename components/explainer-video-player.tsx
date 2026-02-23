@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef } from 'react';
+import { useRef, useState } from 'react';
 
 // The rendered explainer video URL — env var override or Cloudinary default
 const EXPLAINER_VIDEO_URL =
@@ -13,21 +13,16 @@ const EXPLAINER_POSTER_URL =
 
 export function ExplainerVideoPlayer() {
   const videoRef = useRef<HTMLVideoElement>(null);
+  const [isPlaying, setIsPlaying] = useState(false);
 
-  const handleContainerClick = () => {
+  const handlePlay = () => {
     const video = videoRef.current;
     if (!video) return;
-    if (video.paused) {
-      video.play().catch(() => {});
-    }
+    video.play().catch(() => {});
   };
 
   return (
-    // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions
-    <div
-      className="w-full aspect-video bg-black rounded-2xl overflow-hidden border border-white/10 relative z-10 cursor-pointer"
-      onClick={handleContainerClick}
-    >
+    <div className="w-full aspect-video bg-black rounded-2xl overflow-hidden border border-white/10 relative isolate">
       {/* eslint-disable-next-line jsx-a11y/media-has-caption */}
       <video
         ref={videoRef}
@@ -36,9 +31,30 @@ export function ExplainerVideoPlayer() {
         controls
         playsInline
         preload="metadata"
-        className="w-full h-full"
-        style={{ display: 'block', position: 'relative', zIndex: 10 }}
+        className="w-full h-full block relative"
+        onPlay={() => setIsPlaying(true)}
+        onPause={() => setIsPlaying(false)}
       />
+      {/* Play overlay — high z-index so it stays above analytics/chat overlays */}
+      {!isPlaying && (
+        <button
+          type="button"
+          onClick={handlePlay}
+          className="absolute inset-0 z-[100] flex items-center justify-center cursor-pointer group focus:outline-none focus:ring-2 focus:ring-[#D4A017] focus:ring-inset"
+          aria-label="Play video"
+        >
+          <span className="w-20 h-20 rounded-full bg-black/60 flex items-center justify-center group-hover:bg-black/80 transition-colors">
+            <svg
+              className="w-10 h-10 text-[#D4A017] ml-1"
+              fill="currentColor"
+              viewBox="0 0 24 24"
+              aria-hidden
+            >
+              <path d="M8 5v14l11-7z" />
+            </svg>
+          </span>
+        </button>
+      )}
     </div>
   );
 }
