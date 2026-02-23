@@ -1,6 +1,26 @@
 # SnapR Execution Changelog
 =================================
 
+## 2026-02-23 — Explainer Video v4: Fix Shakiness, Jitter, and Voiceover Desync
+
+### Root Causes Fixed
+1. **Ken Burns jitter** — `interpolate()` had NO easing; linear sub-pixel translate snapped to integer pixels causing stutter. Fixed: added `Easing.inOut(Easing.ease)` to all 3 Ken Burns interpolations (scale, panX, panY)
+2. **Too many screenshots** — features-gallery had 11 shots in 9s (0.82s each) causing flickering. Fixed: trimmed 6 scenes to min 2s per screenshot (51→36 total shots)
+3. **Floating-point frame distribution** — `framesPerShot = 270/11 = 24.545` with `Math.floor()` caused uneven timing. Fixed: pre-computed integer frame boundaries via `Math.round()`
+4. **Voiceover 3s ahead of visuals** — `<Audio>` started at frame 0 but intro card runs 0-3s. Fixed: wrapped in `<Sequence from={INTRO_DURATION - TRANSITION_FRAMES}>` (~2.4s delay)
+5. **Linear crossfades** — screenshot-to-screenshot fades used linear interpolation. Fixed: added `Easing.inOut(Easing.ease)` for smooth opacity transitions
+
+### Also
+- Zeroed out horizontal `panX` values on all scenes (vertical-only pan eliminates horizontal jitter)
+- Reduced Ken Burns scale ranges to subtler values (max 4% vs previous 5%)
+- Cloudinary video version: v1771851056
+
+### Modified Files
+- `remotion/compositions/ExplainerVideo.tsx` — all 5 fixes
+- `components/explainer-video-player.tsx` — updated Cloudinary URL
+
+---
+
 ## 2026-02-23 — Add pre-push hook enforcing EXECUTION_CHANGELOG.md updates
 
 - **New file**: `.claude/hooks/require-changelog.sh` — blocks `git push` and `git commit` if `EXECUTION_CHANGELOG.md` has not been modified in the branch's diff vs `origin/main`

@@ -6,6 +6,7 @@ import {
   useVideoConfig,
   staticFile,
   Easing,
+  Sequence,
 } from 'remotion';
 import { Audio } from '@remotion/media';
 import { TransitionSeries, linearTiming } from '@remotion/transitions';
@@ -34,6 +35,7 @@ export type ExplainerVideoProps = z.infer<typeof explainerVideoSchema>;
 
 // ============================================
 // FRAME DEFINITIONS — synced to v2 capture (51 frames: 0000-0050)
+// Trimmed to min 2s per screenshot for smooth pacing.
 // ============================================
 
 interface SceneConfig {
@@ -50,8 +52,8 @@ interface SceneConfig {
   };
 }
 
-// Voiceover timing plan:
-//   Intro card:         0-3s    (no voiceover — music intro)
+// Voiceover timing plan (audio delayed by INTRO_DURATION - TRANSITION_FRAMES):
+//   Intro card:         0-3s    (no voiceover — logo reveal)
 //   Homepage hero:      3-14s   → "Meet SnapR — the AI-powered platform..."
 //   Features/gallery:   14-23s  → "Scroll through stunning before-and-after..."
 //   AI tools:           23-30s  → "Sky replacement, virtual twilight..."
@@ -76,7 +78,7 @@ const SCENES: SceneConfig[] = [
       '0004_homepage_scroll_3.png',
     ],
     durationSec: 11,
-    kenBurns: { startScale: 1.05, endScale: 1.0, panX: 0, panY: -12 },
+    kenBurns: { startScale: 1.04, endScale: 1.0, panX: 0, panY: -8 },
   },
   {
     id: 'features-gallery',
@@ -84,19 +86,12 @@ const SCENES: SceneConfig[] = [
     caption: 'Stunning transformations that sell faster',
     frames: [
       '0005_features_scroll_0.png',
-      '0006_features_scroll_1.png',
-      '0007_features_scroll_2.png',
       '0008_features_scroll_3.png',
-      '0009_features_scroll_4.png',
       '0010_gallery_scroll_0.png',
-      '0011_gallery_scroll_1.png',
-      '0012_gallery_scroll_2.png',
       '0013_gallery_scroll_3.png',
-      '0014_gallery_scroll_4.png',
-      '0015_gallery_scroll_5.png',
     ],
     durationSec: 9,
-    kenBurns: { startScale: 1.0, endScale: 1.04, panX: 0, panY: 10 },
+    kenBurns: { startScale: 1.0, endScale: 1.03, panX: 0, panY: 6 },
   },
   {
     id: 'ai-tools',
@@ -105,11 +100,10 @@ const SCENES: SceneConfig[] = [
     frames: [
       '0016_tools_scroll_0.png',
       '0017_tools_scroll_1.png',
-      '0018_tools_scroll_2.png',
       '0019_tools_scroll_3.png',
     ],
     durationSec: 7,
-    kenBurns: { startScale: 1.02, endScale: 1.0, panX: -3, panY: 5 },
+    kenBurns: { startScale: 1.02, endScale: 1.0, panX: 0, panY: 4 },
   },
   {
     id: 'pricing',
@@ -122,7 +116,7 @@ const SCENES: SceneConfig[] = [
       '0023_pricing_scroll_2.png',
     ],
     durationSec: 8,
-    kenBurns: { startScale: 1.0, endScale: 1.03, panX: 0, panY: -5 },
+    kenBurns: { startScale: 1.0, endScale: 1.03, panX: 0, panY: -4 },
   },
   {
     id: 'signup',
@@ -142,13 +136,11 @@ const SCENES: SceneConfig[] = [
       '0025_login_clean.png',
       '0026_login_filled.png',
       '0027_dashboard_main.png',
-      '0028_dashboard_scroll_0.png',
       '0029_dashboard_scroll_1.png',
-      '0030_dashboard_scroll_2.png',
       '0031_dashboard_scroll_3.png',
     ],
     durationSec: 12,
-    kenBurns: { startScale: 1.0, endScale: 1.04, panX: 4, panY: 6 },
+    kenBurns: { startScale: 1.0, endScale: 1.03, panX: 0, panY: 5 },
   },
   {
     id: 'listings-studio',
@@ -157,14 +149,13 @@ const SCENES: SceneConfig[] = [
     frames: [
       '0032_listings_page.png',
       '0033_listings_scroll_0.png',
-      '0034_listings_scroll_1.png',
       '0035_studio_main.png',
       '0036_studio_scroll_0.png',
       '0037_studio_scroll_1.png',
       '0038_studio_scroll_2.png',
     ],
     durationSec: 13,
-    kenBurns: { startScale: 1.03, endScale: 1.0, panX: -4, panY: 4 },
+    kenBurns: { startScale: 1.03, endScale: 1.0, panX: 0, panY: 4 },
   },
   {
     id: 'content-studio',
@@ -173,14 +164,11 @@ const SCENES: SceneConfig[] = [
     frames: [
       '0039_content_studio_select.png',
       '0040_content_studio_listing.png',
-      '0041_content_studio_scroll_0.png',
       '0042_content_studio_scroll_1.png',
-      '0043_content_studio_scroll_2.png',
       '0044_content_library.png',
-      '0045_content_calendar.png',
     ],
     durationSec: 10,
-    kenBurns: { startScale: 1.0, endScale: 1.04, panX: 0, panY: -6 },
+    kenBurns: { startScale: 1.0, endScale: 1.03, panX: 0, panY: -4 },
   },
   {
     id: 'analytics-brand',
@@ -188,12 +176,11 @@ const SCENES: SceneConfig[] = [
     caption: 'Track performance and customize your brand',
     frames: [
       '0046_analytics.png',
-      '0047_analytics_scroll_0.png',
       '0048_analytics_scroll_1.png',
       '0049_brand_profile.png',
     ],
     durationSec: 7,
-    kenBurns: { startScale: 1.02, endScale: 1.0, panX: 3, panY: -3 },
+    kenBurns: { startScale: 1.02, endScale: 1.0, panX: 0, panY: -3 },
   },
   {
     id: 'closing',
@@ -203,12 +190,12 @@ const SCENES: SceneConfig[] = [
       '0050_final_cta.png',
     ],
     durationSec: 7,
-    kenBurns: { startScale: 1.0, endScale: 1.06, panX: 0, panY: 0 },
+    kenBurns: { startScale: 1.0, endScale: 1.04, panX: 0, panY: 0 },
   },
 ];
 
 const FPS = 30;
-const TRANSITION_FRAMES = 18; // 0.6s crossfade — smoother than 0.5s
+const TRANSITION_FRAMES = 18; // 0.6s crossfade between scenes
 const INTRO_DURATION = 3 * FPS;
 const CLOSING_CARD_DURATION = 5 * FPS;
 
@@ -240,42 +227,66 @@ const SlideshowScene: React.FC<{
   const { frames, kenBurns, durationSec, caption, label } = scene;
   const totalFrames = durationSec * fps;
 
-  // Ken Burns: smooth scale and pan over the scene duration
+  // Ken Burns: smooth eased scale and pan over the scene duration
   const scale = interpolate(
     frame,
     [0, totalFrames],
     [kenBurns.startScale, kenBurns.endScale],
-    { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' },
+    {
+      easing: Easing.inOut(Easing.ease),
+      extrapolateLeft: 'clamp',
+      extrapolateRight: 'clamp',
+    },
   );
 
   const panX = interpolate(frame, [0, totalFrames], [0, kenBurns.panX], {
+    easing: Easing.inOut(Easing.ease),
     extrapolateLeft: 'clamp',
     extrapolateRight: 'clamp',
   });
 
   const panY = interpolate(frame, [0, totalFrames], [0, kenBurns.panY], {
+    easing: Easing.inOut(Easing.ease),
     extrapolateLeft: 'clamp',
     extrapolateRight: 'clamp',
   });
 
-  // Which frame of the screenshot sequence to show
-  const framesPerShot = totalFrames / frames.length;
-  const currentFrameIndex = Math.min(
-    frames.length - 1,
-    Math.floor(frame / framesPerShot),
-  );
+  // Pre-compute integer frame boundaries for even shot distribution
+  const shotBoundaries: number[] = [];
+  for (let i = 0; i <= frames.length; i++) {
+    shotBoundaries.push(Math.round((i * totalFrames) / frames.length));
+  }
 
-  // Smooth crossfade between consecutive screenshots
-  const positionInShot = frame - currentFrameIndex * framesPerShot;
+  // Find current shot index from boundaries
+  let currentFrameIndex = 0;
+  for (let i = 0; i < frames.length; i++) {
+    if (frame >= shotBoundaries[i] && frame < shotBoundaries[i + 1]) {
+      currentFrameIndex = i;
+      break;
+    }
+    if (i === frames.length - 1) {
+      currentFrameIndex = i;
+    }
+  }
+
+  // Smooth eased crossfade between consecutive screenshots
+  const shotStartFrame = shotBoundaries[currentFrameIndex];
+  const shotEndFrame = shotBoundaries[currentFrameIndex + 1];
+  const shotDuration = shotEndFrame - shotStartFrame;
+  const positionInShot = frame - shotStartFrame;
   const nextFrameIndex = Math.min(frames.length - 1, currentFrameIndex + 1);
-  const crossfadeDuration = Math.min(10, framesPerShot * 0.35);
+  const crossfadeDuration = Math.min(10, shotDuration * 0.3);
   const crossfadeProgress =
     currentFrameIndex < frames.length - 1
       ? interpolate(
           positionInShot,
-          [framesPerShot - crossfadeDuration, framesPerShot],
+          [shotDuration - crossfadeDuration, shotDuration],
           [0, 1],
-          { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' },
+          {
+            easing: Easing.inOut(Easing.ease),
+            extrapolateLeft: 'clamp',
+            extrapolateRight: 'clamp',
+          },
         )
       : 0;
 
@@ -676,8 +687,10 @@ export const ExplainerVideo: React.FC<ExplainerVideoProps> = ({
 
   return (
     <AbsoluteFill style={{ backgroundColor: '#0A0A0A' }}>
-      {/* Voiceover audio — plays full duration */}
-      <Audio src={staticFile('explainer-voiceover.mp3')} volume={1} />
+      {/* Voiceover audio — delayed past intro card so narration syncs with scenes */}
+      <Sequence from={INTRO_DURATION - TRANSITION_FRAMES}>
+        <Audio src={staticFile('explainer-voiceover.mp3')} volume={1} />
+      </Sequence>
 
       <TransitionSeries>
         {/* Intro card */}
