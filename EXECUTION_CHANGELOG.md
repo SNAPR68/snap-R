@@ -1,6 +1,14 @@
 # SnapR Execution Changelog
 =================================
 
+## 2026-02-23 — Add pre-push hook enforcing EXECUTION_CHANGELOG.md updates
+
+- **New file**: `.claude/hooks/require-changelog.sh` — blocks `git push` and `git commit` if `EXECUTION_CHANGELOG.md` has not been modified in the branch's diff vs `origin/main`
+- **Modified**: `.claude/settings.json` — added `PreToolUse` hooks matching `Bash(git push*)` and `Bash(git commit*)` that run the changelog check
+- Ensures every code change is documented before it reaches the remote
+
+---
+
 ## 2026-02-23 — Explainer Video v3: Real Screenshots + Shimmer Voiceover
 
 ### Problem
