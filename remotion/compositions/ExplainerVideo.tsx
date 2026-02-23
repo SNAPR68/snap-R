@@ -71,7 +71,7 @@ const Caption: React.FC<{ text: string; subtext?: string }> = ({
   const frame = useCurrentFrame();
   const { width, height } = useVideoConfig();
 
-  const opacity = interpolate(frame, [0, 15, 15, 15], [0, 1, 1, 1], {
+  const opacity = interpolate(frame, [0, 15], [0, 1], {
     extrapolateRight: 'clamp',
   });
 

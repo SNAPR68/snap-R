@@ -62,3 +62,7 @@ app/api/admin/create-test-account/
 # Documents (not source code)
 *.docx
 *.pptx
+
+# Rendered video files (upload to CDN instead)
+public/explainer-video.mp4
+*.mp4
