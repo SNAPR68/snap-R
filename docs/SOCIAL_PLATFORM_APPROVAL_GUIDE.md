@@ -2,7 +2,9 @@
 
 ## Context
 
-SnapR's auto-publishing pipeline is fully coded (OAuth connect → marketing auto-generates content → cron publishes every 15 min). But users can't publish until each platform's API permissions are approved. This document covers the **approval process, requirements, and submission materials** for all four platforms: Facebook, Instagram, LinkedIn, and TikTok.
+SnapR's auto-publishing pipeline is fully coded (OAuth connect → marketing auto-generates content → cron publishes every 15 min → token refresh cron every 4 hours). But users can't publish until each platform's API permissions are approved. This document covers the **approval process, requirements, and submission materials** for all four platforms: Facebook, Instagram, LinkedIn, and TikTok.
+
+**Last updated:** 2026-02-23
 
 ---
 
@@ -158,18 +160,21 @@ LinkedIn does not require video demonstrations for the Share product. It's a sel
 ## Platform 4: TikTok
 
 ### App Details
-- **Client Key:** Requires `TIKTOK_CLIENT_KEY` (set in env)
-- **Callback URL:** `https://snap-r.com/api/social/tiktok/callback`
+- **Client Key:** Set `TIKTOK_CLIENT_KEY` in Vercel env vars
+- **Client Secret:** Set `TIKTOK_CLIENT_SECRET` in Vercel env vars
+- **Callback URL:** `https://snap-r.com/api/social/oauth/tiktok`
 - **Developer Console:** [developers.tiktok.com](https://developers.tiktok.com)
 
-### Current Code Status
+### Current Code Status: COMPLETE
 | Component | Status |
 |-----------|--------|
-| OAuth config | Configured in `lib/social/oauth-config.ts` |
-| Auth route | Implemented at `/api/social/tiktok` |
-| Callback route | Implemented at `/api/social/tiktok/callback` |
-| Settings UI | Shows "Coming Soon" (`available: false`) |
-| Publish function | **NOT IMPLEMENTED** — needs `publishToTikTok()` in `publish-service.ts` |
+| OAuth config (v2) | Configured in `lib/social/oauth-config.ts` (client_key, JSON body, scopes) |
+| OAuth callback | Implemented in `app/api/social/oauth/[platform]/route.ts` → `handleTikTokOAuth()` |
+| Video publishing | Implemented: `publishVideoToTikTok()` in `lib/social/publish-service.ts` (PULL_FROM_URL) |
+| Photo publishing | Implemented: `publishPhotoToTikTok()` in `lib/social/publish-service.ts` (DIRECT_POST carousel) |
+| Cron publisher | Wired in `app/api/cron/publish-scheduled/route.ts` (both image + video) |
+| Token refresh | Handled by `app/api/cron/refresh-tokens/route.ts` (every 4 hours, 24h TikTok tokens) |
+| **Env vars** | **NOT SET** — need `TIKTOK_CLIENT_KEY` + `TIKTOK_CLIENT_SECRET` on Vercel |
 
 ### Permissions/Scopes Required
 
@@ -192,7 +197,7 @@ LinkedIn does not require video demonstrations for the Share product. It's a sel
 1. Go to [developers.tiktok.com](https://developers.tiktok.com) → Create App (or configure existing)
 2. Enable **Login Kit** (for OAuth)
 3. Enable **Content Posting API** (for publishing)
-4. Set redirect URI: `https://snap-r.com/api/social/tiktok/callback`
+4. Set redirect URI: `https://snap-r.com/api/social/oauth/tiktok`
 5. Set Terms of Service URL: `https://snap-r.com/terms`
 6. Set Privacy Policy URL: `https://snap-r.com/privacy`
 
@@ -232,14 +237,16 @@ After business verification, submit for App Audit:
 - ~15 posts/day per creator account (shared across all API clients)
 - Unaudited: max 5 unique creators per 24 hours
 
-### Code Work Needed (Implementation)
-Once TikTok app is approved, implement `publishToTikTok()` in `lib/social/publish-service.ts`:
-- Use Content Posting API v2: `POST https://open.tiktokapis.com/v2/post/publish/content/init/`
-- Photo post with `PULL_FROM_URL` (pull from Cloudinary CDN)
-- Support photo carousels via `photo_images` array
-- Add TikTok case to `publishToSocial()` switch statement
-- Enable TikTok in settings UI: set `available: true`
-- Add TikTok caption generation in marketing-handler.ts Step 2
+### Code Status: COMPLETE
+All TikTok publishing code is built and deployed:
+- `publishVideoToTikTok()` — Content Posting API v2 with `PULL_FROM_URL`
+- `publishPhotoToTikTok()` — Photo carousel with `DIRECT_POST` mode
+- OAuth callback handler with `open_id` storage
+- Cron publisher wired for both video + photo posts
+- Token refresh cron handles 24h TikTok token lifecycle
+- Captions already generated for TikTok in marketing handler Step 2
+
+**Only blocker:** Set env vars on Vercel + complete TikTok developer app registration + app audit
 
 ### Timeline
 - Business Verification: 1-5 business days
@@ -250,7 +257,7 @@ Once TikTok app is approved, implement `publishToTikTok()` in `lib/social/publis
 
 ## Privacy Policy Updates Required
 
-Facebook may reject the app review if the privacy policy doesn't explicitly mention platform-specific data handling. Add these sections to `https://snap-r.com/privacy`:
+Facebook may reject the app review if the privacy policy doesn't explicitly mention platform-specific data handling. **DONE — These sections have been added to `https://snap-r.com/privacy` (deployed Feb 22, 2026).**
 
 ### Section: "Social Media Platform Data"
 
@@ -277,9 +284,9 @@ Facebook may reject the app review if the privacy policy doesn't explicitly ment
 | 5 | TikTok | Submit App Audit | 1-2 weeks after verification |
 
 **Parallel work while waiting:**
-- Fix Supabase billing → apply migrations → E2E test
 - Add yourself as Facebook App tester → test full flow immediately
-- Build TikTok `publishToTikTok()` function (ready for when audit passes)
+- Set `TIKTOK_CLIENT_KEY` + `TIKTOK_CLIENT_SECRET` on Vercel once developer app is created
+- Test TikTok OAuth flow as developer (posts will be PRIVATE until audit passes)
 
 ---
 
