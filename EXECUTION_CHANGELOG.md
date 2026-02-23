@@ -1,6 +1,44 @@
 # SnapR Execution Changelog
 =================================
 
+## 2026-02-23 — Analytics & ROI Dashboard (Measure Stage)
+
+### What
+Enhanced the analytics dashboard from a basic stat-cards + post-list view into a full ROI analytics dashboard with 4 tabs: Overview, Platforms, Leads, and ROI. Installed `recharts` for interactive charts.
+
+### Files Added
+| File | Purpose |
+|------|---------|
+| `app/api/analytics/roi/route.ts` | ROI aggregation API — fetches published_posts, marketing_jobs, property_leads in parallel and returns unified analytics response with daily engagement time-series, platform breakdowns, lead funnel, cost summary, and top posts |
+
+### Files Modified
+| File | Change |
+|------|--------|
+| `app/dashboard/content-studio/analytics/page.tsx` | Complete rewrite — 4-tab dashboard (Overview, Platforms, Leads, ROI) with recharts AreaChart, BarChart, PieChart, engagement trend, platform comparison cards, lead funnel visualization, ROI efficiency metrics, CSV export |
+| `package.json` | Added `recharts` dependency |
+
+### Architecture
+- **ROI API** (`/api/analytics/roi`) aggregates 3 data sources:
+  - `published_posts` → engagement metrics (likes, comments, shares, impressions, reach)
+  - `marketing_jobs` → AI cost tracking (total_cost_cents, cost_breakdown)
+  - `property_leads` → lead attribution (utm_source, utm_campaign, status)
+- All queries run in parallel via `Promise.all` for minimal latency
+- Time-series fills in missing dates with zeros for smooth chart rendering
+- Date range filter: 7d / 30d / 90d / All Time
+
+### Dashboard Tabs
+1. **Overview** — 8 KPI stat cards + engagement trend (area chart) + top 5 performing posts
+2. **Platforms** — Grouped bar chart (likes/comments/shares by platform) + per-platform cards with engagement rates + mini engagement composition bars
+3. **Leads** — Lead KPIs (total, conversion rate, cost per lead, qualified) + pie chart of lead sources + funnel visualization (new → contacted → qualified → converted → archived) + campaign breakdown
+4. **ROI** — Cost KPIs (total AI spend, cost per listing, cost per lead, cost per engagement) + impressions/reach trend chart + ROI summary with efficiency metric ("every $1 generated X engagements")
+
+### Verification
+- `npx tsc --noEmit` — zero errors
+- `npm run build` — successful production build
+- ESLint — zero warnings/errors
+
+---
+
 ## 2026-02-23 — Production Hardening: Rate Limiting, Security Headers, Sentry Fix
 
 ### 1. Rate Limiting Enabled in Middleware
