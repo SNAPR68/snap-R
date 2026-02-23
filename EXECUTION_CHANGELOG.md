@@ -1,13 +1,12 @@
 # SnapR Execution Changelog
 =================================
 
-## 2026-02-23 — Disable Contentsquare (blocking video clicks)
+## 2026-02-23 — Fix CSP blocking explainer video from Cloudinary
 
-- **Modified**: `app/layout.tsx` — commented out Contentsquare UXA script
-- Contentsquare injects transparent overlay elements for click heatmaps/session replay
-- These overlays intercept pointer events on native `<video controls>`, preventing playback
-- Video player play button was unresponsive through 5 iterations of component fixes
-- Disabled until Contentsquare can be configured to exclude video elements
+- **Modified**: `next.config.js` — added `https://*.cloudinary.com` to `media-src` CSP directive
+- Root cause: Content Security Policy `media-src` only allowed `'self'`, `blob:`, and Supabase origins
+- Cloudinary video URL was blocked by the browser, making video controls completely unresponsive
+- Also re-enabled Contentsquare script (was not the cause)
 
 ---
 
