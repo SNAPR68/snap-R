@@ -3,8 +3,10 @@
 import { useState, useRef, useCallback } from 'react';
 import { Play, Pause, Maximize2, Volume2, VolumeX } from 'lucide-react';
 
-// The rendered explainer video URL — update after Remotion render
-const EXPLAINER_VIDEO_URL = process.env.NEXT_PUBLIC_EXPLAINER_VIDEO_URL || '';
+// The rendered explainer video URL — env var override or Cloudinary default
+const EXPLAINER_VIDEO_URL =
+  process.env.NEXT_PUBLIC_EXPLAINER_VIDEO_URL ||
+  'https://res.cloudinary.com/drie9liyn/video/upload/v1771823926/snapr-explainer-video.mp4';
 
 export function ExplainerVideoPlayer() {
   const videoRef = useRef<HTMLVideoElement>(null);
