@@ -1,6 +1,181 @@
 # SnapR Execution Changelog
 =================================
 
+## 2026-02-23 — Mobile App: Billing Gate UI + Notifications Integration + Mobile API Endpoints
+
+### 1. Billing Gate UI Enforcement
+- **AiDirectorScreen**: Blocks free/starter users with upgrade message before camera loads
+- **ContentStudioScreen**: Blocks free-tier users from content studio, skips data fetch when gated
+- Gate checks placed after all hooks (React rules-of-hooks compliant)
+
+### 2. Push Notification Integration
+- **App.tsx**: Registers for push notifications on login, stores device token via backend API
+- Foreground notification listener + notification tap listener with cleanup
+- Inner AppContent component pattern for auth-aware notification setup
+
+### 3. Mobile API Endpoints
+- **GET /api/mobile/dashboard-stats**: Returns totalListings, totalPhotos, publishedPosts counts
+- **GET /api/mobile/content-stats**: Returns scheduledCount, publishedCount, totalImpressions
+
+### Verification
+- npx tsc --noEmit: 0 errors (root + mobile)
+
+## 2026-02-23 — Mobile App Phase 5: Push Notifications + Billing Gates + App Store Prep
+
+### 1. Push Notifications
+- **notifications.ts**: expo-notifications service with permission request, Expo push token, Android channel
+- **register-device API** (app/api/mobile/register-device/route.ts): stores device tokens in profiles.notification_preferences JSONB, dedup, max 5 devices
+- Notification handler configured for banner, list, sound, badge
+
+### 2. Billing Gate Enforcement
+- **useBillingGate.ts**: Hook returning tier, canUseDirector, canPublish, canAccessContentStudio, listingsLimit
+- Uses shared getPlanLimits + getListingLimits from @snapr/shared
+- Free/Starter: AI Director locked, upgrade message shown
+- Pro/Agency: Full access
+
+### 3. App Store Preparation
+- **eas.json**: EAS Build config with development (simulator), preview (internal), production (auto-increment) profiles
+- **app.json**: Updated with expo-notifications plugin, notification icon, EAS project ID
+- Notification icon placeholder created
+
+### Verification
+- npx tsc --noEmit: 0 errors (root + mobile)
+
+## 2026-02-23 — Mobile App Phase 4: Content Studio + Settings
+
+### 1. Content Studio (Data-Driven)
+- Stats row: scheduled, published, total impressions
+- Tab switcher: Scheduled / Published posts
+- Platform color-coded badges (Facebook blue, Instagram pink, LinkedIn blue, TikTok cyan)
+- Post cards with content preview, date, engagement metrics
+- Pull-to-refresh
+
+### 2. Settings (Enhanced)
+- Real social connection status fetched from API
+- "Connect" action opens web dashboard OAuth flow via Linking
+- "Manage Subscription" opens web billing page
+- Notifications section (placeholder for Phase 5)
+- Pull-to-refresh for connection status
+
+### 3. API Client Extensions
+- Added getScheduledPosts, getPublishedPosts, getContentStats, getSocialConnections
+
+### Verification
+- npx tsc --noEmit: 0 errors (root + mobile)
+
+## 2026-02-22 — Mobile App Phase 3: Photo Upload + Dashboard Mirror
+
+### 1. Upload Queue with Offline Support
+- **upload-queue.ts**: Persistent queue using expo-file-system (legacy API)
+- Photos copied to queue directory, uploaded in batches of 3 concurrent
+- Max 3 retries with status tracking (pending/uploading/completed/failed)
+- Progress callback for real-time UI updates
+
+### 2. Dashboard Screen (Data-Driven)
+- Fetches real stats (listings, photos, published posts) from API
+- Recent listings with status dots and photo counts
+- Auto-refresh every 30s + pull-to-refresh
+- "Start AI Capture Session" CTA navigates to Camera tab
+
+### 3. Listings Screen with Search/Filter
+- Full listing list with search by title/address
+- Status filter pills (All/Pending/Preparing/Prepared/Marketing/Marketed/Failed)
+- Client-side filtering with useMemo
+- Status badges with color-coded dots
+
+### 4. Listing Detail Screen
+- Preparation + marketing status display with polling
+- Photo grid with "Enhanced" badges on processed photos
+- Actions: Prepare Listing, Add Photos (navigates to AI Director)
+- Processing banner while preparation in progress
+
+### 5. Marketing Results Screen
+- Property description with copy-to-clipboard
+- Per-platform social captions with copy buttons
+- MLS summary, property site link, scheduled posts count
+- Uses expo-clipboard for native clipboard access
+
+### 6. Navigation + API Updates
+- **ListingsStack.tsx**: Stack navigator (ListingsList → ListingDetail → MarketingResults)
+- MainTabs updated to use ListingsStack
+- **api.ts**: Added getDashboardStats, getRecentListings, getAllListings, getListingDetail, getListingPhotos, prepareListing, getMarketingResults
+
+### Verification
+- npx tsc --noEmit: 0 errors (root + mobile)
+
+---
+
+## 2026-02-22 — Mobile App Phase 2: AI Director Camera
+
+### 1. AI Director Engine Modules
+- **checklist.ts**: Room checklist system with property-type defaults (house/apartment/condo/townhouse/commercial), progress tracking, auto-mark on capture
+- **composition-scorer.ts**: Rule-of-thirds + horizon level + symmetry scoring with weighted tips
+- **lighting-analyzer.ts**: Ambient light assessment for interior/exterior with lux-based scoring
+- **voice-coach.ts**: expo-speech TTS wrapper with priority queue, score coaching, room transitions
+
+### 2. Camera UI Components
+- **CompositionGrid.tsx**: Rule-of-thirds overlay with grid lines + center dot
+- **ScoreRing.tsx**: Circular quality indicator (green 80+, yellow 50-79, red <50)
+- **GuidanceOverlay.tsx**: Animated tip list with fade-in/out
+- **RoomBadge.tsx**: Detected room type pill with confidence percentage
+- **PhotoChecklist.tsx**: Slide-in panel with progress bar, room list, required badges
+
+### 3. AI Director Screen (AiDirectorScreen.tsx)
+- Full camera integration with expo-camera CameraView
+- Real-time composition + lighting scoring (2s interval)
+- Voice coaching on score threshold crossing
+- Photo capture with haptic feedback + checklist auto-update
+- Controls: flash, grid, voice, checklist toggle, capture button
+
+### 4. Supporting Screens
+- **SelectListingScreen.tsx**: Property type selector, create listing form, existing listings FlatList
+- **CaptureReviewScreen.tsx**: Full-screen photo preview with score, room badge, keep/retake actions
+
+### 5. Server-Side API Endpoint
+- **app/api/mobile/analyze-frame/route.ts**: GPT-4o Vision frame analysis (detail: 'low' for speed), returns room type, scores, tips, capture recommendation
+
+### 6. Navigation + API Client
+- **CameraStack.tsx**: Stack navigator (SelectListing → AiDirector → CaptureReview)
+- **MainTabs.tsx**: Updated Camera tab to use CameraStack
+- **api.ts**: Added apiClient with getListings, createListing, analyzeFrame methods
+
+### Verification
+- npx tsc --noEmit: 0 errors (root + mobile)
+- Risk Level: Low (all new files, no existing code modified except MainTabs)
+
+---
+
+## 2026-02-19 — Mobile App Phase 1: Project Scaffolding + Auth
+
+### 1. Initialized Expo Mobile App (`apps/mobile/`)
+- Created React Native app with Expo 54, TypeScript strict mode
+- Configured for iOS (com.snapr.app) and Android with camera permissions
+- Dark theme matching web app (#0A0A0A background, #D4A017 gold accent)
+
+### 2. Created Shared Types Package (`packages/shared/`)
+- Extracted Photo, Listing, Job, PhotoType, PhotoAnalysis, ToolId from web app
+- Extracted billing limits (PlanType, PLAN_LIMITS, LISTING_LIMITS)
+- Added mobile-specific types: RoomChecklistItem, FrameAnalysis, CapturedPhoto
+
+### 3. Supabase Auth Integration
+- Supabase client with expo-secure-store for secure token persistence
+- AuthContext provider with session management, profile fetching
+- Login + Signup screens with email/password auth
+
+### 4. Navigation Structure (React Navigation)
+- RootNavigator: Auth-gated switching between Auth stack and Main tabs
+- AuthStack: Login, Signup screens
+- MainTabs: Dashboard, AI Director (Camera), Listings, Content Studio, Settings
+
+### 5. REST API Client
+- Wrapper for all Next.js backend endpoints with auth headers
+- Covers listings, upload, prepare, marketing, analytics, social, share
+
+### 6. Root tsconfig.json Updated
+- Excluded `apps/mobile/` and `packages/` to prevent React Native type conflicts
+
+---
+
 ## 2026-02-22 — Gated Property Sites + Lead Capture Dashboard
 
 - Created `property_leads` table with UTM attribution columns, RLS policies, public INSERT policy for visitors
@@ -635,6 +810,7 @@ Replaced all `catch (error: any)` with `catch (error: unknown)` across 83 source
 - Added `canGenerateVideo` to all tiers in `lib/content/limits.ts`.
 - Free/Starter: false, Pro/Agency: true.
 - Added `canGenerateVideo()` convenience function export.
+>>>>>>> origin/main
 
 ---
 

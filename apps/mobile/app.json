@@ -1,0 +1,64 @@
+{
+  "expo": {
+    "name": "SnapR",
+    "slug": "snapr",
+    "scheme": "snapr",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "dark",
+    "newArchEnabled": true,
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#0A0A0A"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.snapr.app",
+      "infoPlist": {
+        "NSCameraUsageDescription": "SnapR uses your camera for the AI Photography Director to help you capture professional real estate photos.",
+        "NSPhotoLibraryUsageDescription": "SnapR needs access to your photo library to upload property photos.",
+        "NSMicrophoneUsageDescription": "SnapR uses the microphone for video capture.",
+        "NSSpeechRecognitionUsageDescription": "SnapR uses speech for AI voice coaching."
+      }
+    },
+    "android": {
+      "package": "com.snapr.app",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#0A0A0A"
+      },
+      "edgeToEdgeEnabled": true,
+      "permissions": [
+        "CAMERA",
+        "READ_EXTERNAL_STORAGE",
+        "WRITE_EXTERNAL_STORAGE",
+        "RECORD_AUDIO",
+        "VIBRATE"
+      ]
+    },
+    "plugins": [
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "SnapR uses your camera for the AI Photography Director."
+        }
+      ],
+      "expo-secure-store",
+      "expo-speech",
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/notification-icon.png",
+          "color": "#D4A017"
+        }
+      ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "snapr-mobile"
+      }
+    }
+  }
+}
