@@ -1,6 +1,32 @@
 # SnapR Execution Changelog
 =================================
 
+## 2026-02-23 — Explainer Video Composition + Homepage Video Player
+
+### 1. Remotion ExplainerVideo Composition
+- **New file**: `remotion/compositions/ExplainerVideo.tsx` — 9-scene product walkthrough
+- Scenes: Intro → Homepage → Upload → AI Enhancement → Marketing Pipeline → Content Studio → Auto-Publish → Analytics → Closing CTA
+- 16:9 landscape (1920x1080), 30fps, ~37 seconds total duration
+- Uses TransitionSeries with fade and slide transitions between scenes
+- Each scene recreates SnapR UI as animated React components (mockup style)
+- Animated cursor, typing effects, progress bars, spring animations
+- Registered in `remotion/Root.tsx` as `ExplainerVideo` composition
+
+### 2. Homepage Video Player
+- **New file**: `components/explainer-video-player.tsx` — custom video player component
+- Play/pause, mute/unmute, progress bar, fullscreen controls
+- Reads video URL from `NEXT_PUBLIC_EXPLAINER_VIDEO_URL` env var
+- Falls back to placeholder UI when no video URL is configured
+- Replaces `ProductExplainer` interactive component on homepage
+
+### Next Steps
+- Render the video via `npx remotion render ExplainerVideo` or Lambda
+- Upload rendered MP4 to Cloudinary/CDN
+- Set `NEXT_PUBLIC_EXPLAINER_VIDEO_URL` on Vercel
+- Add voiceover later
+
+---
+
 ## 2026-02-23 — Mobile App: Billing Gate UI + Notifications Integration + Mobile API Endpoints
 
 ### 1. Billing Gate UI Enforcement

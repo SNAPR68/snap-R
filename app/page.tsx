@@ -7,7 +7,7 @@ import Link from 'next/link';
 import { Sparkles, Zap, Check, Camera, Mail, Bell, Menu, X, Shield, Lock, CheckCircle } from 'lucide-react';
 import { LandingGallery } from '@/components/landing-gallery';
 import { Testimonials } from '@/components/testimonials';
-import { ProductExplainer } from '@/components/product-explainer';
+import { ExplainerVideoPlayer } from '@/components/explainer-video-player';
 import { trackEvent, SnapREvents } from '@/lib/analytics';
 
 export default function HomePage() {
@@ -706,7 +706,7 @@ export default function HomePage() {
             </p>
           </div>
 
-          <ProductExplainer />
+          <ExplainerVideoPlayer />
 
           {/* Feature highlights */}
           <div className="grid grid-cols-3 gap-4 mt-8">

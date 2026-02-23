@@ -7,6 +7,12 @@ import {
   calculateDuration,
 } from './compositions/PropertyShowcase';
 import {
+  ExplainerVideo,
+  explainerVideoSchema,
+  type ExplainerVideoProps,
+  calculateExplainerDuration,
+} from './compositions/ExplainerVideo';
+import {
   JustListed,
   justListedSchema,
   type JustListedProps,
@@ -329,6 +335,18 @@ export const RemotionRoot: React.FC = () => {
         schema={soldSchema}
         defaultProps={{ ...soldDefaultProps, aspectRatio: '16:9' as const }}
         calculateMetadata={soldMetadata}
+      />
+
+      {/* Explainer Video — 16:9 for homepage embed */}
+      <Composition
+        id="ExplainerVideo"
+        component={ExplainerVideo}
+        durationInFrames={calculateExplainerDuration()}
+        fps={30}
+        width={ASPECT_CONFIGS['16:9'].width}
+        height={ASPECT_CONFIGS['16:9'].height}
+        schema={explainerVideoSchema}
+        defaultProps={{ showCaptions: true } satisfies ExplainerVideoProps}
       />
 
       {/* Test composition (Phase 1) */}
