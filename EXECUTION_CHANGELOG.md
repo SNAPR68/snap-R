@@ -1,6 +1,26 @@
 # SnapR Execution Changelog
 =================================
 
+## 2026-02-23 — Explainer Video v3: Real Screenshots + Shimmer Voiceover
+
+### Problem
+- Previous video used placeholder/blank screenshots and the `onyx` TTS voice was too deep and depressing
+- Frame filenames in Remotion composition referenced non-existent v1 captures (0053-0079)
+- Voiceover narration was out of sync with what was shown on screen
+
+### Changes
+- **Modified**: `remotion/compositions/ExplainerVideo.tsx` — rewrote all 10 scenes with correct v2 frame filenames (0000-0050), synced scene durations to voiceover paragraphs, smoother 0.6s crossfade transitions
+- **Modified**: `components/explainer-video-player.tsx` — updated Cloudinary video URL to v1771845430
+- **Generated**: `public/explainer-voiceover.mp3` — new voiceover using OpenAI TTS HD `shimmer` voice (87s, warm/friendly tone)
+- **Captured**: 51 real UI screenshots via Puppeteer (`scripts/capture-explainer-v2.mjs`) showing actual dashboard, listings, studio, content studio with real demo data
+- **Seeded**: Demo account data (2 listings with photos, marketing_jobs with descriptions/captions) so screenshots show real content
+- Rendered 2712 frames (90.4s), uploaded 70MB MP4 to Cloudinary
+
+### Scene Flow (synced to voiceover)
+1. Homepage hero (11s) → 2. Features/gallery (9s) → 3. AI tools (7s) → 4. Pricing (8s) → 5. Signup (5s) → 6. Login/Dashboard (12s) → 7. Listings/Studio (13s) → 8. Content Studio (10s) → 9. Analytics/Brand (7s) → 10. Closing CTA (7s)
+
+---
+
 ## 2026-02-23 — Fix CSP blocking explainer video from Cloudinary
 
 - **Modified**: `next.config.js` — added `https://*.cloudinary.com` to `media-src` CSP directive
