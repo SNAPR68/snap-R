@@ -255,14 +255,23 @@ npx remotion render PropertyShowcase-9x16
 export $(grep -E '^REMOTION_AWS' .env.local | xargs) && npx remotion lambda render <serve-url> PropertyShowcase-9x16 --frames-per-lambda=20000
 ```
 
-### Video Compositions (5 templates × 3 aspect ratios)
+### Video Compositions (5 templates × 3 aspect ratios + 1 explainer)
 - **PropertyShowcase** — Ken Burns zoom/pan with closing card
 - **JustListed** — Urgency pacing with event date badge
 - **OpenHouse** — Urgency pacing with open house date
 - **PriceDrop** — Price reduced badge with urgency
 - **Sold** — Celebration styling with social proof
+- **ExplainerVideo** — Homepage product walkthrough (16:9, 90s, 10 scenes of real UI screenshots + shimmer voiceover)
 
-Each has 3 variants: `9x16` (vertical), `16x9` (landscape), `1x1` (square)
+Each property template has 3 variants: `9x16` (vertical), `16x9` (landscape), `1x1` (square)
+
+### Explainer Video
+- `remotion/compositions/ExplainerVideo.tsx` — 10-scene product walkthrough using real captured screenshots
+- Screenshots in `public/explainer-frames/` (51 PNGs, 0000-0050), captured via Puppeteer (`scripts/capture-explainer-v2.mjs`)
+- Voiceover: OpenAI TTS HD `shimmer` voice, generated via `scripts/generate-voiceover.mjs`, saved to `public/explainer-voiceover.mp3`
+- `components/explainer-video-player.tsx` — Homepage video player, loads from Cloudinary CDN with poster auto-generation
+- Hosted on Cloudinary: `snapr-explainer-video.mp4` (overwrite on re-upload)
+- Scene flow: Homepage → Features/Gallery → AI Tools → Pricing → Signup → Login/Dashboard → Listings/Studio → Content Studio → Analytics/Brand → CTA
 
 ### Key Files
 - `remotion/compositions/PropertyShowcase.tsx` — Main composition with Zod schema
