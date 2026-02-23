@@ -185,10 +185,11 @@ export async function POST(request: NextRequest) {
       processingTime,
     });
 
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Generation failed';
     console.error('[AI Description] Error:', error);
     return NextResponse.json({ 
-      error: error.message || 'Failed to generate description' 
+      error: message || 'Failed to generate description' 
     }, { status: 500 });
   }
 }
@@ -242,8 +243,9 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json(data || []);
 
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Internal server error';
     console.error('[AI Description] GET Error:', error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }

@@ -4,10 +4,10 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import {
-  ArrowLeft, Image, Video, Calendar, FolderOpen, Settings,
+  Image, Video, FolderOpen,
   Instagram, Facebook, Linkedin, Sparkles, Mail, Globe,
-  Home, Coins, ChevronRight, Hash, Palette, Zap,
-  BarChart3, ArrowRight, Loader2, Download, CheckCircle
+  Home, Coins, Palette, Zap,
+  ArrowRight, Loader2, Download
 } from 'lucide-react'
 import { trackEvent, SnapREvents } from '@/lib/analytics'
 
@@ -27,6 +27,9 @@ interface MarketingStatus {
   hasCaptions: boolean
   hasSite: boolean
   hasScheduledPosts: boolean
+  descriptionPreview: string | null
+  captionPlatforms: string[]
+  propertySiteSlug: string | null
 }
 
 export default function ContentStudioClient({
@@ -104,7 +107,10 @@ export default function ContentStudioClient({
   const activeTab = tabs.find(t => t.id === selectedTab)!
 
   const handleListingClick = (listingId: string) => {
-    router.push(`${activeTab.route}?listing=${listingId}`)
+    const hasMarketing = marketingStatuses?.[listingId]?.status === 'completed'
+    // Auto-prefill from marketing pipeline when content is ready
+    const prefillParam = hasMarketing ? '&prefill=marketing' : ''
+    router.push(`${activeTab.route}?listing=${listingId}${prefillParam}`)
   }
 
   const getTabDescription = () => {
@@ -213,6 +219,7 @@ export default function ContentStudioClient({
                 >
                   <div className="aspect-[4/3] relative">
                     {listing.thumbnail ? (
+                      // eslint-disable-next-line @next/next/no-img-element
                       <img src={listing.thumbnail} alt="" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
                     ) : (
                       <div className="w-full h-full bg-white/5 flex items-center justify-center">
@@ -228,26 +235,53 @@ export default function ContentStudioClient({
                           <span className="text-[10px] bg-green-500/80 px-1.5 py-0.5 rounded">{listing.enhancedCount} ready</span>
                         )}
                         {marketingStatuses?.[listing.id]?.status === 'completed' && (
-                          <span className="text-[10px] bg-emerald-500/80 px-1.5 py-0.5 rounded flex items-center gap-0.5">
-                            <CheckCircle className="w-2.5 h-2.5" /> Content Ready
+                          <span className="text-[10px] bg-[#D4AF37]/90 text-black font-semibold px-1.5 py-0.5 rounded flex items-center gap-0.5">
+                            <Sparkles className="w-2.5 h-2.5" /> AI Content Ready
                           </span>
                         )}
                         {marketingStatuses?.[listing.id]?.status === 'processing' && (
-                          <span className="text-[10px] bg-amber-500/80 px-1.5 py-0.5 rounded">Processing</span>
+                          <span className="text-[10px] bg-amber-500/80 px-1.5 py-0.5 rounded flex items-center gap-0.5">
+                            <Loader2 className="w-2.5 h-2.5 animate-spin" /> Generating
+                          </span>
                         )}
                       </div>
                     </div>
                     {/* Hover CTA */}
-                    <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/40">
+                    <div className="absolute inset-0 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/40 gap-1.5">
                       <span className={`${activeTab.bgColor} text-black px-3 py-1.5 rounded-lg font-semibold text-xs flex items-center gap-1.5`}>
                         <activeTab.icon className="w-3.5 h-3.5" />
-                        {selectedTab === 'social' && 'Create Post'}
+                        {selectedTab === 'social' && (marketingStatuses?.[listing.id]?.status === 'completed' ? 'Create with AI Content' : 'Create Post')}
                         {selectedTab === 'video' && 'Create Video'}
                         {selectedTab === 'bulk' && 'Add to Bulk'}
-                        {selectedTab === 'email' && 'Create Email'}
+                        {selectedTab === 'email' && (marketingStatuses?.[listing.id]?.status === 'completed' ? 'Create with AI Content' : 'Create Email')}
                       </span>
+                      {marketingStatuses?.[listing.id]?.status === 'completed' && (
+                        <span className="text-[10px] text-white/70">Captions & hashtags auto-loaded</span>
+                      )}
                     </div>
                   </div>
+                  {/* Generated Content Preview */}
+                  {marketingStatuses?.[listing.id]?.status === 'completed' && (
+                    <div className="px-2.5 py-2 border-t border-white/5 space-y-1.5">
+                      {marketingStatuses[listing.id].descriptionPreview && (
+                        <p className="text-[10px] text-white/50 line-clamp-2 leading-relaxed">
+                          {marketingStatuses[listing.id].descriptionPreview}...
+                        </p>
+                      )}
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        {marketingStatuses[listing.id].captionPlatforms.length > 0 && (
+                          <span className="text-[10px] bg-white/5 text-white/60 px-1.5 py-0.5 rounded">
+                            {marketingStatuses[listing.id].captionPlatforms.length} captions
+                          </span>
+                        )}
+                        {marketingStatuses[listing.id].propertySiteSlug && (
+                          <span className="text-[10px] bg-white/5 text-white/60 px-1.5 py-0.5 rounded flex items-center gap-0.5">
+                            <Globe className="w-2.5 h-2.5" /> Site live
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  )}
                 </button>
               ))}
             </div>
@@ -283,7 +317,7 @@ export default function ContentStudioClient({
           </div>
           {listings.length > 0 && (
             <Link
-              href={`${activeTab.route}?listing=${listings[0].id}`}
+              href={`${activeTab.route}?listing=${listings[0].id}${marketingStatuses?.[listings[0].id]?.status === 'completed' ? '&prefill=marketing' : ''}`}
               className={`px-4 py-2 ${activeTab.bgColor} text-black rounded-lg font-semibold text-sm hover:opacity-90 transition-colors flex items-center gap-2`}
             >
               Start Creating <ArrowRight className="w-4 h-4" />

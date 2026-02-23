@@ -121,8 +121,9 @@ export async function POST(request: NextRequest) {
       message: 'Marketing job queued',
     });
 
-  } catch (error: any) {
-    console.error('[Marketing Trigger API] Error:', error.message);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Internal server error';
+    console.error('[Marketing Trigger API] Error:', message);
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }

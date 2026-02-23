@@ -59,12 +59,16 @@ interface Props {
   brand?: Brand | null
   videoUrl?: string | null
   slug: string
+  mapsApiKey?: string | null
+  isGated?: boolean
+  propertySiteId?: string
+  userId?: string
 }
 
 // ============================================
 // MAIN COMPONENT
 // ============================================
-export default function PropertySiteClient({ photos, listing, agent, brand, videoUrl, slug }: Props) {
+export default function PropertySiteClient({ photos, listing, agent, brand, videoUrl, mapsApiKey, isGated = false, propertySiteId, userId }: Props) {
   // State
   const [currentPhoto, setCurrentPhoto] = useState(0)
   const [lightboxOpen, setLightboxOpen] = useState(false)
@@ -77,14 +81,24 @@ export default function PropertySiteClient({ photos, listing, agent, brand, vide
   const [showShareMenu, setShowShareMenu] = useState(false)
   const [heroImageIndex, setHeroImageIndex] = useState(0)
   const [saved, setSaved] = useState(false)
-  
+
+  // Lead gate state
+  const [isUnlocked, setIsUnlocked] = useState(!isGated)
+  const [leadForm, setLeadForm] = useState({ name: '', email: '', phone: '' })
+  const [leadSubmitting, setLeadSubmitting] = useState(false)
+  const [leadError, setLeadError] = useState<string | null>(null)
+  const [utmParams, setUtmParams] = useState<{ source?: string; medium?: string; campaign?: string; content?: string }>({})
+
+  // Number of photos visible before the gate
+  const GATE_PHOTO_COUNT = 4
+
   // Mortgage calculator state
   const [mortgageData, setMortgageData] = useState({
     downPaymentPercent: 20,
     interestRate: 6.5,
     loanTerm: 30,
   })
-  
+
   // Derived values
   const primaryColor = brand?.primaryColor || '#D4A017'
   const location = [listing.city, listing.state].filter(Boolean).join(', ')
@@ -126,10 +140,28 @@ export default function PropertySiteClient({ photos, listing, agent, brand, vide
     }
   }, [showShareMenu])
   
+  // Capture UTM params from URL on mount
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const params = new URLSearchParams(window.location.search)
+    const source = params.get('utm_source')
+    const medium = params.get('utm_medium')
+    const campaign = params.get('utm_campaign')
+    const content = params.get('utm_content')
+    if (source || medium || campaign || content) {
+      setUtmParams({
+        source: source ?? undefined,
+        medium: medium ?? undefined,
+        campaign: campaign ?? undefined,
+        content: content ?? undefined,
+      })
+    }
+  }, [])
+
   // ============================================
   // HANDLERS
   // ============================================
-  
+
   const nextPhoto = () => setCurrentPhoto((prev) => (prev + 1) % photos.length)
   const prevPhoto = () => setCurrentPhoto((prev) => (prev - 1 + photos.length) % photos.length)
   
@@ -179,6 +211,43 @@ export default function PropertySiteClient({ photos, listing, agent, brand, vide
     }
   }
   
+  // Lead gate form submission
+  const handleLeadSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setLeadSubmitting(true)
+    setLeadError(null)
+
+    try {
+      const response = await fetch('/api/leads', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: leadForm.name,
+          email: leadForm.email,
+          phone: leadForm.phone || null,
+          listingId: listing.id || null,
+          propertySiteId: propertySiteId || null,
+          userId: userId,
+          listingAddress: fullAddress,
+          agentEmail: agent?.email || null,
+          utmSource: utmParams.source || null,
+          utmMedium: utmParams.medium || null,
+          utmCampaign: utmParams.campaign || null,
+          utmContent: utmParams.content || null,
+        }),
+      })
+
+      if (!response.ok) throw new Error('Failed to submit')
+
+      setIsUnlocked(true)
+      setLeadForm({ name: '', email: '', phone: '' })
+    } catch {
+      setLeadError('Something went wrong. Please try again.')
+    } finally {
+      setLeadSubmitting(false)
+    }
+  }
+
   // Share functionality
   const copyLink = (e: React.MouseEvent) => {
     e.stopPropagation()
@@ -405,30 +474,33 @@ export default function PropertySiteClient({ photos, listing, agent, brand, vide
           <div className="lg:col-span-2 space-y-12">
             
             {/* ============================================ */}
-            {/* PHOTO GALLERY */}
+            {/* PHOTO GALLERY (with lead gate) */}
             {/* ============================================ */}
             {photos.length > 0 && (
               <section>
                 <h2 className="text-2xl font-bold mb-6">Photo Gallery</h2>
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                  {photos.slice(0, 7).map((photo, index) => (
+                  {(isUnlocked ? photos.slice(0, 7) : photos.slice(0, GATE_PHOTO_COUNT)).map((photo, index) => (
                     <button
                       key={index}
                       onClick={() => {
-                        setCurrentPhoto(index)
-                        setLightboxOpen(true)
+                        if (isUnlocked || index < GATE_PHOTO_COUNT) {
+                          setCurrentPhoto(index)
+                          setLightboxOpen(true)
+                        }
                       }}
                       className={`relative aspect-[4/3] rounded-xl overflow-hidden group ${
                         index === 0 ? 'col-span-2 row-span-2' : ''
                       }`}
                     >
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img
                         src={photo}
                         alt={`Property photo ${index + 1}`}
                         className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
                       />
                       <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors" />
-                      {index === 6 && photos.length > 7 && (
+                      {isUnlocked && index === 6 && photos.length > 7 && (
                         <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
                           <span className="text-lg font-semibold">+{photos.length - 7} more</span>
                         </div>
@@ -436,7 +508,78 @@ export default function PropertySiteClient({ photos, listing, agent, brand, vide
                     </button>
                   ))}
                 </div>
-                {photos.length > 7 && (
+
+                {/* Lead Gate Overlay */}
+                {!isUnlocked && photos.length > GATE_PHOTO_COUNT && (
+                  <div className="relative mt-3 rounded-xl overflow-hidden border border-white/10">
+                    {/* Blurred preview of next photo */}
+                    <div className="absolute inset-0">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={photos[GATE_PHOTO_COUNT]}
+                        alt="More photos available"
+                        className="w-full h-full object-cover blur-xl scale-110 opacity-30"
+                      />
+                    </div>
+                    <div className="relative z-10 py-12 px-8 text-center bg-gradient-to-b from-[#0A0A0A]/80 to-[#0A0A0A]/95">
+                      <div className="mb-2">
+                        <Sparkles className="w-8 h-8 mx-auto mb-3" style={{ color: primaryColor }} />
+                      </div>
+                      <h3 className="text-xl font-bold mb-2">
+                        See all {photos.length} photos{videoUrl ? ' + video tour' : ''}
+                      </h3>
+                      <p className="text-white/60 mb-6 text-sm max-w-md mx-auto">
+                        Enter your info to unlock the full gallery{videoUrl ? ', video tour,' : ''} and get notified about this property.
+                      </p>
+                      <form onSubmit={handleLeadSubmit} className="max-w-sm mx-auto space-y-3">
+                        <input
+                          type="text"
+                          placeholder="Your name"
+                          value={leadForm.name}
+                          onChange={(e) => setLeadForm(prev => ({ ...prev, name: e.target.value }))}
+                          required
+                          aria-label="Your name"
+                          className="w-full px-4 py-3 bg-[#1A1A1A] border border-white/10 rounded-lg text-white placeholder-white/40 focus:outline-none focus:border-[#D4A017] transition-colors"
+                          style={{ borderColor: leadForm.name ? primaryColor : undefined }}
+                        />
+                        <input
+                          type="email"
+                          placeholder="Email address"
+                          value={leadForm.email}
+                          onChange={(e) => setLeadForm(prev => ({ ...prev, email: e.target.value }))}
+                          required
+                          aria-label="Email address"
+                          className="w-full px-4 py-3 bg-[#1A1A1A] border border-white/10 rounded-lg text-white placeholder-white/40 focus:outline-none focus:border-[#D4A017] transition-colors"
+                          style={{ borderColor: leadForm.email ? primaryColor : undefined }}
+                        />
+                        <input
+                          type="tel"
+                          placeholder="Phone (optional)"
+                          value={leadForm.phone}
+                          onChange={(e) => setLeadForm(prev => ({ ...prev, phone: e.target.value }))}
+                          aria-label="Phone number"
+                          className="w-full px-4 py-3 bg-[#1A1A1A] border border-white/10 rounded-lg text-white placeholder-white/40 focus:outline-none focus:border-[#D4A017] transition-colors"
+                        />
+                        {leadError && (
+                          <p className="text-red-400 text-sm">{leadError}</p>
+                        )}
+                        <button
+                          type="submit"
+                          disabled={leadSubmitting}
+                          className="w-full py-3 rounded-lg font-semibold text-black transition-opacity disabled:opacity-50"
+                          style={{ background: `linear-gradient(135deg, ${primaryColor} 0%, #B8860B 100%)` }}
+                        >
+                          {leadSubmitting ? 'Unlocking...' : 'Unlock All Photos'}
+                        </button>
+                        <p className="text-white/30 text-xs">
+                          The listing agent will be notified of your interest.
+                        </p>
+                      </form>
+                    </div>
+                  </div>
+                )}
+
+                {isUnlocked && photos.length > 7 && (
                   <button
                     onClick={() => {
                       setCurrentPhoto(0)
@@ -451,11 +594,11 @@ export default function PropertySiteClient({ photos, listing, agent, brand, vide
                 )}
               </section>
             )}
-            
+
             {/* ============================================ */}
-            {/* VIDEO TOUR (if available) */}
+            {/* VIDEO TOUR (gated if not unlocked) */}
             {/* ============================================ */}
-            {videoUrl && (
+            {videoUrl && isUnlocked && (
               <section>
                 <h2 className="text-2xl font-bold mb-6 flex items-center gap-3">
                   <Play className="w-6 h-6" style={{ color: primaryColor }} />
@@ -622,17 +765,26 @@ export default function PropertySiteClient({ photos, listing, agent, brand, vide
             {fullAddress && (
               <section>
                 <h2 className="text-2xl font-bold mb-6">Location</h2>
-                <div className="aspect-[16/9] rounded-xl overflow-hidden bg-[#1A1A1A]">
-                  <iframe
-                    width="100%"
-                    height="100%"
-                    style={{ border: 0 }}
-                    loading="lazy"
-                    allowFullScreen
-                    referrerPolicy="no-referrer-when-downgrade"
-                    src={`https://www.google.com/maps/embed/v1/place?key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_KEY || 'AIzaSyBFw0Qbyq9zTFTd-tUY6dZWTgaQzuU17R8'}&q=${encodeURIComponent(fullAddress)}`}
-                  />
-                </div>
+                {mapsApiKey ? (
+                  <div className="aspect-[16/9] rounded-xl overflow-hidden bg-[#1A1A1A]">
+                    <iframe
+                      width="100%"
+                      height="100%"
+                      style={{ border: 0 }}
+                      loading="lazy"
+                      allowFullScreen
+                      referrerPolicy="no-referrer-when-downgrade"
+                      src={`https://www.google.com/maps/embed/v1/place?key=${mapsApiKey}&q=${encodeURIComponent(fullAddress)}`}
+                    />
+                  </div>
+                ) : (
+                  <div className="aspect-[16/9] rounded-xl overflow-hidden bg-[#1A1A1A] flex items-center justify-center">
+                    <div className="text-center text-gray-400">
+                      <MapPin className="w-12 h-12 mx-auto mb-3 opacity-50" />
+                      <p className="text-lg font-medium">{fullAddress}</p>
+                    </div>
+                  </div>
+                )}
                 <a
                   href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(fullAddress)}`}
                   target="_blank"

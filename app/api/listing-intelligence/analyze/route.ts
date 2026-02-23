@@ -144,16 +144,18 @@ export async function POST(request: NextRequest) {
         cost,
       });
 
-    } catch (analysisError: any) {
+    } catch (analysisError: unknown) {
+      const message = analysisError instanceof Error ? analysisError.message : 'Internal server error';
       await supabase
         .from('listing_analyses')
-        .update({ status: 'failed', error_message: analysisError.message })
+        .update({ status: 'failed', error_message: message })
         .eq('id', analysis.id);
       throw analysisError;
     }
 
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Internal server error';
     console.error('[Listing Intelligence] API Error:', error);
-    return NextResponse.json({ error: error.message || 'Analysis failed' }, { status: 500 });
+    return NextResponse.json({ error: message || 'Analysis failed' }, { status: 500 });
   }
 }

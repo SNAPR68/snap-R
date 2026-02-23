@@ -95,8 +95,9 @@ export function AIAnalysisTab({ listingId, photos, onApplyEnhancement, onRequest
         estimatedDomOptimized: data.result.estimatedDomOptimized,
         photoScores: data.result.photoScores,
       });
-    } catch (err: any) {
-      setError(err.message || 'Failed to analyze photos');
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Upload failed';
+      setError(message || 'Failed to analyze photos');
     } finally {
       setIsAnalyzing(false);
     }

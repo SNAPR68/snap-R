@@ -5,8 +5,7 @@ import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { Instagram, Linkedin, Youtube, Check } from 'lucide-react';
 
-// TODO: Replace with actual Calendly URL
-const CALENDLY_URL = 'https://calendly.com/rajesh-snap-r/30min';
+const CALENDLY_URL = process.env.NEXT_PUBLIC_CALENDLY_URL || 'https://calendly.com/rajesh-snap-r/30min';
 
 function ContactContent() {
   const searchParams = useSearchParams();
@@ -16,12 +15,12 @@ function ContactContent() {
   return (
     <>
       <main className="flex-1 max-w-4xl mx-auto px-6 py-12">
-        <h1 className="text-4xl font-bold text-white mb-4 text-center">Let's talk</h1>
+        <h1 className="text-4xl font-bold text-white mb-4 text-center">Let&apos;s talk</h1>
         <p className="text-white/60 mb-8 text-center">Book a call to discuss custom pricing for your team.</p>
         
         {isTeamPlan && (
           <div className="mb-6 p-4 bg-[#D4A017]/10 border border-[#D4A017]/30 rounded-xl text-center">
-            <p className="text-white font-medium">You selected the Team plan. Let's discuss custom pricing for your brokerage.</p>
+            <p className="text-white font-medium">You selected the Team plan. Let&apos;s discuss custom pricing for your brokerage.</p>
           </div>
         )}
 
@@ -30,7 +29,7 @@ function ContactContent() {
           <ul className="space-y-3 mb-6 text-white/80">
             <li className="flex items-start gap-3">
               <Check className="w-5 h-5 text-[#D4A017] flex-shrink-0 mt-0.5" />
-              <span>Discuss your team's volume and needs</span>
+              <span>Discuss your team&apos;s volume and needs</span>
             </li>
             <li className="flex items-start gap-3">
               <Check className="w-5 h-5 text-[#D4A017] flex-shrink-0 mt-0.5" />

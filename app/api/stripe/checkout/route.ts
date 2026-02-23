@@ -122,10 +122,11 @@ export async function POST(request: NextRequest) {
     });
 
     return NextResponse.json({ url: session.url });
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Internal server error';
     console.error('Checkout error:', error);
     return NextResponse.json(
-      { error: error.message || 'Failed to create checkout' },
+      { error: message || 'Failed to create checkout' },
       { status: 500 }
     );
   }

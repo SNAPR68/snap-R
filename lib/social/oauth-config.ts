@@ -40,10 +40,10 @@ export const SOCIAL_PLATFORMS = {
     name: 'TikTok',
     icon: 'Music2',
     color: '#000000',
-    scopes: ['user.info.basic', 'video.publish'],
-    authUrl: 'https://www.tiktok.com/auth/authorize/',
-    tokenUrl: 'https://open-api.tiktok.com/oauth/access_token/',
-    apiBase: 'https://open-api.tiktok.com',
+    scopes: ['user.info.basic', 'video.publish', 'video.upload'],
+    authUrl: 'https://www.tiktok.com/v2/auth/authorize/',
+    tokenUrl: 'https://open.tiktokapis.com/v2/oauth/token/',
+    apiBase: 'https://open.tiktokapis.com',
   },
   twitter: {
     id: 'twitter',
@@ -110,8 +110,10 @@ export function getOAuthUrl(platform: SocialPlatform, redirectUri: string, state
   } else if (platform === 'linkedin') {
     params.append('scope', config.scopes.join(' '));
   } else if (platform === 'tiktok') {
-    params.append('scope', config.scopes.join(','));
-    params.append('response_type', 'code');
+    // TikTok v2 uses client_key instead of client_id
+    params.delete('client_id');
+    params.set('client_key', credentials.clientId);
+    params.set('scope', config.scopes.join(','));
   } else if (platform === 'twitter') {
     params.append('scope', config.scopes.join(' '));
     // Proper PKCE with S256 method
@@ -137,6 +139,7 @@ export async function exchangeCodeForToken(
   refreshToken?: string;
   expiresIn?: number;
   tokenType?: string;
+  openId?: string;
 }> {
   const config = SOCIAL_PLATFORMS[platform];
   const credentials = SOCIAL_CREDENTIALS[platform];
@@ -152,6 +155,38 @@ export async function exchangeCodeForToken(
   // Include PKCE verifier for Twitter
   if (platform === 'twitter' && codeVerifier) {
     params.append('code_verifier', codeVerifier);
+  }
+
+  // TikTok v2 uses JSON body with client_key instead of form-urlencoded client_id
+  if (platform === 'tiktok') {
+    const tiktokBody = {
+      client_key: credentials.clientId,
+      client_secret: credentials.clientSecret,
+      code,
+      grant_type: 'authorization_code',
+      redirect_uri: redirectUri,
+    };
+
+    const response = await fetch(config.tokenUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(tiktokBody),
+      signal: AbortSignal.timeout(10000),
+    });
+
+    if (!response.ok) {
+      const error = await response.text();
+      throw new Error(`TikTok token exchange failed: ${error}`);
+    }
+
+    const data = await response.json();
+    return {
+      accessToken: data.access_token,
+      refreshToken: data.refresh_token,
+      expiresIn: data.expires_in,
+      tokenType: data.token_type,
+      openId: data.open_id,
+    };
   }
 
   const response = await fetch(config.tokenUrl, {
@@ -202,6 +237,24 @@ export async function refreshAccessToken(
     return { accessToken: data.access_token, expiresIn: data.expires_in };
   }
 
+  // TikTok: uses JSON body with client_key
+  if (platform === 'tiktok') {
+    const res = await fetch(config.tokenUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        client_key: credentials.clientId,
+        client_secret: credentials.clientSecret,
+        grant_type: 'refresh_token',
+        refresh_token: tokenOrRefreshToken,
+      }),
+      signal: AbortSignal.timeout(10000),
+    });
+    if (!res.ok) throw new Error(`TikTok token refresh failed: ${await res.text()}`);
+    const data = await res.json();
+    return { accessToken: data.access_token, expiresIn: data.expires_in };
+  }
+
   // LinkedIn and others: standard refresh_token grant
   const params = new URLSearchParams({
     grant_type: 'refresh_token',
@@ -239,8 +292,16 @@ export async function getUserProfile(platform: SocialPlatform, accessToken: stri
       url = 'https://api.linkedin.com/v2/userinfo';
       headers['Authorization'] = `Bearer ${accessToken}`;
       break;
-    default:
-      throw new Error(`Profile fetch not implemented for ${platform}`);
+    case 'tiktok':
+      // TikTok User Info endpoint
+      url = 'https://open.tiktokapis.com/v2/user/info/?fields=open_id,union_id,avatar_url,display_name';
+      headers['Authorization'] = `Bearer ${accessToken}`;
+      break;
+    case 'twitter':
+      // Twitter/X v2 user lookup
+      url = 'https://api.twitter.com/2/users/me?user.fields=id,name,username,profile_image_url';
+      headers['Authorization'] = `Bearer ${accessToken}`;
+      break;
   }
 
   const response = await fetch(url, { headers, signal: AbortSignal.timeout(10000) });

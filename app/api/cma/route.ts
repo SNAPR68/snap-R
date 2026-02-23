@@ -562,10 +562,11 @@ export async function POST(request: NextRequest) {
         comparablesCount: comparables.length,
       },
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Internal server error';
     console.error('CMA API error:', error);
     return NextResponse.json(
-      { error: error.message || 'Internal server error' },
+      { error: message || 'Internal server error' },
       { status: 500 }
     );
   }
@@ -589,7 +590,7 @@ export async function GET(request: NextRequest) {
       .limit(20);
 
     return NextResponse.json(reports || []);
-  } catch (error: any) {
+  } catch (error: unknown) {
     return NextResponse.json([]);
   }
 }

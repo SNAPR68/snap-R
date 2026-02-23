@@ -465,9 +465,9 @@ async function runQuickEnhance(
     const data = await res.json() as { signedUrl: string; preset: string; timings: { totalMs: number } };
     console.log(`[Worker] Quick enhance: ${data.preset} preset in ${data.timings.totalMs}ms`);
     return data.signedUrl;
-  } catch (error: any) {
+  } catch (error: unknown) {
     clearTimeout(timeout);
-    if (error.name === 'AbortError') {
+    if (error instanceof Error && error.name === 'AbortError') {
       throw new Error('Quick enhance timeout (40s)');
     }
     throw error;
@@ -628,10 +628,11 @@ async function processOnePhoto(
         recordToolCost(costTracker, tool, durationMs, true);
         console.log(`[Worker] Photo ${photoIndex + 1}/${totalPhotos} tool ${tool} ✓ ${durationMs}ms (${getToolCost(tool)}¢)`);
       }
-    } catch (toolError: any) {
+    } catch (toolError: unknown) {
+      const message = toolError instanceof Error ? toolError.message : 'Unknown error';
       const durationMs = Date.now() - toolStart;
-      const isTimeout = toolError?.message?.includes('timeout');
-      const firstReason = isTimeout ? `timeout (${getToolTimeout(tool)}ms)` : (toolError?.message || 'unknown error');
+      const isTimeout = message?.includes('timeout');
+      const firstReason = isTimeout ? `timeout (${getToolTimeout(tool)}ms)` : (message || 'unknown error');
 
       // Retry high-value structural tools once
       const isStructuralTool = ['sky-replacement', 'lawn-repair'].includes(tool);
@@ -650,8 +651,9 @@ async function processOnePhoto(
             console.log(`[Worker] Photo ${photoIndex + 1}/${totalPhotos} tool ${tool} ✓ RETRY SUCCESS ${Date.now() - retryStart}ms`);
             continue;
           }
-        } catch (retryError: any) {
-          console.warn(`[Worker] Photo ${photoIndex + 1}/${totalPhotos} tool ${tool} RETRY ALSO FAILED: ${retryError?.message}`);
+        } catch (retryError: unknown) {
+          const message = retryError instanceof Error ? retryError.message : 'Request failed';
+          console.warn(`[Worker] Photo ${photoIndex + 1}/${totalPhotos} tool ${tool} RETRY ALSO FAILED: ${message}`);
         }
       }
 
@@ -666,8 +668,9 @@ async function processOnePhoto(
     try {
       storagePath = await uploadToSupabase(supabase, userId, listingId, photo.id, currentUrl);
       await updatePhotoStatus(photo.id, 'completed', storagePath, env, toolsApplied);
-    } catch (uploadError: any) {
-      console.error(`[Worker] Photo ${photoIndex + 1}/${totalPhotos} upload failed: ${uploadError?.message}`);
+    } catch (uploadError: unknown) {
+      const message = uploadError instanceof Error ? uploadError.message : 'Upload failed';
+      console.error(`[Worker] Photo ${photoIndex + 1}/${totalPhotos} upload failed: ${message}`);
       await updatePhotoStatus(photo.id, 'completed', null, env, toolsApplied);
     }
   } else {

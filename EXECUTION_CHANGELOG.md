@@ -176,6 +176,644 @@
 
 ---
 
+## 2026-02-22 — Gated Property Sites + Lead Capture Dashboard
+
+- Created `property_leads` table with UTM attribution columns, RLS policies, public INSERT policy for visitors
+- Lead gate on property sites: Pro/Agency users' sites show first 4 photos, then a capture form to unlock all photos + video
+- `/api/leads` route: POST (public lead capture), GET (dashboard fetch with filters), PATCH (status update)
+- `/dashboard/leads` page: lead list with status filters, expandable details, UTM attribution, status management, CSV export
+- Added `canCaptureLeads` to plan limits (pro/agency = true, free/starter = false)
+- Property site server component now fetches owner tier, passes `isGated`, `propertySiteId`, `userId` to client
+- PropertySiteClient captures UTM params from URL on mount, sends with lead submission
+- Existing `property-inquiry` route also persists sidebar contact form submissions to `property_leads` table
+- Added "Leads" nav item to dashboard sidebar under Measure section
+- Files: `supabase/migrations/20260222_property_leads.sql` (NEW), `app/api/leads/route.ts` (NEW), `app/dashboard/leads/page.tsx` (NEW), `app/p/[slug]/page.tsx`, `app/p/[slug]/PropertySiteClient.tsx`, `app/api/property-inquiry/route.ts`, `components/dashboard-sidebar.tsx`, `lib/content/limits.ts`
+
+---
+
+## 2026-02-22 — Token Refresh Cron + Publish Cron Bug Fix
+
+- Created `app/api/cron/refresh-tokens/route.ts` — proactive token refresh every 4 hours
+- Refreshes all tokens expiring within 48 hours (critical for TikTok's 24h tokens)
+- Facebook/Instagram correctly use `access_token` with `fb_exchange_token` grant; others use `refresh_token`
+- Logs refresh failures to `last_error` on the social_connection for visibility
+- Registered in `vercel.json` at `0 */4 * * *` with 300s/1024MB config
+- Fixed bug in publish cron: was passing `refresh_token` for Facebook/Instagram refresh, now correctly passes `access_token`
+- Files: `app/api/cron/refresh-tokens/route.ts` (NEW), `vercel.json`, `app/api/cron/publish-scheduled/route.ts`
+
+---
+
+## 2026-02-22 — UTM Tracking + TikTok Publishing Integration
+
+- Added UTM campaign tracking to all scheduled social post captions (utm_source, utm_medium, utm_campaign, utm_content)
+- Property site URLs with UTM params appended in marketing handler Step 5 for traffic attribution
+- Created `lib/social/utm.ts` standalone utility for UTM param appending
+- TikTok OAuth v2 callback handler with `client_key` auth, `open_id` storage, 24h/365d token lifecycle
+- TikTok video publishing via Content Posting API (`PULL_FROM_URL` — TikTok fetches from our S3 URL)
+- TikTok photo carousel publishing via Photo Posting API (`DIRECT_POST` mode)
+- Wired TikTok into cron publisher for both image and video post types
+- Updated `oauth-config.ts`: TikTok v2 endpoints, scopes (`video.upload`), JSON body token exchange/refresh
+- Unaudited TikTok apps default to `privacy_level: 'SELF_ONLY'` (private posts until app audit)
+- Updated CLAUDE.md with TikTok publishing docs, UTM tracking, OAuth specifics
+- Files: `lib/social/utm.ts` (NEW), `apps/processor/src/marketing-handler.ts`, `lib/social/oauth-config.ts`, `app/api/social/oauth/[platform]/route.ts`, `lib/social/publish-service.ts`, `app/api/cron/publish-scheduled/route.ts`, `CLAUDE.md`
+
+---
+
+## 2026-02-21 — Video Pipeline: Signed URLs + Faster Pacing + New Endpoints
+
+- Video generate routes now resolve Supabase storage paths to signed URLs before passing to Lambda (fixes broken renders with relative paths)
+- Added `/api/video/health` endpoint — checks Remotion env var config before render attempt
+- Added `/api/video/watch` proxy endpoint — streams completed videos without exposing S3 URLs
+- Reduced photo display from 4.5s to 3s per photo, crossfade from 1.5s to 1s (all compositions)
+- VideoCreator checks `/api/video/health` on mount, shows config errors in UI
+- Marketing status route now returns proxy URLs via `/api/video/watch`
+- Updated CLAUDE.md voiceover duration from 4.5s to 3s per photo
+- Files: `app/api/video/{generate,status,health,watch}/route.ts`, `app/api/internal/video-generate/route.ts`, `app/api/marketing/status/route.ts`, `VideoCreator.tsx`, `remotion/compositions/shared.tsx`, all composition files
+
+---
+
+## 2026-02-21 — Auto-Campaigns: Database Schema + Bug Fixes
+
+- Created 4 new tables: `campaigns`, `campaign_queue`, `campaign_triggers`, `campaign_history`
+- Added 4 columns to existing `campaign_templates`: `is_default`, `social_schedule`, `email_subject_template`, `email_template`
+- All tables have RLS policies (user + service_role) and indexes
+- Fixed `content-generator.ts`: wrong column names (`zip`→`postal_code`, `sqft`→`square_feet`, `url`→`raw_url`, `enhanced_url`→`processed_url`)
+- Fixed `campaigns/route.ts`: same photo column name fix in PostgREST join
+- Seeded existing campaign_templates with `is_default = true`
+- **Migration must be applied to Supabase** before feature works (SQL editor or `npx supabase db push`)
+- Files: `supabase/migrations/20260221_campaign_tables.sql`, `lib/campaigns/content-generator.ts`, `app/api/campaigns/route.ts`
+
+---
+
+## 2026-02-20 — Add AWS Error Diagnostics to Video Pipeline
+
+- Production showed "UnknownError" after Lambda upgrade — no DB rows created, so error is in generate route
+- AWS SDK errors include `$metadata.httpStatusCode` (403 = permission, 429 = throttle) not exposed before
+- Enhanced error catch blocks in generate, internal-generate, and status routes to extract AWS metadata
+- VideoCreator now surfaces `errorName` and `awsHttpStatus` in the UI error display
+- Files: `app/api/video/generate/route.ts`, `app/api/internal/video-generate/route.ts`, `app/api/video/status/route.ts`, `VideoCreator.tsx`
+
+---
+
+## 2026-02-20 — Upgrade Lambda to 3GB RAM / 900s Timeout
+
+- Redeployed Lambda function: `remotion-render-4-0-424-mem3008mb-disk2048mb-900sec`
+- Previous function (2GB/240s) timed out on 31-photo videos (~4200 frames)
+- Added `timeoutInMilliseconds: 900000` to both `renderMediaOnLambda` calls
+- Requires Vercel env var update: `REMOTION_LAMBDA_FUNCTION_NAME`
+- Files: `app/api/video/generate/route.ts`, `app/api/internal/video-generate/route.ts`
+
+---
+
+## 2026-02-20 — Force Single-Lambda Video Rendering
+
+- Increased `framesPerLambda` from 200 to 20000 in both video generate routes
+- With 31 photos (~900 frames), `framesPerLambda: 200` spawned ~5 concurrent lambdas exceeding AWS concurrency limit
+- `framesPerLambda: 20000` forces all rendering onto a single lambda (2GB RAM, 240s timeout — sufficient)
+- Files: `app/api/video/generate/route.ts`, `app/api/internal/video-generate/route.ts`
+
+---
+
+## 2026-02-20 — Fix "s.map is not a function" in Video Generation
+
+- Root cause: `lib/video/photo-ordering.ts` assumed `preparation_metadata.photoAudit` was an array and called `.map()` on it
+- Actual data: `photoAudit` is a `Record<string, object>` (keyed by photoId), produced by `listing-engine/index.ts`
+- Additionally, `photoType` lives in `decisionAudit`, not `photoAudit`
+- Fix: Rewrote `orderPhotosForWalkthrough()` to read `decisionAudit` as a Record, using `Object.entries()` instead of `.map()`
+- Added guards for missing/empty/non-object data with fallback to original photo order
+- File: `lib/video/photo-ordering.ts`
+
+---
+
+## 2026-02-20 — Fix Remotion Lambda Bundling for Vercel
+
+- Added `serverExternalPackages` to `next.config.mjs` for `@remotion/lambda`, `@remotion/lambda-client`, `@remotion/serverless`
+- Root cause: Next.js webpack re-bundles the Remotion Lambda client (76K-line pre-built bundle containing AWS SDK), breaking internal `.map()` calls and producing minified "s.map is not a function" error
+- `serverExternalPackages` tells Next.js to use native `require()` instead of webpack bundling for these packages
+- Confirmed: `renderMediaOnLambda` works perfectly via CLI (native Node.js) but fails from Vercel serverless functions (webpack-bundled)
+- Added diagnostic logging to video generate route for future debugging
+- Files: `next.config.mjs`, `app/api/video/generate/route.ts`, `app/dashboard/content-studio/video/VideoCreator.tsx`
+
+---
+
+## 2026-02-20 — Fix Lambda Concurrency Limit for Video Rendering
+
+- Added `framesPerLambda: 200` to `renderMediaOnLambda` calls in both video generate routes
+- Root cause: AWS account has low Lambda concurrency limit; default Remotion splits renders across ~9 parallel lambdas causing `TooManyRequestsException` (surfaced as "s.map is not a function")
+- Confirmed via CLI: single-lambda render succeeds, multi-lambda render fails with rate limit
+- Files: `app/api/video/generate/route.ts`, `app/api/internal/video-generate/route.ts`
+
+---
+
+## 2026-02-20 — Fix Video Render Crash, Property Site 404, Voiceover Details
+
+### 1. Video Render "s.map is not a function" Fix
+- Made `price`, `beds`, `baths` optional in all 5 Remotion composition Zod schemas
+- Root cause: API sends `undefined` for missing listing fields, but Zod schemas required `z.number()` — validation failure on Lambda produced minified error
+- Updated ClosingCard to conditionally render price/details only when present
+- Fixed PriceDrop composition to guard optional `listing.price`
+- Files: `remotion/compositions/{PropertyShowcase,JustListed,OpenHouse,PriceDrop,Sold,ClosingCard}.tsx`
+
+### 2. Property Site 404 Fallback
+- Added listing_id fallback lookup when slug lookup fails in `app/p/[slug]/page.tsx`
+- Added structured diagnostic logging with error code, message, and slug
+
+### 3. VideoCreator Property Details for Voiceover
+- Added `price`, `bedrooms`, `bathrooms`, `square_feet` to Supabase query in VideoCreator
+- Passes full property details to voiceover API for richer script generation
+- Displays listing price in VideoCreator preview
+- File: `app/dashboard/content-studio/video/VideoCreator.tsx`
+
+---
+
+## 2026-02-20 — Prevent CDN Caching of Property Site 404s
+
+- Added `no-store` Cache-Control + CDN-Cache-Control headers for `/p/*` routes in `vercel.json`
+- Added `export const revalidate = 0` to `app/p/[slug]/page.tsx`
+- Prevents Vercel edge from caching stale 404 responses
+
+---
+
+## 2026-02-20 — Fix Ambiguous photos FK (PGRST201) Across Codebase
+
+### Root Cause
+The `listings` table has TWO foreign key paths to `photos`:
+1. `photos.listing_id → listings.id` (one-to-many — the one we want)
+2. `listings.hero_photo_id → photos.id` (many-to-one — for hero photo)
+
+PostgREST returns PGRST201 "Could not embed because more than one relationship was found" for any query using `photos(...)` on listings. This caused the video generate endpoint to return "Listing not found" (the entire query returned null).
+
+### Files Fixed (6 files)
+- `app/api/video/generate/route.ts` — `photos(...)` → `photos!photos_listing_id_fkey(...)`
+- `app/api/internal/video-generate/route.ts` — same fix
+- `app/p/[slug]/page.tsx` — same fix
+- `components/dashboard-client.tsx` — same fix
+- `lib/campaigns/engine.ts` — same fix
+- `app/(authenticated)/listings/page.tsx` — same fix
+- `app/(authenticated)/listings/[id]/page.tsx` — same fix
+
+---
+
+## 2026-02-20 — Voiceover Timeout Fix + Remotion Env Vars on Vercel
+
+### 1. Voiceover TTS Timeout Fix
+- Increased `AbortSignal.timeout` from 15s to 45s for both ElevenLabs and OpenAI TTS calls
+- Added `export const maxDuration = 60` to voiceover route
+- Added voiceover route to `vercel.json` with `maxDuration: 60` and `memory: 1024`
+- Root cause: TTS generation for 130+ word property narration scripts regularly exceeds 15s
+
+### 2. Vercel Environment Variables Added
+- Added 6 `REMOTION_*` env vars to Vercel (Production, Preview, Development) — video generation was returning 503 because these were only in `.env.local`
+- Added `OPENAI_API_KEY` to Preview and Development environments (was only on Production)
+
+### 3. Property Site 404 Fix
+- Replaced fragile inline `getSupabase()` with shared `adminSupabase()` helper in `app/p/[slug]/page.tsx`
+- Updated all `property_sites` rows to `is_published: true` (were incorrectly `false` from old Worker code)
+- Added error logging for property_sites slug lookup failures
+
+---
+
+## 2026-02-20 — Property Details: Migration, Form, Marketing, Video, Property Sites
+
+### 1. Database Migration — `20260220_listing_property_details.sql`
+- Added 13 columns to `listings` table: `price`, `bedrooms`, `bathrooms`, `square_feet`, `property_type`, `year_built`, `lot_size`, `parking`, `features` (JSONB), `mls_number`, `hoa_fees`, `latitude`, `longitude`
+- Added indexes for `property_type`, `price`, `mls_number`
+- **MUST BE APPLIED** to Supabase before deploying this code
+
+### 2. Listing Creation Form — `app/listings/new/page.tsx`
+- Added city/state/ZIP fields, price/beds/baths/sqft row, description
+- Added collapsible "additional details" section: property type, year built, lot size, parking, MLS number, HOA fees
+- Updated insert query to save all new fields to the database
+
+### 3. Marketing Handler — `apps/processor/src/marketing-handler.ts`
+- Expanded listing query to fetch all property detail columns
+- Step 1 (Description): Now passes `price`, `beds`, `baths`, `sqft`, `propertyType` to GPT-4o
+- Step 2 (Captions): Now passes `price`, `bedrooms`, `bathrooms`, `squareFeet`, `propertyType` to GPT-4o-mini
+- Richer AI-generated content with real property data
+
+### 4. Video Generate APIs
+- Both `/api/video/generate` and `/api/internal/video-generate` now fetch and pass `price`, `beds`, `baths`, `sqft` to Remotion compositions
+- Video overlays can now display real property details
+
+### 5. Property Site Metadata — `app/p/[slug]/page.tsx`
+- Enhanced OG tags with price and specs (beds/baths/sqft)
+- Property site pages will now show full details (price, bedrooms, etc.) since `select('*')` picks up the new columns
+
+### Verification
+- `npx tsc --noEmit`: 0 errors
+- `npm run build`: Success
+
+---
+
+## 2026-02-20 — Fix Video Generate "Listing not found" & Voiceover Failure
+
+### 1. Video Generate API — Non-existent Column Query
+- **Root cause:** `/api/video/generate` queried `price, beds, baths, sqft, features` columns that don't exist on the `listings` table. Supabase returns null for the entire query, triggering "Listing not found" error.
+- Replaced with actual columns: `title, address, city, state, description, preparation_metadata`
+- Updated `ListingWithPhotos` interface and `listingProps` construction
+- Files Modified: `app/api/video/generate/route.ts`
+
+### 2. Internal Video Generate API — Same Fix
+- `/api/internal/video-generate` (called by Cloudflare Worker marketing pipeline) had the exact same non-existent column query
+- Same fix applied: replaced phantom columns with real ones
+- Files Modified: `app/api/internal/video-generate/route.ts`
+
+### 3. Voiceover Unblocked
+- The voiceover API (`/api/video/voiceover`) was working correctly — it generates scripts via OpenAI and audio via ElevenLabs/OpenAI TTS
+- Voiceover appeared broken because after generating audio, clicking "Generate Video" called `/api/video/generate` which immediately failed
+- With the query fix, the full flow (voiceover → video render) now works end-to-end
+
+### Verification
+- `npx tsc --noEmit`: 0 errors
+- `npm run build`: Success
+
+---
+
+## 2026-02-20 — Pipeline Gap Fixes: TikTok Captions, Video→Post Bridge, Video Status
+
+### 1. TikTok Caption Generation
+- Added `'tiktok'` to marketing handler Step 2 platforms array
+- gpt-copy provider already supported TikTok in its type signature — just needed the call
+- Content Studio unified-creator auto-fills TikTok captions from `captions_result.tiktok`
+- Files Modified: `apps/processor/src/marketing-handler.ts`
+
+### 2. Video → Scheduled Post Bridge
+- Marketing Step 6 fires Remotion Lambda but never linked the video URL back to scheduled posts
+- Added video URL backfill in `publish-scheduled` cron: queries `video_render_jobs` for completed renders, updates matching `scheduled_posts.video_url`
+- Runs every 15 min before the publish loop, so videos get linked before publishing
+- Fixed pre-existing duplicate `const message` lint warnings in catch blocks
+- Files Modified: `app/api/cron/publish-scheduled/route.ts`
+
+### 3. Correct Video Status After Trigger
+- Marketing handler was setting `video_status: 'completed'` immediately after triggering the render, but the video was still rendering on Lambda
+- Changed to `video_status: 'processing'` with `status: 'rendering'` flag in result
+- Actual completion is tracked by `/api/video/status` polling and cron backfill
+- Files Modified: `apps/processor/src/marketing-handler.ts`
+
+### Verification
+- `npx tsc --noEmit`: 0 errors
+- `npm run build`: Success
+
+---
+
+## 2026-02-20 — Critical Bug Fixes: Property Site, Video Reel, Studio, Content Visibility
+
+### 1. Property Site 404 Fix
+- **Root cause:** `/p/[slug]` page extracted UUID from slug via regex, but marketing handler generates address-based slugs with random suffix (no UUID). Regex never matched, causing 404.
+- Rewrote slug lookup to query `property_sites` table by slug, then fetch listing via `listing_id`
+- Changed marketing handler to set `is_published: true` so pages are live immediately
+- Removed non-existent columns from metadata query (bedrooms, bathrooms, square_feet)
+- Files Modified: `app/p/[slug]/page.tsx`, `apps/processor/src/marketing-handler.ts`
+
+### 2. Video Reel Photos Not Loading
+- **Root cause:** VideoCreator queried 5 non-existent columns (price, bedrooms, bathrooms, square_feet, features) from listings table, causing the entire Supabase query to fail silently.
+- Fixed query to only select existing columns (title, address, city, state, description)
+- Updated ListingData interface to match actual schema
+- Removed price/bedrooms references from script generation and fallback
+- Files Modified: `app/dashboard/content-studio/video/VideoCreator.tsx`
+
+### 3. Studio Marketing Panel Auto-Show
+- **Root cause:** Marketing results panel only appeared after clicking "View Results" button, which itself only showed when marketing_status was 'completed'. Users never discovered the panel.
+- Auto-show marketing results panel when marketing status is 'completed'
+- Fixed unused variable lint warning in catch block
+- Files Modified: `components/studio-client.tsx`
+
+### 4. Content Studio Generated Content Visibility
+- **Root cause:** marketing_jobs query only fetched status columns, not result/artifact columns. UI showed "AI Content Ready" badge but never displayed actual generated content.
+- Expanded marketing_jobs query to include description_result, captions_result, property_site_result
+- Added content preview below each listing card: description preview, caption count, property site link
+- Fixed pre-existing `any` types in listing/photo mapping
+- Files Modified: `app/dashboard/content-studio/page.tsx`, `app/dashboard/content-studio/ContentStudioClient.tsx`
+
+### Verification
+- `npx tsc --noEmit`: 0 errors
+- `npm run build`: Success
+
+---
+
+## 2026-02-20 — Error Handling Hardening
+
+### Summary
+Replaced all `catch (error: any)` with `catch (error: unknown)` across 83 source files (128 catch blocks), per CLAUDE.md convention. Uses `error instanceof Error` guards with proper message extraction.
+
+### Standard Pattern
+- `catch (error: any)` → `catch (error: unknown)` with `const message = error instanceof Error ? error.message : 'fallback';`
+- All `error.message` and `error?.message` references replaced with guarded `message` variable
+
+### Special Cases (5 blocks)
+- `error.name === 'AbortError'` — guarded with `error instanceof Error &&` (autoenhance.ts, index.ts, preparation-overlay.tsx)
+- `error.code === 'insufficient_quota'` — guarded with `instanceof Error && 'code' in error` (generate-caption/route.ts)
+- `error.stack` — guarded with `error instanceof Error ? error.stack : undefined` (listing/prepare/route.ts)
+
+### Files Modified
+83 files across API routes (44), lib/AI pipeline (12), dashboard pages (7), components (6), authenticated pages (2), public pages (3), worker (1), functions (2), and other modules (6).
+
+### Verification
+- `npx tsc --noEmit`: 0 errors
+- `npm run build`: Success
+- `grep -rn "catch.*: any"`: 0 results in source files
+
+---
+
+## 2026-02-20 — Product Readiness: Critical User-Facing Fixes
+
+### 1. Waitlist Email Submission (Phase 2A)
+- `handleNotifySubmit` now calls `/api/notify` API to save email and send confirmation
+- Previously showed success UI without actually saving the email
+- Files Modified: app/page.tsx
+
+### 2. Calendly URL Configuration (Phase 2B)
+- Replaced hardcoded Calendly URLs with `NEXT_PUBLIC_CALENDLY_URL` env var + fallback
+- Files Modified: app/contact/page.tsx, app/why-snapr/page.tsx
+
+### 3. Revision Notification Emails (Phase 2C)
+- POST: Editors notified via Resend when new revision requested (support@snap-r.com)
+- PATCH: Users notified via Resend when their revision is completed
+- Added `notifyEditorsOfRevision()` and `notifyUserOfCompletion()` helpers
+- Both use try/catch to prevent email failures from blocking API responses
+- Fixed all `catch (error: any)` to `catch (error: unknown)` with proper type guards
+- Added `RevisionUpdateData` interface replacing inline any type
+- Files Modified: app/api/renovation/revision/route.ts
+
+### 4. Organization Membership Check (Phase 2D)
+- Added `organization_members` table query when user is not the org owner
+- Uses `maybeSingle()` for optional membership lookup
+- Non-members redirected to `/dashboard` instead of seeing empty page
+- Files Modified: app/org/[slug]/dashboard/page.tsx
+
+### 5. Team Size from Database (Phase 2E)
+- Replaced hardcoded `isTeam25 = false` with actual count from `organization_members`
+- Queries member count + 1 (for owner) to determine if team has 25+ members
+- Files Modified: app/dashboard/organization/page.tsx
+
+### 6. OAuth Profile Fetch — TikTok & Twitter (Phase 2F)
+- Added `case 'tiktok'` using TikTok v2 User Info API
+- Added `case 'twitter'` using Twitter/X v2 users/me endpoint
+- Removed dead `default: throw` since all 5 platforms now handled
+- Files Modified: lib/social/oauth-config.ts
+
+### 7. Error Handling & Lint Fixes
+- Fixed `catch (error: any)` → `catch (error: unknown)` in notify/route.ts
+- Fixed unescaped JSX entities across 3 files (contact, why-snapr, organization)
+- Removed unused imports (BookOpen, Eye, Zap, BarChart3)
+- Added eslint-disable for intentional img elements
+
+### Verification
+- npx tsc --noEmit: 0 errors
+- npm run build: Success
+
+---
+
+## 2026-02-20 — Marketing Pipeline → Content Studio Integration
+
+### 1. Content Studio Dashboard — Marketing-Aware Routing (Phase 1A)
+- Listings with completed marketing now show gold "AI Content Ready" badge with Sparkles icon
+- Processing listings show animated "Generating" badge
+- Click on listing auto-appends `&prefill=marketing` to route when marketing is completed
+- Hover CTA changes to "Create with AI Content" and shows "Captions & hashtags auto-loaded" hint
+- "Start Creating" footer link also passes prefill param
+- Cleaned up unused imports (ArrowLeft, Calendar, Settings, ChevronRight, Hash, BarChart3, CheckCircle)
+- Files Modified: app/dashboard/content-studio/ContentStudioClient.tsx
+
+### 2. Auto-Populate Create Post from Marketing Captions (Phase 1C)
+- Removed `?prefill=marketing` URL param requirement — now auto-detects marketing content when any listing is selected
+- Captions and hashtags auto-load from marketing_jobs table for completed marketing listings
+- Added "Auto-generated captions loaded from marketing pipeline" banner (only shown when not manually edited)
+- Fixed all 9 `any` types → proper interfaces (ListingPhoto, ListingRecord, ListingData)
+- Fixed all `catch (e: any)` → `catch (e: unknown)` with Error type guards
+- Fixed `mp4Data as any` → safe ArrayBuffer copy pattern
+- Cleaned up unused imports and added eslint-disable for intentionally unused vars
+- Files Modified: components/content-studio/unified-creator.tsx
+
+### 3. Video Creator — Auto-Load Existing Renders (Phase 1D)
+- Added useEffect to check `/api/marketing/status` for existing video renders when listing loads
+- If marketing pipeline already rendered a video, auto-sets videoUrl and shows completed state
+- Users see previously rendered video immediately with download/re-render options
+- Files Modified: app/dashboard/content-studio/video/VideoCreator.tsx
+
+### 4. Email Marketing — Pre-fill from AI Description (Phase 1E)
+- Added marketing description fetch when listing is selected
+- AI-generated description from marketing pipeline used as primary source in email body
+- Falls back to user-entered listing description when no marketing description exists
+- Both HTML and text email templates updated to prefer AI description
+- Fixed `any` types: propertySites forEach and listingsData map
+- Cleaned up unused imports (Send, Image, X)
+- Files Modified: app/dashboard/content-studio/email/EmailMarketing.tsx
+
+### 5. Scheduled Posts Visibility (Phase 1F)
+- Verified: auto-scheduled posts from marketing pipeline already appear in calendar and scheduled list views
+- Both views query the same `scheduled_posts` table that the Worker writes to
+- No code changes needed — integration already works
+
+### Verification
+- npx tsc --noEmit: 0 errors
+- npm run build: Success
+
+---
+
+## 2026-02-20 — Conversion & Onboarding Polish
+
+### 1. Real Music Tracks
+- Replaced 5 silent placeholder MP3s with synthesized background music (45s each, 128kbps stereo)
+- Added LICENSES.md documenting track origins
+- Files Modified: public/music/upbeat.mp3, elegant.mp3, cinematic.mp3, ambient.mp3, corporate.mp3, LICENSES.md
+
+### 2. Landing Page Conversion
+- Added trust section with brokerage logos and trust badges (Shield, Lock, CheckCircle)
+- Updated hero social proof line with "Join 500+ professionals"
+- Added mobile sticky CTA bar using IntersectionObserver
+- Added footer lead capture form (email for marketing guide)
+- Files Modified: app/page.tsx
+
+### 3. Onboarding Social Connect (Step 5)
+- Inserted new Step 5: Connect Social Accounts (Facebook, Instagram, LinkedIn OAuth)
+- Renumbered old Step 5 (WhatsApp) → Step 6, old Step 6 (Get Started) → Step 7
+- OAuth state carries returnTo URL for post-redirect restoration
+- Files Modified: app/onboarding/page.tsx
+
+### 4. OAuth Callback returnTo Support
+- Extract returnTo from JSON state with open-redirect prevention (validates path starts with / not //)
+- Use correct query param separator when redirectUrl already has params
+- Files Modified: app/api/social/oauth/[platform]/route.ts
+
+### 5. Guided First Listing
+- 3-step tooltip system on new listing page (title → photos → submit) with auto-advance
+- Studio guided tooltip on "Prepare Listing" button with localStorage persistence
+- Onboarding "Create Your First Listing" redirects to /listings/new?guided=true
+- Files Modified: app/listings/new/page.tsx, app/dashboard/studio/page.tsx, components/studio-client.tsx
+
+### 6. Gitignore Cleanup
+- node_modules now ignored globally (was /node_modules only)
+- Added ignore rules for .agent/, .agents/, .claude/, .cursor/, .planning/, .env.vercel-*, *.docx, *.pptx
+- Files Modified: .gitignore
+
+### Verification
+- npx tsc --noEmit: 0 errors
+- npm run build: Success
+
+---
+
+## 2026-02-19 — Fix Property Site Critical Issues
+
+### 1. Fix Nonexistent Table Query
+- Changed `listing_videos` → `video_render_jobs` in property site server component
+- Added `status = 'completed'` filter to only show finished video renders
+- Files Modified: app/p/[slug]/page.tsx
+
+### 2. Remove Hardcoded Google Maps API Key
+- Removed exposed fallback key `AIzaSyBFw0Qbyq9zTFTd-tUY6dZWTgaQzuU17R8` from client code
+- Maps API key now passed as `mapsApiKey` prop from server component via env var
+- Shows address fallback with MapPin icon when no API key configured
+- Files Modified: app/p/[slug]/page.tsx, app/p/[slug]/PropertySiteClient.tsx
+
+### 3. Fix Type Safety — Eliminate `any` Types
+- Defined `ListingPhoto` interface for photo sorting and mapping
+- Replaced `(a: any, b: any)` and `(photo: any)` with properly typed parameters
+- Added `display_order` field to shared `Photo` interface
+- Files Modified: app/p/[slug]/page.tsx, lib/types.ts
+
+### Verification
+- npx tsc --noEmit: 0 errors
+- npm run build: Success
+
+---
+
+## 2026-02-19 — Phase 7: Additional Templates + Polish (Video Engine v1.1)
+
+### 1. PriceDrop Template + PriceDropBadge
+- Created `remotion/compositions/PriceDrop.tsx` — urgency-paced template (3.5s/photo, 1s slide
+  transitions). IntroCard shows "Price Reduced" with savings subtitle. Uses slide transitions
+  from @remotion/transitions for visual differentiation.
+- Created `remotion/compositions/PriceDropBadge.tsx` — red badge (#EF4444) showing percentage
+  drop, previous price with strikethrough, and new price in green (#22C55E). Persists at top
+  of frame during slideshow. Fade-in animation over first 20 frames.
+- Zod schema: `priceDropSchema` with optional `listing.previousPrice`.
+- Duration: `calculatePriceDropDuration()` — urgency pacing at 105 frames/photo.
+
+### 2. Sold Template + SoldBadge
+- Created `remotion/compositions/Sold.tsx` — celebration-style template with standard pacing
+  (4.5s/photo), crossfade transitions. IntroCard shows "Sold" with social proof subtitle.
+  Purple closing card (#8B5CF6) instead of gold.
+- Created `remotion/compositions/SoldBadge.tsx` — purple badge (#8B5CF6) with party emoji,
+  optional "Sold in X Days" social proof text. Fade-in animation.
+- Zod schema: `soldSchema` with optional `listing.daysOnMarket`.
+- Duration: `calculateSoldDuration()` — standard pacing at 135 frames/photo.
+
+### 3. Root.tsx Registration — 6 New Compositions
+- Registered PriceDrop and Sold in 3 aspect ratios each (9:16, 1:1, 16:9) = 6 new compositions.
+- Total compositions: 16 (TestVideo + 5 templates × 3 ratios).
+- Added default props with sample data: `priceDropDefaultProps` (previousPrice: 2500000),
+  `soldDefaultProps` (daysOnMarket: 12).
+- Files Modified: remotion/Root.tsx
+
+### 4. API Route Updates — Composition ID Routing
+- Updated `app/api/video/generate/route.ts` (user-facing): added `price-drop` and `sold`
+  cases to getCompositionId(), template-specific prop injection for previousPrice/daysOnMarket.
+- Updated `app/api/internal/video-generate/route.ts` (internal/marketing): same composition
+  ID cases, expanded InternalGenerateBody interface with previousPrice/daysOnMarket.
+- Updated `lib/validation/schemas.ts`: added 'price-drop' and 'sold' to template enum,
+  added previousPrice (number.positive) and daysOnMarket (int 0-9999) optional fields.
+
+### 5. VideoCreator UI — Template Selector + Inputs
+- Added PriceDrop and Sold to VIDEO_TEMPLATES constant with descriptions and icons.
+- Added conditional UI controls: "Original Price" input for PriceDrop, "Days on Market"
+  input for Sold. Values passed to generate API as template-specific params.
+- Files Modified: app/dashboard/content-studio/video/VideoCreator.tsx
+
+### 6. Marketing Handler — Template Auto-Selection
+- Extended `MarketingJobMessage` in types.ts with optional `videoTemplate`, `previousPrice`,
+  `daysOnMarket` fields for template hinting from upstream triggers.
+- Updated `marketing-handler.ts` to use `message.videoTemplate` (defaults to 'property-showcase').
+  Template-specific params injected into internal API call body.
+- Video result recording now stores actual template name (was hardcoded to 'property-showcase').
+- Files Modified: apps/processor/src/types.ts, apps/processor/src/marketing-handler.ts
+
+### Verification
+- npx tsc --noEmit: 0 errors
+- npm run build: Success
+
+---
+
+## 2026-02-19 — Phase 6: Agent Branding + Video Publishing (Video Engine v1.1)
+
+### 1. BrandOverlay Shared Component
+- Created `remotion/compositions/BrandOverlay.tsx` with Zod `brandSchema` and two components.
+- `BrandWatermark`: Agent logo overlay in top-right during photo slideshow (fade-in, 85% opacity).
+- `BrandFooter`: Tagline + business name + phone/website + brokerage logo on closing card
+  with staggered entrance animations.
+- All brand fields optional — compositions render identically without brand data.
+
+### 2. Brand Integration in All Templates
+- Added `brand: brandSchema.optional()` to PropertyShowcase, JustListed, OpenHouse schemas.
+- Each template now renders BrandWatermark during slideshow and BrandFooter on closing card.
+- ClosingCard accepts `primaryColor` prop (defaults to '#D4A017'), replaces hardcoded gold.
+- Updated Root.tsx with `defaultBrand` sample data for Remotion Studio preview.
+- Files Modified:
+  remotion/compositions/PropertyShowcase.tsx, JustListed.tsx, OpenHouse.tsx,
+  ClosingCard.tsx, Root.tsx
+
+### 3. Internal Video Generate API — Brand Data Injection
+- Updated `app/api/internal/video-generate/route.ts` to fetch `brand_profiles` from DB.
+- Uses `adminSupabase().from('brand_profiles').maybeSingle()` (bypasses RLS).
+- Maps snake_case DB columns to camelCase composition props with `?? undefined` coercion.
+- Brand data injected as `inputProps.brand` for Lambda render — videos are now branded.
+
+### 4. Video Publishing in Cron Publisher
+- Rewrote `app/api/cron/publish-scheduled/route.ts` with video publishing support.
+- Checks `post.video_url` to route to video-specific publishing functions.
+- Facebook video: `POST /v18.0/${pageId}/videos` with `file_url` param.
+- Instagram Reels: 3-step flow (create REELS container → poll status → publish).
+- LinkedIn video: returns "coming soon" error (requires complex upload flow).
+- Fixed all `catch (error: any)` → `catch (error: unknown)` with instanceof guards.
+- Added AbortSignal.timeout to all fetch calls (15-30s).
+
+### 5. Database Migration — scheduled_posts video_url
+- Created `supabase/migrations/20260219_scheduled_posts_video_url.sql`.
+- Adds `video_url TEXT` column to `scheduled_posts` table for video post routing.
+
+---
+
+## 2026-02-19 — Phase 5: Marketing Pipeline + Billing (Video Engine v1.1)
+
+### 1. Video Generation as Marketing Step 6
+- Added Step 6 (video generation) to the 5-step marketing pipeline in `marketing-handler.ts`.
+- Fire-and-forget: triggers Remotion Lambda render via internal API, doesn't block other steps.
+- Always-complete semantics: video failure doesn't block marketing completion.
+- Billing gate: Free/Starter tiers get `video_status: 'skipped'`, Pro/Agency get full generation.
+
+### 2. Internal Video Generate API
+- Created `app/api/internal/video-generate/route.ts` for Worker-to-API communication.
+- Uses CRON_SECRET bearer auth (same pattern as Vercel cron jobs).
+- Fetches listing + photos via adminSupabase, orders photos, triggers Lambda render.
+- Returns `{ renderId, bucketName }` to marketing handler.
+
+### 3. Database Migration
+- Created `supabase/migrations/20260219_marketing_jobs_video.sql`.
+- Adds `video_status` (TEXT, default 'pending') and `video_result` (JSONB) to `marketing_jobs`.
+
+### 4. Marketing Status API — Video Resolution
+- Updated `app/api/marketing/status/route.ts` to include video step data.
+- Resolves actual `videoUrl` by joining `video_render_jobs` when `video_result.renderId` exists.
+- Fixed `catch (error: any)` → `catch (error: unknown)`.
+
+### 5. Marketing Banner — 6 Steps
+- Updated `components/marketing-banner.tsx` with Video in STEPS array (6 progress dots).
+- Added "Video ready" indicator in completed state banner.
+
+### 6. Marketing Results Panel — Video Card
+- Added 6th CollapsibleSection for "Property Video" in `components/marketing-results-panel.tsx`.
+- Shows video player with download button when render complete.
+- Shows rendering spinner while in progress.
+- Shows upgrade prompt for skipped (billing gate).
+
+### 7. Billing Limits — canGenerateVideo
+- Added `canGenerateVideo` to all tiers in `lib/content/limits.ts`.
+- Free/Starter: false, Pro/Agency: true.
+- Added `canGenerateVideo()` convenience function export.
+>>>>>>> origin/main
+
+---
+
 ## 2026-02-12 — Phase 1 Billing Hardening
 
 ### 1. Fixed Tailwind Build Failure
@@ -1125,3 +1763,356 @@ Cloudflare Worker (queue handler)
 - npx tsc --noEmit: 0 errors
 - npm run build: Success (all routes compile)
 - Risk Level: Medium (44 files changed, but all changes are hardening — no behavioral changes to core pipeline)
+
+-------------------------------------------------------------------------------
+## 2026-02-19 — Phase 1: Remotion Foundation (Video Engine v1.1)
+-------------------------------------------------------------------------------
+
+### 1. Remotion Test Composition & Configuration
+- Description:
+  Created Remotion project structure with test video composition,
+  configuration, and root registration. TestVideo composition renders
+  listing photo with fade-in animation and text overlay (address, price,
+  beds/baths). All Remotion packages at matching version 4.0.424.
+  Config sets h264 codec with yuv420p pixel format for Safari/QuickTime
+  compatibility.
+- Files Created:
+  remotion/Root.tsx
+  remotion/compositions/TestVideo.tsx
+  remotion/remotion.config.ts
+- Architectural Impact:
+  Foundation for Remotion Lambda rendering. TestVideo composition is
+  the template that API routes will invoke for video generation.
+  Uses Zod schema inference for type safety.
+- Blueprint Alignment:
+  Yes — Phase 1 Plan 1: Remotion foundation artifacts.
+- Risk Level:
+  Low (additive files only, no integration yet)
+
+### 2. Video Render Jobs Table & Validation Schemas
+- Description:
+  Created video_render_jobs table for tracking Remotion Lambda render
+  jobs with full lifecycle (queued/rendering/completed/failed), cost
+  tracking, error logging, and render metadata. Added Zod validation
+  schemas (generateVideoSchema, videoStatusSchema) for API input
+  validation.
+- Files Created:
+  supabase/migrations/20260219_video_render_jobs.sql
+- Files Modified:
+  lib/validation/schemas.ts
+- Architectural Impact:
+  Database layer ready for video rendering pipeline. RLS policies allow
+  users to view their own render jobs, service role has full access for
+  worker inserts/updates. Indexes optimize queries by user, listing,
+  render ID, status, and creation time.
+- Blueprint Alignment:
+  Yes — Phase 1 Plan 1: Database and validation infrastructure.
+- Risk Level:
+  Low (additive schema only, no existing tables modified)
+
+### 3. Video Generation API Route
+- Description:
+  Created POST /api/video/generate endpoint for triggering Remotion Lambda
+  renders. Authenticates user, validates input with Zod, fetches listing
+  with photos, checks Remotion env vars, triggers Lambda render via
+  renderMediaOnLambda, and stores job in video_render_jobs. All error
+  paths return structured JSON with appropriate status codes.
+- Files Created:
+  app/api/video/generate/route.ts
+- Architectural Impact:
+  Entry point for all video renders from UI. Follows existing SnapR
+  patterns: createClient() auth, adminSupabase() service operations,
+  Zod validation, always-complete semantics with structured error
+  responses. No any types.
+- Blueprint Alignment:
+  Yes — Phase 1 Plan 2: Video generation API endpoint.
+- Risk Level:
+  Low (additive API route, follows established patterns)
+
+### 4. Video Status API Route & Vercel Function Configuration
+- Description:
+  Created GET /api/video/status endpoint for polling render progress.
+  Validates renderId, authenticates user, verifies ownership, queries
+  Lambda progress via getRenderProgress, updates database on
+  completion/failure, and returns structured status. Returns cached
+  results for terminal states (completed/failed) to avoid unnecessary
+  AWS API calls. Updated vercel.json with function configs: 60s/1024MB
+  for generate route, 30s/512MB for status route.
+- Files Created:
+  app/api/video/status/route.ts
+- Files Modified:
+  vercel.json
+- Architectural Impact:
+  Enables real-time progress polling for video renders. Optimization:
+  caches terminal states in database to reduce Lambda API calls. Vercel
+  function configs ensure appropriate timeouts and memory allocation.
+- Blueprint Alignment:
+  Yes — Phase 1 Plan 2: Video status polling with optimization.
+- Risk Level:
+  Low (additive API route + function config)
+
+-------------------------------------------------------------------------------
+## 2026-02-19 — Phase 2: PropertyShowcase Composition + Multi-Format (Video Engine v1.1)
+-------------------------------------------------------------------------------
+
+### 1. PropertyShowcase Composition
+- Description:
+  Created cinematic property walkthrough composition using TransitionSeries
+  with crossfade transitions (1.5s fade), Ken Burns zoom/pan effect on each
+  photo (alternating zoom in/out with subtle translateX), persistent address
+  overlay with dark gradient backdrop, and animated closing card with gold
+  price, staggered fade-in for address/price/details.
+- Files Created:
+  remotion/compositions/PropertyShowcase.tsx
+  remotion/compositions/ClosingCard.tsx
+- Architectural Impact:
+  Production-ready video composition replacing TestVideo. Percentage-based
+  sizing handles all aspect ratios from single component. Uses @remotion/transitions
+  TransitionSeries, @remotion/google-fonts Inter, Remotion Img component.
+- Blueprint Alignment:
+  Yes — Phase 2 Plan 02-01: PropertyShowcase composition.
+- Risk Level:
+  Low (additive composition files)
+
+### 2. Multi-Format Registration with calculateMetadata
+- Description:
+  Registered 3 PropertyShowcase compositions in Root.tsx for each aspect ratio:
+  PropertyShowcase-9x16 (1080x1920), PropertyShowcase-1x1 (1080x1080),
+  PropertyShowcase-16x9 (1920x1080). Uses calculateMetadata to dynamically
+  compute durationInFrames from photo count. Duration formula accounts for
+  TransitionSeries overlap (N*90 + 90 frames).
+- Files Modified:
+  remotion/Root.tsx
+- Architectural Impact:
+  Lambda can render any aspect ratio by targeting the correct composition ID.
+  Duration auto-calculated — no hardcoded frame counts.
+- Blueprint Alignment:
+  Yes — Phase 2 Plan 02-01: Multi-format registration.
+- Risk Level:
+  Low (composition registration)
+
+### 3. Photo Ordering Module (AI Room Classification)
+- Description:
+  Created smart photo ordering using existing photoType data from preparation
+  pipeline. Orders photos in walkthrough sequence: exterior_front → interior_living
+  → kitchen → dining → bedrooms → bathrooms → back → drone → detail. Falls back
+  to original order when no preparation metadata available. Zero additional AI cost.
+- Files Created:
+  lib/video/photo-ordering.ts
+- Architectural Impact:
+  Reuses photo-intelligence.ts classification data. No new AI calls needed.
+  Walkthrough ordering makes videos feel like a guided property tour.
+- Blueprint Alignment:
+  Yes — Phase 2 Plan 02-02: Photo ordering module.
+- Risk Level:
+  Low (pure sorting logic)
+
+### 4. Generate Route — Composition Mapping + Photo Ordering
+- Description:
+  Updated /api/video/generate to map template+aspectRatio to composition ID
+  (property-showcase + 9:16 → PropertyShowcase-9x16). Fetches preparation_metadata
+  and photo IDs for smart ordering. Added sqft to listing query. Expanded
+  template enum to include 'property-showcase'.
+- Files Modified:
+  app/api/video/generate/route.ts
+  lib/validation/schemas.ts
+- Architectural Impact:
+  API now supports both test and property-showcase templates. Photo ordering
+  integrates seamlessly — ordered URLs passed directly to Lambda inputProps.
+- Blueprint Alignment:
+  Yes — Phase 2 Plans 02-01/02-02: API integration.
+- Risk Level:
+  Low (backwards-compatible, test template still works)
+
+### 5. tsconfig — Exclude apps/mobile
+- Description:
+  Added apps/mobile/**/* to tsconfig exclude list to prevent cross-branch
+  TypeScript errors from untracked mobile app files.
+- Files Modified:
+  tsconfig.json
+- Architectural Impact:
+  Prevents mobile app (feature/mobile-app branch) from interfering with
+  main project compilation on feature/brand-polish branch.
+- Risk Level:
+  Low (build config only)
+
+### 6. VideoCreator UI Migration — FFmpeg → Lambda
+- Description:
+  Major refactor of VideoCreator.tsx. Removed all FFmpeg-based browser rendering
+  (~300 lines of canvas, mergeAudioWithVideo, ffmpegRef). Replaced with Lambda
+  API integration: POST /api/video/generate triggers render, recursive setTimeout
+  polling at 3s intervals to GET /api/video/status tracks progress. Added
+  isMountedRef cleanup pattern. New UI: progress spinner with percentage bar,
+  HTML5 video player with poster image, aspect ratio visual selector (3 formats),
+  photo reorder with up/down arrows, download + regenerate buttons.
+- Files Modified:
+  app/dashboard/content-studio/video/VideoCreator.tsx
+- Architectural Impact:
+  Eliminates unreliable browser-side FFmpeg. All video rendering now happens on
+  AWS Lambda via Remotion. Aspect ratios reduced to 3 (9:16, 1:1, 16:9) matching
+  registered Remotion compositions. Template hardcoded to 'property-showcase'.
+  Voiceover generation and music selection UI preserved for future audio mixing.
+- Blueprint Alignment:
+  Yes — Phase 2 Plan 02-03: VideoCreator UI migration.
+- Risk Level:
+  Medium (major UI refactor, but old FFmpeg code was non-functional)
+
+-------------------------------------------------------------------------------
+## 2026-02-19 — Phase 3: Lifecycle Templates (Video Engine v1.1)
+-------------------------------------------------------------------------------
+
+### 1. Shared Composition Components
+- Description:
+  Extracted PhotoSlide, AddressOverlay, font loading, and timing constants from
+  PropertyShowcase into shared.tsx. Refactored PropertyShowcase and ClosingCard
+  to import from shared module. Added INTRO_CARD_FRAMES constant (75 frames / 2.5s).
+- Files Created:
+  remotion/compositions/shared.tsx
+- Files Modified:
+  remotion/compositions/PropertyShowcase.tsx
+  remotion/compositions/ClosingCard.tsx
+- Architectural Impact:
+  All compositions share the same PhotoSlide (Ken Burns), AddressOverlay, and font.
+  Eliminates duplication. New compositions only need to import from shared.tsx.
+- Blueprint Alignment:
+  Yes — Phase 3 Plan 03-01: Shared component extraction.
+- Risk Level:
+  Low (refactor, no behavioral change)
+
+### 2. JustListed Composition
+- Description:
+  Created JustListed template with IntroCard ("JUST LISTED" with gold accent line
+  animation), slide transitions (alternating from-left/from-right), FeatureCallout
+  overlays on photos, and ClosingCard. IntroCard has scale+fade title animation
+  with gold line reveal. FeatureCallout shows property features as semi-transparent
+  pills with gold left border.
+- Files Created:
+  remotion/compositions/JustListed.tsx
+  remotion/compositions/IntroCard.tsx
+  remotion/compositions/FeatureCallout.tsx
+- Architectural Impact:
+  Second production template. Uses slide transitions from @remotion/transitions
+  for visual differentiation from PropertyShowcase (which uses fade). Features
+  overlay adds value for listings with rich feature data.
+- Blueprint Alignment:
+  Yes — Phase 3 Plan 03-01: JustListed composition (COMP-02).
+- Risk Level:
+  Low (additive composition files)
+
+### 3. OpenHouse Composition
+- Description:
+  Created OpenHouse template with faster pacing (3.5s/photo vs 4.5s), wipe
+  transitions for urgency feel, EventBadge date overlay (gold background with
+  calendar emoji), and IntroCard with date subtitle. EventBadge persists
+  throughout slideshow at top of frame.
+- Files Created:
+  remotion/compositions/OpenHouse.tsx
+  remotion/compositions/EventBadge.tsx
+- Architectural Impact:
+  Third production template. Wipe transitions + shorter photo duration create
+  urgency appropriate for time-sensitive open house events. EventBadge adds
+  persistent date/time context.
+- Blueprint Alignment:
+  Yes — Phase 3 Plan 03-02: OpenHouse composition (COMP-03).
+- Risk Level:
+  Low (additive composition files)
+
+### 4. Composition Registration + API Integration
+- Description:
+  Registered JustListed and OpenHouse compositions in Root.tsx (3 aspect ratios
+  each = 6 new compositions). Extended getCompositionId() with switch statement
+  for just-listed and open-house templates. Added features field to listing query.
+  Template-specific inputProps: features for JustListed, openHouseDate for OpenHouse.
+  Expanded template enum to include 'just-listed' and 'open-house'. Added
+  openHouseDate optional field to generate schema.
+- Files Modified:
+  remotion/Root.tsx
+  app/api/video/generate/route.ts
+  lib/validation/schemas.ts
+- Architectural Impact:
+  API now supports 4 templates (test, property-showcase, just-listed, open-house).
+  Each template gets correct composition ID and template-specific props.
+- Blueprint Alignment:
+  Yes — Phase 3 Plans 03-01/03-02/03-03: Registration + API.
+- Risk Level:
+  Low (backwards-compatible, existing templates unchanged)
+
+### 5. Template Selector UI
+- Description:
+  Added template selector to VideoCreator.tsx with 3 clickable cards (Showcase,
+  Just Listed, Open House) using gold (#D4A017) border for active selection.
+  Conditional date/time input appears when Open House template selected.
+  Video info box dynamically shows selected template name and duration.
+  Template and openHouseDate passed to generate API call.
+- Files Modified:
+  app/dashboard/content-studio/video/VideoCreator.tsx
+- Architectural Impact:
+  Users can now choose between 3 video templates in the UI. Open House template
+  supports optional event date input. Template selection wired end-to-end from
+  UI → API → Lambda → composition.
+- Blueprint Alignment:
+  Yes — Phase 3 Plan 03-03: Template selector UI (UI-03).
+- Risk Level:
+  Low (UI additions, existing functionality preserved)
+
+## 2026-02-19 — Phase 4 Audio Integration
+
+### 1. AudioLayer Composition Component + Music Library
+- Created `remotion/compositions/AudioLayer.tsx` — reusable audio component for
+  all compositions. Handles background music (looped, with fade in/out), voiceover
+  playback, volume ducking (music ducks to 30% when voiceover present), and silent
+  fallback track for platform compatibility.
+- Created `public/music/` with 6 placeholder MP3 files (upbeat, elegant, cinematic,
+  ambient, corporate, silent) generated via ffmpeg. Silent placeholders for dev —
+  will be replaced with real royalty-free tracks.
+- Integrated AudioLayer into PropertyShowcase, JustListed, OpenHouse compositions.
+  Extended all Zod schemas with optional `audio` prop. Updated Root.tsx default props.
+- Files Created:
+  remotion/compositions/AudioLayer.tsx, public/music/*.mp3
+- Files Modified:
+  remotion/compositions/PropertyShowcase.tsx, JustListed.tsx, OpenHouse.tsx, Root.tsx
+- Architectural Impact:
+  All compositions now support optional audio (music + voiceover). Audio is rendered
+  server-side by Lambda, not in the browser.
+- Blueprint Alignment:
+  Yes — Phase 4 Plan 04-01 (AUDIO-01, AUDIO-02, AUDIO-03, AUDIO-04, AUDIO-05).
+- Risk Level:
+  Low (additive, audio is optional — compositions work identically without it)
+
+### 2. Voiceover Upload + Generate API Audio Params
+- Added `upload-audio` action to voiceover API route. Uploads base64 MP3 to Supabase
+  Storage (`raw-images/voiceovers/` prefix), returns signed URL (1hr expiry) for Lambda.
+- Fixed all `any` types in voiceover route — typed interfaces for request bodies,
+  `catch (error: unknown)` with guards, added AbortSignal.timeout to all fetches.
+- Extended `generateVideoSchema` with optional `audio` object (musicTrack, musicVolume,
+  voiceoverUrl, voiceoverVolume). UI sends 0-100, API converts to 0-1 for compositions.
+- Updated generate route to pass audio params through to Lambda inputProps.
+- Files Modified:
+  app/api/video/voiceover/route.ts, lib/validation/schemas.ts,
+  app/api/video/generate/route.ts
+- Architectural Impact:
+  Voiceover audio now persists in Supabase Storage with signed URLs. Audio params
+  flow end-to-end: UI → generate API → Lambda → composition AudioLayer.
+- Blueprint Alignment:
+  Yes — Phase 4 Plan 04-02 (AUDIO-01, AUDIO-03, UI-05, UI-06).
+- Risk Level:
+  Low (existing render flow unchanged, audio is optional)
+
+### 3. Wire Audio UI to Render Pipeline
+- Updated VideoCreator voiceover flow: generate audio → upload to storage → get URL.
+  Replaced `voiceoverAudio: Blob` state with `voiceoverUrl: string` (URL from storage).
+- Wired audio params into generateVideo(): musicTrack, musicVolume, voiceoverUrl,
+  voiceoverVolume passed to generate API when audio is enabled.
+- Removed yellow "coming soon" banner. Added green audio status indicator showing
+  which audio features will be mixed into the video.
+- Added voiceover audio preview player (HTML5 audio element).
+- Fixed share modal to show actual template name instead of hardcoded "PropertyShowcase".
+- Files Modified:
+  app/dashboard/content-studio/video/VideoCreator.tsx
+- Architectural Impact:
+  Audio tab is now fully functional — voiceover and music settings flow through to
+  Lambda rendering. The audio pipeline is complete end-to-end.
+- Blueprint Alignment:
+  Yes — Phase 4 Plan 04-03 (UI-05, UI-06).
+- Risk Level:
+  Low (UI changes, existing video generation preserved)

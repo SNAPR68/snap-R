@@ -24,6 +24,7 @@ export interface Photo {
   status: string;
   room_type: string | null;
   quality_score: number | null;
+  display_order?: number | null;
   created_at: string;
 }
 

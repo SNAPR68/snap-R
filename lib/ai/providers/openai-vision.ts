@@ -94,6 +94,7 @@ Be accurate and concise. Only flag issues that are clearly visible.`
       };
     }
   } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Processing failed';
     success = false;
     const msg = error instanceof Error ? error.message : 'Unknown error';
     errorMessage = msg;
@@ -187,6 +188,7 @@ Check for:
       return { score: 7, issues: [], passed: true };
     }
   } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Unknown error';
     success = false;
     const msg = error instanceof Error ? error.message : 'Unknown error';
     errorMessage = msg;
@@ -261,6 +263,7 @@ FAIL if you see:
       return { passed: true, issues: [] };
     }
   } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Unknown error';
     success = false;
     const msg = error instanceof Error ? error.message : 'Unknown error';
     errorMessage = msg;

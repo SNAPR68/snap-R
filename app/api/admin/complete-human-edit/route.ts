@@ -53,8 +53,9 @@ export async function POST(request: NextRequest) {
     }
 
     return NextResponse.json({ success: true });
-  } catch (error: any) {
-    console.error('[CompleteHumanEdit] Error:', error.message);
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Internal server error';
+    console.error('[CompleteHumanEdit] Error:', message);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

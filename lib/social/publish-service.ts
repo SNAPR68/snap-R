@@ -434,6 +434,122 @@ export async function publishToLinkedIn(
   }
 }
 
+// Publish video to TikTok via Content Posting API (PULL_FROM_URL)
+export async function publishVideoToTikTok(
+  accessToken: string,
+  videoUrl: string,
+  caption: string
+): Promise<PublishResult> {
+  try {
+    // TikTok Content Posting API — video init with PULL_FROM_URL
+    const response = await fetch(
+      'https://open.tiktokapis.com/v2/post/publish/video/init/',
+      {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${accessToken}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          post_info: {
+            title: caption.slice(0, 150), // TikTok title max ~150 chars
+            privacy_level: 'SELF_ONLY', // Unaudited apps default to private
+            disable_comment: false,
+            disable_duet: false,
+            disable_stitch: false,
+          },
+          source_info: {
+            source: 'PULL_FROM_URL',
+            video_url: videoUrl,
+          },
+        }),
+        signal: AbortSignal.timeout(30000),
+      }
+    );
+
+    if (!response.ok) {
+      const errorBody = await response.text();
+      throw new Error(`TikTok video init failed (${response.status}): ${errorBody}`);
+    }
+
+    const data = await response.json();
+
+    if (data.error?.code !== 'ok' && data.error?.code) {
+      throw new Error(`TikTok API error: ${data.error.message || data.error.code}`);
+    }
+
+    return {
+      success: true,
+      postId: data.data?.publish_id || undefined,
+    };
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Unknown TikTok video error';
+    console.error('TikTok video publish error:', error);
+    return {
+      success: false,
+      error: message,
+    };
+  }
+}
+
+// Publish photo post to TikTok via Photo Posting API
+export async function publishPhotoToTikTok(
+  accessToken: string,
+  imageUrls: string[],
+  caption: string
+): Promise<PublishResult> {
+  try {
+    const response = await fetch(
+      'https://open.tiktokapis.com/v2/post/publish/content/init/',
+      {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${accessToken}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          post_info: {
+            title: caption.slice(0, 150),
+            privacy_level: 'SELF_ONLY',
+            disable_comment: false,
+          },
+          source_info: {
+            source: 'PULL_FROM_URL',
+            photo_cover_index: 0,
+            photo_images: imageUrls,
+          },
+          post_mode: 'DIRECT_POST',
+          media_type: 'PHOTO',
+        }),
+        signal: AbortSignal.timeout(30000),
+      }
+    );
+
+    if (!response.ok) {
+      const errorBody = await response.text();
+      throw new Error(`TikTok photo init failed (${response.status}): ${errorBody}`);
+    }
+
+    const data = await response.json();
+
+    if (data.error?.code !== 'ok' && data.error?.code) {
+      throw new Error(`TikTok API error: ${data.error.message || data.error.code}`);
+    }
+
+    return {
+      success: true,
+      postId: data.data?.publish_id || undefined,
+    };
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Unknown TikTok photo error';
+    console.error('TikTok photo publish error:', error);
+    return {
+      success: false,
+      error: message,
+    };
+  }
+}
+
 // Main publish function
 export async function publishToSocial(request: PublishRequest): Promise<PublishResult> {
   switch (request.platform) {
@@ -442,16 +558,25 @@ export async function publishToSocial(request: PublishRequest): Promise<PublishR
         return { success: false, error: 'Facebook requires page access token and page ID' };
       }
       return publishToFacebook(request.pageAccessToken, request.pageId, request.content);
-    
+
     case 'instagram':
       if (!request.instagramAccountId) {
         return { success: false, error: 'Instagram account ID required' };
       }
       return publishToInstagram(request.accessToken, request.instagramAccountId, request.content);
-    
+
     case 'linkedin':
       return publishToLinkedIn(request.accessToken, request.pageId || '', request.content);
-    
+
+    case 'tiktok':
+      if (request.content.videoUrl) {
+        return publishVideoToTikTok(request.accessToken, request.content.videoUrl, request.content.text);
+      }
+      if (request.content.imageUrls?.length) {
+        return publishPhotoToTikTok(request.accessToken, request.content.imageUrls, request.content.text);
+      }
+      return { success: false, error: 'TikTok requires video or images' };
+
     default:
       return { success: false, error: `Publishing to ${request.platform} not yet supported` };
   }

@@ -8,6 +8,13 @@ export const dynamic = 'force-dynamic';
 
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { adminSupabase } from '@/lib/supabase/admin';
+
+interface VideoRenderJob {
+  video_url: string | null;
+  status: string;
+  render_time_ms: number | null;
+}
 
 export async function GET(request: NextRequest) {
   try {
@@ -38,7 +45,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Get latest marketing job for this listing
-    const { data: marketingJob, error: jobError } = await supabase
+    const { data: marketingJob } = await supabase
       .from('marketing_jobs')
       .select('*')
       .eq('listing_id', listingId)
@@ -54,6 +61,28 @@ export async function GET(request: NextRequest) {
         marketingJob: null,
         message: 'No marketing job found for this listing',
       });
+    }
+
+    // Build video step data — resolve videoUrl from video_render_jobs if available
+    const videoResult = (marketingJob.video_result ?? null) as Record<string, unknown> | null;
+    let videoUrl: string | null = null;
+    let videoRenderStatus: string | null = null;
+
+    if (videoResult?.renderId) {
+      const admin = adminSupabase();
+      const { data: renderJob } = await admin
+        .from('video_render_jobs')
+        .select('video_url, status, render_time_ms')
+        .eq('render_id', videoResult.renderId as string)
+        .eq('user_id', user.id)
+        .single<VideoRenderJob>();
+
+      if (renderJob) {
+        videoUrl = renderJob.video_url && renderJob.status === 'completed'
+          ? `${request.nextUrl.origin}/api/video/watch?id=${videoResult.renderId as string}`
+          : renderJob.video_url;
+        videoRenderStatus = renderJob.status;
+      }
     }
 
     return NextResponse.json({
@@ -82,6 +111,14 @@ export async function GET(request: NextRequest) {
           status: marketingJob.scheduled_posts_status,
           result: marketingJob.scheduled_posts_result,
         },
+        video: {
+          status: marketingJob.video_status ?? 'pending',
+          result: videoResult ? {
+            ...videoResult,
+            videoUrl,
+            renderStatus: videoRenderStatus,
+          } : null,
+        },
         totalCostCents: marketingJob.total_cost_cents,
         costBreakdown: marketingJob.cost_breakdown,
         startedAt: marketingJob.started_at,
@@ -90,8 +127,9 @@ export async function GET(request: NextRequest) {
       },
     });
 
-  } catch (error: any) {
-    console.error('[Marketing Status API] Error:', error.message);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Unknown error';
+    console.error('[Marketing Status API] Error:', message);
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }

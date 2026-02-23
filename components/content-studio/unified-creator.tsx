@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useSearchParams } from 'next/navigation'
 import html2canvas from 'html2canvas'
 import JSZip from 'jszip'
-import { ArrowLeft, Download, Loader2, Check, Sparkles, Instagram, Facebook, Linkedin, Video, Image, Copy, Hash, ClipboardCopy, Package, MessageCircle, Images, ImageIcon, Share2, CheckCircle, Upload, ExternalLink, AlertCircle, FolderOpen, Calendar, ChevronRight } from "lucide-react"
+import { Download, Loader2, Check, Sparkles, Instagram, Facebook, Linkedin, Video, Image, Hash, ClipboardCopy, MessageCircle, Images, ImageIcon, CheckCircle, AlertCircle, FolderOpen, Calendar, ChevronRight } from "lucide-react"
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -14,11 +14,37 @@ import { INSTAGRAM_POST_TEMPLATES, FACEBOOK_POST_TEMPLATES, LINKEDIN_POST_TEMPLA
 import { trackEvent, SnapREvents } from '@/lib/analytics'
 import { ScheduleModal } from './schedule-modal'
 import { FFmpeg } from '@ffmpeg/ffmpeg'
-import { fetchFile, toBlobURL } from '@ffmpeg/util'
+import { fetchFile } from '@ffmpeg/util'
 
 type Platform = 'instagram' | 'facebook' | 'linkedin' | 'tiktok' | 'story'
 type Tone = 'professional' | 'casual' | 'luxury' | 'excited'
 type PostMode = 'single' | 'carousel'
+
+interface ListingPhoto {
+  id: string
+  raw_url: string | null
+  processed_url: string | null
+  status: string | null
+  display_order: number | null
+}
+
+interface ListingRecord {
+  address: string | null
+  city: string | null
+  state: string | null
+  price: number | null
+  bedrooms: number | null
+  bathrooms: number | null
+  square_feet: number | null
+  property_type: string | null
+  features: string[] | null
+  photos: ListingPhoto[] | null
+  [key: string]: unknown
+}
+
+interface ListingData {
+  listing: ListingRecord
+}
 
 const PLATFORMS = [
   { id: 'instagram' as Platform, name: 'Instagram', icon: Instagram, dimensions: '1080×1080', gradient: 'from-purple-500 to-pink-500', supportsCarousel: true },
@@ -84,7 +110,8 @@ export function UnifiedCreator() {
   const [photoUrl, setPhotoUrl] = useState(DEFAULT_PHOTO)
   const [photos, setPhotos] = useState<string[]>([])
   const [selectedPhotos, setSelectedPhotos] = useState<string[]>([])
-  const [loading, setLoading] = useState(false)
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [loading, _setLoading] = useState(false)
   const [uploading, setUploading] = useState<string | null>(null)
   const [listingTitle, setListingTitle] = useState('')
   const [tone, setTone] = useState<Tone>('professional')
@@ -102,10 +129,12 @@ export function UnifiedCreator() {
   const [showScheduleModal, setShowScheduleModal] = useState(false)
 
   const [property, setProperty] = useState({ address: '', city: '', state: '', price: null as number | null, bedrooms: null as number | null, bathrooms: null as number | null, squareFeet: null as number | null, propertyType: 'House' as string })
-  const [listingData, setListingData] = useState<any>(null)
+  const [listingData, setListingData] = useState<ListingData | null>(null)
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [brand, setBrand] = useState({ business_name: '', logo_url: '', primary_color: '#D4AF37', secondary_color: '#1A1A1A', phone: '', tagline: '' })
 
   useEffect(() => {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const loadFFmpeg = async () => {
       try {
         const ffmpeg = new FFmpeg()
@@ -124,19 +153,19 @@ export function UnifiedCreator() {
   useEffect(() => {
     const loadListingData = async () => {
       if (!listingId) return
-      
+
       const { createClient } = await import('@/lib/supabase/client')
       const supabase = createClient()
-      
+
       const { data: listing } = await supabase
         .from('listings')
         .select('*, photos!photos_listing_id_fkey(id, raw_url, processed_url, status, display_order)')
         .eq('id', listingId)
         .single()
-      
+
       if (listing) {
         setListingTitle(listing.title || listing.address || 'Property')
-        setListingData({ listing })
+        setListingData({ listing } as ListingData)
         setProperty({
           address: listing.address || '',
           city: listing.city || '',
@@ -147,39 +176,39 @@ export function UnifiedCreator() {
           squareFeet: listing.square_feet || null,
           propertyType: listing.property_type || 'House'
         })
-        
+
         // Load photos
         const sortedPhotos = (listing.photos || [])
-          .sort((a: any, b: any) => (a.display_order || 0) - (b.display_order || 0))
-        
-        const photoUrls = await Promise.all(sortedPhotos.map(async (photo: any) => {
+          .sort((a: ListingPhoto, b: ListingPhoto) => (a.display_order || 0) - (b.display_order || 0))
+
+        const photoUrls = await Promise.all(sortedPhotos.map(async (photo: ListingPhoto) => {
           const path = photo.processed_url || photo.raw_url
           if (!path) return null
           if (path.startsWith('http')) return path
           const { data } = await supabase.storage.from('raw-images').createSignedUrl(path, 3600)
           return data?.signedUrl || null
         }))
-        
+
         setPhotos(photoUrls.filter(Boolean) as string[])
-        
+
         // Auto-select first photo
         if (photoUrls.length > 0 && photoUrls[0]) {
           setPhotoUrl(photoUrls[0] as string)
         }
       }
     }
-    
+
     loadListingData()
   }, [listingId])
 
-  // Pre-fill from marketing pipeline when ?prefill=marketing
-  const prefill = searchParams.get('prefill')
-  const [marketingCaptions, setMarketingCaptions] = useState<Record<string, any> | null>(null)
+  // Auto-detect and pre-fill from marketing pipeline when listing has completed marketing
+  const [marketingCaptions, setMarketingCaptions] = useState<Record<string, Record<string, string> | string> | null>(null)
+  const [marketingLoaded, setMarketingLoaded] = useState(false)
   const [captionManuallyEdited, setCaptionManuallyEdited] = useState(false)
 
-  // Fetch marketing captions once (no platform dependency)
+  // Fetch marketing captions when listing is selected (auto-detect or via prefill param)
   useEffect(() => {
-    if (prefill !== 'marketing' || !listingId) return
+    if (!listingId) return
 
     const loadMarketingContent = async () => {
       try {
@@ -192,9 +221,10 @@ export function UnifiedCreator() {
         // Cache all captions
         const captions = job.captions?.result
         if (captions && typeof captions === 'object') {
-          setMarketingCaptions(captions)
+          setMarketingCaptions(captions as Record<string, Record<string, string> | string>)
+          setMarketingLoaded(true)
         }
-      } catch (error) {
+      } catch (error: unknown) {
         console.error('Error loading marketing content for prefill:', error)
       }
     }
@@ -202,7 +232,7 @@ export function UnifiedCreator() {
     // Small delay to ensure listing data loads first
     const timer = setTimeout(loadMarketingContent, 500)
     return () => clearTimeout(timer)
-  }, [prefill, listingId])
+  }, [listingId])
 
   // Apply cached caption when platform changes (only if user hasn't manually edited)
   useEffect(() => {
@@ -233,20 +263,20 @@ export function UnifiedCreator() {
       console.error('Download ref not found')
       return null
     }
-    
+
     try {
       const { w, h } = getDims(platform)
       // Wait for images to load
       await new Promise(r => setTimeout(r, 300))
-      
-      const canvas = await html2canvas(downloadRef.current, { 
-        scale: 1, 
-        useCORS: true, 
-        allowTaint: true, 
-        backgroundColor: '#000000', 
-        width: w, 
-        height: h, 
-        windowWidth: w, 
+
+      const canvas = await html2canvas(downloadRef.current, {
+        scale: 1,
+        useCORS: true,
+        allowTaint: true,
+        backgroundColor: '#000000',
+        width: w,
+        height: h,
+        windowWidth: w,
         windowHeight: h,
         logging: false,
         onclone: (clonedDoc) => {
@@ -257,7 +287,7 @@ export function UnifiedCreator() {
           })
         }
       })
-      
+
       return new Promise((resolve) => {
         canvas.toBlob((blob) => {
           if (!blob) {
@@ -285,7 +315,7 @@ export function UnifiedCreator() {
 
     try {
       const imageBlob = await generateImageBlob()
-      
+
       if (!imageBlob) {
         // Fallback: If image generation fails, just copy caption and open platform
         const fullCaption = getFullCaption()
@@ -334,21 +364,21 @@ export function UnifiedCreator() {
         window.open(platformUrl, '_blank')
 
         setUploadSuccess(targetPlatform)
-        
+
         // Save to content library - upload generated image first
         try {
           // Upload the generated image to storage for permanent URL
           const formData = new FormData()
           formData.append('file', imageBlob, fileName)
           formData.append('folder', 'content-library')
-          
+
           const uploadRes = await fetch('/api/upload-image', {
             method: 'POST',
             body: formData,
           })
           const uploadData = await uploadRes.json()
           const permanentImageUrl = uploadData.url || photoUrl
-          
+
           await fetch('/api/content-library', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -365,9 +395,10 @@ export function UnifiedCreator() {
           console.error('Failed to save to library:', libErr)
         }
       }
-    } catch (e: any) {
+    } catch (e: unknown) {
       // User cancelled share or error
-      if (e.name !== 'AbortError') {
+      const error = e instanceof Error ? e : new Error('Unknown error')
+      if (error.name !== 'AbortError') {
         console.error('Upload error:', e)
         setUploadError('Failed to process. Try "Download Only" button instead.')
       }
@@ -387,7 +418,7 @@ export function UnifiedCreator() {
     try {
       const imageBlob = await generateImageBlob()
       const fullCaption = getFullCaption()
-      
+
       if (!imageBlob) {
         // Fallback: just open WhatsApp with text
         const encodedText = encodeURIComponent(fullCaption)
@@ -421,8 +452,9 @@ export function UnifiedCreator() {
         window.open(`https://wa.me/?text=${encodedText}`, '_blank')
       }
       setUploadSuccess('whatsapp')
-    } catch (e: any) {
-      if (e.name !== 'AbortError') {
+    } catch (e: unknown) {
+      const error = e instanceof Error ? e : new Error('Unknown error')
+      if (error.name !== 'AbortError') {
         console.error('WhatsApp share error:', e)
         setUploadError('Failed to share. Try downloading manually.')
       }
@@ -464,12 +496,12 @@ export function UnifiedCreator() {
   const downloadCarousel = async () => {
     if (selectedPhotos.length < 2) return
     setUploading('carousel')
-    try { 
+    try {
       const zip = new JSZip()
-      for (let i = 0; i < selectedPhotos.length; i++) { 
+      for (let i = 0; i < selectedPhotos.length; i++) {
         const res = await fetch(selectedPhotos[i])
         const blob = await res.blob()
-        zip.file(`slide-${String(i+1).padStart(2,'0')}.jpg`, blob) 
+        zip.file(`slide-${String(i+1).padStart(2,'0')}.jpg`, blob)
       }
       if (caption || hashtags) zip.file('caption.txt', getFullCaption())
       const blob = await zip.generateAsync({ type: 'blob' })
@@ -484,6 +516,7 @@ export function UnifiedCreator() {
   }
 
   // Publish carousel directly to platform via API
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const publishCarousel = async (targetPlatform: 'instagram' | 'facebook' | 'linkedin') => {
     if (selectedPhotos.length < 2) return
     setUploading(targetPlatform)
@@ -503,10 +536,11 @@ export function UnifiedCreator() {
       if (!res.ok) throw new Error(data.error || 'Failed to publish')
       setUploadSuccess(targetPlatform)
       if (data.url) setTimeout(() => window.open(data.url, '_blank'), 1000)
-    } catch (e: any) { 
-      setUploadError(e.message || 'Failed to publish carousel') 
-    } finally { 
-      setUploading(null) 
+    } catch (e: unknown) {
+      const error = e instanceof Error ? e : new Error('Unknown error')
+      setUploadError(error.message || 'Failed to publish carousel')
+    } finally {
+      setUploading(null)
     }
   }
 
@@ -517,18 +551,18 @@ export function UnifiedCreator() {
       setUploadError('Video encoder still loading, please wait...')
       return
     }
-    
+
     setUploading(targetPlatform)
     setUploadError(null)
     setVideoProgress(0)
-    
+
     try {
       const ffmpeg = ffmpegRef.current
       const canvas = document.createElement('canvas')
       const ctx = canvas.getContext('2d')!
       canvas.width = 1080
       canvas.height = 1080
-      
+
       // Load all images
       const images: HTMLImageElement[] = []
       for (const url of selectedPhotos) {
@@ -541,26 +575,26 @@ export function UnifiedCreator() {
         })
         images.push(img)
       }
-      
+
       // Generate frames (3 seconds per image at 30fps = 90 frames per image)
       const fps = 30
       const secondsPerImage = 3
       const framesPerImage = fps * secondsPerImage
       const totalFrames = images.length * framesPerImage
-      
+
       for (let i = 0; i < images.length; i++) {
         const img = images[i]
-        
+
         // Draw image (cover fit)
         const scale = Math.max(canvas.width / img.width, canvas.height / img.height)
         const x = (canvas.width - img.width * scale) / 2
         const y = (canvas.height - img.height * scale) / 2
-        
+
         for (let f = 0; f < framesPerImage; f++) {
           ctx.fillStyle = '#000'
           ctx.fillRect(0, 0, canvas.width, canvas.height)
           ctx.drawImage(img, x, y, img.width * scale, img.height * scale)
-          
+
           // Add text overlay
           ctx.fillStyle = 'rgba(0,0,0,0.5)'
           ctx.fillRect(0, canvas.height - 80, canvas.width, 80)
@@ -568,17 +602,17 @@ export function UnifiedCreator() {
           ctx.font = 'bold 28px Arial'
           ctx.textAlign = 'center'
           ctx.fillText(listingTitle || 'Property Listing', canvas.width / 2, canvas.height - 35)
-          
+
           const frameNum = i * framesPerImage + f
           const blob = await new Promise<Blob>((r) => canvas.toBlob(b => r(b!), 'image/jpeg', 0.9))
           await ffmpeg.writeFile(`frame${String(frameNum).padStart(5, '0')}.jpg`, await fetchFile(blob))
-          
+
           setVideoProgress(Math.round((frameNum / totalFrames) * 80))
         }
       }
-      
+
       setVideoProgress(85)
-      
+
       // Generate video
       await ffmpeg.exec([
         '-framerate', '30',
@@ -588,12 +622,15 @@ export function UnifiedCreator() {
         '-preset', 'fast',
         '-y', 'output.mp4'
       ])
-      
+
       setVideoProgress(95)
-      
+
       const mp4Data = await ffmpeg.readFile('output.mp4')
-      const mp4Blob = new Blob([mp4Data as any], { type: 'video/mp4' })
-      
+      const mp4Bytes = mp4Data instanceof Uint8Array ? mp4Data : new TextEncoder().encode(mp4Data)
+      const mp4Buffer = new ArrayBuffer(mp4Bytes.byteLength)
+      new Uint8Array(mp4Buffer).set(mp4Bytes)
+      const mp4Blob = new Blob([mp4Buffer], { type: 'video/mp4' })
+
       // Download
       const link = document.createElement('a')
       link.href = URL.createObjectURL(mp4Blob)
@@ -602,11 +639,11 @@ export function UnifiedCreator() {
       link.click()
       document.body.removeChild(link)
       URL.revokeObjectURL(link.href)
-      
+
       // Copy caption
       const fullCaption = getFullCaption()
       if (fullCaption) await navigator.clipboard.writeText(fullCaption)
-      
+
       // Open platform
       const urls: Record<string, string> = {
         instagram: 'https://www.instagram.com/',
@@ -614,19 +651,20 @@ export function UnifiedCreator() {
         linkedin: 'https://www.linkedin.com/feed/',
       }
       setTimeout(() => window.open(urls[targetPlatform], '_blank'), 500)
-      
+
       setVideoProgress(100)
       setUploadSuccess(targetPlatform)
-      
+
       // Cleanup
       for (let i = 0; i < totalFrames; i++) {
         try { await ffmpeg.deleteFile(`frame${String(i).padStart(5, '0')}.jpg`) } catch {}
       }
       try { await ffmpeg.deleteFile('output.mp4') } catch {}
-      
-    } catch (e: any) {
+
+    } catch (e: unknown) {
+      const error = e instanceof Error ? e : new Error('Unknown error')
       console.error('Video generation error:', e)
-      setUploadError('Failed to generate video: ' + e.message)
+      setUploadError('Failed to generate video: ' + error.message)
     } finally {
       setUploading(null)
       setVideoProgress(0)
@@ -642,12 +680,12 @@ export function UnifiedCreator() {
     setTimeout(() => setCopied(null), 2000)
   }
 
-  const generateCaption = async () => { 
+  const generateCaption = async () => {
     setGenCaption(true)
-    try { 
+    try {
       // Convert category from dash format (just-listed) to underscore format (just_listed) for API
       const contentType = category.replace(/-/g, '_')
-      
+
       // Use listingData as primary source, fallback to property state (form values)
       const propertyData = {
         address: listingData?.listing?.address || property.address || '',
@@ -661,13 +699,13 @@ export function UnifiedCreator() {
         features: []
       }
 
-      const res = await fetch('/api/copy/caption', { 
-        method: 'POST', 
-        headers: { 'Content-Type': 'application/json' }, 
-        body: JSON.stringify({ 
-          platform: platform === 'story' ? 'instagram' : platform, 
-          tone, 
-          includeEmojis: true, 
+      const res = await fetch('/api/copy/caption', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          platform: platform === 'story' ? 'instagram' : platform,
+          tone,
+          includeEmojis: true,
           includeCallToAction: true,
           contentType: contentType,
           property: {
@@ -681,27 +719,27 @@ export function UnifiedCreator() {
             propertyType: propertyData.propertyType,
             features: propertyData.features
           }
-        }) 
+        })
       })
       if (!res.ok) throw new Error('API error')
       const data = await res.json()
       if (data.caption) { setCaption(data.caption); setCaptionManuallyEdited(true) }
       else if (data.error) console.error('Caption error:', data.error)
-    } catch (e) { 
+    } catch (e) {
       console.error('Failed to generate caption:', e)
       generateFallbackCaption()
-    } finally { setGenCaption(false) } 
+    } finally { setGenCaption(false) }
   }
 
-  const generateHashtags = async () => { 
+  const generateHashtags = async () => {
     setGenHashtags(true)
-    try { 
-      const res = await fetch('/api/copy/hashtags', { 
-        method: 'POST', 
-        headers: { 'Content-Type': 'application/json' }, 
-        body: JSON.stringify({ 
-          platform: platform === 'story' ? 'instagram' : platform, 
-          property: { 
+    try {
+      const res = await fetch('/api/copy/hashtags', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          platform: platform === 'story' ? 'instagram' : platform,
+          property: {
             address: property.address || undefined,
             city: property.city || undefined,
             state: property.state || undefined,
@@ -712,17 +750,17 @@ export function UnifiedCreator() {
             propertyType: property.propertyType || 'House',
             features: []
           }
-        }) 
+        })
       })
       if (!res.ok) throw new Error('API error')
       const data = await res.json()
       if (data.hashtagsText) setHashtags(data.hashtagsText)
       else if (data.hashtags) setHashtags(Array.isArray(data.hashtags) ? data.hashtags.join(' ') : data.hashtags)
       else if (data.error) console.error('Hashtags error:', data.error)
-    } catch (e) { 
+    } catch (e) {
       console.error('Failed to generate hashtags:', e)
       generateFallbackHashtags()
-    } finally { setGenHashtags(false) } 
+    } finally { setGenHashtags(false) }
   }
 
   const generateFallbackCaption = () => {
@@ -731,9 +769,9 @@ export function UnifiedCreator() {
     const baths = property.bathrooms ? `${property.bathrooms} bath` : ''
     const sqft = property.squareFeet ? `${Number(property.squareFeet).toLocaleString()} sq ft` : ''
     const location = [property.city, property.state].filter(Boolean).join(', ')
-    
+
     const details = [beds, baths, sqft].filter(Boolean).join(' | ')
-    
+
     let text = `✨ ${headline}\n\n`
     if (property.address) text += `📍 ${property.address}\n`
     if (location) text += `🏙️ ${location}\n`
@@ -750,7 +788,7 @@ export function UnifiedCreator() {
     const state = property.state?.toLowerCase().replace(/\s+/g, '') || ''
     const cityTag = city ? `#${city}realestate #${city}homes` : ''
     const stateTag = state ? `#${state}realestate` : ''
-    
+
     setHashtags(`#realestate #luxuryrealestate #homeforsale #dreamhome #justlisted #realtor #property #househunting #newhome #luxuryhomes #realtorlife #homesforsale ${cityTag} ${stateTag}`.trim())
   }
 
@@ -818,8 +856,9 @@ export function UnifiedCreator() {
         throw new Error(err.error || 'Failed to schedule')
       }
       setUploadSuccess('schedule')
-    } catch (e: any) {
-      setUploadError(e.message || 'Failed to schedule post')
+    } catch (e: unknown) {
+      const error = e instanceof Error ? e : new Error('Unknown error')
+      setUploadError(error.message || 'Failed to schedule post')
     } finally {
       setUploading(null)
     }
@@ -846,8 +885,8 @@ export function UnifiedCreator() {
           <span className="text-white font-medium truncate max-w-[200px]">{listingTitle || 'Create Content'}</span>
           {renovatedImageUrl && <span className="text-xs bg-green-500/20 text-green-400 px-2 py-0.5 rounded-full ml-1.5">Renovated</span>}
         </nav>
-        <Button 
-          size="sm" 
+        <Button
+          size="sm"
           onClick={downloadOnly}
           disabled={uploading !== null}
           className="bg-white/10 hover:bg-white/20 text-white text-xs h-8 px-4"
@@ -964,7 +1003,7 @@ export function UnifiedCreator() {
           {/* Upload to Platform Buttons */}
           <div className="bg-white/5 rounded-xl p-4 border border-white/10">
             <Label className="text-[10px] text-white/40 uppercase mb-3 block">Upload To</Label>
-            
+
             {postMode === 'carousel' ? (
               <>
                 <p className="text-[10px] text-white/60 mb-2">Publish {selectedPhotos.length} photos as carousel:</p>
@@ -989,7 +1028,7 @@ export function UnifiedCreator() {
             ) : (
               <div className="grid grid-cols-2 gap-2 mb-3">
                 {/* Instagram */}
-                <Button 
+                <Button
                   onClick={() => uploadToPlatform('instagram')}
                   disabled={uploading !== null}
                   className="h-11 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white font-semibold"
@@ -998,7 +1037,7 @@ export function UnifiedCreator() {
                 </Button>
 
                 {/* Facebook */}
-                <Button 
+                <Button
                   onClick={() => uploadToPlatform('facebook')}
                   disabled={uploading !== null}
                   className="h-11 bg-gradient-to-r from-blue-600 to-blue-400 hover:from-blue-700 hover:to-blue-500 text-white font-semibold"
@@ -1007,7 +1046,7 @@ export function UnifiedCreator() {
                 </Button>
 
                 {/* LinkedIn */}
-                <Button 
+                <Button
                   onClick={() => uploadToPlatform('linkedin')}
                   disabled={uploading !== null}
                   className="h-11 bg-gradient-to-r from-blue-700 to-blue-500 hover:from-blue-800 hover:to-blue-600 text-white font-semibold"
@@ -1036,7 +1075,7 @@ export function UnifiedCreator() {
             )}
 
             {/* Copy Caption */}
-            <Button 
+            <Button
               onClick={copyCaption}
               disabled={!caption && !hashtags}
               className="w-full h-10 bg-white/10 hover:bg-white/20 text-white font-medium"
@@ -1045,11 +1084,11 @@ export function UnifiedCreator() {
             </Button>
           </div>
 
-          {/* Auto-generated badge when pre-filled */}
-          {prefill === 'marketing' && caption && (
+          {/* Auto-generated badge when pre-filled from marketing pipeline */}
+          {marketingLoaded && caption && !captionManuallyEdited && (
             <div className="flex items-center gap-2 px-3 py-2 bg-emerald-500/10 border border-emerald-500/20 rounded-lg">
               <CheckCircle className="w-3.5 h-3.5 text-emerald-400" />
-              <span className="text-xs text-emerald-400 font-medium">Pre-filled from marketing pipeline</span>
+              <span className="text-xs text-emerald-400 font-medium">Auto-generated captions loaded from marketing pipeline</span>
               <span className="text-xs text-white/30 ml-auto">Edit freely below</span>
             </div>
           )}
@@ -1169,6 +1208,7 @@ export function UnifiedCreator() {
               const isRenovated = renovatedImageUrl && url === decodeURIComponent(renovatedImageUrl)
               return (
                 <button key={i} onClick={() => selectPhoto(url)} className={`relative flex-shrink-0 w-16 h-16 rounded-xl overflow-hidden border-2 transition-all ${selected ? 'border-[#D4AF37] ring-2 ring-[#D4AF37]/50 scale-105' : 'border-white/20 hover:border-white/40'}`}>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img src={url} alt="" className="w-full h-full object-cover" />
                   {postMode === 'carousel' && selected && <div className="absolute top-0 left-0 w-5 h-5 bg-[#D4AF37] rounded-br-lg text-[10px] font-bold text-black flex items-center justify-center">{selectedPhotos.indexOf(url) + 1}</div>}
                   {isRenovated && <div className="absolute bottom-0 inset-x-0 bg-green-500/90 text-[8px] text-white text-center py-0.5">Renovated</div>}

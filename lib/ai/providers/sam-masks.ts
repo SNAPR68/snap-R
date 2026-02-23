@@ -436,9 +436,9 @@ export class SAMMasksClient {
           resolvedMaskUrl = candidateMaskUrl;
           SAMMasksClient.resolvedModel = resolvedModel;
           break;
-        } catch (error: any) {
+        } catch (error: unknown) {
           lastError = error;
-          const message = error?.message || '';
+          const message = error instanceof Error ? error.message : '';
           console.warn(`[SAM] Model failed: ${model} (${message})`);
           if (
             message.includes('does not exist') ||
@@ -686,14 +686,15 @@ export async function generateDeterministicLawnMask(
       processingTimeMs: Date.now() - startTime,
       cost: 0,
     };
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Processing failed';
     return {
       success: false,
       confidence: 0,
       area: 0,
       processingTimeMs: Date.now() - startTime,
       cost: 0,
-      error: error?.message || 'Heuristic lawn mask failed',
+      error: message || 'Heuristic lawn mask failed',
     };
   }
 }

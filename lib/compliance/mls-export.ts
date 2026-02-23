@@ -178,6 +178,7 @@ export async function generateMlsExportPackage(
       console.log('[MLS Export] Photo', i + 1, 'complete');
       
     } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Upload failed';
       const errMsg = 'Error processing ' + photo.filename + ': ' + (err instanceof Error ? err.message : String(err));
       console.error('[MLS Export]', errMsg);
       errors.push(errMsg);

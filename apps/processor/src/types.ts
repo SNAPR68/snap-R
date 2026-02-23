@@ -14,6 +14,12 @@ export interface MarketingJobMessage {
   jobId: string;
   listingId: string;
   userId: string;
+  /** Video template hint — auto-selected if omitted (defaults to property-showcase) */
+  videoTemplate?: 'property-showcase' | 'just-listed' | 'open-house' | 'price-drop' | 'sold';
+  /** Required when videoTemplate is 'price-drop' */
+  previousPrice?: number;
+  /** Required when videoTemplate is 'sold' */
+  daysOnMarket?: number;
 }
 
 // Discriminated union — queue routes by message.type
@@ -41,6 +47,10 @@ export interface Env {
   QUICK_ENHANCE_URL?: string;
   ANALYSIS_CONCURRENCY?: string;
   ANALYSIS_BATCH_DELAY_MS?: string;
+
+  // Video pipeline (Phase 5)
+  NEXT_PUBLIC_BASE_URL?: string;
+  CRON_SECRET?: string;
 }
 
 // Processing checkpoint for resume capability

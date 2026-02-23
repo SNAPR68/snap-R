@@ -1,7 +1,7 @@
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
 # dependencies
-/node_modules
+node_modules
 /.pnp
 .pnp.js
 .yarn/install-state.gz
@@ -48,3 +48,17 @@ app/api/admin/create-test-account/
 # Sentry Config File
 .env.sentry-build-plugin
 .dev.vars
+
+# AI tooling / IDE state
+.agent/
+.agents/
+.claude/
+.cursor/
+.planning/
+
+# Vercel env snapshots
+.env.vercel-*
+
+# Documents (not source code)
+*.docx
+*.pptx

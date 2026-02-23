@@ -63,6 +63,27 @@ export const shareSchema = z.object({
   }).optional(),
 })
 
+// Generate video
+export const generateVideoSchema = z.object({
+  listingId: z.string().uuid(),
+  aspectRatio: z.enum(['9:16', '1:1', '16:9']),
+  template: z.enum(['test', 'property-showcase', 'just-listed', 'open-house', 'price-drop', 'sold']),
+  openHouseDate: z.string().max(100).optional(),
+  previousPrice: z.number().positive().optional(),
+  daysOnMarket: z.number().int().min(0).max(9999).optional(),
+  audio: z.object({
+    musicTrack: z.string().max(50).optional(),
+    musicVolume: z.number().min(0).max(100).optional(),
+    voiceoverUrl: z.string().url().optional(),
+    voiceoverVolume: z.number().min(0).max(100).optional(),
+  }).optional(),
+})
+
+// Video status check
+export const videoStatusSchema = z.object({
+  renderId: z.string().min(1).max(200),
+})
+
 // Helper: Parse body with schema, return typed result or error response
 export function parseBody<T>(schema: z.ZodType<T>, data: unknown):
   { success: true; data: T } | { success: false; error: string; details: ReturnType<z.ZodError['flatten']> } {

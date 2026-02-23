@@ -81,8 +81,9 @@ export default function JobStatusPage({ params }: { params: { id: string } }) {
       const data: JobResponse = await res.json();
       setJob(data);
       setError(null);
-    } catch (err: any) {
-      setError(err.message || "Failed to fetch job status");
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Fetch failed';
+      setError(message || "Failed to fetch job status");
     } finally {
       setLoading(false);
     }
@@ -115,8 +116,9 @@ export default function JobStatusPage({ params }: { params: { id: string } }) {
       }
       setSuccess("Job re-queued. We'll start processing shortly.");
       fetchJob();
-    } catch (err: any) {
-      setError(err.message || "Failed to retry job");
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Internal server error';
+      setError(message || "Failed to retry job");
     } finally {
       setRetrying(false);
     }

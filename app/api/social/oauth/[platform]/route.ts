@@ -14,7 +14,21 @@ export async function GET(
   const errorDescription = searchParams.get('error_description');
 
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL || req.nextUrl.origin;
-  const redirectUrl = `${baseUrl}/dashboard/settings/social`;
+  const defaultRedirect = `${baseUrl}/dashboard/settings/social`;
+
+  // Extract returnTo from state (JSON) for post-OAuth redirect
+  let redirectUrl = defaultRedirect;
+  if (state) {
+    try {
+      const parsed = JSON.parse(state);
+      if (parsed.returnTo && typeof parsed.returnTo === 'string'
+        && parsed.returnTo.startsWith('/') && !parsed.returnTo.startsWith('//')) {
+        redirectUrl = `${baseUrl}${parsed.returnTo}`;
+      }
+    } catch {
+      // State is not JSON (plain user ID), use default redirect
+    }
+  }
 
   if (error) {
     console.error('OAuth error:', error, errorDescription);
@@ -57,6 +71,8 @@ export async function GET(
       return handleFacebookOAuth(code, user.id, platform, baseUrl, redirectUrl);
     } else if (platform === 'linkedin') {
       return handleLinkedInOAuth(code, user.id, baseUrl, redirectUrl);
+    } else if (platform === 'tiktok') {
+      return handleTikTokOAuth(code, user.id, baseUrl, redirectUrl);
     }
 
     return NextResponse.redirect(`${redirectUrl}?error=Unsupported platform`);
@@ -199,7 +215,8 @@ async function handleFacebookOAuth(
       .insert(connectionData);
   }
 
-  return NextResponse.redirect(`${redirectUrl}?connected=${platform}`);
+  const separator = redirectUrl.includes('?') ? '&' : '?';
+  return NextResponse.redirect(`${redirectUrl}${separator}connected=${platform}`);
 }
 
 async function handleLinkedInOAuth(
@@ -276,5 +293,90 @@ async function handleLinkedInOAuth(
       .insert(connectionData);
   }
 
-  return NextResponse.redirect(`${redirectUrl}?connected=linkedin`);
+  const separator = redirectUrl.includes('?') ? '&' : '?';
+  return NextResponse.redirect(`${redirectUrl}${separator}connected=linkedin`);
+}
+
+async function handleTikTokOAuth(
+  code: string,
+  userId: string,
+  baseUrl: string,
+  redirectUrl: string
+) {
+  const serviceSupabase = adminSupabase();
+  const clientKey = process.env.TIKTOK_CLIENT_KEY;
+  const clientSecret = process.env.TIKTOK_CLIENT_SECRET;
+  const callbackUrl = `${baseUrl}/api/social/oauth/tiktok`;
+
+  // Exchange code for access token (TikTok v2 uses JSON body)
+  const tokenResponse = await fetch('https://open.tiktokapis.com/v2/oauth/token/', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      client_key: clientKey,
+      client_secret: clientSecret,
+      code,
+      grant_type: 'authorization_code',
+      redirect_uri: callbackUrl,
+    }),
+    signal: AbortSignal.timeout(10000),
+  });
+
+  const tokenData = await tokenResponse.json();
+
+  if (tokenData.error || !tokenData.access_token) {
+    throw new Error(tokenData.error_description || tokenData.error || 'Failed to get TikTok access token');
+  }
+
+  const accessToken = tokenData.access_token;
+  const openId = tokenData.open_id;
+
+  // Get user profile
+  const profileResponse = await fetch(
+    'https://open.tiktokapis.com/v2/user/info/?fields=open_id,union_id,avatar_url,display_name',
+    {
+      headers: { 'Authorization': `Bearer ${accessToken}` },
+      signal: AbortSignal.timeout(10000),
+    }
+  );
+  const profileData = await profileResponse.json();
+  const userInfo = profileData.data?.user || {};
+
+  // Calculate token expiry (TikTok tokens last ~24 hours, refresh tokens ~365 days)
+  const tiktokExpiresIn = tokenData.expires_in || 86400; // default 24 hours
+  const tiktokExpiresAt = new Date(Date.now() + tiktokExpiresIn * 1000).toISOString();
+
+  // Upsert connection
+  const connectionData: Record<string, unknown> = {
+    user_id: userId,
+    platform: 'tiktok',
+    platform_user_id: openId,
+    platform_username: userInfo.display_name || openId,
+    access_token: accessToken,
+    refresh_token: tokenData.refresh_token || null,
+    token_expires_at: tiktokExpiresAt,
+    is_active: true,
+    connected_at: new Date().toISOString(),
+  };
+
+  const { data: existing } = await serviceSupabase
+    .from('social_connections')
+    .select('id')
+    .eq('user_id', userId)
+    .eq('platform', 'tiktok')
+    .single();
+
+  if (existing) {
+    await serviceSupabase
+      .from('social_connections')
+      .update(connectionData)
+      .eq('id', existing.id);
+  } else {
+    await serviceSupabase
+      .from('social_connections')
+      .insert(connectionData);
+  }
+
+  const separator = redirectUrl.includes('?') ? '&' : '?';
+  return NextResponse.redirect(`${redirectUrl}${separator}connected=tiktok`);
 }

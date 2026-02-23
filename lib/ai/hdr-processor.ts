@@ -278,6 +278,7 @@ export async function processWithImagen(
     };
 
   } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Processing failed';
     const msg = error instanceof Error ? error.message : 'Unknown error';
     console.error(`[Imagen] Error:`, msg);
     return {
@@ -375,6 +376,7 @@ export async function processLocalHDR(
     };
 
   } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Processing failed';
     return {
       success: false,
       provider: 'local',
@@ -486,6 +488,7 @@ export class HDRProcessor {
         cost: result.cost,
       };
     } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Processing failed';
       return {
         success: false,
         provider: 'local',

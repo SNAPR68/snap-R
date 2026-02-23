@@ -19,15 +19,37 @@
     "app/api/cron/sync-analytics/route.ts": {
       "maxDuration": 300,
       "memory": 1024
+    },
+    "app/api/cron/refresh-tokens/route.ts": {
+      "maxDuration": 300,
+      "memory": 1024
+    },
+    "app/api/video/generate/route.ts": {
+      "maxDuration": 60,
+      "memory": 1024
+    },
+    "app/api/video/status/route.ts": {
+      "maxDuration": 30,
+      "memory": 512
+    },
+    "app/api/video/voiceover/route.ts": {
+      "maxDuration": 60,
+      "memory": 1024
     }
   },
-  "routes": [
+  "headers": [
     {
-      "src": "/api/upload",
-      "methods": ["POST"],
-      "headers": {
-        "x-vercel-proxy-body-size": "52428800"
-      }
+      "source": "/p/(.*)",
+      "headers": [
+        { "key": "Cache-Control", "value": "no-store, must-revalidate" },
+        { "key": "CDN-Cache-Control", "value": "no-store" }
+      ]
+    },
+    {
+      "source": "/api/upload",
+      "headers": [
+        { "key": "x-vercel-proxy-body-size", "value": "52428800" }
+      ]
     }
   ],
   "crons": [
@@ -38,6 +60,10 @@
     {
       "path": "/api/cron/sync-analytics",
       "schedule": "0 */6 * * *"
+    },
+    {
+      "path": "/api/cron/refresh-tokens",
+      "schedule": "0 */4 * * *"
     }
   ]
 }

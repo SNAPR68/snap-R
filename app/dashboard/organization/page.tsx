@@ -5,7 +5,7 @@ import { createClient } from '@/lib/supabase/client';
 import Link from 'next/link';
 import {
   Loader2, Building2, Palette, Shield, Save, Upload,
-  Check, AlertCircle, Eye, Copy, ExternalLink, Sparkles,
+  Check, AlertCircle, Copy, ExternalLink, Sparkles,
   Image as ImageIcon, Lock, ArrowLeft, Crown, Zap
 } from 'lucide-react';
 
@@ -87,10 +87,26 @@ export default function OrganizationPage() {
       const plan = profile?.plan || 'free';
       const isPro = plan === 'pro';
       const isTeam = plan === 'team';
-      // Check if Team 25 (highest tier gets free white-label)
-      // This would need to check the actual subscription details
-      const isTeam25 = false; // TODO: Check actual team size from Stripe
-      
+
+      // Check actual team size from organization_members
+      let memberCount = 0;
+      if (isTeam) {
+        const { data: orgOwned } = await supabase
+          .from('organizations')
+          .select('id')
+          .eq('owner_id', user.id)
+          .maybeSingle();
+
+        if (orgOwned) {
+          const { count } = await supabase
+            .from('organization_members')
+            .select('id', { count: 'exact', head: true })
+            .eq('organization_id', orgOwned.id);
+          memberCount = (count ?? 0) + 1; // +1 for owner
+        }
+      }
+      const isTeam25 = isTeam && memberCount >= 25;
+
       setUserPlan({
         plan,
         isTeam25,
@@ -232,8 +248,9 @@ export default function OrganizationPage() {
         setOrg(newOrg);
         setSuccess('Organization created! Enable White-Label to go live.');
       }
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Request failed';
+      setError(err instanceof Error ? err.message : 'An error occurred');
     } finally {
       setSaving(false);
     }
@@ -263,8 +280,9 @@ export default function OrganizationPage() {
 
       // Redirect to Stripe Checkout
       window.location.href = data.url;
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Processing failed';
+      setError(err instanceof Error ? err.message : 'Checkout failed');
       setCheckingOut(false);
     }
   };
@@ -440,7 +458,7 @@ export default function OrganizationPage() {
               </div>
 
               <div>
-                <label className="block text-sm text-white/60 mb-2">Platform Name (Replaces "SnapR")</label>
+                <label className="block text-sm text-white/60 mb-2">Platform Name (Replaces &quot;SnapR&quot;)</label>
                 <input
                   type="text"
                   value={formData.platform_name}
@@ -484,6 +502,7 @@ export default function OrganizationPage() {
                 onClick={() => logoInputRef.current?.click()}
               >
                 {formData.logo_url ? (
+                  // eslint-disable-next-line @next/next/no-img-element
                   <img src={formData.logo_url} alt="Logo" className="w-full h-full object-contain p-2" />
                 ) : (
                   <Upload className="w-8 h-8 text-white/30" />
@@ -575,6 +594,7 @@ export default function OrganizationPage() {
             <div className="mt-4 p-4 rounded-lg" style={{ backgroundColor: formData.secondary_color }}>
               <div className="flex items-center gap-3">
                 {formData.logo_url ? (
+                  // eslint-disable-next-line @next/next/no-img-element
                   <img src={formData.logo_url} alt="" className="w-10 h-10 object-contain" />
                 ) : (
                   <div className="w-10 h-10 rounded-lg" style={{ backgroundColor: formData.primary_color }} />
@@ -600,7 +620,7 @@ export default function OrganizationPage() {
 
             <label className="flex items-center justify-between p-4 bg-white/5 rounded-lg cursor-pointer hover:bg-white/10">
               <div>
-                <div className="font-medium">Hide "Powered by SnapR"</div>
+                <div className="font-medium">Hide &quot;Powered by SnapR&quot;</div>
                 <div className="text-sm text-white/50">Remove all SnapR mentions</div>
               </div>
               <input

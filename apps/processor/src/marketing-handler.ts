@@ -1,5 +1,5 @@
 /**
- * Phase 2: Marketing Automation Handler
+ * Marketing Automation Handler
  *
  * Runs after preparation completes. Generates marketing artifacts:
  * 1. MLS listing description (GPT-4o)
@@ -7,9 +7,10 @@
  * 3. MLS photo manifest (no AI — metadata only)
  * 4. Property site draft (no AI — DB insert)
  * 5. Auto-schedule social posts (no AI — DB insert)
+ * 6. Property video generation (Remotion Lambda — fire-and-forget)
  *
  * Each step is independent. If one fails, others still run.
- * Same always-complete semantics as Phase 1.
+ * Always-complete semantics.
  */
 
 import type { MarketingJobMessage, Env } from './types.js';
@@ -21,6 +22,7 @@ const MARKETING_COST_CENTS = {
   mls: 0,             // No AI
   propertySite: 0,    // No AI
   scheduledPosts: 0,  // No AI — just DB inserts
+  video: 150,         // ~$1.50 per Remotion Lambda render
 };
 
 interface MarketingStepResult {
@@ -36,6 +38,7 @@ interface MarketingCostBreakdown {
   mls: MarketingStepResult;
   propertySite: MarketingStepResult;
   scheduledPosts: MarketingStepResult;
+  video: MarketingStepResult;
   totalCostCents: number;
   totalDurationMs: number;
 }
@@ -72,7 +75,7 @@ export async function handleMarketingJob(
   // Load listing data
   const { data: listing, error: listingError } = await supabase
     .from('listings')
-    .select('id, title, address, description, hero_photo_id, preparation_metadata')
+    .select('id, title, address, city, state, description, price, bedrooms, bathrooms, square_feet, property_type, year_built, lot_size, parking, features, mls_number, hero_photo_id, preparation_metadata')
     .eq('id', listingId)
     .single();
 
@@ -139,6 +142,7 @@ export async function handleMarketingJob(
     mls: { status: 'skipped', durationMs: 0, costCents: 0 },
     propertySite: { status: 'skipped', durationMs: 0, costCents: 0 },
     scheduledPosts: { status: 'skipped', durationMs: 0, costCents: 0 },
+    video: { status: 'skipped', durationMs: 0, costCents: 0 },
     totalCostCents: 0,
     totalDurationMs: 0,
   };
@@ -161,8 +165,13 @@ export async function handleMarketingJob(
       {
         title: listing.title || undefined,
         address: listing.address || undefined,
-        city: addressParts.city,
-        state: addressParts.state,
+        city: listing.city || addressParts.city,
+        state: listing.state || addressParts.state,
+        price: listing.price || undefined,
+        beds: listing.bedrooms || undefined,
+        baths: listing.bathrooms || undefined,
+        sqft: listing.square_feet || undefined,
+        propertyType: listing.property_type || undefined,
       },
       'professional',
       'medium',
@@ -209,7 +218,7 @@ export async function handleMarketingJob(
       '../../../lib/ai/providers/gpt-copy.js'
     );
 
-    const platforms = ['instagram', 'facebook', 'linkedin'] as const;
+    const platforms = ['instagram', 'facebook', 'linkedin', 'tiktok'] as const;
     const captionsResult: Record<string, unknown> = {};
     let captionCost = 0;
 
@@ -218,9 +227,13 @@ export async function handleMarketingJob(
         const caption = await generateCaption(
           {
             address: listing.address || undefined,
-            city: addressParts.city,
-            state: addressParts.state,
-            propertyType: 'residential',
+            city: listing.city || addressParts.city,
+            state: listing.state || addressParts.state,
+            propertyType: listing.property_type || 'residential',
+            price: listing.price || undefined,
+            bedrooms: listing.bedrooms || undefined,
+            bathrooms: listing.bathrooms || undefined,
+            squareFeet: listing.square_feet || undefined,
           },
           {
             platform,
@@ -235,8 +248,9 @@ export async function handleMarketingJob(
         const hashtags = await generateHashtags(
           {
             address: listing.address || undefined,
-            city: addressParts.city,
-            state: addressParts.state,
+            city: listing.city || addressParts.city,
+            state: listing.state || addressParts.state,
+            propertyType: listing.property_type || undefined,
           },
           platform,
           15,
@@ -381,7 +395,7 @@ export async function handleMarketingJob(
           listing_id: listingId,
           slug,
           template: 'modern',
-          is_published: false, // Draft — user publishes manually
+          is_published: true, // Auto-publish when marketing completes
         })
         .select('id, slug')
         .single();
@@ -476,14 +490,15 @@ export async function handleMarketingJob(
           .eq('id', jobId);
         console.log(`[Marketing] Scheduled posts skipped — no social connections`);
       } else {
-        // Get captions result from the job we just updated
+        // Get captions + property site result from the job we just updated
         const { data: jobData } = await supabase
           .from('marketing_jobs')
-          .select('captions_result')
+          .select('captions_result, property_site_result')
           .eq('id', jobId)
           .single();
 
         const captionsResult = (jobData?.captions_result || {}) as Record<string, { caption?: string; hashtags?: string }>;
+        const propertySiteResult = jobData?.property_site_result as { slug?: string } | null;
 
         // Get hero photo URL for the post image
         const heroPhoto = listing.hero_photo_id
@@ -505,10 +520,21 @@ export async function handleMarketingJob(
             continue;
           }
 
-          // Combine caption + hashtags
-          const content = platformCaption.hashtags
+          // Combine caption + hashtags + property site link with UTM tracking
+          let content = platformCaption.hashtags
             ? `${platformCaption.caption}\n\n${platformCaption.hashtags}`
             : platformCaption.caption;
+
+          // Append UTM-tagged property site link if available
+          if (propertySiteResult?.slug) {
+            const baseUrl = env.NEXT_PUBLIC_BASE_URL || 'https://snapr.pro';
+            const siteUrl = new URL(`/p/${propertySiteResult.slug}`, baseUrl);
+            siteUrl.searchParams.set('utm_source', platformKey as string);
+            siteUrl.searchParams.set('utm_medium', 'social');
+            siteUrl.searchParams.set('utm_campaign', 'just_listed');
+            siteUrl.searchParams.set('utm_content', listingId);
+            content += `\n\n${siteUrl.toString()}`;
+          }
 
           const { data: post, error: postError } = await supabase
             .from('scheduled_posts')
@@ -574,24 +600,121 @@ export async function handleMarketingJob(
   }
 
   // =============================================
+  // STEP 6: Property Video Generation (fire-and-forget)
+  // =============================================
+  await updateStepStatus(supabase, jobId, 'video_status', 'processing');
+  const videoStart = Date.now();
+  try {
+    // Billing gate: only Pro/Agency can generate videos
+    if (tier === 'free' || tier === 'starter') {
+      const videoMs = Date.now() - videoStart;
+      costBreakdown.video = {
+        status: 'skipped',
+        durationMs: videoMs,
+        costCents: 0,
+        error: 'Upgrade to Pro for automatic video generation',
+      };
+      await supabase
+        .from('marketing_jobs')
+        .update({
+          video_status: 'skipped',
+          video_result: { reason: 'Upgrade to Pro for automatic video generation' },
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', jobId);
+      console.log(`[Marketing] Video skipped for ${tier} tier`);
+    } else {
+      // Fire-and-forget: trigger render via internal API
+      const baseUrl = env.NEXT_PUBLIC_BASE_URL;
+      const cronSecret = env.CRON_SECRET;
+
+      if (!baseUrl || !cronSecret) {
+        throw new Error('NEXT_PUBLIC_BASE_URL or CRON_SECRET not configured for video generation');
+      }
+
+      // Template auto-selection: use message hint, default to property-showcase
+      const videoTemplate = message.videoTemplate || 'property-showcase';
+      const videoBody: Record<string, unknown> = {
+        listingId,
+        userId,
+        template: videoTemplate,
+        aspectRatio: '9:16',
+      };
+
+      // Inject template-specific params
+      if (videoTemplate === 'price-drop' && message.previousPrice) {
+        videoBody.previousPrice = message.previousPrice;
+      }
+      if (videoTemplate === 'sold' && message.daysOnMarket !== undefined) {
+        videoBody.daysOnMarket = message.daysOnMarket;
+      }
+
+      const videoResponse = await fetch(`${baseUrl}/api/internal/video-generate`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${cronSecret}`,
+        },
+        body: JSON.stringify(videoBody),
+      });
+
+      if (!videoResponse.ok) {
+        const errorBody = await videoResponse.text();
+        throw new Error(`Video API returned ${videoResponse.status}: ${errorBody}`);
+      }
+
+      const videoData = await videoResponse.json() as { renderId: string; bucketName: string };
+      const videoMs = Date.now() - videoStart;
+
+      costBreakdown.video = {
+        status: 'completed',
+        durationMs: videoMs,
+        costCents: MARKETING_COST_CENTS.video,
+      };
+      costBreakdown.totalCostCents += MARKETING_COST_CENTS.video;
+
+      await supabase
+        .from('marketing_jobs')
+        .update({
+          video_status: 'processing',
+          video_result: {
+            renderId: videoData.renderId,
+            bucketName: videoData.bucketName,
+            template: videoTemplate,
+            aspectRatio: '9:16',
+            status: 'rendering',
+          },
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', jobId);
+
+      console.log(`[Marketing] Video render triggered: ${videoData.renderId} (${videoMs}ms)`);
+    }
+  } catch (error) {
+    const videoMs = Date.now() - videoStart;
+    costBreakdown.video = {
+      status: 'failed',
+      durationMs: videoMs,
+      costCents: 0,
+      error: String(error),
+    };
+    await updateStepStatus(supabase, jobId, 'video_status', 'failed');
+    console.error(`[Marketing] Video generation failed:`, error);
+  }
+
+  // =============================================
   // FINALIZE: Update job status + cost
   // =============================================
   const totalMs = Date.now() - jobStart;
   costBreakdown.totalDurationMs = totalMs;
-
-  const anyStepCompleted =
-    costBreakdown.description.status === 'completed' ||
-    costBreakdown.captions.status === 'completed' ||
-    costBreakdown.mls.status === 'completed' ||
-    costBreakdown.propertySite.status === 'completed' ||
-    costBreakdown.scheduledPosts.status === 'completed';
 
   const allStepsFailed =
     costBreakdown.description.status === 'failed' &&
     costBreakdown.captions.status === 'failed' &&
     costBreakdown.mls.status === 'failed' &&
     costBreakdown.propertySite.status === 'failed' &&
-    costBreakdown.scheduledPosts.status === 'failed';
+    costBreakdown.scheduledPosts.status === 'failed' &&
+    costBreakdown.video.status === 'failed';
 
   const finalStatus = allStepsFailed ? 'failed' : 'completed';
 

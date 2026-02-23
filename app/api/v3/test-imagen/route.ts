@@ -44,8 +44,9 @@ export async function POST(request: NextRequest) {
     const result = await response.json();
     return NextResponse.json({ success: true, processingTimeMs, result });
 
-  } catch (error: any) {
-    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Internal server error';
+    return NextResponse.json({ success: false, error: message }, { status: 500 });
   }
 }
 

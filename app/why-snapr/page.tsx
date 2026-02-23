@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { Check, X, ArrowRight, Sparkles, Zap, Clock, DollarSign, BarChart3, Palette, Mail, Video, Share2, Camera, Layers } from 'lucide-react';
+import { Check, X, ArrowRight, Sparkles, Clock, DollarSign, Palette, Mail, Video, Share2, Camera, Layers } from 'lucide-react';
 
 // Feature comparison data - generic "Traditional Services" instead of Fotello
 const COMPARISON = [
@@ -107,7 +107,7 @@ export default function WhySnapRPage() {
                 Try Free - 3 Listings <ArrowRight className="w-5 h-5" />
               </Link>
               <Link
-                href="https://calendly.com/rajesh-snap-r/30min"
+                href={process.env.NEXT_PUBLIC_CALENDLY_URL || 'https://calendly.com/rajesh-snap-r/30min'}
                 className="bg-white/10 text-white px-8 py-4 rounded-lg font-medium hover:bg-white/20 transition text-lg"
               >
                 Book a Demo
@@ -190,14 +190,14 @@ export default function WhySnapRPage() {
                   <div className="flex items-start gap-3">
                     <div className="w-8 h-8 rounded-full bg-green-500/20 flex items-center justify-center text-green-400 flex-shrink-0">2</div>
                     <div>
-                      <p className="font-medium">Click "Generate Marketing"</p>
+                      <p className="font-medium">Click &quot;Generate Marketing&quot;</p>
                       <p className="text-white/50 text-sm">Social posts, emails, video - instantly</p>
                     </div>
                   </div>
                   <div className="flex items-start gap-3">
                     <div className="w-8 h-8 rounded-full bg-green-500/20 flex items-center justify-center text-green-400 flex-shrink-0">3</div>
                     <div>
-                      <p className="font-medium">Click "Publish"</p>
+                      <p className="font-medium">Click &quot;Publish&quot;</p>
                       <p className="text-white/50 text-sm">Post everywhere with one click</p>
                     </div>
                   </div>
@@ -226,7 +226,7 @@ export default function WhySnapRPage() {
         <section className="py-16 px-4">
           <div className="max-w-4xl mx-auto">
             <h2 className="text-3xl font-bold text-center mb-4">Calculate Your Savings</h2>
-            <p className="text-white/60 text-center mb-12">See how much you'll save by consolidating your tools</p>
+            <p className="text-white/60 text-center mb-12">See how much you&apos;ll save by consolidating your tools</p>
 
             {/* Slider */}
             <div className="flex flex-col sm:flex-row items-center justify-center gap-6 mb-12">
@@ -349,7 +349,7 @@ export default function WhySnapRPage() {
                   You save ${savings}/month
                 </p>
                 <p className="text-white/60">
-                  That's ${savings * 12}/year back in your pocket
+                  That&apos;s ${savings * 12}/year back in your pocket
                 </p>
               </div>
             )}
@@ -359,8 +359,8 @@ export default function WhySnapRPage() {
                 <p className="text-[#D4A017] text-xl font-bold mb-2">
                   At {listingCount} listings, you qualify for volume pricing
                 </p>
-                <Link 
-                  href="https://calendly.com/rajesh-snap-r/30min"
+                <Link
+                  href={process.env.NEXT_PUBLIC_CALENDLY_URL || 'https://calendly.com/rajesh-snap-r/30min'}
                   className="inline-flex items-center gap-2 text-white hover:text-[#D4A017] transition mt-2"
                 >
                   Talk to sales for custom pricing <ArrowRight className="w-4 h-4" />
@@ -453,7 +453,7 @@ export default function WhySnapRPage() {
             <div className="grid md:grid-cols-3 gap-6">
               {TESTIMONIALS.map((t, idx) => (
                 <div key={idx} className="bg-black rounded-xl p-6 border border-white/10">
-                  <p className="text-white/80 mb-6 italic">"{t.quote}"</p>
+                  <p className="text-white/80 mb-6 italic">&quot;{t.quote}&quot;</p>
                   <div>
                     <p className="font-bold">{t.name}</p>
                     <p className="text-white/50 text-sm">{t.title}</p>

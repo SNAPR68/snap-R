@@ -12,14 +12,14 @@ interface ListingData {
   address: string;
   city: string;
   state: string;
-  zip: string;
+  postal_code: string;
   price: number;
   bedrooms: number;
   bathrooms: number;
-  sqft: number;
+  square_feet: number;
   description?: string;
   features?: string[];
-  photos: { url: string; enhanced_url?: string }[];
+  photos: { raw_url: string; processed_url?: string }[];
 }
 
 interface GeneratedContent {
@@ -162,9 +162,9 @@ async function generateWithAI(
   const prompt = `Generate a ${platform} real estate post for a ${status.replace('_', ' ')} listing.
 
 Property Details:
-- Address: ${listing.address}, ${listing.city}, ${listing.state} ${listing.zip}
+- Address: ${listing.address}, ${listing.city}, ${listing.state} ${listing.postal_code}
 - Price: $${listing.price?.toLocaleString()}
-- Beds: ${listing.bedrooms} | Baths: ${listing.bathrooms} | SqFt: ${listing.sqft?.toLocaleString()}
+- Beds: ${listing.bedrooms} | Baths: ${listing.bathrooms} | SqFt: ${listing.square_feet?.toLocaleString()}
 ${listing.features?.length ? `- Features: ${listing.features.join(', ')}` : ''}
 
 Style: ${style}
@@ -210,7 +210,7 @@ Respond in JSON format:
   const content = JSON.parse(data.choices[0].message.content);
 
   // Get best photo
-  const imageUrl = listing.photos?.[0]?.enhanced_url || listing.photos?.[0]?.url || '';
+  const imageUrl = listing.photos?.[0]?.processed_url || listing.photos?.[0]?.raw_url || '';
 
   return {
     caption: content.caption,
@@ -231,7 +231,7 @@ function generateFromTemplate(
   const cta = messaging.ctas[Math.floor(Math.random() * messaging.ctas.length)];
 
   const priceFormatted = listing.price ? `$${listing.price.toLocaleString()}` : '';
-  const specs = `${listing.bedrooms} BD | ${listing.bathrooms} BA | ${listing.sqft?.toLocaleString()} SF`;
+  const specs = `${listing.bedrooms} BD | ${listing.bathrooms} BA | ${listing.square_feet?.toLocaleString()} SF`;
 
   let caption = `${hook}\n\n`;
   caption += `📍 ${listing.address}, ${listing.city}, ${listing.state}\n`;
@@ -247,7 +247,7 @@ function generateFromTemplate(
     caption += '\n\n' + hashtags.map(h => `#${h}`).join(' ');
   }
 
-  const imageUrl = listing.photos?.[0]?.enhanced_url || listing.photos?.[0]?.url || '';
+  const imageUrl = listing.photos?.[0]?.processed_url || listing.photos?.[0]?.raw_url || '';
 
   return {
     caption,
@@ -282,7 +282,7 @@ function generateHashtags(listing: ListingData, status: string, maxHashtags: num
 
   // Property-based
   if (listing.bedrooms >= 4) hashtags.push('LargeHome');
-  if (listing.sqft && listing.sqft > 3000) hashtags.push('LuxuryHome');
+  if (listing.square_feet && listing.square_feet > 3000) hashtags.push('LuxuryHome');
   if (listing.price && listing.price > 1000000) hashtags.push('MillionDollarListing');
 
   // General real estate
@@ -310,14 +310,14 @@ export async function generateEmailContent(
   const body = `
 <h2>${messaging.hooks[0]}</h2>
 <p><strong>${listing.address}</strong><br>
-${listing.city}, ${listing.state} ${listing.zip}</p>
+${listing.city}, ${listing.state} ${listing.postal_code}</p>
 
 <p style="font-size: 24px; color: #B8860B;"><strong>$${listing.price?.toLocaleString()}</strong></p>
 
 <p>
 <strong>${listing.bedrooms}</strong> Bedrooms | 
 <strong>${listing.bathrooms}</strong> Bathrooms | 
-<strong>${listing.sqft?.toLocaleString()}</strong> Sq Ft
+<strong>${listing.square_feet?.toLocaleString()}</strong> Sq Ft
 </p>
 
 ${listing.description ? `<p>${listing.description}</p>` : ''}
@@ -340,8 +340,8 @@ export async function processQueueItem(queueItemId: string): Promise<{ success: 
     .select(`
       *,
       listings (
-        id, address, city, state, zip, price, bedrooms, bathrooms, sqft, description,
-        photos (url, enhanced_url)
+        id, address, city, state, postal_code, price, bedrooms, bathrooms, square_feet, description,
+        photos!photos_listing_id_fkey(raw_url, processed_url)
       )
     `)
     .eq('id', queueItemId)

@@ -34,8 +34,9 @@ export async function POST(request: NextRequest) {
     const response = await handleQuickReply(body, profile.id, supabase);
     return respondWithMessage(response);
     
-  } catch (error: any) {
-    console.error('[WhatsApp Webhook] Error:', error.message);
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Download failed';
+    console.error('[WhatsApp Webhook] Error:', message);
     return respondWithMessage('Sorry, something went wrong. Please try again.');
   }
 }

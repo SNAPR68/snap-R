@@ -24,41 +24,87 @@ export default async function ContentStudio() {
     .limit(20)
 
   // Fetch marketing jobs for all user listings (wrapped in try/catch for resilience)
-  let marketingJobs: any[] | null = null
+  interface MarketingJobRow {
+    listing_id: string
+    status: string
+    description_status: string | null
+    description_result: Record<string, unknown> | string | null
+    captions_status: string | null
+    captions_result: Record<string, unknown> | null
+    property_site_status: string | null
+    property_site_result: Record<string, unknown> | null
+    scheduled_posts_status: string | null
+  }
+  let marketingJobs: MarketingJobRow[] | null = null
   try {
     const { data } = await supabase
       .from('marketing_jobs')
-      .select('listing_id, status, description_status, captions_status, property_site_status, scheduled_posts_status')
+      .select('listing_id, status, description_status, description_result, captions_status, captions_result, property_site_status, property_site_result, scheduled_posts_status')
       .eq('user_id', user.id)
-    marketingJobs = data
+    marketingJobs = data as MarketingJobRow[] | null
   } catch { /* marketing_jobs query failed — degrade gracefully */ }
 
-  // Build marketing status map
+  // Build marketing status map with content previews
   const marketingStatuses: Record<string, {
     status: string
     hasDescription: boolean
     hasCaptions: boolean
     hasSite: boolean
     hasScheduledPosts: boolean
+    descriptionPreview: string | null
+    captionPlatforms: string[]
+    propertySiteSlug: string | null
   }> = {}
   if (marketingJobs) {
     for (const job of marketingJobs) {
       if (!marketingStatuses[job.listing_id]) {
+        // Extract description preview
+        let descriptionPreview: string | null = null
+        if (job.description_status === 'completed' && job.description_result) {
+          const descResult = job.description_result
+          if (typeof descResult === 'string') {
+            descriptionPreview = descResult.slice(0, 200)
+          } else if (typeof descResult === 'object' && descResult !== null) {
+            const desc = (descResult as Record<string, unknown>).description ?? (descResult as Record<string, unknown>).text
+            if (typeof desc === 'string') descriptionPreview = desc.slice(0, 200)
+          }
+        }
+
+        // Extract caption platforms
+        const captionPlatforms: string[] = []
+        if (job.captions_status === 'completed' && job.captions_result && typeof job.captions_result === 'object') {
+          for (const key of Object.keys(job.captions_result)) {
+            if (['instagram', 'facebook', 'linkedin', 'tiktok', 'twitter'].includes(key)) {
+              captionPlatforms.push(key)
+            }
+          }
+        }
+
+        // Extract property site slug
+        let propertySiteSlug: string | null = null
+        if (job.property_site_status === 'completed' && job.property_site_result && typeof job.property_site_result === 'object') {
+          const slug = (job.property_site_result as Record<string, unknown>).slug
+          if (typeof slug === 'string') propertySiteSlug = slug
+        }
+
         marketingStatuses[job.listing_id] = {
           status: job.status,
           hasDescription: job.description_status === 'completed',
           hasCaptions: job.captions_status === 'completed',
           hasSite: job.property_site_status === 'completed',
           hasScheduledPosts: job.scheduled_posts_status === 'completed',
+          descriptionPreview,
+          captionPlatforms,
+          propertySiteSlug,
         }
       }
     }
   }
 
   const listingsWithPhotos = await Promise.all(
-    (listings || []).map(async (listing: any) => {
+    (listings || []).map(async (listing: { id: string; title: string | null; address: string | null; photos: Array<{ id: string; raw_url: string | null; processed_url: string | null; status: string }> }) => {
       const photos = listing.photos || []
-      const enhancedPhotos = photos.filter((p: any) => p.processed_url || p.raw_url)
+      const enhancedPhotos = photos.filter((p: { processed_url: string | null; raw_url: string | null }) => p.processed_url || p.raw_url)
       
       let thumbnailUrl = null
       const firstPhoto = enhancedPhotos[0] || photos[0]
@@ -77,7 +123,7 @@ export default async function ContentStudio() {
         title: listing.title || listing.address || 'Untitled',
         photoCount: photos.length,
         enhancedCount: enhancedPhotos.length,
-        thumbnail: thumbnailUrl
+        thumbnail: thumbnailUrl ?? null
       }
     })
   )

@@ -64,18 +64,21 @@ IMPORTANT RULES:
       platform
     })
     
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Caption generation error:', error)
-    
-    if (error.code === 'insufficient_quota') {
+
+    const isQuotaError = error instanceof Error && 'code' in error &&
+      (error as { code: string }).code === 'insufficient_quota';
+    if (isQuotaError) {
       return NextResponse.json(
         { error: 'API quota exceeded. Please try again later.' },
         { status: 429 }
       )
     }
-    
+
+    const message = error instanceof Error ? error.message : 'Failed to generate caption';
     return NextResponse.json(
-      { error: 'Failed to generate caption' },
+      { error: message },
       { status: 500 }
     )
   }

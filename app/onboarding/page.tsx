@@ -28,7 +28,13 @@ const ROLES = [
   { id: 'property-owner', label: 'Property Owner', icon: Briefcase, description: 'I own properties to sell/rent' },
 ];
 
-const TOTAL_STEPS = 6;
+const SOCIAL_PLATFORMS = [
+  { id: 'facebook', label: 'Facebook', icon: '📘', description: 'Post to Pages & Groups' },
+  { id: 'instagram', label: 'Instagram', icon: '📷', description: 'Reels & Feed posts' },
+  { id: 'linkedin', label: 'LinkedIn', icon: '💼', description: 'Professional network posts' },
+];
+
+const TOTAL_STEPS = 7;
 
 function OnboardingContent() {
   const router = useRouter();
@@ -63,7 +69,11 @@ function OnboardingContent() {
   const [brandWebsite, setBrandWebsite] = useState('');
   const [brokerageName, setBrokerageName] = useState('');
 
-  // Step 5: WhatsApp (optional)
+  // Step 5: Social Connections
+  const [socialConnections, setSocialConnections] = useState<Array<{ platform: string; username: string }>>([]);
+  const [userId, setUserId] = useState<string | null>(null);
+
+  // Step 6: WhatsApp (optional)
   const [phone, setPhone] = useState('');
   const [wantsWhatsApp, setWantsWhatsApp] = useState(false);
 
@@ -74,16 +84,34 @@ function OnboardingContent() {
         router.push('/auth/signup');
         return;
       }
+      setUserId(user.id);
       if (user.user_metadata?.full_name) {
         setName(user.user_metadata.full_name);
       }
       if (user.email) {
         setBrandEmail(user.email);
       }
+
+      // Load existing social connections
+      const { data: connections } = await supabase
+        .from('social_connections')
+        .select('platform, platform_username')
+        .eq('user_id', user.id)
+        .eq('is_active', true);
+      if (connections) {
+        setSocialConnections(connections.map(c => ({ platform: c.platform, username: c.platform_username || 'Connected' })));
+      }
+
+      // Restore step from URL (after OAuth redirect)
+      const stepFromUrl = searchParams.get('step');
+      if (stepFromUrl) {
+        setStep(parseInt(stepFromUrl));
+      }
+
       setCheckingAuth(false);
     }
     checkUser();
-  }, [router, supabase]);
+  }, [router, supabase, searchParams]);
 
   // Pre-fill from URL params (from pricing page)
   useEffect(() => {
@@ -99,7 +127,7 @@ function OnboardingContent() {
     }
   }, [roleFromUrl, listingsFromUrl, selectedRole, listingsPerMonth]);
 
-  const handleComplete = async (redirectTo: string = '/listings/new') => {
+  const handleComplete = async (redirectTo: string = '/listings/new?guided=true') => {
     setLoading(true);
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
@@ -509,8 +537,89 @@ function OnboardingContent() {
             </div>
           )}
 
-          {/* STEP 5: WhatsApp (Optional) */}
+          {/* STEP 5: Connect Social Accounts (NEW) */}
           {step === 5 && (
+            <div className="animate-fadeIn">
+              <div className="text-center mb-8">
+                <div className="w-16 h-16 bg-blue-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Globe className="w-8 h-8 text-blue-400" />
+                </div>
+                <h1 className="text-3xl font-bold mb-2">Connect Your Socials</h1>
+                <p className="text-white/60">Publish listings to your platforms automatically</p>
+              </div>
+
+              <div className="space-y-3">
+                {SOCIAL_PLATFORMS.map(platform => {
+                  const connected = socialConnections.find(c => c.platform === platform.id);
+                  return (
+                    <div
+                      key={platform.id}
+                      className={`p-4 rounded-xl border transition-all flex items-center gap-4 ${
+                        connected ? 'border-green-500/30 bg-green-500/5' : 'border-white/10 bg-white/5'
+                      }`}
+                    >
+                      <div className="w-12 h-12 rounded-xl bg-white/10 flex items-center justify-center text-2xl flex-shrink-0">
+                        {platform.icon}
+                      </div>
+                      <div className="flex-1">
+                        <div className="font-semibold">{platform.label}</div>
+                        <div className="text-sm text-white/50">
+                          {connected ? connected.username : platform.description}
+                        </div>
+                      </div>
+                      {connected ? (
+                        <CheckCircle className="w-6 h-6 text-green-400 flex-shrink-0" />
+                      ) : (
+                        <button
+                          onClick={() => {
+                            if (!userId) return;
+                            const baseUrl = window.location.origin;
+                            const redirectUri = `${baseUrl}/api/social/oauth/${platform.id}`;
+                            const state = JSON.stringify({ csrf: userId, returnTo: '/onboarding?step=5' });
+
+                            let authUrl = '';
+                            if (platform.id === 'facebook' || platform.id === 'instagram') {
+                              const appId = process.env.NEXT_PUBLIC_FACEBOOK_APP_ID;
+                              const scopes = platform.id === 'instagram'
+                                ? 'instagram_basic,instagram_content_publish,pages_show_list,pages_read_engagement'
+                                : 'pages_manage_posts,pages_read_engagement,publish_video,pages_show_list';
+                              authUrl = `https://www.facebook.com/v18.0/dialog/oauth?client_id=${appId}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${scopes}&state=${encodeURIComponent(state)}&response_type=code`;
+                            } else if (platform.id === 'linkedin') {
+                              const clientId = process.env.NEXT_PUBLIC_LINKEDIN_CLIENT_ID;
+                              authUrl = `https://www.linkedin.com/oauth/v2/authorization?response_type=code&client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=openid%20profile%20w_member_social&state=${encodeURIComponent(state)}`;
+                            }
+                            if (authUrl) window.location.href = authUrl;
+                          }}
+                          className="px-4 py-2 bg-white/10 rounded-lg text-sm font-medium hover:bg-white/20 transition-colors flex-shrink-0"
+                        >
+                          Connect
+                        </button>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+
+              <p className="text-xs text-white/30 mt-4 text-center">
+                You can always connect or disconnect accounts later in Settings.
+              </p>
+
+              <div className="flex gap-3 mt-6">
+                <button onClick={() => setStep(4)} className="px-6 py-4 bg-white/10 rounded-xl flex items-center gap-2">
+                  <ChevronLeft className="w-5 h-5" /> Back
+                </button>
+                <button
+                  onClick={() => setStep(6)}
+                  className="flex-1 py-4 bg-gradient-to-r from-[#D4A017] to-[#B8860B] rounded-xl text-black font-semibold flex items-center justify-center gap-2"
+                >
+                  {socialConnections.length > 0 ? 'Continue' : 'Skip for now'} <ChevronRight className="w-5 h-5" />
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* STEP 6: WhatsApp (Optional) */}
+          {step === 6 && (
             <div className="animate-fadeIn">
               <div className="text-center mb-8">
                 <div className="w-16 h-16 bg-green-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -563,11 +672,11 @@ function OnboardingContent() {
               </div>
 
               <div className="flex gap-3 mt-6">
-                <button onClick={() => setStep(4)} className="px-6 py-4 bg-white/10 rounded-xl flex items-center gap-2">
+                <button onClick={() => setStep(5)} className="px-6 py-4 bg-white/10 rounded-xl flex items-center gap-2">
                   <ChevronLeft className="w-5 h-5" /> Back
                 </button>
                 <button
-                  onClick={() => setStep(6)}
+                  onClick={() => setStep(7)}
                   className="flex-1 py-4 bg-gradient-to-r from-[#D4A017] to-[#B8860B] rounded-xl text-black font-semibold flex items-center justify-center gap-2"
                 >
                   {wantsWhatsApp ? 'Continue' : 'Skip for now'} <ChevronRight className="w-5 h-5" />
@@ -576,8 +685,8 @@ function OnboardingContent() {
             </div>
           )}
 
-          {/* STEP 6: Get Started */}
-          {step === 6 && (
+          {/* STEP 7: Get Started */}
+          {step === 7 && (
             <div className="animate-fadeIn text-center">
               <div className="w-20 h-20 bg-gradient-to-br from-[#D4A017] to-[#B8860B] rounded-full flex items-center justify-center mx-auto mb-6">
                 <CheckCircle className="w-10 h-10 text-black" />

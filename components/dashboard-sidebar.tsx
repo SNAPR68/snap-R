@@ -56,6 +56,7 @@ const NAV_SECTIONS: NavSection[] = [
     title: 'Measure',
     items: [
       { href: '/dashboard/analytics', label: 'Analytics', icon: BarChart3 },
+      { href: '/dashboard/leads', label: 'Leads', icon: Users },
       { href: '/dashboard/approvals', label: 'Client Approvals', icon: CheckSquare },
     ],
   },
