@@ -1,6 +1,46 @@
 # SnapR Execution Changelog
 =================================
 
+## 2026-02-23 — Campaign Queue → Publishing Bridge (Close the Automation Loop)
+
+### Problem
+The campaign auto-trigger system was 90% built (engine, content generator, approval UI, settings dashboard) but **approved queue items never got published**. The `campaign_queue` table and `scheduled_posts` table were completely disconnected — campaigns could be triggered, content generated, and items approved, but nothing ever went out the door.
+
+### Solution
+Extended the publish-scheduled cron (`app/api/cron/publish-scheduled/route.ts`) with a 3-stage pipeline:
+1. **Video URL backfill** (existing)
+2. **Campaign queue bridge** (NEW) — processes approved `campaign_queue` items
+3. **Publish due posts** (existing)
+
+### Campaign Queue Processing by Content Type
+| Type | Action |
+|------|--------|
+| `social_post` | Insert into `scheduled_posts` → publishing loop handles it |
+| `property_site_update` | Update `property_sites.status_banner` directly |
+| `video` | Fire-and-forget trigger to `/api/internal/video-generate` |
+| `email` | Mark as published (content available in dashboard, manual send) |
+
+### Campaign Completion Tracking
+- `checkCampaignCompletion()` runs after each bridge cycle
+- When all queue items for a campaign are published/skipped, campaign status → `completed`
+- History audit trail: every published item logged to `campaign_history`
+- Failed items marked with error message to prevent infinite retry
+
+### Automation OS Loop Now Complete
+```
+Upload → Prepare → Market → Distribute → Measure → Loop
+                                                      ↑
+Status Change → Campaign Engine → Queue → Approve → Publish (this PR)
+```
+
+### Modified Files
+- `app/api/cron/publish-scheduled/route.ts` — campaign bridge + completion tracking
+
+### Verification
+- `npx tsc --noEmit`: 0 errors
+
+---
+
 ## 2026-02-23 — Explainer Video v4: Fix Shakiness, Jitter, and Voiceover Desync
 
 ### Root Causes Fixed

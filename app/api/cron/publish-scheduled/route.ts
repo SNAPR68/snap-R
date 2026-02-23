@@ -2,8 +2,14 @@
  * SnapR API - Publish Scheduled Posts Cron
  * =========================================
  * Runs every 15 minutes via Vercel Cron.
- * Picks up due `scheduled_posts` and publishes via platform APIs.
- * Supports both image posts and video posts (from marketing pipeline Step 6).
+ *
+ * Pipeline:
+ * 1. Backfill video URLs from completed Remotion renders
+ * 2. Bridge approved campaign_queue items → scheduled_posts
+ * 3. Publish all due scheduled_posts via platform APIs
+ *
+ * Supports both image posts and video posts (from marketing pipeline Step 6
+ * and campaign auto-triggers).
  */
 
 export const dynamic = 'force-dynamic';
@@ -85,6 +91,177 @@ export async function GET(request: NextRequest) {
   } catch (backfillError: unknown) {
     // Non-critical — log and continue with publishing
     console.warn('[PublishCron] Video URL backfill error:', backfillError instanceof Error ? backfillError.message : backfillError);
+  }
+
+  // ── Campaign Queue → Publishing Bridge ───────────────────────────
+  // Approved campaign_queue items get processed based on content_type:
+  //   social_post        → insert into scheduled_posts (publishing loop handles it)
+  //   property_site_update → update property_sites banner directly
+  //   video              → trigger video render via internal API
+  //   email              → skip for now (no email sending infra in cron)
+  //
+  // This closes the "Loop" in the Automation OS:
+  //   Status Change → Campaign Engine → Queue → Approve → Publish
+  try {
+    const { data: approvedItems } = await supabase
+      .from('campaign_queue')
+      .select(`
+        id, user_id, listing_id, campaign_id, platform, content_type,
+        scheduled_for, content_data
+      `)
+      .eq('status', 'approved')
+      .lte('scheduled_for', new Date().toISOString())
+      .limit(50);
+
+    if (approvedItems && approvedItems.length > 0) {
+      let bridged = 0;
+
+      for (const item of approvedItems) {
+        const contentData = (item.content_data || {}) as Record<string, unknown>;
+
+        try {
+          switch (item.content_type) {
+            case 'social_post': {
+              // Bridge to scheduled_posts for the main publishing loop
+              const caption = (contentData.caption as string) || '';
+              const hashtags = (contentData.hashtags as string[]) || [];
+              const imageUrl = (contentData.image_url as string) || '';
+              const fullCaption = hashtags.length > 0
+                ? `${caption}\n\n${hashtags.map((h: string) => `#${h}`).join(' ')}`
+                : caption;
+
+              const insertPayload: Record<string, unknown> = {
+                user_id: item.user_id,
+                listing_id: item.listing_id,
+                platform: item.platform,
+                content: fullCaption,
+                image_urls: imageUrl ? [imageUrl] : [],
+                post_type: (contentData.listing_status as string) || 'campaign',
+                scheduled_for: item.scheduled_for,
+                status: 'pending',
+              };
+
+              const { error: insertError } = await supabase
+                .from('scheduled_posts')
+                .insert(insertPayload);
+
+              if (insertError) {
+                console.error(`[PublishCron] Campaign bridge insert error:`, insertError.message);
+                continue;
+              }
+              break;
+            }
+
+            case 'property_site_update': {
+              // Update the property site banner/status directly
+              const newStatus = (contentData.new_status as string) || '';
+              const newBanner = (contentData.new_banner as string) || newStatus.replace(/_/g, ' ').toUpperCase();
+
+              if (newStatus) {
+                await supabase
+                  .from('property_sites')
+                  .update({
+                    status_banner: newBanner,
+                    updated_at: new Date().toISOString(),
+                  })
+                  .eq('listing_id', item.listing_id);
+              }
+              break;
+            }
+
+            case 'video': {
+              // Trigger video render via internal API (fire-and-forget)
+              const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://snap-r.com';
+              const cronSecret = process.env.CRON_SECRET;
+              const listingStatus = (contentData.listing_status as string) || 'just_listed';
+
+              // Map listing status to video template
+              const templateMap: Record<string, string> = {
+                just_listed: 'property-showcase',
+                coming_soon: 'property-showcase',
+                open_house: 'open-house',
+                price_drop: 'price-drop',
+                sold: 'sold',
+                under_contract: 'just-listed',
+              };
+
+              if (cronSecret) {
+                fetch(`${baseUrl}/api/internal/video-generate`, {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${cronSecret}`,
+                  },
+                  body: JSON.stringify({
+                    listingId: item.listing_id,
+                    template: templateMap[listingStatus] || 'property-showcase',
+                  }),
+                  signal: AbortSignal.timeout(15000),
+                }).catch((videoErr: unknown) => {
+                  console.warn('[PublishCron] Campaign video trigger error:',
+                    videoErr instanceof Error ? videoErr.message : videoErr);
+                });
+              }
+              break;
+            }
+
+            case 'email': {
+              // Email sending not wired into cron yet — mark as published
+              // (content was generated and is available in campaign dashboard)
+              console.log(`[PublishCron] Email campaign item ${item.id} — content generated, manual send required`);
+              break;
+            }
+
+            default:
+              console.warn(`[PublishCron] Unknown campaign content_type: ${item.content_type}`);
+              break;
+          }
+
+          // Mark campaign_queue item as published to prevent re-processing
+          await supabase
+            .from('campaign_queue')
+            .update({
+              status: 'published',
+              published_at: new Date().toISOString(),
+            })
+            .eq('id', item.id);
+
+          // Log to campaign_history
+          await supabase.from('campaign_history').insert({
+            user_id: item.user_id,
+            campaign_id: item.campaign_id,
+            listing_id: item.listing_id,
+            action: 'published',
+            details: {
+              queue_item_id: item.id,
+              platform: item.platform ?? undefined,
+              content_type: item.content_type,
+            },
+          });
+
+          bridged++;
+        } catch (itemError: unknown) {
+          const itemMsg = itemError instanceof Error ? itemError.message : 'Unknown error';
+          console.error(`[PublishCron] Campaign item ${item.id} error:`, itemMsg);
+
+          // Mark as failed so it doesn't retry forever
+          await supabase
+            .from('campaign_queue')
+            .update({ status: 'failed', error: itemMsg })
+            .eq('id', item.id);
+        }
+      }
+
+      if (bridged > 0) {
+        console.log(`[PublishCron] Processed ${bridged} campaign queue item(s)`);
+      }
+
+      // Check if any campaigns are now fully completed
+      await checkCampaignCompletion(supabase, approvedItems);
+    }
+  } catch (campaignBridgeError: unknown) {
+    // Non-critical — log and continue with publishing
+    console.warn('[PublishCron] Campaign bridge error:', campaignBridgeError instanceof Error ? campaignBridgeError.message : campaignBridgeError);
   }
 
   try {
@@ -571,4 +748,51 @@ async function markPostFailed(
     .eq('id', postId);
 
   console.error(`[PublishCron] Post ${postId} failed: ${errorMessage}`);
+}
+
+// ============================================
+// CAMPAIGN COMPLETION HELPERS
+// ============================================
+
+/**
+ * Check if any campaigns are now fully completed (all queue items published/skipped).
+ * If so, update campaign status to 'completed' and log to history.
+ */
+async function checkCampaignCompletion(
+  supabase: ReturnType<typeof adminSupabase>,
+  processedItems: Array<{ campaign_id: string; user_id: string; listing_id: string }>
+): Promise<void> {
+  // Get unique campaign IDs from the processed items
+  const campaignIds = [...new Set(processedItems.map(item => item.campaign_id).filter(Boolean))];
+
+  for (const campaignId of campaignIds) {
+    // Count remaining pending/approved items for this campaign
+    const { count } = await supabase
+      .from('campaign_queue')
+      .select('id', { count: 'exact', head: true })
+      .eq('campaign_id', campaignId)
+      .in('status', ['pending', 'approved']);
+
+    if (count === 0) {
+      // All items are done — mark campaign as completed
+      await supabase
+        .from('campaigns')
+        .update({ status: 'completed', updated_at: new Date().toISOString() })
+        .eq('id', campaignId)
+        .eq('status', 'active');
+
+      const item = processedItems.find(i => i.campaign_id === campaignId);
+      if (item) {
+        await supabase.from('campaign_history').insert({
+          user_id: item.user_id,
+          campaign_id: campaignId,
+          listing_id: item.listing_id,
+          action: 'completed',
+          details: { completed_by: 'publish_cron' },
+        });
+      }
+
+      console.log(`[PublishCron] Campaign ${campaignId} completed — all items published or skipped`);
+    }
+  }
 }
