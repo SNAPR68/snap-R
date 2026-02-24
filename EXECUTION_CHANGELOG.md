@@ -1,6 +1,30 @@
 # SnapR Execution Changelog
 =================================
 
+## 2026-02-24 — Phase 5: Print Materials (Flyer + Feature Sheet PDFs)
+
+### New Dependencies
+- **`@react-pdf/renderer`** — Server-side React PDF generation producing real vector PDFs (selectable text, print-quality)
+- **`qrcode`** + **`@types/qrcode`** — QR code generation as base64 data URI for property site links
+
+### New Files
+- **`lib/print/types.ts`** — Shared data interfaces: `PrintListingData`, `PrintBrandData`, `PrintPhotoData`, `PrintMaterialsInput`.
+- **`lib/print/pdf-utils.ts`** — Utility functions: `generateQrCodeDataUri()`, `fetchImageAsBase64()`, `formatPrice()`, `formatAddress()`, `formatPropertyType()`, `truncateText()`.
+- **`lib/print/flyer-template.tsx`** — Single-page property flyer PDF template (Letter size). Hero photo (55% height), price + stats row, up to 4 detail photos, description excerpt, gold accent line, agent branding footer with QR code.
+- **`lib/print/feature-sheet-template.tsx`** — Two-page feature sheet PDF template. Page 1: header bar with logos, hero photo, address/price, stats bar, full AI description. Page 2: 3x3 photo grid, two-column features list, property details box, agent branding with QR code.
+- **`app/api/marketing/print-materials/route.ts`** — `POST` API route. Validates with Zod, checks `canAccessContentStudio` billing gate (starter+), fetches listing data + marketing description + photos + brand profile + property site slug. Photos fetched as base64 in parallel via `Promise.allSettled`. Renders PDF with `renderToBuffer()`, returns binary with `Content-Disposition: attachment`.
+
+### Modified Files
+- **`lib/validation/schemas.ts`** — Added `printMaterialsSchema` (`{ listingId: uuid, type: 'flyer' | 'feature-sheet' }`).
+- **`components/marketing-results-panel.tsx`** — Added 7th `CollapsibleSection` for "Print Materials" with `Printer` icon. Two download buttons (flyer + feature sheet), loading spinners, locked state for free-tier users. Added `userTier` prop + `handleDownloadPrintMaterial()` handler.
+- **`components/studio-client.tsx`** — Added `subscriptionTier` prop, forwarded as `userTier` to `MarketingResultsPanel`.
+- **`app/dashboard/studio/page.tsx`** — Passes `subscriptionTier={profile?.subscription_tier || 'free'}` to `StudioClient`.
+- **`vercel.json`** — Added `app/api/marketing/print-materials/route.ts` function config (60s timeout, 1024MB memory).
+
+**Verification:** `npx tsc --noEmit` ✅ | `npm run build` ✅ | `npx vitest run` 93/93 ✅
+
+---
+
 ## 2026-02-24 — Phase 4: Watermark on Downloads + Twitter/X Publishing
 
 ### 4a. Watermark on Downloads

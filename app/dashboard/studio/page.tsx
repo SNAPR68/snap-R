@@ -20,5 +20,5 @@ export default async function StudioPage({ searchParams }: { searchParams: Promi
   // Determine if user is agent/broker type (shows MLS Export)
   const isAgentType = ['agent', 'broker', 'property-manager'].includes(profile?.role || '');
 
-  return <StudioClient listingId={params.id} userRole={profile?.role} showMlsFeatures={isAgentType} credits={profile?.credits || 0} guided={params.guided === 'true'} />;
+  return <StudioClient listingId={params.id} userRole={profile?.role} showMlsFeatures={isAgentType} credits={profile?.credits || 0} guided={params.guided === 'true'} subscriptionTier={profile?.subscription_tier || 'free'} />;
 }

@@ -124,7 +124,7 @@ interface PrepareNotificationData {
 }
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-export function StudioClient({ listingId, userRole, showMlsFeatures = false, credits = 0, guided = false }: { listingId: string; userRole?: string; showMlsFeatures?: boolean; credits?: number; guided?: boolean }) {
+export function StudioClient({ listingId, userRole, showMlsFeatures = false, credits = 0, guided = false, subscriptionTier = 'free' }: { listingId: string; userRole?: string; showMlsFeatures?: boolean; credits?: number; guided?: boolean; subscriptionTier?: string }) {
   const supabase = createClient();
   const [listing, setListing] = useState<StudioListing | null>(null);
   const [photos, setPhotos] = useState<StudioPhoto[]>([]);
@@ -841,6 +841,7 @@ export function StudioClient({ listingId, userRole, showMlsFeatures = false, cre
             marketingJob={marketingJobData}
             listingId={listingId}
             onClose={() => setShowMarketingPanel(false)}
+            userTier={subscriptionTier}
           />
         ) : (
           <aside className="w-[200px] bg-[#1A1A1A] border-l border-white/10 p-3 overflow-y-auto flex-shrink-0">
