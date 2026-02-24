@@ -24,6 +24,7 @@ import {
   publishToLinkedIn,
   publishVideoToTikTok,
   publishPhotoToTikTok,
+  publishToTwitter,
 } from '@/lib/social/publish-service';
 import { refreshAccessToken, type SocialPlatform } from '@/lib/social/oauth-config';
 
@@ -465,6 +466,14 @@ export async function GET(request: NextRequest) {
               break;
             }
 
+            case 'twitter': {
+              publishResult = await publishToTwitter(
+                connection.access_token,
+                content
+              );
+              break;
+            }
+
             default: {
               await markPostFailed(supabase, post.id, `Platform ${post.platform} not yet supported`);
               results.skipped++;
@@ -597,6 +606,11 @@ async function publishVideoPost(
 
     case 'tiktok': {
       return publishVideoToTikTok(connection.access_token, videoUrl, content.text);
+    }
+
+    case 'twitter': {
+      // Twitter supports video via the same media upload flow
+      return publishToTwitter(connection.access_token, { text: content.text, imageUrls: [videoUrl] });
     }
 
     default:

@@ -550,6 +550,149 @@ export async function publishPhotoToTikTok(
   }
 }
 
+// Upload media to Twitter via v1.1 media upload endpoint
+async function uploadMediaToTwitter(
+  accessToken: string,
+  imageUrl: string
+): Promise<string | null> {
+  try {
+    // Download image
+    const imageResponse = await fetch(imageUrl, {
+      signal: AbortSignal.timeout(15000),
+    });
+    const imageBuffer = await imageResponse.arrayBuffer();
+    const base64Data = Buffer.from(imageBuffer).toString('base64');
+    const mimeType = imageResponse.headers.get('content-type') || 'image/jpeg';
+
+    // INIT
+    const initResponse = await fetch('https://upload.twitter.com/1.1/media/upload.json', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${accessToken}`,
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body: new URLSearchParams({
+        command: 'INIT',
+        total_bytes: String(imageBuffer.byteLength),
+        media_type: mimeType,
+      }),
+      signal: AbortSignal.timeout(15000),
+    });
+
+    if (!initResponse.ok) {
+      console.warn('[Twitter] Media INIT failed:', initResponse.status);
+      return null;
+    }
+
+    const initData = await initResponse.json();
+    const mediaId = initData.media_id_string;
+
+    // APPEND
+    const appendResponse = await fetch('https://upload.twitter.com/1.1/media/upload.json', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${accessToken}`,
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body: new URLSearchParams({
+        command: 'APPEND',
+        media_id: mediaId,
+        segment_index: '0',
+        media_data: base64Data,
+      }),
+      signal: AbortSignal.timeout(30000),
+    });
+
+    if (!appendResponse.ok) {
+      console.warn('[Twitter] Media APPEND failed:', appendResponse.status);
+      return null;
+    }
+
+    // FINALIZE
+    const finalizeResponse = await fetch('https://upload.twitter.com/1.1/media/upload.json', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${accessToken}`,
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body: new URLSearchParams({
+        command: 'FINALIZE',
+        media_id: mediaId,
+      }),
+      signal: AbortSignal.timeout(15000),
+    });
+
+    if (!finalizeResponse.ok) {
+      console.warn('[Twitter] Media FINALIZE failed:', finalizeResponse.status);
+      return null;
+    }
+
+    return mediaId;
+  } catch (err) {
+    console.warn('[Twitter] Media upload error:', err);
+    return null;
+  }
+}
+
+// Publish to Twitter/X via v2 API
+export async function publishToTwitter(
+  accessToken: string,
+  content: { text: string; imageUrls?: string[] }
+): Promise<PublishResult> {
+  try {
+    // Upload images if provided (max 4)
+    const mediaIds: string[] = [];
+    if (content.imageUrls && content.imageUrls.length > 0) {
+      for (const imageUrl of content.imageUrls.slice(0, 4)) {
+        const mediaId = await uploadMediaToTwitter(accessToken, imageUrl);
+        if (mediaId) {
+          mediaIds.push(mediaId);
+        }
+      }
+    }
+
+    // Create tweet
+    const tweetBody: Record<string, unknown> = {
+      text: content.text,
+    };
+
+    if (mediaIds.length > 0) {
+      tweetBody.media = { media_ids: mediaIds };
+    }
+
+    const response = await fetch('https://api.twitter.com/2/tweets', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${accessToken}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(tweetBody),
+      signal: AbortSignal.timeout(15000),
+    });
+
+    if (!response.ok) {
+      const errorBody = await response.text();
+      throw new Error(`Twitter API error (${response.status}): ${errorBody}`);
+    }
+
+    const data = await response.json();
+    const tweetId = data.data?.id;
+
+    return {
+      success: true,
+      postId: tweetId,
+      postUrl: tweetId ? `https://x.com/i/status/${tweetId}` : undefined,
+    };
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Unknown Twitter error';
+    console.error('Twitter publish error:', error);
+    return {
+      success: false,
+      error: message,
+    };
+  }
+}
+
 // Main publish function
 export async function publishToSocial(request: PublishRequest): Promise<PublishResult> {
   switch (request.platform) {
@@ -576,6 +719,9 @@ export async function publishToSocial(request: PublishRequest): Promise<PublishR
         return publishPhotoToTikTok(request.accessToken, request.content.imageUrls, request.content.text);
       }
       return { success: false, error: 'TikTok requires video or images' };
+
+    case 'twitter':
+      return publishToTwitter(request.accessToken, request.content);
 
     default:
       return { success: false, error: `Publishing to ${request.platform} not yet supported` };

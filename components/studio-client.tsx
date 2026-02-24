@@ -505,8 +505,19 @@ export function StudioClient({ listingId, userRole, showMlsFeatures = false, cre
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const handleDownload = async (url: string, filename: string) => {
-    const response = await fetch(url);
+  const handleDownload = async (photoId: string, filename: string) => {
+    const response = await fetch(`/api/download?photoId=${photoId}`);
+    if (response.redirected) {
+      // No watermark needed — server redirected to signed URL
+      const blob = await response.blob();
+      const downloadUrl = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = downloadUrl;
+      a.download = filename;
+      a.click();
+      window.URL.revokeObjectURL(downloadUrl);
+      return;
+    }
     const blob = await response.blob();
     const downloadUrl = window.URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -856,7 +867,7 @@ export function StudioClient({ listingId, userRole, showMlsFeatures = false, cre
                         </div>
                       )}
                     </div>
-                    <button onClick={() => handleDownload(photo.signedProcessedUrl || '', `enhanced-${photo.variant || 'photo'}-${photo.id.slice(0,6)}.jpg`)} className="w-full flex items-center justify-center gap-1 px-2 py-1.5 bg-gradient-to-r from-[#D4A017] to-[#B8860B] text-black text-xs font-medium"><Download className="w-3 h-3" /> Download</button>
+                    <button onClick={() => handleDownload(photo.id, `enhanced-${photo.variant || 'photo'}-${photo.id.slice(0,6)}.jpg`)} className="w-full flex items-center justify-center gap-1 px-2 py-1.5 bg-gradient-to-r from-[#D4A017] to-[#B8860B] text-black text-xs font-medium"><Download className="w-3 h-3" /> Download</button>
                   </div>
                 ))}
               </div>
