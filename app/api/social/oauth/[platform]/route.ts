@@ -53,13 +53,24 @@ export async function GET(
       return NextResponse.redirect(`${redirectUrl}?error=Missing OAuth state parameter`);
     }
 
-    // State may be JSON (Twitter PKCE) or plain user ID
+    // State may be base64-encoded JSON (Twitter PKCE), plain JSON, or plain user ID
     let stateUserId: string;
+    let codeVerifier: string | undefined;
     try {
-      const parsed = JSON.parse(state);
+      // Try base64 decode first (Twitter PKCE sends btoa(JSON.stringify({csrf, code_verifier})))
+      const decoded = Buffer.from(state, 'base64').toString('utf-8');
+      const parsed = JSON.parse(decoded);
       stateUserId = parsed.csrf || state;
+      codeVerifier = parsed.code_verifier;
     } catch {
-      stateUserId = state;
+      try {
+        // Try plain JSON (other platforms may use JSON state)
+        const parsed = JSON.parse(state);
+        stateUserId = parsed.csrf || state;
+      } catch {
+        // Plain string (user ID)
+        stateUserId = state;
+      }
     }
 
     if (stateUserId !== user.id) {
@@ -73,6 +84,8 @@ export async function GET(
       return handleLinkedInOAuth(code, user.id, baseUrl, redirectUrl);
     } else if (platform === 'tiktok') {
       return handleTikTokOAuth(code, user.id, baseUrl, redirectUrl);
+    } else if (platform === 'twitter') {
+      return handleTwitterOAuth(code, user.id, baseUrl, redirectUrl, codeVerifier);
     }
 
     return NextResponse.redirect(`${redirectUrl}?error=Unsupported platform`);
@@ -379,4 +392,102 @@ async function handleTikTokOAuth(
 
   const separator = redirectUrl.includes('?') ? '&' : '?';
   return NextResponse.redirect(`${redirectUrl}${separator}connected=tiktok`);
+}
+
+async function handleTwitterOAuth(
+  code: string,
+  userId: string,
+  baseUrl: string,
+  redirectUrl: string,
+  codeVerifier?: string
+) {
+  const serviceSupabase = adminSupabase();
+  const clientId = process.env.NEXT_PUBLIC_TWITTER_CLIENT_ID;
+  const clientSecret = process.env.TWITTER_CLIENT_SECRET;
+  const callbackUrl = `${baseUrl}/api/social/oauth/twitter`;
+
+  if (!codeVerifier) {
+    throw new Error('Missing PKCE code_verifier for Twitter OAuth');
+  }
+
+  // Exchange code for access token (Twitter OAuth 2.0 with PKCE)
+  // Twitter requires Basic auth header with client_id:client_secret
+  const basicAuth = Buffer.from(`${clientId}:${clientSecret}`).toString('base64');
+
+  const tokenResponse = await fetch('https://api.twitter.com/2/oauth2/token', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/x-www-form-urlencoded',
+      'Authorization': `Basic ${basicAuth}`,
+    },
+    body: new URLSearchParams({
+      code,
+      grant_type: 'authorization_code',
+      redirect_uri: callbackUrl,
+      code_verifier: codeVerifier,
+    }),
+    signal: AbortSignal.timeout(15000),
+  });
+
+  const tokenData = await tokenResponse.json();
+
+  if (tokenData.error || !tokenData.access_token) {
+    throw new Error(tokenData.error_description || tokenData.error || 'Failed to get Twitter access token');
+  }
+
+  const accessToken = tokenData.access_token;
+
+  // Get user profile
+  const profileResponse = await fetch(
+    'https://api.twitter.com/2/users/me?user.fields=id,name,username,profile_image_url',
+    {
+      headers: { 'Authorization': `Bearer ${accessToken}` },
+      signal: AbortSignal.timeout(15000),
+    }
+  );
+
+  const profileData = await profileResponse.json();
+  const twitterUser = profileData.data;
+
+  if (!twitterUser) {
+    throw new Error('Failed to fetch Twitter user profile');
+  }
+
+  // Calculate token expiry (Twitter OAuth 2.0 tokens last ~2 hours)
+  const twitterExpiresIn = tokenData.expires_in || 7200;
+  const twitterExpiresAt = new Date(Date.now() + twitterExpiresIn * 1000).toISOString();
+
+  // Upsert connection
+  const connectionData: Record<string, unknown> = {
+    user_id: userId,
+    platform: 'twitter',
+    platform_user_id: twitterUser.id,
+    platform_username: twitterUser.username,
+    access_token: accessToken,
+    refresh_token: tokenData.refresh_token || null,
+    token_expires_at: twitterExpiresAt,
+    is_active: true,
+    connected_at: new Date().toISOString(),
+  };
+
+  const { data: existing } = await serviceSupabase
+    .from('social_connections')
+    .select('id')
+    .eq('user_id', userId)
+    .eq('platform', 'twitter')
+    .single();
+
+  if (existing) {
+    await serviceSupabase
+      .from('social_connections')
+      .update(connectionData)
+      .eq('id', existing.id);
+  } else {
+    await serviceSupabase
+      .from('social_connections')
+      .insert(connectionData);
+  }
+
+  const separator = redirectUrl.includes('?') ? '&' : '?';
+  return NextResponse.redirect(`${redirectUrl}${separator}connected=twitter`);
 }

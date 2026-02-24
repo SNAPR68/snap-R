@@ -149,7 +149,7 @@ export async function POST(request: NextRequest) {
           : subscription.status === 'canceled' ? 'canceled'
           : 'inactive';
 
-        const updateData: Record<string, any> = {
+        const updateData: Record<string, unknown> = {
           subscription_status: status,
           updated_at: new Date().toISOString(),
         };
@@ -194,8 +194,8 @@ export async function POST(request: NextRequest) {
     }
 
     return NextResponse.json({ received: true });
-  } catch (error) {
-    console.error('Webhook error:', error);
+  } catch (error: unknown) {
+    console.error('Webhook error:', error instanceof Error ? error.message : error);
     return NextResponse.json({ error: 'Webhook handler failed' }, { status: 500 });
   }
 }

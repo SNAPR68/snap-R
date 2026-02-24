@@ -1,6 +1,7 @@
 export const dynamic = 'force-dynamic';
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { listingCreateSchema, listingUpdateSchema, parseBody } from '@/lib/validation/schemas';
 
 function sanitize(value?: string | null) {
   if (!value) return null;
@@ -25,7 +26,7 @@ export async function GET(request: Request) {
   // ============================================
   if (listingId) {
     console.log(`[Listings API] Fetching single listing: ${listingId}`);
-    
+
     // NOTE: Only select columns that EXIST in your listings table
     const { data: listing, error: listingError } = await supabase
       .from("listings")
@@ -54,7 +55,7 @@ export async function GET(request: Request) {
 
     // Create signed URLs for each photo
     const photosWithSignedUrls = await Promise.all(
-      (photos || []).map(async (photo: any) => {
+      (photos || []).map(async (photo: { id: string; raw_url: string | null; processed_url: string | null; variant: string | null; status: string; created_at: string }) => {
         let signedOriginalUrl: string | null = null;
         let signedProcessedUrl: string | null = null;
 
@@ -80,7 +81,7 @@ export async function GET(request: Request) {
             const { data, error } = await supabase.storage
               .from('raw-images')
               .createSignedUrl(photo.processed_url, 3600);
-            
+
             if (data?.signedUrl) {
               signedProcessedUrl = data.signedUrl;
             } else {
@@ -128,13 +129,29 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "Failed to load listings" }, { status: 500 });
   }
 
-  const listings = (data ?? []).map((listing: any) => {
+  interface ListingWithPhotos {
+    id: string;
+    title: string | null;
+    address: string | null;
+    city: string | null;
+    state: string | null;
+    postal_code: string | null;
+    description: string | null;
+    preparation_status: string | null;
+    marketing_status: string | null;
+    created_at: string;
+    photos: { id: string; raw_url: string | null; processed_url: string | null; variant: string | null; status: string; created_at: string }[] | { count: number }[];
+  }
+
+  const listings = (data ?? []).map((listing: ListingWithPhotos) => {
     if (withPhotos) {
-      const photos = Array.isArray(listing.photos) ? listing.photos : [];
-      return { ...listing, photos };
+      const photosList = Array.isArray(listing.photos) ? listing.photos : [];
+      return { ...listing, photos: photosList };
     }
-    const count = listing.photos?.[0]?.count ?? 0;
-    const { photos, ...rest } = listing;
+    const countRow = listing.photos?.[0] as { count: number } | undefined;
+    const count = countRow?.count ?? 0;
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { photos: _photos, ...rest } = listing;
     return { ...rest, photo_count: count };
   });
 
@@ -150,7 +167,11 @@ export async function POST(request: Request) {
   }
 
   const body = await request.json();
-  const { title, address, city, state, postal_code, description } = body;
+  const parsed = parseBody(listingCreateSchema, body);
+  if (!parsed.success) {
+    return NextResponse.json({ error: parsed.error, details: parsed.details }, { status: 400 });
+  }
+  const { title, address, city, state, postal_code, description } = parsed.data;
 
   const { data, error } = await supabase
     .from("listings")
@@ -184,13 +205,13 @@ export async function PUT(request: Request) {
   }
 
   const body = await request.json();
-  const { id, title, address, city, state, postal_code, description, marketingStatus, status } = body;
-
-  if (!id) {
-    return NextResponse.json({ error: "Listing ID required" }, { status: 400 });
+  const parsed = parseBody(listingUpdateSchema, body);
+  if (!parsed.success) {
+    return NextResponse.json({ error: parsed.error, details: parsed.details }, { status: 400 });
   }
+  const { id, title, address, city, state, postal_code, description, marketingStatus, status } = parsed.data;
 
-  const updates: Record<string, any> = {};
+  const updates: Record<string, unknown> = {};
   if (title !== undefined) updates.title = sanitize(title);
   if (address !== undefined) updates.address = sanitize(address);
   if (city !== undefined) updates.city = sanitize(city);

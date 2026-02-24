@@ -34,10 +34,30 @@ export default async function AdminAiDecisions({ searchParams }: { searchParams?
             .single()).data
         : null;
 
-  const decisionAudit = (selectedListing?.preparation_metadata as any)?.decisionAudit as
-    | Record<string, any>
-    | undefined;
+  interface DecisionAuditEntry {
+    photoType?: string;
+    heroScore?: number;
+    lighting?: string;
+    skyQuality?: string;
+    skyNeedsReplacement?: boolean;
+    lawnQuality?: string;
+    lawnNeedsRepair?: boolean;
+    windowExposureIssue?: boolean;
+    needsHDR?: boolean;
+    verticalAlignment?: string;
+    clutterLevel?: string;
+    roomEmpty?: boolean;
+    toolsSelected?: string[];
+    toolReasons?: Record<string, string>;
+    notSuggested?: Record<string, string>;
+  }
 
+  interface PreparationMetadata {
+    decisionAudit?: Record<string, DecisionAuditEntry>;
+  }
+
+  const metadata = selectedListing?.preparation_metadata as PreparationMetadata | null;
+  const decisionAudit = metadata?.decisionAudit;
   const decisionEntries = decisionAudit ? Object.entries(decisionAudit) : [];
 
   return (

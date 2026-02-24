@@ -1,13 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { batchEnhanceSchema, parseBody } from '@/lib/validation/schemas';
 
 export async function POST(req: NextRequest) {
   try {
-    const { listingId, toolId, preset } = await req.json();
-    
-    if (!listingId || !toolId || !preset) {
-      return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
+    const body = await req.json();
+    const parsed = parseBody(batchEnhanceSchema, body);
+    if (!parsed.success) {
+      return NextResponse.json({ error: parsed.error, details: parsed.details }, { status: 400 });
     }
+    const { listingId, toolId, preset } = parsed.data;
 
     const supabase = await createClient();
     

@@ -3,14 +3,16 @@ import { NextRequest, NextResponse } from 'next/server';
 import { Resend } from 'resend';
 import { adminSupabase } from '@/lib/supabase/admin';
 import { escapeHtml } from '@/lib/utils/html-escape';
+import { contactSchema, parseBody } from '@/lib/validation/schemas';
 
 export async function POST(request: NextRequest) {
   try {
-    const { name, email, message } = await request.json();
-
-    if (!name || !email || !message) {
-      return NextResponse.json({ error: 'All fields required' }, { status: 400 });
+    const body = await request.json();
+    const parsed = parseBody(contactSchema, body);
+    if (!parsed.success) {
+      return NextResponse.json({ error: parsed.error, details: parsed.details }, { status: 400 });
     }
+    const { name, email, message } = parsed.data;
 
     // Save to database
     const supabase = adminSupabase();

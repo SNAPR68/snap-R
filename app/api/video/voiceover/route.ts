@@ -6,6 +6,8 @@ export const maxDuration = 60;
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { adminSupabase } from '@/lib/supabase/admin'
+import { voiceoverSchema, parseBody } from '@/lib/validation/schemas'
+import { z } from 'zod'
 
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY
 const ELEVENLABS_API_KEY = process.env.ELEVENLABS_API_KEY
@@ -28,36 +30,10 @@ const STYLE_PROMPTS: Record<string, string> = {
   firstTimeBuyer: 'Write for first-time home buyers. Be helpful, informative, and reassuring. Highlight practical features and value.',
 }
 
-interface PropertyDetails {
-  address?: string
-  price?: string
-  bedrooms?: number
-  bathrooms?: number
-  sqft?: number
-  neighborhood?: string
-  features?: string[]
-}
-
-interface GenerateScriptBody {
-  action: 'generate-script'
-  propertyDetails: PropertyDetails
-  style: string
-  duration: number
-}
-
-interface GenerateAudioBody {
-  action: 'generate-audio'
-  script: string
-  voiceId: string
-}
-
-interface UploadAudioBody {
-  action: 'upload-audio'
-  audioBase64: string
-  listingId: string
-}
-
-type RequestBody = GenerateScriptBody | GenerateAudioBody | UploadAudioBody
+type VoiceoverInput = z.infer<typeof voiceoverSchema>
+type GenerateScriptBody = Extract<VoiceoverInput, { action: 'generate-script' }>
+type GenerateAudioBody = Extract<VoiceoverInput, { action: 'generate-audio' }>
+type UploadAudioBody = Extract<VoiceoverInput, { action: 'upload-audio' }>
 
 export async function POST(request: NextRequest) {
   try {
@@ -69,15 +45,20 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const body = await request.json() as RequestBody
-    const { action } = body
+    const body = await request.json()
+    const parsed = parseBody(voiceoverSchema, body)
+    if (!parsed.success) {
+      return NextResponse.json({ error: parsed.error, details: parsed.details }, { status: 400 })
+    }
+
+    const { action } = parsed.data
 
     if (action === 'generate-script') {
-      return handleGenerateScript(body as GenerateScriptBody)
+      return handleGenerateScript(parsed.data as GenerateScriptBody)
     } else if (action === 'generate-audio') {
-      return handleGenerateAudio(body as GenerateAudioBody)
+      return handleGenerateAudio(parsed.data as GenerateAudioBody)
     } else if (action === 'upload-audio') {
-      return handleUploadAudio(body as UploadAudioBody, user.id)
+      return handleUploadAudio(parsed.data as UploadAudioBody, user.id)
     } else {
       return NextResponse.json({ error: 'Invalid action' }, { status: 400 })
     }

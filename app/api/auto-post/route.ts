@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { autoPostRuleCreateSchema, autoPostRuleToggleSchema, autoPostRuleDeleteSchema, parseBody } from '@/lib/validation/schemas'
 
 // GET - Fetch auto-post rules
 export async function GET() {
@@ -29,7 +30,11 @@ export async function POST(request: Request) {
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
     const body = await request.json()
-    const { name, triggerEvent, triggerValue, platforms, postType, templateId, includeCaption, includeHashtags } = body
+    const parsed = parseBody(autoPostRuleCreateSchema, body)
+    if (!parsed.success) {
+      return NextResponse.json({ error: parsed.error, details: parsed.details }, { status: 400 })
+    }
+    const { name, triggerEvent, triggerValue, platforms, postType, templateId, includeCaption, includeHashtags } = parsed.data
 
     const { data: rule, error } = await supabase
       .from('auto_post_rules')
@@ -62,7 +67,12 @@ export async function PATCH(request: Request) {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-    const { id, isActive } = await request.json()
+    const body = await request.json()
+    const parsed = parseBody(autoPostRuleToggleSchema, body)
+    if (!parsed.success) {
+      return NextResponse.json({ error: parsed.error, details: parsed.details }, { status: 400 })
+    }
+    const { id, isActive } = parsed.data
 
     const { error } = await supabase
       .from('auto_post_rules')
@@ -85,7 +95,12 @@ export async function DELETE(request: Request) {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-    const { id } = await request.json()
+    const body = await request.json()
+    const parsed = parseBody(autoPostRuleDeleteSchema, body)
+    if (!parsed.success) {
+      return NextResponse.json({ error: parsed.error, details: parsed.details }, { status: 400 })
+    }
+    const { id } = parsed.data
 
     await supabase.from('auto_post_rules').delete().eq('id', id).eq('user_id', user.id)
 
