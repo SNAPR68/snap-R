@@ -7,7 +7,8 @@ import {
   LayoutDashboard, Home, Sparkles, Palette, Calendar, Zap,
   BarChart3, CheckSquare, FileText, FolderOpen, Images, Mic,
   ClipboardList, Users, Settings, CreditCard, LogOut,
-  ChevronDown, ChevronRight, X
+  ChevronDown, ChevronRight, X,
+  Sofa, Globe, Megaphone, ScanSearch, Hammer, Brain, Mail, Handshake
 } from 'lucide-react'
 import { useSidebar } from './mobile-sidebar-provider'
 
@@ -43,6 +44,8 @@ const NAV_SECTIONS: NavSection[] = [
     items: [
       { href: '/dashboard/content-studio', label: 'Content Studio', icon: Sparkles },
       { href: '/dashboard/brand', label: 'Brand Profile', icon: Palette },
+      { href: '/dashboard/staging', label: 'Virtual Staging', icon: Sofa },
+      { href: '/dashboard/content-studio/sites', label: 'Property Sites', icon: Globe },
     ],
   },
   {
@@ -50,6 +53,7 @@ const NAV_SECTIONS: NavSection[] = [
     items: [
       { href: '/dashboard/calendar', label: 'Calendar', icon: Calendar },
       { href: '/dashboard/auto-post', label: 'Auto-Post Rules', icon: Zap },
+      { href: '/dashboard/campaigns', label: 'Campaigns', icon: Megaphone },
     ],
   },
   {
@@ -70,6 +74,11 @@ const NAV_SECTIONS: NavSection[] = [
       { href: '/dashboard/virtual-tours', label: 'Property Gallery', icon: Images },
       { href: '/dashboard/voiceover', label: 'AI Voiceover', icon: Mic },
       { href: '/dashboard/cma', label: 'CMA Reports', icon: ClipboardList },
+      { href: '/dashboard/photo-culling', label: 'Photo Culling', icon: ScanSearch },
+      { href: '/dashboard/renovation', label: 'Renovation', icon: Hammer },
+      { href: '/dashboard/listing-intelligence', label: 'Listing Intel', icon: Brain },
+      { href: '/dashboard/content-studio/email', label: 'Email Marketing', icon: Mail },
+      { href: '/dashboard/partner', label: 'Partner Program', icon: Handshake },
     ],
   },
   {

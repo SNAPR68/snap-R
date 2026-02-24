@@ -1,6 +1,26 @@
 # SnapR Execution Changelog
 =================================
 
+## 2026-02-24 — Phase 7: Quick Wins — Cron Fix, Portfolio Pages, Sidebar Navigation
+
+### Win 1: Register Daily Digest Cron
+- **`vercel.json`** — Added daily digest cron (`0 8 * * *` = 8 AM UTC daily) and function config (300s timeout, 1024MB memory). The route was fully coded but never registered — will now execute automatically.
+
+### Win 2: Portfolio Edit & Items Pages
+- **`app/dashboard/portfolio/[id]/edit/page.tsx`** [NEW] — Portfolio settings page: edit title, tagline, description, theme (dark/light/minimal), accent color picker, public toggle, slug display. Save/delete actions. Previously linked from portfolio cards but returned 404.
+- **`app/dashboard/portfolio/[id]/items/page.tsx`** [NEW] — Portfolio items management: before/after photo grid with reorder (up/down), featured toggle, inline title editing, delete. Add item modal with full form. "Import from Listings" modal fetches user's enhanced photos for bulk import via PATCH API.
+
+### Win 3: Surface Hidden Pages in Sidebar
+- **`components/dashboard-sidebar.tsx`** — Added 8 pages to sidebar navigation across 3 sections:
+  - **Create**: Virtual Staging, Property Sites
+  - **Publish**: Campaigns
+  - **More Tools**: Photo Culling, Renovation, Listing Intel, Email Marketing, Partner Program
+  - 5 pages intentionally excluded (camera=mobile-only, bulk=sub-nav, organization=backend-unbuilt, how-it-works=onboarding, content/scheduled=duplicate)
+
+**Verification:** `npx tsc --noEmit` ✅ | `npm run build` ✅ | `npx vitest run` 93/93 ✅
+
+---
+
 ## 2026-02-24 — Phase 6: Hardening + Platform Unlock Sweep
 
 ### Area 1: Unlock Twitter + TikTok
