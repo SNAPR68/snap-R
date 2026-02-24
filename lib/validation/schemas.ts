@@ -84,6 +84,12 @@ export const videoStatusSchema = z.object({
   renderId: z.string().min(1).max(200),
 })
 
+// Print materials (flyer / feature sheet)
+export const printMaterialsSchema = z.object({
+  listingId: z.string().uuid(),
+  type: z.enum(['flyer', 'feature-sheet']),
+})
+
 // Helper: Parse body with schema, return typed result or error response
 export function parseBody<T>(schema: z.ZodType<T>, data: unknown):
   { success: true; data: T } | { success: false; error: string; details: ReturnType<z.ZodError['flatten']> } {

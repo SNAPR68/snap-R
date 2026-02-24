@@ -6,7 +6,7 @@ import {
   FileText, MessageSquare, FileArchive, Globe, Calendar, Video,
   CheckCircle, AlertCircle, Copy, Check, ExternalLink, Download,
   X, ChevronDown, ChevronUp, Clock, Loader2, Lock,
-  Facebook, Instagram, Linkedin, Sparkles,
+  Facebook, Instagram, Linkedin, Sparkles, Printer,
 } from 'lucide-react';
 import type { MarketingJobData, MarketingStepResult } from './marketing-banner';
 
@@ -19,6 +19,7 @@ type MarketingResultsPanelProps = {
   marketingJob: MarketingJobData;
   listingId: string;
   onClose: () => void;
+  userTier?: string;
 };
 
 /** Safely extract a string field from a record-type result */
@@ -140,7 +141,39 @@ function getVideoRenderStatus(result: MarketingStepResult): string | null {
   return null;
 }
 
-export function MarketingResultsPanel({ marketingJob, listingId, onClose }: MarketingResultsPanelProps) {
+export function MarketingResultsPanel({ marketingJob, listingId, onClose, userTier }: MarketingResultsPanelProps) {
+  const [flyerLoading, setFlyerLoading] = useState(false);
+  const [featureSheetLoading, setFeatureSheetLoading] = useState(false);
+
+  const canAccessPrint = userTier && userTier !== 'free';
+  const printMaterialsAvailable =
+    marketingJob.description.status === 'completed' &&
+    marketingJob.mls.status === 'completed';
+
+  const handleDownloadPrintMaterial = async (type: 'flyer' | 'feature-sheet') => {
+    const setLoading = type === 'flyer' ? setFlyerLoading : setFeatureSheetLoading;
+    setLoading(true);
+    try {
+      const res = await fetch('/api/marketing/print-materials', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ listingId, type }),
+      });
+      if (!res.ok) throw new Error('Failed to generate PDF');
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${type}.pdf`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (error: unknown) {
+      console.error('Print material download error:', error instanceof Error ? error.message : error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <aside className="w-[280px] bg-[#1A1A1A] border-l border-white/10 flex flex-col flex-shrink-0">
       {/* Header */}
@@ -474,6 +507,56 @@ export function MarketingResultsPanel({ marketingJob, listingId, onClose }: Mark
             // Pending
             return <p className="text-xs text-white/30">Pending</p>;
           })()}
+        </CollapsibleSection>
+
+        {/* 7. Print Materials */}
+        <CollapsibleSection
+          title="Print Materials"
+          icon={Printer}
+          status={printMaterialsAvailable ? 'completed' : 'pending'}
+        >
+          {canAccessPrint ? (
+            printMaterialsAvailable ? (
+              <div className="space-y-2">
+                <p className="text-[10px] text-white/40 mb-2">
+                  Download professional print-ready PDFs
+                </p>
+                <button
+                  onClick={() => handleDownloadPrintMaterial('flyer')}
+                  disabled={flyerLoading}
+                  className="flex items-center justify-center gap-1.5 w-full py-1.5 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/20 rounded-lg text-xs text-amber-300 transition-colors disabled:opacity-50"
+                >
+                  {flyerLoading ? <Loader2 className="w-3 h-3 animate-spin" /> : <Download className="w-3 h-3" />}
+                  Download Flyer (1 page)
+                </button>
+                <button
+                  onClick={() => handleDownloadPrintMaterial('feature-sheet')}
+                  disabled={featureSheetLoading}
+                  className="flex items-center justify-center gap-1.5 w-full py-1.5 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/20 rounded-lg text-xs text-amber-300 transition-colors disabled:opacity-50"
+                >
+                  {featureSheetLoading ? <Loader2 className="w-3 h-3 animate-spin" /> : <Download className="w-3 h-3" />}
+                  Download Feature Sheet (2 pages)
+                </button>
+              </div>
+            ) : (
+              <p className="text-xs text-white/30">
+                Available after description and photos are ready
+              </p>
+            )
+          ) : (
+            <div className="space-y-2">
+              <div className="flex items-center gap-1.5 text-xs text-white/40">
+                <Lock className="w-3 h-3" />
+                <span>Upgrade to Starter for print materials</span>
+              </div>
+              <Link
+                href="/dashboard/billing"
+                className="flex items-center justify-center gap-1 w-full py-1.5 bg-[#D4A017]/10 hover:bg-[#D4A017]/20 border border-[#D4A017]/20 rounded-lg text-[10px] text-[#D4A017] font-medium transition-colors"
+              >
+                Upgrade Plan
+              </Link>
+            </div>
+          )}
         </CollapsibleSection>
       </div>
 
