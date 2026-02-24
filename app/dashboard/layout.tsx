@@ -4,6 +4,7 @@ import { FeedbackButton } from '@/components/feedback-button'
 import DashboardSidebar from '@/components/dashboard-sidebar'
 import { MobileSidebarProvider } from '@/components/mobile-sidebar-provider'
 import { MobileDashboardHeader } from '@/components/mobile-dashboard-header'
+import { DesktopNotificationBar } from '@/components/desktop-notification-bar'
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createClient()
@@ -43,8 +44,11 @@ export default async function DashboardLayout({ children }: { children: React.Re
       <div className="min-h-screen bg-[#0F0F0F] text-white flex flex-col md:flex-row">
         <MobileDashboardHeader />
         <DashboardSidebar tier={tier} listingsUsed={listingsUsed} listingsLimit={listingsLimit} />
-        <main className="flex-1 overflow-auto">
-          {children}
+        <main className="flex-1 overflow-auto flex flex-col">
+          <DesktopNotificationBar />
+          <div className="flex-1">
+            {children}
+          </div>
         </main>
         <FeedbackButton />
       </div>
