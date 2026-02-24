@@ -225,6 +225,17 @@ export const organizationUpdateSchema = z.object({
   id: z.string().uuid(),
 }).passthrough()
 
+// Email send
+export const emailSendSchema = z.object({
+  to: z.array(z.string().email('Invalid email address')).min(1, 'At least one recipient required').max(50, 'Maximum 50 recipients per request'),
+  subject: z.string().min(1, 'Subject is required').max(200, 'Subject must be 200 characters or less'),
+  html: z.string().min(1, 'HTML content is required'),
+  text: z.string().optional(),
+  listingId: z.string().uuid().optional(),
+  emailType: z.enum(['just-listed', 'open-house', 'price-reduced', 'just-sold', 'market-update', 'follow-up']).optional(),
+  replyTo: z.string().email('Invalid reply-to email').optional(),
+})
+
 // Helper: Parse body with schema, return typed result or error response
 export function parseBody<T>(schema: z.ZodType<T>, data: unknown):
   { success: true; data: T } | { success: false; error: string; details: ReturnType<z.ZodError['flatten']> } {

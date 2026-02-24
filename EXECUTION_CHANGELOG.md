@@ -1,6 +1,27 @@
 # SnapR Execution Changelog
 =================================
 
+## 2026-02-24 — Phase 8: Partial Features Fix — Campaign Wiring, Drafts UI, Email Send, CMA Persistence
+
+### 1. Wire Campaign Engine to Listing Status Changes
+- **`app/api/listing/status/route.ts`** — Extended PATCH handler to accept `marketingStatus` (display statuses like "Just Listed", "Sold", etc.) alongside existing `preparation_status`. On marketing status change: fetches previous status, updates `listings.marketing_status`, converts display status to campaign key via `toCampaignStatus()`, and calls `onListingStatusChange()` to trigger the campaign engine. Both auto-post evaluation and campaign triggers are non-critical (wrapped in try/catch). Response now includes `marketingStatus` and `campaign` result.
+
+### 2. Post Drafts Management Page
+- **`app/dashboard/content-studio/drafts/page.tsx`** [NEW] — Full drafts management UI: search bar, platform filter tabs (All/Facebook/Instagram/LinkedIn/TikTok), 3-column responsive card grid showing name, platform badge, post type, caption preview (120 char truncation), hashtags, and relative timestamp. Inline edit expansion with name/platform/post type/caption/hashtags fields. Actions: edit, duplicate, delete (with confirmation), "Use in Content Studio" link. Empty states for no drafts and no filter matches.
+
+### 3. Email Send Capability
+- **`app/api/email/send/route.ts`** [NEW] — POST endpoint to send marketing emails via Resend SDK. Auth check, Zod validation (1-50 recipients, subject max 200 chars), plan tier gate (Pro/Agency only). Sends to each recipient individually to avoid exposing the list. Returns `{ success, messageId, recipientCount }`.
+- **`lib/validation/schemas.ts`** — Added `emailSendSchema` Zod schema for email send validation.
+- **`app/dashboard/content-studio/email/EmailMarketing.tsx`** — Added "Send Email" button (green) next to Download HTML. Modal with textarea for comma/newline-separated recipients, subject preview, send progress, and success/error feedback. Also fixed pre-existing lint warnings (unused variables, eslint-disable for `<img>` in email context).
+
+### 4. CMA Report Persistence
+- **`supabase/migrations/20260225_cma_reports.sql`** [NEW] — Creates `cma_reports` table (id, user_id, listing_id, comparables JSONB, pricing JSONB, agent_info JSONB, narrative TEXT, title TEXT, status TEXT). Indexes on user_id and listing_id. RLS policies for user-scoped access + service role bypass.
+- **`app/api/cma/route.ts`** — Upgraded POST handler: saves CMA report with auto-generated title from property address, returns `reportId` in response. Upgraded GET handler: removed unused `request` parameter, fixed unused error variable. CMA save now attempts real persistence (with graceful fallback if table not yet migrated).
+
+**Verification:** `npx tsc --noEmit` clean | `npx vitest run` 93/93 passed
+
+---
+
 ## 2026-02-24 — Phase 7: Quick Wins — Cron Fix, Portfolio Pages, Sidebar Navigation
 
 ### Win 1: Register Daily Digest Cron

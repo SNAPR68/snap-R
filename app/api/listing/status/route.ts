@@ -2,7 +2,7 @@
  * SnapR API - Listing Status
  * ===========================
  * GET: Fetch listing preparation status with history
- * PATCH: Update listing status (also evaluates auto-post rules on status change)
+ * PATCH: Update listing status (also evaluates auto-post rules and triggers campaigns on status change)
  */
 
 export const dynamic = 'force-dynamic';
@@ -10,6 +10,7 @@ export const dynamic = 'force-dynamic';
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { evaluateAutoPostRules } from '@/lib/social/auto-post-evaluator';
+import { onListingStatusChange, toCampaignStatus } from '@/lib/campaigns/status-hook';
 
 interface FlaggedPhoto {
   id: string;
@@ -173,10 +174,17 @@ export async function GET(request: NextRequest) {
   }
 }
 
+// Valid display statuses for marketing_status (maps to campaign triggers)
+const VALID_MARKETING_STATUSES = [
+  'Coming Soon', 'Just Listed', 'Active', 'Open House',
+  'Price Improvement', 'Price Reduced', 'Under Contract',
+  'Pending', 'Sold', 'Closed',
+];
+
 export async function PATCH(request: NextRequest) {
   try {
     const body = await request.json();
-    const { listingId, status, heroPhotoId } = body;
+    const { listingId, status, heroPhotoId, marketingStatus } = body;
 
     if (!listingId) {
       return NextResponse.json({ error: 'listingId required' }, { status: 400 });
@@ -187,6 +195,10 @@ export async function PATCH(request: NextRequest) {
       return NextResponse.json({ error: 'Invalid status' }, { status: 400 });
     }
 
+    if (marketingStatus && !VALID_MARKETING_STATUSES.includes(marketingStatus)) {
+      return NextResponse.json({ error: 'Invalid marketing status' }, { status: 400 });
+    }
+
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
 
@@ -194,10 +206,23 @@ export async function PATCH(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    // Fetch current listing to get previous marketing_status (for campaign trigger)
+    let previousMarketingStatus: string | null = null;
+    if (marketingStatus) {
+      const { data: currentListing } = await supabase
+        .from('listings')
+        .select('marketing_status')
+        .eq('id', listingId)
+        .eq('user_id', user.id)
+        .single();
+      previousMarketingStatus = currentListing?.marketing_status || null;
+    }
+
     const updates: Record<string, unknown> = { updated_at: new Date().toISOString() };
     if (status) updates.preparation_status = status;
     if (heroPhotoId) updates.hero_photo_id = heroPhotoId;
     if (status === 'prepared') updates.prepared_at = new Date().toISOString();
+    if (marketingStatus) updates.marketing_status = marketingStatus;
 
     const { error } = await supabase
       .from('listings')
@@ -209,7 +234,7 @@ export async function PATCH(request: NextRequest) {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
-    // Evaluate auto-post rules on status change (non-critical — log and continue)
+    // Evaluate auto-post rules on preparation status change (non-critical — log and continue)
     if (status) {
       try {
         await evaluateAutoPostRules({
@@ -224,7 +249,40 @@ export async function PATCH(request: NextRequest) {
       }
     }
 
-    return NextResponse.json({ success: true, status });
+    // Trigger campaign engine on marketing status change (non-critical — log and continue)
+    let campaignResult: { triggered: boolean; campaignId?: string; error?: string } | null = null;
+    if (marketingStatus && marketingStatus !== previousMarketingStatus) {
+      try {
+        // Convert display status ("Just Listed") to campaign status key ("just_listed")
+        const campaignStatus = toCampaignStatus(marketingStatus);
+        const previousCampaignStatus = previousMarketingStatus
+          ? toCampaignStatus(previousMarketingStatus) ?? undefined
+          : undefined;
+
+        if (campaignStatus) {
+          campaignResult = await onListingStatusChange({
+            userId: user.id,
+            listingId,
+            newStatus: campaignStatus,
+            previousStatus: previousCampaignStatus,
+          });
+
+          if (campaignResult.triggered) {
+            console.log('[Status API] Campaign triggered:', campaignResult.campaignId);
+          }
+        }
+      } catch (campaignErr: unknown) {
+        const msg = campaignErr instanceof Error ? campaignErr.message : 'Unknown error';
+        console.error('[Status API] Campaign trigger failed (non-critical):', msg);
+      }
+    }
+
+    return NextResponse.json({
+      success: true,
+      status,
+      marketingStatus: marketingStatus || undefined,
+      campaign: campaignResult || undefined,
+    });
 
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Internal server error';
