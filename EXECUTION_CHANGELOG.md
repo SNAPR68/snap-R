@@ -1,6 +1,27 @@
 # SnapR Execution Changelog
 =================================
 
+## 2026-02-24 — Phase 4: Watermark on Downloads + Twitter/X Publishing
+
+### 4a. Watermark on Downloads
+
+Downloads now apply watermark overlays server-side using the existing Sharp-based `addWatermark()` utility. Two layers: MLS compliance watermarks (mandatory for virtual-staging, declutter, etc.) and user custom watermarks (text, position, opacity from Settings).
+
+- **`app/api/download-all/route.ts`** — ZIP download now fetches `photos.tools_applied` and `user_settings` watermark config. Applies compliance watermark (bottom-left) first, then user custom watermark (configurable position) before adding each photo to the ZIP. Fixed pre-existing `catch (fetchError)` → `catch {}` and `catch (error)` → `catch (error: unknown)`.
+- **`app/api/download/route.ts`** — Rewritten to support two modes: `?url=xxx` (existing CORS proxy for external URLs) and `?photoId=xxx` (new watermarked download). Watermarked path verifies ownership via listing join, applies compliance + user watermarks, returns watermarked JPEG. Fast path: if no watermark needed, redirects to signed URL.
+- **`components/studio-client.tsx`** — `handleDownload()` now calls `/api/download?photoId=xxx` instead of fetching signed URLs directly, ensuring watermarks are always applied server-side and cannot be bypassed.
+
+### 4b. Twitter/X Publishing
+
+The cron publisher can now post to Twitter/X. OAuth PKCE infrastructure already existed; this adds the actual publish function and cron integration.
+
+- **`lib/social/publish-service.ts`** — Added `uploadMediaToTwitter()` (v1.1 chunked upload: INIT → APPEND → FINALIZE) and `publishToTwitter(accessToken, content)` (v2 `POST /2/tweets` with optional media_ids). Added `case 'twitter':` to `publishToSocial()` switch.
+- **`app/api/cron/publish-scheduled/route.ts`** — Added `case 'twitter':` for image publishing (uploads up to 4 images, creates tweet) and video publishing (uploads video via chunked upload, creates tweet with media). Twitter doesn't need page ID or account ID — just access_token from `social_connections`.
+
+**Verification:** `npx tsc --noEmit` ✅ | `npm run build` ✅ | `npx vitest run` 93/93 ✅
+
+---
+
 ## 2026-02-24 — Phase 3: In-App Notification Center
 
 ### Database
