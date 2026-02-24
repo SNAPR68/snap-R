@@ -3,6 +3,7 @@ export const dynamic = 'force-dynamic';
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { createClient as createServiceClient } from '@supabase/supabase-js';
+import { organizationCreateSchema, organizationUpdateSchema, parseBody } from '@/lib/validation/schemas';
 
 function getServiceSupabase() {
   return createServiceClient(
@@ -67,15 +68,11 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { name, slug, platform_name, logo_url, primary_color, secondary_color, accent_color } = body;
-
-    if (!name || !slug) {
-      return NextResponse.json({ error: 'Name and slug are required' }, { status: 400 });
+    const parsed = parseBody(organizationCreateSchema, body);
+    if (!parsed.success) {
+      return NextResponse.json({ error: parsed.error, details: parsed.details }, { status: 400 });
     }
-
-    if (!/^[a-z0-9-]+$/.test(slug)) {
-      return NextResponse.json({ error: 'Slug can only contain lowercase letters, numbers, and hyphens' }, { status: 400 });
-    }
+    const { name, slug, platform_name, logo_url, primary_color, secondary_color, accent_color } = parsed.data;
 
     // Check if user already has an org
     const { data: existingOrg } = await getServiceSupabase()
@@ -132,11 +129,11 @@ export async function PUT(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { id, ...updates } = body;
-
-    if (!id) {
-      return NextResponse.json({ error: 'Organization ID required' }, { status: 400 });
+    const parsed = parseBody(organizationUpdateSchema, body);
+    if (!parsed.success) {
+      return NextResponse.json({ error: parsed.error, details: parsed.details }, { status: 400 });
     }
+    const { id, ...updates } = parsed.data;
 
     // Verify ownership
     const { data: org } = await getServiceSupabase()

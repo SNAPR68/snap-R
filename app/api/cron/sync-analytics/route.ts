@@ -3,7 +3,7 @@
  * ========================================
  * Runs every 6 hours via Vercel Cron.
  * Fetches engagement metrics (likes, comments, shares, impressions, reach)
- * from Facebook, Instagram, and LinkedIn APIs for published posts.
+ * from Facebook, Instagram, LinkedIn, Twitter, and TikTok APIs for published posts.
  * Updates the `published_posts` table so the analytics dashboard shows real data.
  */
 
@@ -15,6 +15,20 @@ import { adminSupabase } from '@/lib/supabase/admin';
 import { refreshAccessToken, type SocialPlatform } from '@/lib/social/oauth-config';
 
 const CRON_SECRET = process.env.CRON_SECRET;
+
+interface SocialConnectionRecord {
+  id: string;
+  user_id: string;
+  platform: string;
+  access_token: string;
+  token_expires_at: string | null;
+  refresh_token: string | null;
+  default_page_id: string | null;
+  pages: Array<{ id: string; name: string; access_token: string }> | null;
+  instagram_account: { id: string; username: string } | null;
+  linkedin_urn: string | null;
+  platform_user_id: string | null;
+}
 
 export async function GET(request: NextRequest) {
   // Auth check — same pattern as daily-digest
@@ -30,20 +44,33 @@ export async function GET(request: NextRequest) {
   try {
     const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
 
-    const { data: postsToSync, error: fetchError } = await supabase
-      .from('published_posts')
-      .select('id, user_id, platform, platform_post_id')
-      .not('platform_post_id', 'is', null)
-      .or(`last_synced_at.is.null,last_synced_at.lt.${oneHourAgo}`)
-      .order('published_at', { ascending: false })
-      .limit(100);
+    // Paginated fetch — batch through all posts
+    const batchSize = 200;
+    let offset = 0;
+    let postsToSync: Array<{ id: string; user_id: string; platform: string; platform_post_id: string | null }> = [];
 
-    if (fetchError) {
-      console.error('[AnalyticsSync] Failed to fetch posts:', fetchError.message);
-      return NextResponse.json({ error: fetchError.message }, { status: 500 });
+    // eslint-disable-next-line no-constant-condition
+    while (true) {
+      const { data: batch, error: fetchError } = await supabase
+        .from('published_posts')
+        .select('id, user_id, platform, platform_post_id')
+        .not('platform_post_id', 'is', null)
+        .or(`last_synced_at.is.null,last_synced_at.lt.${oneHourAgo}`)
+        .order('published_at', { ascending: false })
+        .range(offset, offset + batchSize - 1);
+
+      if (fetchError) {
+        console.error('[AnalyticsSync] Failed to fetch posts:', fetchError.message);
+        return NextResponse.json({ error: fetchError.message }, { status: 500 });
+      }
+
+      if (!batch || batch.length === 0) break;
+      postsToSync = postsToSync.concat(batch);
+      if (batch.length < batchSize) break;
+      offset += batchSize;
     }
 
-    if (!postsToSync || postsToSync.length === 0) {
+    if (postsToSync.length === 0) {
       return NextResponse.json({ success: true, results, message: 'Nothing to sync' });
     }
 
@@ -54,12 +81,12 @@ export async function GET(request: NextRequest) {
     // Load connections including token_expires_at for refresh check
     const { data: connections } = await supabase
       .from('social_connections')
-      .select('id, user_id, platform, access_token, token_expires_at, refresh_token, default_page_id, pages, instagram_account, linkedin_urn')
+      .select('id, user_id, platform, access_token, token_expires_at, refresh_token, default_page_id, pages, instagram_account, linkedin_urn, platform_user_id')
       .in('user_id', userIds)
       .eq('is_active', true);
 
-    const connectionMap = new Map<string, any>();
-    for (const conn of connections || []) {
+    const connectionMap = new Map<string, SocialConnectionRecord>();
+    for (const conn of (connections || []) as SocialConnectionRecord[]) {
       // Check if token needs refresh (expired or expiring within 1 hour)
       if (conn.token_expires_at) {
         const expiresAt = new Date(conn.token_expires_at).getTime();
@@ -124,6 +151,12 @@ export async function GET(request: NextRequest) {
           case 'linkedin':
             metrics = await fetchLinkedInMetrics(connection, post.platform_post_id!);
             break;
+          case 'twitter':
+            metrics = await fetchTwitterMetrics(connection, post.platform_post_id!);
+            break;
+          case 'tiktok':
+            metrics = await fetchTikTokMetrics(connection, post.platform_post_id!);
+            break;
           default:
             results.skipped++;
             continue;
@@ -181,7 +214,7 @@ interface Metrics {
 }
 
 async function fetchFacebookMetrics(
-  connection: { pages: any; default_page_id: string },
+  connection: SocialConnectionRecord,
   postId: string
 ): Promise<Metrics | null> {
   try {
@@ -205,12 +238,34 @@ async function fetchFacebookMetrics(
 
     const data = await response.json();
 
+    // Fetch impressions via insights endpoint (requires pages_read_engagement scope)
+    let impressions = 0;
+    let reach = 0;
+    try {
+      const insightsResponse = await fetch(
+        `https://graph.facebook.com/v18.0/${postId}/insights?metric=post_impressions_unique,post_impressions&period=lifetime`,
+        {
+          headers: { 'Authorization': `Bearer ${page.access_token}` },
+          signal: AbortSignal.timeout(15000),
+        }
+      );
+      if (insightsResponse.ok) {
+        const insightsData = await insightsResponse.json();
+        for (const metric of insightsData.data || []) {
+          if (metric.name === 'post_impressions') impressions = metric.values?.[0]?.value || 0;
+          if (metric.name === 'post_impressions_unique') reach = metric.values?.[0]?.value || 0;
+        }
+      }
+    } catch {
+      // Gracefully fall back if pages_read_engagement scope not granted
+    }
+
     return {
       likes: data.likes?.summary?.total_count || 0,
       comments: data.comments?.summary?.total_count || 0,
       shares: data.shares?.count || 0,
-      impressions: 0,
-      reach: 0,
+      impressions,
+      reach,
     };
   } catch (error) {
     console.error('[AnalyticsSync] Facebook fetch error:', error);
@@ -219,7 +274,7 @@ async function fetchFacebookMetrics(
 }
 
 async function fetchInstagramMetrics(
-  connection: { instagram_account: any; pages: any; default_page_id: string; access_token: string },
+  connection: SocialConnectionRecord,
   mediaId: string
 ): Promise<Metrics | null> {
   try {
@@ -272,7 +327,7 @@ async function fetchInstagramMetrics(
 }
 
 async function fetchLinkedInMetrics(
-  connection: { access_token: string; linkedin_urn: string },
+  connection: SocialConnectionRecord,
   postUrn: string
 ): Promise<Metrics | null> {
   try {
@@ -297,12 +352,89 @@ async function fetchLinkedInMetrics(
     return {
       likes: data.likesSummary?.totalLikes || 0,
       comments: data.commentsSummary?.totalFirstLevelComments || 0,
-      shares: 0,
+      shares: data.sharesSummary?.totalShares || 0,
       impressions: 0,
       reach: 0,
     };
   } catch (error) {
     console.error('[AnalyticsSync] LinkedIn fetch error:', error);
+    return null;
+  }
+}
+
+async function fetchTwitterMetrics(
+  connection: SocialConnectionRecord,
+  tweetId: string
+): Promise<Metrics | null> {
+  try {
+    const response = await fetch(
+      `https://api.twitter.com/2/tweets/${tweetId}?tweet.fields=public_metrics`,
+      {
+        headers: { 'Authorization': `Bearer ${connection.access_token}` },
+        signal: AbortSignal.timeout(15000),
+      }
+    );
+
+    if (!response.ok) {
+      console.error(`[AnalyticsSync] Twitter API error for ${tweetId}:`, response.status);
+      return null;
+    }
+
+    const data = await response.json();
+    const metrics = data.data?.public_metrics;
+    if (!metrics) return null;
+
+    return {
+      likes: metrics.like_count || 0,
+      comments: metrics.reply_count || 0,
+      shares: metrics.retweet_count || 0,
+      impressions: metrics.impression_count || 0,
+      reach: 0,
+    };
+  } catch (error) {
+    console.error('[AnalyticsSync] Twitter fetch error:', error);
+    return null;
+  }
+}
+
+async function fetchTikTokMetrics(
+  connection: SocialConnectionRecord,
+  videoId: string
+): Promise<Metrics | null> {
+  try {
+    const response = await fetch(
+      'https://open.tiktokapis.com/v2/video/query/?fields=like_count,comment_count,share_count,view_count',
+      {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${connection.access_token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          filters: { video_ids: [videoId] },
+        }),
+        signal: AbortSignal.timeout(15000),
+      }
+    );
+
+    if (!response.ok) {
+      console.error(`[AnalyticsSync] TikTok API error for ${videoId}:`, response.status);
+      return null;
+    }
+
+    const data = await response.json();
+    const video = data.data?.videos?.[0];
+    if (!video) return null;
+
+    return {
+      likes: video.like_count || 0,
+      comments: video.comment_count || 0,
+      shares: video.share_count || 0,
+      impressions: video.view_count || 0,
+      reach: 0,
+    };
+  } catch (error) {
+    console.error('[AnalyticsSync] TikTok fetch error:', error);
     return null;
   }
 }

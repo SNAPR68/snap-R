@@ -2,13 +2,32 @@
  * SnapR API - Listing Status
  * ===========================
  * GET: Fetch listing preparation status with history
- * PATCH: Update listing status
+ * PATCH: Update listing status (also evaluates auto-post rules on status change)
  */
 
 export const dynamic = 'force-dynamic';
 
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { evaluateAutoPostRules } from '@/lib/social/auto-post-evaluator';
+
+interface FlaggedPhoto {
+  id: string;
+  raw_url: string | null;
+  processed_url: string | null;
+  variant: string | null;
+  confidence?: number;
+}
+
+interface PreparationLog {
+  id: string;
+  created_at: string;
+  confidence: number | null;
+  photos_processed: number | null;
+  tools_used: Record<string, unknown> | null;
+  presets: Record<string, unknown> | null;
+  status: string | null;
+}
 
 export async function GET(request: NextRequest) {
   try {
@@ -67,8 +86,8 @@ export async function GET(request: NextRequest) {
       .eq('listing_id', listingId)
       .lt('confidence', 70);
 
-    const flaggedPhotos = await Promise.all((flaggedPhotosData || []).map(async (photo: any) => {
-      const { data: urlData } = await supabase.storage.from('raw-images').createSignedUrl(photo.processed_url || photo.raw_url, 3600);
+    const flaggedPhotos = await Promise.all((flaggedPhotosData || []).map(async (photo: FlaggedPhoto) => {
+      const { data: urlData } = await supabase.storage.from('raw-images').createSignedUrl(photo.processed_url || photo.raw_url || '', 3600);
       return {
         id: photo.id,
         url: urlData?.signedUrl || '',
@@ -85,7 +104,7 @@ export async function GET(request: NextRequest) {
       .order('created_at', { ascending: false })
       .limit(10);
 
-    const preparationHistory = (historyData || []).map((log: any) => ({
+    const preparationHistory = (historyData || []).map((log: PreparationLog) => ({
       id: log.id,
       preparedAt: log.created_at,
       confidence: log.confidence || 0,
@@ -175,7 +194,7 @@ export async function PATCH(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const updates: any = { updated_at: new Date().toISOString() };
+    const updates: Record<string, unknown> = { updated_at: new Date().toISOString() };
     if (status) updates.preparation_status = status;
     if (heroPhotoId) updates.hero_photo_id = heroPhotoId;
     if (status === 'prepared') updates.prepared_at = new Date().toISOString();
@@ -188,6 +207,21 @@ export async function PATCH(request: NextRequest) {
 
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+
+    // Evaluate auto-post rules on status change (non-critical — log and continue)
+    if (status) {
+      try {
+        await evaluateAutoPostRules({
+          listingId,
+          userId: user.id,
+          triggerEvent: 'status_changed',
+          triggerValue: status,
+        });
+      } catch (autoPostErr: unknown) {
+        const msg = autoPostErr instanceof Error ? autoPostErr.message : 'Unknown error';
+        console.error('[Status API] Auto-post evaluation failed (non-critical):', msg);
+      }
     }
 
     return NextResponse.json({ success: true, status });

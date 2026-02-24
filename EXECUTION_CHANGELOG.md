@@ -1,6 +1,37 @@
 # SnapR Execution Changelog
 =================================
 
+## 2026-02-24 — Phase 6: Hardening + Platform Unlock Sweep
+
+### Area 1: Unlock Twitter + TikTok
+- **`app/dashboard/settings/social/page.tsx`** — Flipped `available: true` for TikTok and Twitter. Added TikTok OAuth initiation (`client_key`, scopes), Twitter OAuth 2.0 with PKCE (code verifier + SHA-256 challenge embedded in base64 state). Typed `SocialPage` interface, removed `any` from `pages` and `instagram_account`. Removed 4 unused Lucide imports.
+- **`app/api/social/oauth/[platform]/route.ts`** — Added `handleTwitterOAuth()`: PKCE token exchange with Basic auth, user profile fetch via `/2/users/me`, connection upsert. Added base64 state decoding for PKCE code_verifier extraction.
+
+### Area 2: Fix Analytics Sync Cron
+- **`app/api/cron/sync-analytics/route.ts`** — Added `fetchTwitterMetrics()` (Twitter v2 `public_metrics`) and `fetchTikTokMetrics()` (TikTok Content Posting API v2). Fixed Facebook impressions with insights API call. Fixed LinkedIn shares (`sharesSummary.totalShares`). Added pagination with batch loop replacing `.limit(100)`. Defined `SocialConnectionRecord` interface, typed all function params. Added token refresh logic for expiring tokens.
+
+### Area 3: Auto-Post Rules Executor
+- **`lib/social/auto-post-evaluator.ts`** [NEW] — `evaluateAutoPostRules()` function: queries matching `auto_post_rules`, generates `scheduled_posts` rows with `status: 'pending'` and `scheduled_for: now + 5min`. Pulls captions from `marketing_jobs.captions_result`. Uses `adminSupabase` (bypasses RLS).
+- **`app/api/listing/status/route.ts`** — Added auto-post evaluation after PATCH (non-critical, try/catch). Defined `FlaggedPhoto` and `PreparationLog` interfaces. `any` → `Record<string, unknown>`.
+
+### Area 4a: Sentry in Error Boundaries
+- **`app/error.tsx`** — Added `Sentry.captureException(error)` in useEffect.
+- **`app/dashboard/error.tsx`** — Same fix.
+
+### Area 4b: Eliminate `any` Types (7 files)
+- **`app/api/stripe/webhook/route.ts`** — `Record<string, any>` → `Record<string, unknown>`
+- **`app/admin/ai-decisions/page.tsx`** — Defined `PreparationMetadata` interface, replaced `any` casts
+- **`app/api/listings/route.ts`** — `Record<string, any>` → `Record<string, unknown>`, defined `ListingPhoto` interface
+- **`app/admin/page.tsx`** — Replaced ~13 inline `any` casts with typed callbacks, renamed Lucide `Image` → `ImageIcon`
+
+### Area 4c: Zod Validation (9 API routes)
+- **`lib/validation/schemas.ts`** — Added 14 schemas: `autoPostRuleCreateSchema`, `autoPostRuleToggleSchema`, `autoPostRuleDeleteSchema`, `notifySchema`, `voiceoverSchema` (discriminated union), `contactSchema`, `stagingSchema`, `batchEnhanceSchema`, `draftCreateSchema`, `draftDeleteSchema`, `listingCreateSchema`, `listingUpdateSchema`, `organizationCreateSchema`, `organizationUpdateSchema`.
+- Applied `parseBody()` pattern to: `auto-post`, `notify`, `contact`, `batch-enhance`, `voiceover`, `staging`, `drafts`, `listings`, `organization` routes.
+
+**Verification:** `npx tsc --noEmit` ✅ | `npm run build` ✅ | `npx vitest run` 93/93 ✅
+
+---
+
 ## 2026-02-24 — Phase 5: Print Materials (Flyer + Feature Sheet PDFs)
 
 ### New Dependencies

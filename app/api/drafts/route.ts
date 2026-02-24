@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { draftCreateSchema, draftDeleteSchema, parseBody } from '@/lib/validation/schemas'
 
 // GET - Fetch drafts
 export async function GET() {
@@ -29,7 +30,11 @@ export async function POST(request: Request) {
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
     const body = await request.json()
-    const { id, listingId, name, platform, postType, templateId, caption, hashtags, propertyData, brandData } = body
+    const parsed = parseBody(draftCreateSchema, body)
+    if (!parsed.success) {
+      return NextResponse.json({ error: parsed.error, details: parsed.details }, { status: 400 })
+    }
+    const { id, listingId, name, platform, postType, templateId, caption, hashtags, propertyData, brandData } = parsed.data
 
     if (id) {
       // Update existing draft
@@ -77,7 +82,12 @@ export async function DELETE(request: Request) {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-    const { id } = await request.json()
+    const body = await request.json()
+    const parsed = parseBody(draftDeleteSchema, body)
+    if (!parsed.success) {
+      return NextResponse.json({ error: parsed.error, details: parsed.details }, { status: 400 })
+    }
+    const { id } = parsed.data
 
     await supabase.from('post_drafts').delete().eq('id', id).eq('user_id', user.id)
 

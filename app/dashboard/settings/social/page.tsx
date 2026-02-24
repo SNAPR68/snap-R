@@ -5,9 +5,14 @@ import { useSearchParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import {
   Loader2, Facebook, Instagram, Linkedin, Twitter, Music2,
-  Check, X, Link2, Unlink, ExternalLink, AlertCircle, Settings,
-  ChevronRight, Sparkles, RefreshCw
+  Check, X, Link2, Unlink, AlertCircle, Sparkles
 } from 'lucide-react';
+
+interface SocialPage {
+  id: string;
+  name: string;
+  access_token: string;
+}
 
 interface SocialConnection {
   id: string;
@@ -15,51 +20,51 @@ interface SocialConnection {
   platform_username: string;
   is_active: boolean;
   connected_at: string;
-  pages?: any[];
-  instagram_account?: any;
+  pages?: SocialPage[];
+  instagram_account?: { id: string; username: string };
   default_page_id?: string;
 }
 
 const PLATFORMS = [
-  { 
-    id: 'facebook', 
-    name: 'Facebook', 
-    icon: Facebook, 
+  {
+    id: 'facebook',
+    name: 'Facebook',
+    icon: Facebook,
     color: '#1877F2',
     description: 'Post to your Facebook Page',
     available: true,
   },
-  { 
-    id: 'instagram', 
-    name: 'Instagram', 
-    icon: Instagram, 
+  {
+    id: 'instagram',
+    name: 'Instagram',
+    icon: Instagram,
     color: '#E4405F',
     description: 'Share photos and reels to Instagram',
     available: true,
   },
-  { 
-    id: 'linkedin', 
-    name: 'LinkedIn', 
-    icon: Linkedin, 
+  {
+    id: 'linkedin',
+    name: 'LinkedIn',
+    icon: Linkedin,
     color: '#0A66C2',
     description: 'Share professional content',
     available: true,
   },
-  { 
-    id: 'tiktok', 
-    name: 'TikTok', 
-    icon: Music2, 
+  {
+    id: 'tiktok',
+    name: 'TikTok',
+    icon: Music2,
     color: '#000000',
     description: 'Share videos to TikTok',
-    available: false, // Coming soon
+    available: true,
   },
-  { 
-    id: 'twitter', 
-    name: 'X (Twitter)', 
-    icon: Twitter, 
+  {
+    id: 'twitter',
+    name: 'X (Twitter)',
+    icon: Twitter,
     color: '#000000',
     description: 'Tweet your listings',
-    available: false, // Coming soon
+    available: true,
   },
 ];
 
@@ -72,11 +77,11 @@ function SocialSettingsContent() {
 
   useEffect(() => {
     loadConnections();
-    
+
     // Check for OAuth callback results
     const connected = searchParams.get('connected');
     const error = searchParams.get('error');
-    
+
     if (connected) {
       setMessage({ type: 'success', text: `Successfully connected to ${connected}!` });
       // Clear URL params
@@ -92,7 +97,7 @@ function SocialSettingsContent() {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
 
-    const { data, error } = await supabase
+    const { data } = await supabase
       .from('social_connections')
       .select('*')
       .eq('user_id', user.id)
@@ -106,7 +111,7 @@ function SocialSettingsContent() {
 
   const initiateOAuth = async (platform: string) => {
     setConnecting(platform);
-    
+
     // Generate state for CSRF protection
     const state = Math.random().toString(36).substring(7);
     sessionStorage.setItem(`oauth_state_${platform}`, state);
@@ -114,21 +119,38 @@ function SocialSettingsContent() {
     // Redirect to OAuth initiation endpoint
     const baseUrl = window.location.origin;
     const redirectUri = `${baseUrl}/api/social/oauth/${platform}`;
-    
+
     let authUrl = '';
-    
+
     if (platform === 'facebook' || platform === 'instagram') {
       const appId = process.env.NEXT_PUBLIC_FACEBOOK_APP_ID;
-      const scopes = platform === 'instagram' 
+      const scopes = platform === 'instagram'
         ? 'instagram_basic,instagram_content_publish,pages_show_list,pages_read_engagement'
         : 'pages_manage_posts,pages_read_engagement,publish_video,pages_show_list';
-      
+
       authUrl = `https://www.facebook.com/v18.0/dialog/oauth?client_id=${appId}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${scopes}&state=${state}&response_type=code`;
     } else if (platform === 'linkedin') {
       const clientId = process.env.NEXT_PUBLIC_LINKEDIN_CLIENT_ID;
       const scopes = 'openid%20profile%20w_member_social';
-      
+
       authUrl = `https://www.linkedin.com/oauth/v2/authorization?response_type=code&client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${scopes}&state=${state}`;
+    } else if (platform === 'tiktok') {
+      const clientKey = process.env.NEXT_PUBLIC_TIKTOK_CLIENT_KEY;
+      const scopes = 'user.info.basic,video.publish,video.upload';
+
+      authUrl = `https://www.tiktok.com/v2/auth/authorize/?client_key=${clientKey}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${scopes}&state=${state}&response_type=code`;
+    } else if (platform === 'twitter') {
+      // Twitter uses PKCE — generate code verifier and challenge
+      const codeVerifier = generateCodeVerifier();
+      const codeChallenge = await generateCodeChallenge(codeVerifier);
+      const clientId = process.env.NEXT_PUBLIC_TWITTER_CLIENT_ID;
+      const scopes = 'tweet.read%20tweet.write%20users.read%20offline.access';
+
+      // Embed code_verifier in state JSON so the callback can use it
+      const statePayload = JSON.stringify({ csrf: state, code_verifier: codeVerifier });
+      const encodedState = btoa(statePayload);
+
+      authUrl = `https://twitter.com/i/oauth2/authorize?response_type=code&client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${scopes}&state=${encodedState}&code_challenge=${codeChallenge}&code_challenge_method=S256`;
     }
 
     if (authUrl) {
@@ -183,7 +205,7 @@ function SocialSettingsContent() {
         {/* Message */}
         {message && (
           <div className={`p-4 rounded-xl mb-6 flex items-center gap-3 ${
-            message.type === 'success' 
+            message.type === 'success'
               ? 'bg-green-500/10 border border-green-500/30 text-green-400'
               : 'bg-red-500/10 border border-red-500/30 text-red-400'
           }`}>
@@ -193,7 +215,7 @@ function SocialSettingsContent() {
               <AlertCircle className="w-5 h-5" />
             )}
             {message.text}
-            <button 
+            <button
               onClick={() => setMessage(null)}
               className="ml-auto hover:opacity-70"
             >
@@ -221,7 +243,7 @@ function SocialSettingsContent() {
             const connection = getConnectionForPlatform(platform.id);
             const Icon = platform.icon;
             const isConnecting = connecting === platform.id;
-            
+
             return (
               <div
                 key={platform.id}
@@ -247,7 +269,7 @@ function SocialSettingsContent() {
                       )}
                     </div>
                     <div className="text-sm text-white/50">
-                      {connection 
+                      {connection
                         ? `Connected as @${connection.platform_username}`
                         : platform.description
                       }
@@ -313,7 +335,7 @@ function SocialSettingsContent() {
                       className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:border-blue-500/50"
                     >
                       <option value="">Select a page...</option>
-                      {connection.pages.map((page: any) => (
+                      {connection.pages.map((page: SocialPage) => (
                         <option key={page.id} value={page.id}>
                           {page.name}
                         </option>
@@ -340,7 +362,7 @@ function SocialSettingsContent() {
             </li>
             <li className="flex items-start gap-3">
               <span className="w-6 h-6 bg-amber-500/20 rounded-full flex items-center justify-center text-amber-400 font-bold flex-shrink-0">3</span>
-              <span>Click "Publish" to post directly to your connected accounts</span>
+              <span>Click &quot;Publish&quot; to post directly to your connected accounts</span>
             </li>
             <li className="flex items-start gap-3">
               <span className="w-6 h-6 bg-amber-500/20 rounded-full flex items-center justify-center text-amber-400 font-bold flex-shrink-0">4</span>
@@ -352,6 +374,23 @@ function SocialSettingsContent() {
       </div>
     </div>
   );
+}
+
+// PKCE helpers for Twitter OAuth 2.0
+function generateCodeVerifier(): string {
+  const array = new Uint8Array(32);
+  crypto.getRandomValues(array);
+  return Array.from(array, (b) => b.toString(16).padStart(2, '0')).join('');
+}
+
+async function generateCodeChallenge(verifier: string): Promise<string> {
+  const encoder = new TextEncoder();
+  const data = encoder.encode(verifier);
+  const digest = await crypto.subtle.digest('SHA-256', data);
+  return btoa(String.fromCharCode(...new Uint8Array(digest)))
+    .replace(/\+/g, '-')
+    .replace(/\//g, '_')
+    .replace(/=/g, '');
 }
 
 export default function SocialSettingsPage() {

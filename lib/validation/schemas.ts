@@ -90,6 +90,141 @@ export const printMaterialsSchema = z.object({
   type: z.enum(['flyer', 'feature-sheet']),
 })
 
+// Auto-post rule
+export const autoPostRuleCreateSchema = z.object({
+  name: z.string().min(1).max(100),
+  triggerEvent: z.string().min(1).max(50),
+  triggerValue: z.string().max(100).optional().nullable(),
+  platforms: z.array(z.enum(['instagram', 'facebook', 'linkedin', 'tiktok'])).min(1).max(4),
+  postType: z.string().max(50).optional(),
+  templateId: z.string().uuid().optional().nullable(),
+  includeCaption: z.boolean().optional(),
+  includeHashtags: z.boolean().optional(),
+})
+
+export const autoPostRuleToggleSchema = z.object({
+  id: z.string().uuid(),
+  isActive: z.boolean(),
+})
+
+export const autoPostRuleDeleteSchema = z.object({
+  id: z.string().uuid(),
+})
+
+// Notify (iOS waitlist)
+export const notifySchema = z.object({
+  email: z.string().email().max(200),
+})
+
+// Video voiceover (discriminated union)
+export const voiceoverSchema = z.discriminatedUnion('action', [
+  z.object({
+    action: z.literal('generate-script'),
+    propertyDetails: z.object({
+      address: z.string().max(200).optional(),
+      price: z.string().max(50).optional(),
+      bedrooms: z.number().int().min(0).max(99).optional(),
+      bathrooms: z.number().min(0).max(99).optional(),
+      sqft: z.number().int().min(0).optional(),
+      neighborhood: z.string().max(200).optional(),
+      features: z.array(z.string().max(200)).max(50).optional(),
+    }),
+    style: z.string().max(50),
+    duration: z.number().int().min(5).max(300),
+  }),
+  z.object({
+    action: z.literal('generate-audio'),
+    script: z.string().min(1).max(10000),
+    voiceId: z.string().max(50),
+  }),
+  z.object({
+    action: z.literal('upload-audio'),
+    audioBase64: z.string().min(1),
+    listingId: z.string().uuid(),
+  }),
+])
+
+// Contact form
+export const contactSchema = z.object({
+  name: z.string().min(1).max(200),
+  email: z.string().email().max(200),
+  message: z.string().min(1).max(5000),
+})
+
+// Virtual staging
+export const stagingSchema = z.object({
+  photoId: z.string().uuid().optional().nullable(),
+  imageUrl: z.string().url(),
+  listingId: z.string().uuid().optional().nullable(),
+  roomType: z.string().max(50).optional(),
+  furnitureStyle: z.string().max(50).optional(),
+  qualityTier: z.enum(['quick', 'standard', 'premium']).optional(),
+  preset: z.string().max(50).optional(),
+  customInstructions: z.string().max(1000).optional(),
+})
+
+// Batch enhance
+export const batchEnhanceSchema = z.object({
+  listingId: z.string().uuid(),
+  toolId: z.string().min(1).max(50),
+  preset: z.string().min(1).max(100),
+})
+
+// Post drafts
+export const draftCreateSchema = z.object({
+  id: z.string().uuid().optional().nullable(),
+  listingId: z.string().uuid().optional().nullable(),
+  name: z.string().max(200).optional().nullable(),
+  platform: z.string().max(50).optional().nullable(),
+  postType: z.string().max(50).optional().nullable(),
+  templateId: z.string().uuid().optional().nullable(),
+  caption: z.string().max(5000).optional().nullable(),
+  hashtags: z.string().max(2000).optional().nullable(),
+  propertyData: z.record(z.unknown()).optional().nullable(),
+  brandData: z.record(z.unknown()).optional().nullable(),
+})
+
+export const draftDeleteSchema = z.object({
+  id: z.string().uuid(),
+})
+
+// Listings
+export const listingCreateSchema = z.object({
+  title: z.string().max(200).optional().nullable(),
+  address: z.string().max(300).optional().nullable(),
+  city: z.string().max(100).optional().nullable(),
+  state: z.string().max(50).optional().nullable(),
+  postal_code: z.string().max(20).optional().nullable(),
+  description: z.string().max(10000).optional().nullable(),
+})
+
+export const listingUpdateSchema = z.object({
+  id: z.string().uuid(),
+  title: z.string().max(200).optional(),
+  address: z.string().max(300).optional(),
+  city: z.string().max(100).optional(),
+  state: z.string().max(50).optional(),
+  postal_code: z.string().max(20).optional(),
+  description: z.string().max(10000).optional(),
+  marketingStatus: z.string().max(50).optional(),
+  status: z.string().max(50).optional(),
+})
+
+// Organization
+export const organizationCreateSchema = z.object({
+  name: z.string().min(1).max(200),
+  slug: z.string().min(1).max(100).regex(/^[a-z0-9-]+$/, 'Slug can only contain lowercase letters, numbers, and hyphens'),
+  platform_name: z.string().max(200).optional().nullable(),
+  logo_url: z.string().url().or(z.literal('')).optional().nullable(),
+  primary_color: z.string().max(20).optional(),
+  secondary_color: z.string().max(20).optional(),
+  accent_color: z.string().max(20).optional(),
+})
+
+export const organizationUpdateSchema = z.object({
+  id: z.string().uuid(),
+}).passthrough()
+
 // Helper: Parse body with schema, return typed result or error response
 export function parseBody<T>(schema: z.ZodType<T>, data: unknown):
   { success: true; data: T } | { success: false; error: string; details: ReturnType<z.ZodError['flatten']> } {

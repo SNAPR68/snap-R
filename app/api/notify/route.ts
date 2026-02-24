@@ -2,14 +2,16 @@ export const dynamic = 'force-dynamic';
 import { NextRequest, NextResponse } from 'next/server';
 import { Resend } from 'resend';
 import { createClient } from '@supabase/supabase-js';
+import { notifySchema, parseBody } from '@/lib/validation/schemas';
 
 export async function POST(request: NextRequest) {
   try {
-    const { email } = await request.json();
-    
-    if (!email) {
-      return NextResponse.json({ error: 'Email required' }, { status: 400 });
+    const body = await request.json();
+    const parsed = parseBody(notifySchema, body);
+    if (!parsed.success) {
+      return NextResponse.json({ error: parsed.error, details: parsed.details }, { status: 400 });
     }
+    const { email } = parsed.data;
 
     const supabase = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,

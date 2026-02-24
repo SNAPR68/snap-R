@@ -1,5 +1,8 @@
 'use client';
 
+import { useEffect } from 'react';
+import * as Sentry from '@sentry/nextjs';
+
 export default function DashboardError({
   error,
   reset,
@@ -7,6 +10,10 @@ export default function DashboardError({
   error: Error & { digest?: string };
   reset: () => void;
 }) {
+  useEffect(() => {
+    Sentry.captureException(error);
+  }, [error]);
+
   return (
     <div className="min-h-screen bg-[#0A0A0A] flex items-center justify-center p-6">
       <div className="text-center max-w-md">

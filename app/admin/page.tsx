@@ -1,5 +1,5 @@
 import { adminSupabase } from '@/lib/supabase/admin';
-import { Users, DollarSign, TrendingUp, Server, Zap, Camera, Image, Activity, ArrowUpRight, ArrowDownRight } from 'lucide-react';
+import { Users, DollarSign, TrendingUp, Server, Zap, Camera, Image as ImageIcon, Activity, ArrowUpRight, ArrowDownRight } from 'lucide-react';
 import Link from 'next/link';
 export const dynamic = 'force-dynamic';
 
@@ -32,48 +32,49 @@ export default async function AdminDashboard() {
 
   // User metrics
   const totalUsers = profiles?.length || 0;
-  const newSignups30d = profiles?.filter((p: any) => new Date(p.created_at) >= thirtyDaysAgo).length || 0;
-  const newSignupsToday = profiles?.filter((p: any) => new Date(p.created_at) >= today).length || 0;
-  const activeUsers7d = new Set(costs?.filter((c: any) => new Date(c.created_at) >= sevenDaysAgo).map((c: any) => c.user_id)).size;
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const newSignups30d = profiles?.filter((p: { created_at: string }) => new Date(p.created_at) >= thirtyDaysAgo).length || 0;
+  const newSignupsToday = profiles?.filter((p: { created_at: string }) => new Date(p.created_at) >= today).length || 0;
+  const activeUsers7d = new Set(costs?.filter((c: { created_at: string }) => new Date(c.created_at) >= sevenDaysAgo).map((c: { user_id: string }) => c.user_id)).size;
 
   // Plan breakdown
   const planCounts = {
-    free: profiles?.filter((p: any) => !p.plan || p.plan === 'free').length || 0,
-    pro: profiles?.filter((p: any) => p.plan === 'pro').length || 0,
-    team: profiles?.filter((p: any) => p.plan === 'team').length || 0,
+    free: profiles?.filter((p: { plan: string | null }) => !p.plan || p.plan === 'free').length || 0,
+    pro: profiles?.filter((p: { plan: string | null }) => p.plan === 'pro').length || 0,
+    team: profiles?.filter((p: { plan: string | null }) => p.plan === 'team').length || 0,
   };
 
   // Listings & Photos
   const totalListings = listings?.length || 0;
-  const listingsThisMonth = listings?.filter((l: any) => new Date(l.created_at) >= thirtyDaysAgo).length || 0;
+  const listingsThisMonth = listings?.filter((l: { created_at: string }) => new Date(l.created_at) >= thirtyDaysAgo).length || 0;
   const totalPhotos = photos?.length || 0;
-  const enhancedPhotos = photos?.filter((p: any) => p.status === 'completed' || p.status === 'enhanced').length || 0;
+  const enhancedPhotos = photos?.filter((p: { status: string }) => p.status === 'completed' || p.status === 'enhanced').length || 0;
 
   // Revenue & Costs
-  const humanEditRevenue = (humanEdits || []).reduce((sum: number, o: any) => sum + (o.amount_paid || 0), 0) / 100;
-  
+  const humanEditRevenue = (humanEdits || []).reduce((sum: number, o: { amount_paid: number | null }) => sum + (o.amount_paid || 0), 0) / 100;
+
   const costByProvider: Record<string, number> = {};
   let totalCostCents = 0;
   let todayCostCents = 0;
-  
-  (costs || []).forEach((cost: any) => {
+
+  (costs || []).forEach((cost: { provider: string; cost_cents: number; created_at: string }) => {
     costByProvider[cost.provider] = (costByProvider[cost.provider] || 0) + cost.cost_cents;
     totalCostCents += cost.cost_cents;
     if (new Date(cost.created_at) >= today) {
       todayCostCents += cost.cost_cents;
     }
   });
-  
-  const yesterdayCost = (costsYesterday || []).reduce((sum: number, c: any) => sum + (c.cost_cents || 0), 0);
+
+  const yesterdayCost = (costsYesterday || []).reduce((sum: number, c: { cost_cents: number }) => sum + (c.cost_cents || 0), 0);
   const costChange = yesterdayCost > 0 ? ((todayCostCents - yesterdayCost) / yesterdayCost) * 100 : 0;
-  
+
   const totalCost = totalCostCents / 100;
   const totalEnhancements = costs?.length || 0;
-  const enhancementsToday = costs?.filter((c: any) => new Date(c.created_at) >= today).length || 0;
+  const enhancementsToday = costs?.filter((c: { created_at: string }) => new Date(c.created_at) >= today).length || 0;
 
   const profit = humanEditRevenue - totalCost;
   const unresolvedErrors = recentErrors?.length || 0;
-  const criticalErrors = recentErrors?.filter((e: any) => e.severity === 'critical').length || 0;
+  const criticalErrors = recentErrors?.filter((e: { severity: string }) => e.severity === 'critical').length || 0;
   const newContacts = recentContacts?.length || 0;
 
   return (
@@ -150,7 +151,7 @@ export default async function AdminDashboard() {
 
         <div className="bg-[#1A1A1A] border border-white/10 rounded-xl p-5">
           <div className="flex items-center justify-between mb-3">
-            <Image className="w-6 h-6 text-pink-400" />
+            <ImageIcon className="w-6 h-6 text-pink-400" />
             <span className="text-xs text-white/40">{enhancedPhotos} enhanced</span>
           </div>
           <p className="text-3xl font-bold">{totalPhotos}</p>

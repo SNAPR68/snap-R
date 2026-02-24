@@ -4,6 +4,7 @@ export const maxDuration = 120;
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { createClient as createServiceClient } from '@supabase/supabase-js';
+import { stagingSchema, parseBody } from '@/lib/validation/schemas';
 
 function getServiceSupabase() {
   return createServiceClient(
@@ -167,13 +168,13 @@ function buildStagingPrompt(
   const style = FURNITURE_STYLES[furnitureStyle] || FURNITURE_STYLES.modern;
   const furniture = style.furniture[roomType] || style.furniture['living-room'];
 
-  const qualityModifier = qualityTier === 'premium' 
+  const qualityModifier = qualityTier === 'premium'
     ? 'Ultra photorealistic rendering, magazine-quality photography, perfect natural lighting, professional interior design, 8K quality detail.'
     : qualityTier === 'standard'
     ? 'High quality realistic furniture, professional staging, good lighting and shadows.'
     : 'Good quality virtual staging with realistic furniture.';
 
-  let prompt = `Stage this empty room with beautiful ${style.label} style furniture and decor.
+  const prompt = `Stage this empty room with beautiful ${style.label} style furniture and decor.
 
 FURNITURE TO ADD: ${furniture}
 
@@ -206,7 +207,7 @@ async function runStaging(imageUrl: string, prompt: string, qualityTier: string)
 
   try {
     console.log('[Staging] Starting with quality:', qualityTier);
-    
+
     // Use FLUX Kontext for best quality staging
     const response = await fetch('https://api.replicate.com/v1/predictions', {
       method: 'POST',
@@ -235,7 +236,7 @@ async function runStaging(imageUrl: string, prompt: string, qualityTier: string)
     }
 
     const prediction = await response.json();
-    
+
     // Poll for completion
     let result = prediction;
     let attempts = 0;
@@ -243,13 +244,13 @@ async function runStaging(imageUrl: string, prompt: string, qualityTier: string)
 
     while (result.status !== 'succeeded' && result.status !== 'failed' && attempts < maxAttempts) {
       await new Promise(resolve => setTimeout(resolve, 2000));
-      
+
       const pollResponse = await fetch(result.urls.get, {
         headers: { 'Authorization': `Token ${REPLICATE_API_TOKEN}` },
       });
       result = await pollResponse.json();
       attempts++;
-      
+
       if (attempts % 10 === 0) {
         console.log('[Staging] Still processing... attempt', attempts);
       }
@@ -277,7 +278,7 @@ async function uploadToStorage(imageUrl: string, stagingId: string, userId: stri
     const buffer = Buffer.from(await blob.arrayBuffer());
 
     const fileName = `staging/${userId}/${stagingId}.jpg`;
-    
+
     const { error } = await getServiceSupabase().storage
       .from('raw-images')
       .upload(fileName, buffer, {
@@ -303,7 +304,7 @@ async function uploadToStorage(imageUrl: string, stagingId: string, userId: stri
 
 export async function POST(request: NextRequest) {
   const startTime = Date.now();
-  
+
   try {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
@@ -313,6 +314,10 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
+    const parsed = parseBody(stagingSchema, body);
+    if (!parsed.success) {
+      return NextResponse.json({ error: parsed.error, details: parsed.details }, { status: 400 });
+    }
     const {
       photoId,
       imageUrl,
@@ -322,11 +327,7 @@ export async function POST(request: NextRequest) {
       qualityTier = 'standard',
       preset = 'vacant-to-staged',
       customInstructions,
-    } = body;
-
-    if (!imageUrl) {
-      return NextResponse.json({ error: 'Image URL required' }, { status: 400 });
-    }
+    } = parsed.data;
 
     // Check credits
     const creditsRequired = CREDITS_REQUIRED[qualityTier] || 5;
@@ -414,7 +415,7 @@ export async function POST(request: NextRequest) {
 }
 
 // GET - Fetch user's staging history
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
