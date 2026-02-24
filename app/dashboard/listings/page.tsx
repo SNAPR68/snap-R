@@ -1,9 +1,40 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import Link from 'next/link';
-import { Plus, Home, Image, MapPin, CheckCircle, AlertCircle, Clock, Loader2, Megaphone, Search, ArrowUpDown } from 'lucide-react';
+import { Plus, Home, ImageIcon, MapPin, CheckCircle, AlertCircle, Clock, Loader2, Megaphone, Search, ArrowUpDown, Users } from 'lucide-react';
+
+// ── Types ──
+
+interface ListingPhoto {
+  id: string;
+  raw_url: string | null;
+  processed_url: string | null;
+  status: string;
+}
+
+interface ListingRow {
+  id: string;
+  title: string | null;
+  address: string | null;
+  price: number | null;
+  status: string | null;
+  preparation_status: string | null;
+  marketing_status: string | null;
+  created_at: string;
+  user_id: string;
+  team_id: string | null;
+  photos: ListingPhoto[];
+}
+
+interface ListingWithMeta extends Omit<ListingRow, 'photos'> {
+  thumbnail: string | null;
+  photoCount: number;
+  isTeamListing: boolean;
+}
+
+// ── Badge helpers ──
 
 const getStatusBadge = (status: string) => {
   switch (status) {
@@ -50,49 +81,99 @@ const STATUS_FILTERS = [
 
 export default function ListingsPage() {
   const supabase = createClient();
-  const [listings, setListings] = useState<any[]>([]);
+  const [listings, setListings] = useState<ListingWithMeta[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [sortBy, setSortBy] = useState<SortOption>('newest');
 
-  useEffect(() => {
-    const fetchListings = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        window.location.href = '/auth/login';
-        return;
-      }
+  const fetchListings = useCallback(async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      window.location.href = '/auth/login';
+      return;
+    }
 
-      const { data: listingsData } = await supabase
+    // Fetch user's team_id from profile
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('current_team_id')
+      .eq('id', user.id)
+      .single();
+
+    const teamId = profile?.current_team_id as string | null;
+
+    // Fetch own listings
+    const { data: ownListings } = await supabase
+      .from('listings')
+      .select('*, photos!photos_listing_id_fkey(id, raw_url, processed_url, status)')
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false });
+
+    // Fetch team listings (if user has a team)
+    let teamListings: ListingRow[] = [];
+    if (teamId) {
+      const { data: teamData } = await supabase
         .from('listings')
         .select('*, photos!photos_listing_id_fkey(id, raw_url, processed_url, status)')
-        .eq('user_id', user.id)
+        .eq('team_id', teamId)
+        .neq('user_id', user.id)
         .order('created_at', { ascending: false });
+      teamListings = (teamData ?? []) as ListingRow[];
+    }
 
-      if (listingsData) {
-        const withThumbnails = await Promise.all(listingsData.map(async (listing: any) => {
-          const photos = listing.photos || [];
-          const firstPhoto = photos.find((p: any) => p.processed_url) || photos[0];
-          let thumbnail = null;
-          if (firstPhoto) {
-            const path = firstPhoto.processed_url || firstPhoto.raw_url;
-            if (path && !path.startsWith('http')) {
-              const { data } = await supabase.storage.from('raw-images').createSignedUrl(path, 3600);
-              thumbnail = data?.signedUrl;
-            } else {
-              thumbnail = path;
-            }
+    const allListings = [
+      ...((ownListings ?? []) as ListingRow[]).map(l => ({ ...l, _isTeam: false })),
+      ...teamListings.map(l => ({ ...l, _isTeam: true })),
+    ];
+
+    // Deduplicate by id (in case a team listing is also owned)
+    const seen = new Set<string>();
+    const deduped = allListings.filter(l => {
+      if (seen.has(l.id)) return false;
+      seen.add(l.id);
+      return true;
+    });
+
+    const withThumbnails: ListingWithMeta[] = await Promise.all(
+      deduped.map(async (listing) => {
+        const photos = listing.photos || [];
+        const firstPhoto = photos.find((p: ListingPhoto) => p.processed_url) || photos[0];
+        let thumbnail: string | null = null;
+        if (firstPhoto) {
+          const path = firstPhoto.processed_url || firstPhoto.raw_url;
+          if (path && !path.startsWith('http')) {
+            const { data } = await supabase.storage.from('raw-images').createSignedUrl(path, 3600);
+            thumbnail = data?.signedUrl ?? null;
+          } else {
+            thumbnail = path;
           }
-          return { ...listing, thumbnail, photoCount: photos.length };
-        }));
-        setListings(withThumbnails);
-      }
-      setLoading(false);
-    };
+        }
+        const isTeam = listing._isTeam;
+        return {
+          id: listing.id,
+          title: listing.title,
+          address: listing.address,
+          price: listing.price,
+          status: listing.status,
+          preparation_status: listing.preparation_status,
+          marketing_status: listing.marketing_status,
+          created_at: listing.created_at,
+          user_id: listing.user_id,
+          team_id: listing.team_id,
+          thumbnail,
+          photoCount: photos.length,
+          isTeamListing: isTeam,
+        };
+      })
+    );
+    setListings(withThumbnails);
+    setLoading(false);
+  }, [supabase]);
 
+  useEffect(() => {
     fetchListings();
-  }, []);
+  }, [fetchListings]);
 
   const filteredListings = useMemo(() => {
     let result = listings;
@@ -225,22 +306,28 @@ export default function ListingsPage() {
           </div>
         ) : (
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredListings.map((listing: any) => (
+            {filteredListings.map((listing) => (
               <Link key={listing.id} href={'/dashboard/studio?id=' + listing.id} className="group bg-white/5 rounded-2xl border border-white/10 overflow-hidden hover:border-amber-500/50 transition-all">
                 <div className="aspect-video relative">
                   {listing.thumbnail ? (
-                    <img src={listing.thumbnail} alt={listing.title} className="w-full h-full object-cover" />
+                    /* eslint-disable-next-line @next/next/no-img-element */
+                    <img src={listing.thumbnail} alt={listing.title || 'Listing photo'} className="w-full h-full object-cover" />
                   ) : (
                     <div className="w-full h-full bg-white/5 flex items-center justify-center">
                       <Home className="w-12 h-12 text-white/20" />
                     </div>
                   )}
                   <div className="absolute top-3 right-3 flex items-center gap-1 px-2 py-1 bg-black/70 rounded-lg text-xs">
-                    <Image className="w-3 h-3" />{listing.photoCount}
+                    <ImageIcon className="w-3 h-3" />{listing.photoCount}
                   </div>
                   <div className="absolute top-3 left-3 flex flex-col gap-1">
-                    {getStatusBadge(listing.preparation_status ?? listing.status)}
+                    {getStatusBadge(listing.preparation_status ?? listing.status ?? '')}
                     {getMarketingBadge(listing.marketing_status)}
+                    {listing.isTeamListing && (
+                      <span className="flex items-center gap-1 px-2 py-1 bg-indigo-500/20 text-indigo-400 rounded-full text-xs font-medium">
+                        <Users className="w-3 h-3" />Team
+                      </span>
+                    )}
                   </div>
                 </div>
                 <div className="p-4">

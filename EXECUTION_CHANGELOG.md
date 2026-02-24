@@ -1,6 +1,19 @@
 # SnapR Execution Changelog
 =================================
 
+## 2026-02-24 — Phase 2: Team Listing Access + Daily Digest Email
+
+### 2a. Team Shared Listing Access
+- **`app/dashboard/listings/page.tsx`** — Full rewrite with proper TypeScript interfaces (`ListingPhoto`, `ListingRow`, `ListingWithMeta`). Eliminated all `any` types. Listings query now fetches user's `current_team_id` from profiles, then queries both own listings AND team listings (where `team_id` matches). Team listings display an indigo "Team" badge. Fixed: `Image` → `ImageIcon` (avoid conflict with HTML img), `useCallback` for fetch, `eslint-disable` for `<img>` with signed URLs, proper alt text.
+- **`app/api/upload/route.ts`** — Upload authorization now checks team access: if user doesn't own the listing directly, falls back to checking if listing's `team_id` matches user's `current_team_id`. Fixed pre-existing `catch (e)` → `catch {}`.
+
+### 2b. Daily Digest Email Channel
+- **`app/api/cron/daily-digest/route.ts`** — Full rewrite. Removed `.not('phone', 'is', null)` filter — now queries ALL users. Uses unified `sendNotification()` from `lib/notifications/sender.ts` instead of raw Twilio calls. Supports both WhatsApp (opt-in via `dailyWhatsapp` pref) and email (default-on via `dailyEmail` pref). Proper TypeScript interfaces (`DigestUser`, `NeedsReviewItem`). Builds `DailySummaryData` for the template system.
+
+**Verification:** `npx tsc --noEmit` ✅ | `npm run build` ✅ | `npx vitest run` 93/93 ✅
+
+---
+
 ## 2026-02-24 — Phase 1: Test Safety Net (Vitest + 93 Tests)
 
 ### What

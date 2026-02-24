@@ -21,9 +21,26 @@ export async function POST(request: NextRequest) {
 
     if (!listingId) return NextResponse.json({ error: "listingId is required" }, { status: 400 });
 
-    const { data: listing, error: listingError } = await supabase
+    // Check ownership first
+    const { data: ownListing } = await supabase
       .from("listings").select("id").eq("id", listingId).eq("user_id", user.id).single();
-    if (listingError || !listing) return NextResponse.json({ error: "Listing not found" }, { status: 404 });
+
+    let listing = ownListing;
+
+    // If not owned, check team access
+    if (!listing) {
+      const { data: profile } = await supabase
+        .from("profiles").select("current_team_id").eq("id", user.id).single();
+      const teamId = profile?.current_team_id as string | null;
+
+      if (teamId) {
+        const { data: teamListing } = await supabase
+          .from("listings").select("id").eq("id", listingId).eq("team_id", teamId).single();
+        listing = teamListing;
+      }
+    }
+
+    if (!listing) return NextResponse.json({ error: "Listing not found" }, { status: 404 });
 
     const files: File[] = formData.getAll("files").filter((e): e is File => e instanceof File);
     if (files.length === 0) return NextResponse.json({ error: "No files provided" }, { status: 400 });
@@ -45,7 +62,7 @@ export async function POST(request: NextRequest) {
           status: "pending", variant, file_name: file.name, file_size: file.size, mime_type: file.type,
         }).select("id, raw_url").single();
         if (photo) uploadedPhotos.push(photo);
-      } catch (e) { continue; }
+      } catch { continue; }
     }
 
     await supabase.from("listings").update({ updated_at: new Date().toISOString() }).eq("id", listingId);
