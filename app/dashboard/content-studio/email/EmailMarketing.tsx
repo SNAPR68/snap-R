@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
-import { ArrowLeft, Mail, Sparkles, Download, Copy, Check, Home, Loader2, ChevronDown, Eye, Code, ExternalLink } from 'lucide-react'
+import { ArrowLeft, Mail, Sparkles, Download, Copy, Check, Home, Loader2, ChevronDown, Eye, Code, ExternalLink, Send, X } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 
 interface ListingPhoto {
@@ -57,11 +57,65 @@ export default function EmailMarketingClient() {
   const [agentTitle, setAgentTitle] = useState('Real Estate Professional')
   const [agentPhone, setAgentPhone] = useState('(555) 123-4567')
   const [agentEmail, setAgentEmail] = useState('agent@realestate.com')
-  const [agentPhoto, setAgentPhoto] = useState('')
+  const [agentPhoto] = useState('')
   const [companyName, setCompanyName] = useState('Premier Realty')
   const [openHouseDate, setOpenHouseDate] = useState('')
   const [openHouseTime, setOpenHouseTime] = useState('')
   const [baseUrl, setBaseUrl] = useState('')
+
+  // Send email state
+  const [showSendModal, setShowSendModal] = useState(false)
+  const [sendRecipients, setSendRecipients] = useState('')
+  const [sending, setSending] = useState(false)
+  const [sendResult, setSendResult] = useState<{ success: boolean; message: string } | null>(null)
+
+  const handleSendEmail = async () => {
+    if (!generatedEmail || !sendRecipients.trim()) return
+    setSending(true)
+    setSendResult(null)
+    try {
+      const recipients = sendRecipients.split(/[,;\n]+/).map(e => e.trim()).filter(Boolean)
+      if (recipients.length === 0) {
+        setSendResult({ success: false, message: 'Please enter at least one recipient email' })
+        setSending(false)
+        return
+      }
+      if (recipients.length > 50) {
+        setSendResult({ success: false, message: 'Maximum 50 recipients per send' })
+        setSending(false)
+        return
+      }
+      const res = await fetch('/api/email/send', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          to: recipients,
+          subject: generatedEmail.subject,
+          html: generatedEmail.html,
+          text: generatedEmail.text,
+          listingId: selectedListing?.id,
+          emailType,
+          replyTo: agentEmail !== 'agent@realestate.com' ? agentEmail : undefined,
+        }),
+        signal: AbortSignal.timeout(30000),
+      })
+      const data = await res.json()
+      if (res.ok && data.success) {
+        setSendResult({ success: true, message: `Email sent to ${data.recipientCount} recipient${data.recipientCount > 1 ? 's' : ''}` })
+      } else {
+        setSendResult({ success: false, message: data.error || 'Failed to send email' })
+      }
+    } catch (error: unknown) {
+      const msg = error instanceof Error ? error.message : 'Failed to send email'
+      setSendResult({ success: false, message: msg })
+    }
+    setSending(false)
+  }
+
+  // Suppress unused variable warnings for optional fields
+  void agentPhoto
+  void agentTitle
+  void companyName
 
   useEffect(() => { 
     loadListings()
@@ -585,6 +639,7 @@ ${agentEmail}
                 <button onClick={() => setShowDropdown(!showDropdown)} className="w-full flex items-center justify-between p-3 bg-white/5 border border-white/10 rounded-xl hover:border-white/20">
                   {selectedListing ? (
                     <div className="flex items-center gap-3">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
                       {selectedListing.thumbnail ? <img src={selectedListing.thumbnail} alt="" className="w-10 h-10 rounded-lg object-cover" /> : <div className="w-10 h-10 rounded-lg bg-white/10 flex items-center justify-center"><Home className="w-5 h-5 text-white/30" /></div>}
                       <div className="text-left">
                         <p className="font-medium text-sm">{selectedListing.title}</p>
@@ -603,6 +658,7 @@ ${agentEmail}
                     : listings.length === 0 ? <div className="p-4 text-center text-white/40 text-sm">No listings found</div>
                     : listings.map(l => (
                       <button key={l.id} onClick={() => handleSelectListing(l)} className={'w-full flex items-center gap-3 p-3 hover:bg-white/5 transition-colors ' + (selectedListing?.id === l.id ? 'bg-blue-500/10' : '')}>
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
                         {l.thumbnail ? <img src={l.thumbnail} alt="" className="w-10 h-10 rounded-lg object-cover" /> : <div className="w-10 h-10 rounded-lg bg-white/10 flex items-center justify-center"><Home className="w-5 h-5 text-white/30" /></div>}
                         <div className="text-left flex-1">
                           <p className="font-medium text-sm">{l.title}</p>
@@ -670,10 +726,11 @@ ${agentEmail}
                 
                 {/* Selected Photos Preview */}
                 <div className="flex gap-2 flex-wrap mb-2">
-                  {selectedPhotos.slice(0, 5).map((url, i) => (
-                    <div key={i} className="relative w-16 h-16 rounded-lg overflow-hidden border-2 border-blue-500">
+                  {selectedPhotos.slice(0, 5).map((url, idx) => (
+                    <div key={idx} className="relative w-16 h-16 rounded-lg overflow-hidden border-2 border-blue-500">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img src={url} alt="" className="w-full h-full object-cover" />
-                      {i === 0 && (
+                      {idx === 0 && (
                         <div className="absolute bottom-0 left-0 right-0 bg-blue-500 text-[10px] text-center py-0.5">Hero</div>
                       )}
                     </div>
@@ -688,7 +745,7 @@ ${agentEmail}
                   <div className="bg-white/5 border border-white/10 rounded-xl p-3 space-y-2">
                     <p className="text-xs text-white/50">Click to select up to {MAX_PHOTOS} photos. First selected = Hero image.</p>
                     <div className="grid grid-cols-4 gap-2">
-                      {selectedListing.photos.map((photo, i) => {
+                      {selectedListing.photos.map((photo) => {
                         const isSelected = selectedPhotos.includes(photo.url)
                         const selectionIndex = selectedPhotos.indexOf(photo.url)
                         return (
@@ -700,6 +757,7 @@ ${agentEmail}
                             } ${!isSelected && selectedPhotos.length >= MAX_PHOTOS ? 'opacity-40 cursor-not-allowed' : ''}`}
                             disabled={!isSelected && selectedPhotos.length >= MAX_PHOTOS}
                           >
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
                             <img src={photo.url} alt="" className="w-full h-full object-cover" />
                             {isSelected && (
                               <div className="absolute inset-0 bg-blue-500/30 flex items-center justify-center">
@@ -814,8 +872,47 @@ ${agentEmail}
                   <button onClick={downloadHtml} className="flex items-center gap-2 px-3 py-2 bg-blue-500 rounded-lg hover:bg-blue-600 text-sm font-medium">
                     <Download className="w-4 h-4" />Download HTML
                   </button>
+                  <button onClick={() => { setShowSendModal(true); setSendResult(null) }} className="flex items-center gap-2 px-3 py-2 bg-green-600 rounded-lg hover:bg-green-700 text-sm font-medium">
+                    <Send className="w-4 h-4" />Send Email
+                  </button>
                 </div>
               </div>
+
+              {/* Send Email Modal */}
+              {showSendModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60" role="dialog" aria-modal="true" aria-label="Send email">
+                  <div className="bg-[#1A1A1A] border border-white/10 rounded-2xl w-full max-w-lg p-6 relative">
+                    <button onClick={() => setShowSendModal(false)} className="absolute top-4 right-4 text-white/40 hover:text-white" aria-label="Close">
+                      <X className="w-5 h-5" />
+                    </button>
+                    <h3 className="text-lg font-bold mb-1">Send Email</h3>
+                    <p className="text-sm text-white/50 mb-4">Enter recipient email addresses (comma or newline separated, max 50)</p>
+                    <textarea
+                      value={sendRecipients}
+                      onChange={e => setSendRecipients(e.target.value)}
+                      placeholder={"john@example.com\njane@example.com"}
+                      rows={4}
+                      className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-sm focus:outline-none focus:border-green-500 mb-3 resize-none"
+                      aria-label="Recipient emails"
+                    />
+                    <div className="text-xs text-white/40 mb-4">
+                      Subject: <span className="text-white/70">{generatedEmail.subject}</span>
+                    </div>
+                    {sendResult && (
+                      <div className={`mb-4 p-3 rounded-lg text-sm ${sendResult.success ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'}`}>
+                        {sendResult.message}
+                      </div>
+                    )}
+                    <div className="flex justify-end gap-3">
+                      <button onClick={() => setShowSendModal(false)} className="px-4 py-2 bg-white/10 rounded-lg hover:bg-white/20 text-sm">Cancel</button>
+                      <button onClick={handleSendEmail} disabled={sending || !sendRecipients.trim()} className="px-4 py-2 bg-green-600 rounded-lg hover:bg-green-700 text-sm font-medium flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
+                        {sending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+                        {sending ? 'Sending...' : 'Send Now'}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
 
               {/* Subject Line */}
               <div className="px-4 py-3 bg-white/5 border-b border-white/5">

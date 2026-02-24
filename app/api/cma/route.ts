@@ -534,9 +534,11 @@ export async function POST(request: NextRequest) {
     // Generate HTML report
     const htmlReport = generateHTMLReport(listing, comparables, pricing, agentInfo, narrative);
 
-    // Save CMA record (ignore errors if table doesn't exist)
+    // Save CMA record to database
+    let reportId: string | null = null;
     try {
-      await getServiceSupabase()
+      const fullAddress = [listing.address, listing.city, listing.state, listing.zip].filter(Boolean).join(', ');
+      const { data: savedReport } = await getServiceSupabase()
         .from('cma_reports')
         .insert({
           user_id: user.id,
@@ -545,15 +547,20 @@ export async function POST(request: NextRequest) {
           pricing: pricing,
           agent_info: agentInfo,
           narrative: narrative,
-          created_at: new Date().toISOString(),
-        });
-    } catch (e) {
-      console.log('CMA save skipped:', e);
+          title: fullAddress ? `CMA - ${fullAddress}` : `CMA Report - ${new Date().toLocaleDateString()}`,
+          status: 'completed',
+        })
+        .select('id')
+        .single();
+      reportId = savedReport?.id || null;
+    } catch {
+      console.log('[CMA API] Save skipped — cma_reports table may not exist yet');
     }
 
     // Return HTML report for client-side PDF conversion
     return NextResponse.json({
       success: true,
+      reportId,
       html: htmlReport,
       narrative,
       stats: {
@@ -573,7 +580,7 @@ export async function POST(request: NextRequest) {
 }
 
 // GET - Fetch user's CMA history
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
@@ -590,7 +597,7 @@ export async function GET(request: NextRequest) {
       .limit(20);
 
     return NextResponse.json(reports || []);
-  } catch (error: unknown) {
+  } catch {
     return NextResponse.json([]);
   }
 }
