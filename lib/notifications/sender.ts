@@ -1,13 +1,16 @@
 /**
  * SnapR Notification System - Sender Service
+ *
+ * Sends notifications via Email (Resend), WhatsApp (Twilio), and
+ * persists an in-app notification record for the bell icon dropdown.
  */
 
-import { 
-  NotificationType, 
-  NotificationPayload, 
+import {
+  NotificationType,
+  NotificationPayload,
   NotificationPreferences,
   NotificationResult,
-  DEFAULT_PREFERENCES 
+  DEFAULT_PREFERENCES
 } from './types';
 import { getTemplate, getEmailHtml } from './templates';
 
@@ -41,8 +44,55 @@ async function logNotification(
       message_id: messageId || null,
       error: error || null,
     });
-  } catch (e) {
-    console.error('[Notify] Failed to log notification:', e);
+  } catch {
+    console.error('[Notify] Failed to log notification');
+  }
+}
+
+// ================================================
+// IN-APP NOTIFICATION WRITER
+// ================================================
+
+async function writeInAppNotification(
+  userId: string,
+  type: NotificationType,
+  title: string,
+  body: string,
+  link?: string
+): Promise<void> {
+  try {
+    const { adminSupabase } = await import('@/lib/supabase/admin');
+    await adminSupabase().from('notifications').insert({
+      user_id: userId,
+      type,
+      title,
+      body,
+      link: link || null,
+    });
+  } catch {
+    console.error('[Notify] Failed to write in-app notification');
+  }
+}
+
+/**
+ * Build a deep link for a notification type.
+ */
+function getNotificationLink(payload: NotificationPayload): string | undefined {
+  const base = process.env.NEXT_PUBLIC_APP_URL || 'https://snap-r.com';
+  if (payload.listingId) {
+    return `${base}/dashboard/studio?id=${payload.listingId}`;
+  }
+  switch (payload.type) {
+    case 'credits_low':
+    case 'credits_depleted':
+      return `${base}/dashboard/billing`;
+    case 'social_disconnected':
+      return `${base}/dashboard/settings/social`;
+    case 'daily_summary':
+    case 'weekly_report':
+      return `${base}/dashboard`;
+    default:
+      return undefined;
   }
 }
 
@@ -78,6 +128,18 @@ export async function sendNotification(
     console.log(`[Notify] Skipping ${payload.type} - quiet hours active`);
     // Queue for later (could store in DB)
     return results;
+  }
+
+  // Always write an in-app notification (fire-and-forget)
+  if (payload.userId) {
+    const link = getNotificationLink(payload);
+    writeInAppNotification(
+      payload.userId,
+      payload.type,
+      template.subject,
+      template.emailText.slice(0, 300),
+      link
+    ).catch(() => {});
   }
 
   // Send Email
@@ -134,9 +196,9 @@ async function sendEmail(
     });
 
     if (!response.ok) {
-      const error = await response.text();
-      console.error('[Notify] Email error:', error);
-      return { channel: 'email', success: false, error };
+      const errText = await response.text();
+      console.error('[Notify] Email error:', errText);
+      return { channel: 'email', success: false, error: errText };
     }
 
     const data = await response.json();
@@ -144,7 +206,6 @@ async function sendEmail(
     return { channel: 'email', success: true, messageId: data.id };
 
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : 'Unknown error';
     const msg = error instanceof Error ? error.message : 'Unknown error';
     console.error('[Notify] Email error:', msg);
     return { channel: 'email', success: false, error: msg };
@@ -192,9 +253,9 @@ async function sendWhatsApp(
     );
 
     if (!response.ok) {
-      const error = await response.text();
-      console.error('[Notify] WhatsApp error:', error);
-      return { channel: 'whatsapp', success: false, error };
+      const errText = await response.text();
+      console.error('[Notify] WhatsApp error:', errText);
+      return { channel: 'whatsapp', success: false, error: errText };
     }
 
     const data = await response.json();
@@ -202,7 +263,6 @@ async function sendWhatsApp(
     return { channel: 'whatsapp', success: true, messageId: data.sid };
 
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : 'Unknown error';
     const msg = error instanceof Error ? error.message : 'Unknown error';
     console.error('[Notify] WhatsApp error:', msg);
     return { channel: 'whatsapp', success: false, error: msg };
@@ -279,7 +339,7 @@ export async function sendBatchNotifications(
   const batchSize = 10;
   for (let i = 0; i < payloads.length; i += batchSize) {
     const batch = payloads.slice(i, i + batchSize);
-    
+
     await Promise.all(
       batch.map(async ({ payload, userEmail, userName, preferences }) => {
         const result = await sendNotification(payload, userEmail, userName, preferences);

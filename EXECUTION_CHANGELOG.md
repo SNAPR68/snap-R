@@ -1,6 +1,29 @@
 # SnapR Execution Changelog
 =================================
 
+## 2026-02-24 — Phase 3: In-App Notification Center
+
+### Database
+- **`supabase/migrations/20260224_notifications.sql`** — New `notifications` table (id, user_id, type, title, body, link, read, created_at) with RLS policies and index on (user_id, read, created_at DESC).
+
+### API Routes
+- **`app/api/notifications/route.ts`** — `GET` with pagination (limit/offset) + unread count.
+- **`app/api/notifications/[id]/route.ts`** — `PATCH` to mark single notification as read.
+- **`app/api/notifications/read-all/route.ts`** — `PATCH` to mark all as read.
+
+### Notification Sender
+- **`lib/notifications/sender.ts`** — Now writes an in-app notification record on every `sendNotification()` call (fire-and-forget). Added `writeInAppNotification()` and `getNotificationLink()` helpers. Fixed pre-existing duplicate variable declarations and `catch(e)` → `catch {}`.
+
+### UI Components
+- **`components/notification-bell.tsx`** — Bell icon with unread badge, dropdown panel with notification list, mark-as-read, mark-all-read, deep-link navigation, Supabase Realtime subscription for live updates.
+- **`components/desktop-notification-bar.tsx`** — Thin top bar for desktop layout rendering the bell.
+- **`components/mobile-dashboard-header.tsx`** — Added NotificationBell to mobile header.
+- **`app/dashboard/layout.tsx`** — Integrated DesktopNotificationBar into main content area.
+
+**Verification:** `npx tsc --noEmit` ✅ | `npm run build` ✅ | `npx vitest run` 93/93 ✅
+
+---
+
 ## 2026-02-24 — Phase 2: Team Listing Access + Daily Digest Email
 
 ### 2a. Team Shared Listing Access
