@@ -1,6 +1,30 @@
 # SnapR Execution Changelog
 =================================
 
+## 2026-02-24 — Phase 1: Test Safety Net (Vitest + 93 Tests)
+
+### What
+Installed Vitest and wrote targeted tests for the 5 highest-risk modules in the platform. Zero tests existed before this — now 93 tests cover billing gates, input validation, UTM attribution, MLS compliance watermarking, and rate limiting.
+
+### Files Added
+| File | Tests | Purpose |
+|------|-------|---------|
+| `vitest.config.ts` | — | Vitest config with path aliases matching tsconfig.json |
+| `__tests__/limits.test.ts` | 33 | Billing gate logic: normalizeTier, getPlanLimits, canPublish, canCreatePost, canGenerateCaption, getRemainingPosts, canGenerateVideo, getListingLimits, shouldResetUsage |
+| `__tests__/schemas.test.ts` | 37 | Zod API input validation: all 9 schemas + parseBody helper, boundary values, type safety |
+| `__tests__/utm.test.ts` | 8 | UTM param construction: all platforms, all campaigns, param preservation, overwrite behavior |
+| `__tests__/watermark.test.ts` | 9 | MLS compliance: requiresWatermark for all 15 tools, getWatermarkText mapping completeness |
+| `__tests__/rate-limit.test.ts` | 6 | Rate limiter: decrement counting, blocking at limit, per-identifier isolation, defaults |
+
+### Files Modified
+| File | Change |
+|------|--------|
+| `package.json` | Added `vitest` devDependency, `test` and `test:watch` scripts |
+
+### Verification
+- `npx vitest run` — 93/93 tests passing in 337ms
+- `npx tsc --noEmit` — zero errors
+
 ## 2026-02-23 — Analytics & ROI Dashboard (Measure Stage)
 
 ### What
