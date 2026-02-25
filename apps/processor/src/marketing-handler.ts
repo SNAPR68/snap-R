@@ -556,7 +556,7 @@ export async function handleMarketingJob(
 
           // Append UTM-tagged property site link if available
           if (propertySiteResult?.slug) {
-            const baseUrl = env.NEXT_PUBLIC_BASE_URL || 'https://snapr.pro';
+            const baseUrl = env.NEXT_PUBLIC_BASE_URL || 'https://snap-r.com';
             const siteUrl = new URL(`/p/${propertySiteResult.slug}`, baseUrl);
             siteUrl.searchParams.set('utm_source', platformKey as string);
             siteUrl.searchParams.set('utm_medium', 'social');
