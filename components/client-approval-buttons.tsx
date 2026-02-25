@@ -8,15 +8,19 @@ interface ClientApprovalButtonsProps {
   shareToken: string;
   initialApproved?: boolean | null;
   initialFeedback?: string | null;
+  clientName?: string;
   onUpdate?: (approved: boolean | null) => void;
+  onAllReviewed?: () => void;
 }
 
-export function ClientApprovalButtons({ 
-  photoId, 
-  shareToken, 
-  initialApproved, 
+export function ClientApprovalButtons({
+  photoId,
+  shareToken,
+  initialApproved,
   initialFeedback,
-  onUpdate 
+  clientName,
+  onUpdate,
+  onAllReviewed,
 }: ClientApprovalButtonsProps) {
   const [approved, setApproved] = useState<boolean | null>(initialApproved ?? null);
   const [showFeedback, setShowFeedback] = useState(false);
@@ -32,12 +36,27 @@ export function ClientApprovalButtons({
         body: JSON.stringify({ photoId, shareToken, approved: isApproved, feedback: isApproved ? '' : feedback }),
       });
       if (res.ok) {
+        const data = await res.json();
         setApproved(isApproved);
         onUpdate?.(isApproved);
         if (!isApproved && !feedback) setShowFeedback(true);
+
+        // If all photos have been reviewed, trigger notification to agent
+        if (data.allReviewed) {
+          onAllReviewed?.();
+          try {
+            await fetch('/api/notify-approval', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ shareToken, clientName: clientName || 'Client' }),
+            });
+          } catch {
+            // Non-critical — notification failure shouldn't break the UI
+          }
+        }
       }
-    } catch (error) {
-      console.error('Approval failed:', error);
+    } catch {
+      // Approval API call failed
     }
     setLoading(false);
   };
@@ -52,8 +71,8 @@ export function ClientApprovalButtons({
         body: JSON.stringify({ photoId, shareToken, approved: false, feedback }),
       });
       setShowFeedback(false);
-    } catch (error) {
-      console.error('Feedback failed:', error);
+    } catch {
+      // Feedback submit failed
     }
     setLoading(false);
   };
@@ -97,6 +116,7 @@ export function ClientApprovalButtons({
               className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-sm text-white placeholder:text-white/30 resize-none focus:outline-none focus:border-[#D4A017]/50"
               rows={2}
               autoFocus
+              aria-label="Feedback for requested changes"
             />
             <div className="flex gap-2">
               <button onClick={submitFeedback} disabled={!feedback.trim()} className="px-3 py-1.5 bg-[#D4A017] rounded-lg text-xs text-black font-medium disabled:opacity-50">Send Feedback</button>
@@ -106,7 +126,7 @@ export function ClientApprovalButtons({
         ) : feedback ? (
           <div className="px-3 py-2 bg-white/5 rounded-lg">
             <p className="text-xs text-white/40 mb-1">Your feedback:</p>
-            <p className="text-sm text-white/70 italic">"{feedback}"</p>
+            <p className="text-sm text-white/70 italic">&quot;{feedback}&quot;</p>
             <button onClick={() => setShowFeedback(true)} className="text-xs text-[#D4A017] mt-1 hover:underline">Edit</button>
           </div>
         ) : (

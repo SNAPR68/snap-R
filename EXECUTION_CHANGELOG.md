@@ -1,6 +1,28 @@
 # SnapR Execution Changelog
 =================================
 
+## 2026-02-24 — Phase 9: Analytics Events Table, Approval Workflow, API Hardening
+
+### 1. Analytics Events & Error Logs Migration
+- **`supabase/migrations/20260225_analytics_events.sql`** [NEW] — Creates `analytics_events` table (session_id, event_type, event_name, event_data JSONB, page_url, referrer, user_agent, device_type, browser, user_id, ip_address, country, city) and `error_logs` table (error_message, error_stack, error_source, page_url, user_agent, user_id, metadata JSONB). Indexes on session, type, user, created_at. RLS policies for service role + user self-read.
+
+### 2. Fix Analytics API Routes
+- **`app/api/analytics/track/route.ts`** — Replaced blind spread insert with explicit field mapping (prevents arbitrary column injection). Added `export const dynamic`, proper error logging, structured insert.
+- **`app/api/analytics/error/route.ts`** — Same pattern: explicit field mapping, proper catch block, `export const dynamic`.
+- **`lib/analytics/tracker.ts`** — Replaced all `Record<string, any>` with `Record<string, unknown>`. Fixed catch blocks to empty `catch {}`.
+
+### 3. Client Approval Workflow Completion
+- **`app/api/approve-photo/route.ts`** — Added completion detection: after each approval update, queries all listing photos to check if any remain pending. Returns `{ success, allReviewed, stats }` so clients can detect review completion.
+- **`components/client-approval-buttons.tsx`** — Wired to auto-notify agent when `allReviewed: true` returned. Calls `/api/notify-approval` with share token and client name. Added `clientName` and `onAllReviewed` props. Fixed catch blocks and added `aria-label` to textarea.
+
+### 4. API Route Hardening
+- **`app/api/approval-summary/route.ts`** — Removed unused `NextRequest` import and `req` parameter. Fixed catch block.
+- **`app/api/notify-approval/route.ts`** — Fixed catch block to typed `error: unknown` pattern.
+
+**Verification:** `npx tsc --noEmit` clean | `npx vitest run` 93/93 passed | `npm run build` clean
+
+---
+
 ## 2026-02-24 — Phase 8: Partial Features Fix — Campaign Wiring, Drafts UI, Email Send, CMA Persistence
 
 ### 1. Wire Campaign Engine to Listing Status Changes
