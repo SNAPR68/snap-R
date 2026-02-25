@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic';
+
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
@@ -16,11 +18,12 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Missing photo ID' }, { status: 400 });
     }
 
+    const supabase = getSupabase();
     let listingId: string | null = null;
 
     // If shareToken provided, verify it
     if (shareToken) {
-      const { data: share } = await getSupabase()
+      const { data: share } = await supabase
         .from('shares')
         .select('listing_id')
         .eq('token', shareToken)
@@ -32,7 +35,7 @@ export async function POST(req: NextRequest) {
       listingId = share.listing_id;
     } else {
       // No shareToken - get listing from photo directly
-      const { data: photo } = await getSupabase()
+      const { data: photo } = await supabase
         .from('photos')
         .select('listing_id')
         .eq('id', photoId)
@@ -45,24 +48,55 @@ export async function POST(req: NextRequest) {
     }
 
     // Update photo approval
-    const { error } = await getSupabase()
+    const { error } = await supabase
       .from('photos')
-      .update({ 
+      .update({
         client_approved: approved,
         client_feedback: feedback || null,
-        approved_at: approved ? new Date().toISOString() : null
+        approved_at: approved ? new Date().toISOString() : null,
       })
       .eq('id', photoId)
       .eq('listing_id', listingId);
 
     if (error) {
-      console.error('Update error:', error);
+      console.error('[Approve Photo] Update error:', error.message);
       return NextResponse.json({ error: 'Failed to update approval' }, { status: 500 });
     }
 
-    return NextResponse.json({ success: true });
-  } catch (error) {
-    console.error('Approve photo error:', error);
-    return NextResponse.json({ error: 'Server error' }, { status: 500 });
+    // Check if all photos for this listing have been reviewed (no pending left)
+    // This enables automatic completion detection
+    let allReviewed = false;
+    let approvalStats: { approved: number; rejected: number; pending: number; total: number } | null = null;
+
+    try {
+      const { data: allPhotos } = await supabase
+        .from('photos')
+        .select('id, client_approved')
+        .eq('listing_id', listingId)
+        .eq('status', 'completed');
+
+      if (allPhotos && allPhotos.length > 0) {
+        const stats = {
+          approved: allPhotos.filter(p => p.client_approved === true).length,
+          rejected: allPhotos.filter(p => p.client_approved === false).length,
+          pending: allPhotos.filter(p => p.client_approved === null).length,
+          total: allPhotos.length,
+        };
+        approvalStats = stats;
+        allReviewed = stats.pending === 0;
+      }
+    } catch {
+      // Non-critical — don't block the approval response
+    }
+
+    return NextResponse.json({
+      success: true,
+      allReviewed,
+      stats: approvalStats,
+    });
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Server error';
+    console.error('[Approve Photo] Error:', message);
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }

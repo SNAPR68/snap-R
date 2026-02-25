@@ -94,8 +94,9 @@ export async function POST(req: NextRequest) {
     });
 
     return NextResponse.json({ success: true });
-  } catch (error) {
-    console.error('Notification error:', error);
-    return NextResponse.json({ error: 'Failed to send notification' }, { status: 500 });
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Failed to send notification';
+    console.error('[Notify Approval] Error:', message);
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }
