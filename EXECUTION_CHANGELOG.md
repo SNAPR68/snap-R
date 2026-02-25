@@ -1,6 +1,43 @@
 # SnapR Execution Changelog
 =================================
 
+## 2026-02-25 — Phase 12: Pre-Launch Fixes
+
+Production readiness audit identified 3 blockers and 3 should-fixes. All resolved.
+
+### 1. Missing DB Tables (BLOCKER)
+- Created migration `20260225_addon_and_human_edit_tables.sql`
+- `addon_purchases` table — tracks add-on purchases referenced by Stripe webhook
+- `human_edit_orders` table — tracks human editing orders referenced by Stripe webhook
+- Indexes on user_id + status, RLS policies for both tables
+- Files Created: `supabase/migrations/20260225_addon_and_human_edit_tables.sql`
+
+### 2. Legacy Billing Page Crash (BLOCKER)
+- Old `/billing` page queried non-existent `users` table and used credit-based model
+- Replaced with server-side redirect to working `/dashboard/billing`
+- Files Modified: `app/(authenticated)/billing/page.tsx`
+
+### 3. Campaign Template trigger_status Mismatch (BLOCKER)
+- Seed data used `'new'` but engine expects `'just_listed'`
+- Created migration to UPDATE existing rows and re-seed with ON CONFLICT DO NOTHING
+- Files Created: `supabase/migrations/20260225_fix_campaign_template_statuses.sql`
+
+### 4. Domain Fallback Standardization
+- Worker marketing handler had fallback `snapr.pro`, should be `snap-r.com`
+- Files Modified: `apps/processor/src/marketing-handler.ts`
+
+### 5. WORKER_URL Default
+- Marketing trigger API route had no fallback for missing WORKER_URL env var
+- Added default `http://127.0.0.1:8787` for local development
+- Files Modified: `app/api/marketing/trigger/route.ts`
+
+### 6. Upstash Redis Rate Limiting
+- Rewrote `lib/rate-limit.ts` as hybrid: Upstash Redis when configured, in-memory fallback
+- Sync `checkRateLimit()` preserved for edge middleware compatibility
+- Added async `checkRateLimitAsync()` for API routes using Redis
+- Installed `@upstash/ratelimit` and `@upstash/redis`
+- Files Modified: `lib/rate-limit.ts`, `package.json`
+
 ## 2026-02-25 — Phase 11: Security Hardening
 
 ### 1. Remove NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY (4 files)
