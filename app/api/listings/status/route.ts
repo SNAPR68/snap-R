@@ -2,27 +2,33 @@
 // Update listing status and trigger campaigns
 
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
+import { createClient } from '@/lib/supabase/server';
+import { adminSupabase } from '@/lib/supabase/admin';
 import { onListingStatusChange, toCampaignStatus } from '@/lib/campaigns/status-hook';
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
-
 export async function POST(request: NextRequest) {
-  const supabase = createClient(supabaseUrl, supabaseServiceKey);
-
   try {
-    const { userId, listingId, newStatus } = await request.json();
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
 
-    if (!userId || !listingId || !newStatus) {
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const userId = user.id;
+    const { listingId, newStatus } = await request.json();
+
+    if (!listingId || !newStatus) {
       return NextResponse.json(
-        { error: 'userId, listingId, and newStatus required' },
+        { error: 'listingId and newStatus required' },
         { status: 400 }
       );
     }
 
-    // Get current marketing status
-    const { data: listing, error: fetchError } = await supabase
+    const admin = adminSupabase();
+
+    // Get current marketing status — verify ownership via user_id
+    const { data: listing, error: fetchError } = await admin
       .from('listings')
       .select('marketing_status')
       .eq('id', listingId)
@@ -36,9 +42,9 @@ export async function POST(request: NextRequest) {
     const previousStatus = listing.marketing_status;
 
     // Update marketing status in database
-    const { error: updateError } = await supabase
+    const { error: updateError } = await admin
       .from('listings')
-      .update({ 
+      .update({
         marketing_status: newStatus,
         updated_at: new Date().toISOString(),
       })
@@ -68,8 +74,9 @@ export async function POST(request: NextRequest) {
       newStatus,
       campaign: campaignResult,
     });
-  } catch (error) {
-    console.error('Status update error:', error);
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Server error';
+    console.error('Status update error:', message);
     return NextResponse.json({ error: 'Server error' }, { status: 500 });
   }
 }

@@ -1,597 +1,306 @@
-# SnapR Complete Forensic Audit Report
-**Generated:** December 2025  
-**Last Updated:** December 2025 (Post-Audit Verification)  
-**Scope:** Complete application audit including user flows, dashboard, listings, API endpoints, database schema, and all features
+# SnapR Forensic Audit Report
+**Date:** February 2026  
+**Scope:** Complete project tree, functionalities, working/broken status, user flow
 
 ---
 
-## Executive Summary
+## A. Complete Project Tree
 
-**Status:** ⚠️ **CRITICAL ISSUES FOUND** - Application has multiple schema mismatches, missing role-based features, and broken user flows.
-
-**Key Findings:**
-1. **Database Schema Mismatch:** Code references `profiles` table with `role` column, but schema shows `users` table without `role`
-2. **Missing Role-Based Dashboard:** Dashboard page checks for `profile.role` but doesn't implement role-based UI segregation
-3. **Onboarding Flow Issues:** Multiple onboarding paths exist with inconsistent role handling
-4. **Listings Fetch Working:** ✅ `/api/listings` endpoint is functional and properly fetches user listings
-5. **Compliance Module:** ✅ MLS export functionality is implemented but not integrated into UI
-6. **AI Router:** ✅ Working correctly with 15 tools, no US market mode logic present
-
----
-
-## 1. User Flow Analysis
-
-### 1.1 Authentication Flow
-
-**Status:** ✅ **WORKING**
-
-**Path:**
-1. User visits `/auth/signup` or `/auth/login`
-2. Can sign up with email/password or Google OAuth
-3. Redirects to `/auth/callback` after authentication
-4. Callback creates profile if missing, then redirects to `/onboarding` or `/dashboard`
-
-**Files:**
-- `app/auth/signup/page.tsx` - ✅ Working
-- `app/auth/login/page.tsx` - ✅ Working
-- `app/auth/callback/route.ts` - ✅ Working, creates profile with defaults
-
-**Issues Found:**
-- ✅ No critical issues in authentication flow
-
----
-
-### 1.2 Onboarding Flow
-
-**Status:** ⚠️ **MULTIPLE PATHS - INCONSISTENT**
-
-**Path 1: `/onboarding/page.tsx` (Current Active)**
-- Two-step process: Region selection → Details (name, company, role)
-- Saves to `profiles` table with `role`, `region`, `onboarded: true`
-- Redirects to `/pricing?role=...&region=...`
-
-**Path 2: `/app/(authenticated)/onboarding/role.tsx` (Deleted/Not Found)**
-- This file was deleted according to deleted_files list
-- Was supposed to handle role selection for users without roles
-
-**Path 3: Dashboard redirects to `/onboarding` if `!profile?.role`**
-- `app/dashboard/page.tsx` line 19-21 checks for role and redirects
-
-**Issues Found:**
-- ⚠️ **CRITICAL:** Dashboard checks `profile.role` but onboarding saves to `profiles.role`
-- ⚠️ **SCHEMA MISMATCH:** Database schema shows `users` table, not `profiles` table
-- ⚠️ **MISSING:** No `/app/(authenticated)/onboarding/role.tsx` file exists (was deleted)
-
----
-
-### 1.3 Dashboard Flow
-
-**Status:** ⚠️ **PARTIALLY WORKING - SCHEMA ISSUES**
-
-**File:** `app/dashboard/page.tsx`
-
-**Current Implementation:**
-```typescript
-1. Checks authentication → redirects to /auth/login if not authenticated
-2. Fetches profile from 'profiles' table
-3. Checks if profile.role exists → redirects to /onboarding if missing
-4. Checks if profile.subscription_tier exists → redirects to /pricing if missing
-5. Fetches listings from 'listings' table
-6. Displays dashboard with stats and recent listings
 ```
-
-**What's Working:**
-- ✅ Authentication check
-- ✅ Listings fetch (line 28-33)
-- ✅ UI rendering with stats cards
-- ✅ Recent listings display
-
-**What's Broken:**
-- ❌ **SCHEMA MISMATCH:** Code queries `profiles` table but `database/schema.sql` shows `users` table
-- ❌ **MISSING ROLE-BASED UI:** Dashboard doesn't implement role-based segregation (photographer vs agent)
-- ❌ **MISSING COMPONENTS:** References to `PhotographerDashboard` and `AgentDashboard` components that don't exist
-- ⚠️ **INCONSISTENT FIELD NAMES:** Code checks `profile.role` but migration shows `user_role` in profiles table
-
-**Database Query:**
-```typescript
-// Line 16: Fetches from 'profiles' table
-const { data: profile } = await supabase.from('profiles').select('*').eq('id', user.id).single();
-
-// Line 28-33: Fetches listings - THIS WORKS ✅
-const { data: listings } = await supabase
-  .from('listings')
-  .select('*, photos(count)')
-  .eq('user_id', user.id)
-  .order('created_at', { ascending: false })
-  .limit(10);
+snap-R/
+├── app/                          # Next.js App Router
+│   ├── (authenticated)/          # Auth-protected routes
+│   │   ├── billing/
+│   │   ├── jobs/[id]/
+│   │   ├── listings/[id]/
+│   │   ├── listings/
+│   │   ├── settings/
+│   │   ├── upload/
+│   │   └── layout.tsx
+│   ├── academy/                  # Educational content (photos, plans, troubleshooting)
+│   ├── admin/                    # Admin panel (users, contacts, logs, ai-decisions)
+│   ├── auth/                     # login, signup, callback
+│   ├── dashboard/                # Main dashboard + all dashboard sections
+│   │   ├── content-studio/        # Facebook, Instagram, LinkedIn, TikTok, Video, etc.
+│   │   ├── portfolio/[id]/        # edit, items
+│   │   ├── settings/             # social, notifications, watermark
+│   │   └── [staging, calendar, campaigns, analytics, leads, approvals, ...]
+│   ├── org/[slug]/               # Organization dashboard
+│   ├── portfolio/[slug]/         # Public portfolio view
+│   ├── p/[slug]/                 # Public property site
+│   ├── tour/[slug]/              # Tour page
+│   ├── share/[token]/            # Share gallery
+│   ├── api/                      # 134 API route files
+│   ├── page.tsx                  # Landing
+│   ├── onboarding/
+│   ├── pricing/
+│   ├── checkout/
+│   ├── contact/
+│   ├── faq/
+│   ├── terms/
+│   ├── privacy/
+│   ├── partners/
+│   └── founding/
+├── apps/
+│   ├── processor/                # Cloudflare Worker (photo + marketing pipeline)
+│   └── mobile/                   # Mobile app (React Native?)
+├── components/                   # React components
+├── lib/
+│   ├── ai/                       # AI engine (listing-engine, providers, router)
+│   ├── supabase/                 # client, server, admin
+│   ├── content/                  # limits, billing
+│   ├── social/                   # publish-service, oauth-config
+│   ├── video/                    # photo-ordering, voiceover-service
+│   └── validation/               # Zod schemas
+├── remotion/                     # Video compositions
+│   ├── compositions/             # PropertyShowcase, JustListed, OpenHouse, PriceDrop, Sold
+│   └── components/
+├── database/                    # Supabase schema reference
+├── supabase/migrations/          # 32 migrations
+├── docs/
+├── vercel.json                   # Crons, function config
+├── package.json
+└── next.config.mjs
 ```
 
 ---
 
-## 2. Listings Management
+## B. In-Built Functionalities
 
-### 2.1 Listings Fetch
+### API Routes (134 total)
 
-**Status:** ✅ **WORKING CORRECTLY**
+| Category | Routes | Purpose |
+|----------|--------|---------|
+| **Listing/Prepare** | `/api/listing/prepare`, `/api/listing/status` | Trigger AI prep, poll status |
+| **Upload** | `/api/upload`, `/api/upload-image` | Photo upload to Supabase |
+| **Enhance** | `/api/enhance`, `/api/batch-enhance`, `/api/enhance-quick`, `/api/staging` | Single/batch enhancement |
+| **Marketing** | `/api/marketing/trigger`, `/api/marketing/status`, `/api/marketing/print-materials`, `/api/marketing/mls-export` | Marketing pipeline |
+| **Video** | `/api/video/generate`, `/api/video/status`, `/api/video/watch`, `/api/video/health`, `/api/video/voiceover`, `/api/internal/video-generate` | Remotion Lambda, proxy, voiceover |
+| **Social** | `/api/social/oauth/[platform]`, `/api/social/publish`, `/api/social/connections`, `/api/social/scheduled` | OAuth, publish, connections |
+| **Cron** | `/api/cron/publish-scheduled` (every 15 min), `/api/cron/sync-analytics` (every 6h), `/api/cron/refresh-tokens` (every 4h), `/api/cron/daily-digest` (8 AM UTC) | Background jobs |
+| **Stripe** | `/api/stripe/checkout`, `/api/stripe/webhook`, `/api/stripe/portal`, `/api/stripe/addon-purchase`, `/api/stripe/human-edit-checkout` | Billing |
+| **Portfolio** | `/api/portfolio`, `/api/portfolio/items` | CRUD portfolios |
+| **AI** | `/api/ai/photo-cull`, `/api/ai/generate-description`, `/api/ai/generate-caption` | Photo cull, descriptions, captions |
+| **Analytics** | `/api/analytics`, `/api/analytics/posts`, `/api/analytics/roi`, `/api/analytics/track` | Engagement metrics |
+| **Content** | `/api/content-library`, `/api/drafts`, `/api/schedule` | Content studio |
+| **Other** | `/api/share`, `/api/download-all`, `/api/contact`, `/api/leads`, `/api/brand`, `/api/cma`, `/api/renovation`, `/api/listing-intelligence`, `/api/translate` | Misc |
 
-**API Endpoint:** `app/api/listings/route.ts`
+### 23 AI Enhancement Tools (lib/ai/router.ts)
 
-**GET `/api/listings`:**
-- ✅ Authenticates user
-- ✅ Fetches listings from `listings` table filtered by `user_id`
-- ✅ Supports `withPhotos=true` query parameter
-- ✅ Supports `photoLimit` query parameter
-- ✅ Returns proper JSON response
-- ✅ Handles errors correctly
+**Exterior:** sky-replacement, virtual-twilight, lawn-repair, pool-enhance  
+**Seasonal:** snow-removal, seasonal-spring/summer/fall  
+**Interior:** declutter, virtual-staging, fire-fireplace, tv-screen, lights-on, window-masking  
+**Enhance:** hdr, auto-enhance, perspective-correction, lens-correction, color-balance  
+**Fix:** reflection-removal, power-line-removal, object-removal, flash-fix  
 
-**Usage in Components:**
-- ✅ `app/(authenticated)/listings/page.tsx` - Uses server-side fetch
-- ✅ `app/(authenticated)/upload/page.tsx` - Uses client-side fetch via `/api/listings`
-- ✅ `components/dashboard-client.tsx` - Fetches listings
+### Cron Jobs (vercel.json)
 
-**No Issues Found** ✅
+| Cron | Schedule | Purpose |
+|------|----------|---------|
+| publish-scheduled | */15 * * * * | Publish queued posts to social platforms |
+| sync-analytics | 0 */6 * * * | Sync engagement metrics from platforms |
+| refresh-tokens | 0 */4 * * * | Refresh OAuth tokens |
+| daily-digest | 0 8 * * * | Daily digest email |
 
----
+### Third-Party Integrations
 
-### 2.2 Listings Detail Page
+- **Supabase:** Auth, PostgreSQL, RLS, Storage (raw-images)
+- **Cloudflare:** Worker (processor), R2 (processed images), Queues
+- **Cloudinary:** CDN for images/videos
+- **Stripe:** Subscriptions, checkout, webhooks
+- **OpenAI:** GPT-4o (descriptions, voiceover), GPT-4o-mini (captions)
+- **Replicate / Runware / AutoEnhance:** Image enhancement providers
+- **ElevenLabs:** Voiceover TTS
+- **Remotion + AWS Lambda:** Video rendering
+- **Resend:** Email
+- **Social:** Facebook, Instagram, LinkedIn, TikTok OAuth + publishing
+- **Sentry:** Error monitoring
+- **Vercel:** Hosting, serverless functions
 
-**Status:** ✅ **WORKING**
+### Dashboard Sections (Sidebar)
 
-**File:** `app/(authenticated)/listings/[id]/page.tsx`
-
-**Functionality:**
-- ✅ Fetches listing with photos
-- ✅ Displays before/after slider using `BeforeAfterSlider` component
-- ✅ Shows photo status (completed, processing, failed)
-- ✅ Shows photo statistics
-- ✅ Proper error handling
-
-**Component Used:**
-- ✅ `BeforeAfterSlider` exists at `components/ui/before-after-slider.tsx`
-
-**No Issues Found** ✅
-
----
-
-### 2.3 Listings Creation
-
-**Status:** ✅ **WORKING**
-
-**API Endpoint:** `app/api/listings/route.ts` (POST method)
-
-**Functionality:**
-- ✅ Validates user authentication
-- ✅ Sanitizes input data
-- ✅ Creates listing in database
-- ✅ Returns created listing data
-
-**No Issues Found** ✅
-
----
-
-## 3. Photo Enhancement Pipeline
-
-### 3.1 AI Router
-
-**Status:** ✅ **WORKING - NO US MARKET MODE**
-
-**File:** `lib/ai/router.ts`
-
-**Current State:**
-- ✅ 15 tools defined (10 with presets, 5 one-click)
-- ✅ Credit system implemented
-- ✅ All tools route to Replicate provider
-- ✅ Proper error handling
-
-**Missing Features:**
-- ❌ **NO US MARKET MODE:** No region-based tone adjustments
-- ❌ **NO POLICY ENGINE:** No `lib/ai/policy.ts` file exists (was deleted)
-- ⚠️ **WATERMARK EXISTS BUT NOT INTEGRATED:** `lib/compliance/watermark.ts` exists with full watermark functionality, but not used in router
-
-**Note:** Previous work attempted to add US market mode but policy engine was deleted:
-- `lib/ai/policy.ts` - DELETED (policy engine for region/role-based rules)
-- ✅ `lib/compliance/watermark.ts` - EXISTS (watermark functionality available but not integrated into AI router)
+**Overview:** Dashboard, My Listings  
+**Create:** Content Studio, Brand Profile, Virtual Staging, Property Sites  
+**Publish:** Calendar, Auto-Post Rules, Campaigns  
+**Measure:** Analytics, Leads, Client Approvals  
+**More Tools:** AI Descriptions, Portfolios, Property Gallery, AI Voiceover, CMA, Photo Culling, Renovation, Listing Intel, Email Marketing, Partner Program  
+**Account:** Team, Settings, Billing  
 
 ---
 
-### 3.2 Enhancement API
+## C. Working vs Broken Audit
 
-**Status:** ✅ **WORKING**
+### ✅ Fully Working
 
-**File:** `app/api/enhance/route.ts`
+| Area | Status | Notes |
+|------|--------|-------|
+| Auth | ✅ | Supabase Auth, login, signup, callback |
+| Onboarding | ✅ | 7-step flow (profile, role, region, social, brand, plan, success) |
+| Upload | ✅ | `/api/upload`, raw-images bucket |
+| Listing Prepare | ✅ | POST `/api/listing/prepare` → Worker → jobs table |
+| Listing Status | ✅ | GET `/api/listing/status` with job status |
+| Photo Enhancement | ✅ | 23 tools via Worker (Replicate, Runware, AutoEnhance) |
+| Marketing Pipeline | ✅ | 5-step: description → captions → MLS → property site → scheduled posts |
+| Cron Publisher | ✅ | Every 15 min, gates by plan (canPublish) |
+| Token Refresh | ✅ | Every 4h |
+| Video Generation | ✅ | Remotion Lambda, signed URLs for photos, proxy `/api/video/watch` |
+| Portfolio | ✅ | CRUD, edit page, items page, import from listings |
+| Content Studio | ✅ | Facebook, Instagram, LinkedIn, TikTok, Video Creator |
+| Stripe | ✅ | Checkout, webhook, portal |
+| Property Sites | ✅ | Public `/p/[slug]` |
+| Share Galleries | ✅ | `/share/[token]` |
+| OAuth Social | ✅ | Facebook, Instagram, LinkedIn, TikTok (callback `/api/social/oauth/[platform]`) |
 
-**Functionality:**
-- ✅ Authenticates user
-- ✅ Checks credits
-- ✅ Fetches photo from database
-- ✅ Calls `processEnhancement` from router
-- ✅ Saves enhanced image to storage
-- ✅ Updates photo record
-- ✅ Deducts credits
-- ✅ Sends email notification
+### ⚠️ Partial / Gated
 
-**Issues:**
-- ⚠️ **NO REGION/USERROLE PASSING:** Options object doesn't include `region` or `userRole` (lines 13, 67)
-- ⚠️ **NO POLICY INTEGRATION:** Can't apply US market mode even if it existed
+| Area | Status | Notes |
+|------|--------|-------|
+| Free tier | ⚠️ | Marketing skipped, canPublish false, Content Studio access gated |
+| TikTok | ⚠️ | Code complete, needs `TIKTOK_CLIENT_KEY` + `TIKTOK_CLIENT_SECRET` on Vercel + app audit |
+| Usage limits | ⚠️ | Counted on listing creation, not preparation; `/api/listing/prepare` has no subscription check |
+| 2FA | ⚠️ | UI shows "Coming Soon" |
 
----
+### ❌ Coming Soon / Placeholder
 
-### 3.3 Upload API
+| Area | Location | Notes |
+|------|----------|-------|
+| iOS App | Landing page | "iOS App Coming Soon" |
+| Two-Factor Auth | Settings | Badge "Coming Soon" |
+| LinkedIn/TikTok connect | Settings > Social | "Coming Soon" badges |
+| Campaign "coming_soon" | Campaigns settings | One campaign type |
 
-**Status:** ✅ **WORKING**
+### 🗑️ Deprecated / Removed
 
-**File:** `app/api/upload/route.ts`
+| Route | Status |
+|-------|--------|
+| `/api/listing/prepare-stream` | **410 Gone** — use POST `/api/listing/prepare` + poll GET `/api/listing/status` |
 
-**Functionality:**
-- ✅ Handles file uploads
-- ✅ Validates file types
-- ✅ Uploads to Cloudinary
-- ✅ Creates job record
-- ✅ Creates photo records
-- ✅ Enqueues to Cloudflare queue (if configured)
+### Known Gaps (from PHASE1_HARDENING_AUDIT)
 
-**No Issues Found** ✅
-
----
-
-## 4. Database Schema Analysis
-
-### 4.1 Schema Mismatch - CRITICAL ISSUE
-
-**Status:** ❌ **MAJOR SCHEMA MISMATCH**
-
-**Problem:**
-1. `database/schema.sql` defines `users` table:
-   ```sql
-   create table if not exists users (
-     id uuid primary key,
-     email text unique not null,
-     name text,
-     avatar_url text,
-     credits integer default 20,
-     has_onboarded boolean default false,
-     created_at timestamp with time zone default now()
-   );
-   ```
-
-2. **BUT** code throughout application queries `profiles` table:
-   - `app/dashboard/page.tsx` line 16: `supabase.from('profiles')`
-   - `app/api/enhance/route.ts` line 31: `supabase.from('profiles')`
-   - `app/onboarding/page.tsx` line 66: `supabase.from('profiles')`
-   - `app/auth/callback/route.ts` line 16, 24: `supabase.from('profiles')`
-
-3. **Migration file** `supabase/migrations/20241203_create_profile_trigger.sql` creates `profiles` table:
-   ```sql
-   INSERT INTO public.profiles (id, email, full_name, avatar_url, plan, credits, ...)
-   ```
-
-**Resolution Needed:**
-- Either update `database/schema.sql` to include `profiles` table
-- OR migrate all code to use `users` table
-- **Current state:** Application likely works in production because migrations create `profiles` table, but schema.sql is outdated
+- `/api/listing/prepare` does **not** check subscription or usage limits before creating job
+- `profiles.listings_used_this_month` incremented on listing creation, not preparation
+- Worker does not log costs to `api_costs` or update `total_cost_cents`
+- PATCH `/api/listing/status` allows direct mutation of `preparation_status` (could desync from Worker)
 
 ---
 
-### 4.2 Role Field Confusion
+## D. Full User Flow
 
-**Status:** ⚠️ **INCONSISTENT FIELD NAMES**
+### 1. Anonymous → Signed Up
 
-**Problem:**
-1. Dashboard checks: `profile?.role` (line 19)
-2. Onboarding saves: `role: selectedRole` (line 70)
-3. But previous work mentioned `user_role` field in profiles table
-4. Migration trigger doesn't set `role` field
+```
+Landing (/) 
+  → See Demo (#see-demo), Pricing, FAQ, Academy
+  → Sign up (/auth/signup) or Log in (/auth/login)
+  → Supabase Auth callback
+  → Redirect to /onboarding (if new) or /dashboard
+```
 
-**Fields in profiles table (from migration):**
-- `id`, `email`, `full_name`, `avatar_url`, `plan`, `credits`, `created_at`, `updated_at`
-- **NO `role` field defined in migration**
+### 2. Onboarding (7 steps)
 
-**Resolution Needed:**
-- Add `role` column to profiles table via migration
-- OR use `user_role` if that's the actual column name
-- Update all code to use consistent field name
+```
+Step 1: Profile (name, company, region, role)
+Step 2: Social platforms (Facebook, Instagram, LinkedIn)
+Step 3: Brand (business name, logo)
+Step 4: Plan selection (Free, Starter, Pro, Agency)
+Step 5: Billing (Stripe checkout if paid)
+Step 6: Success / first listing prompt
+Step 7: Optional "Import first listing"
+  → Redirect to /dashboard or /listings/new
+```
 
----
+### 3. Core Loop: Upload → Prepare → Market → Distribute
 
-### 4.3 Missing Fields
+```
+1. UPLOAD
+   /listings/new or /(authenticated)/upload
+   → Photos to Supabase Storage (raw-images)
+   → Creates listing + photos rows
 
-**Status:** ⚠️ **MISSING FIELDS IN SCHEMA**
+2. PREPARE
+   Listing detail page → "Prepare" button
+   → POST /api/listing/prepare
+   → Creates job, sets preparation_status='preparing'|'queued'
+   → HTTP trigger to Cloudflare Worker
+   → Worker: AI analysis → enhancement tools → upload to R2 → update photos.processed_url
+   → preparation-overlay polls GET /api/listing/status (job + listing status)
 
-**Fields referenced in code but not in schema.sql:**
-- `profiles.role` or `profiles.user_role`
-- `profiles.subscription_tier` (checked in dashboard line 24)
-- `profiles.region` (saved in onboarding line 71)
-- `profiles.company` (saved in onboarding line 69)
-- `profiles.onboarded` (saved in onboarding line 72)
+3. MARKET (auto-triggers after preparation)
+   Worker marketing-handler: 5-step pipeline
+   - Step 1: GPT-4o description
+   - Step 2: Captions (per platform)
+   - Step 3: MLS export
+   - Step 4: Property site
+   - Step 5: Scheduled posts
+   → marketing_jobs, scheduled_posts populated
 
-**Resolution Needed:**
-- Create migration to add these columns to profiles table
-- Update schema.sql to reflect actual database structure
+4. DISTRIBUTE
+   Vercel Cron every 15 min: /api/cron/publish-scheduled
+   → Fetches scheduled_posts with status='pending'
+   → Publishes to Facebook/Instagram/LinkedIn/TikTok (if canPublish)
+   → Writes to published_posts
 
----
+5. MEASURE
+   Vercel Cron every 6h: /api/cron/sync-analytics
+   → Fetches engagement from platforms
+   → Updates published_posts (likes, comments, shares, impressions)
+```
 
-## 5. Component Status
+### 4. Content Studio Flow
 
-### 5.1 Dashboard Components
+```
+/dashboard/content-studio
+  → Select listing
+  → Create tab: Facebook, Instagram, LinkedIn, TikTok, Video
+  → Video Creator: template + aspect ratio + voiceover → POST /api/video/generate
+  → Poll /api/video/status → Play via /api/video/watch (proxied)
+  → Add to calendar, schedule, or publish
+```
 
-**Status:** ❌ **MISSING COMPONENTS**
+### 5. Portfolio Flow
 
-**Referenced but Missing:**
-- `components/dashboards/photographer.tsx` - DELETED
-- `components/dashboards/agent.tsx` - DELETED
-- `app/(authenticated)/onboarding/role.tsx` - DELETED
+```
+/dashboard/portfolio
+  → Create portfolio
+  → /dashboard/portfolio/[id]/edit — settings, theme, accent
+  → /dashboard/portfolio/[id]/items — add/reorder/import from listings
+  → Public: /portfolio/[slug]
+```
 
-**Existing Components:**
-- ✅ `components/dashboard-client.tsx` - Exists but not used in current dashboard
-- ✅ `components/dashboard-analytics.tsx` - Exists
+### 6. Billing Flow
 
----
+```
+/dashboard/billing
+  → View plan, usage
+  → Stripe checkout for upgrade
+  → Webhook: checkout.session.completed, invoice.payment_succeeded
+  → Profile updated (plan, subscription_status)
+```
 
-### 5.2 UI Components
+### 7. Public Entry Points
 
-**Status:** ✅ **MOSTLY WORKING**
+```
+/                   — Landing
+/p/[slug]           — Public property site
+/portfolio/[slug]   — Public portfolio
+/share/[token]      — Share gallery (signed)
+/tour/[slug]        — Tour page
+```
 
-**Working Components:**
-- ✅ `components/ui/before-after-slider.tsx` - Exists and working
-- ✅ `components/studio-client.tsx` - Exists (682 lines)
-- ✅ `components/listing-card.tsx` - Exists
-- ✅ `components/share-view.tsx` - Exists
+### 8. Admin Flow
 
-**Missing/Deleted:**
-- ❌ `components/ui/BeforeAfterSlider.tsx` (capital B) - Was deleted, lowercase version exists
-
----
-
-## 6. Compliance Module
-
-### 6.1 MLS Export
-
-**Status:** ✅ **IMPLEMENTED BUT NOT INTEGRATED**
-
-**Files:**
-- ✅ `lib/compliance/mls-export.ts` - Complete implementation (267 lines)
-- ✅ `lib/compliance/mls-specs.ts` - Exists
-- ✅ `lib/compliance/watermark.ts` - EXISTS (139 lines, full watermark functionality with `addWatermark`, `requiresWatermark`, `getWatermarkText`)
-- ✅ `lib/compliance/metadata.ts` - Exists
-- ✅ `lib/compliance/disclosure.ts` - Exists
-- ✅ `app/api/compliance/export/route.ts` - API endpoint exists
-
-**Functionality:**
-- ✅ Generates MLS-compliant ZIP packages
-- ✅ Processes images with watermarks
-- ✅ Embeds RESO metadata
-- ✅ Creates disclosure documents
-- ✅ Generates XMP sidecars
-
-**Issues:**
-- ⚠️ **NOT INTEGRATED IN UI:** No button or UI element to trigger MLS export
-- ⚠️ **NO ROLE GATING:** API doesn't check if user is agent/broker (should block photographers)
-
----
-
-### 6.2 MLS Export Modal
-
-**Status:** ✅ **COMPONENT EXISTS**
-
-**File:** `components/mls-export-modal.tsx`
-
-**Usage:**
-- Referenced in `components/studio-client.tsx` line 6
-- Can be triggered from studio if `showMlsFeatures` prop is true
-
-**No Issues Found** ✅
-
----
-
-## 7. API Endpoints Status
-
-### 7.1 Working Endpoints
-
-✅ **FULLY FUNCTIONAL:**
-- `GET/POST /api/listings` - Listings CRUD
-- `POST /api/enhance` - Photo enhancement
-- `POST /api/upload` - File uploads
-- `GET /api/compliance/export` - MLS export options
-- `POST /api/compliance/export` - Generate MLS package
-- `GET /api/share/[token]` - Share viewer
-- `POST /api/share` - Create share link
-
-### 7.2 Missing/Deleted Endpoints
-
-❌ **DELETED:**
-- `app/api/mls-pack/route.ts` - DELETED (was for MLS pack generation)
-- `app/api/user/set-role/route.ts` - DELETED (was for setting user role)
-- `app/api/system-diagnostics/route.ts` - DELETED (was for diagnostics)
+```
+/admin/login
+  → /admin (command center)
+  → Users, Contacts, Revenue, Logs, AI Decisions, Human Edits, Partners, etc.
+```
 
 ---
 
-## 8. Critical Issues Summary
+## Summary
 
-### 8.1 Schema Mismatch - CRITICAL
-- **Issue:** Code queries `profiles` table but `schema.sql` shows `users` table
-- **Impact:** Confusion about actual database structure
-- **Fix:** Update schema.sql or verify migrations create profiles table
-
-### 8.2 Missing Role Field - CRITICAL
-- **Issue:** Dashboard checks `profile.role` but field doesn't exist in migration
-- **Impact:** Users can't complete onboarding, stuck in redirect loop
-- **Fix:** Add `role` column to profiles table via migration
-
-### 8.3 Missing Role-Based Dashboard - HIGH
-- **Issue:** Dashboard doesn't implement role-based UI segregation
-- **Impact:** Photographers and agents see same dashboard
-- **Fix:** Implement `PhotographerDashboard` and `AgentDashboard` components
-
-### 8.4 Missing US Market Mode - MEDIUM
-- **Issue:** No region-based tone adjustments or watermarking integration
-- **Impact:** Can't apply MLS-safe adjustments for US market
-- **Fix:** Re-implement policy engine (`lib/ai/policy.ts`) and integrate existing watermark logic from `lib/compliance/watermark.ts` into router
-
-### 8.5 Missing MLS Pack Feature - MEDIUM
-- **Issue:** MLS pack API endpoint was deleted
-- **Impact:** Can't generate MLS packs from listings page
-- **Fix:** Re-implement `/api/mls-pack` endpoint
-
----
-
-## 9. What's Working ✅
-
-1. **Authentication:** Signup, login, OAuth all working
-2. **Listings Fetch:** `/api/listings` endpoint works correctly
-3. **Listings Display:** Listings page and detail page work
-4. **Photo Enhancement:** AI router and enhance API work
-5. **Upload Pipeline:** File upload and job creation work
-6. **Studio Component:** Interactive studio with tools works
-7. **Before/After Slider:** Component exists and works
-8. **Compliance Module:** MLS export logic is complete (just needs UI integration)
-
----
-
-## 10. Recommendations
-
-### Immediate Fixes (Critical)
-
-1. **Fix Database Schema:**
-   - Create migration to add `role` column to `profiles` table
-   - Update `database/schema.sql` to match actual database structure
-   - Verify all fields referenced in code exist in database
-
-2. **Fix Onboarding Flow:**
-   - Ensure role is saved correctly during onboarding
-   - Verify dashboard can read role field
-   - Test complete user flow from signup → onboarding → dashboard
-
-3. **Implement Role-Based Dashboard:**
-   - Create `PhotographerDashboard` component
-   - Create `AgentDashboard` component
-   - Update `app/dashboard/page.tsx` to route based on role
-
-### Short-Term Fixes (High Priority)
-
-4. **Re-implement US Market Mode:**
-   - Create `lib/ai/policy.ts` with policy engine
-   - Integrate existing `lib/compliance/watermark.ts` into `lib/ai/router.ts`
-   - Update `lib/ai/router.ts` to apply policies and watermarks
-   - Update `app/api/enhance/route.ts` to pass region/userRole to router
-
-5. **Re-implement MLS Pack:**
-   - Create `app/api/mls-pack/route.ts`
-   - Add "Download MLS Pack" button to listings detail page
-   - Implement role-based access control (block photographers)
-
-6. **Integrate Compliance Module:**
-   - Add MLS export button to studio or listings page
-   - Ensure role-based gating works
-   - Test end-to-end MLS export flow
-
-### Long-Term Improvements (Medium Priority)
-
-7. **Code Consistency:**
-   - Standardize field names (`role` vs `user_role`)
-   - Update all references to use consistent naming
-   - Add TypeScript types for profile structure
-
-8. **Error Handling:**
-   - Add better error messages for schema mismatches
-   - Add logging for missing fields
-   - Implement fallback behavior for missing data
-
-9. **Testing:**
-   - Add integration tests for user flow
-   - Test role-based access control
-   - Test MLS export with various MLS IDs
-
----
-
-## 11. File Inventory
-
-### Deleted Files (Need Re-implementation)
-- `lib/ai/policy.ts` - Policy engine for region/role-based rules
-- `app/api/mls-pack/route.ts` - MLS pack generation endpoint
-- `app/services/mlsPackClient.ts` - Client service for MLS pack
-- `app/api/user/set-role/route.ts` - API to set user role
-- `app/(authenticated)/onboarding/role.tsx` - Role selection component
-- `components/dashboards/photographer.tsx` - Photographer dashboard component
-- `components/dashboards/agent.tsx` - Agent dashboard component
-- `app/api/system-diagnostics/route.ts` - Diagnostics endpoint
-
-### Existing Files (Available but Not Integrated)
-- ✅ `lib/compliance/watermark.ts` - Full watermark functionality exists (139 lines) but not integrated into AI router
-
-### Existing Files (Working)
-- `app/dashboard/page.tsx` - Needs role-based routing
-- `app/api/listings/route.ts` - ✅ Working
-- `app/api/enhance/route.ts` - ✅ Working, needs region/userRole
-- `lib/ai/router.ts` - ✅ Working, needs policy integration
-- `lib/compliance/mls-export.ts` - ✅ Complete, needs UI integration
-- `components/studio-client.tsx` - ✅ Working
-
----
-
-## 12. Post-Audit Verification Updates
-
-**Status Check Date:** December 2025 (After initial audit)
-
-### 12.1 Watermark Module Status - CORRECTED
-
-**Previous Status:** ❌ Marked as deleted  
-**Actual Status:** ✅ **EXISTS AND FUNCTIONAL**
-
-**File:** `lib/compliance/watermark.ts` (139 lines)
-
-**Functions Available:**
-- ✅ `addWatermark(imageBuffer, options)` - Full watermark implementation
-- ✅ `requiresWatermark(toolId)` - Checks if tool needs watermark
-- ✅ `getWatermarkText(toolId)` - Returns appropriate watermark text
-
-**Integration Status:**
-- ⚠️ **NOT INTEGRATED:** Watermark module exists but is not called from `lib/ai/router.ts`
-- ⚠️ **NOT INTEGRATED:** No watermark applied during enhancement process
-- ✅ **AVAILABLE FOR USE:** Can be imported and used immediately
-
-**Correction:** The watermark functionality is fully implemented in the compliance module but needs to be integrated into the AI enhancement router to apply watermarks during virtual staging and other applicable tools.
-
----
-
-### 12.2 Other Status Verifications
-
-**Verified Still Missing:**
-- ❌ `lib/ai/policy.ts` - Still does not exist
-- ❌ `app/api/mls-pack/route.ts` - Still does not exist
-- ❌ `app/api/user/set-role/route.ts` - Still does not exist
-- ❌ `components/dashboards/photographer.tsx` - Still does not exist
-- ❌ `components/dashboards/agent.tsx` - Still does not exist
-
-**Verified Still Working:**
-- ✅ `app/api/listings/route.ts` - Still functional
-- ✅ `app/api/enhance/route.ts` - Still functional (but no region/userRole passing)
-- ✅ `lib/compliance/mls-export.ts` - Still complete and functional
-- ✅ `components/studio-client.tsx` - Still functional
-
-**No Changes Detected:**
-- Dashboard still doesn't implement role-based routing
-- AI router still doesn't have US market mode logic
-- Enhance API still doesn't pass region/userRole
-- Onboarding still saves to profiles.role
-
----
-
-## Conclusion
-
-**Overall Status:** ⚠️ **APPLICATION IS FUNCTIONAL BUT HAS CRITICAL SCHEMA ISSUES**
-
-The application core functionality (listings, enhancements, uploads) is working correctly. However, there are critical schema mismatches and missing role-based features that prevent the complete user flow from working end-to-end.
-
-**Key Correction:** Watermark functionality exists and is ready to use - it just needs integration into the AI router.
-
-**Priority Actions:**
-1. Fix database schema and role field
-2. Implement role-based dashboard
-3. Re-implement US market mode features (policy engine + integrate existing watermark)
-4. Integrate MLS export into UI
-
-**Estimated Fix Time:** 2-3 days for critical issues, 1 week for all features.
-
----
-
-**End of Audit Report**
+- **Project:** ~2800 TS/TSX/JSON source files; 134 API routes; 124 pages
+- **Automation:** Full loop Upload → Prepare → Market → Distribute → Measure
+- **AI:** 23 enhancement tools, GPT descriptions/captions, voiceover, video
+- **Social:** Facebook, Instagram, LinkedIn, TikTok (TikTok pending env + audit)
+- **Known issues:** No subscription check on prepare; usage counted at creation; Worker cost logging missing; some "Coming Soon" features

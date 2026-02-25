@@ -2,7 +2,8 @@
 // Campaign Engine API
 
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
+import { createClient } from '@/lib/supabase/server';
+import { adminSupabase } from '@/lib/supabase/admin';
 import {
   triggerCampaign,
   approveQueueItem,
@@ -17,26 +18,26 @@ import {
 } from '@/lib/campaigns/engine';
 import { processQueueItem, processCampaignContent } from '@/lib/campaigns/content-generator';
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
-
 // GET - Fetch campaigns, queue, or triggers
 export async function GET(request: NextRequest) {
-  const supabase = createClient(supabaseUrl, supabaseServiceKey);
-  const { searchParams } = new URL(request.url);
-  const userId = searchParams.get('userId');
-  const type = searchParams.get('type') || 'campaigns';
-  const campaignId = searchParams.get('campaignId');
-  const status = searchParams.get('status');
-
-  if (!userId) {
-    return NextResponse.json({ error: 'userId required' }, { status: 400 });
-  }
-
   try {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const userId = user.id;
+    const admin = adminSupabase();
+    const { searchParams } = new URL(request.url);
+    const type = searchParams.get('type') || 'campaigns';
+    const campaignId = searchParams.get('campaignId');
+    const status = searchParams.get('status');
+
     switch (type) {
       case 'campaigns': {
-        let query = supabase
+        let query = admin
           .from('campaigns')
           .select(`
             *,
@@ -57,7 +58,7 @@ export async function GET(request: NextRequest) {
       }
 
       case 'queue': {
-        let query = supabase
+        let query = admin
           .from('campaign_queue')
           .select(`
             *,
@@ -85,14 +86,14 @@ export async function GET(request: NextRequest) {
 
       case 'triggers': {
         const triggers = await getUserTriggers(userId);
-        return NextResponse.json({ 
+        return NextResponse.json({
           triggers,
           availableStatuses: LISTING_STATUSES,
         });
       }
 
       case 'templates': {
-        const { data, error } = await supabase
+        const { data, error } = await admin
           .from('campaign_templates')
           .select('*')
           .eq('is_active', true)
@@ -103,7 +104,7 @@ export async function GET(request: NextRequest) {
       }
 
       case 'history': {
-        const { data, error } = await supabase
+        const { data, error } = await admin
           .from('campaign_history')
           .select(`
             *,
@@ -120,12 +121,12 @@ export async function GET(request: NextRequest) {
 
       case 'stats': {
         // Get campaign stats for user
-        const { data: campaigns } = await supabase
+        const { data: campaigns } = await admin
           .from('campaigns')
           .select('status')
           .eq('user_id', userId);
 
-        const { data: queueItems } = await supabase
+        const { data: queueItems } = await admin
           .from('campaign_queue')
           .select('status')
           .eq('user_id', userId);
@@ -144,8 +145,9 @@ export async function GET(request: NextRequest) {
       default:
         return NextResponse.json({ error: 'Invalid type' }, { status: 400 });
     }
-  } catch (error) {
-    console.error('Campaign GET error:', error);
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Failed to fetch data';
+    console.error('Campaign GET error:', message);
     return NextResponse.json({ error: 'Failed to fetch data' }, { status: 500 });
   }
 }
@@ -153,12 +155,16 @@ export async function GET(request: NextRequest) {
 // POST - Trigger campaign or perform actions
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
-    const { action, userId } = body;
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
 
-    if (!userId) {
-      return NextResponse.json({ error: 'userId required' }, { status: 400 });
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
+
+    const userId = user.id;
+    const body = await request.json();
+    const { action } = body;
 
     switch (action) {
       case 'trigger': {
@@ -259,8 +265,9 @@ export async function POST(request: NextRequest) {
       default:
         return NextResponse.json({ error: 'Invalid action' }, { status: 400 });
     }
-  } catch (error) {
-    console.error('Campaign POST error:', error);
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Failed to process request';
+    console.error('Campaign POST error:', message);
     return NextResponse.json({ error: 'Failed to process request' }, { status: 500 });
   }
 }

@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import OpenAI from 'openai'
+import { createClient } from '@/lib/supabase/server'
 
 function getOpenAIClient(): OpenAI {
   return new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
@@ -13,6 +14,13 @@ const LANGUAGES: Record<string, string> = {
 
 export async function POST(request: Request) {
   try {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
     const { text, targetLanguage } = await request.json()
     if (!text || !targetLanguage) return NextResponse.json({ error: 'Text and target language required' }, { status: 400 })
 
@@ -29,8 +37,9 @@ export async function POST(request: Request) {
     })
 
     return NextResponse.json({ translatedText: response.choices[0]?.message?.content?.trim() || '', language: languageName, languageCode: targetLanguage })
-  } catch (error) {
-    console.error('Translation error:', error)
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Failed to translate';
+    console.error('Translation error:', message)
     return NextResponse.json({ error: 'Failed to translate' }, { status: 500 })
   }
 }

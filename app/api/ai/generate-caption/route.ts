@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import OpenAI from 'openai'
+import { createClient } from '@/lib/supabase/server'
 
 function getOpenAIClient(): OpenAI {
   return new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
@@ -7,6 +8,13 @@ function getOpenAIClient(): OpenAI {
 
 export async function POST(request: NextRequest) {
   try {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
     const { prompt, platform } = await request.json()
 
     if (!prompt) {
@@ -25,7 +33,7 @@ export async function POST(request: NextRequest) {
       linkedin: 'Target 100-150 words. Professional and concise.',
       tiktok: 'Target 50-100 words. Short, punchy, and trendy.'
     }
-    
+
     const systemPrompt = `You are an expert real estate social media copywriter with 10+ years of experience creating high-converting content for top agents. You understand the psychology of home buyers and know exactly how to craft captions that generate leads.
 
 ${targetLengths[platform] || targetLengths.instagram}
@@ -48,22 +56,22 @@ IMPORTANT RULES:
       temperature: 0.8,
       max_tokens: 500,
     })
-    
+
     const caption = completion.choices[0]?.message?.content?.trim() || ''
-    
-    // Track usage for billing
+
+    // Track usage
     const usage = {
       prompt_tokens: completion.usage?.prompt_tokens || 0,
       completion_tokens: completion.usage?.completion_tokens || 0,
       total_tokens: completion.usage?.total_tokens || 0,
     }
-    
+
     return NextResponse.json({
       caption,
       usage,
       platform
     })
-    
+
   } catch (error: unknown) {
     console.error('Caption generation error:', error)
 

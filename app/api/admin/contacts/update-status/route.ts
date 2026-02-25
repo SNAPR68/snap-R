@@ -10,19 +10,28 @@ function getSupabase() {
 
 export async function POST(req: NextRequest) {
   try {
+    // Admin routes require WORKER_ADMIN_KEY
+    const adminKey = req.headers.get('x-admin-key') || req.headers.get('authorization')?.replace('Bearer ', '');
+    if (!adminKey || adminKey !== process.env.WORKER_ADMIN_KEY) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     const { id, status } = await req.json();
-    
+
+    if (!id || !status) {
+      return NextResponse.json({ error: 'id and status are required' }, { status: 400 });
+    }
+
     const { error } = await getSupabase()
       .from('contact_submissions')
       .update({ status })
       .eq('id', id);
 
     if (error) throw error;
-    
+
     return NextResponse.json({ success: true });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Internal server error';
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }
-

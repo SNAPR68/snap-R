@@ -1,6 +1,35 @@
 # SnapR Execution Changelog
 =================================
 
+## 2026-02-25 — Phase 11: Security Hardening
+
+### 1. Remove NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY (4 files)
+- **`lib/supabase/admin.ts`** — Removed `NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY` fallback. Now uses only `SUPABASE_SERVICE_ROLE_KEY`.
+- **`app/sitemap.ts`** — Replaced `NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY || SUPABASE_SERVICE_ROLE_KEY` with just `SUPABASE_SERVICE_ROLE_KEY`.
+- **`app/share/[token]/page.tsx`** — Same fix as sitemap.
+- **`lib/ai/providers/sam-masks.ts`** — Removed `NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY` from fallback chain. Also fixed 8 lint warnings (4 `any` types → `unknown`/`Record`, 2 unused vars, 1 unused param, 1 anonymous default export).
+
+### 2. Add Auth to Admin Routes
+- **`app/api/admin/contacts/update-status/route.ts`** — Added `WORKER_ADMIN_KEY` bearer token check. Previously had zero authentication — any caller could update contact submission status.
+
+### 3. Fix Caller-Supplied userId (IDOR Prevention)
+- **`app/api/listings/status/route.ts`** — Replaced caller-supplied `userId` from request body with session-verified user from `createClient()` + `getUser()`. Uses `adminSupabase()` for DB writes. Prevents IDOR where attacker supplies another user's ID.
+- **`app/api/campaigns/route.ts`** — Same session auth fix for both GET and POST handlers. Replaced `createClient(url, serviceKey)` with session-based auth + `adminSupabase()` for DB operations.
+
+### 4. Add Auth to AI Routes
+- **`app/api/ai/generate-caption/route.ts`** — Added session auth via `createClient()` + `getUser()`. Previously unauthenticated — anyone could burn OpenAI API credits.
+- **`app/api/translate/route.ts`** — Same session auth addition. Fixed catch block to typed pattern.
+
+### 5. Gate Sentry Example Route
+- **`app/api/sentry-example-api/route.ts`** — Returns 404 in production. Removed Sentry import to prevent noise. Only throws test error in development.
+
+### 6. Environment Documentation
+- **`.env.example`** [NEW] — Documents all environment variables organized by category (Supabase, AI, Stripe, Email, Cloudflare, Remotion, Social OAuth, WhatsApp, Cron/Admin, Rate Limiting, Monitoring, AI Tuning). Marks required vs optional.
+
+**Verification:** `npx tsc --noEmit` clean | `npx vitest run` 93/93 passed | `npm run build` clean
+
+---
+
 ## 2026-02-25 — Phase 10: WhatsApp Fix, Description Dedup, Worker Type Hardening
 
 ### 1. WhatsApp Webhook Fix

@@ -1,17 +1,12 @@
-import * as Sentry from "@sentry/nextjs";
-export const dynamic = "force-dynamic";
+import { NextResponse } from 'next/server';
 
-class SentryExampleAPIError extends Error {
-  constructor(message: string | undefined) {
-    super(message);
-    this.name = "SentryExampleAPIError";
-  }
-}
+export const dynamic = 'force-dynamic';
 
-// A faulty API route to test Sentry's error monitoring
+// Sentry test route — only enabled in development
 export function GET() {
-  Sentry.logger.info("Sentry example API called");
-  throw new SentryExampleAPIError(
-    "This error is raised on the backend called by the example page.",
-  );
+  if (process.env.NODE_ENV === 'production') {
+    return NextResponse.json({ error: 'Not found' }, { status: 404 });
+  }
+
+  throw new Error('Sentry example error — this only fires in development');
 }

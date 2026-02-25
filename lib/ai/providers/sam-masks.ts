@@ -1,14 +1,14 @@
 /**
  * SnapR V3 - SAM Masks Provider
  * ==============================
- * 
+ *
  * Integrates Meta's Segment Anything Model (SAM 2) for precise mask generation.
  * Used for:
  * - Window detection (for exposure balancing)
  * - Sky segmentation (for replacement)
  * - Lawn segmentation (for enhancement)
  * - Floor detection (for virtual staging)
- * 
+ *
  * Provider: Replicate (schananas/grounded_sam)
  * Cost: ~$0.01/mask
  */
@@ -17,7 +17,8 @@ import Replicate from 'replicate';
 import { deflateSync } from 'node:zlib';
 import { enqueueReplicate } from './replicate-queue';
 
-let sharpModule: any = null;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+let sharpModule: Record<string, any> | null = null;
 
 async function getSharp() {
   if (!sharpModule) {
@@ -80,10 +81,10 @@ const CONFIG = {
   SAM_MODEL: process.env.AI_SAM_MODEL || 'schananas/grounded_sam:ee871c19efb1941f55f66a3d7d960428c8a5afcb77449547fe8e5a3ab9ebc21c',
   REPLICATE_TIMEOUT_MS: 30000,
   REPLICATE_MIN_INTERVAL_MS: Number(process.env.REPLICATE_MIN_INTERVAL_MS || 12000),
-  
+
   // Cost
   COST_PER_MASK: 0.01,
-  
+
   // Detection thresholds
   WINDOW_BRIGHTNESS_THRESHOLD: 230,
   SKY_REGION_RATIO: 0.15, // Top 15% of image for sky sampling
@@ -106,11 +107,11 @@ const CONFIG = {
  */
 export const DETECTION_STRATEGIES: Record<MaskType, DetectionStrategy> = {
   window: {
-    positivePoints: (width, height, imageData) => {
+    positivePoints: (width, height) => {
       // Find bright rectangular areas (windows are typically bright)
       // This is a simplified heuristic - in production, use ML detection
       const points: Point[] = [];
-      
+
       // Sample interior region (windows usually in middle/upper area)
       const regions = [
         { x: 0.25, y: 0.3 },  // Upper left
@@ -119,7 +120,7 @@ export const DETECTION_STRATEGIES: Record<MaskType, DetectionStrategy> = {
         { x: 0.25, y: 0.6 },  // Mid left
         { x: 0.75, y: 0.6 },  // Mid right
       ];
-      
+
       for (const r of regions) {
         points.push({
           x: Math.round(width * r.x),
@@ -127,7 +128,7 @@ export const DETECTION_STRATEGIES: Record<MaskType, DetectionStrategy> = {
           label: 1,
         });
       }
-      
+
       return points;
     },
     negativePoints: (width, height) => [
@@ -137,13 +138,12 @@ export const DETECTION_STRATEGIES: Record<MaskType, DetectionStrategy> = {
       { x: Math.round(width * 0.5), y: height - 20, label: 0 },
     ],
   },
-  
+
   sky: {
     positivePoints: (width, height) => {
       // Sample top portion of image
       const points: Point[] = [];
-      const skyRegion = height * CONFIG.SKY_REGION_RATIO;
-      
+
       // Grid sample the sky region
       for (let x = 0.1; x <= 0.9; x += 0.2) {
         for (let y = 0.05; y <= 0.12; y += 0.04) {
@@ -154,7 +154,7 @@ export const DETECTION_STRATEGIES: Record<MaskType, DetectionStrategy> = {
           });
         }
       }
-      
+
       return points;
     },
     negativePoints: (width, height) => [
@@ -164,12 +164,12 @@ export const DETECTION_STRATEGIES: Record<MaskType, DetectionStrategy> = {
       { x: Math.round(width * 0.75), y: Math.round(height * 0.85), label: 0 },
     ],
   },
-  
+
   lawn: {
     positivePoints: (width, height) => {
       // Sample lower portion of image (grass/lawn area)
       const points: Point[] = [];
-      
+
       // Bottom third, avoiding edges
       for (let x = 0.2; x <= 0.8; x += 0.2) {
         for (let y = 0.7; y <= 0.9; y += 0.1) {
@@ -180,7 +180,7 @@ export const DETECTION_STRATEGIES: Record<MaskType, DetectionStrategy> = {
           });
         }
       }
-      
+
       return points;
     },
     negativePoints: (width, height) => [
@@ -189,12 +189,12 @@ export const DETECTION_STRATEGIES: Record<MaskType, DetectionStrategy> = {
       { x: Math.round(width * 0.5), y: Math.round(height * 0.4), label: 0 },
     ],
   },
-  
+
   floor: {
     positivePoints: (width, height) => {
       // Sample bottom center area
       const points: Point[] = [];
-      
+
       for (let x = 0.3; x <= 0.7; x += 0.2) {
         points.push({
           x: Math.round(width * x),
@@ -202,7 +202,7 @@ export const DETECTION_STRATEGIES: Record<MaskType, DetectionStrategy> = {
           label: 1,
         });
       }
-      
+
       return points;
     },
     negativePoints: (width, height) => [
@@ -212,7 +212,7 @@ export const DETECTION_STRATEGIES: Record<MaskType, DetectionStrategy> = {
       { x: width - 10, y: Math.round(height * 0.5), label: 0 },
     ],
   },
-  
+
   pool: {
     positivePoints: (width, height) => {
       // Sample center-bottom area where pools typically are
@@ -227,7 +227,7 @@ export const DETECTION_STRATEGIES: Record<MaskType, DetectionStrategy> = {
       { x: 10, y: 10, label: 0 },
     ],
   },
-  
+
   custom: {
     positivePoints: () => [],
     negativePoints: () => [],
@@ -252,7 +252,7 @@ export class SAMMasksClient {
   private static resolvedModel: string | null = null;
   private static badModels = new Set<string>();
   private static resolvedVersions = new Map<string, string>();
-  
+
   constructor(apiToken?: string) {
     this.replicate = new Replicate({
       auth: apiToken || process.env.REPLICATE_API_TOKEN!,
@@ -333,33 +333,33 @@ export class SAMMasksClient {
       return model;
     }
   }
-  
+
   /**
    * Generate a mask using SAM 2
    */
   async generateMask(request: MaskRequest): Promise<MaskResult> {
     const startTime = Date.now();
-    
+
     console.log(`[SAM] Generating ${request.maskType} mask`);
     console.log(`[SAM] Model candidates: ${this.getModelCandidates().join(', ')}`);
-    
+
     try {
       // Get image dimensions
       let imageUrl = request.imageUrl;
       let width = 1024;
       let height = 768;
-      
+
       if (request.imageBuffer) {
         const sharp = await getSharp();
         const metadata = await sharp(request.imageBuffer).metadata();
         width = metadata.width || 1024;
         height = metadata.height || 768;
-        
+
         // Upload buffer to temporary URL if needed
         // In production, use your own upload service
         // For now, assume imageUrl is provided
       }
-      
+
       // Get detection strategy
       const strategy = DETECTION_STRATEGIES[request.maskType];
       const lawnBox =
@@ -375,26 +375,26 @@ export class SAMMasksClient {
             }
           : undefined;
       const effectiveBox = request.box || lawnBox;
-      
+
       // Generate points
-      const positivePoints = request.points?.filter(p => p.label === 1) || 
+      const positivePoints = request.points?.filter(p => p.label === 1) ||
         strategy.positivePoints(width, height, request.imageBuffer);
       const negativePoints = request.points?.filter(p => p.label === 0) ||
         strategy.negativePoints(width, height);
-      
+
       const allPoints = [...positivePoints, ...negativePoints];
-      
+
       if (allPoints.length === 0) {
         throw new Error('No points provided for mask generation');
       }
-      
+
       // Format points for SAM
       const pointCoords = allPoints.map(p => [p.x, p.y]);
       const pointLabels = allPoints.map(p => p.label);
-      
+
       // Call SAM model (try candidates)
-      let output: any;
-      let lastError: any;
+      let output: unknown;
+      let lastError: unknown;
       let resolvedMaskUrl: string | null = null;
       for (const model of this.getModelCandidates()) {
         try {
@@ -428,7 +428,7 @@ export class SAMMasksClient {
           const candidateMaskUrl = extractMaskUrl(output);
           if (!candidateMaskUrl) {
             if (output && typeof output === 'object') {
-              console.warn(`[SAM] ${resolvedModel} output keys:`, Object.keys(output));
+              console.warn(`[SAM] ${resolvedModel} output keys:`, Object.keys(output as Record<string, unknown>));
             }
             lastError = new Error('SAM returned invalid output');
             continue;
@@ -482,15 +482,15 @@ export class SAMMasksClient {
           throw lastError || new Error('SAM returned invalid output');
         }
       }
-      
+
       // Download mask
       const maskResponse = await fetch(resolvedMaskUrl);
       const maskArrayBuffer = await maskResponse.arrayBuffer();
       const maskBuffer = Buffer.from(maskArrayBuffer);
-      
+
       // Analyze mask coverage
       const { area, boundingBox } = await analyzeMask(maskBuffer);
-      
+
       return {
         success: true,
         maskBuffer,
@@ -501,10 +501,10 @@ export class SAMMasksClient {
         processingTimeMs: Date.now() - startTime,
         cost: CONFIG.COST_PER_MASK,
       };
-      
+
     } catch (error) {
       console.error(`[SAM] Mask generation failed:`, error);
-      
+
       return {
         success: false,
         confidence: 0,
@@ -515,7 +515,7 @@ export class SAMMasksClient {
       };
     }
   }
-  
+
   /**
    * Generate multiple masks for an image
    */
@@ -524,16 +524,16 @@ export class SAMMasksClient {
     maskTypes: MaskType[]
   ): Promise<Map<MaskType, MaskResult>> {
     const results = new Map<MaskType, MaskResult>();
-    
+
     // Process masks sequentially to avoid rate limits
     for (const maskType of maskTypes) {
       const result = await this.generateMask({ imageUrl, maskType });
       results.set(maskType, result);
     }
-    
+
     return results;
   }
-  
+
   /**
    * Detect which masks are needed for an image based on analysis
    */
@@ -548,18 +548,18 @@ export class SAMMasksClient {
     }
   ): Promise<MaskType[]> {
     const needed: MaskType[] = [];
-    
+
     if (analysis.hasSky) needed.push('sky');
     if (analysis.hasLawn) needed.push('lawn');
     if (analysis.hasPool) needed.push('pool');
     if (analysis.hasWindows) needed.push('window');
     if (analysis.isEmpty) needed.push('floor');
-    
+
     return needed;
   }
 }
 
-function extractMaskUrl(output: any): string | null {
+function extractMaskUrl(output: unknown): string | null {
   if (!output) return null;
   if (typeof output === 'string') return output;
   if (Array.isArray(output)) {
@@ -569,16 +569,18 @@ function extractMaskUrl(output: any): string | null {
     }
     return null;
   }
-  if (typeof output.url === 'function') return output.url();
-  if (output.mask) return extractMaskUrl(output.mask);
-  if (output.masks) return extractMaskUrl(output.masks);
-  if (output.mask_url) return extractMaskUrl(output.mask_url);
-  if (output.mask_image) return extractMaskUrl(output.mask_image);
-  if (output.segmentation) return extractMaskUrl(output.segmentation);
-  if (output.segmentation_mask) return extractMaskUrl(output.segmentation_mask);
-  if (output.mask_png) return extractMaskUrl(output.mask_png);
-  if (output.png) return extractMaskUrl(output.png);
-  if (output.output) return extractMaskUrl(output.output);
+  if (typeof output !== 'object' || output === null) return null;
+  const obj = output as Record<string, unknown>;
+  if (typeof obj.url === 'function') return (obj.url as () => string)();
+  if (obj.mask) return extractMaskUrl(obj.mask);
+  if (obj.masks) return extractMaskUrl(obj.masks);
+  if (obj.mask_url) return extractMaskUrl(obj.mask_url);
+  if (obj.mask_image) return extractMaskUrl(obj.mask_image);
+  if (obj.segmentation) return extractMaskUrl(obj.segmentation);
+  if (obj.segmentation_mask) return extractMaskUrl(obj.segmentation_mask);
+  if (obj.mask_png) return extractMaskUrl(obj.mask_png);
+  if (obj.png) return extractMaskUrl(obj.png);
+  if (obj.output) return extractMaskUrl(obj.output);
   return null;
 }
 
@@ -600,8 +602,7 @@ async function uploadMaskToSupabase(maskBuffer: Buffer): Promise<string | null> 
     process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
   const serviceKey =
     process.env.SUPABASE_SERVICE_ROLE_KEY ||
-    process.env.SUPABASE_SERVICE_KEY ||
-    process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY;
+    process.env.SUPABASE_SERVICE_KEY;
 
   if (!supabaseUrl || !serviceKey) {
     return null;
@@ -821,19 +822,19 @@ async function analyzeMask(maskBuffer: Buffer): Promise<{
     .greyscale()
     .raw()
     .toBuffer({ resolveWithObject: true });
-  
+
   const width = info.width;
   const height = info.height;
   const totalPixels = width * height;
-  
+
   let whitePixels = 0;
   let minX = width, maxX = 0;
   let minY = height, maxY = 0;
-  
+
   for (let y = 0; y < height; y++) {
     for (let x = 0; x < width; x++) {
       const pixel = data[y * width + x];
-      
+
       if (pixel > 128) { // White (masked) pixel
         whitePixels++;
         minX = Math.min(minX, x);
@@ -843,9 +844,9 @@ async function analyzeMask(maskBuffer: Buffer): Promise<{
       }
     }
   }
-  
+
   const area = (whitePixels / totalPixels) * 100;
-  
+
   return {
     area,
     boundingBox: {
@@ -869,14 +870,14 @@ export async function visualizeMask(
   // Create colored overlay from mask
   const sharp = await getSharp();
   const overlay = await sharp(maskBuffer)
-    .ensureAlpha()
+    .ensureAlpha(opacity)
     .tint(color)
     .composite([{
       input: maskBuffer,
       blend: 'dest-in',
     }])
     .toBuffer();
-  
+
   // Composite onto original image
   return sharp(imageBuffer)
     .composite([{
@@ -899,15 +900,15 @@ export async function applyMaskBlend(
   // Resize overlay to match base
   const sharp = await getSharp();
   const baseMetadata = await sharp(baseImage).metadata();
-  
+
   const resizedOverlay = await sharp(overlayImage)
     .resize(baseMetadata.width, baseMetadata.height)
     .toBuffer();
-  
+
   const resizedMask = await sharp(mask)
     .resize(baseMetadata.width, baseMetadata.height)
     .toBuffer();
-  
+
   // Composite using mask
   return sharp(baseImage)
     .composite([{
@@ -926,10 +927,11 @@ export async function applyMaskBlend(
 // EXPORTS
 // ============================================
 
-export default {
+const samMasksExports = {
   SAMMasksClient,
   DETECTION_STRATEGIES,
   visualizeMask,
   applyMaskBlend,
   CONFIG,
 };
+export default samMasksExports;
