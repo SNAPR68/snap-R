@@ -1,6 +1,26 @@
 # SnapR Execution Changelog
 =================================
 
+## 2026-02-25 — Phase 10: WhatsApp Fix, Description Dedup, Worker Type Hardening
+
+### 1. WhatsApp Webhook Fix
+- **`app/api/webhooks/whatsapp/route.ts`** — Replaced `createClient` from `@/lib/supabase/server` (auth-based, requires session) with service role client from `@supabase/supabase-js` (Twilio webhooks have no user session). Replaced all 8 `any` type annotations with `SupabaseClient` and `ListingRow` interface. Fixed error message ("Download failed" → "Unknown error"). Fixed dead link (`/dashboard/clients` → `/dashboard/approvals`).
+
+### 2. AI Description Deduplication
+- **`apps/processor/src/marketing-handler.ts`** — Step 1 (Description) now checks for existing completed description from a previous marketing job for the same listing before generating a fresh one. If found, reuses it at zero AI cost. Prevents duplicate AI spend on re-triggered marketing jobs.
+- **`apps/processor/src/index.ts`** — Auto-trigger after preparation now checks for existing marketing job (queued/processing/completed) before creating a new one. Skips auto-trigger if a job already exists, preventing duplicate marketing pipelines entirely.
+
+### 3. Worker Type Hardening (14 `any` eliminations)
+- **`apps/processor/src/types.ts`** — Added 4 missing optional fields to `Env` interface (`AUTOENHANCE_API_KEY`, `ANALYSIS_PROVIDER`, `ANALYSIS_REPLICATE_MODEL`, `AI_ANALYSIS_FAIL_OPEN`).
+- **`apps/processor/src/index.ts`** — Replaced all 14 `any` types: `globalThis` polyfill uses typed `_global` constant with eslint-disable, `env` casts removed (fields now in Env), `PhotoStrategy` type imported for strategy arrays, `SupabaseClient` return type for supabase param. Removed unused `JobMessage` import and `updatePhotoStatus` variable. Named the default export.
+
+### 4. CLAUDE.md Corrections
+- **`CLAUDE.md`** — Removed "credits" from profiles table description (app is listing-based, not credit-based). Changed "zero AI credits burned" to "zero AI cost incurred".
+
+**Verification:** `npx tsc --noEmit` clean | `npx vitest run` 93/93 passed | `npm run build` clean
+
+---
+
 ## 2026-02-24 — Phase 9: Analytics Events Table, Approval Workflow, API Hardening
 
 ### 1. Analytics Events & Error Logs Migration

@@ -7,13 +7,14 @@ type MessageBatch<T> = {
   }>;
 };
 
-if (!(globalThis as any).process) {
-  (globalThis as any).process = { env: {} };
+const _global = globalThis as unknown as Record<string, unknown>;
+if (!_global.process) {
+  _global.process = { env: {} };
 }
 
 // Cloudflare Workers don't implement process.report; force-stub to avoid unenv crashes.
 function ensureProcessReportStub() {
-  const proc = (globalThis as any).process;
+  const proc = _global.process as Record<string, unknown>;
   try {
     Object.defineProperty(proc, 'report', {
       value: { getReport: () => ({}) },
@@ -45,26 +46,26 @@ ensureProcessReportStub();
 
 // Function to update with real env values
 function updateProcessEnv(env: Env) {
-  (globalThis as any).process.env = {
+  (_global.process as Record<string, unknown>).env = {
     REPLICATE_API_TOKEN: env.REPLICATE_API_TOKEN || '',
-    AUTOENHANCE_API_KEY: (env as any).AUTOENHANCE_API_KEY || '',
+    AUTOENHANCE_API_KEY: env.AUTOENHANCE_API_KEY || '',
     OPENAI_API_KEY: env.OPENAI_API_KEY || '',
     SUPABASE_URL: env.SUPABASE_URL || '',
     SUPABASE_SERVICE_KEY: env.SUPABASE_SERVICE_KEY || '',
     NEXT_PUBLIC_SUPABASE_URL: env.SUPABASE_URL || '',
     SUPABASE_SERVICE_ROLE_KEY: env.SUPABASE_SERVICE_KEY || '',
-    ANALYSIS_PROVIDER: (env as any).ANALYSIS_PROVIDER || '',
-    ANALYSIS_REPLICATE_MODEL: (env as any).ANALYSIS_REPLICATE_MODEL || '',
-    AI_ANALYSIS_FAIL_OPEN: (env as any).AI_ANALYSIS_FAIL_OPEN || '',
-    ANALYSIS_CONCURRENCY: (env as any).ANALYSIS_CONCURRENCY || '',
-    ANALYSIS_BATCH_DELAY_MS: (env as any).ANALYSIS_BATCH_DELAY_MS || '',
+    ANALYSIS_PROVIDER: env.ANALYSIS_PROVIDER || '',
+    ANALYSIS_REPLICATE_MODEL: env.ANALYSIS_REPLICATE_MODEL || '',
+    AI_ANALYSIS_FAIL_OPEN: env.AI_ANALYSIS_FAIL_OPEN || '',
+    ANALYSIS_CONCURRENCY: env.ANALYSIS_CONCURRENCY || '',
+    ANALYSIS_BATCH_DELAY_MS: env.ANALYSIS_BATCH_DELAY_MS || '',
   };
   ensureProcessReportStub();
 }
 
-import type { Env, JobMessage, QueueMessage, MarketingJobMessage, ProcessingCheckpoint } from './types.js';
+import type { Env, QueueMessage, MarketingJobMessage, ProcessingCheckpoint } from './types.js';
 import type { ToolId } from '../../../lib/ai/router.js';
-import type { PhotoAnalysis } from '../../../lib/ai/listing-engine/types.js';
+import type { PhotoAnalysis, PhotoStrategy } from '../../../lib/ai/listing-engine/types.js';
 
 type WorkerDeps = typeof import('./lib/supabase-client.js');
 let cachedWorkerDeps: WorkerDeps | null = null;
@@ -383,7 +384,7 @@ function getToolStrength(tool: ToolId, analysis?: PhotoAnalysis): FluxOptions | 
 function buildStrategyAudit(
   listingId: string,
   analysesById: Map<string, PhotoAnalysis>,
-  strategy: { heroPhotoId: string | null; photoStrategies: Array<any> },
+  strategy: { heroPhotoId: string | null; photoStrategies: Array<PhotoStrategy> },
   presets: LockedPresets
 ) {
   return {
@@ -396,7 +397,7 @@ function buildStrategyAudit(
       colorTemp: presets.colorTemp,
       declutter: presets.declutterLevel,
     },
-    photos: strategy.photoStrategies.map((photoStrategy: any) => {
+    photos: strategy.photoStrategies.map((photoStrategy: PhotoStrategy) => {
       const analysis = analysesById.get(photoStrategy.photoId);
       return {
         photoId: photoStrategy.photoId,
@@ -586,7 +587,7 @@ async function processOnePhoto(
   analysis: PhotoAnalysis | undefined,
   presets: LockedPresets,
   costTracker: CostTracker,
-  supabase: any,
+  supabase: ReturnType<typeof createSupabaseClient>,
   userId: string,
   listingId: string,
   env: Env
@@ -693,7 +694,9 @@ async function processOnePhoto(
   };
 }
 
-export default {
+// Named worker export for Cloudflare Workers runtime
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+const worker = {
   async queue(batch: MessageBatch<QueueMessage>, env: Env): Promise<void> {
     // Update process.env with real values
     updateProcessEnv(env);
@@ -724,7 +727,6 @@ export default {
     const {
       createSupabaseClient,
       updateJobStatus,
-      updatePhotoStatus,
       updateListingPreparationStatus,
       getListingPhotos,
       createCheckpoint,
@@ -870,7 +872,7 @@ export default {
             batch.map((photo, idx) => {
               const globalIdx = batchStart + idx;
               const strategyForPhoto = strategy.photoStrategies.find(
-                (s: any) => s.photoId === photo.id
+                (s: PhotoStrategy) => s.photoId === photo.id
               );
               const analysis = analysesById.get(photo.id);
 
@@ -969,27 +971,42 @@ export default {
         // =============================================
         // PHASE 2: AUTO-TRIGGER MARKETING
         // Listing is prepared → enqueue marketing job
+        // Dedup: skip if a marketing job already exists for this listing
         // =============================================
         try {
-          const marketingJobId = crypto.randomUUID();
           const supabaseForMarketing = createSupabaseClient(env);
-          await supabaseForMarketing
+
+          // Check for existing marketing job (any status) to prevent duplicates
+          const { data: existingJob } = await supabaseForMarketing
             .from('marketing_jobs')
-            .insert({
-              id: marketingJobId,
-              listing_id: listingId,
-              user_id: userId,
-              status: 'queued',
+            .select('id, status')
+            .eq('listing_id', listingId)
+            .in('status', ['queued', 'processing', 'completed'])
+            .limit(1)
+            .maybeSingle();
+
+          if (existingJob) {
+            console.log(`[Worker] Marketing job already exists for listing ${listingId} (${existingJob.id}, status: ${existingJob.status}) — skipping auto-trigger`);
+          } else {
+            const marketingJobId = crypto.randomUUID();
+            await supabaseForMarketing
+              .from('marketing_jobs')
+              .insert({
+                id: marketingJobId,
+                listing_id: listingId,
+                user_id: userId,
+                status: 'queued',
+              });
+
+            await env.SNAPR_QUEUE.send({
+              type: 'marketing' as const,
+              jobId: marketingJobId,
+              listingId,
+              userId,
             });
 
-          await env.SNAPR_QUEUE.send({
-            type: 'marketing' as const,
-            jobId: marketingJobId,
-            listingId,
-            userId,
-          });
-
-          console.log(`[Worker] Marketing job ${marketingJobId} auto-triggered for listing ${listingId}`);
+            console.log(`[Worker] Marketing job ${marketingJobId} auto-triggered for listing ${listingId}`);
+          }
         } catch (marketingError) {
           // Marketing trigger failure is non-fatal — preparation is already complete
           console.error(`[Worker] Failed to auto-trigger marketing for listing ${listingId}:`, marketingError);
@@ -1117,3 +1134,4 @@ export default {
     return new Response('Not Found', { status: 404 });
   }
 };
+export default worker;

@@ -91,7 +91,7 @@ npm run preview         # Local Worker testing (wrangler dev)
 Supabase PostgreSQL with RLS. Key tables:
 
 ### Core
-- `profiles` - User profiles, subscription_tier, credits, onboarding status
+- `profiles` - User profiles, subscription_tier, onboarding status, phone, notification_preferences
 - `listings` - Property listings with `preparation_status`, `marketing_status`, `hero_photo_id`, `preparation_metadata`
 - `photos` - Listing photos with processing status, raw_url, processed_url, variant, confidence
 - `jobs` - Processing job tracking (queued/processing/completed/failed)
@@ -144,7 +144,7 @@ const limits = getPlanLimits(tier) // returns { canPublish, canAccessContentStud
 ```
 
 **Billing gates enforced at:**
-1. `marketing-handler.ts` — free-tier users get `status: 'skipped'` immediately, zero AI credits burned
+1. `marketing-handler.ts` — free-tier users get `status: 'skipped'` immediately, zero AI cost incurred
 2. `publish-scheduled/route.ts` — `getPlanLimits(tier).canPublish` check before each post
 
 ## Cloudflare Worker (apps/processor)

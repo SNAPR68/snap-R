@@ -152,39 +152,69 @@ export async function handleMarketingJob(
 
   // =============================================
   // STEP 1: Generate MLS Description
+  // Dedup: reuse existing description from a previous completed job if available
   // =============================================
   await updateStepStatus(supabase, jobId, 'description_status', 'processing');
   const descStart = Date.now();
   try {
-    const { generateListingDescription } = await import(
-      '../../../lib/ai/description-generator.js'
-    );
+    // Check for existing completed description for this listing (dedup)
+    const { data: previousJob } = await supabase
+      .from('marketing_jobs')
+      .select('description_result')
+      .eq('listing_id', listingId)
+      .eq('description_status', 'completed')
+      .neq('id', jobId)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
 
-    const descriptionResult = await generateListingDescription(
-      photoUrls,
-      {
-        title: listing.title || undefined,
-        address: listing.address || undefined,
-        city: listing.city || addressParts.city,
-        state: listing.state || addressParts.state,
-        price: listing.price || undefined,
-        beds: listing.bedrooms || undefined,
-        baths: listing.bathrooms || undefined,
-        sqft: listing.square_feet || undefined,
-        propertyType: listing.property_type || undefined,
-      },
-      'professional',
-      'medium',
-      openaiClient
-    );
+    let descriptionResult;
 
-    const descMs = Date.now() - descStart;
-    costBreakdown.description = {
-      status: 'completed',
-      durationMs: descMs,
-      costCents: MARKETING_COST_CENTS.description,
-    };
-    costBreakdown.totalCostCents += MARKETING_COST_CENTS.description;
+    if (previousJob?.description_result) {
+      // Reuse existing description — no AI cost
+      descriptionResult = previousJob.description_result;
+      console.log(`[Marketing] Reusing existing description for listing ${listingId}`);
+
+      const descMs = Date.now() - descStart;
+      costBreakdown.description = {
+        status: 'completed',
+        durationMs: descMs,
+        costCents: 0, // No AI cost — reused
+      };
+    } else {
+      // Generate fresh description
+      const { generateListingDescription } = await import(
+        '../../../lib/ai/description-generator.js'
+      );
+
+      descriptionResult = await generateListingDescription(
+        photoUrls,
+        {
+          title: listing.title || undefined,
+          address: listing.address || undefined,
+          city: listing.city || addressParts.city,
+          state: listing.state || addressParts.state,
+          price: listing.price || undefined,
+          beds: listing.bedrooms || undefined,
+          baths: listing.bathrooms || undefined,
+          sqft: listing.square_feet || undefined,
+          propertyType: listing.property_type || undefined,
+        },
+        'professional',
+        'medium',
+        openaiClient
+      );
+
+      const descMs = Date.now() - descStart;
+      costBreakdown.description = {
+        status: 'completed',
+        durationMs: descMs,
+        costCents: MARKETING_COST_CENTS.description,
+      };
+      costBreakdown.totalCostCents += MARKETING_COST_CENTS.description;
+
+      console.log(`[Marketing] Description generated (${descMs}ms)`);
+    }
 
     await supabase
       .from('marketing_jobs')
@@ -195,7 +225,6 @@ export async function handleMarketingJob(
       })
       .eq('id', jobId);
 
-    console.log(`[Marketing] Description generated (${descMs}ms)`);
   } catch (error) {
     const descMs = Date.now() - descStart;
     costBreakdown.description = {

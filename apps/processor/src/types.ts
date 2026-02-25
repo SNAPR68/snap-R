@@ -48,6 +48,12 @@ export interface Env {
   ANALYSIS_CONCURRENCY?: string;
   ANALYSIS_BATCH_DELAY_MS?: string;
 
+  // Optional provider config
+  AUTOENHANCE_API_KEY?: string;
+  ANALYSIS_PROVIDER?: string;
+  ANALYSIS_REPLICATE_MODEL?: string;
+  AI_ANALYSIS_FAIL_OPEN?: string;
+
   // Video pipeline (Phase 5)
   NEXT_PUBLIC_BASE_URL?: string;
   CRON_SECRET?: string;
