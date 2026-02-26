@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef } from 'react';
+import Image from 'next/image';
 
 const GALLERY_ITEMS = [
   {
@@ -50,13 +51,6 @@ const GALLERY_ITEMS = [
 function HoverSlider({ item }: { item: typeof GALLERY_ITEMS[0] }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [position, setPosition] = useState(50);
-  const [width, setWidth] = useState(400);
-
-  useEffect(() => {
-    if (containerRef.current) {
-      setWidth(containerRef.current.offsetWidth);
-    }
-  }, []);
 
   const handleMouseMove = (e: React.MouseEvent) => {
     if (!containerRef.current) return;
@@ -82,22 +76,26 @@ function HoverSlider({ item }: { item: typeof GALLERY_ITEMS[0] }) {
       onTouchMove={handleTouchMove}
       onMouseLeave={() => setPosition(50)}
     >
-      <img
+      {/* After image — full background */}
+      <Image
         src={item.after}
         alt={`${item.title} after`}
-        className="absolute inset-0 w-full h-full object-cover"
+        fill
+        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+        className="object-cover"
         draggable={false}
       />
 
-      <div className="absolute top-0 left-0 h-full overflow-hidden" style={{ width: `${position}%` }}>
-        <img
-          src={item.before}
-          alt={`${item.title} before`}
-          className="absolute top-0 left-0 h-full object-cover"
-          style={{ width: `${width}px` }}
-          draggable={false}
-        />
-      </div>
+      {/* Before image — revealed via clipPath so it never moves or resizes */}
+      <Image
+        src={item.before}
+        alt={`${item.title} before`}
+        fill
+        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+        className="object-cover"
+        style={{ clipPath: `inset(0 ${100 - position}% 0 0)` }}
+        draggable={false}
+      />
 
       <div className="absolute top-0 h-full w-0.5 bg-white pointer-events-none" style={{ left: `${position}%` }}>
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-10 h-10 bg-white rounded-full shadow-lg flex items-center justify-center">
