@@ -1,6 +1,35 @@
 # SnapR Execution Changelog
 =================================
 
+## 2026-02-26 — RevenueCat Web Analytics + ContentSquare Enhancement
+
+Integrated RevenueCat web SDK for unified subscription analytics and fixed ContentSquare user identification.
+
+### RevenueCat Web SDK
+- Installed `@revenuecat/purchases-js` v1.26.3
+- Created `app/providers/revenuecat-provider.tsx` — lazy-initialises RC with Supabase user ID; attaches Stripe customer ID as subscriber attribute for dashboard cross-reference
+- Created `app/api/webhooks/revenuecat/route.ts` — logs RC events to notification_logs; flags profiles on BILLING_ISSUE/EXPIRATION (Stripe remains source of truth)
+- Created `app/api/user/profile/route.ts` — lightweight GET endpoint returning plan + stripe_customer_id for client-side analytics providers
+- Files Created: `app/providers/revenuecat-provider.tsx`, `app/api/webhooks/revenuecat/route.ts`, `app/api/user/profile/route.ts`
+
+### ContentSquare User Identification
+- Fixed `lib/analytics.ts` `identifyUser()` — now calls `_uxa.push(['setUserIdentity'])` + pushes plan tier as a segmentation variable (was only calling `window.hj()`)
+- Created `components/analytics-identifier.tsx` — null-render client component that fires user identification after auth hydration
+- Files Modified: `lib/analytics.ts`
+- Files Created: `components/analytics-identifier.tsx`
+
+### Provider Wiring
+- Updated `app/providers.tsx` — added `RevenueCatProvider` and `AnalyticsIdentifier` inside `SessionProvider` tree
+- Files Modified: `app/providers.tsx`
+
+### CSP & Config
+- Added `https://api.revenuecat.com`, `https://*.contentsquare.net`, `https://*.contentsquare.com` to `connect-src` in `next.config.mjs`
+- Added `NEXT_PUBLIC_REVENUECAT_PUBLIC_KEY` and `REVENUECAT_WEBHOOK_SECRET` to `.env.example`
+
+### Prerequisites (user must complete in RC dashboard)
+- Create RC account → connect Stripe integration → get Public API Key → set `NEXT_PUBLIC_REVENUECAT_PUBLIC_KEY` in Vercel + `.env.local`
+- Add webhook URL in RC dashboard: `https://snap-r.com/api/webhooks/revenuecat`
+
 ## 2026-02-26 — Homepage Copy + Calendly Fix
 
 Pre-launch copy polish and Calendly integration wired to real URL.

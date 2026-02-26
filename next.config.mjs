@@ -46,7 +46,7 @@ const nextConfig = {
               "img-src 'self' data: blob: https://*.supabase.co https://*.cloudinary.com https://*.workers.dev https://*.stripe.com",
               "media-src 'self' blob: https://*.supabase.co https://*.cloudinary.com",
               "font-src 'self' https://fonts.gstatic.com",
-              "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://*.cloudinary.com https://*.sentry.io https://api.openai.com https://api.stripe.com https://open.tiktokapis.com https://*.workers.dev",
+              "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://*.cloudinary.com https://*.sentry.io https://api.openai.com https://api.stripe.com https://open.tiktokapis.com https://*.workers.dev https://api.revenuecat.com https://*.contentsquare.net https://*.contentsquare.com",
               "frame-src 'self' https://js.stripe.com https://hooks.stripe.com",
               "frame-ancestors 'none'",
             ].join('; '),

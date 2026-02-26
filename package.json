@@ -31,6 +31,7 @@
     "@remotion/media": "^4.0.424",
     "@remotion/tailwind": "^4.0.424",
     "@remotion/transitions": "^4.0.424",
+    "@revenuecat/purchases-js": "^1.26.3",
     "@sentry/nextjs": "^10.36.0",
     "@stripe/stripe-js": "^8.5.3",
     "@supabase/auth-helpers-nextjs": "^0.10.0",

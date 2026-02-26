@@ -25,8 +25,20 @@ export const trackEvent = (eventName: string, eventData?: Record<string, unknown
 };
 
 export const identifyUser = (userId: string, traits?: Record<string, unknown>) => {
-  if (typeof window !== 'undefined' && window.hj) {
+  if (typeof window === 'undefined') return;
+
+  // Hotjar
+  if (window.hj) {
     window.hj('identify', userId, traits || {});
+  }
+
+  // ContentSquare — attribute recordings and heatmaps to this user
+  if (window._uxa) {
+    window._uxa.push(['setUserIdentity', { id: userId, ...(traits ?? {}) }]);
+    // Push plan tier as a segmentation variable so CS dashboards can filter by plan
+    if (traits?.plan) {
+      window._uxa.push(['trackDynamicVariable', { key: 'plan', value: traits.plan }]);
+    }
   }
 };
 
