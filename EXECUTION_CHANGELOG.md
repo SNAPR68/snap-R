@@ -1,6 +1,29 @@
 # SnapR Execution Changelog
 =================================
 
+## 2026-02-26 — Homepage Copy + Calendly Fix
+
+Pre-launch copy polish and Calendly integration wired to real URL.
+
+### 1. Homepage Copy Refresh
+- Headline updated: "Upload Your Photos. We Handle the Rest."
+- Tagline updated: "Stop marketing listings. Start closing them."
+- Sub-headline: single clear sentence listing all deliverables (photos, descriptions, social, site, video)
+- Pain/solution section replaced with compact side-by-side comparison table (6 rows)
+- Removed redundant 15-tool grid and duplicate pain cards sections
+- Files Modified: `app/page.tsx`
+
+### 2. Pricing Section Copy
+- Subtitle changed to "Pick Your Plan"
+- Sub-copy updated to lead with inclusions (all 15 AI tools, templates, property sites, video)
+- Files Modified: `components/pricing-section.tsx`
+
+### 3. Calendly Integration Fixed
+- Contact page iframe now uses real URL: https://calendly.com/rajesh-snap-r/30min
+- Added embed params: dark background (0f0f0f), gold primary (d4a017), no GDPR banner
+- NEXT_PUBLIC_CALENDLY_URL added to .env.local and .env.example with real default
+- Files Modified: `app/contact/page.tsx`, `.env.example`
+
 ## 2026-02-25 — Phase 12: Pre-Launch Fixes
 
 Production readiness audit identified 3 blockers and 3 should-fixes. All resolved.
