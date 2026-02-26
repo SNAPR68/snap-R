@@ -179,10 +179,10 @@ export default function PricingSection({
             Simple, transparent pricing
           </div>
           <h2 className="text-3xl md:text-4xl font-bold mb-3">
-            Edit, Create, Post — All in One Platform
+            Pick Your Plan
           </h2>
           <p className="text-base text-white/60 max-w-2xl mx-auto">
-            Replace Canva + Hootsuite + Mailchimp + your photo editor. One platform for photo enhancement and listing marketing.
+            Every plan includes all 15 AI tools, social templates, property sites, and video. No per-photo fees.
           </p>
         </div>
       )}

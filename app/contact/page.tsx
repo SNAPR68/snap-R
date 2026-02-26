@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { Instagram, Linkedin, Youtube, Check } from 'lucide-react';
 
-const CALENDLY_URL = process.env.NEXT_PUBLIC_CALENDLY_URL || 'https://calendly.com/rajesh-snap-r/30min';
+const CALENDLY_URL = (process.env.NEXT_PUBLIC_CALENDLY_URL || 'https://calendly.com/rajesh-snap-r/30min') + '?embed_type=Inline&hide_gdpr_banner=1&background_color=0f0f0f&text_color=ffffff&primary_color=d4a017';
 
 function ContactContent() {
   const searchParams = useSearchParams();

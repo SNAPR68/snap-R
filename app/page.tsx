@@ -244,24 +244,20 @@ export default function HomePage() {
               </span>
             </div>
             
-            {/* Main Headline - Upload. Enhance. Publish. */}
-            <h1 className="text-4xl md:text-5xl lg:text-7xl font-bold text-white leading-[1.1] mb-5">
-              <span className="text-[#D4A017]">Upload.</span> <span className="text-[#D4A017]">Enhance.</span> <span className="text-[#D4A017]">Publish.</span>
+            {/* Main Headline */}
+            <h1 className="text-4xl md:text-5xl lg:text-7xl font-bold text-white leading-[1.1] mb-6">
+              Upload Your Photos.<br className="hidden sm:block" />
+              <span className="text-[#D4A017]">We Handle the Rest.</span>
             </h1>
-            
-            {/* Trust Line */}
-            <p className="text-base md:text-lg text-white/60 mb-4 max-w-2xl mx-auto">
-              For property owners, photographers, and agents — less work, faster sales.
+
+            {/* One clean sub — what SnapR does */}
+            <p className="text-base md:text-lg text-white/50 mb-6 max-w-2xl mx-auto leading-relaxed">
+              Enhanced photos. Descriptions. Social posts. Property site. Video — all from one upload, in under 10 minutes.
             </p>
-            
-            {/* Promise */}
-            <p className="text-xl md:text-2xl lg:text-3xl text-white font-medium mb-4">
-              Listings ready to sell in under 10 minutes.
-            </p>
-            
+
             {/* Tagline */}
             <p className="text-2xl md:text-3xl lg:text-4xl text-[#D4A017] font-bold mb-8">
-              Just SnapR it.
+              Stop marketing listings. Start closing them.
             </p>
             
             {/* CTA Buttons - Start Free | Book a Demo */}
@@ -342,181 +338,36 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Pain Points Section - 6 Cards */}
+      {/* Problem → Solution Section - Compact */}
       <section className="py-16 px-6 bg-[#0F0F0F]">
-        <div className="max-w-6xl mx-auto">
-          <p className="text-center text-[#D4A017] text-sm font-semibold tracking-wider mb-3">THE INDUSTRY PROBLEM</p>
-          <h2 className="text-3xl md:text-4xl font-bold text-white text-center mb-4">
-            The Real Estate Marketing Struggle
-          </h2>
-          <p className="text-lg text-white/60 text-center mb-12 max-w-2xl mx-auto">
-            Every day, agents and photographers face these frustrations. Sound familiar?
-          </p>
-
-          {/* 6 Pain Point Cards */}
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-16">
-            
-            {/* Pain 1: Wait Times */}
-            <div className="bg-red-500/5 border border-red-500/20 rounded-2xl p-6 hover:border-red-500/40 transition-all">
-              <div className="w-12 h-12 rounded-xl bg-red-500/10 flex items-center justify-center mb-4">
-                <svg className="w-6 h-6 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-              </div>
-              <h3 className="text-lg font-bold text-red-400 mb-2">24-48 Hour Wait Times</h3>
-              <p className="text-white/60 text-sm">Your listing goes live with terrible photos while you wait for edits to come back.</p>
-            </div>
-            
-            {/* Pain 2: Cost */}
-            <div className="bg-red-500/5 border border-red-500/20 rounded-2xl p-6 hover:border-red-500/40 transition-all">
-              <div className="w-12 h-12 rounded-xl bg-red-500/10 flex items-center justify-center mb-4">
-                <svg className="w-6 h-6 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v12m-3-2.818l.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-              </div>
-              <h3 className="text-lg font-bold text-red-400 mb-2">$400+/Month on Photo Editing</h3>
-              <p className="text-white/60 text-sm">$2-4 per photo × 100+ photos = bleeding money on every listing.</p>
-            </div>
-            
-            {/* Pain 3: Tool Juggling */}
-            <div className="bg-red-500/5 border border-red-500/20 rounded-2xl p-6 hover:border-red-500/40 transition-all">
-              <div className="w-12 h-12 rounded-xl bg-red-500/10 flex items-center justify-center mb-4">
-                <svg className="w-6 h-6 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 7.5l3 2.25-3 2.25m4.5 0h3m-9 8.25h13.5A2.25 2.25 0 0021 18V6a2.25 2.25 0 00-2.25-2.25H5.25A2.25 2.25 0 003 6v12a2.25 2.25 0 002.25 2.25z" />
-                </svg>
-              </div>
-              <h3 className="text-lg font-bold text-red-400 mb-2">Juggling 5 Different Tools</h3>
-              <p className="text-white/60 text-sm">Photo editor, Canva, Hootsuite, email platform, MLS upload... the chaos never ends.</p>
-            </div>
-            
-            {/* Pain 4: No Quality Feedback */}
-            <div className="bg-red-500/5 border border-red-500/20 rounded-2xl p-6 hover:border-red-500/40 transition-all">
-              <div className="w-12 h-12 rounded-xl bg-red-500/10 flex items-center justify-center mb-4">
-                <svg className="w-6 h-6 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9 5.25h.008v.008H12v-.008z" />
-                </svg>
-              </div>
-              <h3 className="text-lg font-bold text-red-400 mb-2">No Idea If Your Photos Are Good</h3>
-              <p className="text-white/60 text-sm">Shoot 100 photos, hope some turn out okay. No guidance, no scoring, just guessing.</p>
-            </div>
-            
-            {/* Pain 5: Content Creation */}
-            <div className="bg-red-500/5 border border-red-500/20 rounded-2xl p-6 hover:border-red-500/40 transition-all">
-              <div className="w-12 h-12 rounded-xl bg-red-500/10 flex items-center justify-center mb-4">
-                <svg className="w-6 h-6 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
-                </svg>
-              </div>
-              <h3 className="text-lg font-bold text-red-400 mb-2">Hours on Social Posts</h3>
-              <p className="text-white/60 text-sm">Every listing needs posts for 5 platforms. You spend hours on Canva instead of selling.</p>
-            </div>
-            
-            {/* Pain 6: Client Chaos */}
-            <div className="bg-red-500/5 border border-red-500/20 rounded-2xl p-6 hover:border-red-500/40 transition-all">
-              <div className="w-12 h-12 rounded-xl bg-red-500/10 flex items-center justify-center mb-4">
-                <svg className="w-6 h-6 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75" />
-                </svg>
-              </div>
-              <h3 className="text-lg font-bold text-red-400 mb-2">Photo Approval Nightmare</h3>
-              <p className="text-white/60 text-sm">Endless email chains, lost files, missed feedback. Client communication is chaos.</p>
-            </div>
-            
-          </div>
-          
-          {/* Solution intro */}
-          <div className="text-center mb-6">
-            <p className="text-[#D4A017] text-sm font-semibold tracking-wider mb-3">THE SOLUTION</p>
-            <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
-              SnapR Fixes Everything
+        <div className="max-w-5xl mx-auto">
+          <div className="text-center mb-10">
+            <p className="text-[#D4A017] text-sm font-semibold tracking-wider mb-3">THE PROBLEM → THE FIX</p>
+            <h2 className="text-3xl md:text-4xl font-bold text-white">
+              What You Deal With vs. What SnapR Does
             </h2>
           </div>
-          
-          {/* 6 Solution Cards */}
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-16">
-            
-            {/* Solution 1: Speed */}
-            <div className="bg-green-500/5 border border-green-500/20 rounded-2xl p-6 hover:border-green-500/40 transition-all">
-              <div className="w-12 h-12 rounded-xl bg-green-500/10 flex items-center justify-center mb-4">
-                <svg className="w-6 h-6 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z" />
-                </svg>
-              </div>
-              <h3 className="text-lg font-bold text-green-400 mb-2">30-60 Second AI Processing</h3>
-              <p className="text-white/60 text-sm">Photos enhanced before you finish your coffee. List immediately with stunning visuals.</p>
-            </div>
-            
-            {/* Solution 2: Cost */}
-            <div className="bg-green-500/5 border border-green-500/20 rounded-2xl p-6 hover:border-green-500/40 transition-all">
-              <div className="w-12 h-12 rounded-xl bg-green-500/10 flex items-center justify-center mb-4">
-                <svg className="w-6 h-6 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 18.75a60.07 60.07 0 0115.797 2.101c.727.198 1.453-.342 1.453-1.096V18.75M3.75 4.5v.75A.75.75 0 013 6h-.75m0 0v-.375c0-.621.504-1.125 1.125-1.125H20.25M2.25 6v9m18-10.5v.75c0 .414.336.75.75.75h.75m-1.5-1.5h.375c.621 0 1.125.504 1.125 1.125v9.75c0 .621-.504 1.125-1.125 1.125h-.375m1.5-1.5H21a.75.75 0 00-.75.75v.75m0 0H3.75m0 0h-.375a1.125 1.125 0 01-1.125-1.125V15m1.5 1.5v-.75A.75.75 0 003 15h-.75M15 10.5a3 3 0 11-6 0 3 3 0 016 0zm3 0h.008v.008H18V10.5zm-12 0h.008v.008H6V10.5z" />
-                </svg>
-              </div>
-              <h3 className="text-lg font-bold text-green-400 mb-2">96% Cost Reduction</h3>
-              <p className="text-white/60 text-sm">From $400/month to under $20. Unlimited enhancements included in your plan.</p>
-            </div>
-            
-            {/* Solution 3: All-in-One */}
-            <div className="bg-green-500/5 border border-green-500/20 rounded-2xl p-6 hover:border-green-500/40 transition-all">
-              <div className="w-12 h-12 rounded-xl bg-green-500/10 flex items-center justify-center mb-4">
-                <svg className="w-6 h-6 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z" />
-                </svg>
-              </div>
-              <h3 className="text-lg font-bold text-green-400 mb-2">One Platform Does It All</h3>
-              <p className="text-white/60 text-sm">Photos, videos, social posts, emails, property sites — everything in one place.</p>
-            </div>
-            
-            {/* Solution 4: AI Scoring */}
-            <div className="bg-green-500/5 border border-green-500/20 rounded-2xl p-6 hover:border-green-500/40 transition-all">
-              <div className="w-12 h-12 rounded-xl bg-green-500/10 flex items-center justify-center mb-4">
-                <svg className="w-6 h-6 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M11.48 3.499a.562.562 0 011.04 0l2.125 5.111a.563.563 0 00.475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 00-.182.557l1.285 5.385a.562.562 0 01-.84.61l-4.725-2.885a.563.563 0 00-.586 0L6.982 20.54a.562.562 0 01-.84-.61l1.285-5.386a.562.562 0 00-.182-.557l-4.204-3.602a.563.563 0 01.321-.988l5.518-.442a.563.563 0 00.475-.345L11.48 3.5z" />
-                </svg>
-              </div>
-              <h3 className="text-lg font-bold text-green-400 mb-2">Listing Intelligence AI</h3>
-              <p className="text-white/60 text-sm">AI scores your photos, picks the hero image, and tells you exactly what to improve.</p>
-            </div>
-            
-            {/* Solution 5: Content Studio */}
-            <div className="bg-green-500/5 border border-green-500/20 rounded-2xl p-6 hover:border-green-500/40 transition-all">
-              <div className="w-12 h-12 rounded-xl bg-green-500/10 flex items-center justify-center mb-4">
-                <svg className="w-6 h-6 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M7.5 7.5h-.75A2.25 2.25 0 004.5 9.75v7.5a2.25 2.25 0 002.25 2.25h7.5a2.25 2.25 0 002.25-2.25v-7.5a2.25 2.25 0 00-2.25-2.25h-.75m0-3l-3-3m0 0l-3 3m3-3v11.25m6-2.25h.75a2.25 2.25 0 012.25 2.25v7.5a2.25 2.25 0 01-2.25 2.25h-7.5a2.25 2.25 0 01-2.25-2.25v-.75" />
-                </svg>
-              </div>
-              <h3 className="text-lg font-bold text-green-400 mb-2">150+ Ready Templates</h3>
-              <p className="text-white/60 text-sm">Social posts, videos, emails — all auto-generated and ready to upload in seconds.</p>
-            </div>
-            
-            {/* Solution 6: Client Approval */}
-            <div className="bg-green-500/5 border border-green-500/20 rounded-2xl p-6 hover:border-green-500/40 transition-all">
-              <div className="w-12 h-12 rounded-xl bg-green-500/10 flex items-center justify-center mb-4">
-                <svg className="w-6 h-6 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z" />
-                </svg>
-              </div>
-              <h3 className="text-lg font-bold text-green-400 mb-2">One-Click Client Approval</h3>
-              <p className="text-white/60 text-sm">Share a link, client approves with one click. No more email chains or confusion.</p>
-            </div>
-            
-          </div>
 
-          {/* Stats Row */}
-          <div className="grid md:grid-cols-3 gap-6 text-center">
-            <div>
-              <div className="text-4xl font-bold text-[#D4A017] mb-2">96%</div>
-              <div className="text-white/60 text-sm">Less cost per listing</div>
-            </div>
-            <div>
-              <div className="text-4xl font-bold text-[#D4A017] mb-2">99%</div>
-              <div className="text-white/60 text-sm">Faster turnaround</div>
-            </div>
-            <div>
-              <div className="text-4xl font-bold text-[#D4A017] mb-2">1</div>
-              <div className="text-white/60 text-sm">Platform for everything</div>
-            </div>
+          <div className="space-y-3">
+            {[
+              { problem: '24-48 hour wait for edited photos', solution: 'Enhanced in 30-60 seconds by AI' },
+              { problem: '$400+/month on photo editing alone', solution: 'Unlimited edits from $16/listing' },
+              { problem: '5 different tools for one listing', solution: 'One platform — photos to published' },
+              { problem: 'No idea which photos will sell', solution: 'AI scores and picks your best shots' },
+              { problem: 'Hours creating social posts on Canva', solution: '150+ templates auto-generated instantly' },
+              { problem: 'Endless email chains for approvals', solution: 'One-click client approval link' },
+            ].map((row) => (
+              <div key={row.problem} className="grid md:grid-cols-2 gap-0 rounded-xl overflow-hidden">
+                <div className="flex items-center gap-3 px-5 py-4 bg-red-500/5 border border-red-500/15">
+                  <span className="text-red-400 text-lg flex-shrink-0">✕</span>
+                  <span className="text-white/60 text-sm">{row.problem}</span>
+                </div>
+                <div className="flex items-center gap-3 px-5 py-4 bg-green-500/5 border border-green-500/15">
+                  <span className="text-green-400 text-lg flex-shrink-0">✓</span>
+                  <span className="text-white/70 text-sm font-medium">{row.solution}</span>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       </section>
@@ -726,50 +577,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* NEW: Features Grid - 15 AI Tools */}
-      <section className="py-20 px-6 bg-[#0F0F0F]">
-        <div className="max-w-5xl mx-auto">
-          <div className="text-center mb-12">
-            <p className="text-[#D4A017] text-sm font-semibold tracking-wider mb-3">ALL 15 AI TOOLS INCLUDED</p>
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">What Others Charge Extra For</h2>
-            <p className="text-white/50">Every tool included in your subscription. No per-photo fees.</p>
-          </div>
-          
-          <div className="grid grid-cols-3 md:grid-cols-5 gap-3">
-            {[
-              { name: 'Sky Replace', price: '$4/photo' },
-              { name: 'Twilight', price: '$8/photo' },
-              { name: 'HDR', price: '$1.60/photo' },
-              { name: 'Staging', price: '$24/room' },
-              { name: 'Lawn Repair', price: '$4/photo' },
-              { name: 'Declutter', price: '$4/photo' },
-              { name: 'Fireplace', price: '$4/photo' },
-              { name: 'Lights On', price: '$4/photo' },
-              { name: 'TV Replace', price: '$4/photo' },
-              { name: 'Pool', price: '$4/photo' },
-              { name: 'Auto Enhance', price: '$2/photo' },
-              { name: 'Perspective', price: '$2/photo' },
-              { name: 'Color Fix', price: '$1.60/photo' },
-              { name: 'Brightness', price: '$1.60/photo' },
-              { name: 'Object Remove', price: '$4/photo' },
-            ].map((tool) => (
-              <div key={tool.name} className="group p-4 rounded-xl bg-[#1A1A1A] border border-[#D4A017]/20 hover:border-[#D4A017]/60 transition-all text-center">
-                <p className="text-sm font-medium text-white mb-1">{tool.name}</p>
-                <p className="text-xs text-white/40 line-through">{tool.price}</p>
-                <p className="text-xs text-[#D4A017] font-semibold">INCLUDED</p>
-              </div>
-            ))}
-          </div>
-          
-          {/* Total Savings */}
-          <div className="mt-8 text-center">
-            <p className="text-white/50 text-sm">Traditional cost for 25 photos: <span className="text-red-400 line-through">$148+</span></p>
-            <p className="text-white/70">With SnapR: <span className="text-[#D4A017] font-bold">All included in your listing price</span></p>
-          </div>
-        </div>
-      </section>
-
-      {/* NEW: Do The Math Comparison */}
+      {/* Do The Math Comparison */}
       <section className="py-20 px-6 bg-gradient-to-b from-[#0F0F0F] to-[#1A1A1A]">
         <div className="max-w-5xl mx-auto">
           <div className="text-center mb-12">
