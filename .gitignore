@@ -66,3 +66,8 @@ app/api/admin/create-test-account/
 # Rendered video files (upload to CDN instead)
 public/explainer-video.mp4
 *.mp4
+
+# Explainer video source assets (generated artifacts — re-run scripts/capture-explainer-v2.mjs to regenerate)
+public/explainer-frames/
+public/explainer-voiceover.mp3
+docs/EXPLAINER_VIDEO_SCRIPT.md
