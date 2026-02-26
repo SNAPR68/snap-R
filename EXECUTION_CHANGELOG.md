@@ -1,6 +1,18 @@
 # SnapR Execution Changelog
 =================================
 
+## 2026-02-26 — Before/After Slider Fix
+
+Fixed image dragging and zoom bug in the homepage LandingGallery before/after sliders.
+
+### Root Cause
+`HoverSlider` in `components/landing-gallery.tsx` was clipping the before image using a `<div>` with `width: {position}%` and sizing the inner `<img>` with a JS-captured pixel width (`width` state, default 400px). On resize or initial render, the pixel width was stale/wrong causing the before image to appear at wrong size and "drag" visually as the clip expanded.
+
+### Fix
+Replaced the clip-div + pixel-width approach with CSS `clipPath: inset(0 X% 0 0)` directly on the before image. Both images are now `position: absolute, fill: true, object-cover` — they never move or resize. Only the clip boundary changes. Also replaced `<img>` with Next.js `<Image>` and removed unused `useEffect` import.
+
+- Files Modified: `components/landing-gallery.tsx`
+
 ## 2026-02-26 — Homepage Copy + Calendly Fix
 
 Pre-launch copy polish and Calendly integration wired to real URL.
