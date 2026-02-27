@@ -5,66 +5,45 @@ import { useState, useEffect, useCallback } from 'react';
 const SCREENSHOTS = [
   {
     src: '/agent-voices/fstoppers-quotes.png',
-    source: 'Fstoppers Community',
-    platform: 'Forum',
-    platformClass: 'bg-purple-500/15 text-purple-400',
-    caption: 'Photographers frustrated with editing turnaround times',
-  },
-  {
-    src: '/agent-voices/fstoppers-header.png',
     source: 'Fstoppers',
     platform: 'Industry Blog',
-    platformClass: 'bg-orange-500/15 text-orange-400',
-    caption: 'The real cost of real estate photo editing',
+    platformClass: 'bg-purple-500/15 text-purple-400',
+    caption: 'Common real estate photography pitfalls holding photographers back',
   },
   {
-    src: '/agent-voices/photography-business.png',
-    source: 'Photography Business Forum',
-    platform: 'Forum',
+    src: '/agent-voices/photoup-stats.png',
+    source: 'PhotoUp',
+    platform: 'Industry',
     platformClass: 'bg-blue-500/15 text-blue-400',
-    caption: 'Agents demanding faster turnaround & more content',
-  },
-  {
-    src: '/agent-voices/propphy-costs.png',
-    source: 'Propphy / Industry Data',
-    platform: 'Industry',
-    platformClass: 'bg-green-500/15 text-green-400',
-    caption: 'The hidden costs eating into photographer margins',
-  },
-  {
-    src: '/agent-voices/dan-header.png',
-    source: 'Digital Agency Network',
-    platform: 'Industry',
-    platformClass: 'bg-green-500/15 text-green-400',
-    caption: 'Agencies demand better real estate marketing tools',
-  },
-  {
-    src: '/agent-voices/dan-video-stats.png',
-    source: 'Digital Agency Network',
-    platform: 'Industry',
-    platformClass: 'bg-green-500/15 text-green-400',
-    caption: 'Video content demand skyrocketing — no tools to meet it',
-  },
-  {
-    src: '/agent-voices/rismedia-header.png',
-    source: 'RISMedia',
-    platform: 'Industry Press',
-    platformClass: 'bg-yellow-500/15 text-yellow-400',
-    caption: 'Agents overwhelmed by listing marketing workload',
-  },
-  {
-    src: '/agent-voices/matterport-header.png',
-    source: 'Matterport Research',
-    platform: 'Survey',
-    platformClass: 'bg-[#D4A017]/15 text-[#D4A017]',
-    caption: 'Buyers expect rich media — agents can\'t keep up',
+    caption: '90+ key real estate photography statistics & trends for 2026',
   },
   {
     src: '/agent-voices/matterport-stats.png',
     source: 'Matterport Research',
     platform: 'Survey',
     platformClass: 'bg-[#D4A017]/15 text-[#D4A017]',
-    caption: 'Data showing the gap between buyer expectations and reality',
+    caption: 'Real estate photography stats you need to know in 2024',
+  },
+  {
+    src: '/agent-voices/homejab-trends.png',
+    source: 'HomeJab',
+    platform: 'Industry',
+    platformClass: 'bg-green-500/15 text-green-400',
+    caption: 'End-of-year look at real estate media trends for 2025',
+  },
+  {
+    src: '/agent-voices/sellfastphoto-stats.png',
+    source: 'SellFastPhoto',
+    platform: 'Industry',
+    platformClass: 'bg-orange-500/15 text-orange-400',
+    caption: 'Real estate photography statistics — the 2025 guide',
+  },
+  {
+    src: '/agent-voices/fstoppers-burnout.png',
+    source: 'NAR Research',
+    platform: 'Survey',
+    platformClass: 'bg-yellow-500/15 text-yellow-400',
+    caption: 'REALTOR Technology Survey — 52% use drone photography, 46% use AI',
   },
 ];
 
@@ -126,8 +105,8 @@ export function WeHeardYou() {
               </span>
             </div>
 
-            {/* Screenshot — full image visible, natural height */}
-            <div className="w-full bg-white">
+            {/* Screenshot — clipped to fixed height, shows top content */}
+            <div className="w-full bg-white overflow-hidden" style={{ maxHeight: '340px' }}>
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 key={current}
