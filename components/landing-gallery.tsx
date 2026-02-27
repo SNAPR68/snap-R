@@ -1,7 +1,6 @@
 'use client';
 
-import { useState, useRef } from 'react';
-import Image from 'next/image';
+import { useState, useRef, useCallback } from 'react';
 
 const GALLERY_ITEMS = [
   {
@@ -51,62 +50,84 @@ const GALLERY_ITEMS = [
 function HoverSlider({ item }: { item: typeof GALLERY_ITEMS[0] }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [position, setPosition] = useState(50);
+  const isDragging = useRef(false);
 
-  const handleMouseMove = (e: React.MouseEvent) => {
+  const updatePosition = useCallback((clientX: number) => {
     if (!containerRef.current) return;
     const rect = containerRef.current.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const pct = (x / rect.width) * 100;
-    setPosition(Math.max(0, Math.min(100, pct)));
-  };
+    const x = clientX - rect.left;
+    setPosition(Math.max(0, Math.min(100, (x / rect.width) * 100)));
+  }, []);
 
-  const handleTouchMove = (e: React.TouchEvent) => {
-    if (!containerRef.current) return;
-    const rect = containerRef.current.getBoundingClientRect();
-    const x = e.touches[0].clientX - rect.left;
-    const pct = (x / rect.width) * 100;
-    setPosition(Math.max(0, Math.min(100, pct)));
-  };
+  const handleMouseDown = useCallback((e: React.MouseEvent) => {
+    isDragging.current = true;
+    updatePosition(e.clientX);
+  }, [updatePosition]);
+
+  const handleMouseMove = useCallback((e: React.MouseEvent) => {
+    if (!isDragging.current) return;
+    updatePosition(e.clientX);
+  }, [updatePosition]);
+
+  const handleMouseUp = useCallback(() => {
+    isDragging.current = false;
+  }, []);
+
+  const handleTouchMove = useCallback((e: React.TouchEvent) => {
+    e.preventDefault();
+    updatePosition(e.touches[0].clientX);
+  }, [updatePosition]);
 
   return (
     <div
       ref={containerRef}
       className="relative w-full aspect-[2/1] rounded-xl overflow-hidden cursor-ew-resize select-none bg-neutral-800"
+      onMouseDown={handleMouseDown}
       onMouseMove={handleMouseMove}
+      onMouseUp={handleMouseUp}
+      onMouseLeave={handleMouseUp}
       onTouchMove={handleTouchMove}
-      onMouseLeave={() => setPosition(50)}
     >
-      {/* After image — full background */}
-      <Image
+      {/* AFTER — full size, always visible underneath */}
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
         src={item.after}
         alt={`${item.title} after`}
-        fill
-        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-        className="object-cover"
+        className="absolute inset-0 w-full h-full object-cover"
         draggable={false}
       />
 
-      {/* Before image — revealed via clipPath so it never moves or resizes */}
-      <Image
-        src={item.before}
-        alt={`${item.title} before`}
-        fill
-        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-        className="object-cover"
-        style={{ clipPath: `inset(0 ${100 - position}% 0 0)` }}
-        draggable={false}
-      />
+      {/* BEFORE — clipped by a div that narrows from the right as slider moves */}
+      <div
+        className="absolute inset-y-0 left-0 overflow-hidden"
+        style={{ width: `${position}%` }}
+      >
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={item.before}
+          alt={`${item.title} before`}
+          className="absolute inset-0 h-full object-cover"
+          style={{ width: containerRef.current?.offsetWidth ?? 800 }}
+          draggable={false}
+        />
+      </div>
 
-      <div className="absolute top-0 h-full w-0.5 bg-white pointer-events-none" style={{ left: `${position}%` }}>
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-10 h-10 bg-white rounded-full shadow-lg flex items-center justify-center">
-          <svg className="w-5 h-5 text-gray-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <path d="M8 9l4-4 4 4M8 15l4 4 4-4" />
+      {/* Divider line + handle */}
+      <div
+        className="absolute top-0 bottom-0 w-0.5 bg-white z-10 pointer-events-none"
+        style={{ left: `${position}%`, transform: 'translateX(-50%)' }}
+      >
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-9 h-9 bg-white rounded-full shadow-lg flex items-center justify-center border-2 border-[#D4A017]">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#D4A017" strokeWidth="2.5" strokeLinecap="round">
+            <path d="M8 6l-4 6 4 6" />
+            <path d="M16 6l4 6-4 6" />
           </svg>
         </div>
       </div>
 
-      <div className="absolute top-3 left-3 px-2 py-1 bg-black/70 rounded text-xs text-white font-medium">Before</div>
-      <div className="absolute top-3 right-3 px-2 py-1 bg-[#D4A017] rounded text-xs text-black font-semibold">After</div>
+      {/* Labels */}
+      <div className="absolute top-3 left-3 px-2 py-1 bg-black/70 rounded text-xs text-white font-medium pointer-events-none z-10">Before</div>
+      <div className="absolute top-3 right-3 px-2 py-1 bg-[#D4A017] rounded text-xs text-black font-semibold pointer-events-none z-10">After</div>
     </div>
   );
 }

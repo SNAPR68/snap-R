@@ -1,6 +1,11 @@
 # SnapR Execution Changelog
 =================================
 
+## 2026-02-27 — Before/After Slider Final Fix
+
+Definitive rewrite of HoverSlider. Removed Next.js Image (clipPath doesn't apply through the span wrapper). Used plain img tags with a clipping div. Drag-to-reveal mechanic. No image movement whatsoever.
+- Files Modified: `components/landing-gallery.tsx`
+
 ## 2026-02-26 — Before/After Slider Fix
 
 Fixed image dragging and zoom bug in the homepage LandingGallery before/after sliders.
