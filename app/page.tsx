@@ -6,6 +6,7 @@ import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { Sparkles, Zap, Check, Camera, Mail, Bell, Menu, X, Shield, Lock, CheckCircle } from 'lucide-react';
 import { LandingGallery } from '@/components/landing-gallery';
+import { WeHeardYou } from '@/components/we-heard-you';
 import { Testimonials } from '@/components/testimonials';
 import { ExplainerVideoPlayer } from '@/components/explainer-video-player';
 import { trackEvent, SnapREvents } from '@/lib/analytics';
@@ -543,6 +544,9 @@ export default function HomePage() {
         </div>
         <LandingGallery />
       </section>
+
+      {/* We Heard You */}
+      <WeHeardYou />
 
       {/* See Demo - Interactive Product Walkthrough */}
       <section id="see-demo" className="py-16 px-6 bg-gradient-to-b from-[#0F0F0F] to-[#1A1A1A]">

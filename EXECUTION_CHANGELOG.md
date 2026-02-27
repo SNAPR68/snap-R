@@ -1,6 +1,10 @@
 # SnapR Execution Changelog
 =================================
 
+## 2026-02-27 — "We Heard You" Section
+
+Added social proof section to homepage with auto-rotating carousel of real-world screenshots from Fstoppers, RISMedia, Matterport, We Get Around Network, and photography business forums. 9 screenshots auto-rotate every 3.5s, pause on hover, with dot indicators and prev/next arrows. Includes stat strip (24-48h wait, 5+ tools, $400+/mo). Screenshots sourced from `public/agent-voices/`.
+
 ## 2026-02-26 — Before/After Slider Fix
 
 Fixed image dragging and zoom bug in the homepage LandingGallery before/after sliders.
