@@ -33,14 +33,14 @@ const SCREENSHOTS = [
   },
   {
     src: '/agent-voices/dan-header.png',
-    source: 'Dan Smigrod — We Get Around',
+    source: 'Digital Agency Network',
     platform: 'Industry',
     platformClass: 'bg-green-500/15 text-green-400',
-    caption: 'Top industry voice calling for automation',
+    caption: 'Agencies demand better real estate marketing tools',
   },
   {
     src: '/agent-voices/dan-video-stats.png',
-    source: 'We Get Around Network',
+    source: 'Digital Agency Network',
     platform: 'Industry',
     platformClass: 'bg-green-500/15 text-green-400',
     caption: 'Video content demand skyrocketing — no tools to meet it',
