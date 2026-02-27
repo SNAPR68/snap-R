@@ -126,8 +126,8 @@ export function WeHeardYou() {
               </span>
             </div>
 
-            {/* Screenshot — scaled to fill width, top-aligned inside fixed height */}
-            <div className="relative w-full overflow-hidden bg-white" style={{ height: '220px' }}>
+            {/* Screenshot — full image visible, natural height */}
+            <div className="w-full bg-white">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 key={current}
