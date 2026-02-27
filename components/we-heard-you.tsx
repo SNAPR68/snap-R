@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import Image from 'next/image';
 
 const SCREENSHOTS = [
   {
@@ -90,19 +89,19 @@ export function WeHeardYou() {
   const slide = SCREENSHOTS[current];
 
   return (
-    <section className="py-24 px-6 bg-[#0A0A0A]">
-      <div className="max-w-5xl mx-auto">
+    <section className="py-16 px-6 bg-[#0A0A0A]">
+      <div className="max-w-4xl mx-auto">
         {/* Header */}
-        <div className="text-center mb-14">
-          <p className="text-[#D4A017] text-sm font-semibold tracking-widest uppercase mb-3">
+        <div className="text-center mb-8">
+          <p className="text-[#D4A017] text-xs font-semibold tracking-widest uppercase mb-2">
             The Industry Problem
           </p>
-          <h2 className="text-4xl md:text-5xl font-bold text-white mb-4">
+          <h2 className="text-3xl md:text-4xl font-bold text-white mb-3">
             We Heard You.{' '}
             <span className="text-[#D4A017]">That&apos;s Why We Built SnapR.</span>
           </h2>
-          <p className="text-white/50 text-lg max-w-2xl mx-auto">
-            From Reddit threads to industry forums — photographers and agents have been screaming about the same problems for years. We listened.
+          <p className="text-white/50 text-base max-w-xl mx-auto">
+            From Reddit threads to industry forums — photographers and agents have been screaming about the same problems for years.
           </p>
         </div>
 
@@ -115,12 +114,12 @@ export function WeHeardYou() {
           {/* Main screenshot card */}
           <div className="relative rounded-2xl overflow-hidden border border-white/10 bg-[#111111] shadow-2xl">
             {/* Browser chrome bar */}
-            <div className="flex items-center gap-2 px-4 py-3 bg-[#1A1A1A] border-b border-white/10">
-              <div className="w-3 h-3 rounded-full bg-red-500/70" />
-              <div className="w-3 h-3 rounded-full bg-yellow-500/70" />
-              <div className="w-3 h-3 rounded-full bg-green-500/70" />
-              <div className="flex-1 mx-4 h-6 rounded bg-white/5 flex items-center px-3">
-                <span className="text-white/30 text-xs">Real feedback from photographers & agents</span>
+            <div className="flex items-center gap-1.5 px-4 py-2.5 bg-[#1A1A1A] border-b border-white/10">
+              <div className="w-2.5 h-2.5 rounded-full bg-red-500/70" />
+              <div className="w-2.5 h-2.5 rounded-full bg-yellow-500/70" />
+              <div className="w-2.5 h-2.5 rounded-full bg-green-500/70" />
+              <div className="flex-1 mx-3 h-5 rounded bg-white/5 flex items-center px-3">
+                <span className="text-white/30 text-xs">Real feedback from photographers &amp; agents</span>
               </div>
               <span className={`text-xs font-semibold px-2 py-0.5 rounded ${slide.platformClass}`}>
                 {slide.platform}
@@ -128,13 +127,13 @@ export function WeHeardYou() {
             </div>
 
             {/* Screenshot image — fixed height, clips top portion of screenshot */}
-            <div className="relative h-64 bg-[#0D0D0D] overflow-hidden">
-              <Image
+            <div className="relative h-52 bg-[#0D0D0D] overflow-hidden">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
                 key={current}
                 src={slide.src}
                 alt={slide.caption}
-                fill
-                className="object-cover object-top"
+                className="w-full h-full object-cover object-top"
               />
               {/* Strong gradient fade at bottom so it looks intentional */}
               <div className="absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-[#111111] via-[#111111]/70 to-transparent" />
@@ -153,7 +152,7 @@ export function WeHeardYou() {
           <button
             onClick={prev}
             aria-label="Previous screenshot"
-            className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-5 w-10 h-10 rounded-full bg-[#1A1A1A] border border-white/10 flex items-center justify-center text-white/60 hover:text-white hover:border-[#D4A017]/50 transition-all shadow-lg"
+            className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-4 w-8 h-8 rounded-full bg-[#1A1A1A] border border-white/10 flex items-center justify-center text-white/60 hover:text-white hover:border-[#D4A017]/50 transition-all shadow-lg"
           >
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
@@ -162,7 +161,7 @@ export function WeHeardYou() {
           <button
             onClick={next}
             aria-label="Next screenshot"
-            className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-5 w-10 h-10 rounded-full bg-[#1A1A1A] border border-white/10 flex items-center justify-center text-white/60 hover:text-white hover:border-[#D4A017]/50 transition-all shadow-lg"
+            className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-4 w-8 h-8 rounded-full bg-[#1A1A1A] border border-white/10 flex items-center justify-center text-white/60 hover:text-white hover:border-[#D4A017]/50 transition-all shadow-lg"
           >
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
@@ -170,16 +169,16 @@ export function WeHeardYou() {
           </button>
 
           {/* Dot indicators */}
-          <div className="flex justify-center gap-2 mt-6">
+          <div className="flex justify-center gap-1.5 mt-4">
             {SCREENSHOTS.map((_, i) => (
               <button
                 key={i}
                 onClick={() => setCurrent(i)}
                 aria-label={`Go to screenshot ${i + 1}`}
-                className={`h-1.5 rounded-full transition-all duration-300 ${
+                className={`h-1 rounded-full transition-all duration-300 ${
                   i === current
-                    ? 'w-6 bg-[#D4A017]'
-                    : 'w-1.5 bg-white/20 hover:bg-white/40'
+                    ? 'w-5 bg-[#D4A017]'
+                    : 'w-1 bg-white/20 hover:bg-white/40'
                 }`}
               />
             ))}
@@ -187,18 +186,18 @@ export function WeHeardYou() {
         </div>
 
         {/* Bottom stat strip */}
-        <div className="mt-14 grid grid-cols-3 gap-6 text-center">
-          <div className="bg-white/[0.03] border border-white/8 rounded-2xl p-6">
-            <div className="text-3xl font-bold text-[#D4A017] mb-1">24–48h</div>
-            <div className="text-white/50 text-sm">Avg. editing turnaround agents wait</div>
+        <div className="mt-8 grid grid-cols-3 gap-4 text-center">
+          <div className="bg-white/[0.03] border border-white/8 rounded-xl p-4">
+            <div className="text-2xl font-bold text-[#D4A017] mb-0.5">24–48h</div>
+            <div className="text-white/50 text-xs">Avg. editing turnaround agents wait</div>
           </div>
-          <div className="bg-white/[0.03] border border-white/8 rounded-2xl p-6">
-            <div className="text-3xl font-bold text-[#D4A017] mb-1">5+ tools</div>
-            <div className="text-white/50 text-sm">Juggled per listing just to market it</div>
+          <div className="bg-white/[0.03] border border-white/8 rounded-xl p-4">
+            <div className="text-2xl font-bold text-[#D4A017] mb-0.5">5+ tools</div>
+            <div className="text-white/50 text-xs">Juggled per listing just to market it</div>
           </div>
-          <div className="bg-white/[0.03] border border-white/8 rounded-2xl p-6">
-            <div className="text-3xl font-bold text-[#D4A017] mb-1">$400+/mo</div>
-            <div className="text-white/50 text-sm">Spent on editing, Canva & scheduling</div>
+          <div className="bg-white/[0.03] border border-white/8 rounded-xl p-4">
+            <div className="text-2xl font-bold text-[#D4A017] mb-0.5">$400+/mo</div>
+            <div className="text-white/50 text-xs">Spent on editing, Canva & scheduling</div>
           </div>
         </div>
       </div>
