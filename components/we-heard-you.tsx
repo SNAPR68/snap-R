@@ -127,27 +127,24 @@ export function WeHeardYou() {
               </span>
             </div>
 
-            {/* Screenshot image */}
-            <div className="relative aspect-[16/9] bg-[#0D0D0D]">
+            {/* Screenshot image — fixed height, clips top portion of screenshot */}
+            <div className="relative h-64 bg-[#0D0D0D] overflow-hidden">
               <Image
                 key={current}
                 src={slide.src}
                 alt={slide.caption}
                 fill
-                className="object-cover object-top transition-opacity duration-500"
+                className="object-cover object-top"
               />
-              {/* Gradient overlay at bottom */}
-              <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-[#111111] to-transparent" />
-            </div>
-
-            {/* Caption bar */}
-            <div className="px-6 py-4 flex items-center justify-between">
-              <div>
-                <p className="text-white/80 text-sm font-medium">{slide.caption}</p>
-                <p className="text-white/40 text-xs mt-0.5">Source: {slide.source}</p>
-              </div>
-              <div className="text-white/30 text-xs">
-                {current + 1} / {SCREENSHOTS.length}
+              {/* Strong gradient fade at bottom so it looks intentional */}
+              <div className="absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-[#111111] via-[#111111]/70 to-transparent" />
+              {/* Caption overlaid on gradient */}
+              <div className="absolute bottom-0 inset-x-0 px-5 py-4 flex items-end justify-between">
+                <div>
+                  <p className="text-white text-sm font-semibold leading-snug">{slide.caption}</p>
+                  <p className="text-white/40 text-xs mt-0.5">Source: {slide.source}</p>
+                </div>
+                <div className="text-white/30 text-xs shrink-0 ml-4">{current + 1} / {SCREENSHOTS.length}</div>
               </div>
             </div>
           </div>
