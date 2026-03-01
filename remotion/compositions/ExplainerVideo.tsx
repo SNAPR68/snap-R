@@ -172,9 +172,9 @@ const SCENES: SceneConfig[] = [
     label: 'Dashboard',
     caption: 'Your command center for every listing',
     image: 'dashboard.png',
-    imageHeight: 3000,
+    imageHeight: 1080, // TODO: recapture with auth — actual page is ~3000px
     durationSec: 8,
-    scroll: 'pauseAtTop',
+    scroll: 'none',
     url: 'snap-r.com/dashboard',
   },
   {
@@ -182,26 +182,19 @@ const SCENES: SceneConfig[] = [
     label: 'AI Studio',
     caption: 'Sky replacement, staging, twilight — in seconds',
     image: 'studio.png',
-    imageHeight: 4000,
+    imageHeight: 1080, // TODO: recapture with auth — actual page is ~4000px
     durationSec: 10,
-    scroll: 'smooth',
+    scroll: 'none',
     url: 'snap-r.com/dashboard/studio',
-    zoomTarget: {
-      atPercent: 0.4,
-      x: 960,
-      y: 520,
-      scale: 1.8,
-      durationFrames: 60,
-    },
   },
   {
     id: 'content-studio',
     label: 'Content Studio',
     caption: 'AI generates descriptions, captions, and posts',
     image: 'content-studio.png',
-    imageHeight: 3500,
+    imageHeight: 1080, // TODO: recapture with auth — actual page is ~3500px
     durationSec: 8,
-    scroll: 'smooth',
+    scroll: 'none',
     url: 'snap-r.com/dashboard/content-studio',
   },
   {
@@ -219,9 +212,9 @@ const SCENES: SceneConfig[] = [
     label: 'Analytics',
     caption: 'Cross-platform engagement tracking and ROI',
     image: 'analytics.png',
-    imageHeight: 2500,
+    imageHeight: 1080, // TODO: recapture with auth — actual page is ~2500px
     durationSec: 5,
-    scroll: 'smooth',
+    scroll: 'none',
     url: 'snap-r.com/dashboard/analytics',
   },
   {
