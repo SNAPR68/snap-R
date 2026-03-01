@@ -1,0 +1,56 @@
+[
+  {
+    "filename": "homepage.png",
+    "label": "Homepage full scroll",
+    "scrollHeight": 8704,
+    "viewportHeight": 1080
+  },
+  {
+    "filename": "pricing.png",
+    "label": "Pricing page",
+    "scrollHeight": 2273,
+    "viewportHeight": 1080
+  },
+  {
+    "filename": "signup.png",
+    "label": "Signup page",
+    "scrollHeight": 1080,
+    "viewportHeight": 1080
+  },
+  {
+    "filename": "login.png",
+    "label": "Login filled",
+    "scrollHeight": 1080,
+    "viewportHeight": 1080
+  },
+  {
+    "filename": "studio.png",
+    "label": "AI Studio",
+    "scrollHeight": 1080,
+    "viewportHeight": 1080
+  },
+  {
+    "filename": "content-studio.png",
+    "label": "Content Studio",
+    "scrollHeight": 1080,
+    "viewportHeight": 1080
+  },
+  {
+    "filename": "video-creator.png",
+    "label": "Video Creator",
+    "scrollHeight": 1080,
+    "viewportHeight": 1080
+  },
+  {
+    "filename": "analytics.png",
+    "label": "Analytics",
+    "scrollHeight": 1080,
+    "viewportHeight": 1080
+  },
+  {
+    "filename": "calendar.png",
+    "label": "Calendar",
+    "scrollHeight": 1080,
+    "viewportHeight": 1080
+  }
+]

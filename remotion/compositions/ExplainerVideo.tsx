@@ -7,12 +7,15 @@ import {
   staticFile,
   Easing,
   Sequence,
+  spring,
 } from 'remotion';
 import { Audio } from '@remotion/media';
 import { TransitionSeries, linearTiming } from '@remotion/transitions';
 import { fade } from '@remotion/transitions/fade';
 import { z } from 'zod';
 import { loadFont } from '@remotion/google-fonts/Inter';
+import { BrowserChrome } from '../components/BrowserChrome';
+import { AnimatedCursor } from '../components/AnimatedCursor';
 
 // ============================================
 // FONT
@@ -34,163 +37,195 @@ export const explainerVideoSchema = z.object({
 export type ExplainerVideoProps = z.infer<typeof explainerVideoSchema>;
 
 // ============================================
-// FRAME DEFINITIONS — synced to v2 capture (51 frames: 0000-0050)
-// Trimmed to min 2s per screenshot for smooth pacing.
+// SCENE DEFINITIONS — Full-page scroll approach
 // ============================================
+
+interface CursorWaypoint {
+  x: number;
+  y: number;
+  /** Frame offset within this scene */
+  frame: number;
+  click?: boolean;
+}
+
+interface ZoomTarget {
+  /** Scroll % at which zoom starts (0-1) */
+  atPercent: number;
+  /** Focal point X (px from left of 1920) */
+  x: number;
+  /** Focal point Y (px from top of viewport) */
+  y: number;
+  /** Zoom scale */
+  scale: number;
+  /** Duration in frames */
+  durationFrames: number;
+}
 
 interface SceneConfig {
   id: string;
   label: string;
   caption: string;
-  frames: string[];
+  /** Image filename in public/explainer-frames-v3/ */
+  image: string;
+  /** Full page height in px (from manifest) */
+  imageHeight: number;
+  /** Scene duration in seconds */
   durationSec: number;
-  kenBurns: {
-    startScale: number;
-    endScale: number;
-    panX: number;
-    panY: number;
-  };
+  /** Scroll behavior */
+  scroll: 'smooth' | 'pauseAtTop' | 'none';
+  /** URL to show in browser chrome */
+  url: string;
+  /** Start scroll offset in px (for scenes sharing one tall image) */
+  scrollStartPx?: number;
+  /** End scroll offset in px */
+  scrollEndPx?: number;
+  /** Optional zoom target */
+  zoomTarget?: ZoomTarget;
+  /** Optional cursor waypoints */
+  cursorWaypoints?: CursorWaypoint[];
 }
 
-// Voiceover timing plan (audio delayed by INTRO_DURATION - TRANSITION_FRAMES):
-//   Intro card:         0-3s    (no voiceover — logo reveal)
-//   Homepage hero:      3-14s   → "Meet SnapR — the AI-powered platform..."
-//   Features/gallery:   14-23s  → "Scroll through stunning before-and-after..."
-//   AI tools:           23-30s  → "Sky replacement, virtual twilight..."
-//   Pricing:            30-38s  → "Choose the plan that fits..."
-//   Signup:             38-43s  → "Getting started takes under a minute..."
-//   Login+Dashboard:    43-55s  → "Sign in and your dashboard gives you..."
-//   Listings+Studio:    55-68s  → "Browse your listings, then open the AI Studio..."
-//   Content Studio:     68-78s  → "Once your photos are ready, head to..."
-//   Analytics+Brand:    78-85s  → "Track performance in Analytics..."
-//   Closing CTA:        85-92s  → "SnapR — from photos to published listing..."
+// Content viewport height (1080 minus browser chrome bar)
+const CONTENT_HEIGHT = 1040;
 
 const SCENES: SceneConfig[] = [
   {
     id: 'homepage-hero',
     label: 'Meet SnapR',
     caption: 'The AI-powered platform for real estate marketing',
-    frames: [
-      '0000_homepage_hero.png',
-      '0001_homepage_scroll_0.png',
-      '0002_homepage_scroll_1.png',
-      '0003_homepage_scroll_2.png',
-      '0004_homepage_scroll_3.png',
-    ],
-    durationSec: 11,
-    kenBurns: { startScale: 1.04, endScale: 1.0, panX: 0, panY: -8 },
+    image: 'homepage.png',
+    imageHeight: 8704,
+    durationSec: 8,
+    scroll: 'smooth',
+    url: 'snap-r.com',
+    scrollStartPx: 0,
+    scrollEndPx: 1400,
   },
   {
-    id: 'features-gallery',
+    id: 'homepage-gallery',
     label: 'Before & After',
-    caption: 'Stunning transformations that sell faster',
-    frames: [
-      '0005_features_scroll_0.png',
-      '0008_features_scroll_3.png',
-      '0010_gallery_scroll_0.png',
-      '0013_gallery_scroll_3.png',
-    ],
-    durationSec: 9,
-    kenBurns: { startScale: 1.0, endScale: 1.03, panX: 0, panY: 6 },
+    caption: '15 AI tools — sky, twilight, staging, declutter, and more',
+    image: 'homepage.png',
+    imageHeight: 8704,
+    durationSec: 7,
+    scroll: 'smooth',
+    url: 'snap-r.com',
+    scrollStartPx: 1400,
+    scrollEndPx: 3200,
   },
   {
-    id: 'ai-tools',
-    label: 'AI Tools',
-    caption: 'Fifteen professional tools at your fingertips',
-    frames: [
-      '0016_tools_scroll_0.png',
-      '0017_tools_scroll_1.png',
-      '0019_tools_scroll_3.png',
-    ],
-    durationSec: 7,
-    kenBurns: { startScale: 1.02, endScale: 1.0, panX: 0, panY: 4 },
+    id: 'homepage-problem',
+    label: 'The Problem → The Fix',
+    caption: 'One platform replaces 5+ tools',
+    image: 'homepage.png',
+    imageHeight: 8704,
+    durationSec: 5,
+    scroll: 'smooth',
+    url: 'snap-r.com',
+    scrollStartPx: 3200,
+    scrollEndPx: 4800,
+  },
+  {
+    id: 'homepage-how',
+    label: 'How It Works',
+    caption: 'Upload → Enhance → Market → Publish → Measure',
+    image: 'homepage.png',
+    imageHeight: 8704,
+    durationSec: 6,
+    scroll: 'smooth',
+    url: 'snap-r.com',
+    scrollStartPx: 4800,
+    scrollEndPx: 6400,
   },
   {
     id: 'pricing',
     label: 'Pricing',
-    caption: 'Every plan includes all fifteen AI tools',
-    frames: [
-      '0020_pricing_top.png',
-      '0021_pricing_scroll_0.png',
-      '0022_pricing_scroll_1.png',
-      '0023_pricing_scroll_2.png',
-    ],
-    durationSec: 8,
-    kenBurns: { startScale: 1.0, endScale: 1.03, panX: 0, panY: -4 },
+    caption: 'All 15 AI tools on every plan',
+    image: 'pricing.png',
+    imageHeight: 2273,
+    durationSec: 6,
+    scroll: 'pauseAtTop',
+    url: 'snap-r.com/pricing',
   },
   {
     id: 'signup',
     label: 'Getting Started',
     caption: 'Create your account in under a minute',
-    frames: [
-      '0024_signup_page.png',
-    ],
-    durationSec: 5,
-    kenBurns: { startScale: 1.02, endScale: 1.0, panX: 0, panY: 0 },
+    image: 'signup.png',
+    imageHeight: 1080,
+    durationSec: 2,
+    scroll: 'none',
+    url: 'snap-r.com/auth/signup',
   },
   {
-    id: 'login-dashboard',
+    id: 'login',
+    label: 'Sign In',
+    caption: 'Secure authentication in seconds',
+    image: 'login.png',
+    imageHeight: 1080,
+    durationSec: 2,
+    scroll: 'none',
+    url: 'snap-r.com/auth/login',
+  },
+  {
+    id: 'dashboard',
     label: 'Dashboard',
-    caption: 'Your complete command center for every listing',
-    frames: [
-      '0025_login_clean.png',
-      '0026_login_filled.png',
-      '0027_dashboard_main.png',
-      '0029_dashboard_scroll_1.png',
-      '0031_dashboard_scroll_3.png',
-    ],
-    durationSec: 12,
-    kenBurns: { startScale: 1.0, endScale: 1.03, panX: 0, panY: 5 },
+    caption: 'Your command center for every listing',
+    image: 'dashboard.png',
+    imageHeight: 1080, // TODO: recapture with auth — actual page is ~3000px
+    durationSec: 8,
+    scroll: 'none',
+    url: 'snap-r.com/dashboard',
   },
   {
-    id: 'listings-studio',
+    id: 'studio',
     label: 'AI Studio',
     caption: 'Sky replacement, staging, twilight — in seconds',
-    frames: [
-      '0032_listings_page.png',
-      '0033_listings_scroll_0.png',
-      '0035_studio_main.png',
-      '0036_studio_scroll_0.png',
-      '0037_studio_scroll_1.png',
-      '0038_studio_scroll_2.png',
-    ],
-    durationSec: 13,
-    kenBurns: { startScale: 1.03, endScale: 1.0, panX: 0, panY: 4 },
+    image: 'studio.png',
+    imageHeight: 1080, // TODO: recapture with auth — actual page is ~4000px
+    durationSec: 10,
+    scroll: 'none',
+    url: 'snap-r.com/dashboard/studio',
   },
   {
     id: 'content-studio',
     label: 'Content Studio',
     caption: 'AI generates descriptions, captions, and posts',
-    frames: [
-      '0039_content_studio_select.png',
-      '0040_content_studio_listing.png',
-      '0042_content_studio_scroll_1.png',
-      '0044_content_library.png',
-    ],
-    durationSec: 10,
-    kenBurns: { startScale: 1.0, endScale: 1.03, panX: 0, panY: -4 },
+    image: 'content-studio.png',
+    imageHeight: 1080, // TODO: recapture with auth — actual page is ~3500px
+    durationSec: 8,
+    scroll: 'none',
+    url: 'snap-r.com/dashboard/content-studio',
   },
   {
-    id: 'analytics-brand',
-    label: 'Analytics & Brand',
-    caption: 'Track performance and customize your brand',
-    frames: [
-      '0046_analytics.png',
-      '0048_analytics_scroll_1.png',
-      '0049_brand_profile.png',
-    ],
-    durationSec: 7,
-    kenBurns: { startScale: 1.02, endScale: 1.0, panX: 0, panY: -3 },
+    id: 'video-creator',
+    label: 'Video Generation',
+    caption: 'AI voiceover, 5 templates, 3 aspect ratios',
+    image: 'video-creator.png',
+    imageHeight: 1080,
+    durationSec: 5,
+    scroll: 'none',
+    url: 'snap-r.com/dashboard/content-studio/video',
   },
   {
-    id: 'closing',
-    label: 'Start Free Trial',
-    caption: 'From photos to published listing in under ten minutes',
-    frames: [
-      '0050_final_cta.png',
-    ],
-    durationSec: 7,
-    kenBurns: { startScale: 1.0, endScale: 1.04, panX: 0, panY: 0 },
+    id: 'analytics',
+    label: 'Analytics',
+    caption: 'Cross-platform engagement tracking and ROI',
+    image: 'analytics.png',
+    imageHeight: 1080, // TODO: recapture with auth — actual page is ~2500px
+    durationSec: 5,
+    scroll: 'none',
+    url: 'snap-r.com/dashboard/analytics',
+  },
+  {
+    id: 'calendar',
+    label: 'Auto-Publishing',
+    caption: 'Posts to Instagram, Facebook, LinkedIn, TikTok',
+    image: 'calendar.png',
+    imageHeight: 1080,
+    durationSec: 4,
+    scroll: 'none',
+    url: 'snap-r.com/dashboard/content-studio/calendar',
   },
 ];
 
@@ -208,89 +243,108 @@ export function calculateExplainerDuration(): number {
     (sum, scene) => sum + scene.durationSec * FPS,
     0,
   );
-  // intro + scenes + closing, minus transitions between all
   const totalSequences = 1 + SCENES.length + 1; // intro + scenes + closing
   const transitionCount = totalSequences - 1;
   return INTRO_DURATION + sceneFrames + CLOSING_CARD_DURATION - transitionCount * TRANSITION_FRAMES;
 }
 
 // ============================================
-// SLIDESHOW SCENE COMPONENT
+// SCROLL SCENE COMPONENT
 // ============================================
 
-const SlideshowScene: React.FC<{
+const ScrollScene: React.FC<{
   scene: SceneConfig;
   showCaptions: boolean;
 }> = ({ scene, showCaptions }) => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
-  const { frames, kenBurns, durationSec, caption, label } = scene;
+  const { image, imageHeight, durationSec, caption, label, scroll, url, zoomTarget } = scene;
   const totalFrames = durationSec * fps;
 
-  // Ken Burns: smooth eased scale and pan over the scene duration
-  const scale = interpolate(
-    frame,
-    [0, totalFrames],
-    [kenBurns.startScale, kenBurns.endScale],
-    {
-      easing: Easing.inOut(Easing.ease),
-      extrapolateLeft: 'clamp',
-      extrapolateRight: 'clamp',
-    },
-  );
+  // Determine scroll range — use explicit px offsets if provided, else full page
+  const scrollStart = scene.scrollStartPx ?? 0;
+  const scrollEnd = scene.scrollEndPx ?? Math.max(0, imageHeight - CONTENT_HEIGHT);
+  const scrollDistance = scrollEnd - scrollStart;
 
-  const panX = interpolate(frame, [0, totalFrames], [0, kenBurns.panX], {
-    easing: Easing.inOut(Easing.ease),
-    extrapolateLeft: 'clamp',
-    extrapolateRight: 'clamp',
-  });
-
-  const panY = interpolate(frame, [0, totalFrames], [0, kenBurns.panY], {
-    easing: Easing.inOut(Easing.ease),
-    extrapolateLeft: 'clamp',
-    extrapolateRight: 'clamp',
-  });
-
-  // Pre-compute integer frame boundaries for even shot distribution
-  const shotBoundaries: number[] = [];
-  for (let i = 0; i <= frames.length; i++) {
-    shotBoundaries.push(Math.round((i * totalFrames) / frames.length));
+  // Compute scroll Y offset based on scroll mode
+  let scrollY = -scrollStart; // Start at scrollStartPx
+  if (scroll === 'smooth' && scrollDistance > 0) {
+    scrollY = interpolate(
+      frame,
+      [0, totalFrames],
+      [-scrollStart, -scrollEnd],
+      {
+        easing: Easing.inOut(Easing.cubic),
+        extrapolateLeft: 'clamp',
+        extrapolateRight: 'clamp',
+      },
+    );
+  } else if (scroll === 'pauseAtTop' && scrollDistance > 0) {
+    // Hold at top for 1.5s, then scroll
+    const pauseFrames = Math.round(1.5 * fps);
+    scrollY = interpolate(
+      frame,
+      [0, pauseFrames, totalFrames],
+      [-scrollStart, -scrollStart, -scrollEnd],
+      {
+        easing: Easing.inOut(Easing.cubic),
+        extrapolateLeft: 'clamp',
+        extrapolateRight: 'clamp',
+      },
+    );
   }
 
-  // Find current shot index from boundaries
-  let currentFrameIndex = 0;
-  for (let i = 0; i < frames.length; i++) {
-    if (frame >= shotBoundaries[i] && frame < shotBoundaries[i + 1]) {
-      currentFrameIndex = i;
-      break;
-    }
-    if (i === frames.length - 1) {
-      currentFrameIndex = i;
-    }
+  // Ken Burns for non-scrolling scenes
+  let kenBurnsScale = 1;
+  if (scroll === 'none') {
+    kenBurnsScale = interpolate(
+      frame,
+      [0, totalFrames],
+      [1.02, 1.0],
+      {
+        easing: Easing.inOut(Easing.ease),
+        extrapolateLeft: 'clamp',
+        extrapolateRight: 'clamp',
+      },
+    );
   }
 
-  // Smooth eased crossfade between consecutive screenshots
-  const shotStartFrame = shotBoundaries[currentFrameIndex];
-  const shotEndFrame = shotBoundaries[currentFrameIndex + 1];
-  const shotDuration = shotEndFrame - shotStartFrame;
-  const positionInShot = frame - shotStartFrame;
-  const nextFrameIndex = Math.min(frames.length - 1, currentFrameIndex + 1);
-  const crossfadeDuration = Math.min(10, shotDuration * 0.3);
-  const crossfadeProgress =
-    currentFrameIndex < frames.length - 1
-      ? interpolate(
-          positionInShot,
-          [shotDuration - crossfadeDuration, shotDuration],
-          [0, 1],
-          {
-            easing: Easing.inOut(Easing.ease),
+  // Zoom target animation
+  let zoomScale = 1;
+  let zoomX = 0;
+  let zoomY = 0;
+  if (zoomTarget && scrollDistance > 0) {
+    const scrollProgress = frame / totalFrames;
+    const zoomStart = zoomTarget.atPercent;
+    const zoomEnd = zoomStart + (zoomTarget.durationFrames / totalFrames);
+    const zoomMid = zoomStart + (zoomEnd - zoomStart) * 0.5;
+
+    if (scrollProgress >= zoomStart && scrollProgress <= zoomEnd) {
+      // Zoom in then back out
+      const zoomProgress = scrollProgress <= zoomMid
+        ? interpolate(scrollProgress, [zoomStart, zoomMid], [0, 1], {
             extrapolateLeft: 'clamp',
             extrapolateRight: 'clamp',
-          },
-        )
-      : 0;
+          })
+        : interpolate(scrollProgress, [zoomMid, zoomEnd], [1, 0], {
+            extrapolateLeft: 'clamp',
+            extrapolateRight: 'clamp',
+          });
 
-  // Caption animation — fade in and out with the scene
+      const springVal = spring({
+        frame: Math.round(zoomProgress * zoomTarget.durationFrames),
+        fps,
+        config: { damping: 15, stiffness: 80 },
+      });
+
+      zoomScale = 1 + (zoomTarget.scale - 1) * springVal;
+      // Shift to keep focal point centered
+      zoomX = -(zoomTarget.x - 960) * (zoomScale - 1);
+      zoomY = -(zoomTarget.y - 540) * (zoomScale - 1);
+    }
+  }
+
+  // Caption animation
   const captionOpacity = interpolate(
     frame,
     [12, 28, totalFrames - 20, totalFrames],
@@ -298,67 +352,57 @@ const SlideshowScene: React.FC<{
     { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' },
   );
 
-  const captionY = interpolate(frame, [12, 28], [15, 0], {
+  const captionSlideY = interpolate(frame, [12, 28], [12, 0], {
     easing: Easing.out(Easing.quad),
     extrapolateLeft: 'clamp',
     extrapolateRight: 'clamp',
   });
 
-  return (
-    <AbsoluteFill style={{ backgroundColor: '#0A0A0A', overflow: 'hidden' }}>
-      {/* Current screenshot */}
-      <div
-        style={{
-          position: 'absolute',
-          inset: 0,
-          transform: `scale(${scale}) translate(${panX}px, ${panY}px)`,
-          willChange: 'transform',
-        }}
-      >
-        <Img
-          src={staticFile(`explainer-frames/${frames[currentFrameIndex]}`)}
-          style={{
-            width: '100%',
-            height: '100%',
-            objectFit: 'cover',
-          }}
-        />
-      </div>
+  // Label badge animation
+  const labelOpacity = interpolate(frame, [0, 15], [0, 1], {
+    extrapolateRight: 'clamp',
+  });
 
-      {/* Next screenshot (crossfade) */}
-      {crossfadeProgress > 0 && nextFrameIndex !== currentFrameIndex && (
+  return (
+    <AbsoluteFill style={{ backgroundColor: '#0A0A0A' }}>
+      <BrowserChrome url={url}>
+        {/* Scrolling content */}
         <div
           style={{
             position: 'absolute',
             inset: 0,
-            opacity: crossfadeProgress,
-            transform: `scale(${scale}) translate(${panX}px, ${panY}px)`,
+            overflow: 'hidden',
+            transform: `scale(${kenBurnsScale * zoomScale}) translate(${zoomX}px, ${zoomY}px)`,
             willChange: 'transform',
           }}
         >
           <Img
-            src={staticFile(`explainer-frames/${frames[nextFrameIndex]}`)}
+            src={staticFile(`explainer-frames-v3/${image}`)}
             style={{
-              width: '100%',
-              height: '100%',
-              objectFit: 'cover',
+              width: 1920,
+              height: 'auto',
+              transform: `translateY(${scrollY}px)`,
+              willChange: 'transform',
             }}
           />
         </div>
-      )}
+
+        {/* Cursor overlay */}
+        {scene.cursorWaypoints && scene.cursorWaypoints.length > 0 && (
+          <AnimatedCursor waypoints={scene.cursorWaypoints} />
+        )}
+      </BrowserChrome>
 
       {/* Step label badge */}
       <div
         style={{
           position: 'absolute',
-          top: 24,
+          top: 58,
           left: 24,
           display: 'flex',
           alignItems: 'center',
           gap: 10,
-          opacity: interpolate(frame, [0, 15], [0, 1], {
-            extrapolateRight: 'clamp',
-          }),
+          opacity: labelOpacity,
           zIndex: 10,
         }}
       >
@@ -390,7 +434,7 @@ const SlideshowScene: React.FC<{
             justifyContent: 'center',
             pointerEvents: 'none',
             opacity: captionOpacity,
-            transform: `translateY(${captionY}px)`,
+            transform: `translateY(${captionSlideY}px)`,
             zIndex: 10,
           }}
         >
@@ -670,7 +714,7 @@ export const ExplainerVideo: React.FC<ExplainerVideoProps> = ({
         key={scene.id}
         durationInFrames={scene.durationSec * FPS}
       >
-        <SlideshowScene scene={scene} showCaptions={showCaptions} />
+        <ScrollScene scene={scene} showCaptions={showCaptions} />
       </TransitionSeries.Sequence>,
     );
 
@@ -687,7 +731,7 @@ export const ExplainerVideo: React.FC<ExplainerVideoProps> = ({
 
   return (
     <AbsoluteFill style={{ backgroundColor: '#0A0A0A' }}>
-      {/* Voiceover audio — delayed past intro card so narration syncs with scenes */}
+      {/* Voiceover audio — delayed past intro card */}
       <Sequence from={INTRO_DURATION - TRANSITION_FRAMES}>
         <Audio src={staticFile('explainer-voiceover.mp3')} volume={1} />
       </Sequence>
