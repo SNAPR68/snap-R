@@ -2,91 +2,125 @@
 
 import { useState, useEffect, useCallback } from 'react';
 
-const SCREENSHOTS = [
+const VOICES = [
   {
-    src: '/agent-voices/fstoppers-quotes.png',
-    source: 'Fstoppers Community',
-    platform: 'Forum',
-    platformClass: 'bg-purple-500/15 text-purple-400',
-    caption: 'Photographers frustrated with editing turnaround times',
+    quote: 'I became an agent to sell homes and build relationships — not to spend my evenings editing photos, writing descriptions, designing social posts, building property websites, and trying to figure out which of my 7 subscriptions is worth keeping.',
+    source: 'Real Estate Agent',
+    platform: 'Reddit',
+    platformClass: 'bg-orange-500/15 text-orange-400',
+    category: 'Time Crisis',
   },
   {
-    src: '/agent-voices/fstoppers-header.png',
+    quote: 'Real estate agents and brokers are juggling compliance requirements, client expectations, and razor-thin timelines, and a bloated tech stack isn\'t just inconvenient — it\'s costing business.',
+    source: 'RISMedia',
+    platform: 'Industry',
+    platformClass: 'bg-blue-500/15 text-blue-400',
+    category: 'Tool Overload',
+  },
+  {
+    quote: 'If it\'s taking you 3 hours to shoot a home and 3 or 4 hours to edit, then you can only do 1 or 2 jobs a day.',
+    source: 'Build A Photography Business',
+    platform: 'Industry',
+    platformClass: 'bg-purple-500/15 text-purple-400',
+    category: 'Editing Backlog',
+  },
+  {
+    quote: 'Clients expect 2015 prices with 2025 deliverables, turnaround times, and production values.',
     source: 'Fstoppers',
     platform: 'Industry Blog',
-    platformClass: 'bg-orange-500/15 text-orange-400',
-    caption: 'The real cost of real estate photo editing',
+    platformClass: 'bg-green-500/15 text-green-400',
+    category: 'Cost Crisis',
   },
   {
-    src: '/agent-voices/photography-business.png',
-    source: 'Photography Business Forum',
+    quote: 'Every hour I spend on marketing is an hour I\'m not spending with clients. And I still can\'t do it as well as someone who does it full-time.',
+    source: 'Real Estate Agent',
     platform: 'Forum',
-    platformClass: 'bg-blue-500/15 text-blue-400',
-    caption: 'Agents demanding faster turnaround & more content',
-  },
-  {
-    src: '/agent-voices/propphy-costs.png',
-    source: 'Propphy / Industry Data',
-    platform: 'Industry',
-    platformClass: 'bg-green-500/15 text-green-400',
-    caption: 'The hidden costs eating into photographer margins',
-  },
-  {
-    src: '/agent-voices/dan-header.png',
-    source: 'Dan Smigrod — We Get Around',
-    platform: 'Industry',
-    platformClass: 'bg-green-500/15 text-green-400',
-    caption: 'Top industry voice calling for automation',
-  },
-  {
-    src: '/agent-voices/dan-video-stats.png',
-    source: 'We Get Around Network',
-    platform: 'Industry',
-    platformClass: 'bg-green-500/15 text-green-400',
-    caption: 'Video content demand skyrocketing — no tools to meet it',
-  },
-  {
-    src: '/agent-voices/rismedia-header.png',
-    source: 'RISMedia',
-    platform: 'Industry Press',
     platformClass: 'bg-yellow-500/15 text-yellow-400',
-    caption: 'Agents overwhelmed by listing marketing workload',
+    category: 'Marketing Burnout',
   },
   {
-    src: '/agent-voices/matterport-header.png',
-    source: 'Matterport Research',
+    quote: 'Only 35% of agents use professional photographers — yet properties with professional photos sell 50% faster and get 118% more online views.',
+    source: 'NAR Research',
     platform: 'Survey',
     platformClass: 'bg-[#D4A017]/15 text-[#D4A017]',
-    caption: 'Buyers expect rich media — agents can\'t keep up',
+    category: 'Photography Gap',
   },
   {
-    src: '/agent-voices/matterport-stats.png',
-    source: 'Matterport Research',
+    quote: 'The job of a Realtor IS MARKETING. People think you just take a listing and put it on the MLS. NO no no no no.',
+    source: 'r/RealEstateTechnology',
+    platform: 'Reddit',
+    platformClass: 'bg-orange-500/15 text-orange-400',
+    category: 'Marketing Reality',
+  },
+  {
+    quote: 'Almost all photographers have experienced folders of unedited shoots piling up in Lightroom, creating a mountain of work.',
+    source: 'Fstoppers',
+    platform: 'Industry Blog',
+    platformClass: 'bg-green-500/15 text-green-400',
+    category: 'Editing Backlog',
+  },
+  {
+    quote: 'Listings with video receive 403% more inquiries compared to those without.',
+    source: 'Digital Agency Network',
     platform: 'Survey',
     platformClass: 'bg-[#D4A017]/15 text-[#D4A017]',
-    caption: 'Data showing the gap between buyer expectations and reality',
+    category: 'Video Gap',
+  },
+  {
+    quote: 'Creating consistent, high-quality video content every week is exhausting, involving filming, editing, retakes, lighting, and scheduling.',
+    source: 'Placester',
+    platform: 'Industry',
+    platformClass: 'bg-blue-500/15 text-blue-400',
+    category: 'Content Fatigue',
+  },
+  {
+    quote: '73% of homeowners prefer agents who use video marketing — yet only 63% of agents use video at all, and just 26% use YouTube.',
+    source: 'NAR Research',
+    platform: 'Survey',
+    platformClass: 'bg-[#D4A017]/15 text-[#D4A017]',
+    category: 'Video Gap',
+  },
+  {
+    quote: 'Writing the best MLS property descriptions is not your favorite part of being a REALTOR — and you\'re not alone.',
+    source: 'The Nest Press',
+    platform: 'Blog',
+    platformClass: 'bg-purple-500/15 text-purple-400',
+    category: 'Listing Descriptions',
   },
 ];
+
+const CATEGORY_ICONS: Record<string, string> = {
+  'Time Crisis': '\u23F1',
+  'Tool Overload': '\u2699',
+  'Editing Backlog': '\uD83D\uDCF7',
+  'Cost Crisis': '\uD83D\uDCB8',
+  'Marketing Burnout': '\uD83D\uDD25',
+  'Photography Gap': '\uD83D\uDCC9',
+  'Marketing Reality': '\uD83D\uDCE2',
+  'Video Gap': '\uD83C\uDFA5',
+  'Content Fatigue': '\uD83D\uDE29',
+  'Listing Descriptions': '\u270D',
+};
 
 export function WeHeardYou() {
   const [current, setCurrent] = useState(0);
   const [isHovered, setIsHovered] = useState(false);
 
   const next = useCallback(() => {
-    setCurrent((prev) => (prev + 1) % SCREENSHOTS.length);
+    setCurrent((prev) => (prev + 1) % VOICES.length);
   }, []);
 
   const prev = useCallback(() => {
-    setCurrent((prev) => (prev - 1 + SCREENSHOTS.length) % SCREENSHOTS.length);
+    setCurrent((prev) => (prev - 1 + VOICES.length) % VOICES.length);
   }, []);
 
   useEffect(() => {
     if (isHovered) return;
-    const timer = setInterval(next, 3500);
+    const timer = setInterval(next, 4500);
     return () => clearInterval(timer);
   }, [isHovered, next]);
 
-  const slide = SCREENSHOTS[current];
+  const voice = VOICES[current];
 
   return (
     <section className="py-16 px-6 bg-[#0A0A0A]">
@@ -101,55 +135,58 @@ export function WeHeardYou() {
             <span className="text-[#D4A017]">That&apos;s Why We Built SnapR.</span>
           </h2>
           <p className="text-white/50 text-base max-w-xl mx-auto">
-            From Reddit threads to industry forums — photographers and agents have been screaming about the same problems for years.
+            From Reddit threads to industry surveys — photographers and agents have been screaming about the same problems for years.
           </p>
         </div>
 
-        {/* Carousel */}
+        {/* Quote Carousel */}
         <div
           className="relative"
           onMouseEnter={() => setIsHovered(true)}
           onMouseLeave={() => setIsHovered(false)}
         >
-          {/* Main screenshot card */}
+          {/* Main quote card */}
           <div className="relative rounded-2xl overflow-hidden border border-white/10 bg-[#111111] shadow-2xl">
-            {/* Browser chrome bar */}
-            <div className="flex items-center gap-1.5 px-4 py-2.5 bg-[#1A1A1A] border-b border-white/10">
-              <div className="w-2.5 h-2.5 rounded-full bg-red-500/70" />
-              <div className="w-2.5 h-2.5 rounded-full bg-yellow-500/70" />
-              <div className="w-2.5 h-2.5 rounded-full bg-green-500/70" />
-              <div className="flex-1 mx-3 h-5 rounded bg-white/5 flex items-center px-3">
-                <span className="text-white/30 text-xs">Real feedback from photographers &amp; agents</span>
+            {/* Top bar */}
+            <div className="flex items-center justify-between px-5 py-3 bg-[#1A1A1A] border-b border-white/10">
+              <div className="flex items-center gap-2">
+                <span className="text-lg">{CATEGORY_ICONS[voice.category] ?? '\uD83D\uDCAC'}</span>
+                <span className="text-white/60 text-xs font-medium uppercase tracking-wider">
+                  {voice.category}
+                </span>
               </div>
-              <span className={`text-xs font-semibold px-2 py-0.5 rounded ${slide.platformClass}`}>
-                {slide.platform}
+              <span className={`text-xs font-semibold px-2.5 py-0.5 rounded-full ${voice.platformClass}`}>
+                {voice.platform}
               </span>
             </div>
 
-            {/* Screenshot — scaled to fill width, top-aligned inside fixed height */}
-            <div className="relative w-full overflow-hidden bg-white" style={{ height: '220px' }}>
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                key={current}
-                src={slide.src}
-                alt={slide.caption}
-                style={{ width: '100%', height: 'auto', display: 'block' }}
-              />
-            </div>
-            {/* Caption bar */}
-            <div className="px-4 py-3 flex items-center justify-between bg-[#111111] border-t border-white/10">
+            {/* Quote body */}
+            <div className="px-8 py-10 md:px-12 md:py-12 min-h-[200px] flex items-center">
               <div>
-                <p className="text-white text-sm font-semibold leading-snug">{slide.caption}</p>
-                <p className="text-white/40 text-xs mt-0.5">Source: {slide.source}</p>
+                <svg className="w-8 h-8 text-[#D4A017]/30 mb-4" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M14.017 21v-7.391c0-5.704 3.731-9.57 8.983-10.609l.995 2.151c-2.432.917-3.995 3.638-3.995 5.849h4v10H14.017zM0 21v-7.391c0-5.704 3.731-9.57 8.983-10.609l.995 2.151C7.546 6.068 5.983 8.789 5.983 11H10v10H0z" />
+                </svg>
+                <p className="text-white text-lg md:text-xl leading-relaxed font-light">
+                  {voice.quote}
+                </p>
               </div>
-              <span className="text-white/30 text-xs shrink-0 ml-4">{current + 1} / {SCREENSHOTS.length}</span>
+            </div>
+
+            {/* Source bar */}
+            <div className="px-5 py-3 flex items-center justify-between bg-[#0D0D0D] border-t border-white/10">
+              <p className="text-white/40 text-sm">
+                — {voice.source}
+              </p>
+              <span className="text-white/25 text-xs shrink-0 ml-4">
+                {current + 1} / {VOICES.length}
+              </span>
             </div>
           </div>
 
           {/* Nav arrows */}
           <button
             onClick={prev}
-            aria-label="Previous screenshot"
+            aria-label="Previous quote"
             className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-4 w-8 h-8 rounded-full bg-[#1A1A1A] border border-white/10 flex items-center justify-center text-white/60 hover:text-white hover:border-[#D4A017]/50 transition-all shadow-lg"
           >
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -158,7 +195,7 @@ export function WeHeardYou() {
           </button>
           <button
             onClick={next}
-            aria-label="Next screenshot"
+            aria-label="Next quote"
             className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-4 w-8 h-8 rounded-full bg-[#1A1A1A] border border-white/10 flex items-center justify-center text-white/60 hover:text-white hover:border-[#D4A017]/50 transition-all shadow-lg"
           >
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -168,11 +205,11 @@ export function WeHeardYou() {
 
           {/* Dot indicators */}
           <div className="flex justify-center gap-1.5 mt-4">
-            {SCREENSHOTS.map((_, i) => (
+            {VOICES.map((_, i) => (
               <button
                 key={i}
                 onClick={() => setCurrent(i)}
-                aria-label={`Go to screenshot ${i + 1}`}
+                aria-label={`Go to quote ${i + 1}`}
                 className={`h-1 rounded-full transition-all duration-300 ${
                   i === current
                     ? 'w-5 bg-[#D4A017]'
