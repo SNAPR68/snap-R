@@ -4,7 +4,8 @@ import { useState, useEffect, useCallback } from 'react'
 import {
   Users, Mail, Phone, MapPin, Calendar, Filter,
   ChevronDown, Download, ExternalLink, Instagram,
-  Facebook, Linkedin, Globe, TrendingUp
+  Facebook, Linkedin, Globe, TrendingUp, Zap, CheckCircle,
+  X, Loader2
 } from 'lucide-react'
 
 // ============================================
@@ -35,6 +36,27 @@ interface Lead {
   listings: LeadListing | null
 }
 
+interface DripSequence {
+  id: string
+  name: string
+  description: string | null
+}
+
+interface DripEnrollment {
+  id: string
+  status: string
+  enrolled_at: string
+  sequence_id: string
+  lead_drip_sequences: { name: string } | null
+  lead_drip_emails: Array<{
+    id: string
+    status: string
+    scheduled_for: string
+    sent_at: string | null
+    subject: string
+  }>
+}
+
 type LeadStatus = 'new' | 'contacted' | 'qualified' | 'converted' | 'archived'
 
 const STATUS_OPTIONS: { value: LeadStatus | 'all'; label: string }[] = [
@@ -54,6 +76,13 @@ const STATUS_COLORS: Record<string, string> = {
   archived: 'bg-white/10 text-white/40',
 }
 
+const DRIP_STATUS_COLORS: Record<string, string> = {
+  active: 'text-green-400',
+  completed: 'text-white/40',
+  paused: 'text-yellow-400',
+  unsubscribed: 'text-red-400',
+}
+
 function getPlatformIcon(source: string | null) {
   switch (source?.toLowerCase()) {
     case 'instagram': return <Instagram className="w-4 h-4 text-pink-400" />
@@ -62,6 +91,190 @@ function getPlatformIcon(source: string | null) {
     case 'tiktok': return <Globe className="w-4 h-4 text-white/60" />
     default: return <Globe className="w-4 h-4 text-white/40" />
   }
+}
+
+// ============================================
+// DRIP PANEL — shown inside expanded lead
+// ============================================
+
+function DripPanel({ lead }: { lead: Lead }) {
+  const [sequences, setSequences] = useState<DripSequence[]>([])
+  const [enrollments, setEnrollments] = useState<DripEnrollment[]>([])
+  const [loading, setLoading] = useState(true)
+  const [enrolling, setEnrolling] = useState<string | null>(null)
+  const [unenrolling, setUnenrolling] = useState<string | null>(null)
+  const [toast, setToast] = useState<string | null>(null)
+
+  const showToast = (msg: string) => {
+    setToast(msg)
+    setTimeout(() => setToast(null), 3000)
+  }
+
+  const loadDrip = useCallback(async () => {
+    setLoading(true)
+    try {
+      const res = await fetch(`/api/leads/drip?lead_id=${lead.id}`)
+      if (!res.ok) return
+      const data = await res.json()
+      setSequences(data.sequences || [])
+      setEnrollments(data.enrollments || [])
+    } catch {
+      // silently ignore
+    } finally {
+      setLoading(false)
+    }
+  }, [lead.id])
+
+  useEffect(() => {
+    loadDrip()
+  }, [loadDrip])
+
+  const enroll = async (sequenceId: string) => {
+    setEnrolling(sequenceId)
+    try {
+      const res = await fetch('/api/leads/drip', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ leadId: lead.id, sequenceId }),
+      })
+      const data = await res.json()
+      if (!res.ok) {
+        showToast(data.error || 'Failed to enroll')
+        return
+      }
+      showToast(`Enrolled in "${data.sequenceName}" — ${data.emailsScheduled} emails scheduled`)
+      await loadDrip()
+    } catch {
+      showToast('Failed to enroll')
+    } finally {
+      setEnrolling(null)
+    }
+  }
+
+  const unenroll = async (enrollmentId: string) => {
+    setUnenrolling(enrollmentId)
+    try {
+      const res = await fetch('/api/leads/drip', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ enrollmentId }),
+      })
+      if (!res.ok) {
+        showToast('Failed to unenroll')
+        return
+      }
+      showToast('Unsubscribed from sequence')
+      await loadDrip()
+    } catch {
+      showToast('Failed to unenroll')
+    } finally {
+      setUnenrolling(null)
+    }
+  }
+
+  const activeEnrollmentIds = new Set(
+    enrollments.filter(e => e.status === 'active').map(e => e.sequence_id)
+  )
+
+  if (loading) {
+    return (
+      <div className="flex items-center gap-2 py-2 text-white/40 text-sm">
+        <Loader2 className="w-4 h-4 animate-spin" />
+        Loading sequences...
+      </div>
+    )
+  }
+
+  return (
+    <div className="relative">
+      {toast && (
+        <div className="absolute -top-2 left-0 right-0 bg-[#D4A017] text-black text-xs font-medium px-3 py-2 rounded-lg z-10">
+          {toast}
+        </div>
+      )}
+
+      <h4 className="text-sm font-medium text-white/60 uppercase tracking-wider mb-3">
+        Follow-Up Sequences
+      </h4>
+
+      {/* Active enrollments */}
+      {enrollments.length > 0 && (
+        <div className="space-y-2 mb-4">
+          {enrollments.map(enrollment => {
+            const sentCount = enrollment.lead_drip_emails?.filter(e => e.status === 'sent').length ?? 0
+            const totalCount = enrollment.lead_drip_emails?.length ?? 0
+            const seqName = enrollment.lead_drip_sequences?.name ?? 'Sequence'
+
+            return (
+              <div key={enrollment.id} className="flex items-center justify-between bg-white/[0.03] rounded-lg px-3 py-2.5 border border-white/5">
+                <div className="flex items-center gap-2 min-w-0">
+                  <CheckCircle className={`w-4 h-4 shrink-0 ${DRIP_STATUS_COLORS[enrollment.status] || 'text-white/40'}`} />
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium text-white/80 truncate">{seqName}</p>
+                    <p className="text-xs text-white/40">
+                      {enrollment.status === 'active'
+                        ? `${sentCount}/${totalCount} emails sent`
+                        : enrollment.status.charAt(0).toUpperCase() + enrollment.status.slice(1)}
+                    </p>
+                  </div>
+                </div>
+                {enrollment.status === 'active' && (
+                  <button
+                    onClick={() => unenroll(enrollment.id)}
+                    disabled={unenrolling === enrollment.id}
+                    className="ml-2 p-1 text-white/30 hover:text-red-400 transition-colors disabled:opacity-40"
+                    title="Unsubscribe from sequence"
+                  >
+                    {unenrolling === enrollment.id
+                      ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      : <X className="w-3.5 h-3.5" />
+                    }
+                  </button>
+                )}
+              </div>
+            )
+          })}
+        </div>
+      )}
+
+      {/* Available sequences to enroll */}
+      <div className="space-y-2">
+        {sequences.map(seq => {
+          const isEnrolled = activeEnrollmentIds.has(seq.id)
+          return (
+            <button
+              key={seq.id}
+              onClick={() => !isEnrolled && enroll(seq.id)}
+              disabled={isEnrolled || enrolling === seq.id}
+              className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg border text-left transition-colors ${
+                isEnrolled
+                  ? 'border-green-500/20 bg-green-500/5 cursor-default'
+                  : 'border-[#D4A017]/20 bg-[#D4A017]/5 hover:bg-[#D4A017]/10'
+              } disabled:opacity-60`}
+            >
+              <div className="flex items-center gap-2 min-w-0">
+                <Zap className={`w-4 h-4 shrink-0 ${isEnrolled ? 'text-green-400' : 'text-[#D4A017]'}`} />
+                <div className="min-w-0">
+                  <p className={`text-sm font-medium truncate ${isEnrolled ? 'text-green-400' : 'text-[#D4A017]'}`}>
+                    {seq.name}
+                  </p>
+                  {seq.description && (
+                    <p className="text-xs text-white/40 truncate">{seq.description}</p>
+                  )}
+                </div>
+              </div>
+              {enrolling === seq.id
+                ? <Loader2 className="w-4 h-4 animate-spin text-[#D4A017] shrink-0" />
+                : isEnrolled
+                  ? <span className="text-xs text-green-400 shrink-0">Active</span>
+                  : <span className="text-xs text-[#D4A017]/60 shrink-0">Start</span>
+              }
+            </button>
+          )
+        })}
+      </div>
+    </div>
+  )
 }
 
 // ============================================
@@ -113,7 +326,6 @@ export default function LeadsPage() {
       })
       if (!response.ok) throw new Error('Failed to update')
 
-      // Update locally
       setLeads(prev => prev.map(lead =>
         lead.id === leadId ? { ...lead, status: newStatus } : lead
       ))
@@ -149,7 +361,6 @@ export default function LeadsPage() {
     URL.revokeObjectURL(url)
   }
 
-  // Count leads by platform
   const platformCounts = leads.reduce<Record<string, number>>((acc, lead) => {
     const source = lead.utm_source || 'direct'
     acc[source] = (acc[source] || 0) + 1
@@ -402,8 +613,13 @@ export default function LeadsPage() {
                     </div>
                   )}
 
+                  {/* Drip Sequences */}
+                  <div className="mt-4 p-4 bg-white/[0.02] rounded-lg border border-white/5">
+                    <DripPanel lead={lead} />
+                  </div>
+
                   {/* Actions */}
-                  <div className="mt-4 flex gap-3">
+                  <div className="mt-4 flex gap-3 flex-wrap">
                     <a
                       href={`mailto:${lead.email}`}
                       className="flex items-center gap-2 px-4 py-2 bg-[#D4A017] text-black rounded-lg text-sm font-medium hover:opacity-90 transition-opacity"

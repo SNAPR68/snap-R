@@ -1,6 +1,22 @@
 # SnapR Execution Changelog
 =================================
 
+## 2026-03-04 — Lead Drip Sequences
+
+Implemented automated follow-up email sequences for property leads.
+
+### New Files
+- `supabase/migrations/20260304_lead_drip_sequences.sql` — 4 new tables: `lead_drip_sequences`, `lead_drip_steps`, `lead_drip_enrollments`, `lead_drip_emails`. Seeds a built-in 3-step "New Lead Follow-Up" sequence.
+- `app/api/leads/drip/route.ts` — POST (enroll), GET (list sequences + enrollments), DELETE (unenroll)
+- `app/api/leads/drip/unsubscribe/route.ts` — Public one-click unsubscribe with HTML confirmation
+- `app/api/cron/drip-sequences/route.ts` — Hourly cron sends due emails via Resend
+
+### Modified Files
+- `app/dashboard/leads/page.tsx` — DripPanel inside each expanded lead row
+- `vercel.json` — Registered hourly drip-sequences cron
+
+---
+
 ## 2026-03-04 — Luxury Glassmorphism Design System
 
 Applied a world-class luxury glassmorphism design system across the entire app (homepage + authenticated dashboard).
