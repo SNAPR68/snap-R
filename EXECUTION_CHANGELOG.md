@@ -1,6 +1,26 @@
 # SnapR Execution Changelog
 =================================
 
+## 2026-03-04 — Photographer White-Label Portal
+
+Implemented the photographer partner layer: branded photo delivery, client CRM, and bulk delivery link management.
+
+### New Files
+- `supabase/migrations/20260304_photographer_portal.sql` — 5 new tables: `organizations` (fixes long-missing migration), `organization_members`, `photographer_clients`, `delivery_links`, `delivery_events`. Adds `account_type` to `profiles`. Full RLS.
+- `app/api/photographer/listings/route.ts` — GET listings enriched with delivery stats per listing
+- `app/api/photographer/clients/route.ts` — CRUD client roster (GET/POST/PATCH/DELETE)
+- `app/api/photographer/deliver/route.ts` — POST single/bulk delivery links with branded email, GET list, PATCH revoke
+- `app/api/deliver/event/route.ts` — Public event tracking (viewed/downloaded) for delivery links
+- `app/deliver/[token]/page.tsx` — Public branded client delivery page (SSR, no SnapR branding)
+- `app/deliver/[token]/DeliveryPageClient.tsx` — Photo grid, lightbox, single/bulk download
+- `app/dashboard/photographer/page.tsx` — Photographer dashboard server wrapper
+- `app/dashboard/photographer/PhotographerDashboard.tsx` — Listings tab + client CRM tab, deliver modal
+
+### Modified Files
+- `components/dashboard-sidebar.tsx` — Added "Photographer Portal" nav item under Measure section
+
+---
+
 ## 2026-03-04 — Lead Drip Sequences
 
 Implemented automated follow-up email sequences for property leads.
