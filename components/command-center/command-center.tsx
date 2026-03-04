@@ -57,7 +57,7 @@ export default function CommandCenter({
   }))
 
   return (
-    <div className="min-h-screen bg-[#0A0A0A] text-white">
+    <div className="min-h-screen bg-[#080808] text-white">
       <div className="max-w-7xl mx-auto px-4 md:px-6 py-6">
         {/* Header */}
         {!expandedCard && (

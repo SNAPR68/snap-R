@@ -80,7 +80,7 @@ export function GettingStartedChecklist({ hasListings, hasBrand, hasSocials, has
       {/* Compact banner */}
       <div
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-3 px-4 py-3 bg-gradient-to-r from-[#D4A017]/10 to-transparent border border-[#D4A017]/20 rounded-xl cursor-pointer hover:bg-[#D4A017]/[0.08] transition-colors"
+        className="flex items-center gap-3 px-4 py-3 glass-gold-luxury glossy-top rounded-xl cursor-pointer hover:opacity-90 transition-opacity"
       >
         <div className="w-8 h-8 rounded-lg bg-[#D4A017] flex items-center justify-center flex-shrink-0">
           <Sparkles className="w-4 h-4 text-black" />
@@ -124,10 +124,10 @@ export function GettingStartedChecklist({ hasListings, hasBrand, hasSocials, has
                   <Link
                     key={item.label}
                     href={item.done ? '#' : item.href}
-                    className={`flex items-center gap-3 p-3 rounded-xl border transition-all ${
+                    className={`flex items-center gap-3 p-3 rounded-xl transition-all ${
                       item.done
-                        ? 'bg-white/[0.02] border-white/5 opacity-60'
-                        : 'bg-white/[0.03] border-white/10 hover:bg-white/[0.06] hover:border-white/20 cursor-pointer'
+                        ? 'glass-luxury opacity-50'
+                        : 'glass-luxury hover:opacity-90 cursor-pointer'
                     }`}
                   >
                     {item.done ? (

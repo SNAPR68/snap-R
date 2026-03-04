@@ -1,6 +1,36 @@
 # SnapR Execution Changelog
 =================================
 
+## 2026-03-04 — Luxury Glassmorphism Design System
+
+Applied a world-class luxury glassmorphism design system across the entire app (homepage + authenticated dashboard).
+
+### CSS System (globals.css)
+Added `.glass-luxury`, `.glass-gold-luxury`, `.glow-card`, `.shimmer-text`, `.glossy-top`, `.stat-glow`, `.bento-grid` classes with CSS Houdini `@property --angle` rotating conic-gradient border animation.
+
+### Homepage (app/page.tsx)
+- Hero pills → `glass-luxury rounded-full`
+- Trust section → `glass-luxury glossy-top` wrapper, security badges → `glow-card`
+- Problem/Solution → `glass-luxury glossy-top` container, "SnapR" → `shimmer-text`
+- How It Works → bento grid (Step 1 span-2, Step 2 row-2, Step 3 span-2)
+- Demo stat cards → `glow-card` + `stat-glow`
+- Cost comparison → Pay-Per-Service `glass-luxury`, SnapR Gold `glass-gold-luxury glossy-top`, price → `shimmer-text`
+- Modals → `glass-luxury glossy-top`
+
+### Dashboard Components
+- `components/dashboard-sidebar.tsx` — usage card, active nav items, sidebar backgrounds
+- `components/desktop-notification-bar.tsx` — gold-tinted blur bar
+- `components/command-center/expandable-card.tsx` — collapsed/expanded card states
+- `components/getting-started-checklist.tsx` — banner `glass-gold-luxury`, items `glass-luxury`
+- `components/command-center/command-center.tsx` — background deepened
+
+### Studio
+- `components/studio-client.tsx` — header, AI tools sidebar, downloads sidebar, canvas, modals, tool presets, download items
+- `components/marketing-results-panel.tsx` — panel, collapsible sections, caption cards, post items
+
+### Listings Page
+- `app/dashboard/listings/page.tsx` — listing cards `glass-luxury glossy-top`, empty states, filter buttons
+
 ## 2026-02-27 — "We Heard You" Section
 
 Added social proof section to homepage with auto-rotating carousel of real-world screenshots from Fstoppers, RISMedia, Matterport, We Get Around Network, and photography business forums. 9 screenshots auto-rotate every 3.5s, pause on hover, with dot indicators and prev/next arrows. Includes stat strip (24-48h wait, 5+ tools, $400+/mo). Screenshots sourced from `public/agent-voices/`.
