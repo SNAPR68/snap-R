@@ -3,6 +3,12 @@
 
 ## 2026-03-05 — Property Site Editor + Print Dashboard + Showings + SMS + MLS
 
+### Phase 3: Showings Intelligence
+- `supabase/migrations/20260305_showings.sql` — showings table with status, outcome, interest_level, source attribution, RLS
+- `app/api/showings/route.ts` — full CRUD + stats summary
+- `app/dashboard/showings/page.tsx` + `ShowingsDashboard.tsx` — upcoming/past split, stats, schedule modal, outcome/feedback form with star rating
+- `components/dashboard-sidebar.tsx` — Showings nav item
+
 ### Phase 2: Print Materials Dashboard
 - `app/dashboard/print/page.tsx` — print dashboard page
 - `app/dashboard/print/PrintDashboard.tsx` — 3-step UI: select listing → choose format (flyer/feature-sheet) → generate + download PDF

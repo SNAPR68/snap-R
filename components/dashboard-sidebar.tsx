@@ -61,6 +61,7 @@ const NAV_SECTIONS: NavSection[] = [
     items: [
       { href: '/dashboard/analytics', label: 'Analytics', icon: BarChart3 },
       { href: '/dashboard/leads', label: 'Leads', icon: Users },
+      { href: '/dashboard/showings', label: 'Showings', icon: Calendar },
       { href: '/dashboard/approvals', label: 'Client Approvals', icon: CheckSquare },
       { href: '/dashboard/photographer', label: 'Photographer Portal', icon: Camera },
     ],
