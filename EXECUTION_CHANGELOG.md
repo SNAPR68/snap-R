@@ -1,6 +1,16 @@
 # SnapR Execution Changelog
 =================================
 
+## 2026-03-05 — Property Site Editor + Print Dashboard + Showings + SMS + MLS
+
+### Phase 1: Property Site Editor
+- `app/dashboard/content-studio/sites/[id]/page.tsx` — SSR editor page
+- `app/dashboard/content-studio/sites/[id]/SiteEditorClient.tsx` — split-pane editor (theme, listing fields, agent info, publish toggle, live iframe preview)
+- `app/dashboard/content-studio/sites/PropertySites.tsx` — rewritten: sites grid with Edit/Copy/Delete + create-new form
+- `app/api/listing/update/route.ts` — PATCH endpoint for editing listing fields
+
+---
+
 ## 2026-03-04 — Photographer White-Label Portal
 
 Implemented the photographer partner layer: branded photo delivery, client CRM, and bulk delivery link management.
