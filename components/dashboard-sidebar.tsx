@@ -116,7 +116,7 @@ function SidebarContent({ tier, listingsUsed, listingsLimit, onNavClick }: Dashb
       </Link>
 
       {/* Usage Card */}
-      <div className="mb-6 p-3 bg-white/5 rounded-lg border border-white/10">
+      <div className="mb-6 p-3 glass-luxury glossy-top rounded-xl">
         <div className="flex items-center justify-between mb-2">
           <span className="text-xs text-white/50">Listings This Month</span>
           <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
@@ -181,9 +181,9 @@ function SidebarContent({ tier, listingsUsed, listingsLimit, onNavClick }: Dashb
                     key={item.href}
                     href={item.href}
                     onClick={onNavClick}
-                    className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors ${
+                    className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all ${
                       active
-                        ? 'bg-white/10 text-white'
+                        ? 'glass-gold-luxury text-white'
                         : 'text-white/60 hover:bg-white/5 hover:text-white'
                     }`}
                   >
@@ -215,7 +215,7 @@ export default function DashboardSidebar({ tier, listingsUsed, listingsLimit }: 
   return (
     <>
       {/* Desktop sidebar */}
-      <aside className="hidden md:flex w-[220px] bg-[#1A1A1A] border-r border-white/10 p-4 flex-col flex-shrink-0">
+      <aside className="hidden md:flex w-[220px] bg-[#0F0F0F] border-r border-white/10 p-4 flex-col flex-shrink-0" style={{ backdropFilter: 'blur(24px)', background: 'linear-gradient(180deg, rgba(20,20,20,0.98) 0%, rgba(10,10,10,0.99) 100%)' }}>
         <SidebarContent tier={tier} listingsUsed={listingsUsed} listingsLimit={listingsLimit} />
       </aside>
 
@@ -225,7 +225,7 @@ export default function DashboardSidebar({ tier, listingsUsed, listingsLimit }: 
           {/* Backdrop */}
           <div className="absolute inset-0 bg-black/60" onClick={close} />
           {/* Sidebar panel */}
-          <aside className="relative w-[280px] h-full bg-[#1A1A1A] p-4 flex flex-col overflow-y-auto">
+          <aside className="relative w-[280px] h-full bg-[#0F0F0F] p-4 flex flex-col overflow-y-auto" style={{ backdropFilter: 'blur(24px)', background: 'linear-gradient(180deg, rgba(20,20,20,0.99) 0%, rgba(10,10,10,1) 100%)' }}>
             <button
               onClick={close}
               className="absolute top-4 right-4 text-white/60 hover:text-white transition-colors"

@@ -38,13 +38,13 @@ export function ExpandableCard({
     return (
       <motion.div
         layoutId={`card-${id}`}
-        className="min-h-[calc(100vh-120px)] bg-[#0A0A0A] rounded-2xl border border-white/10 overflow-hidden"
+        className="min-h-[calc(100vh-120px)] glass-luxury rounded-2xl overflow-hidden"
         initial={{ opacity: 0.8 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.3, ease: 'easeOut' }}
       >
         {/* Expanded header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-white/10 bg-white/[0.02]">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-white/10 bg-white/[0.03] glossy-top">
           <div className="flex items-center gap-3">
             <button
               onClick={onCollapse}
@@ -93,7 +93,7 @@ export function ExpandableCard({
     <motion.div
       layoutId={`card-${id}`}
       onClick={onExpand}
-      className={`group cursor-pointer rounded-2xl border border-white/10 bg-white/[0.03] hover:bg-white/[0.06] hover:border-white/20 transition-colors overflow-hidden flex flex-col ${className}`}
+      className={`group cursor-pointer glass-luxury glossy-top overflow-hidden flex flex-col ${className}`}
       whileHover={{ scale: 1.01 }}
       whileTap={{ scale: 0.99 }}
       transition={{ duration: 0.2 }}

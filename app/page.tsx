@@ -285,23 +285,23 @@ export default function HomePage() {
             
             {/* Feature Pills */}
             <div className="flex flex-wrap justify-center items-center gap-3 mb-5">
-              <span className="flex items-center gap-1.5 px-3 py-1.5 bg-white/5 border border-white/10 rounded-full text-xs text-white/60">
+              <span className="flex items-center gap-1.5 px-4 py-2 glass-luxury rounded-full text-xs text-white/70 hover:scale-105 transition-transform cursor-default">
                 <Check className="w-3.5 h-3.5 text-[#D4A017]" />
                 MLS-ready photos
               </span>
-              <span className="flex items-center gap-1.5 px-3 py-1.5 bg-white/5 border border-white/10 rounded-full text-xs text-white/60">
+              <span className="flex items-center gap-1.5 px-4 py-2 glass-luxury rounded-full text-xs text-white/70 hover:scale-105 transition-transform cursor-default">
                 <Check className="w-3.5 h-3.5 text-[#D4A017]" />
                 Social content
               </span>
-              <span className="flex items-center gap-1.5 px-3 py-1.5 bg-white/5 border border-white/10 rounded-full text-xs text-white/60">
+              <span className="flex items-center gap-1.5 px-4 py-2 glass-luxury rounded-full text-xs text-white/70 hover:scale-105 transition-transform cursor-default">
                 <Check className="w-3.5 h-3.5 text-[#D4A017]" />
                 Email campaigns
               </span>
-              <span className="flex items-center gap-1.5 px-3 py-1.5 bg-white/5 border border-white/10 rounded-full text-xs text-white/60">
+              <span className="flex items-center gap-1.5 px-4 py-2 glass-luxury rounded-full text-xs text-white/70 hover:scale-105 transition-transform cursor-default">
                 <Check className="w-3.5 h-3.5 text-[#D4A017]" />
                 Property sites
               </span>
-              <span className="flex items-center gap-1.5 px-3 py-1.5 bg-white/5 border border-white/10 rounded-full text-xs text-white/60">
+              <span className="flex items-center gap-1.5 px-4 py-2 glass-luxury rounded-full text-xs text-white/70 hover:scale-105 transition-transform cursor-default">
                 <Check className="w-3.5 h-3.5 text-[#D4A017]" />
                 Video
               </span>
@@ -312,44 +312,46 @@ export default function HomePage() {
       </section>
 
       {/* Trust & Social Proof Section */}
-      <section className="py-8 px-6 bg-[#0F0F0F] border-y border-white/5">
+      <section className="py-10 px-6 bg-[#0F0F0F]">
         <div className="max-w-5xl mx-auto">
-          <p className="text-center text-white/40 text-sm mb-6">
-            Trusted by 500+ real estate professionals across 8 countries
-          </p>
-          <div className="flex justify-center items-center gap-8 md:gap-12 flex-wrap mb-6 opacity-30">
-            {['Keller Williams', 'RE/MAX', 'Century 21', 'Coldwell Banker', 'Sotheby\'s', 'Compass'].map((name) => (
-              <span key={name} className="text-white text-sm font-semibold tracking-wider uppercase whitespace-nowrap">{name}</span>
-            ))}
-          </div>
-          <div className="flex justify-center items-center gap-6 flex-wrap">
-            <div className="flex items-center gap-2 text-white/50 text-xs">
-              <Shield className="w-4 h-4 text-[#D4A017]" />
-              <span>Enterprise Security</span>
+          <div className="glass-luxury glossy-top p-8 rounded-3xl">
+            <p className="text-center text-white/40 text-sm mb-6">
+              Trusted by 500+ real estate professionals across 8 countries
+            </p>
+            <div className="flex justify-center items-center gap-8 md:gap-12 flex-wrap mb-8 opacity-40">
+              {['Keller Williams', 'RE/MAX', 'Century 21', 'Coldwell Banker', 'Sotheby\'s', 'Compass'].map((name) => (
+                <span key={name} className="text-white text-sm font-bold tracking-widest uppercase whitespace-nowrap">{name}</span>
+              ))}
             </div>
-            <div className="flex items-center gap-2 text-white/50 text-xs">
-              <Lock className="w-4 h-4 text-[#D4A017]" />
-              <span>Data Encrypted</span>
-            </div>
-            <div className="flex items-center gap-2 text-white/50 text-xs">
-              <CheckCircle className="w-4 h-4 text-[#D4A017]" />
-              <span>GDPR Ready</span>
+            <div className="flex justify-center items-center gap-4 flex-wrap">
+              <div className="glow-card flex items-center gap-2 px-5 py-3 text-white/60 text-xs">
+                <Shield className="w-4 h-4 text-[#D4A017]" />
+                <span>Enterprise Security</span>
+              </div>
+              <div className="glow-card flex items-center gap-2 px-5 py-3 text-white/60 text-xs">
+                <Lock className="w-4 h-4 text-[#D4A017]" />
+                <span>Data Encrypted</span>
+              </div>
+              <div className="glow-card flex items-center gap-2 px-5 py-3 text-white/60 text-xs">
+                <CheckCircle className="w-4 h-4 text-[#D4A017]" />
+                <span>GDPR Ready</span>
+              </div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Problem → Solution Section - Compact */}
+      {/* Problem → Solution Section - Luxury */}
       <section className="py-16 px-6 bg-[#0F0F0F]">
         <div className="max-w-5xl mx-auto">
           <div className="text-center mb-10">
             <p className="text-[#D4A017] text-sm font-semibold tracking-wider mb-3">THE PROBLEM → THE FIX</p>
             <h2 className="text-3xl md:text-4xl font-bold text-white">
-              What You Deal With vs. What SnapR Does
+              What You Deal With vs. What <span className="shimmer-text">SnapR</span> Does
             </h2>
           </div>
 
-          <div className="space-y-3">
+          <div className="glass-luxury glossy-top overflow-hidden">
             {[
               { problem: '24-48 hour wait for edited photos', solution: 'Enhanced in 30-60 seconds by AI' },
               { problem: '$400+/month on photo editing alone', solution: 'Unlimited edits from $16/listing' },
@@ -357,15 +359,15 @@ export default function HomePage() {
               { problem: 'No idea which photos will sell', solution: 'AI scores and picks your best shots' },
               { problem: 'Hours creating social posts on Canva', solution: '150+ templates auto-generated instantly' },
               { problem: 'Endless email chains for approvals', solution: 'One-click client approval link' },
-            ].map((row) => (
-              <div key={row.problem} className="grid md:grid-cols-2 gap-0 rounded-xl overflow-hidden">
-                <div className="flex items-center gap-3 px-5 py-4 bg-red-500/5 border border-red-500/15">
-                  <span className="text-red-400 text-lg flex-shrink-0">✕</span>
-                  <span className="text-white/60 text-sm">{row.problem}</span>
+            ].map((row, i) => (
+              <div key={row.problem} className={`grid md:grid-cols-2 gap-0 ${i < 5 ? 'border-b border-white/5' : ''}`}>
+                <div className="flex items-center gap-3 px-6 py-4 bg-red-500/5 backdrop-blur-sm md:border-r border-white/5">
+                  <span className="text-red-400 text-base flex-shrink-0">✕</span>
+                  <span className="text-white/55 text-sm">{row.problem}</span>
                 </div>
-                <div className="flex items-center gap-3 px-5 py-4 bg-green-500/5 border border-green-500/15">
-                  <span className="text-green-400 text-lg flex-shrink-0">✓</span>
-                  <span className="text-white/70 text-sm font-medium">{row.solution}</span>
+                <div className="flex items-center gap-3 px-6 py-4 border-l-2 border-[#D4A017]/30 bg-[#D4A017]/3">
+                  <span className="text-[#D4A017] text-base flex-shrink-0">✓</span>
+                  <span className="text-white/80 text-sm font-medium">{row.solution}</span>
                 </div>
               </div>
             ))}
@@ -373,10 +375,10 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* NEW: How It Works - Animated 3 Steps */}
-      <section className="py-10 px-6 bg-gradient-to-b from-[#0F0F0F] to-[#1A1A1A]">
-        <div className="max-w-4xl mx-auto">
-          <div className="text-center mb-6">
+      {/* How It Works - Luxury Bento */}
+      <section className="py-16 px-6 bg-gradient-to-b from-[#0F0F0F] to-[#1A1A1A]">
+        <div className="max-w-5xl mx-auto">
+          <div className="text-center mb-10">
             <p className="text-[#D4A017] text-xs font-semibold tracking-wider mb-2">HOW IT WORKS</p>
             <h2 className="text-2xl md:text-3xl font-bold text-white mb-2">
               Three Steps to Marketing Gold
@@ -385,145 +387,87 @@ export default function HomePage() {
               From raw photos to fully marketed listing in 60 seconds.
             </p>
           </div>
-          
-          {/* Timeline */}
-          <div className="relative">
-            {/* Vertical Line */}
-            <div className="absolute left-6 md:left-8 top-0 bottom-0 w-0.5 bg-gradient-to-b from-[#D4A017] via-[#D4A017]/50 to-[#D4A017]/20 hidden md:block"></div>
-            
-            {/* STEP 1: UPLOAD */}
-            <div className="relative mb-3 md:ml-16">
-              <div className="absolute -left-[52px] top-0 hidden md:block">
-                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#D4A017] to-[#B8860B] flex items-center justify-center text-black font-bold text-sm pulse-gold">1</div>
+
+          {/* Bento Grid */}
+          <div className="bento-grid">
+            {/* STEP 1 — wide */}
+            <div className="bento-span-2 glass-luxury glossy-top p-6">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="glow-card w-10 h-10 flex items-center justify-center text-black font-bold text-sm shrink-0" style={{ background: 'linear-gradient(135deg,#D4A017,#B8860B)', borderRadius: '50%' }}>1</div>
+                <h3 className="text-lg font-bold">Upload Your Photos</h3>
+                <span className="px-3 py-1 bg-[#D4A017]/10 text-[#D4A017] text-xs rounded-full border border-[#D4A017]/30">10 seconds</span>
               </div>
-              <div className="rounded-xl p-4 bg-[#1A1A1A] border border-[#D4A017]/20">
-                <div className="flex items-center gap-3 mb-3">
-                  <div className="md:hidden w-10 h-10 rounded-full bg-gradient-to-br from-[#D4A017] to-[#B8860B] flex items-center justify-center text-black font-bold">1</div>
-                  <h3 className="text-lg font-bold">Upload Your Photos</h3>
-                  <span className="px-3 py-1 bg-[#D4A017]/10 text-[#D4A017] text-xs rounded-full border border-[#D4A017]/30">10 seconds</span>
-                </div>
-                <p className="text-white/60">Drag & drop up to 75 photos. Create your listing in seconds.</p>
+              <p className="text-white/60 mb-4">Drag & drop up to 75 photos. Create your listing in seconds — no training needed.</p>
+              <div className="grid grid-cols-3 gap-2">
+                {['📷 RAW Photos', '🏡 Add Details', '🚀 Hit Go'].map((s) => (
+                  <div key={s} className="glass-gold-luxury px-3 py-2 text-center text-xs text-white/70 font-medium">{s}</div>
+                ))}
               </div>
             </div>
-            
-            {/* STEP 2: AI PREPARES (The Big One) */}
-            <div className="relative mb-3 md:ml-16">
-              <div className="absolute -left-[52px] top-0 hidden md:block">
-                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#D4A017] to-[#B8860B] flex items-center justify-center text-black font-bold text-sm pulse-gold">2</div>
+
+            {/* STEP 2 — tall right side spanning 2 rows */}
+            <div className="bento-row-2 glass-gold-luxury glossy-top p-6 flex flex-col">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="glow-card w-10 h-10 flex items-center justify-center text-black font-bold text-sm shrink-0" style={{ background: 'linear-gradient(135deg,#D4A017,#B8860B)', borderRadius: '50%' }}>2</div>
+                <h3 className="text-lg font-bold">AI Prepares Everything</h3>
               </div>
-              <div className="rounded-xl p-4 bg-[#1A1A1A] border-2 border-[#D4A017]">
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="md:hidden w-10 h-10 rounded-full bg-gradient-to-br from-[#D4A017] to-[#B8860B] flex items-center justify-center text-black font-bold">2</div>
-                  <h3 className="text-lg font-bold">AI Prepares Everything</h3>
-                  <span className="px-3 py-1 bg-[#D4A017]/10 text-[#D4A017] text-xs rounded-full border border-[#D4A017]/30">45 seconds</span>
+              <span className="inline-flex self-start px-3 py-1 bg-[#D4A017]/10 text-[#D4A017] text-xs rounded-full border border-[#D4A017]/30 mb-4">45 seconds</span>
+
+              <div className="mb-4">
+                <div className="flex justify-between text-xs text-white/50 mb-2"><span>Processing...</span><span>100%</span></div>
+                <div className="h-2 bg-white/10 rounded-full overflow-hidden">
+                  <div className="h-full bg-gradient-to-r from-[#D4A017] to-[#B8860B] progress-animate rounded-full"></div>
                 </div>
-                
-                {/* Progress Bar */}
-                <div className="mb-3"><div className="flex justify-between text-xs text-white/50 mb-2">
-                    <span>Processing...</span>
-                    <span>100%</span>
-                  </div>
-                  <div className="h-2 bg-white/10 rounded-full overflow-hidden">
-                    <div className="h-full bg-gradient-to-r from-[#D4A017] to-[#B8860B] progress-animate rounded-full"></div>
-                  </div>
-                </div>
-                
-                {/* What AI Does */}
-                <div className="grid md:grid-cols-2 gap-2 text-sm">
-                  <div className="flex items-start gap-3">
-                    <span className="text-[#D4A017] mt-0.5">✓</span>
+              </div>
+
+              <div className="space-y-3 text-sm flex-1">
+                {[
+                  { label: 'Removes duplicates & bad shots', saving: '10 min' },
+                  { label: 'Replaces ugly skies with blue', saving: '$4/photo' },
+                  { label: 'Applies HDR & color correction', saving: '$2/photo' },
+                  { label: 'Creates twilight hero shot', saving: '$25' },
+                  { label: 'Writes MLS description', saving: '15 min' },
+                  { label: 'Generates social posts & video', saving: '20 min' },
+                ].map(({ label, saving }) => (
+                  <div key={label} className="flex items-start gap-2">
+                    <span className="text-[#D4A017] mt-0.5 shrink-0">✓</span>
                     <div>
-                      <div className="font-medium text-white/90">Removes duplicates & bad shots</div>
-                      <div className="text-sm text-white/40">Saved you <span className="text-[#D4A017]">10 min</span></div>
+                      <div className="font-medium text-white/90 text-xs">{label}</div>
+                      <div className="text-[10px] text-white/40">Saved you <span className="text-[#D4A017]">{saving}</span></div>
                     </div>
                   </div>
-                  <div className="flex items-start gap-3">
-                    <span className="text-[#D4A017] mt-0.5">✓</span>
-                    <div>
-                      <div className="font-medium text-white/90">Replaces ugly skies with blue</div>
-                      <div className="text-sm text-white/40">Saved you <span className="text-[#D4A017]">$4/photo</span></div>
-                    </div>
-                  </div>
-                  <div className="flex items-start gap-3">
-                    <span className="text-[#D4A017] mt-0.5">✓</span>
-                    <div>
-                      <div className="font-medium text-white/90">Applies HDR & color correction</div>
-                      <div className="text-sm text-white/40">Saved you <span className="text-[#D4A017]">$2/photo</span></div>
-                    </div>
-                  </div>
-                  <div className="flex items-start gap-3">
-                    <span className="text-[#D4A017] mt-0.5">✓</span>
-                    <div>
-                      <div className="font-medium text-white/90">Creates twilight hero shot</div>
-                      <div className="text-sm text-white/40">Saved you <span className="text-[#D4A017]">$25</span></div>
-                    </div>
-                  </div>
-                  <div className="flex items-start gap-3">
-                    <span className="text-[#D4A017] mt-0.5">✓</span>
-                    <div>
-                      <div className="font-medium text-white/90">Writes MLS description</div>
-                      <div className="text-sm text-white/40">Saved you <span className="text-[#D4A017]">15 min</span></div>
-                    </div>
-                  </div>
-                  <div className="flex items-start gap-3">
-                    <span className="text-[#D4A017] mt-0.5">✓</span>
-                    <div>
-                      <div className="font-medium text-white/90">Generates social posts & video</div>
-                      <div className="text-sm text-white/40">Saved you <span className="text-[#D4A017]">20 min</span></div>
-                    </div>
-                  </div>
-                </div>
-                
-                {/* Summary */}
-                <div className="mt-3 pt-2 border-t border-[#D4A017]/20 text-center text-sm">
-                  <span className="text-white/60">What takes editors 24-48 hours, SnapR does in</span>
-                  <span className="text-[#D4A017] font-bold text-xl"> 60 seconds</span>
-                </div>
+                ))}
+              </div>
+
+              <div className="mt-4 pt-3 border-t border-[#D4A017]/20 text-center text-sm">
+                <span className="text-white/60">What takes editors 2 days, SnapR does in</span>
+                <span className="text-[#D4A017] font-bold text-xl stat-glow"> 60s</span>
               </div>
             </div>
-            
-            {/* STEP 3: REVIEW & PUBLISH */}
-            <div className="relative md:ml-16">
-              <div className="absolute -left-[52px] top-0 hidden md:block">
-                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#D4A017] to-[#B8860B] flex items-center justify-center text-black font-bold text-sm pulse-gold">3</div>
+
+            {/* STEP 3 — spans 2 cols bottom */}
+            <div className="bento-span-2 glass-luxury glossy-top p-6">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="glow-card w-10 h-10 flex items-center justify-center text-black font-bold text-sm shrink-0" style={{ background: 'linear-gradient(135deg,#D4A017,#B8860B)', borderRadius: '50%' }}>3</div>
+                <h3 className="text-lg font-bold">Review & Publish</h3>
+                <span className="px-3 py-1 bg-[#D4A017]/10 text-[#D4A017] text-xs rounded-full border border-[#D4A017]/30">5 seconds</span>
               </div>
-              <div className="rounded-xl p-4 bg-[#1A1A1A] border border-[#D4A017]/20">
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="md:hidden w-10 h-10 rounded-full bg-gradient-to-br from-[#D4A017] to-[#B8860B] flex items-center justify-center text-black font-bold">3</div>
-                  <h3 className="text-lg font-bold">Review & Publish</h3>
-                  <span className="px-3 py-1 bg-[#D4A017]/10 text-[#D4A017] text-xs rounded-full border border-[#D4A017]/30">5 seconds</span>
-                </div>
-                <p className="text-white/60 mb-4">Everything&apos;s ready. Just approve and publish everywhere.</p>
-                
-                {/* What's Ready - HIGHLIGHTED MOAT */}
-                <div className="grid grid-cols-4 gap-2">
-                  <div className="p-4 bg-gradient-to-br from-[#D4A017]/20 to-transparent border-2 border-[#D4A017]/50 rounded-2xl text-center hover:border-[#D4A017] hover:shadow-lg hover:shadow-[#D4A017]/20 transition-all group">
-                    <div className="w-8 h-8 mx-auto mb-1 rounded-lg bg-gradient-to-br from-[#D4A017] to-[#B8860B] flex items-center justify-center text-2xl group-hover:scale-110 transition-transform">📱</div>
-                    <div className="font-semibold text-white mb-1">Social Posts</div>
-                    <div className="text-xs text-[#D4A017]">IG, FB, LinkedIn, TikTok</div>
-                    <div className="text-[10px] text-white/50 mt-1">150+ templates</div>
+              <p className="text-white/60 mb-4 text-sm">Everything&apos;s ready. Just approve and publish everywhere.</p>
+              <div className="grid grid-cols-4 gap-2">
+                {[
+                  { icon: '📱', label: 'Social Posts', sub: 'IG, FB, LinkedIn, TikTok' },
+                  { icon: '🎬', label: 'Video Reels', sub: '+ AI Voiceover' },
+                  { icon: '🌐', label: 'Property Site', sub: 'Shareable link' },
+                  { icon: '✉️', label: 'Email Campaign', sub: 'Ready to send' },
+                ].map(({ icon, label, sub }) => (
+                  <div key={label} className="glass-gold-luxury p-3 text-center hover:scale-105 transition-transform">
+                    <div className="text-2xl mb-2">{icon}</div>
+                    <div className="font-semibold text-white text-xs mb-1">{label}</div>
+                    <div className="text-[10px] text-[#D4A017]">{sub}</div>
                   </div>
-                  <div className="p-4 bg-gradient-to-br from-[#D4A017]/20 to-transparent borr-2 border-[#D4A017]/50 rounded-2xl text-center hover:border-[#D4A017] hover:shadow-lg hover:shadow-[#D4A017]/20 transition-all group">
-                    <div className="w-8 h-8 mx-auto mb-1 rounded-lg bg-gradient-to-br from-[#D4A017] to-[#B8860B] flex items-center justify-center text-2xl group-hover:scale-110 transition-transform">🎬</div>
-                    <div className="font-semibold text-white mb-1">Video Reels</div>
-                    <div className="text-xs text-[#D4A017]">+ AI Voiceover</div>
-                    <div className="text-[10px] text-white/50 mt-1">Auto-generated</div>
-                  </div>
-                  <div className="p-4 bg-gradient-to-br from-[#D4A017]/20 to-transparent border-2 border-[#D4A017]/50 rounded-2xl text-center hover:border-[#D4A017] hover:shadow-lg hover:shadow-[#D4A017]/20 transition-all group">
-                    <div className="w-8 h-8 mx-auto mb-1 rounded-lg bg-gradient-to-br from-[#D4A017] to-[#B8860B] flex items-center justify-center text-2xl groupover:scale-110 transition-transform">🌐</div>
-                    <div className="font-semibold text-white mb-1">Property Site</div>
-                    <div className="text-xs text-[#D4A017]">Shareable link</div>
-                    <div className="text-[10px] text-white/50 mt-1">Instant landing page</div>
-                  </div>
-                  <div className="p-4 bg-gradient-to-br from-[#D4A017]/20 to-transparent border-2 border-[#D4A017]/50 rounded-2xl text-center hover:border-[#D4A017] hover:shadow-lg hover:shadow-[#D4A017]/20 transition-all group">
-                    <div className="w-8 h-8 mx-auto mb-1 rounded-lg bg-gradient-to-br from-[#D4A017] to-[#B8860B] flex items-center justify-center text-2xl group-hover:scale-110 transition-transform">✉️</div>
-                    <div className="font-semibold text-white mb-1">Email Campaign</div>
-                    <div className="text-xs text-[#D4A017]">Ready to send</div>
-                    <div className="text-[10px] text-white/50 mt-1">Profel templates</div>
-                  </div>
-                </div>
-                <p className="text-center text-[#D4A017]/80 text-sm mt-4 font-medium">⚡ No other platform gives you all this from one upload</p>
+                ))}
               </div>
+              <p className="text-center text-[#D4A017]/80 text-xs mt-4 font-medium">⚡ No other platform gives you all this from one upload</p>
             </div>
           </div>
         </div>
@@ -565,16 +509,16 @@ export default function HomePage() {
 
           {/* Feature highlights */}
           <div className="grid grid-cols-3 gap-4 mt-8">
-            <div className="text-center p-4 bg-white/5 rounded-xl border border-white/10">
-              <p className="text-[#D4A017] font-bold text-lg mb-1">5 Steps</p>
+            <div className="glow-card text-center p-5">
+              <p className="text-[#D4A017] font-bold text-xl mb-1 stat-glow">5 Steps</p>
               <p className="text-white/50 text-xs">Fully automated</p>
             </div>
-            <div className="text-center p-4 bg-white/5 rounded-xl border border-white/10">
-              <p className="text-[#D4A017] font-bold text-lg mb-1">Under 10 min</p>
+            <div className="glow-card text-center p-5">
+              <p className="text-[#D4A017] font-bold text-xl mb-1 stat-glow">Under 10 min</p>
               <p className="text-white/50 text-xs">End to end</p>
             </div>
-            <div className="text-center p-4 bg-white/5 rounded-xl border border-white/10">
-              <p className="text-[#D4A017] font-bold text-lg mb-1">Zero Effort</p>
+            <div className="glow-card text-center p-5">
+              <p className="text-[#D4A017] font-bold text-xl mb-1 stat-glow">Zero Effort</p>
               <p className="text-white/50 text-xs">AI handles everything</p>
             </div>
           </div>
@@ -592,7 +536,7 @@ export default function HomePage() {
           
           <div className="grid md:grid-cols-2 gap-8">
             {/* Pay Per Service */}
-            <div className="rounded-2xl p-8 bg-[#1A1A1A] border border-white/10">
+            <div className="glass-luxury p-8 border-red-500/10">
               <div className="flex items-center justify-between mb-6">
                 <h3 className="text-xl font-bold text-white/70">Pay-Per-Service</h3>
                 <span className="text-xs text-white/30">Industry Average</span>
@@ -647,7 +591,7 @@ export default function HomePage() {
             </div>
             
             {/* SnapR Gold */}
-            <div className="rounded-2xl p-8 bg-[#1A1A1A] border-2 border-[#D4A017] relative">
+            <div className="glass-gold-luxury glossy-top p-8 relative">
               <div className="absolute -top-3 right-6 px-4 py-1 bg-gradient-to-r from-[#D4A017] to-[#B8860B] text-black text-xs font-bold rounded-full">BEST VALUE</div>
               <div className="flex items-center justify-between mb-6">
                 <h3 className="text-xl font-bold text-[#D4A017]">SnapR Gold</h3>
@@ -700,7 +644,7 @@ export default function HomePage() {
               <div className="border-t border-[#D4A017]/30 pt-4 mt-6">
                 <div className="flex justify-between items-center">
                   <span className="font-semibold">PER LISTING</span>
-                  <span className="text-4xl font-bold text-[#D4A017]">$16-$28</span>
+                  <span className="text-4xl font-bold shimmer-text">$16-$28</span>
                 </div>
                 <p className="text-[#D4A017]/70 text-sm mt-2">⚡ 60 seconds turnaround • Volume discounts available</p>
               </div>
@@ -709,19 +653,19 @@ export default function HomePage() {
           
           {/* Savings Summary */}
           <div className="mt-10 text-center">
-            <div className="inline-flex items-center gap-6 px-8 py-4 bg-[#1A1A1A] border border-[#D4A017]/30 rounded-2xl">
+            <div className="inline-flex items-center gap-6 px-8 py-5 glass-gold-luxury glossy-top">
               <div>
-                <p className="text-3xl font-bold text-[#D4A017]">$365+</p>
+                <p className="text-3xl font-bold text-[#D4A017] stat-glow">$365+</p>
                 <p className="text-xs text-white/50">Saved per listing</p>
               </div>
               <div className="h-12 w-px bg-[#D4A017]/20"></div>
               <div>
-                <p className="text-3xl font-bold text-[#D4A017]">46x</p>
+                <p className="text-3xl font-bold text-[#D4A017] stat-glow">46x</p>
                 <p className="text-xs text-white/50">Cheaper</p>
               </div>
               <div className="h-12 w-px bg-[#D4A017]/20"></div>
               <div>
-                <p className="text-3xl font-bold text-[#D4A017]">2880x</p>
+                <p className="text-3xl font-bold text-[#D4A017] stat-glow">2880x</p>
                 <p className="text-xs text-white/50">Faster</p>
               </div>
             </div>
@@ -828,7 +772,7 @@ export default function HomePage() {
       {showSnapEnhanceModal && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4" onClick={(e) => { if (e.target === e.currentTarget) setShowSnapEnhanceModal(false); }}>
           <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" />
-          <div className="relative bg-[#1A1A1A] rounded-3xl border border-[#D4A017]/30 p-8 max-w-lg w-full shadow-2xl">
+          <div className="relative glass-luxury glossy-top p-8 max-w-lg w-full shadow-2xl border-[#D4A017]/20">
             <button onClick={() => setShowSnapEnhanceModal(false)} className="absolute top-4 right-4 text-white/50 hover:text-white">
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
             </button>
@@ -842,15 +786,15 @@ export default function HomePage() {
             </div>
             
             <div className="space-y-4 mb-8">
-              <div className="flex items-start gap-4 p-4 bg-white/5 rounded-xl">
+              <div className="flex items-start gap-4 p-4 glass-luxury">
                 <div className="w-10 h-10 rounded-lg bg-[#D4A017]/20 flex items-center justify-center flex-shrink-0"><Camera className="w-5 h-5 text-[#D4A017]" /></div>
                 <div><h4 className="font-semibold text-white">Instant Camera Access</h4><p className="text-white/60 text-sm">Tap to open your phone camera and capture property photos directly</p></div>
               </div>
-              <div className="flex items-start gap-4 p-4 bg-white/5 rounded-xl">
+              <div className="flex items-start gap-4 p-4 glass-luxury">
                 <div className="w-10 h-10 rounded-lg bg-[#D4A017]/20 flex items-center justify-center flex-shrink-0"><Sparkles className="w-5 h-5 text-[#D4A017]" /></div>
                 <div><h4 className="font-semibold text-white">AI Enhancement</h4><p className="text-white/60 text-sm">Sky replacement, virtual twilight, HDR, declutter - all in 30 seconds</p></div>
               </div>
-              <div className="flex items-start gap-4 p-4 bg-white/5 rounded-xl">
+              <div className="flex items-start gap-4 p-4 glass-luxury">
                 <div className="w-10 h-10 rounded-lg bg-[#D4A017]/20 flex items-center justify-center flex-shrink-0"><Zap className="w-5 h-5 text-[#D4A017]" /></div>
                 <div><h4 className="font-semibold text-white">Instant Download</h4><p className="text-white/60 text-sm">Enhanced photos ready to share or upload to MLS immediately</p></div>
               </div>
@@ -866,7 +810,7 @@ export default function HomePage() {
       {showIOSNotifyModal && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4" onClick={(e) => { if (e.target === e.currentTarget) setShowIOSNotifyModal(false); }}>
           <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" />
-          <div className="relative bg-[#1A1A1A] rounded-3xl border border-[#D4A017]/30 p-8 max-w-md w-full shadow-2xl">
+          <div className="relative glass-luxury glossy-top p-8 max-w-md w-full shadow-2xl border-[#D4A017]/20">
             <button onClick={() => setShowIOSNotifyModal(false)} className="absolute top-4 right-4 text-white/50 hover:text-white">
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
             </button>
