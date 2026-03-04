@@ -8,7 +8,7 @@ import {
   BarChart3, CheckSquare, FileText, FolderOpen, Images, Mic,
   ClipboardList, Users, Settings, CreditCard, LogOut,
   ChevronDown, ChevronRight, X,
-  Sofa, Globe, Megaphone, ScanSearch, Hammer, Brain, Mail, Handshake, Camera
+  Sofa, Globe, Megaphone, ScanSearch, Hammer, Brain, Mail, Handshake, Camera, Printer
 } from 'lucide-react'
 import { useSidebar } from './mobile-sidebar-provider'
 
@@ -79,6 +79,7 @@ const NAV_SECTIONS: NavSection[] = [
       { href: '/dashboard/renovation', label: 'Renovation', icon: Hammer },
       { href: '/dashboard/listing-intelligence', label: 'Listing Intel', icon: Brain },
       { href: '/dashboard/content-studio/email', label: 'Email Marketing', icon: Mail },
+      { href: '/dashboard/print', label: 'Print Materials', icon: Printer },
       { href: '/dashboard/partner', label: 'Partner Program', icon: Handshake },
     ],
   },

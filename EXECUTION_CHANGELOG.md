@@ -3,6 +3,11 @@
 
 ## 2026-03-05 — Property Site Editor + Print Dashboard + Showings + SMS + MLS
 
+### Phase 2: Print Materials Dashboard
+- `app/dashboard/print/page.tsx` — print dashboard page
+- `app/dashboard/print/PrintDashboard.tsx` — 3-step UI: select listing → choose format (flyer/feature-sheet) → generate + download PDF
+- `components/dashboard-sidebar.tsx` — added Print Materials nav item
+
 ### Phase 1: Property Site Editor
 - `app/dashboard/content-studio/sites/[id]/page.tsx` — SSR editor page
 - `app/dashboard/content-studio/sites/[id]/SiteEditorClient.tsx` — split-pane editor (theme, listing fields, agent info, publish toggle, live iframe preview)
