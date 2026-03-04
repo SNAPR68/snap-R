@@ -104,10 +104,10 @@ function CollapsibleSection({
   const [open, setOpen] = useState(defaultOpen);
 
   return (
-    <div className="border border-white/10 rounded-lg overflow-hidden">
+    <div className="glass-luxury overflow-hidden" style={{ borderRadius: '12px' }}>
       <button
         onClick={() => setOpen(!open)}
-        className="w-full flex items-center gap-2 px-3 py-2.5 bg-white/5 hover:bg-white/8 transition-colors"
+        className="w-full flex items-center gap-2 px-3 py-2.5 bg-white/[0.04] hover:bg-white/[0.07] transition-colors"
       >
         <Icon className="w-3.5 h-3.5 text-white/60" />
         <span className="text-xs font-medium flex-1 text-left">{title}</span>
@@ -115,7 +115,7 @@ function CollapsibleSection({
         {open ? <ChevronUp className="w-3 h-3 text-white/40" /> : <ChevronDown className="w-3 h-3 text-white/40" />}
       </button>
       {open && (
-        <div className="px-3 py-2.5 border-t border-white/10 bg-black/20">
+        <div className="px-3 py-2.5 border-t border-white/10 bg-black/30">
           {children}
         </div>
       )}
@@ -175,7 +175,7 @@ export function MarketingResultsPanel({ marketingJob, listingId, onClose, userTi
   };
 
   return (
-    <aside className="w-[280px] bg-[#1A1A1A] border-l border-white/10 flex flex-col flex-shrink-0">
+    <aside className="w-[280px] border-l border-white/10 flex flex-col flex-shrink-0" style={{ background: 'linear-gradient(180deg, rgba(18,18,18,0.99) 0%, rgba(12,12,12,1) 100%)', backdropFilter: 'blur(24px)' }}>
       {/* Header */}
       <div className="flex items-center justify-between px-3 py-3 border-b border-white/10">
         <h2 className="text-xs font-semibold text-[#D4A017] tracking-wider">MARKETING RESULTS</h2>
@@ -236,7 +236,7 @@ export function MarketingResultsPanel({ marketingJob, listingId, onClose, userTi
                   const hashtags = typeof rawHashtags === 'string' ? rawHashtags : (Array.isArray(rawHashtags) ? rawHashtags.join(' ') : null);
 
                   return (
-                    <div key={platform} className="bg-white/5 rounded-lg p-2">
+                    <div key={platform} className="glass-luxury p-2" style={{ borderRadius: '10px' }}>
                       <div className="flex items-center gap-1.5 mb-1.5">
                         <PlatformIcon platform={platform} className="w-3 h-3 text-white/50" />
                         <span className="text-[10px] font-medium text-white/60 uppercase">{platform}</span>
@@ -372,7 +372,7 @@ export function MarketingResultsPanel({ marketingJob, listingId, onClose, userTi
                       <span>{count || postList.length} post(s) scheduled</span>
                     </div>
                     {postList.slice(0, 3).map((post: ScheduledPost, i: number) => (
-                      <div key={i} className="flex items-center gap-2 px-2 py-1.5 bg-white/5 rounded text-[11px]">
+                      <div key={i} className="flex items-center gap-2 px-2 py-1.5 glass-luxury rounded text-[11px]" style={{ borderRadius: '8px' }}>
                         <PlatformIcon platform={post.platform || 'unknown'} className="w-3 h-3 text-white/40" />
                         <span className="text-white/60 flex-1 truncate">{post.platform || 'Platform'}</span>
                         {post.scheduledFor && (

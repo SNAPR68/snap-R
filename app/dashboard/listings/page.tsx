@@ -252,7 +252,7 @@ export default function ListingsPage() {
                 value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}
                 placeholder="Search by title or address..."
-                className="w-full pl-10 pr-4 py-2 bg-white/5 border border-white/10 rounded-lg text-sm text-white placeholder:text-white/30 focus:outline-none focus:border-[#D4A017]/50 transition-colors"
+                className="w-full pl-10 pr-4 py-2 bg-white/[0.06] border border-white/10 rounded-lg text-sm text-white placeholder:text-white/30 focus:outline-none focus:border-[#D4A017]/50 transition-colors"
               />
             </div>
 
@@ -262,10 +262,10 @@ export default function ListingsPage() {
                 <button
                   key={key}
                   onClick={() => setStatusFilter(key)}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                  className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
                     statusFilter === key
-                      ? 'bg-[#D4A017] text-black'
-                      : 'bg-white/5 text-white/60 hover:bg-white/10'
+                      ? 'bg-[#D4A017] text-black shadow-[0_0_12px_rgba(212,160,23,0.4)]'
+                      : 'glass-luxury text-white/60 hover:text-white/80'
                   }`}
                 >
                   {label}
@@ -290,7 +290,7 @@ export default function ListingsPage() {
         )}
 
         {listings.length === 0 ? (
-          <div className="text-center py-20 bg-white/5 rounded-2xl border border-white/10">
+          <div className="text-center py-20 glass-luxury glossy-top rounded-2xl">
             <Home className="w-16 h-16 text-white/20 mx-auto mb-4" />
             <h3 className="text-xl font-medium mb-2">No listings yet</h3>
             <p className="text-white/40 mb-6">Create your first listing to get started</p>
@@ -299,7 +299,7 @@ export default function ListingsPage() {
             </Link>
           </div>
         ) : filteredListings.length === 0 ? (
-          <div className="text-center py-16 bg-white/5 rounded-2xl border border-white/10">
+          <div className="text-center py-16 glass-luxury rounded-2xl">
             <Search className="w-12 h-12 text-white/10 mx-auto mb-3" />
             <h3 className="text-lg font-medium mb-2">No matches found</h3>
             <p className="text-white/40 text-sm">Try adjusting your search or filters</p>
@@ -307,7 +307,7 @@ export default function ListingsPage() {
         ) : (
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredListings.map((listing) => (
-              <Link key={listing.id} href={'/dashboard/studio?id=' + listing.id} className="group bg-white/5 rounded-2xl border border-white/10 overflow-hidden hover:border-amber-500/50 transition-all">
+              <Link key={listing.id} href={'/dashboard/studio?id=' + listing.id} className="group glass-luxury glossy-top overflow-hidden hover:border-[#D4A017]/40 transition-all" style={{ borderRadius: '16px' }}>
                 <div className="aspect-video relative">
                   {listing.thumbnail ? (
                     /* eslint-disable-next-line @next/next/no-img-element */

@@ -598,7 +598,7 @@ export function StudioClient({ listingId, userRole, showMlsFeatures = false, cre
     <div className="hidden md:flex h-screen bg-[#0F0F0F] text-white flex-col overflow-hidden">
       {prepareProgress && (
         <div className="fixed inset-0 z-50 bg-black/90 backdrop-blur-sm flex items-center justify-center">
-          <div className="bg-[#1A1A1A] border border-white/10 rounded-2xl p-8 max-w-md w-full mx-4 text-center">
+          <div className="glass-luxury glossy-top rounded-2xl p-8 max-w-md w-full mx-4 text-center">
             <div className="w-16 h-16 mx-auto mb-6 relative">
               <div className="absolute inset-0 border-4 border-amber-500/30 rounded-full"></div>
               <div className="absolute inset-0 border-4 border-amber-500 rounded-full border-t-transparent animate-spin"></div>
@@ -645,7 +645,7 @@ export function StudioClient({ listingId, userRole, showMlsFeatures = false, cre
           </div>
         </div>
       )}
-      <header className="h-14 bg-[#1A1A1A] border-b border-white/10 flex items-center justify-between px-4 flex-shrink-0">
+      <header className="h-14 border-b border-white/10 flex items-center justify-between px-4 flex-shrink-0" style={{ background: 'linear-gradient(90deg, rgba(15,15,15,0.98) 0%, rgba(20,20,20,0.98) 100%)', backdropFilter: 'blur(24px)' }}>
         <div className="flex items-center gap-3">
           <Link href="/" className="flex items-center gap-2"><div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#D4A017] to-[#B8860B] flex items-center justify-center font-bold text-black text-sm">S</div></Link>
           <div className="h-6 w-px bg-white/20 mx-1" />
@@ -747,7 +747,7 @@ export function StudioClient({ listingId, userRole, showMlsFeatures = false, cre
       />
 
       <div className="flex-1 flex min-h-0">
-        <aside className="w-[240px] bg-[#1A1A1A] border-r border-white/10 flex flex-col flex-shrink-0">
+        <aside className="w-[240px] border-r border-white/10 flex flex-col flex-shrink-0" style={{ background: 'linear-gradient(180deg, rgba(18,18,18,0.99) 0%, rgba(12,12,12,1) 100%)', backdropFilter: 'blur(24px)' }}>
           <div className="flex-1 overflow-y-auto p-3">
             <h2 className="text-base font-bold text-[#D4A017] mb-4 tracking-wider">AI TOOLS</h2>
             {categories.map(category => (
@@ -760,12 +760,12 @@ export function StudioClient({ listingId, userRole, showMlsFeatures = false, cre
                   <div className="space-y-1">
                     {AI_TOOLS.filter(t => t.category === category).map(tool => (
                       <div key={tool.id}>
-                        <button onClick={() => handleToolSelect(tool.id)} disabled={processing || !selectedPhoto} className={`w-full flex items-center justify-between px-2 py-2 rounded-lg text-xs transition-all ${selectedTool === tool.id ? 'bg-gradient-to-r from-[#D4A017] to-[#B8860B] text-black' : 'hover:bg-white/10 text-white/80'} disabled:opacity-50`}>
+                        <button onClick={() => handleToolSelect(tool.id)} disabled={processing || !selectedPhoto} className={`w-full flex items-center justify-between px-2 py-2 rounded-lg text-xs transition-all ${selectedTool === tool.id ? 'glass-gold-luxury text-white' : 'hover:bg-white/8 text-white/80'} disabled:opacity-50`}>
                           <span className="flex items-center gap-2"><tool.icon className="w-3 h-3" /><span className="truncate">{tool.name}</span></span>
                           <span className="flex items-center gap-1">{tool.hasPresets && selectedTool === tool.id && <ChevronDown className="w-3 h-3" />}</span>
                         </button>
                         {selectedTool === tool.id && tool.hasPresets && currentPresets && (
-                          <div className="mt-2 mb-2 p-2 bg-black/30 rounded-lg">
+                          <div className="mt-2 mb-2 p-2 glass-luxury rounded-xl" style={{ borderRadius: '12px' }}>
                             <p className="text-[10px] text-white/40 mb-2 uppercase">Select Style</p>
                             <div className="grid grid-cols-2 gap-1.5">
                               {currentPresets.map(preset => (
@@ -800,7 +800,7 @@ export function StudioClient({ listingId, userRole, showMlsFeatures = false, cre
         <main className="flex-1 flex flex-col p-4 min-w-0">
           {selectedPhoto ? (
             <>
-              <div className="flex-1 relative flex items-center justify-center bg-[#0A0A0A] rounded-xl overflow-hidden min-h-0">
+              <div className="flex-1 relative flex items-center justify-center bg-[#060606] rounded-xl overflow-hidden min-h-0 border border-white/5">
                 {pendingEnhancement ? (
                   <div className="absolute inset-0 cursor-ew-resize select-none" onMouseDown={(e) => { const rect = e.currentTarget.getBoundingClientRect(); const updatePosition = (clientX: number) => { const x = Math.max(0, Math.min(clientX - rect.left, rect.width)); setSliderPosition((x / rect.width) * 100); }; updatePosition(e.clientX); const onMouseMove = (event: MouseEvent) => updatePosition(event.clientX); const onMouseUp = () => { window.removeEventListener('mousemove', onMouseMove); window.removeEventListener('mouseup', onMouseUp); }; window.addEventListener('mousemove', onMouseMove); window.addEventListener('mouseup', onMouseUp); }}>
                     <img src={pendingEnhancement.enhancedUrl} alt="Enhanced" className="absolute inset-0 w-full h-full object-contain" style={{ filter: filterStyle, opacity: adjustments.intensity / 100 }} draggable={false} />
@@ -844,7 +844,7 @@ export function StudioClient({ listingId, userRole, showMlsFeatures = false, cre
             userTier={subscriptionTier}
           />
         ) : (
-          <aside className="w-[200px] bg-[#1A1A1A] border-l border-white/10 p-3 overflow-y-auto flex-shrink-0">
+          <aside className="w-[200px] border-l border-white/10 p-3 overflow-y-auto flex-shrink-0" style={{ background: 'linear-gradient(180deg, rgba(18,18,18,0.99) 0%, rgba(12,12,12,1) 100%)', backdropFilter: 'blur(24px)' }}>
             <div className="flex items-center justify-between mb-3">
               <h2 className="text-xs font-semibold text-white/40">READY FOR DOWNLOAD</h2>
               {completedPhotos.length > 1 && (
@@ -858,7 +858,7 @@ export function StudioClient({ listingId, userRole, showMlsFeatures = false, cre
             ) : (
               <div className="space-y-2">
                 {completedPhotos.map(photo => (
-                  <div key={photo.id} className="bg-[#0F0F0F] rounded-lg overflow-hidden border border-white/10 group relative">
+                  <div key={photo.id} className="glass-luxury rounded-xl overflow-hidden group relative" style={{ borderRadius: '12px' }}>
                     <button onClick={() => handleDeleteEnhanced(photo.id, photo.processed_url || '')} className="absolute top-1 right-1 w-5 h-5 bg-red-500 rounded-full items-center justify-center text-white hidden group-hover:flex z-10"><X className="w-3 h-3" /></button>
                     <div className="aspect-video relative">
                       <img src={photo.signedProcessedUrl} alt="" className="w-full h-full object-cover" />
@@ -879,7 +879,7 @@ export function StudioClient({ listingId, userRole, showMlsFeatures = false, cre
 
       {showShareModal && (
         <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50" onClick={() => setShowShareModal(false)}>
-          <div className="bg-[#1A1A1A] rounded-2xl p-6 w-full max-w-md" onClick={e => e.stopPropagation()}>
+          <div className="glass-luxury glossy-top rounded-2xl p-6 w-full max-w-md" onClick={e => e.stopPropagation()}>
             <h2 className="text-xl font-bold mb-4 flex items-center gap-2"><Share2 className="w-5 h-5" /> Share with Client</h2>
             <p className="text-white/60 text-sm mb-4">Send this link to get instant approval before downloading.</p>
             <div className="flex gap-2 mb-4">
