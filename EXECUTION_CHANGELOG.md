@@ -35,6 +35,15 @@
 - `app/api/open-house/checkin/route.ts` — public POST for guest check-in with capacity checking
 - `app/api/open-house/feedback/route.ts` — public POST for interest rating + comments
 
+### Phase 5: Dashboard Management UIs + PWA Polish
+- `app/dashboard/open-houses/page.tsx` — open house events management page wrapper
+- `app/dashboard/open-houses/OpenHousesDashboard.tsx` — full event CRUD, attendee table, stats, create modal, status management
+- `app/dashboard/photographer/bookings/page.tsx` — photographer booking management page wrapper
+- `app/dashboard/photographer/bookings/BookingsDashboard.tsx` — booking pipeline (pending→confirmed→shot→editing→delivered), status flow, confirm modal
+- `components/dashboard-sidebar.tsx` — added Open Houses (DoorOpen) and Broker Dashboard (Building2) nav links
+- `public/manifest.json` — PWA: dark theme, description, orientation, categories, scope
+- `app/layout.tsx` — apple-mobile-web-app meta tags, viewport-fit cover, theme-color
+
 ## 2026-03-05 — v1.4 Close the Loop
 
 ### Phase 1a: Lead drip auto-enroll
