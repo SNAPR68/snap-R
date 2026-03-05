@@ -151,6 +151,33 @@ export async function PATCH(request: NextRequest) {
       .single()
 
     if (error) return NextResponse.json({ error: error.message }, { status: 400 })
+
+    // Auto thank-you + feedback request email when showing is marked completed
+    if (rest.status === 'completed' && data.contact_email) {
+      const { Resend } = await import('resend')
+      const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://snap-r.com'
+      const feedbackUrl = `${baseUrl}/feedback/showing/${id}`
+      const resend = new Resend(process.env.RESEND_API_KEY)
+      resend.emails.send({
+        from: 'SnapR Showings <noreply@snap-r.com>',
+        to: [data.contact_email],
+        subject: `Thanks for visiting — we'd love your feedback!`,
+        html: `
+          <!DOCTYPE html><html><head><meta charset="utf-8"></head>
+          <body style="margin:0;padding:0;background:#0A0A0A;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
+            <div style="max-width:600px;margin:0 auto;padding:40px 20px;">
+              <h1 style="color:#D4A017;font-size:22px;margin:0 0 16px 0;">Thanks for the showing, ${data.contact_name}!</h1>
+              <div style="background:#1A1A1A;border-radius:12px;padding:24px;margin-bottom:24px;border:1px solid #333;">
+                <p style="color:#fff;font-size:15px;line-height:1.6;margin:0 0 16px 0;">We hope you enjoyed the tour. We&rsquo;d love to hear what you thought — it only takes 30 seconds.</p>
+                <a href="${feedbackUrl}" style="display:inline-block;padding:12px 28px;background:#D4A017;color:#000;text-decoration:none;border-radius:8px;font-weight:700;font-size:14px;">Share Your Feedback</a>
+              </div>
+              <p style="color:#555;font-size:12px;margin:0;">Powered by <a href="https://snap-r.com" style="color:#D4A017;text-decoration:none;">SnapR</a></p>
+            </div>
+          </body></html>
+        `,
+      }).catch(() => { /* non-critical */ })
+    }
+
     return NextResponse.json({ showing: data })
   } catch (error: unknown) {
     return NextResponse.json({ error: error instanceof Error ? error.message : 'Unknown error' }, { status: 500 })
