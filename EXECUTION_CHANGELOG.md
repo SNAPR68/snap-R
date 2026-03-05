@@ -3,6 +3,9 @@
 
 ## 2026-03-05 — v1.3 Business Intelligence
 
+### Phase 5: Client Approval Portal
+- `app/dashboard/approvals/page.tsx` — added NewApprovalModal component: listing picker (Supabase query), POST to /api/share, copyable share URL result, empty-state CTA button, and "New Approval Link" header button
+
 ### Phase 4: Brand Propagation to Video
 - `app/api/video/generate/route.ts` — fetches brand_profiles and passes brand (agentName, logo, primaryColor, phone, email, website, tagline) into Remotion inputProps.brand for closing card
 
