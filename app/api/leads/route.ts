@@ -11,6 +11,7 @@ import { z } from 'zod'
 import { Resend } from 'resend'
 import { adminSupabase } from '@/lib/supabase/admin'
 import { createClient } from '@/lib/supabase/server'
+import { dispatchWebhookEvent } from '@/lib/webhooks/dispatch'
 
 // ============================================
 // Zod Schemas
@@ -250,9 +251,23 @@ export async function POST(request: NextRequest) {
             enrolled_at: new Date().toISOString(),
           })
         }
+
+        // Dispatch lead.created webhook (fire-and-forget, non-blocking)
+        dispatchWebhookEvent(userId, 'lead.created', {
+          leadId: newLead.id,
+          name,
+          email,
+          phone: phone ?? undefined,
+          message: message ?? undefined,
+          listingId: listingId ?? undefined,
+          listingAddress: listingAddress ?? undefined,
+          utmSource: utmSource ?? undefined,
+          utmMedium: utmMedium ?? undefined,
+          utmCampaign: utmCampaign ?? undefined,
+        }).catch(() => { /* non-critical */ })
       }
     } catch {
-      // Drip enrollment failure is non-critical
+      // Drip enrollment / webhook failure is non-critical
     }
 
     return NextResponse.json({ success: true })
@@ -380,6 +395,10 @@ export async function PATCH(request: NextRequest) {
       console.error('[Leads] PATCH error:', error.message)
       return NextResponse.json({ error: error.message }, { status: 500 })
     }
+
+    // Dispatch lead.updated webhook (fire-and-forget)
+    dispatchWebhookEvent(user.id, 'lead.updated', { leadId: id, status })
+      .catch(() => { /* non-critical */ })
 
     return NextResponse.json({ success: true })
   } catch (error: unknown) {

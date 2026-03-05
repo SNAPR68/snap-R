@@ -11,6 +11,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { evaluateAutoPostRules } from '@/lib/social/auto-post-evaluator';
 import { onListingStatusChange, toCampaignStatus } from '@/lib/campaigns/status-hook';
+import { dispatchWebhookEvent } from '@/lib/webhooks/dispatch';
 
 interface FlaggedPhoto {
   id: string;
@@ -232,6 +233,19 @@ export async function PATCH(request: NextRequest) {
 
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+
+    // Dispatch listing.updated webhook (fire-and-forget)
+    dispatchWebhookEvent(user.id, 'listing.updated', {
+      listingId,
+      status: status ?? undefined,
+      marketingStatus: marketingStatus ?? undefined,
+    }).catch(() => { /* non-critical */ });
+
+    // Also dispatch listing.prepared when preparation_status becomes 'prepared'
+    if (status === 'prepared') {
+      dispatchWebhookEvent(user.id, 'listing.prepared', { listingId })
+        .catch(() => { /* non-critical */ });
     }
 
     // Evaluate auto-post rules on preparation status change (non-critical — log and continue)
