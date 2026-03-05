@@ -6,7 +6,7 @@ import {
   ChevronDown, Download, ExternalLink, Instagram,
   Facebook, Linkedin, Globe, TrendingUp, Zap, CheckCircle,
   X, Loader2, MessageSquare, PhoneCall, Star, Clock,
-  StickyNote, Send, ChevronUp
+  StickyNote, Send, ChevronUp, LayoutList, Columns3
 } from 'lucide-react'
 
 // ============================================
@@ -83,6 +83,16 @@ const DRIP_STATUS_COLORS: Record<string, string> = {
   paused: 'text-yellow-400',
   unsubscribed: 'text-red-400',
 }
+
+type ViewMode = 'list' | 'pipeline'
+
+const KANBAN_COLUMNS: { status: LeadStatus; label: string }[] = [
+  { status: 'new', label: 'New' },
+  { status: 'contacted', label: 'Contacted' },
+  { status: 'qualified', label: 'Qualified' },
+  { status: 'converted', label: 'Converted' },
+  { status: 'archived', label: 'Archived' },
+]
 
 function getPlatformIcon(source: string | null) {
   switch (source?.toLowerCase()) {
@@ -518,6 +528,187 @@ function ActivityPanel({ lead }: { lead: Lead }) {
 }
 
 // ============================================
+// KANBAN BOARD
+// ============================================
+
+interface KanbanBoardProps {
+  leads: Lead[]
+  updatingStatus: string | null
+  onStatusChange: (leadId: string, newStatus: LeadStatus) => Promise<void>
+  formatDate: (dateStr: string) => string
+}
+
+function KanbanBoard({ leads, updatingStatus, onStatusChange, formatDate }: KanbanBoardProps) {
+  const [draggedLeadId, setDraggedLeadId] = useState<string | null>(null)
+  const [dropTargetStatus, setDropTargetStatus] = useState<LeadStatus | null>(null)
+
+  const leadsByStatus = KANBAN_COLUMNS.reduce<Record<LeadStatus, Lead[]>>((acc, col) => {
+    acc[col.status] = leads.filter(l => l.status === col.status)
+    return acc
+  }, {} as Record<LeadStatus, Lead[]>)
+
+  const handleDragStart = (e: React.DragEvent<HTMLDivElement>, leadId: string) => {
+    e.dataTransfer.effectAllowed = 'move'
+    e.dataTransfer.setData('text/plain', leadId)
+    setDraggedLeadId(leadId)
+  }
+
+  const handleDragEnd = () => {
+    setDraggedLeadId(null)
+    setDropTargetStatus(null)
+  }
+
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>, status: LeadStatus) => {
+    e.preventDefault()
+    e.dataTransfer.dropEffect = 'move'
+    setDropTargetStatus(status)
+  }
+
+  const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
+    // Only clear if leaving the column itself, not entering a child
+    const relatedTarget = e.relatedTarget as HTMLElement | null
+    if (!relatedTarget || !e.currentTarget.contains(relatedTarget)) {
+      setDropTargetStatus(null)
+    }
+  }
+
+  const handleDrop = async (e: React.DragEvent<HTMLDivElement>, targetStatus: LeadStatus) => {
+    e.preventDefault()
+    const leadId = e.dataTransfer.getData('text/plain')
+    setDraggedLeadId(null)
+    setDropTargetStatus(null)
+
+    if (!leadId) return
+    const lead = leads.find(l => l.id === leadId)
+    if (!lead || lead.status === targetStatus) return
+
+    await onStatusChange(leadId, targetStatus)
+  }
+
+  const getScoreStars = (lead: Lead) => {
+    // Lead score comes from activity panel; approximate from recency
+    const hoursAgo = (Date.now() - new Date(lead.created_at).getTime()) / (1000 * 60 * 60)
+    if (hoursAgo < 24) return 5
+    if (hoursAgo < 72) return 4
+    if (hoursAgo < 168) return 3
+    if (hoursAgo < 720) return 2
+    return 1
+  }
+
+  return (
+    <div className="flex gap-4 overflow-x-auto pb-4 min-h-[500px]">
+      {KANBAN_COLUMNS.map(col => {
+        const columnLeads = leadsByStatus[col.status] || []
+        const isDropTarget = dropTargetStatus === col.status
+        const statusColor = STATUS_COLORS[col.status] || STATUS_COLORS.new
+        const statusColorClass = statusColor.split(' ')[1] || 'text-white/60'
+
+        return (
+          <div
+            key={col.status}
+            className={`flex-shrink-0 w-[280px] flex flex-col rounded-xl border transition-colors ${
+              isDropTarget
+                ? 'bg-[#0F0F0F] border-[#D4A017]/40'
+                : 'bg-[#0F0F0F] border-white/5'
+            }`}
+            onDragOver={(e) => handleDragOver(e, col.status)}
+            onDragLeave={handleDragLeave}
+            onDrop={(e) => handleDrop(e, col.status)}
+          >
+            {/* Column Header */}
+            <div className="px-4 py-3 border-b border-white/5 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <span className={`w-2 h-2 rounded-full ${statusColor.split(' ')[0]?.replace('/20', '') || 'bg-white/40'}`} />
+                <span className="text-sm font-medium text-white/80">{col.label}</span>
+              </div>
+              <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${statusColor}`}>
+                {columnLeads.length}
+              </span>
+            </div>
+
+            {/* Cards */}
+            <div className="flex-1 p-2 space-y-2 overflow-y-auto max-h-[600px]">
+              {columnLeads.length === 0 && (
+                <div className={`text-center py-8 text-xs transition-colors ${
+                  isDropTarget ? 'text-[#D4A017]/60' : 'text-white/20'
+                }`}>
+                  {isDropTarget ? 'Drop here' : 'No leads'}
+                </div>
+              )}
+
+              {columnLeads.map(lead => {
+                const isDragging = draggedLeadId === lead.id
+                const isUpdating = updatingStatus === lead.id
+                const stars = getScoreStars(lead)
+
+                return (
+                  <div
+                    key={lead.id}
+                    draggable={!isUpdating}
+                    onDragStart={(e) => handleDragStart(e, lead.id)}
+                    onDragEnd={handleDragEnd}
+                    className={`bg-[#1A1A1A] rounded-lg border border-white/5 p-3 cursor-grab active:cursor-grabbing transition-all select-none ${
+                      isDragging ? 'opacity-40 scale-95' : 'opacity-100'
+                    } ${isUpdating ? 'opacity-60 pointer-events-none' : ''} hover:border-white/10`}
+                  >
+                    {/* Avatar + Name */}
+                    <div className="flex items-center gap-2.5 mb-2">
+                      <div className="w-8 h-8 rounded-full bg-[#D4A017]/10 flex items-center justify-center shrink-0">
+                        <span className="text-[#D4A017] font-semibold text-xs">
+                          {lead.name.charAt(0).toUpperCase()}
+                        </span>
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-medium text-white/90 truncate">{lead.name}</p>
+                        <p className="text-xs text-white/40 truncate">{lead.email}</p>
+                      </div>
+                    </div>
+
+                    {/* Property */}
+                    {lead.listings?.address && (
+                      <div className="flex items-center gap-1.5 mb-2 text-white/40">
+                        <MapPin className="w-3 h-3 shrink-0" />
+                        <span className="text-xs truncate">{lead.listings.address}</span>
+                      </div>
+                    )}
+
+                    {/* Bottom row: source + time + score */}
+                    <div className="flex items-center justify-between mt-1">
+                      <div className="flex items-center gap-2">
+                        {getPlatformIcon(lead.utm_source)}
+                        <span className="text-xs text-white/30">{formatDate(lead.created_at)}</span>
+                      </div>
+                      <div className="flex items-center gap-0.5">
+                        {[1, 2, 3, 4, 5].map(i => (
+                          <Star
+                            key={i}
+                            className={`w-2.5 h-2.5 ${
+                              i <= stars
+                                ? `${statusColorClass} fill-current`
+                                : 'text-white/10'
+                            }`}
+                          />
+                        ))}
+                      </div>
+                    </div>
+
+                    {isUpdating && (
+                      <div className="flex items-center justify-center mt-2">
+                        <Loader2 className="w-3.5 h-3.5 animate-spin text-[#D4A017]" />
+                      </div>
+                    )}
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
+// ============================================
 // MAIN COMPONENT
 // ============================================
 
@@ -529,12 +720,14 @@ export default function LeadsPage() {
   const [statusFilter, setStatusFilter] = useState<LeadStatus | 'all'>('all')
   const [expandedLead, setExpandedLead] = useState<string | null>(null)
   const [updatingStatus, setUpdatingStatus] = useState<string | null>(null)
+  const [viewMode, setViewMode] = useState<ViewMode>('list')
 
   const fetchLeads = useCallback(async () => {
     setLoading(true)
     try {
       const params = new URLSearchParams()
-      if (statusFilter !== 'all') params.set('status', statusFilter)
+      // In pipeline mode, fetch all leads (no status filter) so the board shows every column
+      if (viewMode === 'list' && statusFilter !== 'all') params.set('status', statusFilter)
       params.set('limit', '100')
 
       const response = await fetch(`/api/leads?${params.toString()}`)
@@ -550,7 +743,7 @@ export default function LeadsPage() {
     } finally {
       setLoading(false)
     }
-  }, [statusFilter])
+  }, [statusFilter, viewMode])
 
   useEffect(() => {
     fetchLeads()
@@ -629,14 +822,44 @@ export default function LeadsPage() {
             Leads captured from your property sites
           </p>
         </div>
-        <button
-          onClick={exportCSV}
-          disabled={leads.length === 0}
-          className="flex items-center gap-2 px-4 py-2 bg-white/5 border border-white/10 rounded-lg hover:bg-white/10 transition-colors disabled:opacity-40 disabled:cursor-not-allowed text-sm"
-        >
-          <Download className="w-4 h-4" />
-          Export CSV
-        </button>
+        <div className="flex items-center gap-3">
+          {/* View Toggle */}
+          <div className="flex items-center bg-white/5 border border-white/10 rounded-lg overflow-hidden">
+            <button
+              onClick={() => setViewMode('list')}
+              className={`flex items-center gap-1.5 px-3 py-2 text-sm transition-colors ${
+                viewMode === 'list'
+                  ? 'bg-[#D4A017] text-black font-medium'
+                  : 'text-white/60 hover:text-white/80'
+              }`}
+              title="List view"
+            >
+              <LayoutList className="w-4 h-4" />
+              <span className="hidden sm:inline">List</span>
+            </button>
+            <button
+              onClick={() => setViewMode('pipeline')}
+              className={`flex items-center gap-1.5 px-3 py-2 text-sm transition-colors ${
+                viewMode === 'pipeline'
+                  ? 'bg-[#D4A017] text-black font-medium'
+                  : 'text-white/60 hover:text-white/80'
+              }`}
+              title="Pipeline view"
+            >
+              <Columns3 className="w-4 h-4" />
+              <span className="hidden sm:inline">Pipeline</span>
+            </button>
+          </div>
+
+          <button
+            onClick={exportCSV}
+            disabled={leads.length === 0}
+            className="flex items-center gap-2 px-4 py-2 bg-white/5 border border-white/10 rounded-lg hover:bg-white/10 transition-colors disabled:opacity-40 disabled:cursor-not-allowed text-sm"
+          >
+            <Download className="w-4 h-4" />
+            Export CSV
+          </button>
+        </div>
       </div>
 
       {/* Summary Cards */}
@@ -682,25 +905,27 @@ export default function LeadsPage() {
         </div>
       </div>
 
-      {/* Filter Bar */}
-      <div className="flex items-center gap-2 mb-6 overflow-x-auto pb-2">
-        <Filter className="w-4 h-4 text-white/40 shrink-0" />
-        {STATUS_OPTIONS.map(opt => (
-          <button
-            key={opt.value}
-            onClick={() => setStatusFilter(opt.value)}
-            className={`px-3 py-1.5 rounded-full text-sm whitespace-nowrap transition-colors ${
-              statusFilter === opt.value
-                ? 'bg-[#D4A017] text-black font-medium'
-                : 'bg-white/5 text-white/60 hover:bg-white/10'
-            }`}
-          >
-            {opt.label}
-          </button>
-        ))}
-      </div>
+      {/* Filter Bar — only shown in list mode */}
+      {viewMode === 'list' && (
+        <div className="flex items-center gap-2 mb-6 overflow-x-auto pb-2">
+          <Filter className="w-4 h-4 text-white/40 shrink-0" />
+          {STATUS_OPTIONS.map(opt => (
+            <button
+              key={opt.value}
+              onClick={() => setStatusFilter(opt.value)}
+              className={`px-3 py-1.5 rounded-full text-sm whitespace-nowrap transition-colors ${
+                statusFilter === opt.value
+                  ? 'bg-[#D4A017] text-black font-medium'
+                  : 'bg-white/5 text-white/60 hover:bg-white/10'
+              }`}
+            >
+              {opt.label}
+            </button>
+          ))}
+        </div>
+      )}
 
-      {/* Leads List */}
+      {/* Loading / Empty */}
       {loading ? (
         <div className="text-center py-20">
           <div className="w-8 h-8 border-2 border-[#D4A017] border-t-transparent rounded-full animate-spin mx-auto mb-4" />
@@ -715,7 +940,16 @@ export default function LeadsPage() {
             Make sure your property sites are gated (Pro or Agency plan).
           </p>
         </div>
+      ) : viewMode === 'pipeline' ? (
+        /* Pipeline / Kanban View */
+        <KanbanBoard
+          leads={leads}
+          updatingStatus={updatingStatus}
+          onStatusChange={updateLeadStatus}
+          formatDate={formatDate}
+        />
       ) : (
+        /* List View */
         <div className="space-y-3">
           {leads.map(lead => (
             <div
