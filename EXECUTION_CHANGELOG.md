@@ -1,6 +1,18 @@
 # SnapR Execution Changelog
 =================================
 
+## 2026-03-05 — v1.4 Close the Loop
+
+### Phase 1a: Lead drip auto-enroll
+- `app/api/leads/route.ts` — after inserting a new lead, queries first active `new_lead` drip sequence for the agent and auto-enrolls in `drip_enrollments`
+
+### Phase 1b: Client review-complete banner
+- `app/share/[token]/client-gallery.tsx` — added `allReviewed` state + green "Review complete" banner; passes `onAllReviewed` prop to `ClientApprovalButtons` to trigger it; replaced `<img>` thumbnails with `<Image fill>`
+
+### Phase 1c: Download Approved batch
+- `app/api/download-approved/route.ts` — new GET endpoint: auth check, listing ownership check, returns signed URLs for all client_approved=true photos
+- `app/dashboard/approvals/page.tsx` — adds emerald Download button per listing (only visible when approved > 0); sequential blob download with 200ms gap
+
 ## 2026-03-05 — v1.3 Business Intelligence
 
 ### Phase 5: Client Approval Portal

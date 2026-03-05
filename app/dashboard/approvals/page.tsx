@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Check, X, Clock, ExternalLink, ChevronRight, Loader2, Copy, Plus, Link2 } from 'lucide-react';
+import { Check, X, Clock, ExternalLink, ChevronRight, Loader2, Copy, Plus, Link2, Download } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 
@@ -168,6 +168,30 @@ export default function ApprovalsPage() {
   const [filter, setFilter] = useState<'all' | 'pending' | 'complete'>('all');
   const [copiedToken, setCopiedToken] = useState<string | null>(null);
   const [showModal, setShowModal] = useState(false);
+  const [downloadingId, setDownloadingId] = useState<string | null>(null);
+
+  const downloadApproved = async (listingId: string, title: string) => {
+    setDownloadingId(listingId);
+    try {
+      const res = await fetch(`/api/download-approved?listingId=${listingId}`);
+      const data = await res.json();
+      if (!data.urls?.length) return;
+      for (let i = 0; i < data.urls.length; i++) {
+        const blob = await fetch(data.urls[i]).then(r => r.blob());
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${title.replace(/\s+/g, '-').toLowerCase()}-approved-${i + 1}.jpg`;
+        a.click();
+        URL.revokeObjectURL(url);
+        await new Promise(r => setTimeout(r, 200));
+      }
+    } catch {
+      // download failed silently
+    } finally {
+      setDownloadingId(null);
+    }
+  };
 
   useEffect(() => {
     fetchApprovals();
@@ -380,6 +404,18 @@ export default function ApprovalsPage() {
                     </div>
 
                     <div className="flex items-center gap-2">
+                      {listing.stats.approved > 0 && (
+                        <button
+                          onClick={() => downloadApproved(listing.id, listing.title)}
+                          disabled={downloadingId === listing.id}
+                          className="p-2 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/20 rounded-lg transition-all disabled:opacity-50"
+                          title={`Download ${listing.stats.approved} approved photo${listing.stats.approved !== 1 ? 's' : ''}`}
+                        >
+                          {downloadingId === listing.id
+                            ? <Loader2 className="w-5 h-5 animate-spin text-emerald-400" />
+                            : <Download className="w-5 h-5 text-emerald-400" />}
+                        </button>
+                      )}
                       <Link
                         href={`/dashboard/studio?id=${listing.id}`}
                         className="p-2 bg-white/5 hover:bg-white/10 rounded-lg transition-all"

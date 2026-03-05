@@ -219,6 +219,42 @@ export async function POST(request: NextRequest) {
       // Confirmation email failure is not critical
     }
 
+    // Auto-enroll in first active drip sequence for this agent (non-blocking)
+    try {
+      const { data: newLead } = await supabase
+        .from('property_leads')
+        .select('id')
+        .eq('user_id', userId)
+        .eq('email', email)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .single()
+
+      if (newLead) {
+        const { data: sequences } = await supabase
+          .from('drip_sequences')
+          .select('id')
+          .eq('user_id', userId)
+          .eq('is_active', true)
+          .eq('trigger_type', 'new_lead')
+          .order('created_at', { ascending: true })
+          .limit(1)
+
+        if (sequences && sequences.length > 0) {
+          await supabase.from('drip_enrollments').insert({
+            lead_id: newLead.id,
+            sequence_id: sequences[0].id,
+            user_id: userId,
+            status: 'active',
+            current_step: 0,
+            enrolled_at: new Date().toISOString(),
+          })
+        }
+      }
+    } catch {
+      // Drip enrollment failure is non-critical
+    }
+
     return NextResponse.json({ success: true })
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Unknown error'
