@@ -3,6 +3,13 @@
 
 ## 2026-03-05 — Property Site Editor + Print Dashboard + Showings + SMS + MLS
 
+### Phase 4: WhatsApp/SMS Notify
+- `lib/notify/twilio.ts` — Twilio REST helpers (sendSms, sendWhatsApp) using fetch + Basic auth, no SDK dependency
+- `app/api/notify/sms/route.ts` — POST endpoint, Zod validated, sends SMS via Twilio
+- `app/api/notify/whatsapp/route.ts` — POST endpoint, Zod validated, sends WhatsApp via Twilio sandbox
+- `app/dashboard/notify/page.tsx` + `NotifyDashboard.tsx` — send UI: channel toggle, listing picker, 4 message templates + custom, phone input, send button
+- `components/dashboard-sidebar.tsx` — Notify nav item under Measure
+
 ### Phase 3: Showings Intelligence
 - `supabase/migrations/20260305_showings.sql` — showings table with status, outcome, interest_level, source attribution, RLS
 - `app/api/showings/route.ts` — full CRUD + stats summary

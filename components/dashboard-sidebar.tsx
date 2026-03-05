@@ -8,7 +8,7 @@ import {
   BarChart3, CheckSquare, FileText, FolderOpen, Images, Mic,
   ClipboardList, Users, Settings, CreditCard, LogOut,
   ChevronDown, ChevronRight, X,
-  Sofa, Globe, Megaphone, ScanSearch, Hammer, Brain, Mail, Handshake, Camera, Printer
+  Sofa, Globe, Megaphone, ScanSearch, Hammer, Brain, Mail, Handshake, Camera, Printer, MessageSquare
 } from 'lucide-react'
 import { useSidebar } from './mobile-sidebar-provider'
 
@@ -64,6 +64,7 @@ const NAV_SECTIONS: NavSection[] = [
       { href: '/dashboard/showings', label: 'Showings', icon: Calendar },
       { href: '/dashboard/approvals', label: 'Client Approvals', icon: CheckSquare },
       { href: '/dashboard/photographer', label: 'Photographer Portal', icon: Camera },
+      { href: '/dashboard/notify', label: 'Notify', icon: MessageSquare },
     ],
   },
   {
