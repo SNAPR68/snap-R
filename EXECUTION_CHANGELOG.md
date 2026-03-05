@@ -3,6 +3,9 @@
 
 ## 2026-03-05 — v1.3 Business Intelligence
 
+### Phase 4: Brand Propagation to Video
+- `app/api/video/generate/route.ts` — fetches brand_profiles and passes brand (agentName, logo, primaryColor, phone, email, website, tagline) into Remotion inputProps.brand for closing card
+
 ### Phase 2: Lead CRM Upgrade
 - `supabase/migrations/20260305_lead_activity.sql` — lead_activities table + score/notes/last_activity_at columns on property_leads + auto-update trigger
 - `app/api/leads/activity/route.ts` — GET/POST/PATCH for activities and lead score/notes

@@ -139,6 +139,13 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Fetch brand profile for video closing card
+    const { data: brandProfile } = await admin
+      .from('brand_profiles')
+      .select('business_name, logo_url, primary_color, secondary_color, phone, email, website, tagline, brokerage_name')
+      .eq('user_id', user.id)
+      .maybeSingle()
+
     // Order photos using AI room classification (zero additional cost)
     const orderedStoragePaths = orderPhotosForWalkthrough(
       listing.photos,
@@ -194,6 +201,16 @@ export async function POST(request: NextRequest) {
     const inputProps: Record<string, unknown> = {
       listing: listingProps,
       aspectRatio: validatedInput.aspectRatio,
+      brand: brandProfile ? {
+        agentName: brandProfile.business_name ?? undefined,
+        brokerageName: brandProfile.brokerage_name ?? undefined,
+        phone: brandProfile.phone ?? undefined,
+        email: brandProfile.email ?? undefined,
+        website: brandProfile.website ?? undefined,
+        logoUrl: brandProfile.logo_url ?? undefined,
+        primaryColor: brandProfile.primary_color ?? undefined,
+        tagline: brandProfile.tagline ?? undefined,
+      } : undefined,
     };
 
     // OpenHouse needs date
