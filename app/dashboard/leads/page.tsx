@@ -5,7 +5,8 @@ import {
   Users, Mail, Phone, MapPin, Calendar, Filter,
   ChevronDown, Download, ExternalLink, Instagram,
   Facebook, Linkedin, Globe, TrendingUp, Zap, CheckCircle,
-  X, Loader2
+  X, Loader2, MessageSquare, PhoneCall, Star, Clock,
+  StickyNote, Send, ChevronUp
 } from 'lucide-react'
 
 // ============================================
@@ -272,6 +273,245 @@ function DripPanel({ lead }: { lead: Lead }) {
             </button>
           )
         })}
+      </div>
+    </div>
+  )
+}
+
+// ============================================
+// ACTIVITY PANEL — timeline + notes + score
+// ============================================
+
+interface Activity {
+  id: string
+  activity_type: string
+  body: string | null
+  metadata: Record<string, unknown> | null
+  created_at: string
+}
+
+const ACTIVITY_ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
+  note: StickyNote,
+  call: PhoneCall,
+  email: Mail,
+  text: MessageSquare,
+  showing: Calendar,
+  status_change: ChevronUp,
+  drip_email_sent: Send,
+  property_site_viewed: Globe,
+  form_submitted: CheckCircle,
+  auto: Clock,
+}
+
+const ACTIVITY_COLORS: Record<string, string> = {
+  note: 'text-yellow-400',
+  call: 'text-green-400',
+  email: 'text-blue-400',
+  text: 'text-purple-400',
+  showing: 'text-orange-400',
+  status_change: 'text-[#D4A017]',
+  drip_email_sent: 'text-cyan-400',
+  property_site_viewed: 'text-pink-400',
+  form_submitted: 'text-emerald-400',
+  auto: 'text-white/40',
+}
+
+function ScoreDots({ score }: { score: number }) {
+  const filled = Math.round(score / 20) // 0–5 dots
+  return (
+    <div className="flex items-center gap-1">
+      {[1,2,3,4,5].map(i => (
+        <Star
+          key={i}
+          className={`w-3.5 h-3.5 ${i <= filled ? 'text-[#D4A017] fill-[#D4A017]' : 'text-white/20'}`}
+        />
+      ))}
+      <span className="text-xs text-white/40 ml-1">{score}/100</span>
+    </div>
+  )
+}
+
+function ActivityPanel({ lead }: { lead: Lead }) {
+  const [activities, setActivities] = useState<Activity[]>([])
+  const [loading, setLoading] = useState(true)
+  const [score, setScore] = useState(0)
+  const [notes, setNotes] = useState('')
+  const [newNote, setNewNote] = useState('')
+  const [logType, setLogType] = useState<'note' | 'call' | 'email' | 'text'>('note')
+  const [saving, setSaving] = useState(false)
+  const [editingScore, setEditingScore] = useState(false)
+  const [tempScore, setTempScore] = useState(0)
+
+  const load = useCallback(async () => {
+    setLoading(true)
+    try {
+      const res = await fetch(`/api/leads/activity?leadId=${lead.id}`)
+      if (!res.ok) return
+      const data = await res.json() as { activities: Activity[]; lead: { score: number; notes: string | null } }
+      setActivities(data.activities || [])
+      setScore(data.lead.score ?? 0)
+      setNotes(data.lead.notes ?? '')
+      setTempScore(data.lead.score ?? 0)
+    } catch {
+      // silent
+    } finally {
+      setLoading(false)
+    }
+  }, [lead.id])
+
+  useEffect(() => { load() }, [load])
+
+  const logActivity = async () => {
+    if (!newNote.trim()) return
+    setSaving(true)
+    try {
+      const res = await fetch('/api/leads/activity', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ leadId: lead.id, activityType: logType, body: newNote.trim() }),
+      })
+      if (!res.ok) return
+      setNewNote('')
+      await load()
+    } catch {
+      // silent
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const saveScore = async () => {
+    try {
+      await fetch('/api/leads/activity', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ leadId: lead.id, score: tempScore }),
+      })
+      setScore(tempScore)
+      setEditingScore(false)
+    } catch {
+      // silent
+    }
+  }
+
+  const saveNotes = async () => {
+    try {
+      await fetch('/api/leads/activity', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ leadId: lead.id, notes }),
+      })
+    } catch {
+      // silent
+    }
+  }
+
+  return (
+    <div className="mt-4 space-y-4">
+      {/* Score + Private Notes */}
+      <div className="grid sm:grid-cols-2 gap-3">
+        <div className="p-3 bg-white/[0.03] rounded-lg border border-white/5">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-xs text-white/50 uppercase tracking-wider">Lead Score</span>
+            <button
+              onClick={() => editingScore ? saveScore() : setEditingScore(true)}
+              className="text-xs text-[#D4A017] hover:underline"
+            >
+              {editingScore ? 'Save' : 'Edit'}
+            </button>
+          </div>
+          {editingScore ? (
+            <div className="flex items-center gap-2">
+              <input
+                type="range" min={0} max={100} step={5}
+                value={tempScore}
+                onChange={e => setTempScore(Number(e.target.value))}
+                aria-label="Lead score"
+                className="flex-1 accent-[#D4A017]"
+              />
+              <span className="text-sm font-bold w-8 text-right">{tempScore}</span>
+            </div>
+          ) : (
+            <ScoreDots score={score} />
+          )}
+        </div>
+
+        <div className="p-3 bg-white/[0.03] rounded-lg border border-white/5">
+          <span className="text-xs text-white/50 uppercase tracking-wider">Private Notes</span>
+          <textarea
+            value={notes}
+            onChange={e => setNotes(e.target.value)}
+            onBlur={saveNotes}
+            rows={2}
+            placeholder="Internal notes..."
+            aria-label="Private notes"
+            className="w-full mt-1 bg-transparent text-sm text-white/70 placeholder-white/20 resize-none focus:outline-none"
+          />
+        </div>
+      </div>
+
+      {/* Log activity */}
+      <div className="p-3 bg-white/[0.03] rounded-lg border border-white/5">
+        <span className="text-xs text-white/50 uppercase tracking-wider block mb-2">Log Activity</span>
+        <div className="flex gap-2 mb-2">
+          {(['note', 'call', 'email', 'text'] as const).map(t => (
+            <button
+              key={t}
+              onClick={() => setLogType(t)}
+              className={`px-2.5 py-1 rounded-lg text-xs capitalize transition-all ${logType === t ? 'bg-[#D4A017]/20 text-[#D4A017] border border-[#D4A017]/30' : 'bg-white/5 text-white/40 hover:text-white/60'}`}
+            >
+              {t}
+            </button>
+          ))}
+        </div>
+        <div className="flex gap-2">
+          <input
+            type="text"
+            value={newNote}
+            onChange={e => setNewNote(e.target.value)}
+            onKeyDown={e => { if (e.key === 'Enter') logActivity() }}
+            placeholder={`Log a ${logType}...`}
+            aria-label={`Log ${logType}`}
+            className="flex-1 bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 text-sm text-white placeholder-white/30 focus:outline-none focus:border-[#D4A017]/40"
+          />
+          <button
+            onClick={logActivity}
+            disabled={!newNote.trim() || saving}
+            className="px-3 py-1.5 bg-[#D4A017] text-black rounded-lg text-xs font-bold disabled:opacity-40"
+          >
+            {saving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Send className="w-3.5 h-3.5" />}
+          </button>
+        </div>
+      </div>
+
+      {/* Timeline */}
+      <div>
+        <span className="text-xs text-white/50 uppercase tracking-wider">Activity Timeline</span>
+        {loading ? (
+          <div className="flex justify-center py-4"><Loader2 className="w-4 h-4 animate-spin text-white/30" /></div>
+        ) : activities.length === 0 ? (
+          <p className="text-xs text-white/30 py-3">No activity yet</p>
+        ) : (
+          <div className="mt-2 space-y-2">
+            {activities.map(a => {
+              const Icon = ACTIVITY_ICONS[a.activity_type] ?? Clock
+              const color = ACTIVITY_COLORS[a.activity_type] ?? 'text-white/40'
+              return (
+                <div key={a.id} className="flex items-start gap-3 py-2 border-b border-white/5 last:border-0">
+                  <div className={`w-7 h-7 rounded-lg bg-white/5 flex items-center justify-center flex-shrink-0 mt-0.5 ${color}`}>
+                    <Icon className="w-3.5 h-3.5" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm text-white/70">{a.body ?? a.activity_type.replace(/_/g, ' ')}</p>
+                    <p className="text-xs text-white/30 mt-0.5">
+                      {new Date(a.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                    </p>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        )}
       </div>
     </div>
   )
@@ -616,6 +856,11 @@ export default function LeadsPage() {
                   {/* Drip Sequences */}
                   <div className="mt-4 p-4 bg-white/[0.02] rounded-lg border border-white/5">
                     <DripPanel lead={lead} />
+                  </div>
+
+                  {/* Activity Timeline + Score + Notes */}
+                  <div className="mt-4 p-4 bg-white/[0.02] rounded-lg border border-white/5">
+                    <ActivityPanel lead={lead} />
                   </div>
 
                   {/* Actions */}

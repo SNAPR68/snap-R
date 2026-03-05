@@ -1,6 +1,13 @@
 # SnapR Execution Changelog
 =================================
 
+## 2026-03-05 — v1.3 Business Intelligence
+
+### Phase 2: Lead CRM Upgrade
+- `supabase/migrations/20260305_lead_activity.sql` — lead_activities table + score/notes/last_activity_at columns on property_leads + auto-update trigger
+- `app/api/leads/activity/route.ts` — GET/POST/PATCH for activities and lead score/notes
+- `app/dashboard/leads/page.tsx` — ActivityPanel: lead scoring (0-100 stars), private notes, log call/email/text/note, timeline with icons + timestamps
+
 ## 2026-03-05 — Property Site Editor + Print Dashboard + Showings + SMS + MLS
 
 ### Phase 5: MLS Direct Submission / RESO Export
