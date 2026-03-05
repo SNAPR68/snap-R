@@ -35,6 +35,13 @@
 - `app/api/open-house/checkin/route.ts` — public POST for guest check-in with capacity checking
 - `app/api/open-house/feedback/route.ts` — public POST for interest rating + comments
 
+### Phase 8: Showing Feedback Forms + Auto Thank-You Email
+- `app/api/showing/feedback/route.ts` — public POST endpoint: validates showing UUID, saves interest_level + comments, emails agent with rating bar
+- `app/feedback/showing/[id]/page.tsx` — public feedback page (server component, looks up showing by UUID)
+- `app/feedback/showing/[id]/ShowingFeedbackForm.tsx` — star-rating form with comments + follow-up checkbox, success state
+- `app/api/showings/route.ts` — PATCH: when status→'completed' and contact_email present, fires auto thank-you + feedback request email (dynamic import Resend, fire-and-forget)
+- `app/dashboard/showings/ShowingsDashboard.tsx` — added Send Feedback mailto button on completed showing cards with contact email
+
 ### Phase 7: Webhook Wiring + Webhook Management UI
 - `app/api/leads/route.ts` — dispatch `lead.created` on POST, `lead.updated` on PATCH
 - `app/api/listing/status/route.ts` — dispatch `listing.updated` on PATCH, `listing.prepared` when status→'prepared'

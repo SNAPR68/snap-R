@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from 'react'
 import {
   Calendar, Plus, Home, ChevronDown, X, Check, Clock,
   User, Phone, Mail, MapPin, Star, TrendingUp, AlertCircle,
-  CheckCircle2, XCircle, Loader2, MessageSquare, Building
+  CheckCircle2, XCircle, Loader2, MessageSquare, Building, Send
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 
@@ -402,12 +402,23 @@ function ShowingCard({ showing, onUpdate }: { showing: Showing; onUpdate: () => 
         </div>
       )}
 
-      <button
-        onClick={() => setShowOutcome(true)}
-        className="w-full py-2 bg-white/5 border border-white/10 rounded-xl text-xs font-medium hover:bg-white/10 transition-colors"
-      >
-        {showing.status === 'scheduled' ? 'Update / Mark Complete' : 'Edit Outcome'}
-      </button>
+      <div className="flex gap-2">
+        <button
+          onClick={() => setShowOutcome(true)}
+          className="flex-1 py-2 bg-white/5 border border-white/10 rounded-xl text-xs font-medium hover:bg-white/10 transition-colors"
+        >
+          {showing.status === 'scheduled' ? 'Update / Mark Complete' : 'Edit Outcome'}
+        </button>
+        {showing.status === 'completed' && showing.contact_email && (
+          <a
+            href={`mailto:${showing.contact_email}?subject=Thanks for visiting — share your feedback&body=Hi ${encodeURIComponent(showing.contact_name)},%0A%0AThanks for the showing! We'd love your feedback:%0A%0A${encodeURIComponent(`${process.env.NEXT_PUBLIC_BASE_URL || 'https://snap-r.com'}/feedback/showing/${showing.id}`)}%0A%0AThanks!`}
+            title="Send feedback request email"
+            className="flex items-center gap-1.5 px-3 py-2 bg-white/5 border border-white/10 rounded-xl text-xs font-medium hover:bg-[#D4A017]/10 hover:border-[#D4A017]/30 hover:text-[#D4A017] transition-colors"
+          >
+            <Send className="w-3 h-3" /> Feedback
+          </a>
+        )}
+      </div>
 
       {showOutcome && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
