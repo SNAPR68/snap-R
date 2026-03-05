@@ -54,6 +54,7 @@ function NewListingContent() {
   const [parking, setParking] = useState('');
   const [mlsNumber, setMlsNumber] = useState('');
   const [hoaFees, setHoaFees] = useState('');
+  const [virtualTourUrl, setVirtualTourUrl] = useState('');
   const [showDetails, setShowDetails] = useState(false);
   const [files, setFiles] = useState<File[]>([]);
   const [previews, setPreviews] = useState<string[]>([]);
@@ -136,6 +137,7 @@ function NewListingContent() {
         parking: parking.trim() || null,
         mls_number: mlsNumber.trim() || null,
         hoa_fees: hoaFees ? parseFloat(hoaFees) : null,
+        virtual_tour_url: virtualTourUrl.trim() || null,
         marketing_status: 'Active',
       }).select('id').single();
       if (listingError) throw new Error('Listing error: ' + listingError.message);
@@ -289,6 +291,11 @@ function NewListingContent() {
                   <label className="block text-sm font-medium text-white/70 mb-2">HOA Fees ($/mo)</label>
                   <input type="number" value={hoaFees} onChange={(e) => setHoaFees(e.target.value)} placeholder="250" className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder:text-white/30 focus:outline-none focus:border-[#D4A017]" />
                 </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-white/70 mb-2">Virtual Tour URL</label>
+                <input type="url" value={virtualTourUrl} onChange={(e) => setVirtualTourUrl(e.target.value)} placeholder="https://my.matterport.com/show/?m=..." className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder:text-white/30 focus:outline-none focus:border-[#D4A017]" />
+                <p className="text-xs text-white/30 mt-1">Paste a Matterport, iGUIDE, or other 3D tour URL</p>
               </div>
             </div>
           )}

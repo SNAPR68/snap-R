@@ -243,6 +243,7 @@ export default async function PropertySitePage({ params }: Props) {
     hoa_fees: listing.hoa_fees,
     latitude: listing.latitude,
     longitude: listing.longitude,
+    virtual_tour_url: listing.virtual_tour_url,
   }
 
   // Build agent data object

@@ -35,7 +35,7 @@ export default async function SiteEditorPage({ params }: Props) {
   // Fetch the listing
   const { data: listing } = await admin
     .from('listings')
-    .select('id, title, address, city, state, postal_code, price, bedrooms, bathrooms, square_feet, description, property_type, year_built, lot_size, parking, features, mls_number, hoa_fees')
+    .select('id, title, address, city, state, postal_code, price, bedrooms, bathrooms, square_feet, description, property_type, year_built, lot_size, parking, features, mls_number, hoa_fees, virtual_tour_url')
     .eq('id', site.listing_id)
     .single()
 

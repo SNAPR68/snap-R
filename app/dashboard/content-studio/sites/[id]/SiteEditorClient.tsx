@@ -36,6 +36,7 @@ interface Listing {
   features: string[] | null
   mls_number: string | null
   hoa_fees: number | null
+  virtual_tour_url: string | null
 }
 
 interface Props {
@@ -101,6 +102,7 @@ export default function SiteEditorClient({ site, listing }: Props) {
   const [mlsNumber, setMlsNumber] = useState(listing?.mls_number ?? '')
   const [hoaFees, setHoaFees] = useState(listing?.hoa_fees?.toString() ?? '')
   const [featuresText, setFeaturesText] = useState((listing?.features ?? []).join('\n'))
+  const [virtualTourUrl, setVirtualTourUrl] = useState(listing?.virtual_tour_url ?? '')
 
   // Agent info
   const [agentName, setAgentName] = useState(site.agent_info?.name ?? '')
@@ -148,6 +150,7 @@ export default function SiteEditorClient({ site, listing }: Props) {
             mls_number: mlsNumber || null,
             hoa_fees: hoaFees ? parseFloat(hoaFees) : null,
             features: featuresText.split('\n').map(f => f.trim()).filter(Boolean),
+            virtual_tour_url: virtualTourUrl.trim() || null,
           }),
         })
         if (!listingRes.ok) {
@@ -189,7 +192,7 @@ export default function SiteEditorClient({ site, listing }: Props) {
   }, [
     listing?.id, site.id, title, address, city, state, postalCode,
     price, bedrooms, bathrooms, squareFeet, description, propertyType,
-    yearBuilt, lotSize, parking, mlsNumber, hoaFees, featuresText,
+    yearBuilt, lotSize, parking, mlsNumber, hoaFees, featuresText, virtualTourUrl,
     theme, isPublished, agentName, agentEmail, agentPhone, agentCompany, agentTitle,
   ])
 
@@ -354,6 +357,9 @@ export default function SiteEditorClient({ site, listing }: Props) {
                 <input value={mlsNumber} onChange={e => setMlsNumber(e.target.value)} placeholder="MLS123456" className={inputCls} />
               </Field>
             </div>
+            <Field label="Virtual Tour URL">
+              <input value={virtualTourUrl} onChange={e => setVirtualTourUrl(e.target.value)} placeholder="https://my.matterport.com/show/?m=..." className={inputCls} />
+            </Field>
             <Field label="Features (one per line)">
               <textarea value={featuresText} onChange={e => setFeaturesText(e.target.value)} rows={5} placeholder={"Chef's Kitchen\nHardwood Floors\nPool & Spa\nSmart Home"} className={textareaCls} />
             </Field>
