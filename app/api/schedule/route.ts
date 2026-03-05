@@ -77,6 +77,37 @@ export async function POST(request: Request) {
   }
 }
 
+// PATCH - Reschedule a pending post (drag-and-drop)
+export async function PATCH(request: Request) {
+  try {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+    const { id, scheduledFor } = await request.json()
+    if (!id || !scheduledFor) {
+      return NextResponse.json({ error: 'id and scheduledFor are required' }, { status: 400 })
+    }
+
+    const { data: post, error } = await supabase
+      .from('scheduled_posts')
+      .update({ scheduled_for: scheduledFor, updated_at: new Date().toISOString() })
+      .eq('id', id)
+      .eq('user_id', user.id)
+      .eq('status', 'pending')
+      .select()
+      .single()
+
+    if (error) throw error
+    if (!post) return NextResponse.json({ error: 'Post not found or already published' }, { status: 404 })
+
+    return NextResponse.json({ post })
+  } catch (error: unknown) {
+    console.error('Error rescheduling post:', error)
+    return NextResponse.json({ error: 'Failed to reschedule post' }, { status: 500 })
+  }
+}
+
 // DELETE - Cancel scheduled post
 export async function DELETE(request: Request) {
   try {
