@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
+import Link from 'next/link'
 import {
   Users, Mail, Phone, MapPin, Calendar, Filter,
   ChevronDown, Download, ExternalLink, Instagram,
@@ -850,6 +851,14 @@ export default function LeadsPage() {
               <span className="hidden sm:inline">Pipeline</span>
             </button>
           </div>
+
+          <Link
+            href="/dashboard/leads/sequences"
+            className="flex items-center gap-2 px-4 py-2 bg-white/5 border border-white/10 rounded-lg hover:bg-white/10 transition-colors text-sm"
+          >
+            <Mail className="w-4 h-4" />
+            Sequences
+          </Link>
 
           <button
             onClick={exportCSV}

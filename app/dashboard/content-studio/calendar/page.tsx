@@ -33,14 +33,42 @@ interface Listing {
 const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
 const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
 
+interface RawPost {
+  id: string
+  listing_id?: string
+  listings?: { title?: string; address?: string }
+  platform: string
+  post_type?: string
+  scheduled_for: string
+  content?: string
+  status: 'pending' | 'published' | 'failed' | 'cancelled'
+  image_urls?: string[]
+}
+
+interface RawListingPhoto {
+  raw_url: string | null
+  processed_url: string | null
+  status: string | null
+}
+
+interface RawListing {
+  id: string
+  title: string | null
+  address: string | null
+  photos: RawListingPhoto[]
+}
+
 export default function ContentCalendar() {
   const [currentDate, setCurrentDate] = useState(new Date())
   const [scheduledPosts, setScheduledPosts] = useState<ScheduledPost[]>([])
   const [listings, setListings] = useState<Listing[]>([])
-  const [loading, setLoading] = useState(true)
   const [showModal, setShowModal] = useState(false)
   const [selectedDate, setSelectedDate] = useState<Date | null>(null)
   const [editingPost, setEditingPost] = useState<ScheduledPost | null>(null)
+
+  // Drag-and-drop state
+  const [draggingId, setDraggingId] = useState<string | null>(null)
+  const [dragOverDate, setDragOverDate] = useState<string | null>(null)
 
   // Form state
   const [formListing, setFormListing] = useState('')
@@ -52,18 +80,15 @@ export default function ContentCalendar() {
 
   const loadPosts = useCallback(async () => {
     try {
-      // Load all non-cancelled posts from database
       const res = await fetch('/api/schedule?status=pending,published,failed')
       if (!res.ok) throw new Error('Failed to fetch posts')
       const { posts } = await res.json()
-
-      const mapped: ScheduledPost[] = (posts || []).map((p: any) => {
+      const mapped: ScheduledPost[] = (posts || []).map((p: RawPost) => {
         const scheduledFor = new Date(p.scheduled_for)
-        const listingTitle = p.listings?.title || p.listings?.address || 'Untitled'
         return {
           id: p.id,
           listing_id: p.listing_id || '',
-          listing_title: listingTitle,
+          listing_title: p.listings?.title || p.listings?.address || 'Untitled',
           platform: p.platform,
           post_type: p.post_type || 'just_listed',
           scheduled_date: scheduledFor.toISOString().split('T')[0],
@@ -74,26 +99,18 @@ export default function ContentCalendar() {
           source: (p.post_type === 'just_listed' && p.content && p.content.length > 50) ? 'auto' : 'manual',
         }
       })
-
       setScheduledPosts(mapped)
     } catch (error) {
       console.error('Error loading scheduled posts:', error)
     }
   }, [])
 
-  useEffect(() => {
-    loadData()
-  }, [])
-
-  const loadData = async () => {
-    setLoading(true)
+  const loadData = useCallback(async () => {
     const supabase = createClient()
-
     try {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return
 
-      // Load listings
       const { data: listingsData } = await supabase
         .from('listings')
         .select('id, title, address, photos!photos_listing_id_fkey(raw_url, processed_url, status)')
@@ -102,38 +119,58 @@ export default function ContentCalendar() {
 
       if (listingsData) {
         const processed = await Promise.all(
-          listingsData.map(async (listing: any) => {
+          (listingsData as RawListing[]).map(async (listing) => {
             const photos = listing.photos || []
-            const firstPhoto = photos.find((p: any) => p.processed_url) || photos[0]
-            let thumbnail = null
+            const firstPhoto = photos.find((p) => p.processed_url) ?? photos[0]
+            let thumbnail: string | null = null
             if (firstPhoto) {
               const path = firstPhoto.processed_url || firstPhoto.raw_url
               if (path && !path.startsWith('http')) {
                 const { data } = await supabase.storage.from('raw-images').createSignedUrl(path, 3600)
-                thumbnail = data?.signedUrl
+                thumbnail = data?.signedUrl ?? null
               } else {
                 thumbnail = path
               }
             }
-            return {
-              id: listing.id,
-              title: listing.title || listing.address || 'Untitled',
-              thumbnail
-            }
+            return { id: listing.id, title: listing.title || listing.address || 'Untitled', thumbnail }
           })
         )
         setListings(processed)
         if (processed.length > 0) setFormListing(processed[0].id)
       }
 
-      // Load scheduled posts from database
       await loadPosts()
     } catch (error) {
       console.error('Error loading data:', error)
     }
+  }, [loadPosts])
 
-    setLoading(false)
-  }
+  // Reschedule a post by drag-and-drop
+  const reschedulePost = useCallback(async (postId: string, newDate: Date, oldTime: string) => {
+    const [h, m] = oldTime.split(':').map(Number)
+    const scheduled = new Date(newDate)
+    scheduled.setHours(h, m, 0, 0)
+    const scheduledFor = scheduled.toISOString()
+
+    // Optimistic update
+    setScheduledPosts(prev => prev.map(p =>
+      p.id === postId
+        ? { ...p, scheduled_date: newDate.toISOString().split('T')[0] }
+        : p
+    ))
+
+    try {
+      await fetch('/api/schedule', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: postId, scheduledFor }),
+      })
+    } catch {
+      await loadPosts()
+    }
+  }, [loadPosts])
+
+  useEffect(() => { loadData() }, [loadData])
 
   const getDaysInMonth = (date: Date) => {
     const year = date.getFullYear()
@@ -392,14 +429,26 @@ export default function ContentCalendar() {
               {days.map((date, i) => {
                 const posts = date ? getPostsForDate(date) : []
                 const today = date ? isToday(date) : false
+                const dateKey = date ? date.toISOString().split('T')[0] : null
+                const isOver = dateKey !== null && dragOverDate === dateKey
 
                 return (
                   <div
                     key={i}
-                    className={`min-h-[120px] border-b border-r border-white/5 p-2 ${
+                    className={`min-h-[120px] border-b border-r border-white/5 p-2 transition-colors ${
                       date ? 'hover:bg-white/5 cursor-pointer' : 'bg-white/[0.02]'
-                    } ${today ? 'bg-[#D4AF37]/10' : ''}`}
+                    } ${today ? 'bg-[#D4AF37]/10' : ''} ${isOver ? 'bg-[#D4A017]/10 ring-1 ring-inset ring-[#D4A017]/40' : ''}`}
                     onClick={() => date && openScheduleModal(date)}
+                    onDragOver={date ? (e) => { e.preventDefault(); setDragOverDate(dateKey) } : undefined}
+                    onDragLeave={() => setDragOverDate(null)}
+                    onDrop={date ? (e) => {
+                      e.preventDefault()
+                      setDragOverDate(null)
+                      const postId = e.dataTransfer.getData('postId')
+                      const oldTime = e.dataTransfer.getData('oldTime')
+                      if (postId && draggingId === postId) reschedulePost(postId, date, oldTime)
+                      setDraggingId(null)
+                    } : undefined}
                   >
                     {date && (
                       <>
@@ -411,13 +460,22 @@ export default function ContentCalendar() {
                             const Icon = platformIcons[post.platform] || Instagram
                             const isPublished = post.status === 'published'
                             const isFailed = post.status === 'failed'
+                            const isDraggable = post.status === 'pending'
                             return (
                               <div
                                 key={post.id}
+                                draggable={isDraggable}
+                                onDragStart={isDraggable ? (e) => {
+                                  setDraggingId(post.id)
+                                  e.dataTransfer.setData('postId', post.id)
+                                  e.dataTransfer.setData('oldTime', post.scheduled_time)
+                                  e.dataTransfer.effectAllowed = 'move'
+                                } : undefined}
+                                onDragEnd={() => { setDraggingId(null); setDragOverDate(null) }}
                                 onClick={(e) => { e.stopPropagation(); openScheduleModal(date, post) }}
                                 className={`flex items-center gap-1.5 p-1.5 rounded-lg text-xs truncate ${
-                                  isPublished ? 'opacity-60' : isFailed ? 'opacity-50' : ''
-                                }`}
+                                  isDraggable ? 'cursor-grab active:cursor-grabbing' : ''
+                                } ${isPublished ? 'opacity-60' : isFailed ? 'opacity-50' : ''} ${draggingId === post.id ? 'opacity-30' : ''}`}
                                 style={{ backgroundColor: (postTypeColors[post.post_type] || '#6B7280') + '30' }}
                               >
                                 <div className={`w-4 h-4 rounded flex items-center justify-center flex-shrink-0 ${platformColors[post.platform] || 'bg-gray-600'}`}>
@@ -465,8 +523,10 @@ export default function ContentCalendar() {
                       <div key={post.id} className="bg-[#111] rounded-xl border border-white/5 overflow-hidden">
                         <div className="flex items-center gap-3 p-3 border-b border-white/5">
                           {listing?.thumbnail ? (
+                            // eslint-disable-next-line @next/next/no-img-element
                             <img src={listing.thumbnail} alt="" className="w-12 h-12 rounded-lg object-cover" />
                           ) : post.image_urls?.[0] ? (
+                            // eslint-disable-next-line @next/next/no-img-element
                             <img src={post.image_urls[0]} alt="" className="w-12 h-12 rounded-lg object-cover" />
                           ) : (
                             <div className="w-12 h-12 rounded-lg bg-white/10 flex items-center justify-center">

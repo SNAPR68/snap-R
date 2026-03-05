@@ -3,6 +3,21 @@
 
 ## 2026-03-05 — v1.5 Race to 100
 
+### Phase 10: Email Drip Sequence Management UI
+- `app/api/leads/sequences/route.ts` — NEW: CRUD API for custom drip sequences + steps (GET/POST/PATCH/DELETE). Ownership guard; system sequences protected.
+- `app/dashboard/leads/sequences/page.tsx` — NEW: Full sequence management UI with create/edit/toggle/delete + step editor + template vars reference
+- `app/dashboard/leads/page.tsx` — Added "Sequences" Link button in leads header
+
+### Phase 9: Content Calendar Drag-and-Drop Reschedule
+- `app/api/schedule/route.ts` — Added PATCH handler for drag-and-drop reschedule (validates id + scheduledFor, updates where status='pending' + ownership guard)
+- `app/dashboard/content-studio/calendar/page.tsx` — Full refactor:
+  - Typed interfaces RawPost/RawListingPhoto/RawListing (removed all `any`)
+  - `draggingId`/`dragOverDate` state for visual feedback
+  - `reschedulePost` useCallback with optimistic update + PATCH + error revert
+  - Post pills: draggable with onDragStart/onDragEnd
+  - Calendar cells: onDragOver/onDragLeave/onDrop with gold ring highlight
+- Architectural Impact: Drag-to-reschedule pending posts on calendar; no external DnD library
+
 ### Phase 1: Virtual Tour + MLS Import
 - `supabase/migrations/20260305_listing_virtual_tour.sql` — adds `virtual_tour_url` column to listings
 - `lib/mls/types.ts` — MLS provider types (MLSPropertyData, MLSPhoto, MLSProvider interface)
