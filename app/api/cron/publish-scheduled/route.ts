@@ -27,6 +27,7 @@ import {
   publishToTwitter,
 } from '@/lib/social/publish-service';
 import { refreshAccessToken, type SocialPlatform } from '@/lib/social/oauth-config';
+import { dispatchWebhookEvent } from '@/lib/webhooks/dispatch';
 
 const CRON_SECRET = process.env.CRON_SECRET;
 
@@ -508,6 +509,16 @@ export async function GET(request: NextRequest) {
               caption: post.content,
               published_at: publishedAt,
             });
+
+          // Dispatch post.published webhook (fire-and-forget)
+          dispatchWebhookEvent(post.user_id, 'post.published', {
+            postId: post.id,
+            platform: post.platform,
+            listingId: post.listing_id,
+            postType: post.post_type,
+            platformPostId: publishResult.postId ?? undefined,
+            publishedAt,
+          }).catch(() => { /* non-critical */ });
 
           console.log(`[PublishCron] Published ${post.platform} ${isVideoPost ? 'video' : 'post'} ${post.id} → ${publishResult.postId}`);
           results.published++;

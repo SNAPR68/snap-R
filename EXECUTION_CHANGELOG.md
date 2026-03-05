@@ -35,6 +35,13 @@
 - `app/api/open-house/checkin/route.ts` — public POST for guest check-in with capacity checking
 - `app/api/open-house/feedback/route.ts` — public POST for interest rating + comments
 
+### Phase 7: Webhook Wiring + Webhook Management UI
+- `app/api/leads/route.ts` — dispatch `lead.created` on POST, `lead.updated` on PATCH
+- `app/api/listing/status/route.ts` — dispatch `listing.updated` on PATCH, `listing.prepared` when status→'prepared'
+- `app/api/cron/publish-scheduled/route.ts` — dispatch `post.published` after each successful publish
+- `app/dashboard/settings/webhooks/page.tsx` — full webhook management UI (create, toggle, delete, copy secret, signature docs)
+- `app/dashboard/settings/page.tsx` — added Outgoing Webhooks section linking to /settings/webhooks
+
 ### Phase 6: Lead Kanban Pipeline + Outgoing Webhooks
 - `app/dashboard/leads/page.tsx` — added Pipeline/Kanban view with HTML5 drag-and-drop; List/Pipeline toggle buttons; columns: New, Contacted, Qualified, Touring, Offer, Closed, Lost; PATCH /api/leads/:id on drop
 - `app/api/webhooks/outgoing/route.ts` — CRUD API: GET list, POST create, PATCH update/toggle, DELETE remove
