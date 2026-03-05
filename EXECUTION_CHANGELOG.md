@@ -3,6 +3,11 @@
 
 ## 2026-03-05 — Property Site Editor + Print Dashboard + Showings + SMS + MLS
 
+### Phase 5: MLS Direct Submission / RESO Export
+- `app/api/marketing/reso-export/route.ts` — RESO Data Dictionary 2.0 JSON export endpoint with full field mapping
+- `app/dashboard/mls/page.tsx` + `MlsDashboard.tsx` — 3-step export UI: listing picker, format selector (ZIP vs RESO JSON), MLS spec chips, download
+- `components/dashboard-sidebar.tsx` — MLS Submission nav item under More Tools
+
 ### Phase 4: WhatsApp/SMS Notify
 - `lib/notify/twilio.ts` — Twilio REST helpers (sendSms, sendWhatsApp) using fetch + Basic auth, no SDK dependency
 - `app/api/notify/sms/route.ts` — POST endpoint, Zod validated, sends SMS via Twilio
