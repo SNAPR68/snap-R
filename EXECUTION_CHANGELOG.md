@@ -35,6 +35,13 @@
 - `app/api/open-house/checkin/route.ts` — public POST for guest check-in with capacity checking
 - `app/api/open-house/feedback/route.ts` — public POST for interest rating + comments
 
+### Phase 6: Lead Kanban Pipeline + Outgoing Webhooks
+- `app/dashboard/leads/page.tsx` — added Pipeline/Kanban view with HTML5 drag-and-drop; List/Pipeline toggle buttons; columns: New, Contacted, Qualified, Touring, Offer, Closed, Lost; PATCH /api/leads/:id on drop
+- `app/api/webhooks/outgoing/route.ts` — CRUD API: GET list, POST create, PATCH update/toggle, DELETE remove
+- `lib/webhooks/dispatch.ts` — `dispatchWebhookEvent()` with HMAC-SHA256 signing, always-complete semantics, delivery logging to `webhook_deliveries`
+- `lib/validation/schemas.ts` — added webhookCreateSchema, webhookUpdateSchema, webhookDeleteSchema
+- `supabase/migrations/20260305_outgoing_webhooks.sql` — outgoing_webhooks + webhook_deliveries tables with RLS
+
 ### Phase 5: Dashboard Management UIs + PWA Polish
 - `app/dashboard/open-houses/page.tsx` — open house events management page wrapper
 - `app/dashboard/open-houses/OpenHousesDashboard.tsx` — full event CRUD, attendee table, stats, create modal, status management

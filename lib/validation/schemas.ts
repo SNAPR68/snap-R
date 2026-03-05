@@ -284,6 +284,38 @@ export const openHouseFeedbackSchema = z.object({
   wantsFollowUp: z.boolean().optional(),
 })
 
+// Outgoing webhooks
+const WEBHOOK_EVENTS = [
+  'listing.created',
+  'listing.prepared',
+  'listing.marketing_complete',
+  'lead.created',
+  'lead.status_changed',
+  'post.published',
+  'post.scheduled',
+  'open_house.checkin',
+] as const
+
+export type WebhookEvent = typeof WEBHOOK_EVENTS[number]
+
+export const webhookCreateSchema = z.object({
+  url: z.string().url('Must be a valid URL').max(2000),
+  events: z.array(z.enum(WEBHOOK_EVENTS)).min(1, 'At least one event required').max(WEBHOOK_EVENTS.length),
+  secret: z.string().max(500).optional(),
+})
+
+export const webhookUpdateSchema = z.object({
+  id: z.string().uuid(),
+  url: z.string().url('Must be a valid URL').max(2000).optional(),
+  events: z.array(z.enum(WEBHOOK_EVENTS)).min(1).max(WEBHOOK_EVENTS.length).optional(),
+  is_active: z.boolean().optional(),
+  secret: z.string().max(500).optional(),
+})
+
+export const webhookDeleteSchema = z.object({
+  id: z.string().uuid(),
+})
+
 // Helper: Parse body with schema, return typed result or error response
 export function parseBody<T>(schema: z.ZodType<T>, data: unknown):
   { success: true; data: T } | { success: false; error: string; details: ReturnType<z.ZodError['flatten']> } {
