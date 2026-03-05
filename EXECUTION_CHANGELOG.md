@@ -1,6 +1,40 @@
 # SnapR Execution Changelog
 =================================
 
+## 2026-03-05 — v1.5 Race to 100
+
+### Phase 1: Virtual Tour + MLS Import
+- `supabase/migrations/20260305_listing_virtual_tour.sql` — adds `virtual_tour_url` column to listings
+- `lib/mls/types.ts` — MLS provider types (MLSPropertyData, MLSPhoto, MLSProvider interface)
+- `lib/mls/simplyrets.ts` — SimplyRETS adapter implementing MLSProvider
+- `lib/mls/provider.ts` — factory for MLS providers
+- `app/api/mls/import/route.ts` — POST endpoint for MLS data import
+- `components/mls-import-modal.tsx` — search + preview + import modal component
+- `app/p/[slug]/PropertySiteClient.tsx` — 3D Virtual Tour iframe embed section
+- `app/p/[slug]/page.tsx` — pass virtual_tour_url to client
+- `app/listings/new/page.tsx` — virtual tour URL input field + insert call
+- `app/api/listing/update/route.ts` — added virtual_tour_url to Zod schema
+- `app/dashboard/content-studio/sites/[id]/SiteEditorClient.tsx` — virtual tour URL field in site editor
+- `app/dashboard/content-studio/sites/[id]/page.tsx` — include virtual_tour_url in select query
+- `lib/validation/schemas.ts` — mlsImportSchema, photographerBookingSchema, openHouseCheckinSchema, openHouseFeedbackSchema
+
+### Phase 2: Photographer Booking System
+- `supabase/migrations/20260305_photographer_bookings.sql` — photographer_packages, booking_requests, photographer_availability tables
+- `app/book/[slug]/page.tsx` — server component fetching org, packages, availability
+- `app/book/[slug]/BookingForm.tsx` — 5-step booking form (package, property, schedule, contact, review)
+- `app/api/photographer/booking/route.ts` — POST endpoint for booking submissions + client upsert
+
+### Phase 3: Broker Team Dashboard
+- `app/dashboard/broker/page.tsx` — server component fetching team, members, listings, lead stats
+- `app/dashboard/broker/BrokerDashboardClient.tsx` — stats grid, agent roster, listings panel, invite modal
+
+### Phase 4: Open House Check-in + Showing Feedback
+- `supabase/migrations/20260305_open_house.sql` — open_house_events + open_house_attendees tables with RLS
+- `app/open-house/[slug]/page.tsx` — public server component for open house check-in page
+- `app/open-house/[slug]/CheckInForm.tsx` — mobile-first 4-step flow (welcome, form, success, feedback)
+- `app/api/open-house/checkin/route.ts` — public POST for guest check-in with capacity checking
+- `app/api/open-house/feedback/route.ts` — public POST for interest rating + comments
+
 ## 2026-03-05 — v1.4 Close the Loop
 
 ### Phase 1a: Lead drip auto-enroll

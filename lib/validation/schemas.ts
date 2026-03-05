@@ -236,6 +236,54 @@ export const emailSendSchema = z.object({
   replyTo: z.string().email('Invalid reply-to email').optional(),
 })
 
+// MLS import
+export const mlsImportSchema = z.object({
+  mlsNumber: z.string().min(1).max(50),
+  provider: z.string().max(50).optional().default('simplyrets'),
+})
+
+// Photographer booking
+export const photographerBookingSchema = z.object({
+  photographerId: z.string().uuid(),
+  packageId: z.string().uuid().optional(),
+  clientName: z.string().min(1).max(200),
+  clientEmail: z.string().email(),
+  clientPhone: z.string().max(30).optional(),
+  clientBrokerage: z.string().max(200).optional(),
+  propertyAddress: z.string().min(1).max(500),
+  propertyCity: z.string().max(100).optional(),
+  propertyState: z.string().max(50).optional(),
+  propertyZip: z.string().max(20).optional(),
+  propertyType: z.string().max(50).optional(),
+  bedrooms: z.number().int().min(0).max(99).optional(),
+  bathrooms: z.number().min(0).max(99).optional(),
+  squareFeet: z.number().int().min(0).optional(),
+  preferredDate: z.string().optional(),
+  preferredTime: z.string().optional(),
+  specialInstructions: z.string().max(2000).optional(),
+  accessInfo: z.string().max(500).optional(),
+  addOns: z.array(z.string()).optional(),
+})
+
+// Open house check-in (public, no auth)
+export const openHouseCheckinSchema = z.object({
+  eventId: z.string().uuid(),
+  name: z.string().min(1).max(200),
+  email: z.string().email(),
+  phone: z.string().max(30).optional(),
+  contactType: z.enum(['buyer', 'agent', 'investor', 'neighbor', 'other']).optional(),
+  brokerage: z.string().max(200).optional(),
+  source: z.string().max(100).optional(),
+})
+
+// Open house feedback (public, no auth)
+export const openHouseFeedbackSchema = z.object({
+  attendeeId: z.string().uuid(),
+  interestLevel: z.number().int().min(1).max(5),
+  feedback: z.string().max(2000).optional(),
+  wantsFollowUp: z.boolean().optional(),
+})
+
 // Helper: Parse body with schema, return typed result or error response
 export function parseBody<T>(schema: z.ZodType<T>, data: unknown):
   { success: true; data: T } | { success: false; error: string; details: ReturnType<z.ZodError['flatten']> } {

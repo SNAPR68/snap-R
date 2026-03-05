@@ -29,6 +29,7 @@ const schema = z.object({
   mls_number: z.string().nullable().optional(),
   hoa_fees: z.number().min(0).nullable().optional(),
   features: z.array(z.string()).nullable().optional(),
+  virtual_tour_url: z.string().url().nullable().optional(),
 })
 
 export async function PATCH(request: NextRequest) {

@@ -33,6 +33,7 @@ interface Listing {
   hoa_fees?: number | null
   latitude?: number | null
   longitude?: number | null
+  virtual_tour_url?: string | null
 }
 
 interface Agent {
@@ -759,6 +760,34 @@ export default function PropertySiteClient({ photos, listing, agent, brand, vide
               </section>
             )}
             
+            {/* ============================================ */}
+            {/* 3D VIRTUAL TOUR */}
+            {/* ============================================ */}
+            {listing.virtual_tour_url && (
+              <section>
+                <h2 className="text-2xl font-bold mb-6 flex items-center gap-3">
+                  <div className="p-2 rounded-lg bg-purple-500/20">
+                    <Home className="w-5 h-5 text-purple-400" />
+                  </div>
+                  3D Virtual Tour
+                </h2>
+                <div className="aspect-video rounded-2xl overflow-hidden bg-[#1A1A1A] border border-white/10">
+                  <iframe
+                    src={listing.virtual_tour_url}
+                    width="100%"
+                    height="100%"
+                    style={{ border: 0 }}
+                    loading="lazy"
+                    allowFullScreen
+                    title="3D Virtual Tour"
+                  />
+                </div>
+                <p className="text-sm text-white/40 mt-3 text-center">
+                  Drag to look around • Click arrows to move through the property
+                </p>
+              </section>
+            )}
+
             {/* ============================================ */}
             {/* LOCATION MAP */}
             {/* ============================================ */}
