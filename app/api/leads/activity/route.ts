@@ -70,10 +70,24 @@ export async function POST(request: NextRequest) {
 
     const { leadId, activityType, body: actBody, metadata } = parsed.data
 
+    // Score delta per activity type (caps at 100)
+    const SCORE_DELTAS: Record<string, number> = {
+      call: 10,
+      email: 5,
+      text: 5,
+      showing: 20,
+      property_site_viewed: 8,
+      form_submitted: 15,
+      drip_email_sent: 2,
+      status_change: 0,
+      note: 0,
+      auto: 0,
+    }
+
     // Verify lead belongs to user
     const { data: lead } = await supabase
       .from('property_leads')
-      .select('id')
+      .select('id, score')
       .eq('id', leadId)
       .eq('user_id', user.id)
       .single()
@@ -93,6 +107,24 @@ export async function POST(request: NextRequest) {
       .single()
 
     if (error) throw error
+
+    // Auto-update score based on activity
+    const delta = SCORE_DELTAS[activityType] ?? 0
+    if (delta > 0) {
+      const newScore = Math.min(100, (lead.score ?? 0) + delta)
+      await supabase
+        .from('property_leads')
+        .update({ score: newScore, last_activity_at: new Date().toISOString() })
+        .eq('id', leadId)
+        .eq('user_id', user.id)
+    } else {
+      await supabase
+        .from('property_leads')
+        .update({ last_activity_at: new Date().toISOString() })
+        .eq('id', leadId)
+        .eq('user_id', user.id)
+    }
+
     return NextResponse.json({ activity: data })
   } catch (err: unknown) {
     return NextResponse.json({ error: err instanceof Error ? err.message : 'Error' }, { status: 500 })
