@@ -8,7 +8,7 @@ import {
   BarChart3, CheckSquare, FileText, FolderOpen, Images, Mic,
   ClipboardList, Users, Settings, CreditCard, LogOut,
   ChevronDown, ChevronRight, X,
-  Sofa, Globe, Megaphone, ScanSearch, Hammer, Brain, Mail, Handshake, Camera
+  Sofa, Globe, Megaphone, ScanSearch, Hammer, Brain, Mail, Handshake, Camera, Printer, MessageSquare, FileJson
 } from 'lucide-react'
 import { useSidebar } from './mobile-sidebar-provider'
 
@@ -61,8 +61,10 @@ const NAV_SECTIONS: NavSection[] = [
     items: [
       { href: '/dashboard/analytics', label: 'Analytics', icon: BarChart3 },
       { href: '/dashboard/leads', label: 'Leads', icon: Users },
+      { href: '/dashboard/showings', label: 'Showings', icon: Calendar },
       { href: '/dashboard/approvals', label: 'Client Approvals', icon: CheckSquare },
       { href: '/dashboard/photographer', label: 'Photographer Portal', icon: Camera },
+      { href: '/dashboard/notify', label: 'Notify', icon: MessageSquare },
     ],
   },
   {
@@ -79,7 +81,9 @@ const NAV_SECTIONS: NavSection[] = [
       { href: '/dashboard/renovation', label: 'Renovation', icon: Hammer },
       { href: '/dashboard/listing-intelligence', label: 'Listing Intel', icon: Brain },
       { href: '/dashboard/content-studio/email', label: 'Email Marketing', icon: Mail },
+      { href: '/dashboard/print', label: 'Print Materials', icon: Printer },
       { href: '/dashboard/partner', label: 'Partner Program', icon: Handshake },
+      { href: '/dashboard/mls', label: 'MLS Submission', icon: FileJson },
     ],
   },
   {

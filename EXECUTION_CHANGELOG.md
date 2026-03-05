@@ -1,6 +1,39 @@
 # SnapR Execution Changelog
 =================================
 
+## 2026-03-05 — Property Site Editor + Print Dashboard + Showings + SMS + MLS
+
+### Phase 5: MLS Direct Submission / RESO Export
+- `app/api/marketing/reso-export/route.ts` — RESO Data Dictionary 2.0 JSON export endpoint with full field mapping
+- `app/dashboard/mls/page.tsx` + `MlsDashboard.tsx` — 3-step export UI: listing picker, format selector (ZIP vs RESO JSON), MLS spec chips, download
+- `components/dashboard-sidebar.tsx` — MLS Submission nav item under More Tools
+
+### Phase 4: WhatsApp/SMS Notify
+- `lib/notify/twilio.ts` — Twilio REST helpers (sendSms, sendWhatsApp) using fetch + Basic auth, no SDK dependency
+- `app/api/notify/sms/route.ts` — POST endpoint, Zod validated, sends SMS via Twilio
+- `app/api/notify/whatsapp/route.ts` — POST endpoint, Zod validated, sends WhatsApp via Twilio sandbox
+- `app/dashboard/notify/page.tsx` + `NotifyDashboard.tsx` — send UI: channel toggle, listing picker, 4 message templates + custom, phone input, send button
+- `components/dashboard-sidebar.tsx` — Notify nav item under Measure
+
+### Phase 3: Showings Intelligence
+- `supabase/migrations/20260305_showings.sql` — showings table with status, outcome, interest_level, source attribution, RLS
+- `app/api/showings/route.ts` — full CRUD + stats summary
+- `app/dashboard/showings/page.tsx` + `ShowingsDashboard.tsx` — upcoming/past split, stats, schedule modal, outcome/feedback form with star rating
+- `components/dashboard-sidebar.tsx` — Showings nav item
+
+### Phase 2: Print Materials Dashboard
+- `app/dashboard/print/page.tsx` — print dashboard page
+- `app/dashboard/print/PrintDashboard.tsx` — 3-step UI: select listing → choose format (flyer/feature-sheet) → generate + download PDF
+- `components/dashboard-sidebar.tsx` — added Print Materials nav item
+
+### Phase 1: Property Site Editor
+- `app/dashboard/content-studio/sites/[id]/page.tsx` — SSR editor page
+- `app/dashboard/content-studio/sites/[id]/SiteEditorClient.tsx` — split-pane editor (theme, listing fields, agent info, publish toggle, live iframe preview)
+- `app/dashboard/content-studio/sites/PropertySites.tsx` — rewritten: sites grid with Edit/Copy/Delete + create-new form
+- `app/api/listing/update/route.ts` — PATCH endpoint for editing listing fields
+
+---
+
 ## 2026-03-04 — Photographer White-Label Portal
 
 Implemented the photographer partner layer: branded photo delivery, client CRM, and bulk delivery link management.
