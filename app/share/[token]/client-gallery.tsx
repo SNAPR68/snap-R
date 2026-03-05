@@ -1,7 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { Download, ChevronLeft, ChevronRight, Check, X } from 'lucide-react';
+import { Download, ChevronLeft, ChevronRight, Check, X, PartyPopper } from 'lucide-react';
+import Image from 'next/image';
 import { ClientApprovalButtons } from '@/components/client-approval-buttons';
 
 interface Photo {
@@ -24,6 +25,7 @@ interface ClientGalleryProps {
 export function ClientGallery({ photos, listingTitle, shareToken, allowDownload, showComparison }: ClientGalleryProps) {
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [showBefore, setShowBefore] = useState(false);
+  const [allReviewed, setAllReviewed] = useState(false);
   const [approvalCounts, setApprovalCounts] = useState({
     approved: photos.filter(p => p.client_approved === true).length,
     rejected: photos.filter(p => p.client_approved === false).length,
@@ -35,7 +37,6 @@ export function ClientGallery({ photos, listingTitle, shareToken, allowDownload,
     const photo = photos.find(p => p.id === photoId);
     if (!photo) return;
 
-    // Update counts
     if (photo.client_approved === true) setApprovalCounts(c => ({ ...c, approved: c.approved - 1 }));
     if (photo.client_approved === false) setApprovalCounts(c => ({ ...c, rejected: c.rejected - 1 }));
     if (approved === true) setApprovalCounts(c => ({ ...c, approved: c.approved + 1 }));
@@ -58,8 +59,22 @@ export function ClientGallery({ photos, listingTitle, shareToken, allowDownload,
     window.URL.revokeObjectURL(downloadUrl);
   };
 
+  const pending = photos.length - approvalCounts.approved - approvalCounts.rejected;
+
   return (
     <div className="min-h-screen bg-[#0F0F0F] text-white">
+      {/* Review Complete Banner */}
+      {allReviewed && (
+        <div className="bg-gradient-to-r from-emerald-900/60 to-emerald-800/40 border-b border-emerald-500/30 px-4 py-3">
+          <div className="max-w-6xl mx-auto flex items-center gap-3">
+            <PartyPopper className="w-5 h-5 text-emerald-400 flex-shrink-0" />
+            <p className="text-sm text-emerald-300 font-medium">
+              Review complete! Your feedback has been sent to the agent. They&apos;ll be in touch shortly.
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* Header */}
       <header className="sticky top-0 z-10 bg-[#1A1A1A] border-b border-white/10 px-4 py-3">
         <div className="max-w-6xl mx-auto flex items-center justify-between">
@@ -77,7 +92,7 @@ export function ClientGallery({ photos, listingTitle, shareToken, allowDownload,
                 <X className="w-4 h-4" /> {approvalCounts.rejected}
               </span>
               <span className="text-white/30">|</span>
-              <span className="text-white/50">{photos.length - approvalCounts.approved - approvalCounts.rejected} pending</span>
+              <span className="text-white/50">{pending} pending</span>
             </div>
           </div>
         </div>
@@ -89,12 +104,13 @@ export function ClientGallery({ photos, listingTitle, shareToken, allowDownload,
           {/* Main Image */}
           <div className="relative">
             <div className="aspect-[4/3] bg-[#1A1A1A] rounded-xl overflow-hidden relative">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={showBefore && showComparison && selectedPhoto.originalUrl ? selectedPhoto.originalUrl : selectedPhoto.url}
                 alt=""
                 className="w-full h-full object-contain"
               />
-              
+
               {/* Navigation */}
               <button
                 onClick={goPrev}
@@ -148,8 +164,9 @@ export function ClientGallery({ photos, listingTitle, shareToken, allowDownload,
                 initialApproved={selectedPhoto.client_approved}
                 initialFeedback={selectedPhoto.client_feedback}
                 onUpdate={(approved) => handleApprovalUpdate(selectedPhoto.id, approved)}
+                onAllReviewed={() => setAllReviewed(true)}
               />
-              
+
               {allowDownload && (
                 <button
                   onClick={() => handleDownload(selectedPhoto.url)}
@@ -174,8 +191,8 @@ export function ClientGallery({ photos, listingTitle, shareToken, allowDownload,
                     selectedIndex === index ? 'border-[#D4A017]' : 'border-transparent hover:border-white/30'
                   }`}
                 >
-                  <img src={photo.url} alt="" className="w-full h-full object-cover" />
-                  
+                  <Image src={photo.url} alt="" fill className="object-cover" />
+
                   {/* Approval indicator */}
                   {photo.client_approved !== null && (
                     <div className={`absolute top-1 right-1 w-5 h-5 rounded-full flex items-center justify-center ${
