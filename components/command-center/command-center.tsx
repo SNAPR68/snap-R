@@ -7,6 +7,7 @@ import {
 } from 'lucide-react'
 import { ExpandableCard } from './expandable-card'
 import { GettingStartedChecklist } from '../getting-started-checklist'
+import { UsageWidget } from '../usage-widget'
 import { ListingsCollapsed, ListingsExpanded, type ListingItem } from './containers/listings-container'
 import { ContentCollapsed, ContentExpanded, type MarketingStatus } from './containers/content-container'
 import { CalendarCollapsed, CalendarExpanded, type ScheduledPostItem } from './containers/calendar-container'
@@ -23,6 +24,12 @@ interface SetupStatus {
   tier: string
 }
 
+interface UsageData {
+  listingsUsed: number
+  listingsLimit: number
+  tier: string
+}
+
 interface CommandCenterProps {
   listings: ListingItem[]
   scheduledPosts: ScheduledPostItem[]
@@ -34,6 +41,7 @@ interface CommandCenterProps {
   processingItems: ProcessingItem[]
   setupStatus: SetupStatus
   marketingStatuses: Record<string, MarketingStatus>
+  usage?: UsageData
 }
 
 export default function CommandCenter({
@@ -44,6 +52,7 @@ export default function CommandCenter({
   processingItems,
   setupStatus,
   marketingStatuses,
+  usage,
 }: CommandCenterProps) {
   const [expandedCard, setExpandedCard] = useState<string | null>(null)
 
@@ -202,6 +211,17 @@ export default function CommandCenter({
                 hasMarketing={setupStatus.hasMarketing}
                 tier={setupStatus.tier}
               />
+
+              {/* Usage widget — shows plan usage + upgrade nudge */}
+              {usage && (
+                <div className="mb-5">
+                  <UsageWidget
+                    listingsUsed={usage.listingsUsed}
+                    listingsLimit={usage.listingsLimit}
+                    tier={usage.tier}
+                  />
+                </div>
+              )}
 
               {/* Main grid — 2-column magazine layout with hero card */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-5">

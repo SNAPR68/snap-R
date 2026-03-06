@@ -6,7 +6,7 @@ export default function robots(): MetadataRoute.Robots {
       {
         userAgent: '*',
         allow: '/',
-        disallow: ['/dashboard/', '/admin/', '/api/', '/auth/callback'],
+        disallow: ['/dashboard/', '/admin/', '/api/', '/auth/callback', '/auth/forgot-password', '/auth/reset-password', '/checkout/', '/onboarding/'],
       },
     ],
     sitemap: 'https://snap-r.com/sitemap.xml',

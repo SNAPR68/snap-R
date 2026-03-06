@@ -101,7 +101,19 @@ export const SnapREvents = {
   CHECKOUT_STARTED: 'checkout_started',
   PAYMENT_COMPLETED: 'payment_completed',
   PAYMENT_FAILED: 'payment_failed',
-  
+
+  // Upgrade / Conversion
+  UPGRADE_CLICKED: 'upgrade_clicked',
+  UPGRADE_NUDGE_SHOWN: 'upgrade_nudge_shown',
+  UPGRADE_NUDGE_DISMISSED: 'upgrade_nudge_dismissed',
+  USAGE_LIMIT_WARNING: 'usage_limit_warning',
+
+  // Pipeline milestones
+  LISTING_PREPARED: 'listing_prepared',
+  MARKETING_COMPLETED: 'marketing_completed',
+  VIDEO_GENERATED: 'video_generated',
+  POST_PUBLISHED: 'post_published',
+
   // Errors
   ERROR_OCCURRED: 'error_occurred',
 };

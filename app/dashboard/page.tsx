@@ -4,6 +4,23 @@ import CommandCenter from '@/components/command-center/command-center'
 
 export const dynamic = 'force-dynamic'
 
+interface ListingPhoto {
+  id: string
+  raw_url: string | null
+  processed_url: string | null
+}
+
+interface RawListing {
+  id: string
+  title: string | null
+  address: string | null
+  preparation_status: string | null
+  marketing_status: string | null
+  hero_photo_id: string | null
+  updated_at: string
+  photos: ListingPhoto[]
+}
+
 export default async function DashboardPage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -78,23 +95,23 @@ export default async function DashboardPage() {
       .single(),
   ])
 
-  const rawListings = listingsResult.data || []
+  const rawListings = (listingsResult.data || []) as unknown as RawListing[]
   const scheduledPosts = scheduledResult.data || []
   const publishedPosts = publishedResult.data || []
   const marketingJobs = marketingJobsResult.data || []
-  const processingListings = processingResult.data || []
+  const processingListings = (processingResult.data || []) as unknown as RawListing[]
 
   // Resolve thumbnails for listings
   const listings = await Promise.all(
-    rawListings.map(async (listing: any) => {
+    rawListings.map(async (listing) => {
       const photos = listing.photos || []
       let thumbnailUrl: string | null = null
 
       // Try hero photo first, then first photo with processed_url, then first photo
       const heroPhoto = listing.hero_photo_id
-        ? photos.find((p: any) => p.id === listing.hero_photo_id)
+        ? photos.find((p) => p.id === listing.hero_photo_id)
         : null
-      const firstPhoto = heroPhoto || photos.find((p: any) => p.processed_url) || photos[0]
+      const firstPhoto = heroPhoto || photos.find((p) => p.processed_url) || photos[0]
 
       if (firstPhoto) {
         const photoPath = firstPhoto.processed_url || firstPhoto.raw_url
@@ -238,10 +255,10 @@ export default async function DashboardPage() {
 
   // Resolve thumbnails for processing items
   const processingItems = await Promise.all(
-    processingListings.map(async (listing: any) => {
+    processingListings.map(async (listing) => {
       const photos = listing.photos || []
       let thumbnailUrl: string | null = null
-      const firstPhoto = photos.find((p: any) => p.processed_url) || photos[0]
+      const firstPhoto = photos.find((p) => p.processed_url) || photos[0]
 
       if (firstPhoto) {
         const photoPath = firstPhoto.processed_url || firstPhoto.raw_url
@@ -285,6 +302,25 @@ export default async function DashboardPage() {
     status: p.status as string,
   }))
 
+  // Usage data for the usage widget
+  const now = new Date()
+  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString()
+  const { count: listingsThisMonth } = await supabase
+    .from('listings')
+    .select('*', { count: 'exact', head: true })
+    .eq('user_id', user.id)
+    .gte('created_at', monthStart)
+
+  const tierDefaults: Record<string, number> = { free: 3, starter: 10, pro: 30, agency: 50 }
+  const userTier = setupStatus.tier
+  const listingsLimit = tierDefaults[userTier] || 3
+
+  const usage = {
+    listingsUsed: listingsThisMonth || 0,
+    listingsLimit,
+    tier: userTier,
+  }
+
   return (
     <CommandCenter
       listings={listings}
@@ -297,6 +333,7 @@ export default async function DashboardPage() {
       processingItems={processingItems}
       setupStatus={setupStatus}
       marketingStatuses={marketingStatuses}
+      usage={usage}
     />
   )
 }

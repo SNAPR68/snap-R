@@ -1,4 +1,12 @@
 User-agent: *
 Allow: /
-Sitemap: https://snap-r.com/sitemap.xml
+Disallow: /dashboard/
+Disallow: /admin/
+Disallow: /api/
+Disallow: /auth/callback
+Disallow: /auth/forgot-password
+Disallow: /auth/reset-password
+Disallow: /checkout/
+Disallow: /onboarding/
 
+Sitemap: https://snap-r.com/sitemap.xml
