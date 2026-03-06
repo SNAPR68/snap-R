@@ -17,7 +17,7 @@ interface LogEntry {
   source: string;
   message: string;
   userId?: string;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
   stack?: string;
 }
 
@@ -55,15 +55,15 @@ export async function logEvent({
     if (level === 'critical') {
       await sendAlertEmail(source, message, metadata);
     }
-  } catch (e) {
-    console.error('[ErrorLogger] Failed to log:', e);
+  } catch {
+    console.error('[ErrorLogger] Failed to log event');
   }
 }
 
 export async function logError(
   source: string,
   error: Error | unknown,
-  metadata?: Record<string, any>
+  metadata?: Record<string, unknown>
 ) {
   const err = error instanceof Error ? error : new Error(String(error));
   await logEvent({
@@ -78,7 +78,7 @@ export async function logError(
 export async function logCritical(
   source: string,
   message: string,
-  metadata?: Record<string, any>
+  metadata?: Record<string, unknown>
 ) {
   await logEvent({
     level: 'critical',
@@ -88,7 +88,11 @@ export async function logCritical(
   });
 }
 
-async function sendAlertEmail(source: string, message: string, metadata?: any) {
+async function sendAlertEmail(
+  source: string,
+  message: string,
+  metadata?: Record<string, unknown>
+) {
   try {
     const { Resend } = await import('resend');
     if (!process.env.RESEND_API_KEY) return;
@@ -97,19 +101,19 @@ async function sendAlertEmail(source: string, message: string, metadata?: any) {
     await resend.emails.send({
       from: 'SnapR Alerts <notifications@snap-r.com>',
       to: 'rajesh@snap-r.com',
-      subject: `🚨 CRITICAL: ${source}`,
+      subject: `CRITICAL: ${source}`,
       html: `
         <div style="font-family: monospace; background: #1a1a1a; color: #fff; padding: 20px;">
-          <h2 style="color: #ff4444;">🚨 Critical Error Alert</h2>
+          <h2 style="color: #ff4444;">Critical Error Alert</h2>
           <p><strong>Source:</strong> ${source}</p>
           <p><strong>Message:</strong> ${message}</p>
           <p><strong>Time:</strong> ${new Date().toISOString()}</p>
           ${metadata ? `<pre style="background: #000; padding: 10px; overflow: auto;">${JSON.stringify(metadata, null, 2)}</pre>` : ''}
-          <p style="margin-top: 20px;"><a href="https://snap-r.com/admin/logs" style="color: #D4A017;">View Logs →</a></p>
+          <p style="margin-top: 20px;"><a href="https://snap-r.com/admin/logs" style="color: #D4A017;">View Logs</a></p>
         </div>
       `,
     });
-  } catch (e) {
-    console.error('[Alert] Failed to send:', e);
+  } catch {
+    console.error('[Alert] Failed to send critical alert email');
   }
 }
