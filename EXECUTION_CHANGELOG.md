@@ -1,6 +1,13 @@
 # SnapR Execution Changelog
 =================================
 
+## 2026-03-06 — v1.5 Polish
+
+### Phase 13: Broker Charts + Webhook Delivery Log
+- `app/dashboard/broker/BrokerDashboardClient.tsx` — Added analytics charts: bar chart (listings per agent) + donut pie chart (listings by preparation status) using recharts
+- `app/api/webhooks/deliveries/route.ts` — NEW: GET delivery log API (last 50 deliveries, filterable by webhookId)
+- `app/dashboard/settings/webhooks/page.tsx` — Added Delivery Log section: status/event/endpoint/code table, click-to-expand response body, refresh button, success/fail counters
+
 ## 2026-03-05 — v1.5 Race to 100
 
 ### Phase 12: Email Contact Lists + Bulk Send
