@@ -130,10 +130,10 @@ function OnboardingContent() {
   const handleComplete = async (redirectTo: string = '/listings/new?guided=true') => {
     setLoading(true);
     const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
+    if (!user) { setLoading(false); return; }
 
     // Save profile with plan info
-    await supabase.from('profiles').upsert({
+    const { error: profileError } = await supabase.from('profiles').upsert({
       id: user.id,
       full_name: name,
       company,
@@ -156,7 +156,13 @@ function OnboardingContent() {
       onboarded_at: new Date().toISOString(),
     });
 
-    // Update auth user metadata
+    if (profileError) {
+      setLoading(false);
+      alert('Failed to save your profile. Please try again.');
+      return;
+    }
+
+    // Update auth user metadata (non-blocking — failure doesn't stop onboarding)
     await supabase.auth.updateUser({
       data: {
         full_name: name,
@@ -167,26 +173,30 @@ function OnboardingContent() {
       }
     });
 
-    // Save brand profile if any brand data was entered
+    // Save brand profile if any brand data was entered (non-blocking)
     if (brandName || brandPhone || brandEmail || brandWebsite || brokerageName) {
-      await fetch('/api/brand', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          business_name: brandName || name,
-          phone: brandPhone,
-          email: brandEmail,
-          website: brandWebsite,
-          brokerage_name: brokerageName,
-          primary_color: '#D4AF37',
-          secondary_color: '#1A1A1A',
-          tagline: '',
-          logo_url: '',
-          brokerage_logo_url: '',
-          license_number: '',
-          social_handles: {},
-        }),
-      });
+      try {
+        await fetch('/api/brand', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            business_name: brandName || name,
+            phone: brandPhone,
+            email: brandEmail,
+            website: brandWebsite,
+            brokerage_name: brokerageName,
+            primary_color: '#D4AF37',
+            secondary_color: '#1A1A1A',
+            tagline: '',
+            logo_url: '',
+            brokerage_logo_url: '',
+            license_number: '',
+            social_handles: {},
+          }),
+        });
+      } catch {
+        // Brand profile save failure is non-blocking — user can set it later in settings
+      }
     }
 
     router.push(redirectTo);

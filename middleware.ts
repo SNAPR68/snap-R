@@ -45,7 +45,6 @@ export async function middleware(request: NextRequest) {
 
   // ── 1. Block suspicious bot patterns ───────────────────────────
   if (SUSPICIOUS_PATTERNS.some(pattern => pattern.test(pathname))) {
-    console.warn(`[Middleware] Blocked suspicious request: ${pathname}`)
     return new NextResponse('Not Found', { status: 404 })
   }
 
@@ -64,7 +63,6 @@ export async function middleware(request: NextRequest) {
     const { success, remaining } = checkRateLimit(identifier, config.limit, config.windowMs)
 
     if (!success) {
-      console.warn(`[Middleware] Rate limit exceeded: ${identifier}`)
       return NextResponse.json(
         {
           error: 'Too many requests',

@@ -60,8 +60,7 @@ export async function POST(request: NextRequest) {
     }
 
     const senderName = fromName || profile?.full_name || 'Your Agent'
-    // Use verified Resend sender — replies go to the agent's registered email
-    const fromAddress = `${senderName} <onboarding@resend.dev>`
+    const fromAddress = `${senderName} <notifications@snap-r.com>`
 
     // Send emails (Resend free tier: 1 per call; use batch for paid)
     const results: Array<{ leadId: string; success: boolean; error?: string }> = []
