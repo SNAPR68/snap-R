@@ -860,6 +860,14 @@ export default function LeadsPage() {
             Sequences
           </Link>
 
+          <Link
+            href="/dashboard/leads/email-lists"
+            className="flex items-center gap-2 px-4 py-2 bg-[#D4AF37]/10 border border-[#D4AF37]/30 rounded-lg hover:bg-[#D4AF37]/20 transition-colors text-sm text-[#D4AF37]"
+          >
+            <Send className="w-4 h-4" />
+            Bulk Email
+          </Link>
+
           <button
             onClick={exportCSV}
             disabled={leads.length === 0}

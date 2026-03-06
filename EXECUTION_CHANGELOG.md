@@ -3,6 +3,18 @@
 
 ## 2026-03-05 — v1.5 Race to 100
 
+### Phase 12: Email Contact Lists + Bulk Send
+- `app/api/leads/bulk-email/route.ts` — NEW: Bulk email send to selected lead IDs via Resend (POST); returns sent/failed counts + logs activities. GET returns recent send history.
+- `app/dashboard/leads/email-lists/page.tsx` — NEW: Contact list UI with search/filter, multi-select checkboxes, compose panel with {{name}}/{{first_name}} personalization, send history
+- `app/dashboard/leads/page.tsx` — Added "Bulk Email" gold button linking to email-lists page
+- Files Modified: bulk-email/route.ts (new), email-lists/page.tsx (new), leads/page.tsx
+
+### Phase 11: Advanced Analytics + Lead Auto-Scoring
+- `app/api/leads/activity/route.ts` — Auto-score leads on POST: SCORE_DELTAS map (call=10, showing=20, form_submitted=15, property_site_viewed=8, email/text=5, drip=2). Caps at 100.
+- `app/api/analytics/listings/route.ts` — NEW: Per-listing analytics aggregation (posts, engagement, impressions, leads, qualified leads, AI cost)
+- `app/dashboard/content-studio/analytics/page.tsx` — Added Listings tab (per-listing comparison table) + ROI Calculator (commission % × sale price → ROI vs AI spend)
+- Files Modified: activity/route.ts, analytics/listings/route.ts (new), analytics/page.tsx
+
 ### Phase 10: Email Drip Sequence Management UI
 - `app/api/leads/sequences/route.ts` — NEW: CRUD API for custom drip sequences + steps (GET/POST/PATCH/DELETE). Ownership guard; system sequences protected.
 - `app/dashboard/leads/sequences/page.tsx` — NEW: Full sequence management UI with create/edit/toggle/delete + step editor + template vars reference

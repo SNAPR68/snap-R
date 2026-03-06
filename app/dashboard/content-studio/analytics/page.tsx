@@ -194,11 +194,36 @@ function StatCard({
 // MAIN COMPONENT
 // ============================================
 
+interface ListingStat {
+  id: string
+  title: string
+  address: string
+  city: string
+  state: string
+  price: number | null
+  preparation_status: string
+  posts: number
+  likes: number
+  comments: number
+  shares: number
+  impressions: number
+  reach: number
+  engagement: number
+  engagementRate: number
+  leads: number
+  qualifiedLeads: number
+  costCents: number
+}
+
 export default function AnalyticsDashboard() {
   const [data, setData] = useState<ROIData | null>(null)
+  const [listingStats, setListingStats] = useState<ListingStat[]>([])
   const [loading, setLoading] = useState(true)
   const [dateRange, setDateRange] = useState<DateRange>('30d')
-  const [activeTab, setActiveTab] = useState<'overview' | 'platforms' | 'leads' | 'roi'>('overview')
+  const [activeTab, setActiveTab] = useState<'overview' | 'platforms' | 'leads' | 'roi' | 'listings'>('overview')
+  // ROI Calculator state
+  const [roiCommission, setRoiCommission] = useState(3)
+  const [roiSalePrice, setRoiSalePrice] = useState(500000)
 
   const fetchROI = useCallback(async () => {
     setLoading(true)
@@ -207,10 +232,17 @@ export default function AnalyticsDashboard() {
       const { from } = getDateParams(dateRange)
       if (from) params.set('from', from)
       const qs = params.toString()
-      const res = await fetch(`/api/analytics/roi${qs ? `?${qs}` : ''}`)
-      if (!res.ok) throw new Error('Failed to fetch')
-      const json = await res.json()
+      const [roiRes, listingsRes] = await Promise.all([
+        fetch(`/api/analytics/roi${qs ? `?${qs}` : ''}`),
+        fetch(`/api/analytics/listings${qs ? `?${qs}` : ''}`),
+      ])
+      if (!roiRes.ok) throw new Error('Failed to fetch')
+      const json = await roiRes.json()
       setData(json)
+      if (listingsRes.ok) {
+        const lj = await listingsRes.json()
+        setListingStats(lj.listings || [])
+      }
     } catch {
       console.error('[Analytics] Failed to load ROI data')
     } finally {
@@ -309,6 +341,7 @@ export default function AnalyticsDashboard() {
             { id: 'platforms', label: 'Platforms', icon: TrendingUp },
             { id: 'leads', label: 'Leads', icon: UserPlus },
             { id: 'roi', label: 'ROI', icon: DollarSign },
+            { id: 'listings', label: 'Listings', icon: Target },
           ] as const).map(tab => {
             const TabIcon = tab.icon
             return (
@@ -847,6 +880,133 @@ export default function AnalyticsDashboard() {
                       )}
                     </div>
                   </div>
+                </div>
+              </div>
+            )}
+
+            {/* ══════════════════ LISTINGS TAB ══════════════════ */}
+            {activeTab === 'listings' && (
+              <div className="space-y-6">
+                {/* ROI Calculator */}
+                <div className="bg-[#1A1A1A] rounded-xl p-5 border border-white/5">
+                  <h3 className="text-sm font-semibold text-white/70 mb-4 flex items-center gap-2">
+                    <DollarSign className="w-4 h-4 text-[#D4AF37]" />
+                    ROI Calculator
+                  </h3>
+                  <div className="grid md:grid-cols-3 gap-4">
+                    <div>
+                      <label className="block text-xs text-white/40 mb-1.5">Expected Sale Price</label>
+                      <div className="relative">
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-white/30 text-sm">$</span>
+                        <input
+                          type="number"
+                          value={roiSalePrice}
+                          onChange={e => setRoiSalePrice(Number(e.target.value))}
+                          min={50000}
+                          step={10000}
+                          aria-label="Expected sale price"
+                          className="w-full bg-white/5 border border-white/10 rounded-lg pl-7 pr-3 py-2 text-sm text-white focus:outline-none focus:border-[#D4AF37]/50"
+                        />
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-xs text-white/40 mb-1.5">Your Commission (%)</label>
+                      <div className="relative">
+                        <input
+                          type="number"
+                          value={roiCommission}
+                          onChange={e => setRoiCommission(Number(e.target.value))}
+                          min={0.5}
+                          max={10}
+                          step={0.25}
+                          aria-label="Commission percentage"
+                          className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-[#D4AF37]/50"
+                        />
+                        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-white/30 text-sm">%</span>
+                      </div>
+                    </div>
+                    <div className="bg-gradient-to-r from-[#D4AF37]/10 to-[#B8960C]/10 border border-[#D4AF37]/20 rounded-lg p-3 flex flex-col justify-center">
+                      {(() => {
+                        const commission = (roiSalePrice * roiCommission) / 100
+                        const spend = data?.costSummary.totalCents ? data.costSummary.totalCents / 100 : 0
+                        const roi = spend > 0 ? ((commission - spend) / spend) * 100 : null
+                        return (
+                          <>
+                            <div className="text-xs text-white/40 mb-1">Estimated Return</div>
+                            <div className="text-2xl font-bold text-[#D4AF37]">
+                              ${commission.toLocaleString('en-US', { maximumFractionDigits: 0 })}
+                            </div>
+                            {roi !== null && (
+                              <div className="text-xs text-green-400 mt-1">
+                                {roi >= 0 ? '+' : ''}{roi.toFixed(0)}% ROI vs AI spend
+                              </div>
+                            )}
+                          </>
+                        )
+                      })()}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Per-Listing Comparison Table */}
+                <div className="bg-[#1A1A1A] rounded-xl border border-white/5 overflow-hidden">
+                  <div className="px-5 py-4 border-b border-white/5 flex items-center justify-between">
+                    <h3 className="text-sm font-semibold text-white/70">Per-Listing Performance</h3>
+                    <span className="text-xs text-white/30">{listingStats.length} listings</span>
+                  </div>
+                  {listingStats.length === 0 ? (
+                    <div className="py-12 text-center text-white/30 text-sm">
+                      No listing data available for this period
+                    </div>
+                  ) : (
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-sm">
+                        <thead>
+                          <tr className="border-b border-white/5">
+                            <th className="px-5 py-3 text-left text-xs font-medium text-white/40">Listing</th>
+                            <th className="px-3 py-3 text-right text-xs font-medium text-white/40">Posts</th>
+                            <th className="px-3 py-3 text-right text-xs font-medium text-white/40">Engagement</th>
+                            <th className="px-3 py-3 text-right text-xs font-medium text-white/40">Impressions</th>
+                            <th className="px-3 py-3 text-right text-xs font-medium text-white/40">Leads</th>
+                            <th className="px-3 py-3 text-right text-xs font-medium text-white/40">Qualified</th>
+                            <th className="px-3 py-3 text-right text-xs font-medium text-white/40">AI Spend</th>
+                            <th className="px-3 py-3 text-right text-xs font-medium text-white/40">Eng. Rate</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {listingStats.map((ls, i) => (
+                            <tr key={ls.id} className={`border-b border-white/[0.03] hover:bg-white/[0.02] transition-colors ${i % 2 === 0 ? '' : 'bg-white/[0.01]'}`}>
+                              <td className="px-5 py-3">
+                                <div className="font-medium text-white truncate max-w-[200px]">{ls.title || ls.address}</div>
+                                <div className="text-xs text-white/30 truncate">{ls.city}{ls.city && ls.state ? ', ' : ''}{ls.state}</div>
+                              </td>
+                              <td className="px-3 py-3 text-right text-white/70">{ls.posts}</td>
+                              <td className="px-3 py-3 text-right">
+                                <span className="text-white/70">{formatNumber(ls.engagement)}</span>
+                              </td>
+                              <td className="px-3 py-3 text-right text-white/70">{formatNumber(ls.impressions)}</td>
+                              <td className="px-3 py-3 text-right text-white/70">{ls.leads}</td>
+                              <td className="px-3 py-3 text-right">
+                                {ls.qualifiedLeads > 0
+                                  ? <span className="text-green-400 font-medium">{ls.qualifiedLeads}</span>
+                                  : <span className="text-white/30">—</span>
+                                }
+                              </td>
+                              <td className="px-3 py-3 text-right text-[#D4AF37]">{ls.costCents > 0 ? formatCurrency(ls.costCents) : '—'}</td>
+                              <td className="px-3 py-3 text-right">
+                                {ls.engagementRate > 0
+                                  ? <span className={`font-medium ${ls.engagementRate >= 3 ? 'text-green-400' : ls.engagementRate >= 1 ? 'text-yellow-400' : 'text-white/50'}`}>
+                                      {ls.engagementRate.toFixed(1)}%
+                                    </span>
+                                  : <span className="text-white/30">—</span>
+                                }
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
                 </div>
               </div>
             )}
