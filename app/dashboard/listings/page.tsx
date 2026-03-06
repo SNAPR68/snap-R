@@ -3,7 +3,8 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import Link from 'next/link';
-import { Plus, Home, ImageIcon, MapPin, CheckCircle, AlertCircle, Clock, Loader2, Megaphone, Search, ArrowUpDown, Users } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { Plus, Home, ImageIcon, MapPin, CheckCircle, AlertCircle, Clock, Loader2, Megaphone, Search, ArrowUpDown, Users, Sparkles } from 'lucide-react';
 
 // ── Types ──
 
@@ -80,9 +81,11 @@ const STATUS_FILTERS = [
 ] as const
 
 export default function ListingsPage() {
+  const router = useRouter();
   const supabase = createClient();
   const [listings, setListings] = useState<ListingWithMeta[]>([]);
   const [loading, setLoading] = useState(true);
+  const [creatingSample, setCreatingSample] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [sortBy, setSortBy] = useState<SortOption>('newest');
@@ -174,6 +177,19 @@ export default function ListingsPage() {
   useEffect(() => {
     fetchListings();
   }, [fetchListings]);
+
+  const handleCreateSample = async () => {
+    setCreatingSample(true);
+    try {
+      const res = await fetch('/api/listing/sample', { method: 'POST' });
+      const data = await res.json();
+      if (data.id) {
+        router.push(`/dashboard/studio?id=${data.id}`);
+      }
+    } catch {
+      setCreatingSample(false);
+    }
+  };
 
   const filteredListings = useMemo(() => {
     let result = listings;
@@ -293,10 +309,29 @@ export default function ListingsPage() {
           <div className="text-center py-20 glass-luxury glossy-top rounded-2xl">
             <Home className="w-16 h-16 text-white/20 mx-auto mb-4" />
             <h3 className="text-xl font-medium mb-2">No listings yet</h3>
-            <p className="text-white/40 mb-6">Create your first listing to get started</p>
-            <Link href="/listings/new" className="inline-flex items-center gap-2 px-6 py-3 bg-amber-500 text-black rounded-xl font-semibold hover:bg-amber-400">
-              <Plus className="w-5 h-5" />Create First Listing
-            </Link>
+            <p className="text-white/40 mb-6 max-w-md mx-auto">
+              Upload your property photos and let AI transform them into luxury showcases
+            </p>
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+              <Link href="/listings/new" className="inline-flex items-center gap-2 px-6 py-3 bg-amber-500 text-black rounded-xl font-semibold hover:bg-amber-400">
+                <Plus className="w-5 h-5" />Upload Your Photos
+              </Link>
+              <button
+                onClick={handleCreateSample}
+                disabled={creatingSample}
+                className="inline-flex items-center gap-2 px-6 py-3 border border-[#D4A017]/40 text-[#D4A017] rounded-xl font-semibold hover:bg-[#D4A017]/10 transition-colors disabled:opacity-50"
+              >
+                {creatingSample ? (
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                ) : (
+                  <Sparkles className="w-5 h-5" />
+                )}
+                Try with Sample Photos
+              </button>
+            </div>
+            <p className="text-white/30 text-xs mt-4">
+              Sample listing includes 5 curated property photos to explore AI tools
+            </p>
           </div>
         ) : filteredListings.length === 0 ? (
           <div className="text-center py-16 glass-luxury rounded-2xl">

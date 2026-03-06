@@ -60,6 +60,9 @@ function ResetPasswordForm() {
       return;
     }
 
+    // Send security notification email (fire-and-forget)
+    fetch('/api/auth/password-changed', { method: 'POST' }).catch(() => {});
+
     setDone(true);
     setTimeout(() => router.push('/dashboard'), 2500);
   };

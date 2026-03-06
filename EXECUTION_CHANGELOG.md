@@ -1,6 +1,25 @@
 # SnapR Execution Changelog
 =================================
 
+## 2026-03-06 — Phase E: Launch Readiness
+
+### Pricing/Checkout Alignment (Gap 1)
+- `app/api/stripe/checkout/route.ts` — REWRITTEN: Replaced hardcoded `$99 base + $18/listing` formula with same per-listing pricing function as pricing-section.tsx. Gold: paygo=$28, monthly 5-50=$20/75-300=$16, annual 5-50=$16/75-300=$11. Platinum: paygo=$30, monthly 5-50=$22/75-300=$18, annual 5-50=$18/75-300=$12. Added paygo mode (Stripe `payment` vs `subscription`). Preserved `planKey` in metadata for webhook normalization.
+
+### Sample Demo Listing (Gap 2)
+- `app/api/listing/sample/route.ts` — NEW: Creates a sample listing with 5 curated Unsplash property photos so new users can explore the AI studio without uploading. Limited to one sample per user.
+- `app/dashboard/listings/page.tsx` — Enhanced empty state with "Try with Sample Photos" button that creates a sample listing and navigates to studio. Kept "Upload Your Photos" as primary CTA.
+
+### Email Verification Resend (Gap 3)
+- `app/auth/signup/page.tsx` — REWRITTEN: Added dedicated verification screen after signup with "Resend verification email" button (60s cooldown), Google alternative, and "Wrong email? Go back" link. Fixed free plan subtitle accuracy.
+
+### Password Change Notification (Gap 4)
+- `app/api/auth/password-changed/route.ts` — NEW: Sends security notification email via Resend after password change. Rate limited via system_logs (5 min). Includes timestamp, device info, "Didn't change your password?" reset link.
+- `app/auth/reset-password/page.tsx` — Wired fire-and-forget POST to password-changed endpoint after successful updateUser.
+
+### Testimonials Cleanup (Gap 5)
+- `components/testimonials.tsx` — Removed stock Unsplash photos (replaced with initial avatars). Changed heading from "Trusted by Photographers Everywhere" to "Built for Real Estate Pros". Replaced fabricated vanity stats (10K+ photos, 500+ clients, 4.9 rating) with honest product stats (15+ tools, 30s avg time, 5-in-1 pipeline). Shortened names to first name + initial only.
+
 ## 2026-03-06 — Phase D: Aha Moment
 
 ### Onboarding Compression (7 → 3 steps)

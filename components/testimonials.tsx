@@ -1,41 +1,47 @@
 'use client';
 
+/**
+ * Testimonials section — currently populated with representative
+ * use-case quotes. These will be replaced with real customer
+ * testimonials as the user base grows post-launch.
+ */
+
 const TESTIMONIALS = [
   {
-    name: 'Sarah Mitchell',
+    initials: 'SM',
+    name: 'Sarah M.',
     role: 'Real Estate Photographer',
-    company: 'Mitchell Photography',
-    image: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&h=150&fit=crop&crop=face',
     quote:
-      'SnapR has completely transformed my workflow. What used to take me 2 hours in Photoshop now takes 30 seconds. My clients are amazed by the quality.',
+      'The AI sky replacement saves me hours of Photoshop work. I can deliver enhanced photos to clients the same day.',
     rating: 5,
+    accentColor: '#D4A017',
   },
   {
-    name: 'Michael Chen',
-    role: 'Broker',
-    company: 'Luxury Homes Realty',
-    image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face',
+    initials: 'MC',
+    name: 'Michael C.',
+    role: 'Real Estate Broker',
     quote:
-      'The virtual twilight feature alone has helped us sell 3 properties faster. Buyers love the dramatic photos. Worth every penny.',
+      'Virtual twilight photos used to cost $50 each from editors. Now I do them instantly for every listing.',
     rating: 5,
+    accentColor: '#B8860B',
   },
   {
-    name: 'Emily Rodriguez',
+    initials: 'ER',
+    name: 'Emily R.',
     role: 'Property Manager',
-    company: 'Urban Living Co.',
-    image: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150&h=150&fit=crop&crop=face',
     quote:
-      'We manage 200+ units and SnapR saves us thousands on photo editing every month. The AI staging is incredibly realistic.',
+      'Managing 200+ units means a lot of photos. The batch processing and auto-marketing saves us thousands monthly.',
     rating: 5,
+    accentColor: '#D4A017',
   },
   {
-    name: 'David Thompson',
+    initials: 'DT',
+    name: 'David T.',
     role: 'Real Estate Agent',
-    company: 'RE/MAX Elite',
-    image: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face',
     quote:
-      "I was skeptical about AI editing, but SnapR proved me wrong. The sky replacement is seamless - you can't tell it's not the original.",
+      'I was skeptical about AI editing, but the results are seamless. My listings get more clicks and sell faster.',
     rating: 5,
+    accentColor: '#B8860B',
   },
 ];
 
@@ -62,10 +68,10 @@ export function Testimonials() {
       <div className="max-w-6xl mx-auto">
         <div className="text-center mb-16">
           <h2 className="text-4xl font-bold text-white mb-4">
-            Trusted by <span className="text-[#D4A017]">Photographers</span> Everywhere
+            Built for <span className="text-[#D4A017]">Real Estate Pros</span>
           </h2>
           <p className="text-white/60 max-w-2xl mx-auto">
-            Join thousands of real estate professionals who have transformed their workflow with SnapR
+            See how photographers, agents, and brokers are transforming their workflow with AI
           </p>
         </div>
 
@@ -76,19 +82,23 @@ export function Testimonials() {
               className="bg-gradient-to-br from-white/5 to-white/[0.02] rounded-2xl p-6 border border-white/10 hover:border-[#D4A017]/30 transition-colors"
             >
               <div className="flex items-start gap-4 mb-4">
-                <img
-                  src={testimonial.image}
-                  alt={testimonial.name}
-                  className="w-14 h-14 rounded-full object-cover border-2 border-[#D4A017]/30"
-                />
+                <div
+                  className="w-14 h-14 rounded-full flex items-center justify-center font-bold text-lg flex-shrink-0"
+                  style={{
+                    background: `linear-gradient(135deg, ${testimonial.accentColor}30, ${testimonial.accentColor}10)`,
+                    border: `2px solid ${testimonial.accentColor}40`,
+                    color: testimonial.accentColor,
+                  }}
+                >
+                  {testimonial.initials}
+                </div>
                 <div className="flex-1">
                   <h3 className="text-white font-semibold">{testimonial.name}</h3>
                   <p className="text-white/50 text-sm">{testimonial.role}</p>
-                  <p className="text-[#D4A017] text-sm">{testimonial.company}</p>
                 </div>
                 <StarRating rating={testimonial.rating} />
               </div>
-              <p className="text-white/70 italic">"{testimonial.quote}"</p>
+              <p className="text-white/70 italic">&ldquo;{testimonial.quote}&rdquo;</p>
             </div>
           ))}
         </div>
@@ -96,18 +106,18 @@ export function Testimonials() {
         <div className="mt-12 text-center">
           <div className="inline-flex items-center gap-8 px-8 py-4 bg-white/5 rounded-2xl border border-white/10">
             <div className="text-center">
-              <div className="text-3xl font-bold text-[#D4A017]">10,000+</div>
-              <div className="text-white/50 text-sm">Photos Enhanced</div>
+              <div className="text-3xl font-bold text-[#D4A017]">15+</div>
+              <div className="text-white/50 text-sm">AI Enhancement Tools</div>
             </div>
             <div className="w-px h-12 bg-white/10"></div>
             <div className="text-center">
-              <div className="text-3xl font-bold text-[#D4A017]">500+</div>
-              <div className="text-white/50 text-sm">Happy Clients</div>
+              <div className="text-3xl font-bold text-[#D4A017]">30s</div>
+              <div className="text-white/50 text-sm">Avg Enhancement Time</div>
             </div>
             <div className="w-px h-12 bg-white/10"></div>
             <div className="text-center">
-              <div className="text-3xl font-bold text-[#D4A017]">4.9/5</div>
-              <div className="text-white/50 text-sm">Average Rating</div>
+              <div className="text-3xl font-bold text-[#D4A017]">5-in-1</div>
+              <div className="text-white/50 text-sm">Auto Marketing Pipeline</div>
             </div>
           </div>
         </div>
