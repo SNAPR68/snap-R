@@ -34,7 +34,8 @@ export async function POST(request: NextRequest) {
 
     // If no profile, use defaults (free tier behavior)
     const rawTier = profile?.subscription_tier || profile?.plan || "free";
-    const userTier = rawTier === "free" && profile?.plan && profile.plan !== "free" ? profile.plan : rawTier;
+    const _tier = rawTier === "free" && profile?.plan && profile.plan !== "free" ? profile.plan : rawTier;
+    void _tier; // Reserved for future tier-based enhancement limits
     
     // NEW MODEL: AI enhancements are FREE for all tiers
     // The limit is on LISTINGS per month, not enhancements
@@ -68,7 +69,12 @@ export async function POST(request: NextRequest) {
     }
     
     console.log('[API] Processing with tier:', profile?.subscription_tier || 'free');
-    const result = await processEnhancement(toolId as ToolId, sourceUrl, options);
+    const result = await Promise.race([
+      processEnhancement(toolId as ToolId, sourceUrl, options),
+      new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error('Enhancement timed out after 120s')), 120000)
+      ),
+    ]);
     
     const processingTime = Date.now() - startTime;
     
@@ -93,8 +99,10 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: result.error || 'Enhancement failed' }, { status: 500 });
     }
     
-    // Upload enhanced image
-    const enhancedResponse = await fetch(result.enhancedUrl);
+    // Upload enhanced image (15s timeout — just downloading, not processing)
+    const enhancedResponse = await fetch(result.enhancedUrl, {
+      signal: AbortSignal.timeout(15000),
+    });
     const enhancedBlob = await enhancedResponse.blob();
     const enhancedPath = `${user.id}/${photo.listing_id}/${imageId}_${toolId}_${Date.now()}.jpg`;
     
