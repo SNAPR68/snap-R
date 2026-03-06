@@ -37,8 +37,17 @@ Upload → Prepare → Market → Distribute → Measure → Loop
 /app/api/cron/          - Vercel Cron jobs (daily-digest, publish-scheduled, sync-analytics)
 /app/api/marketing/     - Marketing status API
 /app/api/listing/       - Listing status/preparation API
-/app/dashboard/         - Dashboard pages (listings, studio, content-studio, analytics)
+/app/dashboard/         - Dashboard pages (listings, studio, content-studio, analytics, leads, open-houses, broker)
+/app/dashboard/leads/   - Lead CRM with list view + Kanban pipeline (drag-and-drop)
+/app/dashboard/leads/sequences/ - Drip sequence management UI (create/edit/enable/delete + step editor)
+/app/dashboard/leads/email-lists/ - Bulk email contact list + compose/send UI
+/app/dashboard/open-houses/ - Open house event CRUD + attendee tracking
+/app/dashboard/photographer/bookings/ - Photographer booking pipeline management
+/app/dashboard/broker/  - Broker team dashboard (agent roster, stats)
+/app/api/webhooks/      - Outgoing webhooks CRUD API
 /app/p/[slug]/          - Public property site pages (SSR)
+/app/open-house/[slug]/ - Public open house check-in form
+/app/book/[slug]/       - Public photographer booking form
 /apps/processor/        - Cloudflare Worker for async photo processing + marketing
 /apps/processor/src/    - Worker source (handler.ts, marketing-handler.ts, types.ts)
 /lib                    - Shared libraries
@@ -47,12 +56,15 @@ Upload → Prepare → Market → Distribute → Measure → Loop
 /lib/content/           - Content/billing utilities (limits.ts)
 /lib/social/            - Social publishing service (publish-service.ts, oauth-config.ts, utm.ts)
 /lib/video/             - Video utilities (photo-ordering.ts, voiceover-service.ts)
+/lib/webhooks/          - Outgoing webhook dispatch (HMAC-SHA256 signed delivery)
+/lib/mls/               - MLS provider adapters (SimplyRETS)
+/lib/notify/            - SMS/WhatsApp via Twilio
 /lib/validation/        - Zod schemas for API input validation (schemas.ts)
 /remotion/              - Remotion video compositions and config
 /remotion/compositions/ - Video templates (PropertyShowcase, JustListed, OpenHouse, PriceDrop, Sold)
 /remotion/components/   - Shared video components (AudioLayer, ClosingCard, etc.)
 /components             - React components
-/supabase/migrations/   - Database migrations (32 files)
+/supabase/migrations/   - Database migrations (38+ files)
 /database               - Supabase schema reference
 ```
 
@@ -70,6 +82,45 @@ npm run preview         # Local Worker testing (wrangler dev)
 ## Current Branch
 
 `main`
+
+## Deployment & Git Workflow
+
+**Production site** (snap-r.com) runs from `main` only. Feature branches get Vercel preview URLs, not the production domain.
+
+**`main` is branch-protected** — direct push is blocked. Always:
+```bash
+git checkout -b feature/my-change
+# ...make changes, commit...
+git push origin feature/my-change
+gh pr create --base main
+# merge via GitHub
+```
+
+**Pre-commit hook**: A hook blocks commits on structural changes unless `EXECUTION_CHANGELOG.md` is updated and staged. If you see `ERROR: Structural change detected but EXECUTION_CHANGELOG.md not updated`, add an entry to `EXECUTION_CHANGELOG.md` and `git add` it before committing.
+
+**Manual Vercel deploy** (if needed after merging):
+```bash
+vercel --prod --yes
+```
+
+## Luxury Glassmorphism Design System
+
+All luxury CSS classes are defined in `app/globals.css` after `@tailwind utilities`, after the `.glass-card-gold` block (~line 93).
+
+| Class | Use case |
+|-------|----------|
+| `.glass-luxury` | Dark surface cards, panels, modals |
+| `.glass-gold-luxury` | Gold-accented banners and CTAs |
+| `.glossy-top` | Adds 1px white highlight sheen (pair with above) |
+| `.glow-card` | Rotating conic-gradient gold border (CSS Houdini `@property --angle`) |
+| `.shimmer-text` | Animated gold gradient text |
+| `.stat-glow` | Gold text-shadow on metric values |
+| `.bento-grid` | 2-col bento layout; `.bento-span-2` / `.bento-row-2` for spanning |
+
+**Preview sandbox limitation**: Headless preview browser cannot apply custom CSS from Next.js HMR. Verify glass classes via build output:
+```bash
+npx next build && grep -o "\.glass-luxury[^}]*}" .next/static/css/*.css
+```
 
 ## Code Conventions
 
@@ -109,10 +160,21 @@ Supabase PostgreSQL with RLS. Key tables:
 ### Video
 - `video_render_jobs` - Lambda render tracking (render_id, bucket_name, status, input_props, output_url)
 
+### v1.5 Features
+- `open_house_events` - Open house events with capacity, check-in slug, status (upcoming/active/completed/cancelled)
+- `open_house_attendees` - Guest check-in records with interest_rating and comments
+- `photographer_packages` - Photographer service packages (name, price, description)
+- `booking_requests` - Photographer booking pipeline (pending→confirmed→shot→editing→delivered)
+- `photographer_availability` - Photographer schedule availability
+- `outgoing_webhooks` - User-configured webhook endpoints (url, events[], secret, is_active)
+- `webhook_deliveries` - Delivery log (event, payload, status_code, success)
+
 ### Other
 - `content_library`, `post_drafts`, `auto_post_rules` - Content studio
 - `client_approvals` - Client approval workflows
 - `preparation_logs` - Preparation history
+- `lead_activities` - Lead CRM activity timeline (call/email/text/showing/note)
+- `drip_sequences`, `drip_enrollments` - Lead drip automation
 
 ## Supabase Clients
 
@@ -251,6 +313,15 @@ export $(grep -E '^REMOTION_AWS' .env.local | xargs) && npx remotion lambda func
 # Test local render
 npx remotion render PropertyShowcase-9x16
 
+# Render explainer video locally (~50s, ~35MB)
+npx remotion render ExplainerVideo --output=/tmp/snapr-explainer-video.mp4 --codec=h264
+
+# Render single explainer frame for testing
+npx remotion still ExplainerVideo --frame=950 --output=/tmp/test-frame.png
+
+# Regenerate explainer voiceover (requires OPENAI_API_KEY in .env.local)
+node scripts/generate-voiceover.mjs
+
 # Test Lambda render from CLI
 export $(grep -E '^REMOTION_AWS' .env.local | xargs) && npx remotion lambda render <serve-url> PropertyShowcase-9x16 --frames-per-lambda=20000
 ```
@@ -261,17 +332,20 @@ export $(grep -E '^REMOTION_AWS' .env.local | xargs) && npx remotion lambda rend
 - **OpenHouse** — Urgency pacing with open house date
 - **PriceDrop** — Price reduced badge with urgency
 - **Sold** — Celebration styling with social proof
-- **ExplainerVideo** — Homepage product walkthrough (16:9, 90s, 10 scenes of real UI screenshots + shimmer voiceover)
+- **ExplainerVideo** — Homepage product walkthrough (16:9, 50s, 10 scenes of real UI screenshots + shimmer voiceover)
 
 Each property template has 3 variants: `9x16` (vertical), `16x9` (landscape), `1x1` (square)
 
 ### Explainer Video
-- `remotion/compositions/ExplainerVideo.tsx` — 10-scene product walkthrough using real captured screenshots
-- Screenshots in `public/explainer-frames/` (51 PNGs, 0000-0050), captured via Puppeteer (`scripts/capture-explainer-v2.mjs`)
-- Voiceover: OpenAI TTS HD `shimmer` voice, generated via `scripts/generate-voiceover.mjs`, saved to `public/explainer-voiceover.mp3`
+- `remotion/compositions/ExplainerVideo.tsx` — 10-scene product walkthrough (50s, 16:9, 1920x1080 @ 30fps)
+- **Screenshot versions**: `public/explainer-frames-v3/` (v3 full-page captures) + fallback from `public/explainer-frames/` (v1 viewport captures for authenticated pages where v3 auth failed)
+- **Capture scripts**: `scripts/capture-explainer-v3.mjs` (full-page, auth broken), `scripts/capture-explainer-v2.mjs` (viewport, v1 working)
+- **Voiceover**: OpenAI TTS HD `shimmer` voice, generated via `scripts/generate-voiceover.mjs`, saved to `public/explainer-voiceover.mp3`
 - `components/explainer-video-player.tsx` — Homepage video player, loads from Cloudinary CDN with poster auto-generation
-- Hosted on Cloudinary: `snapr-explainer-video.mp4` (overwrite on re-upload)
-- Scene flow: Homepage → Features/Gallery → AI Tools → Pricing → Signup → Login/Dashboard → Listings/Studio → Content Studio → Analytics/Brand → CTA
+- **Cloudinary**: `snapr-explainer-video.mp4` (version `v1772556197`, overwrite on re-upload)
+- **Scene flow**: Homepage Hero → Before/After Gallery → One Platform → How It Works → Pricing → Signup → Dashboard → AI Studio → Content Studio → Analytics → CTA
+- **Scroll modes**: `smooth` (tall page scroll), `pauseAtTop` (hold 1.5s then scroll), `none` (Ken Burns gentle zoom)
+- **Known issue**: `capture-explainer-v3.mjs` Puppeteer auth fails — dashboard/studio/content-studio/analytics screenshots are sourced from v1 captures
 
 ### Key Files
 - `remotion/compositions/PropertyShowcase.tsx` — Main composition with Zod schema
@@ -351,8 +425,31 @@ Each tool has presets (e.g., sky-replacement: Clear Blue, Sunset, Dramatic Cloud
 | `/api/video/status` | GET | Poll video render progress |
 | `/api/video/voiceover` | POST | Generate script / audio / upload (3 actions) |
 | `/api/internal/video-generate` | POST | Marketing pipeline internal video trigger |
+| `/api/webhooks/outgoing` | GET/POST/PATCH/DELETE | Outgoing webhook CRUD |
+| `/api/mls/import` | POST | MLS data import (SimplyRETS) |
+| `/api/photographer/booking` | POST | Photographer booking submission |
+| `/api/open-house/checkin` | POST | Public open house guest check-in |
+| `/api/open-house/feedback` | POST | Public showing/open house feedback |
+| `/api/leads/activity` | GET/POST/PATCH | Lead activity timeline + auto-scoring (score caps at 100) |
+| `/api/leads/sequences` | GET/POST/PATCH/DELETE | Drip sequence CRUD (system sequences protected) |
+| `/api/leads/bulk-email` | GET/POST | Bulk email to selected leads via Resend; logs activities |
+| `/api/analytics/listings` | GET | Per-listing analytics aggregation (engagement, leads, AI spend) |
+| `/api/webhooks/deliveries` | GET | Webhook delivery log (last 50, filterable by webhookId) |
+| `/api/download-approved` | GET | Download client-approved photos |
+| `/api/marketing/reso-export` | POST | RESO Data Dictionary 2.0 JSON export |
 
-## Applied Migrations (Feb 2026)
+## Outgoing Webhooks
+
+`lib/webhooks/dispatch.ts` exports `dispatchWebhookEvent(userId, event, payload)`:
+- Fetches active webhooks matching the event type
+- POSTs JSON payload with `X-Webhook-Signature` (HMAC-SHA256 of body using webhook secret)
+- 10s timeout, logs all deliveries to `webhook_deliveries`, never throws (always-complete)
+
+Supported events: `listing.created`, `listing.updated`, `listing.prepared`, `lead.created`, `lead.updated`, `post.published`, `post.scheduled`, `photo.enhanced`
+
+**Wired into**: leads API (lead.created/lead.updated), listing status API (listing.prepared), publish cron (post.published/post.scheduled).
+
+## Applied Migrations
 
 These migrations have been applied to the live Supabase database:
 
@@ -361,6 +458,12 @@ These migrations have been applied to the live Supabase database:
 3. `20260216_published_posts.sql` — published_posts table with analytics columns, RLS, service role bypass
 4. `20260216_photos_tools_applied.sql` — tools_applied text[] column on photos table
 5. `20260217_phone_and_partners.sql` — profiles.phone/referred_by/notification_preferences columns, partner_applications table with referral_code, RLS
+6. `20260305_lead_activity.sql` — lead_activities table + score/notes/last_activity_at on property_leads
+7. `20260305_showings.sql` — showings table with RLS
+8. `20260305_listing_virtual_tour.sql` — virtual_tour_url column on listings
+9. `20260305_photographer_bookings.sql` — photographer_packages, booking_requests, photographer_availability
+10. `20260305_open_house.sql` — open_house_events + open_house_attendees
+11. `20260305_outgoing_webhooks.sql` — outgoing_webhooks + webhook_deliveries ✓ (applied Session 4)
 
 ## Environment Variables
 
@@ -472,3 +575,12 @@ Key settings:
 17. **TikTok unaudited app limitation**: Posts default to `SELF_ONLY` (private). Must apply for TikTok app audit to enable public posting. Video must be H.264 MP4, max 4GB, 1080x1920 recommended (Remotion output matches)
 18. **TikTok API uses `client_key`** not `client_id` — all TikTok OAuth/token calls use JSON body format, not form-urlencoded like other platforms
 19. **UTM tracking is automatic**: Marketing handler Step 5 appends UTM-tagged property site URL to every scheduled post caption. The UTM utility (`lib/social/utm.ts`) is also available for standalone use
+20. **Explainer video Cloudinary version**: After re-rendering, update the version number in `components/explainer-video-player.tsx` (both `EXPLAINER_VIDEO_URL` and `EXPLAINER_POSTER_URL`) to match the new Cloudinary upload version, then redeploy
+21. **Explainer screenshot auth is broken**: `scripts/capture-explainer-v3.mjs` cannot authenticate via Puppeteer — all authenticated pages (dashboard, studio, content-studio, analytics) fall back to v1 captures from `public/explainer-frames/`. Fix the Puppeteer login flow before re-capturing
+22. **Explainer video render**: Use `npx remotion render ExplainerVideo` for local render (~35 MB MP4), then upload to Cloudinary with `public_id=snapr-explainer-video` and `overwrite=true`
+23. **Lead Kanban uses HTML5 drag-and-drop** — no external library. Columns: New, Contacted, Qualified, Touring, Offer, Closed, Lost. Pipeline view toggled via List/Pipeline buttons in `/dashboard/leads`
+24. **Outgoing webhooks use HMAC-SHA256** — signature in `X-Webhook-Signature` header. Dispatch utility at `lib/webhooks/dispatch.ts` uses always-complete semantics (never throws). Wired into leads API, listing status API, and publish cron.
+25. **Supabase Management API** for migrations when `db push` fails: `POST https://api.supabase.com/v1/projects/{ref}/database/query`. Access token from macOS Keychain: `security find-generic-password -s "Supabase CLI" -w` (decode `go-keyring-base64:` prefix + base64)
+26. **Lead auto-scoring**: `POST /api/leads/activity` auto-increments `property_leads.score` on each activity. SCORE_DELTAS: call=+10, showing=+20, form_submitted=+15, property_site_viewed=+8, email/text=+5, drip_email_sent=+2. Score capped at 100.
+27. **Bulk email**: `POST /api/leads/bulk-email` sends via Resend to selected lead IDs. Supports `{{name}}` and `{{first_name}}` template vars. Logs each send as a `lead_activities` row (activity_type='email', metadata.bulk=true).
+28. **Webhook delivery log**: `GET /api/webhooks/deliveries` returns last 50 deliveries from `webhook_deliveries` table. Filterable by `?webhookId=`. UI is in `/dashboard/settings/webhooks` — click any row to expand response body.
