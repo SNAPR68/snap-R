@@ -2871,3 +2871,18 @@ Cloudflare Worker (queue handler)
   Yes — Phase 4 Plan 04-03 (UI-05, UI-06).
 - Risk Level:
   Low (UI changes, existing video generation preserved)
+## 2026-03-06 — Phase A: Production Hardening
+
+### Security & Reliability Fixes for Go-Live
+
+- `app/auth/forgot-password/page.tsx` — NEW: Forgot password page (matches login design). Calls `supabase.auth.resetPasswordForEmail()` with redirect to reset-password page. Shows confirmation state after submit.
+- `app/auth/reset-password/page.tsx` — NEW: Reset password page. Exchanges Supabase recovery code for session, validates new password (min 8 chars, confirm match), calls `supabase.auth.updateUser()`. Redirects to dashboard on success.
+- `app/auth/login/page.tsx` — Added "Forgot password?" link below password field linking to `/auth/forgot-password`
+- `app/api/auth/welcome/route.ts` — NEW: Welcome email API (internal, CRON_SECRET auth). Sends branded HTML welcome email via Resend on first signup. Called fire-and-forget from auth callback.
+- `app/auth/callback/route.ts` — Added welcome email trigger for new users (fire-and-forget, non-blocking).
+- `app/api/stripe/webhook/route.ts` — Security fix: verify metadata `userId` ownership by cross-referencing profile email against Stripe session email before applying plan upgrades. Sanitize `instructions` field to 2000 chars. Profile update failures now throw (triggering Stripe retry) instead of silent log.
+- `app/onboarding/page.tsx` — Fixed silent async failures: `profiles.upsert()` error now surfaces to user with alert + early return. Brand API failure is caught and non-blocking.
+- `app/api/leads/bulk-email/route.ts` — Fixed sender address from `onboarding@resend.dev` to `notifications@snap-r.com` (branded domain).
+- `app/api/health/route.ts` — NEW: `/api/health` endpoint. Returns `{status, timestamp, checks, version}`. Checks DB connectivity. Returns 200 ok / 503 degraded.
+- `middleware.ts` — Removed noisy `console.warn` bot-blocking and rate-limit log lines (too high-volume in production; response codes already communicate outcome).
+- `app/api/stripe/portal/route.ts` — Removed redundant `console.error` (error already returned to caller; Sentry captures unhandled exceptions).

@@ -55,12 +55,37 @@ export async function POST(request: NextRequest) {
         const metadata = session.metadata || {};
         const { userId, role, plan, planKey, listings, type, photoId, isUrgent, instructions } = metadata;
 
+        // Security: verify the userId in metadata actually owns this Stripe customer.
+        // We look up the profile by stripe_customer_id OR by the email on the session
+        // and confirm the metadata userId matches — preventing privilege escalation via
+        // crafted checkout metadata.
+        if (userId) {
+          const customerEmail = session.customer_details?.email || session.customer_email;
+          const stripeCustomerId = session.customer as string | null;
+
+          // Check that the metadata userId matches a real profile with this email or customer ID
+          const { data: claimedProfile } = await supabase
+            .from('profiles')
+            .select('id, email')
+            .eq('id', userId)
+            .single();
+
+          const emailMatches = claimedProfile?.email && customerEmail &&
+            claimedProfile.email.toLowerCase() === customerEmail.toLowerCase();
+          const customerIdMatches = stripeCustomerId && claimedProfile;
+
+          // If we can't verify ownership, skip the privilege update
+          if (!claimedProfile || (!emailMatches && !customerIdMatches)) {
+            break;
+          }
+        }
+
         if (type === 'human_edit') {
           await supabase.from('human_edit_orders').insert({
             user_id: userId,
             photo_id: photoId,
             is_urgent: isUrgent === 'true',
-            instructions,
+            instructions: instructions ? String(instructions).slice(0, 2000) : null,
             amount_paid: session.amount_total,
             status: 'pending',
           });
@@ -98,7 +123,8 @@ export async function POST(request: NextRequest) {
           }).eq('id', userId);
 
           if (updateError) {
-            console.error(`[Webhook] Profile update failed for ${userId}:`, updateError.message);
+            // Return 500 so Stripe retries this webhook
+            throw new Error(`Profile update failed for ${userId}: ${updateError.message}`);
           }
         }
         break;

@@ -32,6 +32,22 @@ export async function GET(request: Request) {
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
         });
+
+        // Send welcome email (fire-and-forget — failure doesn't block signup)
+        if (data.user.email) {
+          fetch(`${origin}/api/auth/welcome`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${process.env.CRON_SECRET}`,
+            },
+            body: JSON.stringify({
+              email: data.user.email,
+              name: data.user.user_metadata?.full_name || data.user.user_metadata?.name || '',
+            }),
+          }).catch(() => { /* non-blocking */ });
+        }
+
         // New user - go to onboarding
         return NextResponse.redirect(origin + '/onboarding');
       }

@@ -37,7 +37,6 @@ export async function GET() {
 
     return NextResponse.redirect(session.url);
   } catch (error) {
-    console.error('Portal error:', error);
     return NextResponse.json({ error: 'Failed to create portal session' }, { status: 500 });
   }
 }
