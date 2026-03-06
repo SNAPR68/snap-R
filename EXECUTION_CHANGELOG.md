@@ -1,6 +1,24 @@
 # SnapR Execution Changelog
 =================================
 
+## 2026-03-06 — Phase F: Launch Polish
+
+### Cleanup, Type Safety, Accessibility
+
+- `app/sentry-example-page/page.tsx` — DELETED: Removed Sentry example page (was leaking org/project ID publicly)
+- `app/page-backup.tsx`, `app/page-backup-20251229-134429.tsx` — DELETED: Removed backup page files (26K+ lines of dead code)
+- `*.bak` (7 files) — DELETED: Removed all .bak backup files from root
+- `app/dashboard/analytics/loading.tsx` — NEW: Skeleton loading state with gold spinner
+- `app/dashboard/broker/loading.tsx` — NEW: Skeleton loading state with gold spinner
+- `app/dashboard/content-studio/loading.tsx` — NEW: Skeleton loading state with gold spinner
+- `app/dashboard/leads/loading.tsx` — NEW: Skeleton loading state with gold spinner
+- `app/dashboard/listings/loading.tsx` — NEW: Skeleton loading state with gold spinner
+- `app/dashboard/settings/loading.tsx` — NEW: Skeleton loading state with gold spinner
+- `app/dashboard/studio/loading.tsx` — NEW: Skeleton loading state with gold spinner
+- `app/dashboard/cma/page.tsx` — Fixed all `any` types: `listing: ListingRow` typed map, `value: string | number` in updateComp, removed dead `(window as any)` code block. Removed unused `html2pdfLoaded` and `reportData` state. Converted 2 `<img>` to `next/image`. Fixed unescaped apostrophe in JSX.
+- `components/content-studio/facebook-renderer.tsx` — Added `alt=""` to all `<img>` tags (30+ occurrences). Added `/* eslint-disable @next/next/no-img-element */` — canvas rendering component cannot use next/image.
+- `app/p/[slug]/page.tsx` — Removed debug `console.log` from server component.
+
 ## 2026-03-06 — Phase E: Launch Readiness
 
 ### Pricing/Checkout Alignment (Gap 1)
