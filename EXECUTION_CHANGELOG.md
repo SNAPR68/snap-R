@@ -1,6 +1,26 @@
 # SnapR Execution Changelog
 =================================
 
+## 2026-03-06 — Phase B: GTM Readiness
+
+### Upgrade Nudge + Usage Widget
+- `components/upgrade-nudge.tsx` — NEW: Reusable upgrade CTA component with 3 variants (banner, modal, inline). Tracks UPGRADE_CLICKED analytics event.
+- `components/usage-widget.tsx` — NEW: Listings used / limit progress bar with contextual CTAs (at-limit upgrade button, near-limit warning, free-tier unlock marketing link).
+- `components/command-center/command-center.tsx` — Added UsageWidget import, UsageData interface, optional usage prop, rendered between checklist and grid.
+- `app/dashboard/page.tsx` — Added RawListing/ListingPhoto interfaces (removed 5 pre-existing `any` types), usage data computation (monthly listings query + tier limits), passed usage prop to CommandCenter.
+
+### Usage Limit Warning Email
+- `app/api/cron/usage-check/route.ts` — NEW: Daily cron (9am UTC) checks each user's monthly listing usage. Sends branded warning email at 80% and limit-reached email at 100% via Resend. Skips agency-tier (unlimited). CRON_SECRET auth.
+
+### Analytics Events
+- `lib/analytics.ts` — Added 8 new SnapREvents: UPGRADE_CLICKED, UPGRADE_NUDGE_SHOWN, UPGRADE_NUDGE_DISMISSED, USAGE_LIMIT_WARNING, LISTING_PREPARED, MARKETING_COMPLETED, VIDEO_GENERATED, POST_PUBLISHED.
+
+### SEO + Caching
+- `app/p/[slug]/page.tsx` — Changed from `force-dynamic` + `revalidate=0` to ISR with `revalidate=3600` (1-hour cache + background revalidation).
+- `vercel.json` — Updated property site Cache-Control headers from `no-store` to `s-maxage=3600, stale-while-revalidate=86400`. Added usage-check cron (daily 9am) and function config.
+- `app/robots.ts` — Extended disallow list: added `/auth/forgot-password`, `/auth/reset-password`, `/checkout/`, `/onboarding/`.
+- `public/robots.txt` — Updated to match dynamic robots.ts with full disallow rules.
+
 ## 2026-03-06 — v1.5 Polish
 
 ### Phase 13: Broker Charts + Webhook Delivery Log

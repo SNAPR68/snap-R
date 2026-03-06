@@ -47,14 +47,18 @@
     "app/api/cron/drip-sequences/route.ts": {
       "maxDuration": 300,
       "memory": 1024
+    },
+    "app/api/cron/usage-check/route.ts": {
+      "maxDuration": 300,
+      "memory": 1024
     }
   },
   "headers": [
     {
       "source": "/p/(.*)",
       "headers": [
-        { "key": "Cache-Control", "value": "no-store, must-revalidate" },
-        { "key": "CDN-Cache-Control", "value": "no-store" }
+        { "key": "Cache-Control", "value": "public, s-maxage=3600, stale-while-revalidate=86400" },
+        { "key": "CDN-Cache-Control", "value": "public, s-maxage=3600, stale-while-revalidate=86400" }
       ]
     },
     {
@@ -84,6 +88,10 @@
     {
       "path": "/api/cron/drip-sequences",
       "schedule": "0 * * * *"
+    },
+    {
+      "path": "/api/cron/usage-check",
+      "schedule": "0 9 * * *"
     }
   ]
 }

@@ -4,8 +4,8 @@ import { Metadata } from 'next'
 import { adminSupabase } from '@/lib/supabase/admin'
 import { normalizeTier, PLAN_LIMITS } from '@/lib/content/limits'
 
-export const dynamic = 'force-dynamic'
-export const revalidate = 0
+// ISR: cache property pages for 1 hour, then revalidate in background
+export const revalidate = 3600
 
 interface Props {
   params: Promise<{ slug: string }>
