@@ -4,21 +4,9 @@ import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import {
-  Camera, Home, Building2, Users, Briefcase, Loader2, Globe,
+  Camera, Home, Building2, Users, Briefcase, Loader2,
   ChevronRight, ChevronLeft, Upload, Sparkles, CheckCircle, Share2,
-  MessageCircle, Phone, Palette, Mail, Link2, Building
 } from 'lucide-react';
-
-const REGIONS = [
-  { id: 'us', label: 'United States', flag: '🇺🇸' },
-  { id: 'uk', label: 'United Kingdom', flag: '🇬🇧' },
-  { id: 'ae', label: 'UAE', flag: '🇦🇪' },
-  { id: 'au', label: 'Australia', flag: '🇦🇺' },
-  { id: 'ca', label: 'Canada', flag: '🇨🇦' },
-  { id: 'in', label: 'India', flag: '🇮🇳' },
-  { id: 'sg', label: 'Singapore', flag: '🇸🇬' },
-  { id: 'other', label: 'Other', flag: '🌍' },
-];
 
 const ROLES = [
   { id: 'photographer', label: 'Real Estate Photographer', icon: Camera, description: 'I shoot properties for clients' },
@@ -28,20 +16,14 @@ const ROLES = [
   { id: 'property-owner', label: 'Property Owner', icon: Briefcase, description: 'I own properties to sell/rent' },
 ];
 
-const SOCIAL_PLATFORMS = [
-  { id: 'facebook', label: 'Facebook', icon: '📘', description: 'Post to Pages & Groups' },
-  { id: 'instagram', label: 'Instagram', icon: '📷', description: 'Reels & Feed posts' },
-  { id: 'linkedin', label: 'LinkedIn', icon: '💼', description: 'Professional network posts' },
-];
-
-const TOTAL_STEPS = 7;
+const TOTAL_STEPS = 3;
 
 function OnboardingContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const supabase = createClient();
 
-  // Read URL params from pricing page / Stripe success
+  // URL params from pricing page / Stripe success
   const roleFromUrl = searchParams.get('role');
   const planFromUrl = searchParams.get('plan');
   const listingsFromUrl = searchParams.get('listings');
@@ -53,29 +35,10 @@ function OnboardingContent() {
   const [loading, setLoading] = useState(false);
   const [checkingAuth, setCheckingAuth] = useState(true);
 
-  // Step 1: Profile
+  // Step 1: Profile + Role (merged)
   const [name, setName] = useState('');
   const [company, setCompany] = useState('');
-  const [selectedRegion, setSelectedRegion] = useState<string | null>(null);
   const [selectedRole, setSelectedRole] = useState<string | null>(null);
-
-  // Step 2: Volume
-  const [listingsPerMonth, setListingsPerMonth] = useState('');
-
-  // Step 4: Brand Profile
-  const [brandName, setBrandName] = useState('');
-  const [brandPhone, setBrandPhone] = useState('');
-  const [brandEmail, setBrandEmail] = useState('');
-  const [brandWebsite, setBrandWebsite] = useState('');
-  const [brokerageName, setBrokerageName] = useState('');
-
-  // Step 5: Social Connections
-  const [socialConnections, setSocialConnections] = useState<Array<{ platform: string; username: string }>>([]);
-  const [userId, setUserId] = useState<string | null>(null);
-
-  // Step 6: WhatsApp (optional)
-  const [phone, setPhone] = useState('');
-  const [wantsWhatsApp, setWantsWhatsApp] = useState(false);
 
   useEffect(() => {
     async function checkUser() {
@@ -84,70 +47,39 @@ function OnboardingContent() {
         router.push('/auth/signup');
         return;
       }
-      setUserId(user.id);
       if (user.user_metadata?.full_name) {
         setName(user.user_metadata.full_name);
       }
-      if (user.email) {
-        setBrandEmail(user.email);
-      }
 
-      // Load existing social connections
-      const { data: connections } = await supabase
-        .from('social_connections')
-        .select('platform, platform_username')
-        .eq('user_id', user.id)
-        .eq('is_active', true);
-      if (connections) {
-        setSocialConnections(connections.map(c => ({ platform: c.platform, username: c.platform_username || 'Connected' })));
-      }
-
-      // Restore step from URL (after OAuth redirect)
-      const stepFromUrl = searchParams.get('step');
-      if (stepFromUrl) {
-        setStep(parseInt(stepFromUrl));
+      // Pre-fill role from URL
+      if (roleFromUrl) {
+        setSelectedRole(roleFromUrl);
       }
 
       setCheckingAuth(false);
     }
     checkUser();
-  }, [router, supabase, searchParams]);
-
-  // Pre-fill from URL params (from pricing page)
-  useEffect(() => {
-    if (roleFromUrl && !selectedRole) {
-      setSelectedRole(roleFromUrl);
-    }
-    if (listingsFromUrl && !listingsPerMonth) {
-      const num = parseInt(listingsFromUrl);
-      if (num <= 5) setListingsPerMonth('1-5');
-      else if (num <= 20) setListingsPerMonth('6-20');
-      else if (num <= 50) setListingsPerMonth('21-50');
-      else setListingsPerMonth('50+');
-    }
-  }, [roleFromUrl, listingsFromUrl, selectedRole, listingsPerMonth]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleComplete = async (redirectTo: string = '/listings/new?guided=true') => {
     setLoading(true);
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) { setLoading(false); return; }
 
-    // Save profile with plan info
+    // Save profile — only essential fields; brand/social/phone collected progressively later
     const { error: profileError } = await supabase.from('profiles').upsert({
       id: user.id,
       full_name: name,
       company,
       role: selectedRole,
-      region: selectedRegion,
-      listings_per_month: listingsPerMonth,
-      phone: wantsWhatsApp ? phone : null,
       plan: planFromUrl || 'free',
       listings_limit: listingsFromUrl ? parseInt(listingsFromUrl) : 3,
       price_per_listing: priceFromUrl ? parseFloat(priceFromUrl) : 0,
       billing_cycle: billingFromUrl || 'monthly',
       notification_preferences: {
         email: true,
-        whatsapp: wantsWhatsApp,
+        whatsapp: false,
         transactional: 'all',
         clientEngagement: 'all',
         dailyWhatsapp: false,
@@ -162,42 +94,15 @@ function OnboardingContent() {
       return;
     }
 
-    // Update auth user metadata (non-blocking — failure doesn't stop onboarding)
+    // Update auth user metadata (non-blocking)
     await supabase.auth.updateUser({
       data: {
         full_name: name,
         role: selectedRole,
-        region: selectedRegion,
         plan: planFromUrl || 'free',
         onboarded: true,
       }
     });
-
-    // Save brand profile if any brand data was entered (non-blocking)
-    if (brandName || brandPhone || brandEmail || brandWebsite || brokerageName) {
-      try {
-        await fetch('/api/brand', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            business_name: brandName || name,
-            phone: brandPhone,
-            email: brandEmail,
-            website: brandWebsite,
-            brokerage_name: brokerageName,
-            primary_color: '#D4AF37',
-            secondary_color: '#1A1A1A',
-            tagline: '',
-            logo_url: '',
-            brokerage_logo_url: '',
-            license_number: '',
-            social_handles: {},
-          }),
-        });
-      } catch {
-        // Brand profile save failure is non-blocking — user can set it later in settings
-      }
-    }
 
     router.push(redirectTo);
   };
@@ -223,13 +128,13 @@ function OnboardingContent() {
       <div className="flex-1 flex items-center justify-center p-6">
         <div className="w-full max-w-xl">
 
-          {/* STEP 1: Profile */}
+          {/* STEP 1: Profile + Role (merged — was steps 1+2) */}
           {step === 1 && (
             <div className="animate-fadeIn">
               <div className="text-center mb-8">
                 <div className="w-16 h-16 rounded-2xl flex items-center justify-center text-black font-bold text-2xl bg-gradient-to-br from-[#D4A017] to-[#B8860B] shadow-lg shadow-[#D4A017]/30 mx-auto mb-4">S</div>
                 <h1 className="text-3xl font-bold mb-2">Welcome to SnapR</h1>
-                <p className="text-white/60">Let&apos;s set up your account</p>
+                <p className="text-white/60">Just two quick things and you&apos;re in</p>
               </div>
 
               {/* Checkout success banner */}
@@ -252,7 +157,6 @@ function OnboardingContent() {
                   <p className="font-bold text-[#D4A017] capitalize">
                     {planFromUrl} — {listingsFromUrl} listings/mo {priceFromUrl ? `@ $${priceFromUrl}/listing` : ''}
                   </p>
-                  {billingFromUrl && <p className="text-xs text-white/40 capitalize">{billingFromUrl} billing</p>}
                 </div>
               )}
 
@@ -265,6 +169,7 @@ function OnboardingContent() {
                     onChange={(e) => setName(e.target.value)}
                     placeholder="John Smith"
                     className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 focus:border-[#D4A017] outline-none"
+                    aria-label="Your name"
                   />
                 </div>
 
@@ -276,33 +181,44 @@ function OnboardingContent() {
                     onChange={(e) => setCompany(e.target.value)}
                     placeholder="ABC Realty"
                     className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 focus:border-[#D4A017] outline-none"
+                    aria-label="Company name"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm text-white/60 mb-2">Your Region</label>
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-                    {REGIONS.map(region => (
-                      <button
-                        key={region.id}
-                        onClick={() => setSelectedRegion(region.id)}
-                        className={`p-3 rounded-xl border text-center transition-all ${
-                          selectedRegion === region.id
-                            ? 'border-[#D4A017] bg-[#D4A017]/10'
-                            : 'border-white/10 hover:border-white/30'
-                        }`}
-                      >
-                        <div className="text-2xl mb-1">{region.flag}</div>
-                        <div className="text-xs text-white/60 truncate">{region.label}</div>
-                      </button>
-                    ))}
+                  <label className="block text-sm text-white/60 mb-2">What describes you best?</label>
+                  <div className="space-y-2">
+                    {ROLES.map(role => {
+                      const Icon = role.icon;
+                      return (
+                        <button
+                          key={role.id}
+                          onClick={() => setSelectedRole(role.id)}
+                          className={`w-full p-3 rounded-xl border text-left transition-all flex items-center gap-3 ${
+                            selectedRole === role.id
+                              ? 'border-[#D4A017] bg-[#D4A017]/10'
+                              : 'border-white/10 hover:border-white/30'
+                          }`}
+                        >
+                          <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
+                            selectedRole === role.id ? 'bg-[#D4A017] text-black' : 'bg-white/10'
+                          }`}>
+                            <Icon className="w-5 h-5" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="font-medium text-sm">{role.label}</div>
+                            <div className="text-xs text-white/40">{role.description}</div>
+                          </div>
+                        </button>
+                      );
+                    })}
                   </div>
                 </div>
               </div>
 
               <button
-                onClick={() => setStep(roleFromUrl ? 3 : 2)}
-                disabled={!name || !selectedRegion}
+                onClick={() => setStep(2)}
+                disabled={!name || !selectedRole}
                 className="w-full mt-6 py-4 bg-gradient-to-r from-[#D4A017] to-[#B8860B] rounded-xl text-black font-semibold disabled:opacity-50 flex items-center justify-center gap-2"
               >
                 Continue <ChevronRight className="w-5 h-5" />
@@ -310,66 +226,8 @@ function OnboardingContent() {
             </div>
           )}
 
-          {/* STEP 2: Role Selection */}
+          {/* STEP 2: How It Works (quick walkthrough — was step 3) */}
           {step === 2 && (
-            <div className="animate-fadeIn">
-              <div className="text-center mb-8">
-                <h1 className="text-3xl font-bold mb-2">What describes you best?</h1>
-                <p className="text-white/60">This helps us customize your experience</p>
-              </div>
-
-              <div className="space-y-3">
-                {ROLES.map(role => {
-                  const Icon = role.icon;
-                  const isPreSelected = roleFromUrl === role.id;
-                  return (
-                    <button
-                      key={role.id}
-                      onClick={() => setSelectedRole(role.id)}
-                      className={`w-full p-4 rounded-xl border text-left transition-all flex items-center gap-4 ${
-                        selectedRole === role.id
-                          ? 'border-[#D4A017] bg-[#D4A017]/10'
-                          : 'border-white/10 hover:border-white/30'
-                      }`}
-                    >
-                      <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${
-                        selectedRole === role.id ? 'bg-[#D4A017] text-black' : 'bg-white/10'
-                      }`}>
-                        <Icon className="w-6 h-6" />
-                      </div>
-                      <div className="flex-1">
-                        <div className="font-semibold flex items-center gap-2">
-                          {role.label}
-                          {isPreSelected && selectedRole === role.id && (
-                            <span className="text-xs bg-green-500/20 text-green-400 px-2 py-0.5 rounded-full">
-                              From your selection
-                            </span>
-                          )}
-                        </div>
-                        <div className="text-sm text-white/50">{role.description}</div>
-                      </div>
-                    </button>
-                  );
-                })}
-              </div>
-
-              <div className="flex gap-3 mt-6">
-                <button onClick={() => setStep(1)} className="px-6 py-4 bg-white/10 rounded-xl flex items-center gap-2">
-                  <ChevronLeft className="w-5 h-5" /> Back
-                </button>
-                <button
-                  onClick={() => setStep(3)}
-                  disabled={!selectedRole}
-                  className="flex-1 py-4 bg-gradient-to-r from-[#D4A017] to-[#B8860B] rounded-xl text-black font-semibold disabled:opacity-50 flex items-center justify-center gap-2"
-                >
-                  Continue <ChevronRight className="w-5 h-5" />
-                </button>
-              </div>
-            </div>
-          )}
-
-          {/* STEP 3: How It Works */}
-          {step === 3 && (
             <div className="animate-fadeIn">
               <div className="text-center mb-8">
                 <h1 className="text-3xl font-bold mb-2">Here&apos;s How SnapR Works</h1>
@@ -383,7 +241,7 @@ function OnboardingContent() {
                   </div>
                   <div>
                     <h3 className="font-semibold text-lg">1. Upload Your Photos</h3>
-                    <p className="text-white/60 text-sm">Drop all your listing photos at once. No sorting needed—just upload everything.</p>
+                    <p className="text-white/60 text-sm">Drop all your listing photos at once. No sorting needed.</p>
                   </div>
                 </div>
 
@@ -393,7 +251,7 @@ function OnboardingContent() {
                   </div>
                   <div>
                     <h3 className="font-semibold text-lg">2. Click &quot;Prepare Listing&quot;</h3>
-                    <p className="text-white/60 text-sm">AI analyzes every photo and applies the right enhancements automatically. Same sky, same style across all photos.</p>
+                    <p className="text-white/60 text-sm">AI enhances every photo automatically — same sky, same style.</p>
                   </div>
                 </div>
 
@@ -403,7 +261,7 @@ function OnboardingContent() {
                   </div>
                   <div>
                     <h3 className="font-semibold text-lg">3. Done in 60 Seconds</h3>
-                    <p className="text-white/60 text-sm">MLS-ready photos, not in 48 hours—in under a minute. Export or share with clients instantly.</p>
+                    <p className="text-white/60 text-sm">MLS-ready photos, description, captions, and social posts — all auto-generated.</p>
                   </div>
                 </div>
 
@@ -412,23 +270,23 @@ function OnboardingContent() {
                     <Share2 className="w-6 h-6 text-blue-400" />
                   </div>
                   <div>
-                    <h3 className="font-semibold text-lg">4. Create Marketing Content</h3>
-                    <p className="text-white/60 text-sm">Social posts, videos, property sites—all from the same photos. One platform, complete workflow.</p>
+                    <h3 className="font-semibold text-lg">4. Publish Everywhere</h3>
+                    <p className="text-white/60 text-sm">Property sites, social posts, videos — one platform, complete workflow.</p>
                   </div>
                 </div>
               </div>
 
               <div className="mt-6 p-4 bg-[#D4A017]/10 border border-[#D4A017]/30 rounded-xl text-center">
-                <p className="text-[#D4A017] font-medium">✨ AI enhancements are FREE on all plans</p>
+                <p className="text-[#D4A017] font-medium">AI enhancements are FREE on all plans</p>
                 <p className="text-white/50 text-sm mt-1">No per-photo charges. Ever.</p>
               </div>
 
               <div className="flex gap-3 mt-6">
-                <button onClick={() => setStep(roleFromUrl ? 1 : 2)} className="px-6 py-4 bg-white/10 rounded-xl flex items-center gap-2">
+                <button onClick={() => setStep(1)} className="px-6 py-4 bg-white/10 rounded-xl flex items-center gap-2">
                   <ChevronLeft className="w-5 h-5" /> Back
                 </button>
                 <button
-                  onClick={() => setStep(4)}
+                  onClick={() => setStep(3)}
                   className="flex-1 py-4 bg-gradient-to-r from-[#D4A017] to-[#B8860B] rounded-xl text-black font-semibold flex items-center justify-center gap-2"
                 >
                   Continue <ChevronRight className="w-5 h-5" />
@@ -437,266 +295,8 @@ function OnboardingContent() {
             </div>
           )}
 
-          {/* STEP 4: Brand Profile (NEW) */}
-          {step === 4 && (
-            <div className="animate-fadeIn">
-              <div className="text-center mb-8">
-                <div className="w-16 h-16 bg-[#D4A017]/20 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <Palette className="w-8 h-8 text-[#D4A017]" />
-                </div>
-                <h1 className="text-3xl font-bold mb-2">Set Up Your Brand</h1>
-                <p className="text-white/60">This info appears on your marketing content, social posts, and property sites</p>
-              </div>
-
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm text-white/60 mb-2">Business / Agent Name</label>
-                  <div className="relative">
-                    <Building className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-white/40" />
-                    <input
-                      type="text"
-                      value={brandName}
-                      onChange={(e) => setBrandName(e.target.value)}
-                      placeholder={name || 'Your Name or Company'}
-                      className="w-full pl-12 pr-4 py-3 rounded-xl bg-white/5 border border-white/10 focus:border-[#D4A017] outline-none"
-                    />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm text-white/60 mb-2">Phone</label>
-                    <div className="relative">
-                      <Phone className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-white/40" />
-                      <input
-                        type="tel"
-                        value={brandPhone}
-                        onChange={(e) => setBrandPhone(e.target.value)}
-                        placeholder="(555) 123-4567"
-                        className="w-full pl-12 pr-4 py-3 rounded-xl bg-white/5 border border-white/10 focus:border-[#D4A017] outline-none"
-                      />
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm text-white/60 mb-2">Email</label>
-                    <div className="relative">
-                      <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-white/40" />
-                      <input
-                        type="email"
-                        value={brandEmail}
-                        onChange={(e) => setBrandEmail(e.target.value)}
-                        placeholder="you@company.com"
-                        className="w-full pl-12 pr-4 py-3 rounded-xl bg-white/5 border border-white/10 focus:border-[#D4A017] outline-none"
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-sm text-white/60 mb-2">Website (optional)</label>
-                  <div className="relative">
-                    <Link2 className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-white/40" />
-                    <input
-                      type="url"
-                      value={brandWebsite}
-                      onChange={(e) => setBrandWebsite(e.target.value)}
-                      placeholder="https://yourwebsite.com"
-                      className="w-full pl-12 pr-4 py-3 rounded-xl bg-white/5 border border-white/10 focus:border-[#D4A017] outline-none"
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-sm text-white/60 mb-2">Brokerage (optional)</label>
-                  <div className="relative">
-                    <Building2 className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-white/40" />
-                    <input
-                      type="text"
-                      value={brokerageName}
-                      onChange={(e) => setBrokerageName(e.target.value)}
-                      placeholder="Keller Williams, Compass, etc."
-                      className="w-full pl-12 pr-4 py-3 rounded-xl bg-white/5 border border-white/10 focus:border-[#D4A017] outline-none"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              <p className="text-xs text-white/30 mt-4 text-center">
-                You can upload your logo and customize colors later in Brand Profile settings.
-              </p>
-
-              <div className="flex gap-3 mt-6">
-                <button onClick={() => setStep(3)} className="px-6 py-4 bg-white/10 rounded-xl flex items-center gap-2">
-                  <ChevronLeft className="w-5 h-5" /> Back
-                </button>
-                <button
-                  onClick={() => setStep(5)}
-                  className="flex-1 py-4 bg-gradient-to-r from-[#D4A017] to-[#B8860B] rounded-xl text-black font-semibold flex items-center justify-center gap-2"
-                >
-                  Continue <ChevronRight className="w-5 h-5" />
-                </button>
-              </div>
-
-              <button
-                onClick={() => setStep(5)}
-                className="w-full mt-2 py-2 text-white/40 hover:text-white/60 text-sm transition-colors"
-              >
-                Skip for now
-              </button>
-            </div>
-          )}
-
-          {/* STEP 5: Connect Social Accounts (NEW) */}
-          {step === 5 && (
-            <div className="animate-fadeIn">
-              <div className="text-center mb-8">
-                <div className="w-16 h-16 bg-blue-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <Globe className="w-8 h-8 text-blue-400" />
-                </div>
-                <h1 className="text-3xl font-bold mb-2">Connect Your Socials</h1>
-                <p className="text-white/60">Publish listings to your platforms automatically</p>
-              </div>
-
-              <div className="space-y-3">
-                {SOCIAL_PLATFORMS.map(platform => {
-                  const connected = socialConnections.find(c => c.platform === platform.id);
-                  return (
-                    <div
-                      key={platform.id}
-                      className={`p-4 rounded-xl border transition-all flex items-center gap-4 ${
-                        connected ? 'border-green-500/30 bg-green-500/5' : 'border-white/10 bg-white/5'
-                      }`}
-                    >
-                      <div className="w-12 h-12 rounded-xl bg-white/10 flex items-center justify-center text-2xl flex-shrink-0">
-                        {platform.icon}
-                      </div>
-                      <div className="flex-1">
-                        <div className="font-semibold">{platform.label}</div>
-                        <div className="text-sm text-white/50">
-                          {connected ? connected.username : platform.description}
-                        </div>
-                      </div>
-                      {connected ? (
-                        <CheckCircle className="w-6 h-6 text-green-400 flex-shrink-0" />
-                      ) : (
-                        <button
-                          onClick={() => {
-                            if (!userId) return;
-                            const baseUrl = window.location.origin;
-                            const redirectUri = `${baseUrl}/api/social/oauth/${platform.id}`;
-                            const state = JSON.stringify({ csrf: userId, returnTo: '/onboarding?step=5' });
-
-                            let authUrl = '';
-                            if (platform.id === 'facebook' || platform.id === 'instagram') {
-                              const appId = process.env.NEXT_PUBLIC_FACEBOOK_APP_ID;
-                              const scopes = platform.id === 'instagram'
-                                ? 'instagram_basic,instagram_content_publish,pages_show_list,pages_read_engagement'
-                                : 'pages_manage_posts,pages_read_engagement,publish_video,pages_show_list';
-                              authUrl = `https://www.facebook.com/v18.0/dialog/oauth?client_id=${appId}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${scopes}&state=${encodeURIComponent(state)}&response_type=code`;
-                            } else if (platform.id === 'linkedin') {
-                              const clientId = process.env.NEXT_PUBLIC_LINKEDIN_CLIENT_ID;
-                              authUrl = `https://www.linkedin.com/oauth/v2/authorization?response_type=code&client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=openid%20profile%20w_member_social&state=${encodeURIComponent(state)}`;
-                            }
-                            if (authUrl) window.location.href = authUrl;
-                          }}
-                          className="px-4 py-2 bg-white/10 rounded-lg text-sm font-medium hover:bg-white/20 transition-colors flex-shrink-0"
-                        >
-                          Connect
-                        </button>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-
-              <p className="text-xs text-white/30 mt-4 text-center">
-                You can always connect or disconnect accounts later in Settings.
-              </p>
-
-              <div className="flex gap-3 mt-6">
-                <button onClick={() => setStep(4)} className="px-6 py-4 bg-white/10 rounded-xl flex items-center gap-2">
-                  <ChevronLeft className="w-5 h-5" /> Back
-                </button>
-                <button
-                  onClick={() => setStep(6)}
-                  className="flex-1 py-4 bg-gradient-to-r from-[#D4A017] to-[#B8860B] rounded-xl text-black font-semibold flex items-center justify-center gap-2"
-                >
-                  {socialConnections.length > 0 ? 'Continue' : 'Skip for now'} <ChevronRight className="w-5 h-5" />
-                </button>
-              </div>
-            </div>
-          )}
-
-          {/* STEP 6: WhatsApp (Optional) */}
-          {step === 6 && (
-            <div className="animate-fadeIn">
-              <div className="text-center mb-8">
-                <div className="w-16 h-16 bg-green-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <MessageCircle className="w-8 h-8 text-green-400" />
-                </div>
-                <h1 className="text-3xl font-bold mb-2">Stay Connected</h1>
-                <p className="text-white/60">Get instant alerts on WhatsApp (optional)</p>
-              </div>
-
-              <div className="space-y-4">
-                <div className="p-5 bg-white/5 rounded-xl border border-white/10">
-                  <h3 className="font-medium mb-3">What you&apos;ll receive:</h3>
-                  <ul className="space-y-2 text-sm text-white/70">
-                    <li className="flex items-center gap-2"><CheckCircle className="w-4 h-4 text-green-400" /> Instant alert when clients view your listings</li>
-                    <li className="flex items-center gap-2"><CheckCircle className="w-4 h-4 text-green-400" /> Notification when listings are prepared</li>
-                    <li className="flex items-center gap-2"><CheckCircle className="w-4 h-4 text-green-400" /> Client approval/feedback alerts</li>
-                    <li className="flex items-center gap-2"><CheckCircle className="w-4 h-4 text-green-400" /> Quick reply commands to take action</li>
-                  </ul>
-                </div>
-
-                <label className="flex items-center justify-between p-4 bg-white/5 rounded-xl cursor-pointer border border-white/10">
-                  <div className="flex items-center gap-3">
-                    <MessageCircle className="w-5 h-5 text-green-400" />
-                    <span>Enable WhatsApp notifications</span>
-                  </div>
-                  <input
-                    type="checkbox"
-                    checked={wantsWhatsApp}
-                    onChange={(e) => setWantsWhatsApp(e.target.checked)}
-                    className="w-5 h-5 accent-[#D4A017]"
-                  />
-                </label>
-
-                {wantsWhatsApp && (
-                  <div className="p-4 bg-green-500/10 border border-green-500/30 rounded-xl">
-                    <label className="block text-sm font-medium mb-2">Your WhatsApp Number</label>
-                    <div className="relative">
-                      <Phone className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-white/40" />
-                      <input
-                        type="tel"
-                        value={phone}
-                        onChange={(e) => setPhone(e.target.value)}
-                        placeholder="+1 (555) 123-4567"
-                        className="w-full pl-12 pr-4 py-3 bg-white/10 border border-white/20 rounded-lg focus:border-green-400 outline-none"
-                      />
-                    </div>
-                    <p className="text-xs text-white/40 mt-2">Include country code. You can change this anytime in settings.</p>
-                  </div>
-                )}
-              </div>
-
-              <div className="flex gap-3 mt-6">
-                <button onClick={() => setStep(5)} className="px-6 py-4 bg-white/10 rounded-xl flex items-center gap-2">
-                  <ChevronLeft className="w-5 h-5" /> Back
-                </button>
-                <button
-                  onClick={() => setStep(7)}
-                  className="flex-1 py-4 bg-gradient-to-r from-[#D4A017] to-[#B8860B] rounded-xl text-black font-semibold flex items-center justify-center gap-2"
-                >
-                  {wantsWhatsApp ? 'Continue' : 'Skip for now'} <ChevronRight className="w-5 h-5" />
-                </button>
-              </div>
-            </div>
-          )}
-
-          {/* STEP 7: Get Started */}
-          {step === 7 && (
+          {/* STEP 3: Get Started (was step 7) */}
+          {step === 3 && (
             <div className="animate-fadeIn text-center">
               <div className="w-20 h-20 bg-gradient-to-br from-[#D4A017] to-[#B8860B] rounded-full flex items-center justify-center mx-auto mb-6">
                 <CheckCircle className="w-10 h-10 text-black" />
@@ -714,21 +314,19 @@ function OnboardingContent() {
                 <ul className="space-y-3 text-left">
                   {planFromUrl && planFromUrl !== 'free' ? (
                     <>
-                      <li className="flex items-center gap-3"><CheckCircle className="w-5 h-5 text-green-400" /> <span>{listingsFromUrl} listings per month</span></li>
-                      <li className="flex items-center gap-3"><CheckCircle className="w-5 h-5 text-green-400" /> <span>Full AI preparation (all 15 tools)</span></li>
-                      <li className="flex items-center gap-3"><CheckCircle className="w-5 h-5 text-green-400" /> <span>Unlimited human revision on photos</span></li>
-                      <li className="flex items-center gap-3"><CheckCircle className="w-5 h-5 text-green-400" /> <span>Content Studio &amp; Email Marketing</span></li>
-                      <li className="flex items-center gap-3"><CheckCircle className="w-5 h-5 text-green-400" /> <span>Social Publishing (5 platforms)</span></li>
+                      <li className="flex items-center gap-3"><CheckCircle className="w-5 h-5 text-green-400 flex-shrink-0" /> <span>{listingsFromUrl} listings per month</span></li>
+                      <li className="flex items-center gap-3"><CheckCircle className="w-5 h-5 text-green-400 flex-shrink-0" /> <span>Full AI preparation (all 15+ tools)</span></li>
+                      <li className="flex items-center gap-3"><CheckCircle className="w-5 h-5 text-green-400 flex-shrink-0" /> <span>Marketing automation &amp; content studio</span></li>
+                      <li className="flex items-center gap-3"><CheckCircle className="w-5 h-5 text-green-400 flex-shrink-0" /> <span>Social publishing (5 platforms)</span></li>
                     </>
                   ) : (
                     <>
-                      <li className="flex items-center gap-3"><CheckCircle className="w-5 h-5 text-green-400" /> <span>3 listings per month</span></li>
-                      <li className="flex items-center gap-3"><CheckCircle className="w-5 h-5 text-green-400" /> <span>Full AI preparation (all 15 tools)</span></li>
-                      <li className="flex items-center gap-3"><CheckCircle className="w-5 h-5 text-green-400" /> <span>Client approval workflow</span></li>
-                      <li className="flex items-center gap-3"><CheckCircle className="w-5 h-5 text-green-400" /> <span>5 social media posts</span></li>
+                      <li className="flex items-center gap-3"><CheckCircle className="w-5 h-5 text-green-400 flex-shrink-0" /> <span>3 listings per month</span></li>
+                      <li className="flex items-center gap-3"><CheckCircle className="w-5 h-5 text-green-400 flex-shrink-0" /> <span>Full AI preparation (all 15+ tools)</span></li>
+                      <li className="flex items-center gap-3"><CheckCircle className="w-5 h-5 text-green-400 flex-shrink-0" /> <span>Client approval workflow</span></li>
+                      <li className="flex items-center gap-3"><CheckCircle className="w-5 h-5 text-green-400 flex-shrink-0" /> <span>Property site &amp; social captions</span></li>
                     </>
                   )}
-                  {wantsWhatsApp && <li className="flex items-center gap-3"><CheckCircle className="w-5 h-5 text-green-400" /> <span>WhatsApp notifications</span></li>}
                 </ul>
               </div>
 

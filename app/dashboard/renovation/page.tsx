@@ -2,23 +2,31 @@
 
 import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { 
+import Image from 'next/image';
+import {
   Paintbrush, Home, ChefHat, Bath, Flame, Upload,
   ArrowLeft, Loader2, Download, RefreshCw, Sparkles,
-  CheckCircle, XCircle, AlertTriangle, ChevronDown, ChevronRight,
-  Building, MapPin
+  CheckCircle, XCircle, AlertTriangle, ChevronRight,
+  Building
 } from 'lucide-react';
 import Link from 'next/link';
 
 // ============================================
 // TYPES
 // ============================================
+interface ListingPhoto {
+  signedProcessedUrl?: string;
+  signedOriginalUrl?: string;
+  processed_url?: string;
+  raw_url?: string;
+}
+
 interface Listing {
   id: string;
   address: string;
   city: string;
   state: string;
-  photos?: { signedProcessedUrl?: string; signedOriginalUrl?: string; processed_url?: string; raw_url?: string }[];
+  photos?: ListingPhoto[];
 }
 
 // ============================================
@@ -182,7 +190,7 @@ export default function VirtualRenovationPage() {
       if (res.ok) {
         const data = await res.json();
         if (data.photos?.length) {
-          const urls = data.photos.map((p: any) => p.signedProcessedUrl || p.signedOriginalUrl || p.processed_url || p.raw_url).filter(Boolean);
+          const urls = data.photos.map((p: ListingPhoto) => p.signedProcessedUrl || p.signedOriginalUrl || p.processed_url || p.raw_url).filter(Boolean);
           setListingPhotos(urls);
           if (urls[0]) setSelectedPhoto(urls[0]);
         }
@@ -288,7 +296,7 @@ export default function VirtualRenovationPage() {
           <Link href="/dashboard" className="inline-flex items-center gap-2 text-gray-400 hover:text-white mb-6">
             <ArrowLeft className="w-4 h-4" /> Back
           </Link>
-          
+
           <h1 className="text-3xl font-bold bg-gradient-to-r from-[#D4A017] to-[#FFD700] bg-clip-text text-transparent mb-2">
             Virtual Renovation
           </h1>
@@ -316,7 +324,7 @@ export default function VirtualRenovationPage() {
             <div className="text-center py-16 bg-black/30 rounded-2xl border border-white/10">
               <Building className="w-16 h-16 mx-auto mb-4 text-gray-600" />
               <p className="text-gray-400 mb-3">No listings found</p>
-              <Link href="/dashboard/listings/new" className="text-[#D4A017] hover:underline">Create your first listing</Link>
+              <Link href="/listings/new" className="text-[#D4A017] hover:underline">Create your first listing</Link>
             </div>
           ) : (
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
@@ -328,7 +336,7 @@ export default function VirtualRenovationPage() {
                 >
                   <div className="aspect-[4/3] bg-black/50 relative">
                     {getCoverPhoto(listing) ? (
-                      <img src={getCoverPhoto(listing)!} alt="" className="w-full h-full object-cover" />
+                      <Image src={getCoverPhoto(listing)!} alt="" fill className="object-cover" unoptimized />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center"><Building className="w-10 h-10 text-gray-700" /></div>
                     )}
@@ -376,12 +384,12 @@ export default function VirtualRenovationPage() {
 
       <div className="max-w-7xl mx-auto p-6">
         <div className="grid grid-cols-12 gap-6">
-          
+
           {/* LEFT: Photo Selection */}
           <div className="col-span-3 space-y-4">
             <div className="bg-black/40 border border-white/10 rounded-xl p-4">
               <h3 className="text-sm font-medium text-gray-400 mb-3">SELECT PHOTO</h3>
-              
+
               {loadingPhotos ? (
                 <div className="flex justify-center py-8"><Loader2 className="w-6 h-6 animate-spin text-[#D4A017]" /></div>
               ) : (
@@ -390,11 +398,11 @@ export default function VirtualRenovationPage() {
                     <button
                       key={idx}
                       onClick={() => { setSelectedPhoto(url); setResultUrl(null); }}
-                      className={`aspect-square rounded-lg overflow-hidden border-2 transition-all ${
+                      className={`aspect-square rounded-lg overflow-hidden border-2 transition-all relative ${
                         selectedPhoto === url ? 'border-[#D4A017] ring-2 ring-[#D4A017]/30' : 'border-transparent hover:border-white/30'
                       }`}
                     >
-                      <img src={url} alt="" className="w-full h-full object-cover" />
+                      <Image src={url} alt="" fill className="object-cover" unoptimized />
                     </button>
                   ))}
                 </div>
@@ -417,9 +425,9 @@ export default function VirtualRenovationPage() {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <p className="text-xs text-gray-500 mb-2 uppercase tracking-wide">Before</p>
-                  <div className="aspect-[4/3] bg-black/50 rounded-lg overflow-hidden">
+                  <div className="aspect-[4/3] bg-black/50 rounded-lg overflow-hidden relative">
                     {selectedPhoto ? (
-                      <img src={selectedPhoto} alt="Before" className="w-full h-full object-cover" />
+                      <Image src={selectedPhoto} alt="Before" fill className="object-cover" unoptimized />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center text-gray-600">
                         <span className="text-sm">Select a photo</span>
@@ -436,7 +444,7 @@ export default function VirtualRenovationPage() {
                         <p className="text-xs text-gray-500">Processing...</p>
                       </div>
                     ) : resultUrl ? (
-                      <img src={resultUrl} alt="After" className="w-full h-full object-cover" />
+                      <Image src={resultUrl} alt="After" fill className="object-cover" unoptimized />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center text-gray-600">
                         <Sparkles className="w-6 h-6 opacity-30" />

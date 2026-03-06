@@ -1,6 +1,21 @@
 # SnapR Execution Changelog
 =================================
 
+## 2026-03-06 — Phase D: Aha Moment
+
+### Onboarding Compression (7 → 3 steps)
+- `app/onboarding/page.tsx` — Compressed from 7 steps to 3: Step 1 merges profile + role selection, Step 2 keeps "How It Works" walkthrough, Step 3 is "Get Started" CTA. Removed brand profile, social connections, and WhatsApp steps (deferred to progressive disclosure in dashboard settings). Reduces time-to-first-listing from ~5 min to ~60s.
+
+### API Timeout Hardening
+- `app/api/enhance/route.ts` — Added 120s timeout on AI enhancement processing via Promise.race. Added AbortSignal.timeout(15000) on enhanced image download fetch. Fixed pre-existing unused `userTier` lint warning.
+
+### Unsubscribe Page
+- `app/unsubscribe/page.tsx` — NEW: Landing page for email unsubscribe links (referenced in welcome email and usage-check cron emails). Directs users to dashboard notification settings. Branded with luxury dark theme.
+
+### Dead Route Fix
+- `app/dashboard/listings/new/page.tsx` — NEW: Server redirect from `/dashboard/listings/new` → `/listings/new`. Fixes dead-end link in renovation page.
+- `app/dashboard/renovation/page.tsx` — Fixed dead link from `/dashboard/listings/new` to `/listings/new`. Replaced `any` type with `ListingPhoto` interface. Replaced `<img>` tags with `next/image` `<Image>`. Removed unused imports (ChevronDown, MapPin).
+
 ## 2026-03-06 — Phase C: Scale Infrastructure
 
 ### Error Boundary + Sentry Integration
