@@ -1,6 +1,20 @@
 # SnapR Execution Changelog
 =================================
 
+## 2026-03-06 — Phase C: Scale Infrastructure
+
+### Error Boundary + Sentry Integration
+- `components/error-boundary.tsx` — Added Sentry.captureException in componentDidCatch with scope tags (error.boundary context). Fixed `any` type → `ErrorInfo`. Changed fallback from full-page reload to React state reset. Added optional `context` prop for labeling boundaries.
+
+### Webhook Retry with Exponential Backoff
+- `lib/webhooks/dispatch.ts` — Added retry logic: 3 attempts with exponential backoff (1s, 4s, 16s). Only retries on network errors or 5xx; 4xx is a final failure. Logs `attempts` count in `webhook_deliveries`. Added `sleep()` utility.
+
+### API Error Handler Utility
+- `lib/api/handler.ts` — NEW: DRY utilities for API routes: `withAuth()` (auth + supabase client), `parseBody(request, zodSchema)` (JSON parse + Zod validation), `apiError(message, status)` / `apiSuccess(data)` (standardized responses), `handleApiError(source, handler)` (try/catch wrapper with Sentry reporting).
+
+### Type Safety Fixes
+- `lib/error-logger.ts` — Replaced 4 `any` types with `unknown` (LogEntry.metadata, logError, logCritical, sendAlertEmail). Removed unused catch variable bindings.
+
 ## 2026-03-06 — Phase B: GTM Readiness
 
 ### Upgrade Nudge + Usage Widget
