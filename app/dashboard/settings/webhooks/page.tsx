@@ -4,7 +4,7 @@ export const dynamic = 'force-dynamic';
 
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
-import { ArrowLeft, Webhook, Plus, Trash2, ToggleLeft, ToggleRight, Copy, Check, ChevronDown, ChevronUp } from 'lucide-react';
+import { ArrowLeft, Webhook, Plus, Trash2, ToggleLeft, ToggleRight, Copy, Check, ChevronDown, ChevronUp, Activity, CheckCircle2, XCircle, Clock } from 'lucide-react';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -16,6 +16,16 @@ interface OutgoingWebhook {
   is_active: boolean;
   created_at: string;
   description: string | null;
+}
+
+interface WebhookDelivery {
+  id: string;
+  webhook_id: string;
+  event: string;
+  status_code: number | null;
+  success: boolean;
+  response_body: string | null;
+  created_at: string;
 }
 
 const ALL_EVENTS = [
@@ -40,6 +50,11 @@ export default function WebhooksSettingsPage() {
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
+  // Delivery log state
+  const [deliveries, setDeliveries] = useState<WebhookDelivery[]>([]);
+  const [loadingDeliveries, setLoadingDeliveries] = useState(false);
+  const [selectedDelivery, setSelectedDelivery] = useState<WebhookDelivery | null>(null);
+
   // Create form state
   const [newUrl, setNewUrl] = useState('');
   const [newDescription, setNewDescription] = useState('');
@@ -59,7 +74,25 @@ export default function WebhooksSettingsPage() {
     }
   }, []);
 
-  useEffect(() => { fetchWebhooks(); }, [fetchWebhooks]);
+  const fetchDeliveries = useCallback(async () => {
+    setLoadingDeliveries(true);
+    try {
+      const res = await fetch('/api/webhooks/deliveries?limit=50');
+      if (res.ok) {
+        const data = await res.json() as { deliveries: WebhookDelivery[] };
+        setDeliveries(data.deliveries || []);
+      }
+    } catch {
+      // silently ignore
+    } finally {
+      setLoadingDeliveries(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchWebhooks();
+    fetchDeliveries();
+  }, [fetchWebhooks, fetchDeliveries]);
 
   async function handleCreate(e: React.FormEvent) {
     e.preventDefault();
@@ -127,6 +160,13 @@ export default function WebhooksSettingsPage() {
       prev.includes(ev) ? prev.filter(e => e !== ev) : [...prev, ev]
     );
   }
+
+  function webhookUrlFor(webhookId: string) {
+    return webhooks.find(w => w.id === webhookId)?.url ?? webhookId.slice(0, 8) + '...';
+  }
+
+  const successCount = deliveries.filter(d => d.success).length;
+  const failCount = deliveries.filter(d => !d.success).length;
 
   return (
     <div className="min-h-screen bg-[#0F0F0F] text-white">
@@ -305,6 +345,93 @@ export default function WebhooksSettingsPage() {
             ))}
           </div>
         )}
+
+        {/* ── Delivery Log ─────────────────────────────────────────────── */}
+        <div className="mt-10">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-semibold flex items-center gap-2">
+              <Activity className="w-5 h-5 text-[#D4A017]" />
+              Delivery Log
+            </h2>
+            <div className="flex items-center gap-3 text-xs text-white/40">
+              {deliveries.length > 0 && (
+                <>
+                  <span className="flex items-center gap-1 text-green-400">
+                    <CheckCircle2 className="w-3.5 h-3.5" />{successCount} ok
+                  </span>
+                  {failCount > 0 && (
+                    <span className="flex items-center gap-1 text-red-400">
+                      <XCircle className="w-3.5 h-3.5" />{failCount} failed
+                    </span>
+                  )}
+                </>
+              )}
+              <button
+                onClick={fetchDeliveries}
+                className="px-2.5 py-1 rounded bg-white/5 hover:bg-white/10 text-white/50 hover:text-white transition-colors"
+              >
+                Refresh
+              </button>
+            </div>
+          </div>
+
+          {loadingDeliveries ? (
+            <div className="text-white/40 text-sm py-8 text-center">Loading deliveries...</div>
+          ) : deliveries.length === 0 ? (
+            <div className="bg-[#1A1A1A] border border-white/5 rounded-xl p-8 text-center">
+              <Clock className="w-8 h-8 text-white/10 mx-auto mb-2" />
+              <p className="text-white/30 text-sm">No deliveries yet. Events will appear here once webhooks start firing.</p>
+            </div>
+          ) : (
+            <div className="bg-[#1A1A1A] border border-white/5 rounded-xl overflow-hidden">
+              {/* Summary row */}
+              <div className="px-4 py-2.5 border-b border-white/5 bg-white/[0.02] grid grid-cols-[auto_1fr_auto_auto] gap-4 text-xs text-white/30 font-medium">
+                <span>Status</span>
+                <span>Event / Endpoint</span>
+                <span className="text-right">Code</span>
+                <span className="text-right">When</span>
+              </div>
+              <div className="divide-y divide-white/[0.04] max-h-[400px] overflow-y-auto">
+                {deliveries.map(d => (
+                  <button
+                    key={d.id}
+                    onClick={() => setSelectedDelivery(selectedDelivery?.id === d.id ? null : d)}
+                    className="w-full grid grid-cols-[auto_1fr_auto_auto] gap-4 items-center px-4 py-3 hover:bg-white/[0.02] text-left transition-colors"
+                  >
+                    <span>
+                      {d.success
+                        ? <CheckCircle2 className="w-4 h-4 text-green-400" />
+                        : <XCircle className="w-4 h-4 text-red-400" />}
+                    </span>
+                    <span className="min-w-0">
+                      <span className="text-sm font-mono text-white/70 block truncate">{d.event}</span>
+                      <span className="text-xs text-white/30 block truncate">{webhookUrlFor(d.webhook_id)}</span>
+                    </span>
+                    <span className={`text-xs font-mono text-right flex-shrink-0 ${d.success ? 'text-green-400' : 'text-red-400'}`}>
+                      {d.status_code ?? 'ERR'}
+                    </span>
+                    <span className="text-xs text-white/30 text-right flex-shrink-0 whitespace-nowrap">
+                      {new Date(d.created_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
+                    </span>
+                  </button>
+                ))}
+              </div>
+
+              {/* Expanded delivery detail */}
+              {selectedDelivery && (
+                <div className="border-t border-white/10 px-4 py-3 bg-black/20">
+                  <p className="text-xs text-white/40 mb-1.5">Response body</p>
+                  <pre className="text-xs font-mono text-white/50 bg-black/40 rounded p-3 overflow-x-auto max-h-32 whitespace-pre-wrap break-all">
+                    {selectedDelivery.response_body || '(empty)'}
+                  </pre>
+                  <p className="text-xs text-white/20 mt-1.5">
+                    {new Date(selectedDelivery.created_at).toLocaleString()}
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
 
         {/* ── Docs callout ─────────────────────────────────────────────── */}
         <div className="mt-8 bg-[#1A1A1A] border border-white/10 rounded-xl p-5">

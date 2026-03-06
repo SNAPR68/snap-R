@@ -7,6 +7,10 @@ import {
   UserPlus, ExternalLink, ChevronRight, X, Loader2,
   Check, AlertCircle
 } from 'lucide-react'
+import {
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
+  ResponsiveContainer, Cell, PieChart, Pie, Legend,
+} from 'recharts'
 
 interface BrokerDashboardProps {
   team: {
@@ -49,6 +53,14 @@ const ROLE_COLORS: Record<string, string> = {
   viewer: 'bg-white/10 text-white/50',
 }
 
+const STATUS_PIE_COLORS: Record<string, string> = {
+  prepared: '#10B981',
+  completed: '#D4A017',
+  processing: '#3B82F6',
+  failed: '#EF4444',
+  pending: '#6B7280',
+}
+
 function StatusBadge({ status }: { status: string | null }) {
   if (!status) return <span className="text-xs text-white/30">Draft</span>
   const colors: Record<string, string> = {
@@ -61,6 +73,26 @@ function StatusBadge({ status }: { status: string | null }) {
     <span className={`text-xs px-2 py-0.5 rounded-full ${colors[status] ?? 'bg-white/10 text-white/40'}`}>
       {status}
     </span>
+  )
+}
+
+interface ChartTooltipProps {
+  active?: boolean
+  payload?: Array<{ value: number; name: string; color: string }>
+  label?: string
+}
+
+function ChartTooltip({ active, payload, label }: ChartTooltipProps) {
+  if (!active || !payload?.length) return null
+  return (
+    <div className="bg-[#1A1A1A] border border-white/10 rounded-lg px-3 py-2 shadow-xl">
+      {label && <p className="text-xs text-white/50 mb-1">{label}</p>}
+      {payload.map((entry, i) => (
+        <p key={i} className="text-sm" style={{ color: entry.color }}>
+          {entry.name}: <span className="font-semibold">{entry.value}</span>
+        </p>
+      ))}
+    </div>
   )
 }
 
@@ -128,6 +160,24 @@ export default function BrokerDashboardClient({ team, members, listings, stats }
     { label: 'Avg Response', value: '< 2h', icon: Clock, color: 'text-purple-400', bg: 'bg-purple-500/10' },
   ]
 
+  // Chart data: listings per agent
+  const agentBarData = members.map(m => ({
+    name: (m.full_name ?? m.email ?? 'Unknown').split(' ')[0],
+    Listings: m.listing_count,
+  }))
+
+  // Pie: listings by preparation status
+  const statusCounts: Record<string, number> = {}
+  for (const l of listings) {
+    const s = l.preparation_status ?? 'pending'
+    statusCounts[s] = (statusCounts[s] || 0) + 1
+  }
+  const statusPieData = Object.entries(statusCounts).map(([name, value]) => ({
+    name: name.charAt(0).toUpperCase() + name.slice(1),
+    value,
+    rawName: name,
+  }))
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -158,6 +208,80 @@ export default function BrokerDashboardClient({ team, members, listings, stats }
           </div>
         ))}
       </div>
+
+      {/* Analytics Charts */}
+      {(members.length > 0 || listings.length > 0) && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Listings per agent bar chart */}
+          <div className="bg-[#1A1A1A] border border-white/5 rounded-xl p-5">
+            <h3 className="text-sm font-semibold text-white/70 mb-4">Listings per Agent</h3>
+            {agentBarData.length > 0 ? (
+              <ResponsiveContainer width="100%" height={220}>
+                <BarChart data={agentBarData} barCategoryGap="30%">
+                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
+                  <XAxis
+                    dataKey="name"
+                    tick={{ fill: 'rgba(255,255,255,0.3)', fontSize: 11 }}
+                    tickLine={false}
+                    axisLine={{ stroke: 'rgba(255,255,255,0.05)' }}
+                  />
+                  <YAxis
+                    tick={{ fill: 'rgba(255,255,255,0.3)', fontSize: 11 }}
+                    tickLine={false}
+                    axisLine={false}
+                    allowDecimals={false}
+                    width={28}
+                  />
+                  <Tooltip content={<ChartTooltip />} />
+                  <Bar dataKey="Listings" radius={[4, 4, 0, 0]}>
+                    {agentBarData.map((_, i) => (
+                      <Cell key={i} fill={i % 2 === 0 ? '#D4A017' : '#B8860B'} />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="flex items-center justify-center h-[220px] text-white/20 text-sm">
+                No agent data yet
+              </div>
+            )}
+          </div>
+
+          {/* Listing status pie chart */}
+          <div className="bg-[#1A1A1A] border border-white/5 rounded-xl p-5">
+            <h3 className="text-sm font-semibold text-white/70 mb-4">Listings by Status</h3>
+            {statusPieData.length > 0 ? (
+              <ResponsiveContainer width="100%" height={220}>
+                <PieChart>
+                  <Pie
+                    data={statusPieData}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={55}
+                    outerRadius={85}
+                    paddingAngle={3}
+                    dataKey="value"
+                  >
+                    {statusPieData.map((entry, i) => (
+                      <Cell key={i} fill={STATUS_PIE_COLORS[entry.rawName] ?? '#6B7280'} />
+                    ))}
+                  </Pie>
+                  <Tooltip content={<ChartTooltip />} />
+                  <Legend
+                    iconType="circle"
+                    iconSize={8}
+                    formatter={(value: string) => <span className="text-xs text-white/50 ml-1">{value}</span>}
+                  />
+                </PieChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="flex items-center justify-center h-[220px] text-white/20 text-sm">
+                No listing data yet
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Content: Agent Roster + Listings */}
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
