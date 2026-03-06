@@ -11,24 +11,38 @@ function getStripe() {
   });
 }
 
-// New pricing model: Pro = $99 base + $18/listing (max 30)
-const PRO_BASE_PRICE = 99; // dollars
-const PRO_PER_LISTING = 18; // dollars
-const MAX_LISTINGS = 30;
-const ANNUAL_DISCOUNT = 0.20; // 20% off base only
+/**
+ * Pricing aligned with pricing-section.tsx (Gold/Platinum per-listing model).
+ *
+ * Gold:
+ *   Pay-as-you-go: $28/listing
+ *   Monthly  (5–50): $20/listing, (75–300): $16/listing
+ *   Annual   (5–50): $16/listing, (75–300): $11/listing
+ *
+ * Platinum:
+ *   Pay-as-you-go: $30/listing
+ *   Monthly  (5–50): $22/listing, (75–300): $18/listing
+ *   Annual   (5–50): $18/listing, (75–300): $12/listing
+ */
+function getPricePerListing(planId: string, listings: number, billing: string): number {
+  if (billing === 'paygo') {
+    return planId === 'platinum' ? 30 : 28;
+  }
 
-function calculateProPrice(listings: number, isAnnual: boolean): { base: number; perListing: number; total: number; totalCents: number } {
-  const cappedListings = Math.min(listings, MAX_LISTINGS);
-  const base = isAnnual ? PRO_BASE_PRICE * (1 - ANNUAL_DISCOUNT) : PRO_BASE_PRICE;
-  const listingCost = PRO_PER_LISTING * cappedListings;
-  const total = base + listingCost;
-  return {
-    base,
-    perListing: PRO_PER_LISTING,
-    total,
-    totalCents: Math.round(total * 100),
-  };
+  if (planId === 'gold' || planId === 'pro') {
+    if (billing === 'monthly') return listings >= 75 ? 16 : 20;
+    return listings >= 75 ? 11 : 16; // annual
+  }
+
+  if (planId === 'platinum' || planId === 'agency') {
+    if (billing === 'monthly') return listings >= 75 ? 18 : 22;
+    return listings >= 75 ? 12 : 18; // annual
+  }
+
+  return 28; // fallback
 }
+
+const MAX_LISTINGS = 300;
 
 export async function POST(request: NextRequest) {
   try {
@@ -38,7 +52,9 @@ export async function POST(request: NextRequest) {
     if (!parsed.success) {
       return NextResponse.json({ error: 'Invalid request', details: parsed.error.flatten() }, { status: 400 });
     }
-    const plan = normalizeTier(parsed.data.plan);
+
+    const rawPlan = parsed.data.plan;
+    const normalizedPlan = normalizeTier(rawPlan);
     const listings = parsed.data.listings;
     const billing = parsed.data.billing;
 
@@ -49,38 +65,43 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Free plan - no checkout needed
-    if (plan === 'free') {
+    // Free plan — no checkout needed
+    if (normalizedPlan === 'free') {
       await supabase.from('profiles').update({
         plan: 'free',
         listings_limit: 3,
       }).eq('id', user.id);
-      
-      return NextResponse.json({ 
-        success: true, 
-        redirect: '/dashboard?plan=free' 
+
+      return NextResponse.json({
+        success: true,
+        redirect: '/dashboard?plan=free',
       });
     }
 
-    // Only Pro plan is self-serve (Team/Brokerage require sales call)
-    if (plan !== 'pro') {
-      return NextResponse.json({ 
-        error: 'Team and Brokerage plans require a sales call. Visit /contact to schedule.' 
+    // Enterprise / agency requires sales call
+    if (normalizedPlan === 'agency' && rawPlan !== 'platinum') {
+      return NextResponse.json({
+        error: 'Enterprise plans require a sales call. Visit /contact to schedule.',
       }, { status: 400 });
     }
 
-    // Validate listings (1-30 for Pro)
-    const listingCount = Math.min(Math.max(1, listings || 15), MAX_LISTINGS);
-    const isAnnual = billing === 'annual';
-    const { base, total, totalCents } = calculateProPrice(listingCount, isAnnual);
-
-    const productName = `SnapR Pro - ${listingCount} listings/mo`;
-    const description = `$${base.toFixed(0)} base + $${PRO_PER_LISTING}/listing | ${isAnnual ? 'Annual' : 'Monthly'} billing`;
-
+    // Validate listing count
+    const listingCount = Math.min(Math.max(5, listings || 15), MAX_LISTINGS);
     const billingStr = billing || 'monthly';
+    const isAnnual = billingStr === 'annual';
+
+    // Calculate price using same function as pricing page
+    const perListing = getPricePerListing(rawPlan, listingCount, billingStr);
+    const totalMonthly = perListing * listingCount;
+    const totalCents = Math.round(totalMonthly * 100);
+
+    // Display name preserves user-facing plan name
+    const displayName = rawPlan === 'platinum' ? 'SnapR Platinum' : 'SnapR Gold';
+    const productName = `${displayName} - ${listingCount} listings/mo`;
+    const description = `$${perListing}/listing × ${listingCount} listings | ${isAnnual ? 'Annual' : billingStr === 'paygo' ? 'Pay as you go' : 'Monthly'} billing`;
 
     const session = await stripe.checkout.sessions.create({
-      mode: 'subscription',
+      mode: billingStr === 'paygo' ? 'payment' : 'subscription',
       payment_method_types: ['card'],
       line_items: [
         {
@@ -91,33 +112,40 @@ export async function POST(request: NextRequest) {
               description: description,
             },
             unit_amount: totalCents,
-            recurring: {
-              interval: isAnnual ? 'year' : 'month',
-            },
+            ...(billingStr !== 'paygo' && {
+              recurring: {
+                interval: isAnnual ? 'year' : 'month',
+              },
+            }),
           },
           quantity: 1,
         },
       ],
-      success_url: `${process.env.NEXT_PUBLIC_BASE_URL || 'https://snap-r.com'}/onboarding?checkout=success&plan=${plan}&listings=${listingCount}&billing=${billingStr}`,
+      success_url: `${process.env.NEXT_PUBLIC_BASE_URL || 'https://snap-r.com'}/onboarding?checkout=success&plan=${rawPlan}&listings=${listingCount}&billing=${billingStr}`,
       cancel_url: `${process.env.NEXT_PUBLIC_BASE_URL || 'https://snap-r.com'}/pricing`,
       customer_email: user.email,
-      subscription_data: {
-        trial_period_days: isAnnual ? 14 : 7,
-        metadata: {
-          userId: user.id,
-          plan: 'pro',
-          billing: billingStr,
-          listings: String(listingCount),
-          basePrice: String(base),
-          perListing: String(PRO_PER_LISTING),
+      ...(billingStr !== 'paygo' && {
+        subscription_data: {
+          trial_period_days: isAnnual ? 14 : 7,
+          metadata: {
+            userId: user.id,
+            plan: normalizedPlan,
+            planKey: rawPlan,
+            billing: billingStr,
+            listings: String(listingCount),
+            perListing: String(perListing),
+          },
         },
-      },
+      }),
       allow_promotion_codes: true,
       metadata: {
         userId: user.id,
-        plan: 'pro',
+        plan: normalizedPlan,
+        planKey: rawPlan,
         billing: billingStr,
         listings: String(listingCount),
+        perListing: String(perListing),
+        totalMonthly: String(totalMonthly),
       },
     });
 
