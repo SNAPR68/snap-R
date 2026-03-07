@@ -554,7 +554,7 @@ async function uploadToSupabase(
   photoId: string,
   enhancedUrl: string
 ): Promise<string> {
-  const response = await fetch(enhancedUrl);
+  const response = await fetch(enhancedUrl, { signal: AbortSignal.timeout(30000) });
   if (!response.ok) {
     throw new Error(`Failed to fetch enhanced image: ${response.status}`);
   }

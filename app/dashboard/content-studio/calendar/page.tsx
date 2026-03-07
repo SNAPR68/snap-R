@@ -81,7 +81,7 @@ export default function ContentCalendar() {
 
   const loadPosts = useCallback(async () => {
     try {
-      const res = await fetch('/api/schedule?status=pending,published,failed')
+      const res = await fetch('/api/schedule?status=pending,published,failed', { signal: AbortSignal.timeout(15000) })
       if (!res.ok) throw new Error('Failed to fetch posts')
       const { posts } = await res.json()
       const mapped: ScheduledPost[] = (posts || []).map((p: RawPost) => {
@@ -165,6 +165,7 @@ export default function ContentCalendar() {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id: postId, scheduledFor }),
+        signal: AbortSignal.timeout(15000),
       })
     } catch {
       await loadPosts()
@@ -248,6 +249,7 @@ export default function ContentCalendar() {
           method: 'DELETE',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ id: editingPost.id }),
+          signal: AbortSignal.timeout(15000),
         })
       }
 
@@ -261,6 +263,7 @@ export default function ContentCalendar() {
           content: formCaption,
           scheduledFor: scheduledFor.toISOString(),
         }),
+        signal: AbortSignal.timeout(15000),
       })
 
       if (!res.ok) {
@@ -286,6 +289,7 @@ export default function ContentCalendar() {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id: postId }),
+        signal: AbortSignal.timeout(15000),
       })
       if (!res.ok) throw new Error('Failed to cancel')
       await loadPosts()

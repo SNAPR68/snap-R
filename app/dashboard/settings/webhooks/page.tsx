@@ -62,7 +62,7 @@ export default function WebhooksSettingsPage() {
 
   const fetchWebhooks = useCallback(async () => {
     try {
-      const res = await fetch('/api/webhooks/outgoing');
+      const res = await fetch('/api/webhooks/outgoing', { signal: AbortSignal.timeout(15000) });
       if (res.ok) {
         const data = await res.json();
         setWebhooks(data.webhooks || []);
@@ -77,7 +77,7 @@ export default function WebhooksSettingsPage() {
   const fetchDeliveries = useCallback(async () => {
     setLoadingDeliveries(true);
     try {
-      const res = await fetch('/api/webhooks/deliveries?limit=50');
+      const res = await fetch('/api/webhooks/deliveries?limit=50', { signal: AbortSignal.timeout(15000) });
       if (res.ok) {
         const data = await res.json() as { deliveries: WebhookDelivery[] };
         setDeliveries(data.deliveries || []);
@@ -104,6 +104,7 @@ export default function WebhooksSettingsPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ url: newUrl, events: newEvents, description: newDescription || null }),
+        signal: AbortSignal.timeout(15000),
       });
       if (!res.ok) {
         const d = await res.json();
@@ -128,6 +129,7 @@ export default function WebhooksSettingsPage() {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id, is_active: !currentActive }),
+        signal: AbortSignal.timeout(15000),
       });
       setWebhooks(wh => wh.map(w => w.id === id ? { ...w, is_active: !currentActive } : w));
     } catch {
@@ -142,6 +144,7 @@ export default function WebhooksSettingsPage() {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id }),
+        signal: AbortSignal.timeout(15000),
       });
       setWebhooks(wh => wh.filter(w => w.id !== id));
     } catch {

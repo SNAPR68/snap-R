@@ -49,7 +49,7 @@ export function ClientGallery({ photos, listingTitle, shareToken, allowDownload,
   const goPrev = () => setSelectedIndex(i => (i - 1 + photos.length) % photos.length);
 
   const handleDownload = async (url: string) => {
-    const response = await fetch(url);
+    const response = await fetch(url, { signal: AbortSignal.timeout(15000) });
     const blob = await response.blob();
     const downloadUrl = window.URL.createObjectURL(blob);
     const a = document.createElement('a');

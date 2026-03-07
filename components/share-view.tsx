@@ -68,6 +68,7 @@ export function ShareView({ listing, photos, settings, shareToken }: ShareViewPr
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ photoId, shareToken, approved, feedback: feedbackText[photoId] || null }),
+        signal: AbortSignal.timeout(15000),
       });
       if (response.ok) {
         setApprovalStatus(prev => ({ ...prev, [photoId]: approved ? 'approved' : 'rejected' }));
@@ -93,6 +94,7 @@ export function ShareView({ listing, photos, settings, shareToken }: ShareViewPr
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ shareToken, clientName: clientName || 'Client' }),
+        signal: AbortSignal.timeout(15000),
       });
       setSubmitted(true);
       setShowSubmitModal(false);
@@ -104,7 +106,7 @@ export function ShareView({ listing, photos, settings, shareToken }: ShareViewPr
   };
 
   const handleDownload = async (url: string, filename: string) => {
-    const response = await fetch(url);
+    const response = await fetch(url, { signal: AbortSignal.timeout(15000) });
     const blob = await response.blob();
     const downloadUrl = window.URL.createObjectURL(blob);
     const a = document.createElement('a');

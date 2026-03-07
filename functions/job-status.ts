@@ -14,6 +14,7 @@ export const onRequestGet: PagesFunction<{
       apikey: env.SUPABASE_SERVICE_KEY,
       Authorization: `Bearer ${env.SUPABASE_SERVICE_KEY}`,
     },
+    signal: AbortSignal.timeout(15000),
   });
 
   const job = await supabaseRes.json();
@@ -23,6 +24,7 @@ export const onRequestGet: PagesFunction<{
       apikey: env.SUPABASE_SERVICE_KEY,
       Authorization: `Bearer ${env.SUPABASE_SERVICE_KEY}`,
     },
+    signal: AbortSignal.timeout(15000),
   });
 
   const photos = await photosRes.json();

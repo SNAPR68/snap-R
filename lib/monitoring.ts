@@ -34,6 +34,7 @@ export async function logError(
         message: errorMessage,
         context: { ...context, stack: errorStack },
       }),
+      signal: AbortSignal.timeout(10000),
     });
   } catch (error: unknown) {
     logger.error('Failed to log error to database:', error);
@@ -53,6 +54,7 @@ export async function logWarning(
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ level: 'warning', message, context }),
+      signal: AbortSignal.timeout(10000),
     });
   } catch (error: unknown) {
     logger.error('Failed to log warning:', error);
@@ -78,6 +80,7 @@ export async function trackApiCost(
         cost,
         metadata,
       }),
+      signal: AbortSignal.timeout(10000),
     });
   } catch (error: unknown) {
     logger.error('Failed to track API cost:', error);

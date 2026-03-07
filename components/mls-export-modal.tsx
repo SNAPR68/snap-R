@@ -36,7 +36,7 @@ export function MlsExportModal({ photos, listingTitle, listingAddress, onClose }
   useEffect(() => {
     async function fetchMlsOptions() {
       try {
-        const res = await fetch('/api/compliance/export');
+        const res = await fetch('/api/compliance/export', { signal: AbortSignal.timeout(15000) });
         const data = await res.json();
         if (data.mlsOptions) {
           setMlsOptions(data.mlsOptions);
@@ -76,6 +76,7 @@ export function MlsExportModal({ photos, listingTitle, listingAddress, onClose }
           mlsNumber,
           agentName,
         }),
+        signal: AbortSignal.timeout(15000),
       });
 
       const data = await res.json();

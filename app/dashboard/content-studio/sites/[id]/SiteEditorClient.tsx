@@ -152,6 +152,7 @@ export default function SiteEditorClient({ site, listing }: Props) {
             features: featuresText.split('\n').map(f => f.trim()).filter(Boolean),
             virtual_tour_url: virtualTourUrl.trim() || null,
           }),
+          signal: AbortSignal.timeout(15000),
         })
         if (!listingRes.ok) {
           const d = await listingRes.json() as { error?: string }
@@ -175,6 +176,7 @@ export default function SiteEditorClient({ site, listing }: Props) {
             title: agentTitle,
           },
         }),
+        signal: AbortSignal.timeout(15000),
       })
       if (!siteRes.ok) {
         const d = await siteRes.json() as { error?: string }

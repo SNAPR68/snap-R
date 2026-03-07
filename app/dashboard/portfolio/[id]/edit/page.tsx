@@ -93,6 +93,7 @@ export default function PortfolioEditPage() {
           accent_color: accentColor,
           is_public: isPublic,
         }),
+        signal: AbortSignal.timeout(15000),
       });
 
       if (!response.ok) {
@@ -117,6 +118,7 @@ export default function PortfolioEditPage() {
     try {
       const response = await fetch(`/api/portfolio?id=${portfolioId}`, {
         method: 'DELETE',
+        signal: AbortSignal.timeout(15000),
       });
 
       if (!response.ok) {

@@ -347,6 +347,7 @@ function VoiceoverGenerator() {
           agentPhone,
           scriptOnly: true,
         }),
+        signal: AbortSignal.timeout(30000),
       });
 
       const data = await response.json();
@@ -388,6 +389,7 @@ function VoiceoverGenerator() {
           agentPhone,
           customScript: useCustomScript ? customScript : undefined,
         }),
+        signal: AbortSignal.timeout(30000),
       });
 
       const data = await response.json();

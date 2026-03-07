@@ -57,7 +57,7 @@ async function downloadTourPhotosAsZip(tour: Tour) {
   for (let i = 0; i < tour.tour_scenes.length; i++) {
     const scene = tour.tour_scenes[i];
     try {
-      const response = await fetch(scene.image_url);
+      const response = await fetch(scene.image_url, { signal: AbortSignal.timeout(15000) });
       if (!response.ok) throw new Error('Failed to fetch');
       const blob = await response.blob();
       const fileName = `${scene.name || `photo-${i + 1}`}.jpg`;
@@ -94,7 +94,7 @@ async function downloadTourPhotosIndividually(tour: Tour) {
     const scene = tour.tour_scenes[i];
     try {
       // Try fetch first
-      const response = await fetch(scene.image_url);
+      const response = await fetch(scene.image_url, { signal: AbortSignal.timeout(15000) });
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');

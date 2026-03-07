@@ -160,7 +160,7 @@ export default function VirtualRenovationPage() {
     async function loadListings() {
       setLoadingListings(true);
       try {
-        const res = await fetch('/api/listings');
+        const res = await fetch('/api/listings', { signal: AbortSignal.timeout(30000) });
         if (res.ok) {
           const data = await res.json();
           const arr = Array.isArray(data) ? data : data.listings || [];
@@ -252,6 +252,7 @@ export default function VirtualRenovationPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ imageUrl, roomType, style, selectedRenovations, detailedOptions }),
+        signal: AbortSignal.timeout(30000),
       });
       const data = await response.json();
 

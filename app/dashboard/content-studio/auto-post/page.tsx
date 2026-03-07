@@ -48,7 +48,7 @@ export default function AutoPostSettings() {
 
   const fetchRules = async () => {
     try {
-      const res = await fetch('/api/auto-post')
+      const res = await fetch('/api/auto-post', { signal: AbortSignal.timeout(15000) })
       const data = await res.json()
       setRules(data.rules || [])
     } catch (error: unknown) { console.error(error) }
@@ -69,7 +69,8 @@ export default function AutoPostSettings() {
           triggerValue: newRule.trigger.replace('status_', ''),
           platforms: newRule.platforms,
           postType: POST_TYPES[newRule.trigger] || 'just-listed'
-        })
+        }),
+        signal: AbortSignal.timeout(15000),
       })
       const data = await res.json()
       if (data.rule) {
@@ -86,7 +87,8 @@ export default function AutoPostSettings() {
       await fetch('/api/auto-post', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id, isActive: !isActive })
+        body: JSON.stringify({ id, isActive: !isActive }),
+        signal: AbortSignal.timeout(15000),
       })
       setRules(rules.map(r => r.id === id ? { ...r, is_active: !isActive } : r))
     } catch (error: unknown) { console.error(error) }
@@ -97,7 +99,8 @@ export default function AutoPostSettings() {
       await fetch('/api/auto-post', {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id })
+        body: JSON.stringify({ id }),
+        signal: AbortSignal.timeout(15000),
       })
       setRules(rules.filter(r => r.id !== id))
     } catch (error: unknown) { console.error(error) }

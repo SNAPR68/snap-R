@@ -58,6 +58,7 @@ export function MLSImportModal({ onImport, onClose }: MLSImportModalProps) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ mlsNumber: mlsNumber.trim() }),
+        signal: AbortSignal.timeout(15000),
       });
 
       const data = await res.json();

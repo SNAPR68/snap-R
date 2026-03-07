@@ -109,6 +109,7 @@ export default function JobStatusPage({ params }: { params: { id: string } }) {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ action: "retry" }),
+        signal: AbortSignal.timeout(15000),
       });
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));

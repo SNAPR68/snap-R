@@ -121,7 +121,8 @@ export async function generateCaption(request: CaptionRequest): Promise<Generate
     const response = await fetch('/api/ai/generate-caption', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ prompt, platform: request.platform })
+      body: JSON.stringify({ prompt, platform: request.platform }),
+      signal: AbortSignal.timeout(15000),
     })
     
     if (!response.ok) {

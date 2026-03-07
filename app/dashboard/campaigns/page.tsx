@@ -139,6 +139,7 @@ export default function CampaignsPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ action, userId: user?.id, ...data }),
+        signal: AbortSignal.timeout(15000),
       });
       const result = await res.json();
       if (result.success) {

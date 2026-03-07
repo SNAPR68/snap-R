@@ -685,6 +685,7 @@ export async function handleMarketingJob(
           'Authorization': `Bearer ${cronSecret}`,
         },
         body: JSON.stringify(videoBody),
+        signal: AbortSignal.timeout(30000),
       });
 
       if (!videoResponse.ok) {

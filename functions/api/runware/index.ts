@@ -9,7 +9,8 @@ export async function onRequestPost(context: { request: Request; env: Record<str
       "Content-Type": "application/json",
       Authorization: `Bearer ${env.RUNWARE_API_KEY}`
     },
-    body: JSON.stringify(body)
+    body: JSON.stringify(body),
+    signal: AbortSignal.timeout(30000),
   });
 
   return new Response(await response.text(), {

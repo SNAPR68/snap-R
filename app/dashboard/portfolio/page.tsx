@@ -40,6 +40,7 @@ function CreatePortfolioModal({
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ title, tagline }),
+        signal: AbortSignal.timeout(15000),
       });
       const data = await response.json();
       if (data.portfolio) {
@@ -253,7 +254,7 @@ function PortfolioContent() {
 
   const loadPortfolios = async () => {
     try {
-      const response = await fetch('/api/portfolio');
+      const response = await fetch('/api/portfolio', { signal: AbortSignal.timeout(15000) });
       const data = await response.json();
       setPortfolios(data);
     } catch (error: unknown) {

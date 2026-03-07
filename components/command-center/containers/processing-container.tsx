@@ -48,7 +48,7 @@ export function ProcessingCollapsed({ initialItems }: ProcessingContainerProps) 
 
   const pollStatus = useCallback(async () => {
     try {
-      const res = await fetch('/api/dashboard/processing-status')
+      const res = await fetch('/api/dashboard/processing-status', { signal: AbortSignal.timeout(15000) })
       if (!res.ok) return
       const data = await res.json()
       const newItems = data.items || []
@@ -104,7 +104,7 @@ export function ProcessingExpanded({ initialItems }: ProcessingContainerProps) {
 
   const pollStatus = useCallback(async () => {
     try {
-      const res = await fetch('/api/dashboard/processing-status')
+      const res = await fetch('/api/dashboard/processing-status', { signal: AbortSignal.timeout(15000) })
       if (!res.ok) return
       const data = await res.json()
 

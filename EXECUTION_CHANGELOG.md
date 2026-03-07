@@ -1,6 +1,16 @@
 # SnapR Execution Changelog
 =================================
 
+## 2026-03-08 — AbortSignal.timeout on fetch calls (batch 1)
+
+### Prevent hanging requests from blocking Vercel functions
+
+- Added `AbortSignal.timeout()` to ~200 external fetch calls across 83 files
+- Timeout values: 30s for AI/processing calls, 15s for standard APIs, 10s for internal calls
+- Files Modified: 83 files
+- Architectural Impact: Reliability improvement — no more indefinite hangs on upstream failures
+- Risk Level: Low (timeout additions only, no behavioral changes)
+
 ## 2026-03-07 — Codebase Hardening: Zod Validation, Timeouts, Catch Blocks, Cleanup
 
 ### Comprehensive remediation across 255 files

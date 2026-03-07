@@ -31,6 +31,7 @@ export function HumanEditRequestModal({ listingId, photoUrl, onClose, initialIns
           instructions: instructions.trim(),
           isUrgent,
         }),
+        signal: AbortSignal.timeout(15000),
       });
 
       const data = await res.json();

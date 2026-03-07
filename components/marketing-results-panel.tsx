@@ -158,6 +158,7 @@ export function MarketingResultsPanel({ marketingJob, listingId, onClose, userTi
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ listingId, type }),
+        signal: AbortSignal.timeout(15000),
       });
       if (!res.ok) throw new Error('Failed to generate PDF');
       const blob = await res.blob();

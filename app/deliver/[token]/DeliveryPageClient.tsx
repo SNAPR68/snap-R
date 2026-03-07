@@ -78,7 +78,7 @@ export default function DeliveryPageClient({
     if (!allowDownload) return
     setDownloadingSingle(photo.id)
     try {
-      const response = await fetch(photo.downloadUrl)
+      const response = await fetch(photo.downloadUrl, { signal: AbortSignal.timeout(15000) })
       const blob = await response.blob()
       const url = URL.createObjectURL(blob)
       const a = document.createElement('a')
@@ -109,12 +109,13 @@ export default function DeliveryPageClient({
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ deliveryId, listingId, eventType: 'downloaded' }),
+        signal: AbortSignal.timeout(15000),
       })
 
       // Download each photo sequentially to avoid browser limits
       for (let i = 0; i < photos.length; i++) {
         const photo = photos[i]
-        const response = await fetch(photo.downloadUrl)
+        const response = await fetch(photo.downloadUrl, { signal: AbortSignal.timeout(15000) })
         const blob = await response.blob()
         const url = URL.createObjectURL(blob)
         const a = document.createElement('a')

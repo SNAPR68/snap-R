@@ -68,7 +68,7 @@ export default function UploadPage() {
   const fetchListings = useCallback(async () => {
     setListingLoading(true);
     try {
-      const res = await fetch("/api/listings");
+      const res = await fetch("/api/listings", { signal: AbortSignal.timeout(15000) });
       if (!res.ok) {
         throw new Error("Failed to fetch listings");
       }
@@ -109,6 +109,7 @@ export default function UploadPage() {
           address: newListing.address,
           description: newListing.description,
         }),
+        signal: AbortSignal.timeout(15000),
       });
       if (!res.ok) {
         const body = await res.json();
@@ -145,6 +146,7 @@ export default function UploadPage() {
       const response = await fetch("/api/upload", {
         method: "POST",
         body: formData,
+        signal: AbortSignal.timeout(15000),
       });
 
       if (!response.ok) {

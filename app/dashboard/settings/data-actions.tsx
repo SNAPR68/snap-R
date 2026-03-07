@@ -21,6 +21,7 @@ export function DataPrivacyActions({ userId, userEmail, deleteOnly = false }: Da
     try {
       const response = await fetch('/api/user/export-data', {
         method: 'POST',
+        signal: AbortSignal.timeout(15000),
       });
       
       if (response.ok) {
@@ -50,6 +51,7 @@ export function DataPrivacyActions({ userId, userEmail, deleteOnly = false }: Da
     try {
       const response = await fetch('/api/user/delete-account', {
         method: 'POST',
+        signal: AbortSignal.timeout(15000),
       });
       
       if (response.ok) {

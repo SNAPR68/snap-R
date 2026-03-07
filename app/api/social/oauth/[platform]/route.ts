@@ -255,6 +255,7 @@ async function handleLinkedInOAuth(
       client_id: clientId!,
       client_secret: clientSecret!,
     }),
+    signal: AbortSignal.timeout(15000),
   });
 
   const tokenData = await tokenResponse.json();
@@ -268,6 +269,7 @@ async function handleLinkedInOAuth(
   // Get user profile using modern OpenID Connect userinfo endpoint
   const profileResponse = await fetch('https://api.linkedin.com/v2/userinfo', {
     headers: { Authorization: `Bearer ${accessToken}` },
+    signal: AbortSignal.timeout(15000),
   });
   const profileData = await profileResponse.json();
 

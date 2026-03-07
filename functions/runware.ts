@@ -10,6 +10,7 @@ export const onRequestPost: PagesFunction<{
       Authorization: `Bearer ${env.RUNWARE_API_KEY}`,
     },
     body: JSON.stringify(payload),
+    signal: AbortSignal.timeout(30000),
   });
 
   const data = await res.json();

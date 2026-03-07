@@ -303,7 +303,7 @@ export async function windowPull(
  */
 export async function hasBlownOutWindows(imageUrl: string): Promise<boolean> {
   try {
-    const response = await fetch(imageUrl);
+    const response = await fetch(imageUrl, { signal: AbortSignal.timeout(30000) });
     const buffer = Buffer.from(await response.arrayBuffer());
     const detection = await detectBlownOutWindows(buffer);
     return detection.hasBrownOutWindows;

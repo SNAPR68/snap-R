@@ -209,6 +209,7 @@ export async function POST(request: NextRequest) {
           priority,
           timestamp: now,
         }),
+        signal: AbortSignal.timeout(15000),
       });
     } catch (error: unknown) {
       await admin

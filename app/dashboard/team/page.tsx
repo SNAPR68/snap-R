@@ -85,7 +85,7 @@ function TeamPageContent() {
 
   const fetchTeams = useCallback(async () => {
     try {
-      const res = await fetch('/api/teams');
+      const res = await fetch('/api/teams', { signal: AbortSignal.timeout(15000) });
       const data = await res.json();
       if (data.teams) setTeams(data.teams);
     } catch (err) {
@@ -147,7 +147,8 @@ function TeamPageContent() {
       const res = await fetch('/api/teams', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: newTeamName })
+        body: JSON.stringify({ name: newTeamName }),
+        signal: AbortSignal.timeout(15000),
       });
       
       const data = await res.json();
@@ -176,7 +177,8 @@ function TeamPageContent() {
       const res = await fetch(`/api/teams/${selectedTeam.id}/invite`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: inviteEmail, role: inviteRole })
+        body: JSON.stringify({ email: inviteEmail, role: inviteRole }),
+        signal: AbortSignal.timeout(15000),
       });
       
       const data = await res.json();
@@ -206,7 +208,8 @@ function TeamPageContent() {
       await fetch(`/api/teams/${selectedTeam.id}/members`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId, role: newRole })
+        body: JSON.stringify({ userId, role: newRole }),
+        signal: AbortSignal.timeout(15000),
       });
       setMembers(members.map(m => m.user_id === userId ? { ...m, role: newRole } : m));
     } catch (err) {
@@ -220,7 +223,8 @@ function TeamPageContent() {
       await fetch(`/api/teams/${selectedTeam.id}/members`, {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId })
+        body: JSON.stringify({ userId }),
+        signal: AbortSignal.timeout(15000),
       });
       setMembers(members.filter(m => m.user_id !== userId));
     } catch (err) {
@@ -234,7 +238,8 @@ function TeamPageContent() {
       await fetch(`/api/teams/${selectedTeam.id}/invite`, {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ inviteId })
+        body: JSON.stringify({ inviteId }),
+        signal: AbortSignal.timeout(15000),
       });
       setInvites(invites.filter(i => i.id !== inviteId));
     } catch (err) {

@@ -242,6 +242,7 @@ function VirtualStagingStudio({
           preset,
           customInstructions: customInstructions || undefined,
         }),
+        signal: AbortSignal.timeout(30000),
       });
 
       const data = await response.json();

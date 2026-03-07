@@ -61,6 +61,7 @@ export function ListingStatusSelector({
           listingId,
           newStatus,
         }),
+        signal: AbortSignal.timeout(15000),
       });
 
       const result = await res.json();

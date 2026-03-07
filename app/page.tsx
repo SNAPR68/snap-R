@@ -42,6 +42,7 @@ export default function HomePage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name: 'Lead Capture', email: leadEmail, message: 'Marketing Guide Request from homepage' }),
+        signal: AbortSignal.timeout(15000),
       });
       setLeadSubmitted(true);
     } catch {
@@ -57,6 +58,7 @@ export default function HomePage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: notifyEmail }),
+        signal: AbortSignal.timeout(15000),
       });
     } catch {
       // silently ignore — still show success UI

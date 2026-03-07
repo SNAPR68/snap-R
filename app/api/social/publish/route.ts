@@ -139,6 +139,7 @@ async function publishToFacebook(connection: SocialConnection, content: string, 
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ url: imageUrls[0], caption: content, access_token: accessToken }),
+        signal: AbortSignal.timeout(15000),
       });
       const data = await response.json();
       if (data.error) throw new Error(data.error.message);
@@ -150,6 +151,7 @@ async function publishToFacebook(connection: SocialConnection, content: string, 
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ url, published: false, access_token: accessToken }),
+            signal: AbortSignal.timeout(15000),
           });
           const data = await response.json();
           return { media_fbid: data.id };
@@ -159,6 +161,7 @@ async function publishToFacebook(connection: SocialConnection, content: string, 
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ message: content, attached_media: photoIds, access_token: accessToken }),
+        signal: AbortSignal.timeout(15000),
       });
       const data = await response.json();
       if (data.error) throw new Error(data.error.message);
@@ -169,6 +172,7 @@ async function publishToFacebook(connection: SocialConnection, content: string, 
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ message: content, access_token: accessToken }),
+      signal: AbortSignal.timeout(15000),
     });
     const data = await response.json();
     if (data.error) throw new Error(data.error.message);
@@ -191,6 +195,7 @@ async function publishToInstagram(connection: SocialConnection, content: string,
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ image_url: imageUrls[0], caption: content, access_token: accessToken }),
+      signal: AbortSignal.timeout(15000),
     });
     const createData = await createResponse.json();
     if (createData.error) throw new Error(createData.error.message);
@@ -202,6 +207,7 @@ async function publishToInstagram(connection: SocialConnection, content: string,
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ image_url: url, is_carousel_item: true, access_token: accessToken }),
+          signal: AbortSignal.timeout(15000),
         });
         const data = await response.json();
         return data.id;
@@ -211,6 +217,7 @@ async function publishToInstagram(connection: SocialConnection, content: string,
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ media_type: 'CAROUSEL', children: childContainers, caption: content, access_token: accessToken }),
+      signal: AbortSignal.timeout(15000),
     });
     const carouselData = await carouselResponse.json();
     if (carouselData.error) throw new Error(carouselData.error.message);
@@ -221,6 +228,7 @@ async function publishToInstagram(connection: SocialConnection, content: string,
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ creation_id: containerId, access_token: accessToken }),
+    signal: AbortSignal.timeout(15000),
   });
   const publishData = await publishResponse.json();
   if (publishData.error) throw new Error(publishData.error.message);

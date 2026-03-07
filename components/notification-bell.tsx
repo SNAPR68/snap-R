@@ -58,7 +58,7 @@ export function NotificationBell() {
   const fetchNotifications = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch('/api/notifications?limit=20');
+      const res = await fetch('/api/notifications?limit=20', { signal: AbortSignal.timeout(15000) });
       if (res.ok) {
         const data = await res.json();
         setNotifications(data.notifications);

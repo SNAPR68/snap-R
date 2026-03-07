@@ -79,6 +79,7 @@ export function AIAnalysisTab({ listingId, photos, onApplyEnhancement, onRequest
           listingId,
           photoUrls 
         }),
+        signal: AbortSignal.timeout(15000),
       });
 
       if (!response.ok) {

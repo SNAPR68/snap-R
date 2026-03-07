@@ -43,7 +43,7 @@ export default function EmailListsPage() {
   const fetchLeads = useCallback(async () => {
     setLoading(true)
     try {
-      const res = await fetch('/api/leads')
+      const res = await fetch('/api/leads', { signal: AbortSignal.timeout(15000) })
       if (!res.ok) throw new Error('Failed')
       const json = await res.json() as { leads: Lead[] }
       setLeads(json.leads || [])
@@ -56,7 +56,7 @@ export default function EmailListsPage() {
 
   const fetchHistory = useCallback(async () => {
     try {
-      const res = await fetch('/api/leads/bulk-email')
+      const res = await fetch('/api/leads/bulk-email', { signal: AbortSignal.timeout(15000) })
       if (!res.ok) return
       const json = await res.json() as { sends: BulkSend[] }
       setHistory(json.sends || [])
@@ -121,6 +121,7 @@ export default function EmailListsPage() {
           subject: subject.trim(),
           body: body.trim(),
         }),
+        signal: AbortSignal.timeout(15000),
       })
       const json = await res.json() as { sent?: number; failed?: number; error?: string }
       if (!res.ok) throw new Error(json.error || 'Send failed')

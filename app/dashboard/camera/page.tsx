@@ -170,6 +170,7 @@ export default function CameraPage() {
           toolId,
           options: presetId ? { prompt: presetId } : {}
         }),
+        signal: AbortSignal.timeout(30000),
       });
 
       if (!enhanceRes.ok) {

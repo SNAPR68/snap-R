@@ -138,6 +138,7 @@ export default function PropertySitesClient() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ listingId: selectedListingId, template: theme }),
+        signal: AbortSignal.timeout(15000),
       })
       const data = await res.json() as { site?: PropertySite }
       if (data.site) {
@@ -158,6 +159,7 @@ export default function PropertySitesClient() {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id: siteId }),
+        signal: AbortSignal.timeout(15000),
       })
       setSites(s => s.filter(x => x.id !== siteId))
     } catch {

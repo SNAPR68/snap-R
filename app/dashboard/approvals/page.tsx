@@ -62,6 +62,7 @@ function NewApprovalModal({ onClose, onCreated }: { onClose: () => void; onCreat
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ listingId: selectedId }),
+        signal: AbortSignal.timeout(15000),
       });
       const data = await res.json();
       if (data.shareUrl) {
@@ -177,7 +178,7 @@ export default function ApprovalsPage() {
       const data = await res.json();
       if (!data.urls?.length) return;
       for (let i = 0; i < data.urls.length; i++) {
-        const blob = await fetch(data.urls[i]).then(r => r.blob());
+        const blob = await fetch(data.urls[i], { signal: AbortSignal.timeout(15000) }).then(r => r.blob());
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
@@ -199,7 +200,7 @@ export default function ApprovalsPage() {
 
   const fetchApprovals = async () => {
     try {
-      const res = await fetch('/api/approval-summary');
+      const res = await fetch('/api/approval-summary', { signal: AbortSignal.timeout(15000) });
       const data = await res.json();
       setListings(data.listings || []);
     } catch (error: unknown) {

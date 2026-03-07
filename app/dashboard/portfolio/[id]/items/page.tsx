@@ -137,6 +137,7 @@ export default function PortfolioItemsPage() {
           tags: addForm.tags ? addForm.tags.split(',').map((t: string) => t.trim()).filter(Boolean) : [],
           isFeatured: addForm.isFeatured,
         }),
+        signal: AbortSignal.timeout(30000),
       });
 
       if (!response.ok) {
@@ -161,6 +162,7 @@ export default function PortfolioItemsPage() {
     try {
       const response = await fetch(`/api/portfolio/items?id=${itemId}&portfolioId=${portfolioId}`, {
         method: 'DELETE',
+        signal: AbortSignal.timeout(15000),
       });
 
       if (!response.ok) throw new Error('Failed to delete');
@@ -181,6 +183,7 @@ export default function PortfolioItemsPage() {
           portfolioId,
           isFeatured: !item.is_featured,
         }),
+        signal: AbortSignal.timeout(15000),
       });
 
       if (!response.ok) throw new Error('Failed to update');
@@ -234,6 +237,7 @@ export default function PortfolioItemsPage() {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ id: item.id, portfolioId, title: editTitle || null }),
+          signal: AbortSignal.timeout(15000),
         });
 
         setItems(prev => prev.map(i =>
@@ -306,6 +310,7 @@ export default function PortfolioItemsPage() {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ portfolioId, items: importItems }),
+        signal: AbortSignal.timeout(15000),
       });
 
       if (!response.ok) throw new Error('Failed to import');

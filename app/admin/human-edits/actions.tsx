@@ -16,6 +16,7 @@ export function HumanEditActions({ orderId, status, userEmail }: { orderId: stri
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ orderId, userEmail }),
+        signal: AbortSignal.timeout(15000),
       });
 
       if (res.ok) {

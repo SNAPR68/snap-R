@@ -124,6 +124,7 @@ export default function ListingIntelligenceDashboard({ onApplyEnhancement, onApp
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ photoUrls: Array.from(selectedPhotos).map(idx => photos[idx]), listingId }),
+        signal: AbortSignal.timeout(15000),
       });
 
       if (!response.ok) {

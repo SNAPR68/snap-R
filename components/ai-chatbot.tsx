@@ -48,6 +48,7 @@ export function AIChatbot() {
         body: JSON.stringify({ 
           messages: [...messages, { role: 'user', content: userMessage }]
         }),
+        signal: AbortSignal.timeout(15000),
       });
 
       const data = await response.json();
@@ -83,6 +84,7 @@ export function AIChatbot() {
           source: 'ansel-chatbot',
           conversation: messages.slice(-5).map(m => `${m.role}: ${m.content}`).join('\n')
         }),
+        signal: AbortSignal.timeout(15000),
       });
       setFeedbackSubmitted(true);
       setTimeout(() => {
