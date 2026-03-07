@@ -5,6 +5,7 @@ import Stripe from 'stripe';
 import { normalizeTier } from '@/lib/content/limits';
 import { stripeCheckoutSchema } from '@/lib/validation/schemas';
 
+import { logger } from '@/lib/logger';
 function getStripe() {
   return new Stripe(process.env.STRIPE_SECRET_KEY!, {
     apiVersion: '2026-01-28.clover',
@@ -152,7 +153,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ url: session.url });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Internal server error';
-    console.error('Checkout error:', error);
+    logger.error('Checkout error:', error);
     return NextResponse.json(
       { error: message || 'Failed to create checkout' },
       { status: 500 }

@@ -3,6 +3,7 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { Plus, Home, ImageIcon, MapPin, CheckCircle, AlertCircle, Clock, Loader2, Megaphone, Search, ArrowUpDown, Users, Sparkles } from 'lucide-react';
 
@@ -346,7 +347,7 @@ export default function ListingsPage() {
                 <div className="aspect-video relative">
                   {listing.thumbnail ? (
                     /* eslint-disable-next-line @next/next/no-img-element */
-                    <img src={listing.thumbnail} alt={listing.title || 'Listing photo'} className="w-full h-full object-cover" />
+                    <Image src={listing.thumbnail} alt={listing.title || 'Listing photo'} className="w-full h-full object-cover" width={400} height={300} unoptimized />
                   ) : (
                     <div className="w-full h-full bg-white/5 flex items-center justify-center">
                       <Home className="w-12 h-12 text-white/20" />

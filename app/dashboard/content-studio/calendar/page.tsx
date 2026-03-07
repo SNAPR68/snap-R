@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
+import Image from 'next/image';
 import {
   ArrowLeft, Calendar as CalendarIcon, ChevronLeft, ChevronRight, Plus,
   Instagram, Facebook, Linkedin, Video, Clock, Trash2, Edit2, X,
@@ -100,7 +101,7 @@ export default function ContentCalendar() {
         }
       })
       setScheduledPosts(mapped)
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Error loading scheduled posts:', error)
     }
   }, [])
@@ -140,7 +141,7 @@ export default function ContentCalendar() {
       }
 
       await loadPosts()
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Error loading data:', error)
     }
   }, [loadPosts])
@@ -269,7 +270,7 @@ export default function ContentCalendar() {
 
       // Reload posts from DB
       await loadPosts()
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Error saving post:', error)
     }
 
@@ -288,7 +289,7 @@ export default function ContentCalendar() {
       })
       if (!res.ok) throw new Error('Failed to cancel')
       await loadPosts()
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Error cancelling post:', error)
     }
   }
@@ -524,10 +525,10 @@ export default function ContentCalendar() {
                         <div className="flex items-center gap-3 p-3 border-b border-white/5">
                           {listing?.thumbnail ? (
                             // eslint-disable-next-line @next/next/no-img-element
-                            <img src={listing.thumbnail} alt="" className="w-12 h-12 rounded-lg object-cover" />
+                            <Image src={listing.thumbnail} alt="" className="w-12 h-12 rounded-lg object-cover" width={400} height={300} unoptimized />
                           ) : post.image_urls?.[0] ? (
                             // eslint-disable-next-line @next/next/no-img-element
-                            <img src={post.image_urls[0]} alt="" className="w-12 h-12 rounded-lg object-cover" />
+                            <Image src={post.image_urls[0]} alt="" className="w-12 h-12 rounded-lg object-cover" width={400} height={300} unoptimized />
                           ) : (
                             <div className="w-12 h-12 rounded-lg bg-white/10 flex items-center justify-center">
                               <Home className="w-6 h-6 text-white/30" />

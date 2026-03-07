@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+import { logger } from '@/lib/logger';
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
@@ -14,12 +15,12 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'IMAGEN_API_KEY not set' }, { status: 500 });
     }
 
-    console.log('[Imagen Test] Testing with image:', imageUrl);
+    logger.info('[Imagen Test] Testing with image:', imageUrl);
 
-    const imgResponse = await fetch(imageUrl);
+    const imgResponse = await fetch(imageUrl, { signal: AbortSignal.timeout(15000) });
     const buffer = Buffer.from(await imgResponse.arrayBuffer());
 
-    console.log('[Imagen Test] Image downloaded, size:', buffer.length);
+    logger.info('[Imagen Test] Image downloaded, size:', buffer.length);
 
     const formData = new FormData();
     const blob = new Blob([new Uint8Array(buffer)], { type: 'image/jpeg' });
@@ -32,6 +33,7 @@ export async function POST(request: NextRequest) {
       method: 'POST',
       headers: { 'Authorization': 'Bearer ' + apiKey },
       body: formData,
+      signal: AbortSignal.timeout(30000),
     });
 
     const processingTimeMs = Date.now() - startTime;

@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import { useState, useEffect, useRef } from 'react';
 import { Download, Check, X, ChevronLeft, ChevronRight, MessageSquare, Send, Loader2, CheckCircle } from 'lucide-react';
 import { trackEvent, SnapREvents } from '@/lib/analytics';
@@ -77,7 +78,7 @@ export function ShareView({ listing, photos, settings, shareToken }: ShareViewPr
         }
         setShowFeedback(null);
       }
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Approval error:', error);
     } finally {
       setSaving(null);
@@ -95,7 +96,7 @@ export function ShareView({ listing, photos, settings, shareToken }: ShareViewPr
       });
       setSubmitted(true);
       setShowSubmitModal(false);
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Submit error:', error);
     } finally {
       setSubmitting(false);
@@ -195,9 +196,9 @@ export function ShareView({ listing, photos, settings, shareToken }: ShareViewPr
           <div className="flex-1 relative bg-[#0A0A0A] rounded-xl overflow-hidden flex items-center justify-center">
             {settings.show_comparison && selectedPhoto.rawUrl ? (
               <div ref={sliderRef} className="relative w-full h-full cursor-col-resize select-none" onMouseMove={handleSliderMove} onTouchMove={handleSliderMove}>
-                <img src={selectedPhoto.processedUrl} alt="Enhanced" className="absolute inset-0 w-full h-full object-contain pointer-events-none" draggable={false} />
+                <Image src={selectedPhoto.processedUrl} alt="Enhanced" className="absolute inset-0 w-full h-full object-contain pointer-events-none" draggable={false} width={400} height={300} unoptimized />
                 <div className="absolute inset-0 overflow-hidden pointer-events-none" style={{ clipPath: `inset(0 ${100 - sliderPosition}% 0 0)` }}>
-                  <img src={selectedPhoto.rawUrl} alt="Original" className="absolute inset-0 w-full h-full object-contain" draggable={false} />
+                  <Image src={selectedPhoto.rawUrl} alt="Original" className="absolute inset-0 w-full h-full object-contain" draggable={false} width={400} height={300} unoptimized />
                 </div>
                 <div className="absolute top-0 bottom-0 w-1 bg-white shadow-lg pointer-events-none" style={{ left: `${sliderPosition}%`, transform: 'translateX(-50%)' }}>
                   <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-10 h-10 bg-white rounded-full shadow-xl flex items-center justify-center">
@@ -208,7 +209,7 @@ export function ShareView({ listing, photos, settings, shareToken }: ShareViewPr
                 <div className="absolute top-4 right-4 px-3 py-1.5 bg-black/80 backdrop-blur rounded-lg text-sm font-medium">After</div>
               </div>
             ) : (
-              <img src={selectedPhoto.processedUrl} alt="Enhanced" className="w-full h-full object-contain" />
+              <Image src={selectedPhoto.processedUrl} alt="Enhanced" className="w-full h-full object-contain" width={400} height={300} unoptimized />
             )}
             {approvalStatus[selectedPhoto.id] && (
               <div className={`absolute top-4 left-1/2 -translate-x-1/2 px-4 py-2 rounded-full font-medium ${approvalStatus[selectedPhoto.id] === 'approved' ? 'bg-emerald-500/90 text-white' : 'bg-red-500/90 text-white'}`}>
@@ -255,7 +256,7 @@ export function ShareView({ listing, photos, settings, shareToken }: ShareViewPr
           <div className="flex gap-2 mt-4 overflow-x-auto py-2 justify-center">
             {photos.map((photo, index) => (
               <button key={photo.id} onClick={() => setSelectedIndex(index)} className={`relative flex-shrink-0 w-16 h-16 rounded-lg overflow-hidden border-2 transition-all ${index === selectedIndex ? 'border-[#D4A017]' : 'border-transparent hover:border-white/30'}`}>
-                <img src={photo.processedUrl} alt="" className="w-full h-full object-cover" />
+                <Image src={photo.processedUrl} alt="" className="w-full h-full object-cover" width={400} height={300} unoptimized />
                 {approvalStatus[photo.id] === 'approved' && <div className="absolute inset-0 bg-emerald-500/40 flex items-center justify-center"><Check className="w-6 h-6 text-white" /></div>}
                 {approvalStatus[photo.id] === 'rejected' && <div className="absolute inset-0 bg-red-500/40 flex items-center justify-center"><X className="w-6 h-6 text-white" /></div>}
               </button>

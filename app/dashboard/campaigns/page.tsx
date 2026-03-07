@@ -25,6 +25,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 
+import Image from 'next/image';
 const PLATFORM_ICONS: Record<string, LucideIcon> = {
   instagram: Instagram,
   facebook: Facebook,
@@ -281,11 +282,9 @@ export default function CampaignsPage() {
                     {/* Preview Image */}
                     {item.preview_image_url && (
                       <div className="w-20 h-20 rounded-lg overflow-hidden flex-shrink-0">
-                        <img
-                          src={item.preview_image_url}
+                        <Image src={item.preview_image_url}
                           alt="Preview"
-                          className="w-full h-full object-cover"
-                        />
+                          className="w-full h-full object-cover" width={400} height={300} unoptimized />
                       </div>
                     )}
 
@@ -422,14 +421,12 @@ export default function CampaignsPage() {
                   {/* Listing Photo */}
                   {campaign.listings?.photos?.[0] && (
                     <div className="w-16 h-16 rounded-lg overflow-hidden flex-shrink-0">
-                      <img
-                        src={
+                      <Image src={
                           campaign.listings.photos[0].processed_url ||
                           campaign.listings.photos[0].raw_url
                         }
                         alt="Listing"
-                        className="w-full h-full object-cover"
-                      />
+                        className="w-full h-full object-cover" width={400} height={300} unoptimized />
                     </div>
                   )}
 

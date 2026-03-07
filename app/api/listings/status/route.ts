@@ -5,7 +5,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { adminSupabase } from '@/lib/supabase/admin';
 import { onListingStatusChange, toCampaignStatus } from '@/lib/campaigns/status-hook';
+import { listingsStatusSchema, parseBody } from '@/lib/validation/schemas'
 
+import { logger } from '@/lib/logger';
 export async function POST(request: NextRequest) {
   try {
     const supabase = await createClient();
@@ -16,7 +18,7 @@ export async function POST(request: NextRequest) {
     }
 
     const userId = user.id;
-    const { listingId, newStatus } = await request.json();
+    const body = await request.json(); const validated = parseBody(listingsStatusSchema, body); if (!validated.success) { return NextResponse.json({ error: validated.error, details: validated.details }, { status: 400 }); } const { listingId, newStatus } = body;
 
     if (!listingId || !newStatus) {
       return NextResponse.json(
@@ -76,7 +78,7 @@ export async function POST(request: NextRequest) {
     });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Server error';
-    console.error('Status update error:', message);
+    logger.error('Status update error:', message);
     return NextResponse.json({ error: 'Server error' }, { status: 500 });
   }
 }

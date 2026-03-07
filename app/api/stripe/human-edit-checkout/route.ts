@@ -3,7 +3,9 @@ export const dynamic = 'force-dynamic';
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import Stripe from 'stripe';
+import { stripeHumanEditCheckoutSchema, parseBody } from '@/lib/validation/schemas'
 
+import { logger } from '@/lib/logger';
 function getStripe() {
   return new Stripe(process.env.STRIPE_SECRET_KEY!, {
     apiVersion: '2026-01-28.clover',
@@ -13,7 +15,7 @@ function getStripe() {
 export async function POST(request: NextRequest) {
   try {
     const stripe = getStripe();
-    const { photoId, isUrgent, instructions } = await request.json();
+    const body = await request.json(); const validated = parseBody(stripeHumanEditCheckoutSchema, body); if (!validated.success) { return NextResponse.json({ error: validated.error, details: validated.details }, { status: 400 }); } const { photoId, isUrgent, instructions } = body;
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
 
@@ -44,8 +46,8 @@ export async function POST(request: NextRequest) {
     });
 
     return NextResponse.json({ url: session.url });
-  } catch (error) {
-    console.error('Human edit checkout error:', error);
+  } catch (error: unknown) {
+    logger.error('Human edit checkout error:', error);
     return NextResponse.json({ error: 'Failed to create checkout' }, { status: 500 });
   }
 }

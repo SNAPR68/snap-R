@@ -1,6 +1,8 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
+import { brandSchema, parseBody } from '@/lib/validation/schemas'
 
+import { logger } from '@/lib/logger';
 // GET - Fetch user's brand profile
 export async function GET() {
   try {
@@ -24,8 +26,8 @@ export async function GET() {
     }
 
     return NextResponse.json({ brandProfile: brandProfile || null })
-  } catch (error) {
-    console.error('Brand profile fetch error:', error)
+  } catch (error: unknown) {
+    logger.error('Brand profile fetch error:', error)
     return NextResponse.json({ error: 'Failed to fetch brand profile' }, { status: 500 })
   }
 }
@@ -42,6 +44,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
+    const validated = parseBody(brandSchema, body); if (!validated.success) { return NextResponse.json({ error: validated.error, details: validated.details }, { status: 400 }); }
     
     const brandData = {
       user_id: user.id,
@@ -71,13 +74,13 @@ export async function POST(request: NextRequest) {
       .single()
 
     if (error) {
-      console.error('Brand profile save error:', error)
+      logger.error('Brand profile save error:', error)
       return NextResponse.json({ error: error.message }, { status: 500 })
     }
 
     return NextResponse.json({ brandProfile, success: true })
-  } catch (error) {
-    console.error('Brand profile save error:', error)
+  } catch (error: unknown) {
+    logger.error('Brand profile save error:', error)
     return NextResponse.json({ error: 'Failed to save brand profile' }, { status: 500 })
   }
 }

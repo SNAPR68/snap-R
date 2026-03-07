@@ -2,6 +2,7 @@ export const dynamic = 'force-dynamic';
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 
+import { logger } from '@/lib/logger';
 export async function GET() {
   try {
     const supabase = await createClient();
@@ -25,8 +26,8 @@ export async function GET() {
     const authUrl = `https://www.linkedin.com/oauth/v2/authorization?response_type=code&client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${encodeURIComponent(scope)}&state=${user.id}`;
 
     return NextResponse.json({ authUrl });
-  } catch (error) {
-    console.error('LinkedIn connect error:', error);
+  } catch (error: unknown) {
+    logger.error('LinkedIn connect error:', error);
     return NextResponse.json({ error: 'Server error' }, { status: 500 });
   }
 }

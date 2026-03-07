@@ -1,5 +1,6 @@
 'use client'
 
+import Image from 'next/image';
 import { useState, useCallback } from 'react'
 import { Upload, X, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -66,7 +67,7 @@ export function LogoUploader({ currentLogo, onUpload, label = 'Logo' }: LogoUplo
         .getPublicUrl(filePath)
 
       onUpload(publicUrl)
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Upload error:', error)
       alert('Failed to upload logo. Please try again.')
       setPreview(currentLogo || null)
@@ -88,11 +89,9 @@ export function LogoUploader({ currentLogo, onUpload, label = 'Logo' }: LogoUplo
         {preview ? (
           <div className="relative">
             <div className="w-20 h-20 rounded-lg overflow-hidden bg-white/10 border border-white/20">
-              <img 
-                src={preview} 
+              <Image src={preview} 
                 alt="Logo preview" 
-                className="w-full h-full object-contain"
-              />
+                className="w-full h-full object-contain" width={400} height={300} unoptimized />
             </div>
             <button
               onClick={handleRemove}

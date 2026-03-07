@@ -4,6 +4,7 @@ import { Resend } from 'resend';
 import { createClient } from '@supabase/supabase-js';
 import { notifySchema, parseBody } from '@/lib/validation/schemas';
 
+import { logger } from '@/lib/logger';
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
@@ -51,7 +52,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ success: true });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Internal server error';
-    console.error('Notify API error:', error);
+    logger.error('Notify API error:', error);
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }

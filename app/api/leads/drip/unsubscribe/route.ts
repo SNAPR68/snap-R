@@ -8,6 +8,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { adminSupabase } from '@/lib/supabase/admin'
 
+import { logger } from '@/lib/logger';
 export async function GET(request: NextRequest) {
   const url = new URL(request.url)
   const enrollmentId = url.searchParams.get('e')
@@ -27,7 +28,7 @@ export async function GET(request: NextRequest) {
     .in('status', ['active', 'paused'])
 
   if (error) {
-    console.error('[Drip Unsubscribe] Error:', error.message)
+    logger.error('[Drip Unsubscribe] Error:', error.message)
     return new NextResponse(unsubscribePage('Something went wrong. Please try again.', false), {
       headers: { 'Content-Type': 'text/html' },
     })

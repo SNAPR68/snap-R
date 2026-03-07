@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { draftCreateSchema, draftDeleteSchema, parseBody } from '@/lib/validation/schemas'
 
+import { logger } from '@/lib/logger';
 // GET - Fetch drafts
 export async function GET() {
   try {
@@ -16,8 +17,8 @@ export async function GET() {
       .order('updated_at', { ascending: false })
 
     return NextResponse.json({ drafts: drafts || [] })
-  } catch (error) {
-    console.error('Error fetching drafts:', error)
+  } catch (error: unknown) {
+    logger.error('Error fetching drafts:', error)
     return NextResponse.json({ error: 'Failed to fetch drafts' }, { status: 500 })
   }
 }
@@ -69,8 +70,8 @@ export async function POST(request: Request) {
       if (error) throw error
       return NextResponse.json({ draft })
     }
-  } catch (error) {
-    console.error('Error saving draft:', error)
+  } catch (error: unknown) {
+    logger.error('Error saving draft:', error)
     return NextResponse.json({ error: 'Failed to save draft' }, { status: 500 })
   }
 }
@@ -92,8 +93,8 @@ export async function DELETE(request: Request) {
     await supabase.from('post_drafts').delete().eq('id', id).eq('user_id', user.id)
 
     return NextResponse.json({ success: true })
-  } catch (error) {
-    console.error('Error deleting draft:', error)
+  } catch (error: unknown) {
+    logger.error('Error deleting draft:', error)
     return NextResponse.json({ error: 'Failed to delete' }, { status: 500 })
   }
 }

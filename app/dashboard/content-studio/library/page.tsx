@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button'
 import { ArrowLeft, Loader2, FolderOpen, Heart, Trash2, Copy, Search, Filter, Grid, List } from 'lucide-react'
 import Link from 'next/link'
 
+import Image from 'next/image';
 const CATEGORIES = [
   { id: 'all', name: 'All Content' },
   { id: 'just-listed', name: 'Just Listed' },
@@ -47,7 +48,7 @@ export default function ContentLibrary() {
       const res = await fetch(`/api/content-library?${params}`)
       const data = await res.json()
       setContent(data.content || [])
-    } catch (e) { console.error(e) }
+    } catch (error: unknown) { console.error(error) }
     finally { setLoading(false) }
   }
 
@@ -151,7 +152,7 @@ export default function ContentLibrary() {
               <div key={item.id} className="bg-white/5 rounded-xl overflow-hidden border border-white/10 hover:border-[#D4AF37]/50 transition group">
                 <div className="aspect-square relative">
                   {item.image_url ? (
-                    <img src={item.image_url} alt={item.name} className="w-full h-full object-cover" />
+                    <Image src={item.image_url} alt={item.name} className="w-full h-full object-cover" width={400} height={300} unoptimized />
                   ) : (
                     <div className="w-full h-full bg-gradient-to-br from-gray-700 to-gray-800 flex items-center justify-center">
                       <FolderOpen className="w-12 h-12 text-white/20" />
@@ -185,7 +186,7 @@ export default function ContentLibrary() {
             {filtered.map(item => (
               <div key={item.id} className="bg-white/5 rounded-xl p-4 border border-white/10 flex items-center gap-4">
                 <div className="w-16 h-16 rounded-lg overflow-hidden flex-shrink-0">
-                  {item.image_url ? <img src={item.image_url} alt="" className="w-full h-full object-cover" /> : <div className="w-full h-full bg-gray-700" />}
+                  {item.image_url ? <Image src={item.image_url} alt="" className="w-full h-full object-cover" width={400} height={300} unoptimized /> : <div className="w-full h-full bg-gray-700" />}
                 </div>
                 <div className="flex-1 min-w-0">
                   <h3 className="font-medium">{item.name}</h3>

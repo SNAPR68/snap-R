@@ -76,7 +76,7 @@ export function CaptionGenerator({ property, platform, contentType, onCaptionGen
       setCaption(data.caption)
       setRemaining(data.captionsRemaining)
       onCaptionGenerated?.(data.caption)
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Failed to generate caption:', error)
       alert('Failed to generate caption. Please try again.')
     } finally {
@@ -111,7 +111,7 @@ export function CaptionGenerator({ property, platform, contentType, onCaptionGen
       setHashtags(data.hashtags)
       setRemaining(data.generationsRemaining)
       onHashtagsGenerated?.(data.hashtags)
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Failed to generate hashtags:', error)
       alert('Failed to generate hashtags. Please try again.')
     } finally {

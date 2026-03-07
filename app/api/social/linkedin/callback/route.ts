@@ -3,6 +3,7 @@ export const dynamic = "force-dynamic"
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 
+import { logger } from '@/lib/logger';
 const LINKEDIN_CLIENT_ID = process.env.NEXT_PUBLIC_LINKEDIN_CLIENT_ID
 const LINKEDIN_CLIENT_SECRET = process.env.LINKEDIN_CLIENT_SECRET
 const REDIRECT_URI = process.env.NEXT_PUBLIC_APP_URL + '/api/social/linkedin/callback'
@@ -31,18 +32,20 @@ export async function GET(request: Request) {
         redirect_uri: REDIRECT_URI!,
         client_id: LINKEDIN_CLIENT_ID!,
         client_secret: LINKEDIN_CLIENT_SECRET!
-      })
+      }),
+          signal: AbortSignal.timeout(15000),
     })
     const tokenData = await tokenRes.json()
 
     if (!tokenData.access_token) {
-      console.error('LinkedIn token error:', tokenData)
+      logger.error('LinkedIn token error:', tokenData)
       return NextResponse.redirect(new URL('/dashboard/content-studio?error=token_failed', request.url))
     }
 
     // Get user profile
     const profileRes = await fetch('https://api.linkedin.com/v2/userinfo', {
-      headers: { 'Authorization': `Bearer ${tokenData.access_token}` }
+      headers: { 'Authorization': `Bearer ${tokenData.access_token}` },
+          signal: AbortSignal.timeout(15000),
     })
     const profile = await profileRes.json()
 
@@ -65,8 +68,8 @@ export async function GET(request: Request) {
     }
 
     return NextResponse.redirect(new URL('/dashboard/content-studio?connected=linkedin', request.url))
-  } catch (error) {
-    console.error('LinkedIn callback error:', error)
+  } catch (error: unknown) {
+    logger.error('LinkedIn callback error:', error)
     return NextResponse.redirect(new URL('/dashboard/content-studio?error=callback_failed', request.url))
   }
 }

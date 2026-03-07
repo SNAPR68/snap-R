@@ -15,6 +15,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { adminSupabase } from '@/lib/supabase/admin';
 
+import { logger } from '@/lib/logger';
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
@@ -79,7 +80,7 @@ export async function POST(request: NextRequest) {
       });
 
     if (insertError) {
-      console.error('[Marketing Trigger] Insert error:', insertError);
+      logger.error('[Marketing Trigger] Insert error:', insertError);
       return NextResponse.json({ error: 'Failed to create marketing job' }, { status: 500 });
     }
 
@@ -103,10 +104,11 @@ export async function POST(request: NextRequest) {
         listingId,
         userId: user.id,
       }),
+      signal: AbortSignal.timeout(15000),
     });
 
     if (!workerResponse.ok) {
-      console.error('[Marketing Trigger] Worker enqueue failed:', workerResponse.status);
+      logger.error('[Marketing Trigger] Worker enqueue failed:', workerResponse.status);
       // Roll back: delete the marketing job
       await admin
         .from('marketing_jobs')
@@ -123,7 +125,7 @@ export async function POST(request: NextRequest) {
 
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Internal server error';
-    console.error('[Marketing Trigger API] Error:', message);
+    logger.error('[Marketing Trigger API] Error:', message);
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }

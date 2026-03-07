@@ -144,7 +144,7 @@ export function UnifiedCreator() {
           wasmURL: 'https://unpkg.com/@ffmpeg/core@0.12.6/dist/umd/ffmpeg-core.wasm',
         })
         setFfmpegLoaded(true)
-      } catch (e) { console.error('FFmpeg load error:', e) }
+      } catch (error: unknown) { console.error('FFmpeg load error:', error) }
     }
     //loadFFmpeg()
   }, [])
@@ -296,7 +296,7 @@ export function UnifiedCreator() {
           resolve(blob)
         }, 'image/png', 1.0)
       })
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('html2canvas error:', error)
       return null
     }
@@ -484,8 +484,8 @@ export function UnifiedCreator() {
       URL.revokeObjectURL(link.href)
 
       setUploadSuccess('download')
-    } catch (e) {
-      console.error('Download error:', e)
+    } catch (error: unknown) {
+      console.error('Download error:', error)
       setUploadError('Download failed. Please try again.')
     } finally {
       setUploading(null)
@@ -512,7 +512,7 @@ export function UnifiedCreator() {
       link.click()
       document.body.removeChild(link)
       setUploadSuccess('carousel')
-    } catch (e) { console.error(e) } finally { setUploading(null) }
+    } catch (error: unknown) { console.error(error) } finally { setUploading(null) }
   }
 
   // Publish carousel directly to platform via API
@@ -725,8 +725,8 @@ export function UnifiedCreator() {
       const data = await res.json()
       if (data.caption) { setCaption(data.caption); setCaptionManuallyEdited(true) }
       else if (data.error) console.error('Caption error:', data.error)
-    } catch (e) {
-      console.error('Failed to generate caption:', e)
+    } catch (error: unknown) {
+      console.error('Failed to generate caption:', error)
       generateFallbackCaption()
     } finally { setGenCaption(false) }
   }
@@ -757,8 +757,8 @@ export function UnifiedCreator() {
       if (data.hashtagsText) setHashtags(data.hashtagsText)
       else if (data.hashtags) setHashtags(Array.isArray(data.hashtags) ? data.hashtags.join(' ') : data.hashtags)
       else if (data.error) console.error('Hashtags error:', data.error)
-    } catch (e) {
-      console.error('Failed to generate hashtags:', e)
+    } catch (error: unknown) {
+      console.error('Failed to generate hashtags:', error)
       generateFallbackHashtags()
     } finally { setGenHashtags(false) }
   }
@@ -829,7 +829,7 @@ export function UnifiedCreator() {
         })
       })
       if (res.ok) { alert('Saved to library!'); } else { const err = await res.json(); alert('Save failed: ' + (err.error || 'Unknown error')); console.error('Save failed:', err); }
-    } catch (e) { console.error('Save error:', e) }
+    } catch (error: unknown) { console.error('Save error:', error) }
   }
 
   // Schedule post for future publishing
@@ -1209,7 +1209,8 @@ export function UnifiedCreator() {
               return (
                 <button key={i} onClick={() => selectPhoto(url)} className={`relative flex-shrink-0 w-16 h-16 rounded-xl overflow-hidden border-2 transition-all ${selected ? 'border-[#D4AF37] ring-2 ring-[#D4AF37]/50 scale-105' : 'border-white/20 hover:border-white/40'}`}>
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={url} alt="" className="w-full h-full object-cover" />
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+<img src={url} alt="" className="w-full h-full object-cover" />
                   {postMode === 'carousel' && selected && <div className="absolute top-0 left-0 w-5 h-5 bg-[#D4AF37] rounded-br-lg text-[10px] font-bold text-black flex items-center justify-center">{selectedPhotos.indexOf(url) + 1}</div>}
                   {isRenovated && <div className="absolute bottom-0 inset-x-0 bg-green-500/90 text-[8px] text-white text-center py-0.5">Renovated</div>}
                 </button>

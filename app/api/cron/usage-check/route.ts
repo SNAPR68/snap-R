@@ -13,6 +13,7 @@ import { adminSupabase } from '@/lib/supabase/admin';
 import { Resend } from 'resend';
 import { normalizeTier, LISTING_LIMITS, type PlanType } from '@/lib/content/limits';
 
+import { logger } from '@/lib/logger';
 const resend = new Resend(process.env.RESEND_API_KEY);
 const CRON_SECRET = process.env.CRON_SECRET;
 
@@ -202,16 +203,16 @@ export async function GET(request: NextRequest) {
         }
       } catch (error: unknown) {
         const msg = error instanceof Error ? error.message : 'Unknown error';
-        console.error(`[UsageCheck] Error for ${user.id}:`, msg);
+        logger.error(`[UsageCheck] Error for ${user.id}:`, msg);
         results.failed++;
       }
     }
 
-    console.log('[UsageCheck] Complete:', results);
+    logger.info('[UsageCheck] Complete:', results);
     return NextResponse.json({ success: true, results });
   } catch (error: unknown) {
     const msg = error instanceof Error ? error.message : 'Unknown error';
-    console.error('[UsageCheck] Fatal error:', msg);
+    logger.error('[UsageCheck] Fatal error:', msg);
     return NextResponse.json({ error: msg }, { status: 500 });
   }
 }

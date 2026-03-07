@@ -1,5 +1,6 @@
 import { randomUUID } from 'node:crypto';
 
+import { logger } from '@/lib/logger';
 const RUNWARE_API = 'https://api.runware.ai/v1';
 const DEFAULT_MODEL = 'runware:100@1';
 const REQUEST_TIMEOUT = 60000;
@@ -48,7 +49,7 @@ async function imageToBase64WithDimensions(imageUrl: string): Promise<ImageInfo>
     };
   }
 
-  console.log('[Runware] Downloading image...');
+  logger.info('[Runware] Downloading image...');
   const response = await fetchWithTimeout(imageUrl, {}, 30000);
   if (!response.ok) {
     throw new Error(`Failed to download image: ${response.status}`);
@@ -56,7 +57,7 @@ async function imageToBase64WithDimensions(imageUrl: string): Promise<ImageInfo>
 
   const buffer = await response.arrayBuffer();
   const bytes = new Uint8Array(buffer);
-  console.log('[Runware] Downloaded:', (buffer.byteLength / 1024).toFixed(0), 'KB');
+  logger.info('[Runware] Downloaded:', (buffer.byteLength / 1024).toFixed(0), 'KB');
 
   let width = 0;
   let height = 0;
@@ -88,17 +89,17 @@ async function imageToBase64WithDimensions(imageUrl: string): Promise<ImageInfo>
   }
 
   if (width === 0 || height === 0) {
-    console.log('[Runware] Could not detect dimensions, using defaults');
+    logger.info('[Runware] Could not detect dimensions, using defaults');
     width = 1344;
     height = 896;
   } else {
-    console.log(`[Runware] Detected dimensions: ${width}x${height}`);
+    logger.info(`[Runware] Detected dimensions: ${width}x${height}`);
     const maxDim = 2048;
     if (width > maxDim || height > maxDim) {
       const scale = maxDim / Math.max(width, height);
       width = Math.round(width * scale);
       height = Math.round(height * scale);
-      console.log(`[Runware] Scaled to: ${width}x${height}`);
+      logger.info(`[Runware] Scaled to: ${width}x${height}`);
     }
     width = Math.round(width / 8) * 8;
     height = Math.round(height / 8) * 8;
@@ -117,7 +118,7 @@ interface RunwareResponse {
 }
 
 async function runwareRequest(tasks: Record<string, unknown>[]): Promise<RunwareResponse> {
-  console.log('[Runware] API request:', tasks[0]?.taskType);
+  logger.info('[Runware] API request:', tasks[0]?.taskType);
   const response = await fetchWithTimeout(
     RUNWARE_API,
     {
@@ -133,7 +134,7 @@ async function runwareRequest(tasks: Record<string, unknown>[]): Promise<Runware
 
   if (!response.ok) {
     const errorText = await response.text();
-    console.error('[Runware] API error:', response.status, errorText);
+    logger.error('[Runware] API error:', response.status, errorText);
     throw new Error(`Runware API error: ${response.status}`);
   }
 
@@ -149,8 +150,8 @@ async function runwareRequest(tasks: Record<string, unknown>[]): Promise<Runware
 export async function runwareEnhance(imageUrl: string, options: RunwareOptions): Promise<string> {
   const { prompt, strength = 0.7, model = DEFAULT_MODEL } = options;
 
-  console.log('[Runware] Enhancement starting...');
-  console.log('[Runware] Prompt:', prompt.substring(0, 50) + '...');
+  logger.info('[Runware] Enhancement starting...');
+  logger.info('[Runware] Prompt:', prompt.substring(0, 50) + '...');
 
   const imageInfo = await imageToBase64WithDimensions(imageUrl);
 
@@ -174,11 +175,11 @@ export async function runwareEnhance(imageUrl: string, options: RunwareOptions):
   const imageURL = data?.data?.[0]?.imageURL;
   
   if (!imageURL) {
-    console.error('[Runware] No imageURL in response:', JSON.stringify(data).substring(0, 300));
+    logger.error('[Runware] No imageURL in response:', JSON.stringify(data).substring(0, 300));
     throw new Error('Runware returned no image URL');
   }
 
-  console.log('[Runware] Enhancement complete');
+  logger.info('[Runware] Enhancement complete');
   return imageURL;
 }
 
@@ -186,12 +187,12 @@ export async function runwareSkyReplacement(
   imageUrl: string,
   skyType: 'sunny' | 'sunset' | 'dramatic' | 'cloudy' = 'sunny',
 ): Promise<string> {
-  console.log('[Runware] Sky Replacement starting...');
+  logger.info('[Runware] Sky Replacement starting...');
 
   const imageInfo = await imageToBase64WithDimensions(imageUrl);
   const base64Uri = `data:image/jpeg;base64,${imageInfo.base64}`;
 
-  console.log('[Runware] Step 1/3: Uploading image...');
+  logger.info('[Runware] Step 1/3: Uploading image...');
   const uploadData = await runwareRequest([
     {
       taskType: 'imageUpload',
@@ -204,9 +205,9 @@ export async function runwareSkyReplacement(
   if (!imageUUID) {
     throw new Error('Runware did not return imageUUID');
   }
-  console.log('[Runware] Image UUID:', imageUUID);
+  logger.info('[Runware] Image UUID:', imageUUID);
 
-  console.log('[Runware] Step 2/3: Creating sky mask...');
+  logger.info('[Runware] Step 2/3: Creating sky mask...');
   const maskData = await runwareRequest([
     {
       taskType: 'imageBackgroundRemoval',
@@ -223,7 +224,7 @@ export async function runwareSkyReplacement(
   if (!maskUUID) {
     throw new Error('Failed to create sky mask');
   }
-  console.log('[Runware] Mask UUID:', maskUUID);
+  logger.info('[Runware] Mask UUID:', maskUUID);
 
   const prompts: Record<string, string> = {
     sunny: 'beautiful clear blue sky, bright sunny day, white fluffy cumulus clouds, perfect weather, photorealistic',
@@ -232,7 +233,7 @@ export async function runwareSkyReplacement(
     cloudy: 'overcast sky with soft white clouds, diffused natural lighting, photorealistic',
   };
 
-  console.log('[Runware] Step 3/3: Inpainting sky...');
+  logger.info('[Runware] Step 3/3: Inpainting sky...');
   const inpaintData = await runwareRequest([
     {
       taskType: 'imageInference',
@@ -256,6 +257,6 @@ export async function runwareSkyReplacement(
     throw new Error('Runware inpaint returned no image URL');
   }
 
-  console.log('[Runware] Sky Replacement complete!');
+  logger.info('[Runware] Sky Replacement complete!');
   return resultUrl;
 }

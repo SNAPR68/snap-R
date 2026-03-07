@@ -12,7 +12,9 @@ import { createClient } from '@/lib/supabase/server';
 import { evaluateAutoPostRules } from '@/lib/social/auto-post-evaluator';
 import { onListingStatusChange, toCampaignStatus } from '@/lib/campaigns/status-hook';
 import { dispatchWebhookEvent } from '@/lib/webhooks/dispatch';
+import { listingStatusSchema, parseBody } from '@/lib/validation/schemas'
 
+import { logger } from '@/lib/logger';
 interface FlaggedPhoto {
   id: string;
   raw_url: string | null;
@@ -170,7 +172,7 @@ export async function GET(request: NextRequest) {
 
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Internal server error';
-    console.error('[Status API] Error:', message);
+    logger.error('[Status API] Error:', message);
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }
@@ -185,6 +187,7 @@ const VALID_MARKETING_STATUSES = [
 export async function PATCH(request: NextRequest) {
   try {
     const body = await request.json();
+    const validated = parseBody(listingStatusSchema, body); if (!validated.success) { return NextResponse.json({ error: validated.error, details: validated.details }, { status: 400 }); }
     const { listingId, status, heroPhotoId, marketingStatus } = body;
 
     if (!listingId) {
@@ -259,7 +262,7 @@ export async function PATCH(request: NextRequest) {
         });
       } catch (autoPostErr: unknown) {
         const msg = autoPostErr instanceof Error ? autoPostErr.message : 'Unknown error';
-        console.error('[Status API] Auto-post evaluation failed (non-critical):', msg);
+        logger.error('[Status API] Auto-post evaluation failed (non-critical):', msg);
       }
     }
 
@@ -282,12 +285,12 @@ export async function PATCH(request: NextRequest) {
           });
 
           if (campaignResult.triggered) {
-            console.log('[Status API] Campaign triggered:', campaignResult.campaignId);
+            logger.info('[Status API] Campaign triggered:', campaignResult.campaignId);
           }
         }
       } catch (campaignErr: unknown) {
         const msg = campaignErr instanceof Error ? campaignErr.message : 'Unknown error';
-        console.error('[Status API] Campaign trigger failed (non-critical):', msg);
+        logger.error('[Status API] Campaign trigger failed (non-critical):', msg);
       }
     }
 
@@ -300,7 +303,7 @@ export async function PATCH(request: NextRequest) {
 
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Internal server error';
-    console.error('[Status API] Error:', message);
+    logger.error('[Status API] Error:', message);
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }

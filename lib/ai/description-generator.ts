@@ -1,5 +1,6 @@
 import OpenAI from 'openai';
 
+import { logger } from '@/lib/logger';
 function getOpenAIClient(client?: OpenAI): OpenAI {
   if (client) return client;
   return new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
@@ -163,7 +164,7 @@ export async function analyzePhotosForDescription(photoUrls: string[], client?: 
     };
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Unknown error';
-    console.error('[Description Generator] Photo analysis error:', error instanceof Error ? error.message : 'Unknown error');
+    logger.error('[Description Generator] Photo analysis error:', error instanceof Error ? error.message : 'Unknown error');
     return {
       features: {},
       analysis: [],
@@ -191,7 +192,7 @@ export async function generateListingDescription(
   length: DescriptionLength = 'medium',
   client?: OpenAI
 ): Promise<GeneratedDescription> {
-  console.log(`[Description Generator] Generating ${tone} ${length} description...`);
+  logger.info(`[Description Generator] Generating ${tone} ${length} description...`);
 
   // First, analyze photos
   const photoAnalysis = await analyzePhotosForDescription(photoUrls, client);
@@ -276,7 +277,7 @@ RESPOND IN THIS EXACT JSON FORMAT:
 
     const description = result.description || '';
 
-    console.log(`[Description Generator] Generated ${description.length} chars, ${description.split(/\s+/).length} words`);
+    logger.info(`[Description Generator] Generated ${description.length} chars, ${description.split(/\s+/).length} words`);
 
     return {
       headline: result.headline || 'Beautiful Home Awaits',
@@ -290,7 +291,7 @@ RESPOND IN THIS EXACT JSON FORMAT:
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Unknown error';
     const msg = error instanceof Error ? error.message : 'Unknown error';
-    console.error('[Description Generator] Generation error:', msg);
+    logger.error('[Description Generator] Generation error:', msg);
     throw new Error(`Failed to generate description: ${msg}`);
   }
 }

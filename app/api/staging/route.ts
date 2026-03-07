@@ -6,6 +6,7 @@ import { createClient } from '@/lib/supabase/server';
 import { createClient as createServiceClient } from '@supabase/supabase-js';
 import { stagingSchema, parseBody } from '@/lib/validation/schemas';
 
+import { logger } from '@/lib/logger';
 function getServiceSupabase() {
   return createServiceClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -199,14 +200,14 @@ Professional real estate virtual staging photography quality.`;
 // Run staging via Replicate
 async function runStaging(imageUrl: string, prompt: string, qualityTier: string): Promise<string | null> {
   if (!REPLICATE_API_TOKEN) {
-    console.error('Missing REPLICATE_API_TOKEN');
+    logger.error('Missing REPLICATE_API_TOKEN');
     return null;
   }
 
   const settings = QUALITY_SETTINGS[qualityTier] || QUALITY_SETTINGS.standard;
 
   try {
-    console.log('[Staging] Starting with quality:', qualityTier);
+    logger.info('[Staging] Starting with quality:', qualityTier);
 
     // Use FLUX Kontext for best quality staging
     const response = await fetch('https://api.replicate.com/v1/predictions', {
@@ -227,11 +228,12 @@ async function runStaging(imageUrl: string, prompt: string, qualityTier: string)
           output_quality: 95,
         },
       }),
+      signal: AbortSignal.timeout(15000),
     });
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('[Staging] Replicate error:', errorText);
+      logger.error('[Staging] Replicate error:', errorText);
       return null;
     }
 
@@ -247,25 +249,26 @@ async function runStaging(imageUrl: string, prompt: string, qualityTier: string)
 
       const pollResponse = await fetch(result.urls.get, {
         headers: { 'Authorization': `Token ${REPLICATE_API_TOKEN}` },
+        signal: AbortSignal.timeout(15000),
       });
       result = await pollResponse.json();
       attempts++;
 
       if (attempts % 10 === 0) {
-        console.log('[Staging] Still processing... attempt', attempts);
+        logger.info('[Staging] Still processing... attempt', attempts);
       }
     }
 
     if (result.status === 'succeeded' && result.output) {
       const outputUrl = Array.isArray(result.output) ? result.output[0] : result.output;
-      console.log('[Staging] Complete!');
+      logger.info('[Staging] Complete!');
       return outputUrl;
     }
 
-    console.error('[Staging] Failed:', result.status, result.error);
+    logger.error('[Staging] Failed:', result.status, result.error);
     return null;
-  } catch (error) {
-    console.error('[Staging] Error:', error);
+  } catch (error: unknown) {
+    logger.error('[Staging] Error:', error);
     return null;
   }
 }
@@ -273,7 +276,7 @@ async function runStaging(imageUrl: string, prompt: string, qualityTier: string)
 // Upload result to storage
 async function uploadToStorage(imageUrl: string, stagingId: string, userId: string): Promise<string | null> {
   try {
-    const response = await fetch(imageUrl);
+    const response = await fetch(imageUrl, { signal: AbortSignal.timeout(15000) });
     const blob = await response.blob();
     const buffer = Buffer.from(await blob.arrayBuffer());
 
@@ -287,7 +290,7 @@ async function uploadToStorage(imageUrl: string, stagingId: string, userId: stri
       });
 
     if (error) {
-      console.error('[Staging] Storage error:', error);
+      logger.error('[Staging] Storage error:', error);
       return null;
     }
 
@@ -296,8 +299,8 @@ async function uploadToStorage(imageUrl: string, stagingId: string, userId: stri
       .createSignedUrl(fileName, 3600);
 
     return urlData?.signedUrl || null;
-  } catch (error) {
-    console.error('[Staging] Upload error:', error);
+  } catch (error: unknown) {
+    logger.error('[Staging] Upload error:', error);
     return null;
   }
 }
@@ -347,7 +350,7 @@ export async function POST(request: NextRequest) {
 
     // Build prompt
     const prompt = buildStagingPrompt(roomType, furnitureStyle, qualityTier, preset, customInstructions);
-    console.log('[Staging] Prompt length:', prompt.length);
+    logger.info('[Staging] Prompt length:', prompt.length);
 
     // Create staging record
     const stagingId = `staging-${Date.now()}`;
@@ -392,7 +395,7 @@ export async function POST(request: NextRequest) {
       });
 
     const processingTime = Date.now() - startTime;
-    console.log('[Staging] Total time:', (processingTime / 1000).toFixed(1), 's');
+    logger.info('[Staging] Total time:', (processingTime / 1000).toFixed(1), 's');
 
     return NextResponse.json({
       success: true,
@@ -406,7 +409,7 @@ export async function POST(request: NextRequest) {
 
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Internal server error';
-    console.error('[Staging] Error:', error);
+    logger.error('[Staging] Error:', error);
     return NextResponse.json(
       { error: message || 'Internal server error' },
       { status: 500 }

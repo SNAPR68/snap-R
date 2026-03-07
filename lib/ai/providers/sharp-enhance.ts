@@ -15,6 +15,7 @@
 import sharp from 'sharp';
 import { adminSupabase } from '@/lib/supabase/admin';
 
+import { logger } from '@/lib/logger';
 // ============================================
 // TYPES
 // ============================================
@@ -243,24 +244,24 @@ export async function enhanceAndUpload(
   listingId: string,
   photoId: string
 ): Promise<string> {
-  console.log('[Sharp] Enhancing image...');
+  logger.info('[Sharp] Enhancing image...');
   const startTime = Date.now();
 
   // Download image
-  const response = await fetch(imageUrl);
+  const response = await fetch(imageUrl, { signal: AbortSignal.timeout(15000) });
   const arrayBuffer = await response.arrayBuffer();
   const inputBuffer = Buffer.from(arrayBuffer);
 
   // Enhance
   const result = await autoEnhance(inputBuffer);
-  console.log(`[Sharp] Enhanced with ${result.preset.name} preset in ${result.processingTimeMs}ms`);
+  logger.info(`[Sharp] Enhanced with ${result.preset.name} preset in ${result.processingTimeMs}ms`);
 
   // Upload to Supabase
   const supabase = adminSupabase();
 
   const filename = `enhanced/v3/${listingId}/${photoId}_enhanced.jpg`;
   
-  const { data, error } = await supabase.storage
+  const { error } = await supabase.storage
     .from('raw-images')
     .upload(filename, result.buffer, {
       contentType: 'image/jpeg',
@@ -268,7 +269,7 @@ export async function enhanceAndUpload(
     });
 
   if (error) {
-    console.error('[Sharp] Upload failed:', error);
+    logger.error('[Sharp] Upload failed:', error);
     throw new Error(`Failed to upload enhanced image: ${error.message}`);
   }
 
@@ -277,7 +278,7 @@ export async function enhanceAndUpload(
     .from('raw-images')
     .createSignedUrl(filename, 3600);
 
-  console.log(`[Sharp] Complete in ${Date.now() - startTime}ms`);
+  logger.info(`[Sharp] Complete in ${Date.now() - startTime}ms`);
   
   return urlData?.signedUrl || '';
 }
@@ -290,7 +291,7 @@ export async function quickEnhance(buffer: Buffer): Promise<Buffer> {
   return result.buffer;
 }
 
-export default {
+const sharpEnhance = {
   autoEnhance,
   enhanceAndUpload,
   quickEnhance,
@@ -299,3 +300,5 @@ export default {
   applyEnhancement,
   PRESETS,
 };
+
+export default sharpEnhance;

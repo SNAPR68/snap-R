@@ -24,6 +24,7 @@ import {
 } from './types';
 import { ToolId } from '../router';
 
+import { logger } from '@/lib/logger';
 function getOpenAIClient(client?: OpenAI): OpenAI {
   if (client) return client;
   return new OpenAI({ apiKey: process.env.OPENAI_API_KEY! });
@@ -303,7 +304,7 @@ export async function analyzePhoto(
   photoUrl: string,
   client: OpenAI
 ): Promise<PhotoAnalysis> {
-  console.log(`[PhotoIntelligence V3] Analyzing photo: ${photoId}`);
+  logger.info(`[PhotoIntelligence V3] Analyzing photo: ${photoId}`);
   const startTime = Date.now();
   const analysisProvider = process.env.ANALYSIS_PROVIDER || 'openai';
   const failOpen = process.env.AI_ANALYSIS_FAIL_OPEN === 'true';
@@ -384,16 +385,16 @@ export async function analyzePhoto(
     try {
       analysis = JSON.parse(cleanContent) as RawPhotoAnalysis;
     } catch {
-      console.error('[PhotoIntelligence V3] JSON parse error:', cleanContent.substring(0, 200));
+      logger.error('[PhotoIntelligence V3] JSON parse error:', cleanContent.substring(0, 200));
       throw new Error('Failed to parse GPT-4 response as JSON');
     }
 
     const duration = Date.now() - startTime;
-    console.log(`[PhotoIntelligence V3] Analysis complete in ${duration}ms`);
-    console.log(`[PhotoIntelligence V3] Type: ${analysis.photoType}`);
-    console.log(`[PhotoIntelligence V3] Valid: ${analysis.isValidPropertyPhoto}`);
-    console.log(`[PhotoIntelligence V3] Tools: ${analysis.suggestedTools?.join(', ') || 'none'}`);
-    console.log(`[PhotoIntelligence V3] Confidence: ${analysis.confidence}%`);
+    logger.info(`[PhotoIntelligence V3] Analysis complete in ${duration}ms`);
+    logger.info(`[PhotoIntelligence V3] Type: ${analysis.photoType}`);
+    logger.info(`[PhotoIntelligence V3] Valid: ${analysis.isValidPropertyPhoto}`);
+    logger.info(`[PhotoIntelligence V3] Tools: ${analysis.suggestedTools?.join(', ') || 'none'}`);
+    logger.info(`[PhotoIntelligence V3] Confidence: ${analysis.confidence}%`);
 
     // Validate and normalize the response
     return normalizeAnalysis(photoId, photoUrl, analysis);
@@ -401,7 +402,7 @@ export async function analyzePhoto(
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Internal server error';
     const duration = Date.now() - startTime;
-    console.error(`[PhotoIntelligence V3] Analysis failed after ${duration}ms:`, message);
+    logger.error(`[PhotoIntelligence V3] Analysis failed after ${duration}ms:`, message);
 
     if (failOpen || message.includes('429')) {
       return getFailOpenAnalysis(photoId, photoUrl, message);
@@ -430,10 +431,10 @@ export async function analyzePhotos(
 
   const results: PhotoAnalysis[] = [];
 
-  console.log(`[PhotoIntelligence V3] ═══════════════════════════════════════`);
-  console.log(`[PhotoIntelligence V3] Analyzing ${photos.length} photos`);
-  console.log(`[PhotoIntelligence V3] Concurrency: ${maxConcurrency}`);
-  console.log(`[PhotoIntelligence V3] ═══════════════════════════════════════`);
+  logger.info(`[PhotoIntelligence V3] ═══════════════════════════════════════`);
+  logger.info(`[PhotoIntelligence V3] Analyzing ${photos.length} photos`);
+  logger.info(`[PhotoIntelligence V3] Concurrency: ${maxConcurrency}`);
+  logger.info(`[PhotoIntelligence V3] ═══════════════════════════════════════`);
 
   const startTime = Date.now();
 
@@ -449,7 +450,7 @@ export async function analyzePhotos(
       onProgress(results.length, photos.length);
     }
 
-    console.log(`[PhotoIntelligence V3] Progress: ${results.length}/${photos.length}`);
+    logger.info(`[PhotoIntelligence V3] Progress: ${results.length}/${photos.length}`);
 
     // Delay between batches to avoid rate limits
     if (i + maxConcurrency < photos.length) {
@@ -464,13 +465,13 @@ export async function analyzePhotos(
   const skippedPhotos = results.filter(r => r.skipEnhancement).length;
   const avgConfidence = Math.round(results.reduce((sum, r) => sum + r.confidence, 0) / results.length);
 
-  console.log(`[PhotoIntelligence V3] ═══════════════════════════════════════`);
-  console.log(`[PhotoIntelligence V3] ANALYSIS COMPLETE`);
-  console.log(`[PhotoIntelligence V3] Time: ${(duration / 1000).toFixed(1)}s`);
-  console.log(`[PhotoIntelligence V3] Valid photos: ${validPhotos}/${photos.length}`);
-  console.log(`[PhotoIntelligence V3] To skip: ${skippedPhotos}`);
-  console.log(`[PhotoIntelligence V3] Avg confidence: ${avgConfidence}%`);
-  console.log(`[PhotoIntelligence V3] ═══════════════════════════════════════`);
+  logger.info(`[PhotoIntelligence V3] ═══════════════════════════════════════`);
+  logger.info(`[PhotoIntelligence V3] ANALYSIS COMPLETE`);
+  logger.info(`[PhotoIntelligence V3] Time: ${(duration / 1000).toFixed(1)}s`);
+  logger.info(`[PhotoIntelligence V3] Valid photos: ${validPhotos}/${photos.length}`);
+  logger.info(`[PhotoIntelligence V3] To skip: ${skippedPhotos}`);
+  logger.info(`[PhotoIntelligence V3] Avg confidence: ${avgConfidence}%`);
+  logger.info(`[PhotoIntelligence V3] ═══════════════════════════════════════`);
 
   return results;
 }
@@ -683,7 +684,7 @@ function validateSuggestedTools(raw: NormalizedRawForToolValidation): ToolId[] {
     if (isValid) {
       validated.push(tool as ToolId);
     } else {
-      console.log(`[PhotoIntelligence V3] Rejected invalid tool suggestion: ${tool}`);
+      logger.info(`[PhotoIntelligence V3] Rejected invalid tool suggestion: ${tool}`);
     }
   }
 
@@ -849,7 +850,7 @@ async function analyzeWithReplicate(photoUrl: string): Promise<RawPhotoAnalysis>
   try {
     return JSON.parse(cleanContent) as RawPhotoAnalysis;
   } catch {
-    console.error('[PhotoIntelligence V3] Replicate JSON parse error:', cleanContent.substring(0, 200));
+    logger.error('[PhotoIntelligence V3] Replicate JSON parse error:', cleanContent.substring(0, 200));
     throw new Error('Failed to parse Replicate response as JSON');
   }
 }

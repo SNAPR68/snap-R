@@ -11,6 +11,7 @@
 import Replicate from 'replicate';
 import { SAMMasksClient } from '../providers/sam-masks';
 
+import { logger } from '@/lib/logger';
 const replicate = new Replicate({
   auth: (typeof process !== "undefined" ? (typeof process !== "undefined" ? process.env.REPLICATE_API_TOKEN : "") : "")!,
 });
@@ -42,17 +43,17 @@ export interface WindowBalanceResult {
  * Returns mask image highlighting all windows
  */
 export async function detectWindows(imageUrl: string): Promise<WindowMask | null> {
-  console.log('[WindowMasking] Detecting windows with SAM...');
+  logger.info('[WindowMasking] Detecting windows with SAM...');
 
   try {
     const samClient = new SAMMasksClient();
     const result = await samClient.generateMask({ imageUrl, maskType: 'window' });
     if (!result.success || !result.maskUrl) {
-      console.log('[WindowMasking] No windows detected');
+      logger.info('[WindowMasking] No windows detected');
       return null;
     }
 
-    console.log('[WindowMasking] Windows detected successfully');
+    logger.info('[WindowMasking] Windows detected successfully');
     return {
       maskUrl: result.maskUrl,
       windowCount: result.boundingBox ? 1 : 0,
@@ -67,7 +68,7 @@ export async function detectWindows(imageUrl: string): Promise<WindowMask | null
 
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Processing failed';
-    console.error('[WindowMasking] SAM detection failed:', message);
+    logger.error('[WindowMasking] SAM detection failed:', message);
     return await fallbackWindowDetection(imageUrl);
   }
 }
@@ -78,7 +79,7 @@ export async function detectWindows(imageUrl: string): Promise<WindowMask | null
  */
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 async function fallbackWindowDetection(_imageUrl: string): Promise<WindowMask | null> {
-  console.log('[WindowMasking] Using fallback detection method');
+  logger.info('[WindowMasking] Using fallback detection method');
 
   // For fallback, we return null and let the enhancement handle it
   // The multi-pass twilight already handles window glow enhancement
@@ -96,7 +97,7 @@ export async function balanceWindowExposure(
     viewType?: 'sky' | 'garden' | 'neighborhood';
   } = {}
 ): Promise<WindowBalanceResult> {
-  console.log('[WindowMasking] Balancing window exposure...');
+  logger.info('[WindowMasking] Balancing window exposure...');
 
   const { showOutdoorView = true, viewType = 'sky' } = options;
 
@@ -146,7 +147,7 @@ Professional real estate photography with balanced exposure.`;
       throw new Error('Window balancing failed');
     }
 
-    console.log('[WindowMasking] Window exposure balanced');
+    logger.info('[WindowMasking] Window exposure balanced');
 
     return {
       url: resultUrl,
@@ -156,7 +157,7 @@ Professional real estate photography with balanced exposure.`;
 
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Internal server error';
-    console.error('[WindowMasking] Balance failed:', message);
+    logger.error('[WindowMasking] Balance failed:', message);
 
     // Return original on failure
     return {
@@ -187,7 +188,7 @@ export async function enhanceWindowsOnly(
   imageUrl: string,
   enhancement: 'glow' | 'balance' | 'darken'
 ): Promise<string> {
-  console.log('[WindowMasking] Enhancing windows only:', enhancement);
+  logger.info('[WindowMasking] Enhancing windows only:', enhancement);
 
   const prompts = {
     'glow': 'Add warm yellow-orange interior light glow to all windows. Windows should appear to have cozy interior lighting. Keep everything else exactly the same.',
@@ -212,7 +213,7 @@ export async function enhanceWindowsOnly(
 
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Processing failed';
-    console.error('[WindowMasking] Enhancement failed:', message);
+    logger.error('[WindowMasking] Enhancement failed:', message);
     return imageUrl;
   }
 }

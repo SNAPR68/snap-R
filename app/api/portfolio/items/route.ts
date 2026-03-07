@@ -1,7 +1,9 @@
 export const dynamic = 'force-dynamic';
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { portfolioItemsSchema, parseBody } from '@/lib/validation/schemas'
 
+import { logger } from '@/lib/logger';
 // GET - Fetch portfolio items
 export async function GET(request: NextRequest) {
   try {
@@ -52,7 +54,7 @@ export async function GET(request: NextRequest) {
 
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Internal server error';
-    console.error('[Portfolio Items] GET Error:', error);
+    logger.error('[Portfolio Items] GET Error:', error);
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }
@@ -68,6 +70,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
+    const validated = parseBody(portfolioItemsSchema, body); if (!validated.success) { return NextResponse.json({ error: validated.error, details: validated.details }, { status: 400 }); }
     const { 
       portfolioId,
       beforeUrl,
@@ -131,7 +134,7 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (error) {
-      console.error('[Portfolio Items] Create error:', error);
+      logger.error('[Portfolio Items] Create error:', error);
       return NextResponse.json({ error: 'Failed to add item' }, { status: 500 });
     }
 
@@ -142,7 +145,7 @@ export async function POST(request: NextRequest) {
 
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Internal server error';
-    console.error('[Portfolio Items] POST Error:', error);
+    logger.error('[Portfolio Items] POST Error:', error);
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }
@@ -158,6 +161,7 @@ export async function PUT(request: NextRequest) {
     }
 
     const body = await request.json();
+    const validated = parseBody(portfolioItemsSchema, body); if (!validated.success) { return NextResponse.json({ error: validated.error, details: validated.details }, { status: 400 }); }
     const { id, portfolioId, ...updates } = body;
 
     if (!id || !portfolioId) {
@@ -199,7 +203,7 @@ export async function PUT(request: NextRequest) {
       .single();
 
     if (error) {
-      console.error('[Portfolio Items] Update error:', error);
+      logger.error('[Portfolio Items] Update error:', error);
       return NextResponse.json({ error: 'Failed to update item' }, { status: 500 });
     }
 
@@ -210,7 +214,7 @@ export async function PUT(request: NextRequest) {
 
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Internal server error';
-    console.error('[Portfolio Items] PUT Error:', error);
+    logger.error('[Portfolio Items] PUT Error:', error);
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }
@@ -252,7 +256,7 @@ export async function DELETE(request: NextRequest) {
       .eq('portfolio_id', portfolioId);
 
     if (error) {
-      console.error('[Portfolio Items] Delete error:', error);
+      logger.error('[Portfolio Items] Delete error:', error);
       return NextResponse.json({ error: 'Failed to delete item' }, { status: 500 });
     }
 
@@ -260,7 +264,7 @@ export async function DELETE(request: NextRequest) {
 
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Internal server error';
-    console.error('[Portfolio Items] DELETE Error:', error);
+    logger.error('[Portfolio Items] DELETE Error:', error);
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }
@@ -276,6 +280,7 @@ export async function PATCH(request: NextRequest) {
     }
 
     const body = await request.json();
+    const validated = parseBody(portfolioItemsSchema, body); if (!validated.success) { return NextResponse.json({ error: validated.error, details: validated.details }, { status: 400 }); }
     const { portfolioId, items } = body;
 
     if (!portfolioId || !items || !Array.isArray(items) || items.length === 0) {
@@ -326,7 +331,7 @@ export async function PATCH(request: NextRequest) {
       .select();
 
     if (error) {
-      console.error('[Portfolio Items] Bulk insert error:', error);
+      logger.error('[Portfolio Items] Bulk insert error:', error);
       return NextResponse.json({ error: 'Failed to add items' }, { status: 500 });
     }
 
@@ -338,7 +343,7 @@ export async function PATCH(request: NextRequest) {
 
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Internal server error';
-    console.error('[Portfolio Items] PATCH Error:', error);
+    logger.error('[Portfolio Items] PATCH Error:', error);
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }

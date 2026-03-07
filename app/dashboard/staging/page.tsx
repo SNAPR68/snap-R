@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import React, { useState, useEffect, Suspense } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import {
@@ -288,21 +289,17 @@ function VirtualStagingStudio({
               <div className="absolute top-3 left-3 px-3 py-1 bg-black/70 rounded-full text-sm font-medium">
                 Before
               </div>
-              <img
-                src={selectedPhoto?.url}
+              <Image src={selectedPhoto?.url || ''}
                 alt="Before"
-                className="w-full rounded-xl border border-white/10"
-              />
+                className="w-full rounded-xl border border-white/10" width={400} height={300} unoptimized />
             </div>
             <div className="relative">
               <div className="absolute top-3 left-3 px-3 py-1 bg-amber-500 text-black rounded-full text-sm font-bold">
                 After
               </div>
-              <img
-                src={result.stagedUrl}
+              <Image src={result.stagedUrl || ''}
                 alt="After"
-                className="w-full rounded-xl border border-amber-500/30"
-              />
+                className="w-full rounded-xl border border-amber-500/30" width={400} height={300} unoptimized />
             </div>
           </div>
 
@@ -437,7 +434,7 @@ function VirtualStagingStudio({
                       : 'border-transparent hover:border-white/30'
                   }`}
                 >
-                  <img src={photo.url} alt="" className="w-full h-full object-cover" />
+                  <Image src={photo.url || ''} alt="" className="w-full h-full object-cover" width={400} height={300} unoptimized />
                   {selectedPhoto?.id === photo.id && (
                     <div className="absolute top-2 right-2 p-1 bg-amber-500 rounded-full">
                       <Check className="w-4 h-4 text-black" />
@@ -470,11 +467,9 @@ function VirtualStagingStudio({
             {/* Selected Photo Preview */}
             <div className="flex gap-6 mb-8">
               <div className="w-64 flex-shrink-0">
-                <img
-                  src={selectedPhoto?.url}
+                <Image src={selectedPhoto?.url || ''}
                   alt=""
-                  className="w-full rounded-xl border border-white/10"
-                />
+                  className="w-full rounded-xl border border-white/10" width={400} height={300} unoptimized />
                 <button
                   onClick={() => setStep(1)}
                   className="w-full mt-2 text-sm text-white/50 hover:text-white"
@@ -572,11 +567,9 @@ function VirtualStagingStudio({
               {/* Left: Preview & Options */}
               <div>
                 <div className="mb-6">
-                  <img
-                    src={selectedPhoto?.url}
+                  <Image src={selectedPhoto?.url || ''}
                     alt=""
-                    className="w-full rounded-xl border border-white/10"
-                  />
+                    className="w-full rounded-xl border border-white/10" width={400} height={300} unoptimized />
                 </div>
 
                 {/* Custom Instructions */}
@@ -827,7 +820,7 @@ function ListingSelector({
             >
               <div className="w-16 h-16 rounded-lg overflow-hidden bg-white/10 flex-shrink-0">
                 {listing.thumbnail ? (
-                  <img src={listing.thumbnail} alt="" className="w-full h-full object-cover" />
+                  <Image src={listing.thumbnail || ''} alt="" className="w-full h-full object-cover" width={400} height={300} unoptimized />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center">
                     <Home className="w-6 h-6 text-white/20" />

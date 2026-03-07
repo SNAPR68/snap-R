@@ -10,6 +10,7 @@
 import sharp from 'sharp';
 import { BracketGroup } from './input-router';
 
+import { logger } from '@/lib/logger';
 // ============================================
 // TYPES
 // ============================================
@@ -81,6 +82,7 @@ export class ImagenAIClient {
         'Content-Type': 'application/json',
         ...options.headers,
       },
+      signal: options.signal ?? AbortSignal.timeout(30000),
     });
 
     if (!response.ok) {
@@ -114,6 +116,7 @@ export class ImagenAIClient {
     const response = await fetch(uploadLink, {
       method: 'PUT',
       body: new Uint8Array(buffer),
+      signal: AbortSignal.timeout(30000),
     });
 
     if (!response.ok) {
@@ -183,7 +186,7 @@ export class ImagenAIClient {
   }
 
   async downloadImage(downloadLink: string): Promise<Buffer> {
-    const response = await fetch(downloadLink);
+    const response = await fetch(downloadLink, { signal: AbortSignal.timeout(30000) });
     if (!response.ok) {
       throw new Error(`Download failed: ${response.status}`);
     }
@@ -225,21 +228,21 @@ export async function processWithImagen(
   const client = new ImagenAIClient(apiKey);
 
   try {
-    console.log(`[Imagen] Processing ${images.length} image(s)`);
+    logger.info(`[Imagen] Processing ${images.length} image(s)`);
 
     // 1. Create project
     const projectUuid = await client.createProject();
-    console.log(`[Imagen] Created project: ${projectUuid}`);
+    logger.info(`[Imagen] Created project: ${projectUuid}`);
 
     // 2. Get upload links
     const fileNames = images.map(img => img.filename);
     const uploadLinks = await client.getUploadLinks(projectUuid, fileNames);
-    console.log(`[Imagen] Got ${uploadLinks.length} upload links`);
+    logger.info(`[Imagen] Got ${uploadLinks.length} upload links`);
 
     // 3. Upload images
     for (let i = 0; i < images.length; i++) {
       await client.uploadImage(uploadLinks[i].uploadLink, images[i].buffer);
-      console.log(`[Imagen] Uploaded: ${images[i].filename}`);
+      logger.info(`[Imagen] Uploaded: ${images[i].filename}`);
     }
 
     // 4. Start edit
@@ -250,16 +253,16 @@ export async function processWithImagen(
       windowPull: options.enableWindowPull ?? true,
       perspectiveCorrection: options.enablePerspective ?? true,
     });
-    console.log(`[Imagen] Edit started with profile: ${profileKey}`);
+    logger.info(`[Imagen] Edit started with profile: ${profileKey}`);
 
     // 5. Wait for completion
     await client.waitForCompletion(projectUuid);
-    console.log(`[Imagen] Processing complete`);
+    logger.info(`[Imagen] Processing complete`);
 
     // 6. Download result
     const downloadLinks = await client.getDownloadLinks(projectUuid);
     const outputBuffer = await client.downloadImage(downloadLinks[0].downloadLink);
-    console.log(`[Imagen] Downloaded result: ${outputBuffer.length} bytes`);
+    logger.info(`[Imagen] Downloaded result: ${outputBuffer.length} bytes`);
 
     // Calculate cost
     let cost = CONFIG.COST_IMAGEN_BASE;
@@ -278,9 +281,8 @@ export async function processWithImagen(
     };
 
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : 'Processing failed';
     const msg = error instanceof Error ? error.message : 'Unknown error';
-    console.error(`[Imagen] Error:`, msg);
+    logger.error(`[Imagen] Error:`, msg);
     return {
       success: false,
       provider: 'imagen',
@@ -299,7 +301,7 @@ export async function processHDRBracket(
   bracket: BracketGroup,
   options: HDRProcessingOptions = {}
 ): Promise<HDRResult> {
-  console.log(`[HDR] Processing bracket ${bracket.id} with ${bracket.images.length} images`);
+  logger.info(`[HDR] Processing bracket ${bracket.id} with ${bracket.images.length} images`);
 
   // Prepare images
   const images = bracket.images
@@ -330,7 +332,7 @@ export async function processHDRBracket(
   }
 
   // Fallback to local processing
-  console.log(`[HDR] Imagen failed, falling back to local processing`);
+  logger.info(`[HDR] Imagen failed, falling back to local processing`);
   return processLocalHDR(bracket, options);
 }
 
@@ -376,7 +378,6 @@ export async function processLocalHDR(
     };
 
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : 'Processing failed';
     return {
       success: false,
       provider: 'local',
@@ -488,7 +489,6 @@ export class HDRProcessor {
         cost: result.cost,
       };
     } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : 'Processing failed';
       return {
         success: false,
         provider: 'local',

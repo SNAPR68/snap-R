@@ -11,6 +11,7 @@ import { z } from 'zod'
 import { createClient } from '@/lib/supabase/server'
 import { adminSupabase } from '@/lib/supabase/admin'
 
+import { logger } from '@/lib/logger';
 // ============================================
 // Schemas
 // ============================================
@@ -223,7 +224,7 @@ export async function POST(request: NextRequest) {
         .single()
 
       if (enrollError || !enrollment) {
-        console.error('[Drip] Enrollment insert error:', enrollError?.message)
+        logger.error('[Drip] Enrollment insert error:', enrollError?.message)
         return NextResponse.json({ error: 'Failed to create enrollment' }, { status: 500 })
       }
 
@@ -263,7 +264,7 @@ export async function POST(request: NextRequest) {
       .insert(emailInserts)
 
     if (emailInsertError) {
-      console.error('[Drip] Email schedule error:', emailInsertError.message)
+      logger.error('[Drip] Email schedule error:', emailInsertError.message)
       // Don't fail — enrollment is created, cron will retry scheduling
     }
 
@@ -275,7 +276,7 @@ export async function POST(request: NextRequest) {
     })
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Unknown error'
-    console.error('[Drip] POST error:', message)
+    logger.error('[Drip] POST error:', message)
     return NextResponse.json({ error: message }, { status: 500 })
   }
 }
@@ -329,7 +330,7 @@ export async function GET(request: NextRequest) {
     })
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Unknown error'
-    console.error('[Drip] GET error:', message)
+    logger.error('[Drip] GET error:', message)
     return NextResponse.json({ error: message }, { status: 500 })
   }
 }
@@ -377,7 +378,7 @@ export async function DELETE(request: NextRequest) {
     return NextResponse.json({ success: true })
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Unknown error'
-    console.error('[Drip] DELETE error:', message)
+    logger.error('[Drip] DELETE error:', message)
     return NextResponse.json({ error: message }, { status: 500 })
   }
 }

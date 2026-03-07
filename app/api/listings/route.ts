@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { listingCreateSchema, listingUpdateSchema, parseBody } from '@/lib/validation/schemas';
 
+import { logger } from '@/lib/logger';
 function sanitize(value?: string | null) {
   if (!value) return null;
   const trimmed = value.trim();
@@ -25,7 +26,7 @@ export async function GET(request: Request) {
   // SINGLE LISTING FETCH (for Content Studio)
   // ============================================
   if (listingId) {
-    console.log(`[Listings API] Fetching single listing: ${listingId}`);
+    logger.info(`[Listings API] Fetching single listing: ${listingId}`);
 
     // NOTE: Only select columns that EXIST in your listings table
     const { data: listing, error: listingError } = await supabase
@@ -36,7 +37,7 @@ export async function GET(request: Request) {
       .single();
 
     if (listingError || !listing) {
-      console.error("[Listings API] Listing not found:", listingError);
+      logger.error("[Listings API] Listing not found:", listingError);
       return NextResponse.json({ error: "Listing not found" }, { status: 404 });
     }
 
@@ -48,10 +49,10 @@ export async function GET(request: Request) {
       .order("created_at", { ascending: true });
 
     if (photosError) {
-      console.error("[Listings API] Photos fetch error:", photosError);
+      logger.error("[Listings API] Photos fetch error:", photosError);
     }
 
-    console.log(`[Listings API] Found ${photos?.length || 0} photos`);
+    logger.info(`[Listings API] Found ${photos?.length || 0} photos`);
 
     // Create signed URLs for each photo
     const photosWithSignedUrls = await Promise.all(
@@ -85,12 +86,12 @@ export async function GET(request: Request) {
             if (data?.signedUrl) {
               signedProcessedUrl = data.signedUrl;
             } else {
-              console.error(`[Listings API] Failed to sign: ${photo.processed_url}`, error?.message);
+              logger.error(`[Listings API] Failed to sign: ${photo.processed_url}`, error?.message);
             }
           }
         }
 
-        console.log(`[Listings API] Photo ${photo.id}: processed_url=${photo.processed_url ? 'YES' : 'NO'}, signed=${signedProcessedUrl ? 'YES' : 'NO'}`);
+        logger.info(`[Listings API] Photo ${photo.id}: processed_url=${photo.processed_url ? 'YES' : 'NO'}, signed=${signedProcessedUrl ? 'YES' : 'NO'}`);
 
         return {
           ...photo,
@@ -101,7 +102,7 @@ export async function GET(request: Request) {
     );
 
     const enhancedCount = photosWithSignedUrls.filter(p => p.signedProcessedUrl).length;
-    console.log(`[Listings API] Returning ${photosWithSignedUrls.length} photos, ${enhancedCount} with signed enhanced URLs`);
+    logger.info(`[Listings API] Returning ${photosWithSignedUrls.length} photos, ${enhancedCount} with signed enhanced URLs`);
 
     return NextResponse.json({
       listing,
@@ -125,7 +126,7 @@ export async function GET(request: Request) {
   const { data, error } = await query;
 
   if (error) {
-    console.error("Listings fetch error", error);
+    logger.error("Listings fetch error", error);
     return NextResponse.json({ error: "Failed to load listings" }, { status: 500 });
   }
 
@@ -189,7 +190,7 @@ export async function POST(request: Request) {
     .single();
 
   if (error) {
-    console.error("Listing creation error", error);
+    logger.error("Listing creation error", error);
     return NextResponse.json({ error: "Failed to create listing" }, { status: 500 });
   }
 
@@ -231,7 +232,7 @@ export async function PUT(request: Request) {
     .single();
 
   if (error) {
-    console.error("Listing update error", error);
+    logger.error("Listing update error", error);
     return NextResponse.json({ error: "Failed to update listing" }, { status: 500 });
   }
 
@@ -260,7 +261,7 @@ export async function DELETE(request: Request) {
     .eq("user_id", user.id);
 
   if (error) {
-    console.error("Listing delete error", error);
+    logger.error("Listing delete error", error);
     return NextResponse.json({ error: "Failed to delete listing" }, { status: 500 });
   }
 

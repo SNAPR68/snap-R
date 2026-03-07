@@ -105,11 +105,9 @@ export function ClientGallery({ photos, listingTitle, shareToken, allowDownload,
           <div className="relative">
             <div className="aspect-[4/3] bg-[#1A1A1A] rounded-xl overflow-hidden relative">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={showBefore && showComparison && selectedPhoto.originalUrl ? selectedPhoto.originalUrl : selectedPhoto.url}
+              <Image src={showBefore && showComparison && selectedPhoto.originalUrl ? selectedPhoto.originalUrl : selectedPhoto.url}
                 alt=""
-                className="w-full h-full object-contain"
-              />
+                className="w-full h-full object-contain" width={400} height={300} unoptimized />
 
               {/* Navigation */}
               <button

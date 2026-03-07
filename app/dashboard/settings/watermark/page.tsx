@@ -38,7 +38,7 @@ export default function WatermarkSettings() {
         setOpacity(data.settings.watermark_opacity || 50)
         setMode(data.settings.watermark_logo_url ? 'logo' : 'text')
       }
-    } catch (e) { console.error(e) }
+    } catch (error: unknown) { console.error(error) }
     finally { setLoading(false) }
   }
 
@@ -52,7 +52,7 @@ export default function WatermarkSettings() {
       })
       setSaved(true)
       setTimeout(() => setSaved(false), 2000)
-    } catch (e) { console.error(e) }
+    } catch (error: unknown) { console.error(error) }
     finally { setSaving(false) }
   }
 

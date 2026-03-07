@@ -61,6 +61,7 @@ export const trackEvent = async (options: TrackEventOptions) => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
         keepalive: true,
+              signal: AbortSignal.timeout(10000),
       });
     }
   } catch {

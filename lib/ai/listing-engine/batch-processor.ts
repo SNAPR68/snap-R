@@ -30,6 +30,7 @@ import { autoEnhance as runAutoEnhance } from '../providers/autoenhance';
 import * as replicate from '../providers/replicate';
 import type { FluxOptions } from '../providers/replicate';
 
+import { logger } from '@/lib/logger';
 // ============================================
 // CONFIGURATION
 // ============================================
@@ -161,10 +162,10 @@ export async function processListingBatch(
     supabase?: SupabaseClient;
   }
 ): Promise<PhotoProcessingResult[]> {
-  console.log(`[BatchProcessor V3] ═══════════════════════════════════════`);
-  console.log(`[BatchProcessor V3] Processing ${strategy.photoStrategies.length} photos`);
-  console.log(`[BatchProcessor V3] AutoEnhance configured: ${isAutoEnhanceConfigured()}`);
-  console.log(`[BatchProcessor V3] ═══════════════════════════════════════`);
+  logger.info(`[BatchProcessor V3] ═══════════════════════════════════════`);
+  logger.info(`[BatchProcessor V3] Processing ${strategy.photoStrategies.length} photos`);
+  logger.info(`[BatchProcessor V3] AutoEnhance configured: ${isAutoEnhanceConfigured()}`);
+  logger.info(`[BatchProcessor V3] ═══════════════════════════════════════`);
 
   const startTime = Date.now();
   const results: PhotoProcessingResult[] = [];
@@ -177,7 +178,7 @@ export async function processListingBatch(
   for (let i = 0; i < photosWithUrls.length; i += CONFIG.maxConcurrency) {
     // Overall batch timeout check
     if (Date.now() - startTime > CONFIG.maxBatchTimeoutMs) {
-      console.warn(`[BatchProcessor V3] Batch timeout reached (${CONFIG.maxBatchTimeoutMs}ms), stopping early`);
+      logger.warn(`[BatchProcessor V3] Batch timeout reached (${CONFIG.maxBatchTimeoutMs}ms), stopping early`);
       break;
     }
 
@@ -211,7 +212,7 @@ export async function processListingBatch(
     const batchResults = await Promise.all(batchPromises);
     results.push(...batchResults);
 
-    console.log(`[BatchProcessor V3] Progress: ${results.length}/${strategy.totalPhotos}`);
+    logger.info(`[BatchProcessor V3] Progress: ${results.length}/${strategy.totalPhotos}`);
 
     // Delay between batches
     if (i + CONFIG.maxConcurrency < photosWithUrls.length) {
@@ -222,9 +223,9 @@ export async function processListingBatch(
   const duration = Date.now() - startTime;
   const successCount = results.filter(r => r.success).length;
 
-  console.log(`[BatchProcessor V3] ═══════════════════════════════════════`);
-  console.log(`[BatchProcessor V3] COMPLETE: ${successCount}/${results.length} in ${(duration / 1000).toFixed(1)}s`);
-  console.log(`[BatchProcessor V3] ═══════════════════════════════════════`);
+  logger.info(`[BatchProcessor V3] ═══════════════════════════════════════`);
+  logger.info(`[BatchProcessor V3] COMPLETE: ${successCount}/${results.length} in ${(duration / 1000).toFixed(1)}s`);
+  logger.info(`[BatchProcessor V3] ═══════════════════════════════════════`);
 
   return results;
 }
@@ -281,7 +282,7 @@ async function processPhoto(
     };
   }
 
-  console.log(`[BatchProcessor V3] Photo ${photo.photoId}: ${photo.tools.join(' → ')}`);
+  logger.info(`[BatchProcessor V3] Photo ${photo.photoId}: ${photo.tools.join(' → ')}`);
 
   // Process each tool
   for (const tool of photo.toolOrder) {
@@ -316,11 +317,11 @@ async function processPhoto(
             qualityPassed = qc.passed && qc.score >= minScore;
             qualityScore = qc.score;
             if (!qualityPassed) {
-              console.warn(`[BatchProcessor V3] ⚠ Quality gate failed for ${tool} (score ${qc.score})`);
+              logger.warn(`[BatchProcessor V3] ⚠ Quality gate failed for ${tool} (score ${qc.score})`);
             }
           } catch (qcError: unknown) {
             const message = qcError instanceof Error ? qcError.message : 'Processing failed';
-            console.warn(`[BatchProcessor V3] ⚠ Quality gate error for ${tool}: ${message || qcError}`);
+            logger.warn(`[BatchProcessor V3] ⚠ Quality gate error for ${tool}: ${message || qcError}`);
             if (!QUALITY_GATE.failOpen) {
               qualityPassed = false;
             }
@@ -331,11 +332,11 @@ async function processPhoto(
             structurePassed = structural.passed;
             structureIssues = structural.issues || [];
             if (!structurePassed) {
-              console.warn(`[BatchProcessor V3] ⚠ Structure check failed for ${tool}`);
+              logger.warn(`[BatchProcessor V3] ⚠ Structure check failed for ${tool}`);
             }
           } catch (structError: unknown) {
             const message = structError instanceof Error ? structError.message : 'Processing failed';
-            console.warn(`[BatchProcessor V3] ⚠ Structure check error for ${tool}: ${message || structError}`);
+            logger.warn(`[BatchProcessor V3] ⚠ Structure check error for ${tool}: ${message || structError}`);
             if (!QUALITY_GATE.failOpen) {
               structurePassed = false;
               structureIssues = ['Structure check failed to run'];
@@ -365,32 +366,32 @@ async function processPhoto(
                         structurePassed = structuralRecovered.passed;
                         structureIssues = structuralRecovered.issues || [];
                       }
-                      console.warn(`[BatchProcessor V3] ⚠ Brightness recovered for ${tool}`);
+                      logger.warn(`[BatchProcessor V3] ⚠ Brightness recovered for ${tool}`);
                     } else {
                       qualityPassed = false;
-                      console.warn(
+                      logger.warn(
                         `[BatchProcessor V3] ⚠ Brightness guard failed for ${tool} after recovery (orig ${origStats2.brightness.toFixed(1)} → ${recoveredStats.brightness.toFixed(1)})`
                       );
                     }
                   } else {
                     qualityPassed = false;
-                    console.warn(`[BatchProcessor V3] ⚠ Brightness recovery failed for ${tool}`);
+                    logger.warn(`[BatchProcessor V3] ⚠ Brightness recovery failed for ${tool}`);
                   }
                 } catch (recoveryError: unknown) {
                   const message = recoveryError instanceof Error ? recoveryError.message : 'Processing failed';
                   qualityPassed = false;
-                  console.warn(`[BatchProcessor V3] ⚠ Brightness recovery error for ${tool}: ${message || recoveryError}`);
+                  logger.warn(`[BatchProcessor V3] ⚠ Brightness recovery error for ${tool}: ${message || recoveryError}`);
                 }
               } else {
                 qualityPassed = false;
-                console.warn(
+                logger.warn(
                   `[BatchProcessor V3] ⚠ Brightness guard failed for ${tool} (orig ${origStats.brightness.toFixed(1)} → ${enhancedStats.brightness.toFixed(1)})`
                 );
               }
             }
           } catch (brightnessError: unknown) {
             const message = brightnessError instanceof Error ? brightnessError.message : 'Processing failed';
-            console.warn(`[BatchProcessor V3] ⚠ Brightness guard error for ${tool}: ${message || brightnessError}`);
+            logger.warn(`[BatchProcessor V3] ⚠ Brightness guard error for ${tool}: ${message || brightnessError}`);
             if (!QUALITY_GATE.failOpen) {
               qualityPassed = false;
             }
@@ -419,7 +420,7 @@ async function processPhoto(
                 const minAllowed = Math.max(BRIGHTNESS_GUARD.minBrightness, origStats.brightness - BRIGHTNESS_GUARD.maxDrop);
                 if (enhancedStats.brightness < minAllowed) {
                   qualityPassed = false;
-                  console.warn(
+                  logger.warn(
                     `[BatchProcessor V3] ⚠ Brightness guard failed after retry for ${tool} (orig ${origStats.brightness.toFixed(1)} → ${enhancedStats.brightness.toFixed(1)})`
                   );
                 }
@@ -427,7 +428,7 @@ async function processPhoto(
             }
           } catch (retryError: unknown) {
             const message = retryError instanceof Error ? retryError.message : 'Processing failed';
-            console.warn(`[BatchProcessor V3] ⚠ Retry failed for ${tool}: ${message || retryError}`);
+            logger.warn(`[BatchProcessor V3] ⚠ Retry failed for ${tool}: ${message || retryError}`);
           }
         }
 
@@ -453,7 +454,7 @@ async function processPhoto(
           duration: Date.now() - toolStart,
             model: modelUsed,
         };
-        console.log(`[BatchProcessor V3] ✓ ${tool} (${config.provider})`);
+        logger.info(`[BatchProcessor V3] ✓ ${tool} (${config.provider})`);
         }
       } else {
         toolsSkipped.push(tool);
@@ -465,7 +466,7 @@ async function processPhoto(
           error: result.error,
         };
         lastError = result.error;
-        console.log(`[BatchProcessor V3] ✗ ${tool}: ${result.error}`);
+        logger.info(`[BatchProcessor V3] ✗ ${tool}: ${result.error}`);
       }
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : 'Internal server error';
@@ -477,7 +478,7 @@ async function processPhoto(
         error: message,
       };
       lastError = message;
-      console.error(`[BatchProcessor V3] ✗ ${tool} error:`, message);
+      logger.error(`[BatchProcessor V3] ✗ ${tool} error:`, message);
     }
   }
 
@@ -490,10 +491,10 @@ async function processPhoto(
       const upscaled = await replicate.upscale(currentUrl, { scale: HERO_UPSCALE.scale });
       currentUrl = upscaled;
       postProcessing.push(`upscale-${HERO_UPSCALE.scale}x`);
-      console.log(`[BatchProcessor V3] ✓ hero upscale (${HERO_UPSCALE.scale}x)`);
+      logger.info(`[BatchProcessor V3] ✓ hero upscale (${HERO_UPSCALE.scale}x)`);
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : 'Processing failed';
-      console.warn(`[BatchProcessor V3] ⚠ hero upscale failed: ${message || error}`);
+      logger.warn(`[BatchProcessor V3] ⚠ hero upscale failed: ${message || error}`);
     }
   }
 
@@ -504,7 +505,7 @@ async function processPhoto(
       let baseBuffer: Buffer | undefined;
       if (BASE_ENHANCE.enabled) {
         try {
-          const response = await fetch(currentUrl);
+          const response = await fetch(currentUrl, { signal: AbortSignal.timeout(15000) });
           if (response.ok) {
             const arrayBuffer = await response.arrayBuffer();
             const enhanced = await sharpAutoEnhance(Buffer.from(arrayBuffer), {
@@ -515,7 +516,7 @@ async function processPhoto(
           }
         } catch (error: unknown) {
           const message = error instanceof Error ? error.message : 'Processing failed';
-          console.warn(`[BatchProcessor V3] ⚠ base enhance failed: ${message || error}`);
+          logger.warn(`[BatchProcessor V3] ⚠ base enhance failed: ${message || error}`);
         }
       }
 
@@ -529,7 +530,7 @@ async function processPhoto(
       );
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : 'Processing failed';
-      console.error(`[BatchProcessor V3] Save error:`, message);
+      logger.error(`[BatchProcessor V3] Save error:`, message);
     }
   }
 
@@ -579,7 +580,7 @@ async function processToolWithRouting(
       return { success: result.success, enhancedUrl: result.url, providerUsed: 'flux-multipass', modelUsed: 'black-forest-labs/flux-kontext-dev' };
     } catch {
       // Fallback to single-pass
-      console.log('[BatchProcessor V3] Multi-pass failed, trying single-pass');
+      logger.info('[BatchProcessor V3] Multi-pass failed, trying single-pass');
     }
   }
 
@@ -598,11 +599,11 @@ async function processToolWithRouting(
   switch (provider) {
     case 'autoenhance':
       if (!isAutoEnhanceConfigured()) {
-        console.log('[BatchProcessor V3] AutoEnhance not configured, using FLUX');
+        logger.info('[BatchProcessor V3] AutoEnhance not configured, using FLUX');
         return runFluxTool(imageUrl, tool, presets);
       }
       if (!canUseAutoEnhance(planTier, tool, isHeroCandidate)) {
-        console.log('[BatchProcessor V3] AutoEnhance blocked by plan, using FLUX');
+        logger.info('[BatchProcessor V3] AutoEnhance blocked by plan, using FLUX');
         return runFluxTool(imageUrl, tool, presets);
       }
       return runAutoEnhanceTool(imageUrl, tool);
@@ -731,12 +732,12 @@ async function runFluxTool(
         return inpaintResult;
       }
       if (inpaintResult?.error) {
-        console.warn(`[BatchProcessor V3] Inpaint fallback: ${inpaintResult.error}`);
+        logger.warn(`[BatchProcessor V3] Inpaint fallback: ${inpaintResult.error}`);
         if (ENFORCE_MASKED_TOOLS) {
           return { success: false, error: `Mask required: ${inpaintResult.error}`, providerUsed: 'flux-fill', modelUsed: INPAINT.provider };
         }
         // Fall through to Flux Kontext fallback
-        console.log(`[BatchProcessor V3] Inpaint failed, falling back to Flux Kontext for ${tool}`);
+        logger.info(`[BatchProcessor V3] Inpaint failed, falling back to Flux Kontext for ${tool}`);
       }
     }
 
@@ -870,7 +871,7 @@ async function recoverTwilightBrightness(imageUrl: string): Promise<string | nul
     return await replicate.colorBalance(imageUrl, prompt, { guidance: 1.6, steps: 16 });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Processing failed';
-    console.warn('[BatchProcessor V3] Twilight brightness recovery failed:', message || error);
+    logger.warn('[BatchProcessor V3] Twilight brightness recovery failed:', message || error);
     return null;
   }
 }
@@ -966,7 +967,7 @@ async function saveEnhancedPhoto(
   if (bufferOverride) {
     buffer = Uint8Array.from(bufferOverride).buffer;
   } else {
-  const response = await fetch(enhancedUrl);
+  const response = await fetch(enhancedUrl, { signal: AbortSignal.timeout(15000) });
   if (!response.ok) throw new Error('Failed to fetch enhanced image');
     buffer = await response.arrayBuffer();
   }

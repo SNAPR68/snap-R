@@ -28,7 +28,7 @@ export default function ShareGalleryModal({ listingId, listingTitle, onClose }: 
       if (data.shareUrl) setShareUrl(data.shareUrl)
       else if (data.success && data.token) setShareUrl(`${window.location.origin}/share/${data.token}`)
       else alert(data.error || 'Failed to generate link')
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Error generating link:', error)
       alert('Failed to generate link')
     }

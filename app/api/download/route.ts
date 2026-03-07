@@ -9,6 +9,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { addWatermark, requiresWatermark, getWatermarkText } from '@/lib/compliance/watermark';
 
+import { logger } from '@/lib/logger';
 type WatermarkPosition = 'bottom-left' | 'bottom-right' | 'bottom-center' | 'top-left' | 'top-right';
 
 const VALID_POSITIONS = new Set(['bottom-left', 'bottom-right', 'bottom-center', 'top-left', 'top-right']);
@@ -99,7 +100,7 @@ async function handleWatermarkedDownload(photoId: string): Promise<NextResponse>
     }
 
     // Fetch and watermark
-    const response = await fetch(imageUrl);
+    const response = await fetch(imageUrl, { signal: AbortSignal.timeout(15000) });
     let buffer: Buffer | Uint8Array = Buffer.from(await response.arrayBuffer());
 
     // MLS compliance watermark — always applied if tool requires it
@@ -131,7 +132,7 @@ async function handleWatermarkedDownload(photoId: string): Promise<NextResponse>
     });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Download failed';
-    console.error('Watermarked download error:', message);
+    logger.error('Watermarked download error:', message);
     return NextResponse.json({ error: 'Download failed' }, { status: 500 });
   }
 }
@@ -164,7 +165,7 @@ async function handleProxyDownload(searchParams: URLSearchParams): Promise<NextR
       return NextResponse.json({ error: 'Domain not allowed' }, { status: 403 });
     }
 
-    const response = await fetch(imageUrl);
+    const response = await fetch(imageUrl, { signal: AbortSignal.timeout(15000) });
 
     if (!response.ok) {
       return NextResponse.json({ error: 'Failed to fetch image' }, { status: 500 });
@@ -182,7 +183,7 @@ async function handleProxyDownload(searchParams: URLSearchParams): Promise<NextR
     });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Download failed';
-    console.error('Download proxy error:', message);
+    logger.error('Download proxy error:', message);
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }

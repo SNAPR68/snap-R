@@ -8,6 +8,7 @@ import { adminSupabase } from '@/lib/supabase/admin';
 import { videoStatusSchema } from '@/lib/validation/schemas';
 import { ZodError } from 'zod';
 
+import { logger } from '@/lib/logger';
 interface VideoRenderJob {
   id: string;
   user_id: string;
@@ -40,7 +41,7 @@ export async function GET(request: NextRequest) {
     let validatedInput;
     try {
       validatedInput = videoStatusSchema.parse({ renderId });
-    } catch (error) {
+    } catch (error: unknown) {
       if (error instanceof ZodError) {
         return NextResponse.json(
           {
@@ -154,7 +155,7 @@ export async function GET(request: NextRequest) {
       const errorType = (firstError as Record<string, unknown>)?.type as string | undefined;
       const errorName = (firstError as Record<string, unknown>)?.name as string | undefined;
 
-      console.error('[video/status] Fatal render error:', {
+      logger.error('[video/status] Fatal render error:', {
         renderId: validatedInput.renderId,
         errorMessage,
         errorType,
@@ -193,7 +194,7 @@ export async function GET(request: NextRequest) {
     });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Unknown error';
-    console.error('[video/status]', error);
+    logger.error('[video/status]', error);
 
     return NextResponse.json(
       {

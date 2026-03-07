@@ -3,6 +3,7 @@
 
 import { getEstimatedDelivery } from './config';
 
+import { logger } from '@/lib/logger';
 const CUBICASA_API_KEY = process.env.CUBICASA_API_KEY;
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 
@@ -41,7 +42,7 @@ interface FloorPlanResult {
 // CubiCasa API Integration (when available)
 async function generateWithCubiCasa(photos: string[]): Promise<FloorPlanResult | null> {
   if (!CUBICASA_API_KEY) {
-    console.log('CubiCasa API key not configured');
+    logger.info('CubiCasa API key not configured');
     return null;
   }
 
@@ -59,10 +60,11 @@ async function generateWithCubiCasa(photos: string[]): Promise<FloorPlanResult |
         output_format: 'png',
         include_3d: false,
       }),
+          signal: AbortSignal.timeout(15000),
     });
 
     if (!response.ok) {
-      console.error('CubiCasa API error:', await response.text());
+      logger.error('CubiCasa API error:', await response.text());
       return null;
     }
 
@@ -75,8 +77,8 @@ async function generateWithCubiCasa(photos: string[]): Promise<FloorPlanResult |
       rooms: data.rooms,
       processingMethod: 'cubicasa',
     };
-  } catch (error) {
-    console.error('CubiCasa error:', error);
+  } catch (error: unknown) {
+    logger.error('CubiCasa error:', error);
     return null;
   }
 }
@@ -136,7 +138,7 @@ Return as JSON:
     });
 
     if (!response.ok) {
-      console.error('OpenAI error:', await response.text());
+      logger.error('OpenAI error:', await response.text());
       return null;
     }
 
@@ -150,8 +152,8 @@ Return as JSON:
     }
     
     return null;
-  } catch (error) {
-    console.error('Photo analysis error:', error);
+  } catch (error: unknown) {
+    logger.error('Photo analysis error:', error);
     return null;
   }
 }

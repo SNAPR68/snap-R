@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { Camera, ArrowLeft, Loader2, X, Sun, Moon, Leaf, Waves, Trash2, Sofa, Flame, Tv, Lightbulb, Sparkles, Wand2, Download, Check, Move, Circle, Palette, PanelTop } from 'lucide-react';
 import Link from 'next/link';
 
+import Image from 'next/image';
 const AI_TOOLS = [
   { id: 'sky-replacement', name: 'Sky Replace', icon: Sun, credits: 1, category: 'EXTERIOR', hasPresets: true },
   { id: 'virtual-twilight', name: 'Twilight', icon: Moon, credits: 2, category: 'EXTERIOR', hasPresets: true },
@@ -248,7 +249,7 @@ export default function CameraPage() {
         {step === 'tools' && preview && (
           <div className="space-y-4">
             <div className="relative rounded-xl overflow-hidden">
-              <img src={preview} alt="Preview" className="w-full max-h-64 object-cover" />
+              <Image src={preview} alt="Preview" className="w-full max-h-64 object-cover" width={400} height={300} unoptimized />
             </div>
             
             <div className="flex gap-2 justify-center">
@@ -287,7 +288,7 @@ export default function CameraPage() {
         {step === 'presets' && selectedTool && PRESETS[selectedTool.id] && (
           <div className="space-y-4">
             <div className="relative rounded-xl overflow-hidden">
-              <img src={preview!} alt="Preview" className="w-full max-h-64 object-cover" />
+              <Image src={preview!} alt="Preview" className="w-full max-h-64 object-cover" width={400} height={300} unoptimized />
             </div>
             <p className="text-center text-white/60 text-sm">Select {selectedTool.name} style</p>
             <div className="grid grid-cols-2 gap-2">
@@ -316,7 +317,7 @@ export default function CameraPage() {
         {step === 'result' && result && (
           <div className="space-y-4">
             <div className="relative rounded-xl overflow-hidden">
-              <img src={result} alt="Enhanced" className="w-full" />
+              <Image src={result} alt="Enhanced" className="w-full" width={400} height={300} unoptimized />
               <div className="absolute top-2 right-2 bg-green-500 text-white text-xs px-2 py-1 rounded-full flex items-center gap-1">
                 <Check className="w-3 h-3" /> Enhanced
               </div>

@@ -19,6 +19,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { Resend } from 'resend'
 import { adminSupabase } from '@/lib/supabase/admin'
 
+import { logger } from '@/lib/logger';
 interface DripEmail {
   id: string
   enrollment_id: string
@@ -115,12 +116,12 @@ export async function GET(request: NextRequest) {
       .limit(50)
 
     if (fetchError) {
-      console.error('[DripCron] Fetch error:', fetchError.message)
+      logger.error('[DripCron] Fetch error:', fetchError.message)
       return NextResponse.json({ error: fetchError.message }, { status: 500 })
     }
 
     const emails = (dueEmails || []) as DripEmail[]
-    console.log(`[DripCron] Processing ${emails.length} due drip emails`)
+    logger.info(`[DripCron] Processing ${emails.length} due drip emails`)
 
     for (const email of emails) {
       const enrollment = email.lead_drip_enrollments[0] ?? null
@@ -222,7 +223,7 @@ export async function GET(request: NextRequest) {
         }
       } catch (sendErr: unknown) {
         const errMsg = sendErr instanceof Error ? sendErr.message : 'Send failed'
-        console.error(`[DripCron] Failed to send email ${email.id}:`, errMsg)
+        logger.error(`[DripCron] Failed to send email ${email.id}:`, errMsg)
 
         await admin
           .from('lead_drip_emails')
@@ -233,12 +234,12 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    console.log(`[DripCron] Done — sent=${sent} failed=${failed} skipped=${skipped}`)
+    logger.info(`[DripCron] Done — sent=${sent} failed=${failed} skipped=${skipped}`)
 
     return NextResponse.json({ success: true, sent, failed, skipped })
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Unknown error'
-    console.error('[DripCron] Fatal error:', message)
+    logger.error('[DripCron] Fatal error:', message)
     return NextResponse.json({ error: message }, { status: 500 })
   }
 }

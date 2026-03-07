@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { teamMemberActionSchema, parseBody } from '@/lib/validation/schemas'
 
+import { logger } from '@/lib/logger';
 export const dynamic = 'force-dynamic';
 
 // GET - List team members
@@ -25,8 +27,8 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     }
 
     return NextResponse.json({ members });
-  } catch (error) {
-    console.error('Get members error:', error);
+  } catch (error: unknown) {
+    logger.error('Get members error:', error);
     return NextResponse.json({ error: 'Server error' }, { status: 500 });
   }
 }
@@ -42,7 +44,7 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { userId } = await req.json();
+    const body = await req.json(); const validated = parseBody(teamMemberActionSchema, body); if (!validated.success) { return NextResponse.json({ error: validated.error, details: validated.details }, { status: 400 }); } const { userId } = body;
 
     // Check if requester is admin/owner
     const { data: requesterMember } = await supabase
@@ -82,8 +84,8 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
     }
 
     return NextResponse.json({ success: true });
-  } catch (error) {
-    console.error('Remove member error:', error);
+  } catch (error: unknown) {
+    logger.error('Remove member error:', error);
     return NextResponse.json({ error: 'Server error' }, { status: 500 });
   }
 }
@@ -140,8 +142,8 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     }
 
     return NextResponse.json({ success: true });
-  } catch (error) {
-    console.error('Update role error:', error);
+  } catch (error: unknown) {
+    logger.error('Update role error:', error);
     return NextResponse.json({ error: 'Server error' }, { status: 500 });
   }
 }

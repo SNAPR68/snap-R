@@ -1,3 +1,4 @@
+import { logger } from '@/lib/logger';
 interface LogErrorOptions {
   errorType: 'api' | 'frontend' | 'enhancement' | 'payment' | 'auth';
   message: string;
@@ -26,9 +27,10 @@ export const logError = async (options: LogErrorOptions) => {
         severity: options.severity || 'error',
         user_id: options.userId,
       }),
+          signal: AbortSignal.timeout(10000),
     });
-  } catch (e) {
-    console.error('Failed to log error:', e);
+  } catch (error: unknown) {
+    logger.error('Failed to log error:', error);
   }
 };
 

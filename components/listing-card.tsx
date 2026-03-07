@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
@@ -19,9 +20,13 @@ export function ListingCard({
           <CardTitle className="truncate">{title}</CardTitle>
         </CardHeader>
         <CardContent>
-          <img
+          <Image
             src={thumbnail}
+            alt={title}
+            width={400}
+            height={160}
             className="rounded-lg w-full h-40 object-cover"
+            unoptimized
           />
           <p className="text-sm text-[var(--text-soft)] mt-2">{count} photos</p>
         </CardContent>

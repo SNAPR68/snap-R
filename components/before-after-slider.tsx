@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import { useState, useRef, useCallback } from 'react';
 
 interface BeforeAfterSliderProps {
@@ -67,12 +68,10 @@ export function BeforeAfterSlider({
         onTouchMove={handleTouchMove}
       >
         {/* After Image - Full background */}
-        <img
-          src={afterUrl}
+        <Image src={afterUrl}
           alt={afterLabel}
           className="absolute inset-0 w-full h-full object-contain"
-          draggable={false}
-        />
+          draggable={false} width={400} height={300} unoptimized />
         <span className="absolute top-3 right-3 px-3 py-1.5 bg-[#D4A017] text-black text-xs font-bold rounded-md shadow-lg z-20">
           {afterLabel} • Enhanced
         </span>
@@ -82,16 +81,14 @@ export function BeforeAfterSlider({
           className="absolute top-0 left-0 bottom-0 overflow-hidden"
           style={{ width: `${sliderPosition}%` }}
         >
-          <img
-            src={beforeUrl}
+          <Image src={beforeUrl}
             alt={beforeLabel}
             className="absolute top-0 left-0 h-full object-contain"
             style={{ 
               width: containerRef.current?.offsetWidth || '100vw',
               maxWidth: 'none'
             }}
-            draggable={false}
-          />
+            draggable={false} unoptimized />
           <span className="absolute top-3 left-3 px-3 py-1.5 bg-white/90 text-black text-xs font-bold rounded-md shadow-lg z-20">
             {beforeLabel} • Original
           </span>

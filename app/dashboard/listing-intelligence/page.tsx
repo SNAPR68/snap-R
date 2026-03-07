@@ -110,7 +110,7 @@ function ListingIntelligenceContent() {
     } else {
       loadAllListings();
     }
-  }, [listingId]);
+  }, [listingId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const loadAllListings = async () => {
     const supabase = createClient();

@@ -1,6 +1,7 @@
 export const dynamic = 'force-dynamic';
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { logger } from '@/lib/logger';
 import {
   addWatermark,
   requiresWatermark,
@@ -34,7 +35,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Fetch original image
-    const response = await fetch(imageUrl);
+    const response = await fetch(imageUrl, { signal: AbortSignal.timeout(15000) });
     if (!response.ok) {
       return NextResponse.json(
         { error: 'Failed to fetch image' },
@@ -93,7 +94,7 @@ export async function POST(request: NextRequest) {
     });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Internal server error';
-    console.error('[Compliance Apply] Error:', message);
+    logger.error('[Compliance Apply] Error:', message);
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }

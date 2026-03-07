@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
+import Image from 'next/image';
 import { ArrowLeft, Mail, Sparkles, Download, Copy, Check, Home, Loader2, ChevronDown, Eye, Code, ExternalLink, Send, X } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 
@@ -221,7 +222,7 @@ export default function EmailMarketingClient() {
         }))
         setListings(processed)
       }
-    } catch (error) { console.error('Error loading listings:', error) }
+    } catch (error: unknown) { console.error('Error loading listings:', error) }
     setLoading(false)
   }
 
@@ -441,7 +442,7 @@ ${agentEmail}
                 <tr>
                   ${galleryPhotos.map((photo, i) => `
                     <td style="width:${100 / galleryPhotos.length}%;padding:${i > 0 ? '0 0 0 8px' : '0'};">
-                      <img src="${photo}" alt="Property Photo ${i + 2}" style="width:100%;height:120px;object-fit:cover;border-radius:8px;display:block;">
+                      <Image src="${photo}" alt="Property Photo ${i + 2}" style="width:100%;height:120px;object-fit:cover;border-radius:8px;display:block;" unoptimized />
                     </td>
                   `).join('')}
                 </tr>
@@ -476,7 +477,7 @@ ${agentEmail}
           <tr>
             <td style="position:relative;">
               ${hasPropertySite ? `<a href="${ctaUrl}" style="display:block;">` : ''}
-              <img src="${heroPhoto}" alt="${listing.title}" style="width:100%;height:320px;object-fit:cover;display:block;">
+              <Image src="${heroPhoto}" alt="${listing.title}" style="width:100%;height:320px;object-fit:cover;display:block;" unoptimized />
               ${hasPropertySite ? '</a>' : ''}
               <div style="position:absolute;top:20px;left:20px;background:${colors.secondary};color:#ffffff;padding:10px 20px;font-weight:bold;font-size:14px;letter-spacing:1px;border-radius:6px;text-transform:uppercase;">
                 ${type.replace('-', ' ')}
@@ -640,7 +641,7 @@ ${agentEmail}
                   {selectedListing ? (
                     <div className="flex items-center gap-3">
                       {/* eslint-disable-next-line @next/next/no-img-element */}
-                      {selectedListing.thumbnail ? <img src={selectedListing.thumbnail} alt="" className="w-10 h-10 rounded-lg object-cover" /> : <div className="w-10 h-10 rounded-lg bg-white/10 flex items-center justify-center"><Home className="w-5 h-5 text-white/30" /></div>}
+                      {selectedListing.thumbnail ? <Image src={selectedListing.thumbnail} alt="" className="w-10 h-10 rounded-lg object-cover" width={400} height={300} unoptimized /> : <div className="w-10 h-10 rounded-lg bg-white/10 flex items-center justify-center"><Home className="w-5 h-5 text-white/30" /></div>}
                       <div className="text-left">
                         <p className="font-medium text-sm">{selectedListing.title}</p>
                         <p className="text-xs text-white/40">
@@ -659,7 +660,7 @@ ${agentEmail}
                     : listings.map(l => (
                       <button key={l.id} onClick={() => handleSelectListing(l)} className={'w-full flex items-center gap-3 p-3 hover:bg-white/5 transition-colors ' + (selectedListing?.id === l.id ? 'bg-blue-500/10' : '')}>
                         {/* eslint-disable-next-line @next/next/no-img-element */}
-                        {l.thumbnail ? <img src={l.thumbnail} alt="" className="w-10 h-10 rounded-lg object-cover" /> : <div className="w-10 h-10 rounded-lg bg-white/10 flex items-center justify-center"><Home className="w-5 h-5 text-white/30" /></div>}
+                        {l.thumbnail ? <Image src={l.thumbnail} alt="" className="w-10 h-10 rounded-lg object-cover" width={400} height={300} unoptimized /> : <div className="w-10 h-10 rounded-lg bg-white/10 flex items-center justify-center"><Home className="w-5 h-5 text-white/30" /></div>}
                         <div className="text-left flex-1">
                           <p className="font-medium text-sm">{l.title}</p>
                           <p className="text-xs text-white/40">{l.city}{l.city && l.state ? ', ' : ''}{l.state}</p>
@@ -729,7 +730,7 @@ ${agentEmail}
                   {selectedPhotos.slice(0, 5).map((url, idx) => (
                     <div key={idx} className="relative w-16 h-16 rounded-lg overflow-hidden border-2 border-blue-500">
                       {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={url} alt="" className="w-full h-full object-cover" />
+                      <Image src={url} alt="" className="w-full h-full object-cover" width={400} height={300} unoptimized />
                       {idx === 0 && (
                         <div className="absolute bottom-0 left-0 right-0 bg-blue-500 text-[10px] text-center py-0.5">Hero</div>
                       )}
@@ -758,7 +759,7 @@ ${agentEmail}
                             disabled={!isSelected && selectedPhotos.length >= MAX_PHOTOS}
                           >
                             {/* eslint-disable-next-line @next/next/no-img-element */}
-                            <img src={photo.url} alt="" className="w-full h-full object-cover" />
+                            <Image src={photo.url} alt="" className="w-full h-full object-cover" width={400} height={300} unoptimized />
                             {isSelected && (
                               <div className="absolute inset-0 bg-blue-500/30 flex items-center justify-center">
                                 <div className="w-6 h-6 rounded-full bg-blue-500 text-white text-xs font-bold flex items-center justify-center">

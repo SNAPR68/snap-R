@@ -2,11 +2,13 @@ export const dynamic = 'force-dynamic';
 import { NextRequest, NextResponse } from 'next/server';
 import { Resend } from 'resend';
 import { createClient } from '@/lib/supabase/server';
+import { humanEditorSchema, parseBody } from '@/lib/validation/schemas'
 
+import { logger } from '@/lib/logger';
 export async function POST(request: NextRequest) {
   try {
     const resend = new Resend(process.env.RESEND_API_KEY);
-    const { photoUrl, listingId, instructions, isUrgent, userEmail } = await request.json();
+    const body = await request.json(); const validated = parseBody(humanEditorSchema, body); if (!validated.success) { return NextResponse.json({ error: validated.error, details: validated.details }, { status: 400 }); } const { photoUrl, listingId, instructions, isUrgent, userEmail } = body;
 
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
@@ -33,7 +35,7 @@ export async function POST(request: NextRequest) {
         <p><strong>Instructions:</strong></p>
         <p>${instructions || 'No special instructions'}</p>
         <p><strong>Photo:</strong></p>
-        <img src="${photoUrl}" style="max-width: 600px; border-radius: 8px;" />
+        <img src="${photoUrl}" style="max-width: 600px; border-radius: 8px;"  alt="Property photo" />
         <hr />
         <p>Listing ID: ${listingId}</p>
         <p>User ID: ${user.id}</p>
@@ -55,8 +57,8 @@ export async function POST(request: NextRequest) {
     });
 
     return NextResponse.json({ success: true });
-  } catch (error) {
-    console.error('Human editor error:', error);
+  } catch (error: unknown) {
+    logger.error('Human editor error:', error);
     return NextResponse.json({ error: 'Failed to send' }, { status: 500 });
   }
 }

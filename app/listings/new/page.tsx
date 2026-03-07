@@ -7,6 +7,7 @@ import { createClient } from '@/lib/supabase/client';
 import { ArrowLeft, Upload, Loader2, X, Image as ImageIcon, Sparkles, ChevronUp, ChevronDown } from 'lucide-react';
 import Link from 'next/link';
 
+import Image from 'next/image';
 function GuidedTooltip({ text, step, onDismiss }: { text: string; step: number; onDismiss: () => void }) {
   return (
     <div className="absolute -top-2 left-0 right-0 -translate-y-full z-10 animate-fadeIn">
@@ -320,7 +321,7 @@ function NewListingContent() {
               <div className="grid grid-cols-4 gap-3 mt-4">
                 {previews.map((preview, i) => (
                   <div key={i} className="relative aspect-square rounded-lg overflow-hidden bg-white/5">
-                    <img src={preview} alt="" className="w-full h-full object-cover" />
+                    <Image src={preview} alt="" className="w-full h-full object-cover" width={400} height={300} unoptimized />
                     <button type="button" onClick={() => removeFile(i)} className="absolute top-1 right-1 p-1 bg-black/70 rounded-full hover:bg-red-500"><X className="w-4 h-4" /></button>
                   </div>
                 ))}

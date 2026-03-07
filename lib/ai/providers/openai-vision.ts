@@ -1,6 +1,7 @@
 import OpenAI from 'openai';
 import { logApiCost } from '@/lib/cost-logger';
 
+import { logger } from '@/lib/logger';
 function getOpenAIClient(client?: OpenAI): OpenAI {
   if (client) return client;
   return new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
@@ -23,7 +24,7 @@ export interface ImageAnalysis {
 }
 
 export async function analyzeImage(imageUrl: string, client?: OpenAI): Promise<ImageAnalysis> {
-  console.log('[Vision] Analyzing image...');
+  logger.info('[Vision] Analyzing image...');
   const startTime = Date.now();
   let success = true;
   let errorMessage: string | undefined;
@@ -72,10 +73,10 @@ Be accurate and concise. Only flag issues that are clearly visible.`
     try {
       const cleanContent = content.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
       const analysis = JSON.parse(cleanContent) as ImageAnalysis;
-      console.log('[Vision] Analysis complete:', analysis.recommended_enhancements);
+      logger.info('[Vision] Analysis complete:', analysis.recommended_enhancements);
       return analysis;
     } catch {
-      console.error('[Vision] Failed to parse response:', content);
+      logger.error('[Vision] Failed to parse response:', content);
       errorMessage = 'Failed to parse OpenAI response';
       return {
         sky_replacement_needed: false,
@@ -98,7 +99,7 @@ Be accurate and concise. Only flag issues that are clearly visible.`
     success = false;
     const msg = error instanceof Error ? error.message : 'Unknown error';
     errorMessage = msg;
-    console.error('[Vision] API error:', msg);
+    logger.error('[Vision] API error:', msg);
     return {
       sky_replacement_needed: false,
       sky_condition: 'good',
@@ -132,7 +133,7 @@ export async function scoreEnhancementQuality(
   enhancementType: string,
   client?: OpenAI
 ): Promise<{ score: number; issues: string[]; passed: boolean }> {
-  console.log('[QC] Scoring enhancement quality...');
+  logger.info('[QC] Scoring enhancement quality...');
   const startTime = Date.now();
   let success = true;
   let errorMessage: string | undefined;
@@ -182,7 +183,7 @@ Check for:
     try {
       const cleanContent = content.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
       const result = JSON.parse(cleanContent);
-      console.log('[QC] Score:', result.score, 'Passed:', result.passed);
+      logger.info('[QC] Score:', result.score, 'Passed:', result.passed);
       return result;
     } catch {
       return { score: 7, issues: [], passed: true };
@@ -192,7 +193,7 @@ Check for:
     success = false;
     const msg = error instanceof Error ? error.message : 'Unknown error';
     errorMessage = msg;
-    console.error('[QC] API error:', msg);
+    logger.error('[QC] API error:', msg);
     return { score: 7, issues: [], passed: true };
   } finally {
     // Log OpenAI cost
@@ -212,7 +213,7 @@ export async function checkStructuralIntegrity(
   enhancementType: string,
   client?: OpenAI
 ): Promise<{ passed: boolean; issues: string[] }> {
-  console.log('[QC] Checking structural integrity...');
+  logger.info('[QC] Checking structural integrity...');
   const startTime = Date.now();
   let success = true;
   let errorMessage: string | undefined;
@@ -267,7 +268,7 @@ FAIL if you see:
     success = false;
     const msg = error instanceof Error ? error.message : 'Unknown error';
     errorMessage = msg;
-    console.error('[QC] Structural check API error:', msg);
+    logger.error('[QC] Structural check API error:', msg);
     return { passed: true, issues: [] };
   } finally {
     await logApiCost({

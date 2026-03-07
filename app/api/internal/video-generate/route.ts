@@ -16,7 +16,9 @@ import { renderMediaOnLambda } from '@remotion/lambda/client';
 import type { AwsRegion } from '@remotion/lambda';
 import { adminSupabase } from '@/lib/supabase/admin';
 import { orderPhotosForWalkthrough } from '@/lib/video/photo-ordering';
+import { internalVideoGenerateSchema, parseBody } from '@/lib/validation/schemas'
 
+import { logger } from '@/lib/logger';
 const CRON_SECRET = process.env.CRON_SECRET;
 
 interface InternalGenerateBody {
@@ -86,6 +88,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = (await request.json()) as InternalGenerateBody;
+    const validated = parseBody(internalVideoGenerateSchema, body); if (!validated.success) { return NextResponse.json({ error: validated.error, details: validated.details }, { status: 400 }); }
     const { listingId, userId } = body;
     const template = body.template || 'property-showcase';
     const aspectRatio = body.aspectRatio || '9:16';
@@ -135,7 +138,7 @@ export async function POST(request: NextRequest) {
     );
 
     if (missingEnvVars.length > 0) {
-      console.error('[internal/video-generate] Missing env vars:', missingEnvVars);
+      logger.error('[internal/video-generate] Missing env vars:', missingEnvVars);
       return NextResponse.json(
         {
           error: 'Video rendering not configured',
@@ -266,10 +269,10 @@ export async function POST(request: NextRequest) {
       });
 
     if (insertError) {
-      console.error('[internal/video-generate] Database insert failed:', insertError);
+      logger.error('[internal/video-generate] Database insert failed:', insertError);
     }
 
-    console.log(`[internal/video-generate] Render triggered: ${renderResponse.renderId} for listing ${listingId}`);
+    logger.info(`[internal/video-generate] Render triggered: ${renderResponse.renderId} for listing ${listingId}`);
 
     return NextResponse.json({
       renderId: renderResponse.renderId,
@@ -289,7 +292,7 @@ export async function POST(request: NextRequest) {
       : undefined;
     const displayMessage = causeMsg ? `${message} — ${causeMsg}` : message;
 
-    console.error('[internal/video-generate] Full error:', {
+    logger.error('[internal/video-generate] Full error:', {
       name: errorName,
       message: displayMessage,
       awsHttpStatus: httpStatusCode,

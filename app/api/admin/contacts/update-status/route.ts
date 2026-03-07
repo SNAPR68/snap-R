@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { adminContactStatusSchema, parseBody } from '@/lib/validation/schemas'
 
 function getSupabase() {
   return createClient(
@@ -16,7 +17,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { id, status } = await req.json();
+    const body = await req.json(); const validated = parseBody(adminContactStatusSchema, body); if (!validated.success) { return NextResponse.json({ error: validated.error, details: validated.details }, { status: 400 }); } const { id, status } = body;
 
     if (!id || !status) {
       return NextResponse.json({ error: 'id and status are required' }, { status: 400 });

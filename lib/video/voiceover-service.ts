@@ -1,3 +1,4 @@
+import { logger } from '@/lib/logger';
 // AI Video Voiceover Service
 // Generates professional narration for property videos using AI
 
@@ -186,6 +187,7 @@ Write the script as continuous narration, no scene directions or brackets. Start
       max_tokens: 1000,
       temperature: 0.7,
     }),
+    signal: AbortSignal.timeout(30000),
   });
 
   if (!response.ok) {
@@ -226,6 +228,7 @@ export async function generateAudio(
           use_speaker_boost: true,
         },
       }),
+      signal: AbortSignal.timeout(30000),
     }
   );
 
@@ -265,6 +268,7 @@ export async function generateAudioOpenAI(
       voice: voice,
       response_format: 'mp3',
     }),
+    signal: AbortSignal.timeout(30000),
   });
 
   if (!response.ok) {
@@ -306,7 +310,7 @@ export async function generateVoiceover(request: VoiceoverRequest): Promise<Voic
       audioBuffer = result.audioBuffer;
       duration = result.duration;
     } catch {
-      console.log('ElevenLabs failed, falling back to OpenAI TTS');
+      logger.info('ElevenLabs failed, falling back to OpenAI TTS');
       // Map voice to OpenAI equivalent
       const openAIVoice = request.voiceId.includes('female') ? 'nova' : 'onyx';
       const result = await generateAudioOpenAI(script, openAIVoice);
@@ -326,8 +330,7 @@ export async function generateVoiceover(request: VoiceoverRequest): Promise<Voic
       duration,
     };
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : 'Unknown error';
-    console.error('Voiceover generation error:', error);
+    logger.error('Voiceover generation error:', error);
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Unknown error',

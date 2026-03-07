@@ -8,6 +8,7 @@
 
 import Replicate from 'replicate';
 
+import { logger } from '@/lib/logger';
 const replicate = new Replicate({
   auth: (typeof process !== "undefined" ? (typeof process !== "undefined" ? process.env.REPLICATE_API_TOKEN : "") : "")!,
 });
@@ -51,15 +52,15 @@ export async function multiPassTwilight(
 ): Promise<{ url: string; passes: number; success: boolean }> {
   const opts = { ...DEFAULT_OPTIONS, ...options };
 
-  console.log('[MultiPassTwilight] Starting multi-pass twilight processing');
-  console.log('[MultiPassTwilight] Preset:', opts.preset);
-  console.log('[MultiPassTwilight] Enhance glow:', opts.enhanceWindowGlow);
+  logger.info('[MultiPassTwilight] Starting multi-pass twilight processing');
+  logger.info('[MultiPassTwilight] Preset:', opts.preset);
+  logger.info('[MultiPassTwilight] Enhance glow:', opts.enhanceWindowGlow);
 
   try {
     // ========================================
     // PASS 1: Overall Twilight Transformation
     // ========================================
-    console.log('[MultiPassTwilight] === PASS 1: Twilight Atmosphere ===');
+    logger.info('[MultiPassTwilight] === PASS 1: Twilight Atmosphere ===');
 
     const twilightPrompt = getTwilightPrompt(opts.preset);
 
@@ -81,7 +82,7 @@ export async function multiPassTwilight(
       throw new Error('Pass 1 failed - no output');
     }
 
-    console.log('[MultiPassTwilight] Pass 1 complete');
+    logger.info('[MultiPassTwilight] Pass 1 complete');
 
     // If window glow enhancement is disabled, return after pass 1
     if (!opts.enhanceWindowGlow) {
@@ -91,7 +92,7 @@ export async function multiPassTwilight(
     // ========================================
     // PASS 2: Window Glow Enhancement
     // ========================================
-    console.log('[MultiPassTwilight] === PASS 2: Window Glow Enhancement ===');
+    logger.info('[MultiPassTwilight] === PASS 2: Window Glow Enhancement ===');
 
     const glowPrompt = getWindowGlowPrompt(opts.glowIntensity);
 
@@ -110,17 +111,17 @@ export async function multiPassTwilight(
     const pass2Url = normalizeOutputUrl(pass2Output);
 
     if (!pass2Url) {
-      console.warn('[MultiPassTwilight] Pass 2 failed, returning Pass 1 result');
+      logger.warn('[MultiPassTwilight] Pass 2 failed, returning Pass 1 result');
       return { url: pass1Url, passes: 1, success: true };
     }
 
-    console.log('[MultiPassTwilight] Pass 2 complete - Full multi-pass twilight done');
+    logger.info('[MultiPassTwilight] Pass 2 complete - Full multi-pass twilight done');
 
     return { url: pass2Url, passes: 2, success: true };
 
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Processing failed';
-    console.error('[MultiPassTwilight] Error:', message);
+    logger.error('[MultiPassTwilight] Error:', message);
     throw error;
   }
 }
@@ -187,7 +188,7 @@ export async function singlePassTwilight(
   imageUrl: string,
   preset: TwilightOptions['preset'] = 'blue-hour'
 ): Promise<string> {
-  console.log('[SinglePassTwilight] Running single-pass twilight');
+  logger.info('[SinglePassTwilight] Running single-pass twilight');
 
   const result = await multiPassTwilight(imageUrl, {
     preset,

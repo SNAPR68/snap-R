@@ -7,7 +7,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { Resend } from 'resend';
 import { adminSupabase } from '@/lib/supabase/admin';
+import { renovationRevisionSchema, parseBody } from '@/lib/validation/schemas'
 
+import { logger } from '@/lib/logger';
 // Notify editors via email when a new revision is requested
 async function notifyEditorsOfRevision(revisionId: string, userId: string) {
   try {
@@ -33,7 +35,7 @@ async function notifyEditorsOfRevision(revisionId: string, userId: string) {
     });
   } catch (emailError: unknown) {
     // Don't fail the request if email fails
-    console.error('Failed to notify editors:', emailError);
+    logger.error('Failed to notify editors:', emailError);
   }
 }
 
@@ -75,7 +77,7 @@ async function notifyUserOfCompletion(revisionId: string, userId: string) {
       `,
     });
   } catch (emailError: unknown) {
-    console.error('Failed to notify user of revision completion:', emailError);
+    logger.error('Failed to notify user of revision completion:', emailError);
   }
 }
 
@@ -100,6 +102,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
+    const validated = parseBody(renovationRevisionSchema, body); if (!validated.success) { return NextResponse.json({ error: validated.error, details: validated.details }, { status: 400 }); }
     const {
       renovationId,
       originalImageUrl,
@@ -138,7 +141,7 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (error) {
-      console.error('Create revision error:', error);
+      logger.error('Create revision error:', error);
       return NextResponse.json(
         { error: 'Failed to create revision request' },
         { status: 500 }
@@ -157,7 +160,7 @@ export async function POST(request: NextRequest) {
 
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Internal server error';
-    console.error('Revision API error:', error);
+    logger.error('Revision API error:', error);
     return NextResponse.json(
       { error: message },
       { status: 500 }
@@ -193,7 +196,7 @@ export async function GET(request: NextRequest) {
     const { data: revisions, error } = await query;
 
     if (error) {
-      console.error('Fetch revisions error:', error);
+      logger.error('Fetch revisions error:', error);
       return NextResponse.json(
         { error: 'Failed to fetch revisions' },
         { status: 500 }
@@ -204,7 +207,7 @@ export async function GET(request: NextRequest) {
 
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Internal server error';
-    console.error('Revision GET error:', error);
+    logger.error('Revision GET error:', error);
     return NextResponse.json(
       { error: message },
       { status: 500 }
@@ -234,6 +237,7 @@ export async function PATCH(request: NextRequest) {
     }
 
     const body = await request.json();
+    const validated = parseBody(renovationRevisionSchema, body); if (!validated.success) { return NextResponse.json({ error: validated.error, details: validated.details }, { status: 400 }); }
     const { revisionId, status, humanResultUrl, editorNotes } = body;
 
     if (!revisionId) {
@@ -265,7 +269,7 @@ export async function PATCH(request: NextRequest) {
       .single();
 
     if (error) {
-      console.error('Update revision error:', error);
+      logger.error('Update revision error:', error);
       return NextResponse.json(
         { error: 'Failed to update revision' },
         { status: 500 }
@@ -284,7 +288,7 @@ export async function PATCH(request: NextRequest) {
 
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Internal server error';
-    console.error('Revision PATCH error:', error);
+    logger.error('Revision PATCH error:', error);
     return NextResponse.json(
       { error: message },
       { status: 500 }

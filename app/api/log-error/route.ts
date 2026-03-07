@@ -1,6 +1,7 @@
 export const dynamic = 'force-dynamic';
 import { NextRequest, NextResponse } from 'next/server';
 import { adminSupabase } from '@/lib/supabase/admin';
+import { logErrorSchema, parseBody } from '@/lib/validation/schemas'
 
 // Simple in-memory rate limiter for error logging (max 30 per minute per IP)
 const rateLimiter = new Map<string, { count: number; resetAt: number }>();
@@ -29,6 +30,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
+    const validated = parseBody(logErrorSchema, body); if (!validated.success) { return NextResponse.json({ error: validated.error, details: validated.details }, { status: 400 }); }
     const supabase = adminSupabase();
 
     // Sanitize and limit input
@@ -48,7 +50,7 @@ export async function POST(request: NextRequest) {
     });
 
     return NextResponse.json({ logged: true });
-  } catch (e) {
+  } catch {
     return NextResponse.json({ error: 'Failed to log' }, { status: 500 });
   }
 }

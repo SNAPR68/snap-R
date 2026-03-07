@@ -1,5 +1,6 @@
 import OpenAI from 'openai';
 
+import { logger } from '@/lib/logger';
 function getOpenAIClient(client?: OpenAI): OpenAI {
   if (client) return client;
   return new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
@@ -116,7 +117,7 @@ export async function analyzePhotosForCulling(
   scores: PhotoCullScore[];
   duplicateGroups: { original: number; duplicates: number[] }[];
 }> {
-  console.log(`[Photo Culling] Analyzing ${photoUrls.length} photos, target: ${targetCount}`);
+  logger.info(`[Photo Culling] Analyzing ${photoUrls.length} photos, target: ${targetCount}`);
 
   // For large batches, process in chunks of 20 (GPT-4V can handle ~20 images well)
   const chunkSize = 20;
@@ -127,7 +128,7 @@ export async function analyzePhotosForCulling(
     const chunk = photoUrls.slice(i, i + chunkSize);
     const chunkStartIndex = i;
 
-    console.log(`[Photo Culling] Processing chunk ${Math.floor(i / chunkSize) + 1} (photos ${i + 1}-${Math.min(i + chunkSize, photoUrls.length)})`);
+    logger.info(`[Photo Culling] Processing chunk ${Math.floor(i / chunkSize) + 1} (photos ${i + 1}-${Math.min(i + chunkSize, photoUrls.length)})`);
 
     try {
       const openai = getOpenAIClient(client);
@@ -197,7 +198,7 @@ export async function analyzePhotosForCulling(
 
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : 'Internal server error';
-      console.error(`[Photo Culling] Error in chunk ${Math.floor(i / chunkSize) + 1}:`, message);
+      logger.error(`[Photo Culling] Error in chunk ${Math.floor(i / chunkSize) + 1}:`, message);
       // Generate default scores for failed chunk
       chunk.forEach((url, idx) => {
         allScores.push({
@@ -386,7 +387,7 @@ export async function runCullSession(
 
   const processingTime = Date.now() - startTime;
 
-  console.log(`[Photo Culling] Complete: ${selectedPhotos.length} selected, ${rejectedPhotos.length} rejected, ${duplicateGroups.length} duplicate groups`);
+  logger.info(`[Photo Culling] Complete: ${selectedPhotos.length} selected, ${rejectedPhotos.length} rejected, ${duplicateGroups.length} duplicate groups`);
 
   return {
     totalPhotos: photoUrls.length,

@@ -4,6 +4,7 @@
 import { triggerCampaign, LISTING_STATUSES, ListingStatus } from './engine';
 import { processCampaignContent } from './content-generator';
 
+import { logger } from '@/lib/logger';
 interface StatusChangeParams {
   userId: string;
   listingId: string;
@@ -44,8 +45,8 @@ export async function onListingStatusChange({
     }
 
     return { triggered: false, error: result.error };
-  } catch (error) {
-    console.error('Status change hook error:', error);
+  } catch (error: unknown) {
+    logger.error('Status change hook error:', error);
     return { triggered: false, error: 'Failed to trigger campaign' };
   }
 }

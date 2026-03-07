@@ -11,6 +11,7 @@ import { MlsExportModal } from "./mls-export-modal";
 import { AdjustmentPanel } from "./adjustment-panel";
 import { StylePromptModal } from "./style-prompt-modal";
 import Link from 'next/link';
+import Image from 'next/image';
 import { PreparationOverlay } from './preparation-overlay';
 import { MarketingBanner, type MarketingJobData } from './marketing-banner';
 import { MarketingResultsPanel } from './marketing-results-panel';
@@ -233,7 +234,7 @@ export function StudioClient({ listingId, userRole, showMlsFeatures = false, cre
         });
         const data = await res.json();
         if (!cancelled && data.success && data.shareUrl) setShareLink(data.shareUrl);
-      } catch (error) {
+      } catch (error: unknown) {
         console.error('[Share] Error', error);
       } finally {
         if (!cancelled) setShareLoading(false);
@@ -405,7 +406,7 @@ export function StudioClient({ listingId, userRole, showMlsFeatures = false, cre
         body: JSON.stringify({ action: 'trigger', listingId, userId: user.id, newStatus, previousStatus: marketingStatus }),
       });
       setMarketingStatus(newStatus);
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Status change error:', error);
     }
     setChangingStatus(false);
@@ -770,7 +771,7 @@ export function StudioClient({ listingId, userRole, showMlsFeatures = false, cre
                             <div className="grid grid-cols-2 gap-1.5">
                               {currentPresets.map(preset => (
                                 <button key={preset.id} onClick={() => setSelectedPreset(preset)} className={`relative aspect-[4/3] rounded overflow-hidden border-2 transition-all ${selectedPreset?.id === preset.id ? 'border-[#D4A017] ring-1 ring-[#D4A017]/50' : 'border-transparent hover:border-white/30'}`}>
-                                  <img src={preset.thumbnail} alt={preset.name} className="w-full h-full object-cover" />
+                                  <Image src={preset.thumbnail || ''} alt={preset.name} className="w-full h-full object-cover" width={400} height={300} unoptimized />
                                   <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent" />
                                   <span className="absolute bottom-0.5 left-0.5 right-0.5 text-[9px] font-medium text-white truncate">{preset.name}</span>
                                   {selectedPreset?.id === preset.id && <div className="absolute top-0.5 right-0.5 w-4 h-4 bg-[#D4A017] rounded-full flex items-center justify-center"><Check className="w-2.5 h-2.5 text-black" /></div>}
@@ -803,8 +804,8 @@ export function StudioClient({ listingId, userRole, showMlsFeatures = false, cre
               <div className="flex-1 relative flex items-center justify-center bg-[#060606] rounded-xl overflow-hidden min-h-0 border border-white/5">
                 {pendingEnhancement ? (
                   <div className="absolute inset-0 cursor-ew-resize select-none" onMouseDown={(e) => { const rect = e.currentTarget.getBoundingClientRect(); const updatePosition = (clientX: number) => { const x = Math.max(0, Math.min(clientX - rect.left, rect.width)); setSliderPosition((x / rect.width) * 100); }; updatePosition(e.clientX); const onMouseMove = (event: MouseEvent) => updatePosition(event.clientX); const onMouseUp = () => { window.removeEventListener('mousemove', onMouseMove); window.removeEventListener('mouseup', onMouseUp); }; window.addEventListener('mousemove', onMouseMove); window.addEventListener('mouseup', onMouseUp); }}>
-                    <img src={pendingEnhancement.enhancedUrl} alt="Enhanced" className="absolute inset-0 w-full h-full object-contain" style={{ filter: filterStyle, opacity: adjustments.intensity / 100 }} draggable={false} />
-                    <div className="absolute inset-0 overflow-hidden" style={{ width: `${sliderPosition}%` }}><img src={pendingEnhancement.originalUrl} alt="Original" className="absolute inset-0 w-full h-full object-contain" style={{ maxWidth: 'none', width: `${sliderPosition === 0 ? 0 : 100 / (sliderPosition / 100)}%` }} draggable={false} /></div>
+                    <Image src={pendingEnhancement.enhancedUrl || ''} alt="Enhanced" className="absolute inset-0 w-full h-full object-contain" style={{ filter: filterStyle, opacity: adjustments.intensity / 100 }} draggable={false} width={400} height={300} unoptimized />
+                    <div className="absolute inset-0 overflow-hidden" style={{ width: `${sliderPosition}%` }}><Image src={pendingEnhancement.originalUrl || ''} alt="Original" className="absolute inset-0 w-full h-full object-contain" style={{ maxWidth: 'none', width: `${sliderPosition === 0 ? 0 : 100 / (sliderPosition / 100)}%` }} draggable={false} unoptimized /></div>
                     <div className="absolute top-0 bottom-0 w-0.5 bg-white shadow-lg" style={{ left: `${sliderPosition}%`, transform: 'translateX(-50%)' }}><div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-10 h-10 bg-white rounded-full shadow-lg flex items-center justify-center cursor-ew-resize"><span className="text-gray-600 text-sm font-bold">↔</span></div></div>
                     <div className="absolute top-4 left-4 px-3 py-1.5 bg-black/70 rounded-lg text-sm font-medium">Before</div>
                     <div className="absolute top-4 right-4 px-3 py-1.5 bg-black/70 rounded-lg text-sm font-medium">After</div>
@@ -817,7 +818,7 @@ export function StudioClient({ listingId, userRole, showMlsFeatures = false, cre
                     className="w-full h-full"
                   />
                 ) : (
-                  <img src={selectedPhoto.signedRawUrl} alt="Selected" className="max-w-full max-h-full object-contain" />
+                  <Image src={selectedPhoto.signedRawUrl || ''} alt="Selected" className="max-w-full max-h-full object-contain" width={400} height={300} unoptimized />
                 )}
                 {processing && <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center"><Loader2 className="w-10 h-10 animate-spin text-[#D4A017] mb-2" /><p>Processing...</p></div>}
               </div>
@@ -825,7 +826,7 @@ export function StudioClient({ listingId, userRole, showMlsFeatures = false, cre
               <div className="flex gap-2 mt-3 overflow-x-auto py-1 flex-shrink-0">
                 {photos.map(photo => (
                   <div key={photo.id} className="relative flex-shrink-0 group">
-                    <button onClick={() => { setSelectedPhoto(photo); setPendingEnhancement(null); setAdjustments({ intensity: 100, brightness: 0, contrast: 0, saturation: 0, warmth: 0 }); }} className={`w-16 h-16 rounded-lg overflow-hidden border-2 ${selectedPhoto?.id === photo.id ? 'border-[#D4A017]' : 'border-transparent hover:border-white/30'} relative`}><img src={photo.signedRawUrl} alt="" className="w-full h-full object-cover" style={{ filter: listingStyleFilter }} />{listingStatus?.heroPhotoId === photo.id && <div className="absolute -top-1 -left-1 w-5 h-5 bg-[#D4A017] rounded-full flex items-center justify-center" title="AI-selected hero photo"><Star className="w-3 h-3 text-black fill-black" /></div>}</button>
+                    <button onClick={() => { setSelectedPhoto(photo); setPendingEnhancement(null); setAdjustments({ intensity: 100, brightness: 0, contrast: 0, saturation: 0, warmth: 0 }); }} className={`w-16 h-16 rounded-lg overflow-hidden border-2 ${selectedPhoto?.id === photo.id ? 'border-[#D4A017]' : 'border-transparent hover:border-white/30'} relative`}><Image src={photo.signedRawUrl || ''} alt="" className="w-full h-full object-cover" style={{ filter: listingStyleFilter }} width={400} height={300} unoptimized />{listingStatus?.heroPhotoId === photo.id && <div className="absolute -top-1 -left-1 w-5 h-5 bg-[#D4A017] rounded-full flex items-center justify-center" title="AI-selected hero photo"><Star className="w-3 h-3 text-black fill-black" /></div>}</button>
                     <button onClick={e => { e.stopPropagation(); handleDeletePhoto(photo.id, photo.raw_url); }} className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 rounded-full items-center justify-center text-white hidden group-hover:flex"><X className="w-3 h-3" /></button>
                   </div>
                 ))}
@@ -861,7 +862,7 @@ export function StudioClient({ listingId, userRole, showMlsFeatures = false, cre
                   <div key={photo.id} className="glass-luxury rounded-xl overflow-hidden group relative" style={{ borderRadius: '12px' }}>
                     <button onClick={() => handleDeleteEnhanced(photo.id, photo.processed_url || '')} className="absolute top-1 right-1 w-5 h-5 bg-red-500 rounded-full items-center justify-center text-white hidden group-hover:flex z-10"><X className="w-3 h-3" /></button>
                     <div className="aspect-video relative">
-                      <img src={photo.signedProcessedUrl} alt="" className="w-full h-full object-cover" />
+                      <Image src={photo.signedProcessedUrl || ''} alt="" className="w-full h-full object-cover" width={400} height={300} unoptimized />
                       {photo.variant && (
                         <div className="absolute top-1 left-1 px-1.5 py-0.5 bg-[#D4A017] rounded text-[10px] text-black capitalize">
                           {photo.variant.replace(/-/g, ' ')}

@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { contentLibrarySchema, parseBody } from '@/lib/validation/schemas'
 
+import { logger } from '@/lib/logger';
 // GET - Fetch saved content
 export async function GET(request: Request) {
   try {
@@ -19,7 +21,7 @@ export async function GET(request: Request) {
 
     const { data: content } = await query
     return NextResponse.json({ content: content || [] })
-  } catch (error) {
+  } catch (error: unknown) {
     return NextResponse.json({ error: 'Failed to fetch' }, { status: 500 })
   }
 }
@@ -32,6 +34,7 @@ export async function POST(request: Request) {
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
     const body = await request.json()
+    const validated = parseBody(contentLibrarySchema, body); if (!validated.success) { return NextResponse.json({ error: validated.error, details: validated.details }, { status: 400 }); }
     const { name, category, platform, postType, templateId, imageUrl, caption, hashtags, propertyData } = body
 
     const { data: item, error } = await supabase
@@ -48,8 +51,8 @@ export async function POST(request: Request) {
 
     if (error) throw error
     return NextResponse.json({ item })
-  } catch (error) {
-    console.error('Save error:', error)
+  } catch (error: unknown) {
+    logger.error('Save error:', error)
     return NextResponse.json({ error: 'Failed to save' }, { status: 500 })
   }
 }
@@ -71,7 +74,7 @@ export async function PATCH(request: Request) {
     }
 
     return NextResponse.json({ success: true })
-  } catch (error) {
+  } catch (error: unknown) {
     return NextResponse.json({ error: 'Failed to update' }, { status: 500 })
   }
 }
@@ -86,7 +89,7 @@ export async function DELETE(request: Request) {
     const { id } = await request.json()
     await supabase.from('content_library').delete().eq('id', id).eq('user_id', user.id)
     return NextResponse.json({ success: true })
-  } catch (error) {
+  } catch (error: unknown) {
     return NextResponse.json({ error: 'Failed to delete' }, { status: 500 })
   }
 }

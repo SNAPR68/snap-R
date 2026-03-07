@@ -2,7 +2,9 @@ export const dynamic = 'force-dynamic';
 
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { analyticsErrorSchema, parseBody } from '@/lib/validation/schemas'
 
+import { logger } from '@/lib/logger';
 export async function POST(req: NextRequest) {
   try {
     const supabase = createClient(
@@ -10,7 +12,7 @@ export async function POST(req: NextRequest) {
       process.env.SUPABASE_SERVICE_ROLE_KEY!
     );
 
-    const data = await req.json();
+    const data = await req.json(); const validated = parseBody(analyticsErrorSchema, data); if (!validated.success) { return NextResponse.json({ error: validated.error, details: validated.details }, { status: 400 }); }
     const { error } = await supabase.from('error_logs').insert({
       error_message: data.error_message || data.message || null,
       error_stack: data.error_stack || data.stack || null,
@@ -24,13 +26,13 @@ export async function POST(req: NextRequest) {
     });
 
     if (error) {
-      console.error('[Error Log] Insert error:', error.message);
+      logger.error('[Error Log] Insert error:', error.message);
       return NextResponse.json({ success: false });
     }
 
     return NextResponse.json({ success: true });
   } catch {
-    console.error('[Error Log] Unexpected failure');
+    logger.error('[Error Log] Unexpected failure');
     return NextResponse.json({ success: false });
   }
 }

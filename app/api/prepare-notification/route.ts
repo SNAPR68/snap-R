@@ -1,10 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { notifyListingPrepared } from '@/lib/notifications/sender';
+import { prepareNotificationSchema, parseBody } from '@/lib/validation/schemas'
 
+import { logger } from '@/lib/logger';
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
+    const validated = parseBody(prepareNotificationSchema, body); if (!validated.success) { return NextResponse.json({ error: validated.error, details: validated.details }, { status: 400 }); }
     const { listingId, type, channels, data } = body;
 
     if (!listingId) {
@@ -26,7 +29,7 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (!profile) {
-      console.log('[PrepareNotification] No profile found for user:', user.id);
+      logger.info('[PrepareNotification] No profile found for user:', user.id);
       return NextResponse.json({ success: true, skipped: true });
     }
 
@@ -57,13 +60,13 @@ export async function POST(request: NextRequest) {
       preferences
     );
 
-    console.log(`[PrepareNotification] Sent for listing ${listingId}:`,
+    logger.info(`[PrepareNotification] Sent for listing ${listingId}:`,
       results.map((r: { channel: string; success: boolean }) => `${r.channel}: ${r.success}`));
 
     return NextResponse.json({ success: true, results });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Internal server error';
-    console.error('[PrepareNotification] Error:', message);
+    logger.error('[PrepareNotification] Error:', message);
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }

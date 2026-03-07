@@ -19,6 +19,7 @@ import Replicate from 'replicate';
 import sharp from 'sharp';
 import { SAMMasksClient, MaskResult } from './sam-masks';
 
+import { logger } from '@/lib/logger';
 // ============================================
 // TYPES
 // ============================================
@@ -147,7 +148,7 @@ async function windowPullSimple(
   
   const prompt = `Fix the blown-out overexposed windows. Replace the white/bright window areas with a realistic ${viewPrompt}. Keep the interior room, furniture, walls, and everything else exactly the same. Only fix the windows to show a proper outdoor view.`;
   
-  console.log('[WindowPull] Running simple FLUX-based window pull...');
+  logger.info('[WindowPull] Running simple FLUX-based window pull...');
   
   try {
     const output = await replicate.run(
@@ -173,7 +174,7 @@ async function windowPullSimple(
       processingTimeMs: Date.now() - startTime,
       cost: CONFIG.COST_SIMPLE_METHOD,
     };
-  } catch (error) {
+  } catch (error: unknown) {
     return {
       success: false,
       windowsDetected: 0,
@@ -196,7 +197,7 @@ async function windowPullWithSAM(
   const startTime = Date.now();
   let totalCost = 0;
   
-  console.log('[WindowPull] Running SAM-based window pull...');
+  logger.info('[WindowPull] Running SAM-based window pull...');
   
   try {
     // Step 1: Detect windows using SAM
@@ -209,7 +210,7 @@ async function windowPullWithSAM(
     totalCost += CONFIG.COST_SAM_MASK;
     
     if (!maskResult.success || maskResult.area < CONFIG.MIN_WINDOW_AREA) {
-      console.log('[WindowPull] No significant windows detected, skipping');
+      logger.info('[WindowPull] No significant windows detected, skipping');
       return {
         success: true,
         outputUrl: imageUrl, // Return original
@@ -220,7 +221,7 @@ async function windowPullWithSAM(
       };
     }
     
-    console.log(`[WindowPull] Windows detected: ${maskResult.area.toFixed(1)}% coverage`);
+    logger.info(`[WindowPull] Windows detected: ${maskResult.area.toFixed(1)}% coverage`);
     
     // Step 2: Use FLUX with mask awareness
     const replicate = new Replicate({ auth: process.env.REPLICATE_API_TOKEN! });
@@ -256,7 +257,7 @@ async function windowPullWithSAM(
       cost: totalCost,
     };
     
-  } catch (error) {
+  } catch (error: unknown) {
     return {
       success: false,
       windowsDetected: 0,
@@ -283,7 +284,7 @@ export async function windowPull(
   imageUrl: string,
   options: WindowPullOptions = {}
 ): Promise<WindowPullResult> {
-  console.log('[WindowPull] === WINDOW PULL START ===');
+  logger.info('[WindowPull] === WINDOW PULL START ===');
   
   // Use SAM method by default for better quality
   const useSAM = options.useSAM !== false;
@@ -292,7 +293,7 @@ export async function windowPull(
     ? await windowPullWithSAM(imageUrl, options)
     : await windowPullSimple(imageUrl, options);
   
-  console.log(`[WindowPull] === WINDOW PULL COMPLETE === (${result.processingTimeMs}ms, $${result.cost.toFixed(2)})`);
+  logger.info(`[WindowPull] === WINDOW PULL COMPLETE === (${result.processingTimeMs}ms, $${result.cost.toFixed(2)})`);
   
   return result;
 }

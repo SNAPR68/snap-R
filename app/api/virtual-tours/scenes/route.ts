@@ -2,7 +2,9 @@ export const dynamic = 'force-dynamic';
 
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { virtualTourSceneSchema, parseBody } from '@/lib/validation/schemas'
 
+import { logger } from '@/lib/logger';
 // Helper to verify tour ownership
 async function verifyTourOwnership(supabase: Awaited<ReturnType<typeof createClient>>, tourId: string, userId: string) {
   const { data } = await supabase
@@ -34,7 +36,7 @@ export async function GET(request: NextRequest) {
       .order('sort_order', { ascending: true });
 
     if (error) {
-      console.error('Fetch scenes error:', error);
+      logger.error('Fetch scenes error:', error);
       return NextResponse.json({ error: 'Failed to fetch scenes' }, { status: 500 });
     }
 
@@ -42,7 +44,7 @@ export async function GET(request: NextRequest) {
 
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Internal server error';
-    console.error('Scenes GET error:', error);
+    logger.error('Scenes GET error:', error);
     return NextResponse.json(
       { error: message || 'Internal server error' },
       { status: 500 }
@@ -61,6 +63,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
+    const validated = parseBody(virtualTourSceneSchema, body); if (!validated.success) { return NextResponse.json({ error: validated.error, details: validated.details }, { status: 400 }); }
     const {
       tourId,
       name,
@@ -132,7 +135,7 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (error) {
-      console.error('Create scene error:', error);
+      logger.error('Create scene error:', error);
       return NextResponse.json({ error: 'Failed to create scene' }, { status: 500 });
     }
 
@@ -140,7 +143,7 @@ export async function POST(request: NextRequest) {
 
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Internal server error';
-    console.error('Scenes POST error:', error);
+    logger.error('Scenes POST error:', error);
     return NextResponse.json(
       { error: message || 'Internal server error' },
       { status: 500 }
@@ -159,6 +162,7 @@ export async function PATCH(request: NextRequest) {
     }
 
     const body = await request.json();
+    const validated = parseBody(virtualTourSceneSchema, body); if (!validated.success) { return NextResponse.json({ error: validated.error, details: validated.details }, { status: 400 }); }
     const { id, tourId, ...updates } = body;
 
     if (!id) {
@@ -211,7 +215,7 @@ export async function PATCH(request: NextRequest) {
       .single();
 
     if (error) {
-      console.error('Update scene error:', error);
+      logger.error('Update scene error:', error);
       return NextResponse.json({ error: 'Failed to update scene' }, { status: 500 });
     }
 
@@ -219,7 +223,7 @@ export async function PATCH(request: NextRequest) {
 
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Internal server error';
-    console.error('Scenes PATCH error:', error);
+    logger.error('Scenes PATCH error:', error);
     return NextResponse.json(
       { error: message || 'Internal server error' },
       { status: 500 }
@@ -265,7 +269,7 @@ export async function DELETE(request: NextRequest) {
       .eq('id', id);
 
     if (error) {
-      console.error('Delete scene error:', error);
+      logger.error('Delete scene error:', error);
       return NextResponse.json({ error: 'Failed to delete scene' }, { status: 500 });
     }
 
@@ -273,7 +277,7 @@ export async function DELETE(request: NextRequest) {
 
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Internal server error';
-    console.error('Scenes DELETE error:', error);
+    logger.error('Scenes DELETE error:', error);
     return NextResponse.json(
       { error: message || 'Internal server error' },
       { status: 500 }

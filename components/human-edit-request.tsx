@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import { useState } from 'react';
 import { X, UserCheck, Clock, Send, Loader2 } from 'lucide-react';
 
@@ -40,7 +41,7 @@ export function HumanEditRequestModal({ listingId, photoUrl, onClose, initialIns
         alert('Failed to create checkout. Please try again.');
         setLoading(false);
       }
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Checkout error:', error);
       alert('Something went wrong. Please try again.');
       setLoading(false);
@@ -67,7 +68,7 @@ export function HumanEditRequestModal({ listingId, photoUrl, onClose, initialIns
 
         {photoUrl && (
           <div className="mb-4 rounded-lg overflow-hidden bg-black/30">
-            <img src={photoUrl} alt="Photo to edit" className="w-full h-40 object-cover" />
+            <Image src={photoUrl} alt="Photo to edit" className="w-full h-40 object-cover" width={400} height={300} unoptimized />
           </div>
         )}
 

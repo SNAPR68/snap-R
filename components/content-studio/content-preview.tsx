@@ -1,5 +1,6 @@
 'use client'
 
+import Image from 'next/image';
 import { Instagram, Facebook, Video, Linkedin } from 'lucide-react'
 
 interface ContentPreviewProps {
@@ -37,11 +38,9 @@ export function ContentPreview({ platform, imageUrl, caption, brandProfile }: Co
         {/* User Info */}
         <div className="flex items-center gap-3 mb-3">
           {brandProfile?.logo_url ? (
-            <img 
-              src={brandProfile.logo_url} 
+            <Image src={brandProfile.logo_url} 
               alt="Logo" 
-              className="w-10 h-10 rounded-full object-cover"
-            />
+              className="w-10 h-10 rounded-full object-cover" width={400} height={300} unoptimized />
           ) : (
             <div 
               className="w-10 h-10 rounded-full flex items-center justify-center text-black font-bold"
@@ -64,11 +63,9 @@ export function ContentPreview({ platform, imageUrl, caption, brandProfile }: Co
           style={{ aspectRatio: config.aspectRatio }}
         >
           {imageUrl ? (
-            <img 
-              src={imageUrl} 
+            <Image src={imageUrl} 
               alt="Post preview" 
-              className="w-full h-full object-cover"
-            />
+              className="w-full h-full object-cover" width={400} height={300} unoptimized />
           ) : (
             <div className="w-full h-full flex items-center justify-center text-white/30">
               <span>Select a photo</span>

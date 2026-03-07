@@ -17,10 +17,13 @@ export const dynamic = 'force-dynamic';
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { adminSupabase } from '@/lib/supabase/admin';
+import { listingPrepareSchema, parseBody } from '@/lib/validation/schemas'
 
+import { logger } from '@/lib/logger';
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json().catch(() => ({}));
+    const validated = parseBody(listingPrepareSchema, body); if (!validated.success) { return NextResponse.json({ error: validated.error, details: validated.details }, { status: 400 }); }
     const { listingId, priority = 'standard' } = body || {};
 
     if (!listingId) {
@@ -168,7 +171,7 @@ export async function POST(request: NextRequest) {
         .eq('id', listingId);
 
       if (incrementError) {
-        console.error('[Billing] Failed to mark listing for usage:', incrementError.message);
+        logger.error('[Billing] Failed to mark listing for usage:', incrementError.message);
       }
     }
 
@@ -185,7 +188,7 @@ export async function POST(request: NextRequest) {
       .eq('id', listingId);
 
     if (updateError) {
-      console.error('[Prepare] Failed to update listing:', updateError.message);
+      logger.error('[Prepare] Failed to update listing:', updateError.message);
     }
 
     // ============================================
@@ -195,6 +198,7 @@ export async function POST(request: NextRequest) {
     const effectiveUserId = allowAdmin ? listing.user_id : user?.id;
     let workerResponse: Response;
     try {
+              signal: AbortSignal.timeout(15000),
       workerResponse = await fetch(`${workerUrl}/process`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -215,7 +219,7 @@ export async function POST(request: NextRequest) {
         })
         .eq('id', listingId);
       const workerMsg = error instanceof Error ? error.message : 'unknown';
-      console.error('[Prepare] Worker fetch failed:', workerMsg);
+      logger.error('[Prepare] Worker fetch failed:', workerMsg);
       return NextResponse.json(
         {
           success: false,
@@ -250,7 +254,7 @@ export async function POST(request: NextRequest) {
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Failed to prepare listing';
     const stack = error instanceof Error ? error.stack : undefined;
-    console.error('[Prepare] Error:', message, stack);
+    logger.error('[Prepare] Error:', message, stack);
     return NextResponse.json(
       {
         success: false,

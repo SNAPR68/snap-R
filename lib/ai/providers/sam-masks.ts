@@ -17,15 +17,17 @@ import Replicate from 'replicate';
 import { deflateSync } from 'node:zlib';
 import { enqueueReplicate } from './replicate-queue';
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-let sharpModule: any = null;
+import type sharp from 'sharp';
+import { logger } from '@/lib/logger';
+type SharpStatic = typeof sharp;
+let sharpModule: SharpStatic | null = null;
 
-async function getSharp() {
+async function getSharp(): Promise<SharpStatic> {
   if (!sharpModule) {
-    sharpModule = await import('sharp');
+    const mod = await import('sharp');
+    sharpModule = (mod.default ?? mod) as SharpStatic;
   }
-  return sharpModule.default ?? sharpModule;
+  return sharpModule;
 }
 
 // ============================================
@@ -318,6 +320,7 @@ export class SAMMasksClient {
     try {
       const response = await fetch(`https://api.replicate.com/v1/models/${model}`, {
         headers: { Authorization: `Token ${apiToken}` },
+        signal: AbortSignal.timeout(15000),
       });
       if (!response.ok) {
         return model;
@@ -341,8 +344,8 @@ export class SAMMasksClient {
   async generateMask(request: MaskRequest): Promise<MaskResult> {
     const startTime = Date.now();
 
-    console.log(`[SAM] Generating ${request.maskType} mask`);
-    console.log(`[SAM] Model candidates: ${this.getModelCandidates().join(', ')}`);
+    logger.info(`[SAM] Generating ${request.maskType} mask`);
+    logger.info(`[SAM] Model candidates: ${this.getModelCandidates().join(', ')}`);
 
     try {
       // Get image dimensions
@@ -402,7 +405,7 @@ export class SAMMasksClient {
           const resolvedModel = await this.resolveModelVersion(model);
           if (resolvedModel.includes('grounded_sam')) {
             const maskPrompt = MASK_TEXT_PROMPTS[request.maskType] || MASK_TEXT_PROMPTS.custom;
-            console.log(`[SAM] Using grounded_sam prompt: ${maskPrompt}`);
+            logger.info(`[SAM] Using grounded_sam prompt: ${maskPrompt}`);
             output = await this.enqueueReplicate(() =>
               this.replicate.run(resolvedModel as `${string}/${string}`, {
                 input: {
@@ -412,7 +415,7 @@ export class SAMMasksClient {
               })
             );
           } else {
-            console.log(`[SAM] Using SAM points model: ${resolvedModel}`);
+            logger.info(`[SAM] Using SAM points model: ${resolvedModel}`);
             output = await this.enqueueReplicate(() =>
               this.replicate.run(resolvedModel as `${string}/${string}`, {
                 input: {
@@ -429,7 +432,7 @@ export class SAMMasksClient {
           const candidateMaskUrl = extractMaskUrl(output);
           if (!candidateMaskUrl) {
             if (output && typeof output === 'object') {
-              console.warn(`[SAM] ${resolvedModel} output keys:`, Object.keys(output as Record<string, unknown>));
+              logger.warn(`[SAM] ${resolvedModel} output keys:`, Object.keys(output as Record<string, unknown>));
             }
             lastError = new Error('SAM returned invalid output');
             continue;
@@ -440,7 +443,7 @@ export class SAMMasksClient {
         } catch (error: unknown) {
           lastError = error;
           const message = error instanceof Error ? error.message : '';
-          console.warn(`[SAM] Model failed: ${model} (${message})`);
+          logger.warn(`[SAM] Model failed: ${model} (${message})`);
           if (
             message.includes('does not exist') ||
             message.includes('Not Found') ||
@@ -467,7 +470,7 @@ export class SAMMasksClient {
       if (!output || !resolvedMaskUrl) {
         // For lawn masks, fall back to a deterministic heuristic mask
         if (request.maskType === 'lawn') {
-          console.warn('[SAM] Falling back to heuristic lawn mask');
+          logger.warn('[SAM] Falling back to heuristic lawn mask');
           const fallback = await generateDeterministicLawnMask(request.imageUrl);
           if (fallback.success && fallback.maskUrl) {
             return fallback;
@@ -485,7 +488,7 @@ export class SAMMasksClient {
       }
 
       // Download mask
-      const maskResponse = await fetch(resolvedMaskUrl);
+      const maskResponse = await fetch(resolvedMaskUrl, { signal: AbortSignal.timeout(15000) });
       const maskArrayBuffer = await maskResponse.arrayBuffer();
       const maskBuffer = Buffer.from(maskArrayBuffer);
 
@@ -503,8 +506,8 @@ export class SAMMasksClient {
         cost: CONFIG.COST_PER_MASK,
       };
 
-    } catch (error) {
-      console.error(`[SAM] Mask generation failed:`, error);
+    } catch (error: unknown) {
+      logger.error(`[SAM] Mask generation failed:`, error);
 
       return {
         success: false,
@@ -590,7 +593,7 @@ function extractMaskUrl(output: unknown): string | null {
 // ============================================
 
 async function downloadImageBuffer(imageUrl: string): Promise<Buffer> {
-  const response = await fetch(imageUrl);
+  const response = await fetch(imageUrl, { signal: AbortSignal.timeout(15000) });
   if (!response.ok) {
     throw new Error(`Failed to download image: ${response.status}`);
   }
@@ -619,6 +622,7 @@ async function uploadMaskToSupabase(maskBuffer: Buffer): Promise<string | null> 
       Authorization: `Bearer ${serviceKey}`,
     },
     body: maskBuffer as unknown as BodyInit,
+    signal: AbortSignal.timeout(15000),
   });
   if (!uploadRes.ok) {
     return null;
@@ -632,6 +636,7 @@ async function uploadMaskToSupabase(maskBuffer: Buffer): Promise<string | null> 
       Authorization: `Bearer ${serviceKey}`,
     },
     body: JSON.stringify({ expiresIn: 3600 }),
+    signal: AbortSignal.timeout(15000),
   });
   if (!signRes.ok) {
     return null;

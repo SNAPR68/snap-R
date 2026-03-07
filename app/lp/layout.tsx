@@ -1,3 +1,4 @@
+import Image from 'next/image';
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
@@ -35,13 +36,11 @@ export default function LandingPageLayout({
         }}
       />
       <noscript>
-        <img 
-          height="1" 
+        <Image height="1" 
           width="1" 
           style={{ display: 'none' }}
           src="https://www.facebook.com/tr?id=YOUR_PIXEL_ID&ev=PageView&noscript=1"
-          alt=""
-        />
+          alt="" unoptimized />
       </noscript>
       {children}
     </>

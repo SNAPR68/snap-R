@@ -1,7 +1,9 @@
 export const dynamic = 'force-dynamic';
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { portfolioCreateSchema, parseBody } from '@/lib/validation/schemas'
 
+import { logger } from '@/lib/logger';
 // GET - Fetch portfolio(s)
 export async function GET(request: NextRequest) {
   try {
@@ -80,7 +82,7 @@ export async function GET(request: NextRequest) {
 
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Internal server error';
-    console.error('[Portfolio] GET Error:', error);
+    logger.error('[Portfolio] GET Error:', error);
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }
@@ -96,6 +98,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
+    const validated = parseBody(portfolioCreateSchema, body); if (!validated.success) { return NextResponse.json({ error: validated.error, details: validated.details }, { status: 400 }); }
     const { title, tagline, description, theme, accent_color } = body;
 
     // Generate unique slug
@@ -133,7 +136,7 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (error) {
-      console.error('[Portfolio] Create error:', error);
+      logger.error('[Portfolio] Create error:', error);
       return NextResponse.json({ error: 'Failed to create portfolio' }, { status: 500 });
     }
 
@@ -144,7 +147,7 @@ export async function POST(request: NextRequest) {
 
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Internal server error';
-    console.error('[Portfolio] POST Error:', error);
+    logger.error('[Portfolio] POST Error:', error);
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }
@@ -160,6 +163,7 @@ export async function PUT(request: NextRequest) {
     }
 
     const body = await request.json();
+    const validated = parseBody(portfolioCreateSchema, body); if (!validated.success) { return NextResponse.json({ error: validated.error, details: validated.details }, { status: 400 }); }
     const { id, ...updates } = body;
 
     if (!id) {
@@ -180,7 +184,7 @@ export async function PUT(request: NextRequest) {
       .single();
 
     if (error) {
-      console.error('[Portfolio] Update error:', error);
+      logger.error('[Portfolio] Update error:', error);
       return NextResponse.json({ error: 'Failed to update portfolio' }, { status: 500 });
     }
 
@@ -191,7 +195,7 @@ export async function PUT(request: NextRequest) {
 
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Internal server error';
-    console.error('[Portfolio] PUT Error:', error);
+    logger.error('[Portfolio] PUT Error:', error);
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }
@@ -220,7 +224,7 @@ export async function DELETE(request: NextRequest) {
       .eq('user_id', user.id);
 
     if (error) {
-      console.error('[Portfolio] Delete error:', error);
+      logger.error('[Portfolio] Delete error:', error);
       return NextResponse.json({ error: 'Failed to delete portfolio' }, { status: 500 });
     }
 
@@ -228,7 +232,7 @@ export async function DELETE(request: NextRequest) {
 
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Internal server error';
-    console.error('[Portfolio] DELETE Error:', error);
+    logger.error('[Portfolio] DELETE Error:', error);
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }

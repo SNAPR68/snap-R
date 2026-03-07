@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { watermarkSchema, parseBody } from '@/lib/validation/schemas'
 
+import { logger } from '@/lib/logger';
 // GET - Fetch user's watermark settings
 export async function GET() {
   try {
@@ -15,8 +17,8 @@ export async function GET() {
       .single()
 
     return NextResponse.json({ settings: settings || { watermark_enabled: false, watermark_position: 'bottom-right', watermark_opacity: 50 } })
-  } catch (error) {
-    console.error('Error fetching watermark:', error)
+  } catch (error: unknown) {
+    logger.error('Error fetching watermark:', error)
     return NextResponse.json({ settings: { watermark_enabled: false, watermark_position: 'bottom-right', watermark_opacity: 50 } })
   }
 }
@@ -29,6 +31,7 @@ export async function POST(request: Request) {
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
     const body = await request.json()
+    const validated = parseBody(watermarkSchema, body); if (!validated.success) { return NextResponse.json({ error: validated.error, details: validated.details }, { status: 400 }); }
     const { enabled, text, logoUrl, position, opacity } = body
 
     const { error } = await supabase
@@ -45,8 +48,8 @@ export async function POST(request: Request) {
 
     if (error) throw error
     return NextResponse.json({ success: true })
-  } catch (error) {
-    console.error('Error saving watermark:', error)
+  } catch (error: unknown) {
+    logger.error('Error saving watermark:', error)
     return NextResponse.json({ error: 'Failed to save' }, { status: 500 })
   }
 }

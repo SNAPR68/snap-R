@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react'
 import Link from 'next/link'
+import Image from 'next/image';
 import { Loader2, CheckCircle, Sparkles, Image as ImageIcon } from 'lucide-react'
 import { useToast } from '@/components/toast'
 
@@ -142,7 +143,7 @@ export function ProcessingExpanded({ initialItems }: ProcessingContainerProps) {
           <div className="flex items-center gap-3 mb-3">
             <div className="w-10 h-10 rounded-lg bg-white/10 overflow-hidden flex-shrink-0">
               {item.thumbnail ? (
-                <img src={item.thumbnail} alt="" className="w-full h-full object-cover" />
+                <Image src={item.thumbnail} alt="" className="w-full h-full object-cover" width={400} height={300} unoptimized />
               ) : (
                 <div className="w-full h-full flex items-center justify-center">
                   <ImageIcon className="w-5 h-5 text-white/20" />

@@ -2,10 +2,12 @@ export const dynamic = 'force-dynamic';
 import { randomUUID } from 'node:crypto';
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { shareSchema, parseBody } from '@/lib/validation/schemas'
 
+import { logger } from '@/lib/logger';
 export async function POST(request: NextRequest) {
   try {
-    const { listingId, options = {} } = await request.json();
+    const body = await request.json(); const validated = parseBody(shareSchema, body); if (!validated.success) { return NextResponse.json({ error: validated.error, details: validated.details }, { status: 400 }); } const { listingId, options = {} } = body;
 
     // Validate listingId is a UUID
     const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -50,7 +52,7 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (error) {
-      console.warn('[Share] Could not save share:', error);
+      logger.warn('[Share] Could not save share:', error);
     }
 
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://snap-r.com';
@@ -64,7 +66,7 @@ export async function POST(request: NextRequest) {
     });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Internal server error';
-    console.error('[Share] Error:', error);
+    logger.error('[Share] Error:', error);
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }

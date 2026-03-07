@@ -1,3 +1,4 @@
+import { logger } from '@/lib/logger';
 // Virtual Renovation Service - Best-in-Class AI + Human Revision
 // Multi-model pipeline for surgical precision
 
@@ -43,6 +44,7 @@ async function pollPrediction(predictionUrl: string, maxAttempts: number = 120):
   while (attempts < maxAttempts) {
     const response = await fetch(predictionUrl, {
       headers: { 'Authorization': `Token ${REPLICATE_API_TOKEN}` },
+          signal: AbortSignal.timeout(30000),
     });
     const result = await response.json();
 
@@ -57,7 +59,7 @@ async function pollPrediction(predictionUrl: string, maxAttempts: number = 120):
     attempts++;
 
     if (attempts % 15 === 0) {
-      console.log(`Still processing... (${attempts * 2}s)`);
+      logger.info(`Still processing... (${attempts * 2}s)`);
     }
   }
 
@@ -86,7 +88,7 @@ async function findElementByText(
   if (!REPLICATE_API_TOKEN) return null;
 
   try {
-    console.log('[GroundedSAM] Searching for:', searchTerms);
+    logger.info('[GroundedSAM] Searching for:', searchTerms);
 
     const response = await fetch('https://api.replicate.com/v1/predictions', {
       method: 'POST',
@@ -102,10 +104,11 @@ async function findElementByText(
           segmentation_prompt: searchTerms.join('. '),
         },
       }),
+          signal: AbortSignal.timeout(30000),
     });
 
     if (!response.ok) {
-      console.error('[GroundedSAM] API error');
+      logger.error('[GroundedSAM] API error');
       return null;
     }
 
@@ -115,13 +118,13 @@ async function findElementByText(
     if (result.output) {
       const outputs = Array.isArray(result.output) ? result.output : [result.output];
       const maskUrl = outputs.find((url): url is string => typeof url === 'string');
-      console.log('[GroundedSAM] Found mask');
+      logger.info('[GroundedSAM] Found mask');
       return maskUrl || null;
     }
 
     return null;
-  } catch (error) {
-    console.error('[GroundedSAM] Error:', error);
+  } catch (error: unknown) {
+    logger.error('[GroundedSAM] Error:', error);
     return null;
   }
 }
@@ -135,7 +138,7 @@ async function getDepthMap(imageUrl: string): Promise<string | null> {
   if (!REPLICATE_API_TOKEN) return null;
 
   try {
-    console.log('[Depth] Generating depth map...');
+    logger.info('[Depth] Generating depth map...');
 
     const response = await fetch('https://api.replicate.com/v1/predictions', {
       method: 'POST',
@@ -150,6 +153,7 @@ async function getDepthMap(imageUrl: string): Promise<string | null> {
           model_type: 'dpt_beit_large_512',
         },
       }),
+          signal: AbortSignal.timeout(30000),
     });
 
     if (!response.ok) return null;
@@ -158,13 +162,13 @@ async function getDepthMap(imageUrl: string): Promise<string | null> {
     const result = await pollPrediction(prediction.urls.get, 60);
 
     if (result.output) {
-      console.log('[Depth] Depth map generated');
+      logger.info('[Depth] Depth map generated');
       return extractOutputUrl(result.output);
     }
 
     return null;
-  } catch (error) {
-    console.error('[Depth] Error:', error);
+  } catch (error: unknown) {
+    logger.error('[Depth] Error:', error);
     return null;
   }
 }
@@ -182,7 +186,7 @@ async function inpaintArea(
   if (!REPLICATE_API_TOKEN) return null;
 
   try {
-    console.log('[Inpaint] Inpainting with prompt:', prompt.substring(0, 50) + '...');
+    logger.info('[Inpaint] Inpainting with prompt:', prompt.substring(0, 50) + '...');
 
     const response = await fetch('https://api.replicate.com/v1/predictions', {
       method: 'POST',
@@ -201,6 +205,7 @@ async function inpaintArea(
           guidance_scale: 7.5,
         },
       }),
+          signal: AbortSignal.timeout(30000),
     });
 
     if (!response.ok) return null;
@@ -209,13 +214,13 @@ async function inpaintArea(
     const result = await pollPrediction(prediction.urls.get, 90);
 
     if (result.output) {
-      console.log('[Inpaint] Inpainting complete');
+      logger.info('[Inpaint] Inpainting complete');
       return extractOutputUrl(result.output);
     }
 
     return null;
-  } catch (error) {
-    console.error('[Inpaint] Error:', error);
+  } catch (error: unknown) {
+    logger.error('[Inpaint] Error:', error);
     return null;
   }
 }
@@ -233,7 +238,7 @@ async function controlNetDepth(
   if (!REPLICATE_API_TOKEN) return null;
 
   try {
-    console.log('[ControlNet-Depth] Processing...');
+    logger.info('[ControlNet-Depth] Processing...');
 
     const response = await fetch('https://api.replicate.com/v1/predictions', {
       method: 'POST',
@@ -251,6 +256,7 @@ async function controlNetDepth(
           guidance_scale: 9,
         },
       }),
+          signal: AbortSignal.timeout(30000),
     });
 
     if (!response.ok) return null;
@@ -259,13 +265,13 @@ async function controlNetDepth(
     const result = await pollPrediction(prediction.urls.get, 90);
 
     if (result.output) {
-      console.log('[ControlNet-Depth] Complete');
+      logger.info('[ControlNet-Depth] Complete');
       return extractOutputUrl(result.output);
     }
 
     return null;
-  } catch (error) {
-    console.error('[ControlNet-Depth] Error:', error);
+  } catch (error: unknown) {
+    logger.error('[ControlNet-Depth] Error:', error);
     return null;
   }
 }
@@ -282,7 +288,7 @@ async function instructPix2Pix(
   if (!REPLICATE_API_TOKEN) return null;
 
   try {
-    console.log('[InstructPix2Pix] Instruction:', instruction.substring(0, 50) + '...');
+    logger.info('[InstructPix2Pix] Instruction:', instruction.substring(0, 50) + '...');
 
     const response = await fetch('https://api.replicate.com/v1/predictions', {
       method: 'POST',
@@ -301,6 +307,7 @@ async function instructPix2Pix(
           scheduler: 'K_EULER_ANCESTRAL',
         },
       }),
+          signal: AbortSignal.timeout(30000),
     });
 
     if (!response.ok) return null;
@@ -309,13 +316,13 @@ async function instructPix2Pix(
     const result = await pollPrediction(prediction.urls.get, 90);
 
     if (result.output) {
-      console.log('[InstructPix2Pix] Complete');
+      logger.info('[InstructPix2Pix] Complete');
       return extractOutputUrl(result.output);
     }
 
     return null;
-  } catch (error) {
-    console.error('[InstructPix2Pix] Error:', error);
+  } catch (error: unknown) {
+    logger.error('[InstructPix2Pix] Error:', error);
     return null;
   }
 }
@@ -332,7 +339,7 @@ async function fluxInpaint(
   if (!REPLICATE_API_TOKEN) return null;
 
   try {
-    console.log('[Flux] High quality inpainting...');
+    logger.info('[Flux] High quality inpainting...');
 
     const response = await fetch('https://api.replicate.com/v1/predictions', {
       method: 'POST',
@@ -351,6 +358,7 @@ async function fluxInpaint(
           output_format: 'png',
         },
       }),
+          signal: AbortSignal.timeout(30000),
     });
 
     if (!response.ok) return null;
@@ -359,13 +367,13 @@ async function fluxInpaint(
     const result = await pollPrediction(prediction.urls.get, 120);
 
     if (result.output) {
-      console.log('[Flux] Complete');
+      logger.info('[Flux] Complete');
       return extractOutputUrl(result.output);
     }
 
     return null;
-  } catch (error) {
-    console.error('[Flux] Error:', error);
+  } catch (error: unknown) {
+    logger.error('[Flux] Error:', error);
     return null;
   }
 }
@@ -425,28 +433,28 @@ export async function processRenovation(request: RenovationRequest): Promise<Ren
   const selectedRenovations = request.options?.selectedRenovations || [request.renovationType];
   const detailedOptions = request.options?.detailedOptions || {};
 
-  console.log('============================================');
-  console.log('VIRTUAL RENOVATION - MULTI-MODEL PIPELINE');
-  console.log('============================================');
-  console.log('Room type:', request.roomType);
-  console.log('Style:', request.style);
-  console.log('Selected renovations:', selectedRenovations);
+  logger.info('============================================');
+  logger.info('VIRTUAL RENOVATION - MULTI-MODEL PIPELINE');
+  logger.info('============================================');
+  logger.info('Room type:', request.roomType);
+  logger.info('Style:', request.style);
+  logger.info('Selected renovations:', selectedRenovations);
 
   let resultUrl: string | null = null;
   let currentImage = request.imageUrl;
   let modelUsed = 'pipeline';
 
   // APPROACH 1: Sequential element-by-element processing
-  console.log('\n--- APPROACH 1: Element-by-Element Inpainting ---');
+  logger.info('\n--- APPROACH 1: Element-by-Element Inpainting ---');
 
   for (const renoType of selectedRenovations) {
     const searchTerms = ELEMENT_SEARCH_TERMS[renoType];
     if (!searchTerms) {
-      console.log(`[Skip] No search terms for: ${renoType}`);
+      logger.info(`[Skip] No search terms for: ${renoType}`);
       continue;
     }
 
-    console.log(`\n[Processing] ${renoType}...`);
+    logger.info(`\n[Processing] ${renoType}...`);
 
     const maskUrl = await findElementByText(currentImage, searchTerms);
 
@@ -465,12 +473,12 @@ export async function processRenovation(request: RenovationRequest): Promise<Ren
 
       if (newImage) {
         currentImage = newImage;
-        console.log(`[Success] ${renoType} updated`);
+        logger.info(`[Success] ${renoType} updated`);
       } else {
-        console.log(`[Failed] Could not update ${renoType}`);
+        logger.info(`[Failed] Could not update ${renoType}`);
       }
     } else {
-      console.log(`[Skip] Could not find ${renoType} in image`);
+      logger.info(`[Skip] Could not find ${renoType} in image`);
     }
   }
 
@@ -481,7 +489,7 @@ export async function processRenovation(request: RenovationRequest): Promise<Ren
 
   // APPROACH 2: If element-by-element failed, try Instruct-Pix2Pix
   if (!resultUrl) {
-    console.log('\n--- APPROACH 2: Instruct-Pix2Pix ---');
+    logger.info('\n--- APPROACH 2: Instruct-Pix2Pix ---');
 
     let instruction = `Transform this ${request.roomType}: `;
     selectedRenovations.forEach(renoType => {
@@ -498,7 +506,7 @@ export async function processRenovation(request: RenovationRequest): Promise<Ren
 
   // APPROACH 3: If still no result, try ControlNet with depth
   if (!resultUrl) {
-    console.log('\n--- APPROACH 3: ControlNet Depth ---');
+    logger.info('\n--- APPROACH 3: ControlNet Depth ---');
 
     const depthMap = await getDepthMap(request.imageUrl);
     if (depthMap) {
@@ -513,11 +521,11 @@ export async function processRenovation(request: RenovationRequest): Promise<Ren
 
   const processingTime = Date.now() - startTime;
 
-  console.log('\n============================================');
-  console.log('RESULT:', resultUrl ? 'SUCCESS' : 'FAILED');
-  console.log('Model:', modelUsed);
-  console.log('Time:', processingTime, 'ms');
-  console.log('============================================');
+  logger.info('\n============================================');
+  logger.info('RESULT:', resultUrl ? 'SUCCESS' : 'FAILED');
+  logger.info('Model:', modelUsed);
+  logger.info('Time:', processingTime, 'ms');
+  logger.info('============================================');
 
   if (resultUrl) {
     return {

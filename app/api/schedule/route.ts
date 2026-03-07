@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { schedulePostSchema } from '@/lib/validation/schemas'
 
+import { logger } from '@/lib/logger';
 // GET - Fetch scheduled posts
 export async function GET(request: Request) {
   try {
@@ -33,8 +34,8 @@ export async function GET(request: Request) {
     if (error) throw error
 
     return NextResponse.json({ posts: posts || [] })
-  } catch (error) {
-    console.error('Error fetching scheduled posts:', error)
+  } catch (error: unknown) {
+    logger.error('Error fetching scheduled posts:', error)
     return NextResponse.json({ error: 'Failed to fetch posts' }, { status: 500 })
   }
 }
@@ -71,8 +72,8 @@ export async function POST(request: Request) {
     if (error) throw error
 
     return NextResponse.json({ post })
-  } catch (error) {
-    console.error('Error creating scheduled post:', error)
+  } catch (error: unknown) {
+    logger.error('Error creating scheduled post:', error)
     return NextResponse.json({ error: 'Failed to schedule post' }, { status: 500 })
   }
 }
@@ -103,7 +104,7 @@ export async function PATCH(request: Request) {
 
     return NextResponse.json({ post })
   } catch (error: unknown) {
-    console.error('Error rescheduling post:', error)
+    logger.error('Error rescheduling post:', error)
     return NextResponse.json({ error: 'Failed to reschedule post' }, { status: 500 })
   }
 }
@@ -126,8 +127,8 @@ export async function DELETE(request: Request) {
     if (error) throw error
 
     return NextResponse.json({ success: true })
-  } catch (error) {
-    console.error('Error cancelling post:', error)
+  } catch (error: unknown) {
+    logger.error('Error cancelling post:', error)
     return NextResponse.json({ error: 'Failed to cancel' }, { status: 500 })
   }
 }

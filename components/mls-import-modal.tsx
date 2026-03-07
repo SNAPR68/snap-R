@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import { useState } from 'react';
 import { Search, Loader2, X, CheckCircle, AlertCircle, Download } from 'lucide-react';
 
@@ -153,11 +154,9 @@ export function MLSImportModal({ onImport, onClose }: MLSImportModalProps) {
                   {result.photos.slice(0, 8).map((photo, i) => (
                     <div key={i} className="aspect-square rounded-lg overflow-hidden bg-white/5">
                       {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
-                        src={photo.url}
+                      <Image src={photo.url}
                         alt={`MLS photo ${i + 1}`}
-                        className="w-full h-full object-cover"
-                      />
+                        className="w-full h-full object-cover" width={400} height={300} unoptimized />
                     </div>
                   ))}
                 </div>

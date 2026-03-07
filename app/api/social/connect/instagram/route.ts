@@ -2,6 +2,7 @@ export const dynamic = 'force-dynamic';
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 
+import { logger } from '@/lib/logger';
 export async function GET() {
   try {
     const supabase = await createClient();
@@ -27,8 +28,8 @@ export async function GET() {
     const authUrl = `https://www.facebook.com/v18.0/dialog/oauth?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${encodeURIComponent(scope)}&state=${user.id}_instagram`;
 
     return NextResponse.json({ authUrl });
-  } catch (error) {
-    console.error('Instagram connect error:', error);
+  } catch (error: unknown) {
+    logger.error('Instagram connect error:', error);
     return NextResponse.json({ error: 'Server error' }, { status: 500 });
   }
 }

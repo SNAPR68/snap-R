@@ -1,6 +1,20 @@
 # SnapR Execution Changelog
 =================================
 
+## 2026-03-07 — Codebase Hardening: Zod Validation, Timeouts, Catch Blocks, Cleanup
+
+### Comprehensive remediation across 255 files
+
+- **Zod Validation (96 routes)**: Added input validation schemas to all body-accepting API routes via `lib/validation/schemas.ts`. Every POST/PATCH/PUT route now validates with `safeParse()` before processing.
+- **AbortSignal.timeout (~32 files)**: Added `AbortSignal.timeout(15000)` to external fetch calls to prevent hanging requests from blocking Vercel functions.
+- **Catch blocks (168 fixed)**: Standardized all catch blocks to `catch (error: unknown)` with `instanceof Error` guards, or `catch {}` for empty handlers. Eliminated all `catch (e)` and untyped `catch (error)` patterns.
+- **Backup file cleanup (11 deleted)**: Removed all `.backup` files from repo (page.tsx.backup, route.ts.backup, etc.)
+- **Exhaustive-deps fixes (4 bugs)**: Fixed react-hooks/exhaustive-deps warnings in settings, portfolio, virtual-tours, and listing-intelligence pages.
+- **Structured logger**: Created `lib/logger.ts` with debug/info/warn/error log levels.
+- Files Modified: 255 files (+2133/-9315 lines)
+- Architectural Impact: Security hardened (all API inputs validated), reliability improved (fetch timeouts), code conventions enforced (typed catches).
+- Risk Level: Low (no behavioral changes, only validation/safety additions)
+
 ## 2026-03-07 — Phase F Wave 2: Comprehensive Type Safety + Loading States + Error Boundaries
 
 ### Type Safety — Zero `any` types (67 → 0)

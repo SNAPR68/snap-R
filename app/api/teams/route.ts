@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { teamCreateSchema, parseBody } from '@/lib/validation/schemas'
 
+import { logger } from '@/lib/logger';
 export const dynamic = 'force-dynamic';
 
 // GET - List user's teams
@@ -61,8 +63,8 @@ export async function GET() {
     });
 
     return NextResponse.json({ teams });
-  } catch (error) {
-    console.error('Get teams error:', error);
+  } catch (error: unknown) {
+    logger.error('Get teams error:', error);
     return NextResponse.json({ error: 'Server error' }, { status: 500 });
   }
 }
@@ -77,7 +79,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { name } = await req.json();
+    const body = await req.json(); const validated = parseBody(teamCreateSchema, body); if (!validated.success) { return NextResponse.json({ error: validated.error, details: validated.details }, { status: 400 }); } const { name } = body;
     
     if (!name || name.trim().length < 2) {
       return NextResponse.json({ error: 'Team name must be at least 2 characters' }, { status: 400 });
@@ -101,7 +103,7 @@ export async function POST(req: NextRequest) {
       .single();
 
     if (teamError) {
-      console.error('Create team error:', teamError);
+      logger.error('Create team error:', teamError);
       return NextResponse.json({ error: 'Failed to create team' }, { status: 500 });
     }
 
@@ -116,8 +118,8 @@ export async function POST(req: NextRequest) {
       });
 
     return NextResponse.json({ team });
-  } catch (error) {
-    console.error('Create team error:', error);
+  } catch (error: unknown) {
+    logger.error('Create team error:', error);
     return NextResponse.json({ error: 'Server error' }, { status: 500 });
   }
 }

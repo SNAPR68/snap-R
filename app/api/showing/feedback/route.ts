@@ -10,6 +10,7 @@ import { z } from 'zod';
 import { adminSupabase } from '@/lib/supabase/admin';
 import { Resend } from 'resend';
 
+import { logger } from '@/lib/logger';
 const feedbackSchema = z.object({
   showingId: z.string().uuid('Invalid showing ID'),
   interestLevel: z.number().int().min(1).max(5),
@@ -118,7 +119,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ success: true });
   } catch (error: unknown) {
     const msg = error instanceof Error ? error.message : 'Internal server error';
-    console.error('[ShowingFeedback]', msg);
+    logger.error('[ShowingFeedback]', msg);
     return NextResponse.json({ error: msg }, { status: 500 });
   }
 }

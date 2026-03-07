@@ -7,6 +7,7 @@
 import OpenAI from 'openai';
 import { PhotoProcessingResult, ValidationResult, ValidationIssue } from './types';
 
+import { logger } from '@/lib/logger';
 function getOpenAIClient(client?: OpenAI): OpenAI {
   if (client) return client;
   return new OpenAI({ apiKey: process.env.OPENAI_API_KEY! });
@@ -105,7 +106,7 @@ export async function validateResult(
 
   // Skip validation for high-confidence results to save API calls
   if (result.confidence >= CONFIG.skipValidationThreshold) {
-    console.log(`[Validator] Skipping validation for high-confidence photo ${result.photoId}`);
+    logger.info(`[Validator] Skipping validation for high-confidence photo ${result.photoId}`);
     return {
       photoId: result.photoId,
       isValid: true,
@@ -115,7 +116,7 @@ export async function validateResult(
     };
   }
 
-  console.log(`[Validator] Validating photo ${result.photoId}`);
+  logger.info(`[Validator] Validating photo ${result.photoId}`);
 
   const openai = getOpenAIClient(client);
 
@@ -156,7 +157,7 @@ export async function validateResult(
     return normalizeValidation(result.photoId, validation);
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Processing failed';
-    console.error(`[Validator] Validation failed:`, message);
+    logger.error(`[Validator] Validation failed:`, message);
 
     // On error, use confidence from processing result
     return {
@@ -177,7 +178,7 @@ export async function validateResults(
   results: PhotoProcessingResult[],
   client?: OpenAI
 ): Promise<ValidationResult[]> {
-  console.log(`[Validator] Validating ${results.length} photos`);
+  logger.info(`[Validator] Validating ${results.length} photos`);
   const startTime = Date.now();
 
   const validations: ValidationResult[] = [];
@@ -197,7 +198,7 @@ export async function validateResults(
 
   const duration = Date.now() - startTime;
   const passedCount = validations.filter(v => v.isValid).length;
-  console.log(`[Validator] Complete: ${passedCount}/${results.length} passed in ${(duration / 1000).toFixed(1)}s`);
+  logger.info(`[Validator] Complete: ${passedCount}/${results.length} passed in ${(duration / 1000).toFixed(1)}s`);
 
   return validations;
 }

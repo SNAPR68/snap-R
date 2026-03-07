@@ -3,7 +3,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { processEnhancement, ToolId, TOOL_CREDITS } from '@/lib/ai/router';
 import { logApiCost } from '@/lib/cost-logger';
+import { enhanceSchema, parseBody } from '@/lib/validation/schemas'
 
+import { logger } from '@/lib/logger';
 const VALID_TOOL_IDS = new Set(Object.keys(TOOL_CREDITS));
 
 export const maxDuration = 180;
@@ -11,7 +13,7 @@ export const maxDuration = 180;
 export async function POST(request: NextRequest) {
   const startTime = Date.now();
   try {
-    const { imageId, toolId, options = {} } = await request.json();
+    const body = await request.json(); const validated = parseBody(enhanceSchema, body); if (!validated.success) { return NextResponse.json({ error: validated.error, details: validated.details }, { status: 400 }); } const { imageId, toolId, options = {} } = body;
 
     // Validate toolId before processing
     if (!toolId || !VALID_TOOL_IDS.has(toolId)) {
@@ -68,7 +70,7 @@ export async function POST(request: NextRequest) {
       sourceUrl = signedUrlData.signedUrl;
     }
     
-    console.log('[API] Processing with tier:', profile?.subscription_tier || 'free');
+    logger.info('[API] Processing with tier:', profile?.subscription_tier || 'free');
     const result = await Promise.race([
       processEnhancement(toolId as ToolId, sourceUrl, options),
       new Promise<never>((_, reject) =>
@@ -111,7 +113,7 @@ export async function POST(request: NextRequest) {
       .upload(enhancedPath, enhancedBlob, { contentType: 'image/jpeg', upsert: true });
       
     if (uploadError) {
-      console.error('[API] Upload error:', uploadError);
+      logger.error('[API] Upload error:', uploadError);
       return NextResponse.json({ error: 'Failed to save enhanced image' }, { status: 500 });
     }
     
@@ -127,7 +129,7 @@ export async function POST(request: NextRequest) {
       .eq('id', imageId);
       
     if (updateError) {
-      console.error('[API] Update error:', updateError);
+      logger.error('[API] Update error:', updateError);
     }
     
     // Get signed URL for the enhanced image
@@ -135,7 +137,7 @@ export async function POST(request: NextRequest) {
       .from('raw-images')
       .createSignedUrl(enhancedPath, 3600);
     
-    console.log('[API] Enhancement complete in', processingTime, 'ms');
+    logger.info('[API] Enhancement complete in', processingTime, 'ms');
     
     return NextResponse.json({
       success: true,
@@ -145,8 +147,8 @@ export async function POST(request: NextRequest) {
       processingTime,
     });
     
-  } catch (error) {
-    console.error('[API] Enhancement error:', error);
+  } catch (error: unknown) {
+    logger.error('[API] Enhancement error:', error);
     return NextResponse.json({ 
       error: error instanceof Error ? error.message : 'Enhancement failed' 
     }, { status: 500 });

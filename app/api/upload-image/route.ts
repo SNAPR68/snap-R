@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 
+import { logger } from '@/lib/logger';
 export async function POST(req: NextRequest) {
   try {
     const supabase = await createClient()
@@ -38,7 +39,7 @@ export async function POST(req: NextRequest) {
         })
       
       if (fallbackError) {
-        console.error('Upload error:', fallbackError)
+        logger.error('Upload error:', fallbackError)
         return NextResponse.json({ error: 'Failed to upload image' }, { status: 500 })
       }
       
@@ -54,8 +55,8 @@ export async function POST(req: NextRequest) {
       .getPublicUrl(fileName)
 
     return NextResponse.json({ url: urlData.publicUrl, path: fileName })
-  } catch (error) {
-    console.error('Upload error:', error)
+  } catch (error: unknown) {
+    logger.error('Upload error:', error)
     return NextResponse.json({ error: 'Failed to upload' }, { status: 500 })
   }
 }

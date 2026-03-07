@@ -4,6 +4,7 @@ import Stripe from 'stripe';
 import { adminSupabase } from '@/lib/supabase/admin';
 import { normalizeTier, getListingLimits } from '@/lib/content/limits';
 
+import { logger } from '@/lib/logger';
 function getStripe() {
   return new Stripe(process.env.STRIPE_SECRET_KEY!, {
     apiVersion: '2026-01-28.clover',
@@ -25,7 +26,7 @@ export async function POST(request: NextRequest) {
       process.env.STRIPE_WEBHOOK_SECRET!
     );
   } catch (err) {
-    console.error('Webhook signature verification failed:', err);
+    logger.error('Webhook signature verification failed:', err);
     return NextResponse.json({ error: 'Invalid signature' }, { status: 400 });
   }
 
@@ -148,7 +149,7 @@ export async function POST(request: NextRequest) {
           }).eq('id', profile.id);
 
           if (updateError) {
-            console.error(`[Webhook] Usage reset failed for ${profile.id}:`, updateError.message);
+            logger.error(`[Webhook] Usage reset failed for ${profile.id}:`, updateError.message);
           }
         }
         break;
@@ -161,7 +162,7 @@ export async function POST(request: NextRequest) {
         }).eq('stripe_customer_id', invoice.customer as string);
 
         if (updateError) {
-          console.error(`[Webhook] past_due update failed:`, updateError.message);
+          logger.error(`[Webhook] past_due update failed:`, updateError.message);
         }
         break;
       }
@@ -194,7 +195,7 @@ export async function POST(request: NextRequest) {
           .eq('stripe_customer_id', customerId);
 
         if (updateError) {
-          console.error(`[Webhook] Subscription update failed for ${customerId}:`, updateError.message);
+          logger.error(`[Webhook] Subscription update failed for ${customerId}:`, updateError.message);
         }
         break;
       }
@@ -213,7 +214,7 @@ export async function POST(request: NextRequest) {
         }).eq('stripe_customer_id', subscription.customer as string);
 
         if (updateError) {
-          console.error(`[Webhook] Downgrade failed:`, updateError.message);
+          logger.error(`[Webhook] Downgrade failed:`, updateError.message);
         }
         break;
       }
@@ -221,7 +222,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ received: true });
   } catch (error: unknown) {
-    console.error('Webhook error:', error instanceof Error ? error.message : error);
+    logger.error('Webhook error:', error instanceof Error ? error.message : error);
     return NextResponse.json({ error: 'Webhook handler failed' }, { status: 500 });
   }
 }

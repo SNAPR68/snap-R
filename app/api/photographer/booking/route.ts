@@ -11,6 +11,7 @@ import { photographerBookingSchema } from '@/lib/validation/schemas'
 import { adminSupabase } from '@/lib/supabase/admin'
 import crypto from 'crypto'
 
+import { logger } from '@/lib/logger';
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
@@ -87,7 +88,7 @@ export async function POST(request: NextRequest) {
       .single()
 
     if (insertError) {
-      console.error('[booking] Insert failed:', insertError.message)
+      logger.error('[booking] Insert failed:', insertError.message)
       return NextResponse.json({ error: 'Failed to create booking' }, { status: 500 })
     }
 
@@ -108,7 +109,7 @@ export async function POST(request: NextRequest) {
 
     if (clientError) {
       // Non-blocking — booking was already created
-      console.warn('[booking] Client upsert warning:', clientError.message)
+      logger.warn('[booking] Client upsert warning:', clientError.message)
     }
 
     return NextResponse.json({
@@ -121,7 +122,7 @@ export async function POST(request: NextRequest) {
     })
   } catch (error: unknown) {
     const msg = error instanceof Error ? error.message : 'Unknown error'
-    console.error('[booking] Error:', msg)
+    logger.error('[booking] Error:', msg)
     return NextResponse.json({ error: msg }, { status: 500 })
   }
 }

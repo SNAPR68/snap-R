@@ -1,5 +1,6 @@
 import { SNAP_R_STACK } from '../utils/config';
 
+import { logger } from '@/lib/logger';
 const AUTOENHANCE_TIMEOUT_MS = 60000;
 const MAX_POLLS = 20;
 const POLL_INTERVAL_MS = 3000;
@@ -14,7 +15,7 @@ class AutoEnhanceProvider {
   }
 
   async processImage(imageUrl: string, options: Record<string, unknown>): Promise<string> {
-    console.log('[AutoEnhance] Starting...');
+    logger.info('[AutoEnhance] Starting...');
 
     if (!this.apiKey) {
       throw new Error('AutoEnhance API key not configured');
@@ -31,7 +32,7 @@ class AutoEnhanceProvider {
         throw new Error(`Failed to download image: ${imageResponse.status}`);
       }
       imageBuffer = await imageResponse.arrayBuffer();
-    console.log('[AutoEnhance] Downloaded:', (imageBuffer.byteLength / 1024).toFixed(0), 'KB');
+    logger.info('[AutoEnhance] Downloaded:', (imageBuffer.byteLength / 1024).toFixed(0), 'KB');
     } catch (error: unknown) {
       clearTimeout(downloadTimeout);
       if (error instanceof Error && error.name === 'AbortError') {
@@ -51,6 +52,7 @@ class AutoEnhanceProvider {
         content_type: 'image/jpeg',
         ...options,
       }),
+      signal: AbortSignal.timeout(15000),
     });
 
     if (!createRes.ok) {
@@ -65,21 +67,22 @@ class AutoEnhanceProvider {
     if (!imageId) {
       throw new Error('AutoEnhance did not return image_id');
     }
-    console.log('[AutoEnhance] Image ID:', imageId);
+    logger.info('[AutoEnhance] Image ID:', imageId);
 
     if (uploadUrl) {
-      console.log('[AutoEnhance] Uploading to S3...');
+      logger.info('[AutoEnhance] Uploading to S3...');
       const uploadRes = await fetch(uploadUrl, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/octet-stream' },
         body: imageBuffer,
+        signal: AbortSignal.timeout(30000),
       });
       if (!uploadRes.ok) {
         throw new Error(`AutoEnhance S3 upload failed: ${uploadRes.status}`);
     }
     }
 
-    console.log('[AutoEnhance] Polling for result...');
+    logger.info('[AutoEnhance] Polling for result...');
     const startTime = Date.now();
 
     for (let i = 0; i < MAX_POLLS; i++) {
@@ -91,20 +94,21 @@ class AutoEnhanceProvider {
 
       const checkRes = await fetch(`${this.baseUrl}images/${imageId}`, {
         headers: { 'x-api-key': this.apiKey },
+        signal: AbortSignal.timeout(15000),
       });
 
       if (!checkRes.ok) {
-        console.warn(`[AutoEnhance] Poll ${i + 1} failed: ${checkRes.status}`);
+        logger.warn(`[AutoEnhance] Poll ${i + 1} failed: ${checkRes.status}`);
         continue;
       }
 
       const data = await checkRes.json();
-      console.log(`[AutoEnhance] Poll ${i + 1}/${MAX_POLLS}: status=${data.status}`);
+      logger.info(`[AutoEnhance] Poll ${i + 1}/${MAX_POLLS}: status=${data.status}`);
       
       if (data.status === 'processed' || data.status === 'completed') {
         const resultUrl = data.enhanced_image_url || data.enhanced_url;
         if (resultUrl) {
-          console.log('[AutoEnhance] Complete!');
+          logger.info('[AutoEnhance] Complete!');
           return resultUrl;
         }
         throw new Error('AutoEnhance completed but no URL returned');

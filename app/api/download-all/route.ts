@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server';
 import JSZip from 'jszip';
 import { addWatermark, requiresWatermark, getWatermarkText } from '@/lib/compliance/watermark';
 
+import { logger } from '@/lib/logger';
 interface WatermarkSettings {
   watermark_enabled: boolean;
   watermark_text: string | null;
@@ -80,7 +81,7 @@ export async function POST(req: NextRequest) {
 
       if (signedUrl?.signedUrl) {
         try {
-          const response = await fetch(signedUrl.signedUrl);
+          const response = await fetch(signedUrl.signedUrl, { signal: AbortSignal.timeout(15000) });
           let buffer: Buffer | Uint8Array = Buffer.from(await response.arrayBuffer());
 
           // MLS compliance watermark — always applied if tool requires it
@@ -106,7 +107,7 @@ export async function POST(req: NextRequest) {
           const fileName = `${String(i + 1).padStart(2, '0')}-${photo.variant || 'enhanced'}.jpg`;
           zip.file(fileName, buffer);
         } catch {
-          console.error(`Failed to fetch photo ${photo.id}`);
+          logger.error(`Failed to fetch photo ${photo.id}`);
         }
       }
     }
@@ -122,7 +123,7 @@ export async function POST(req: NextRequest) {
     });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Failed to create ZIP';
-    console.error('Download all error:', message);
+    logger.error('Download all error:', message);
     return NextResponse.json({ error: 'Failed to create ZIP' }, { status: 500 });
   }
 }

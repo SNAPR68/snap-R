@@ -9,7 +9,9 @@ import {
   SCRIPT_STYLES,
   VOICEOVER_PRICING,
 } from '@/lib/video/voiceover-service';
+import { voiceoverSimpleSchema, parseBody } from '@/lib/validation/schemas';
 
+import { logger } from '@/lib/logger';
 type ScriptStyleKey = keyof typeof SCRIPT_STYLES;
 type VoiceIdKey = keyof typeof VOICE_OPTIONS;
 
@@ -24,6 +26,10 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
+    const validated = parseBody(voiceoverSimpleSchema, body);
+    if (!validated.success) {
+      return NextResponse.json({ error: validated.error, details: validated.details }, { status: 400 });
+    }
     const {
       listingId,
       propertyDetails,
@@ -104,7 +110,7 @@ export async function POST(request: NextRequest) {
       });
 
     if (costError) {
-      console.error('Failed to log cost:', costError);
+      logger.error('Failed to log cost:', costError);
     }
 
     return NextResponse.json({
@@ -117,7 +123,7 @@ export async function POST(request: NextRequest) {
 
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Internal server error';
-    console.error('Voiceover API error:', error);
+    logger.error('Voiceover API error:', error);
     return NextResponse.json(
       { error: message || 'Internal server error' },
       { status: 500 }

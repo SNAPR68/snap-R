@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react'
 import { Button } from '@/components/ui/button'
 import { ArrowLeft, Loader2, Palette, Type, Layout, Download, RotateCcw, Save, Check } from 'lucide-react'
 import Link from 'next/link'
+import Image from 'next/image';
 import { useSearchParams } from 'next/navigation'
 import { Suspense } from 'react'
 
@@ -112,7 +113,7 @@ function TemplateCustomizerContent() {
           <div>
             <h2 className="text-lg font-bold mb-4">Preview</h2>
             <div className="aspect-square rounded-2xl overflow-hidden relative" style={{ fontFamily: currentFont?.family }}>
-              <img src={property.photo} alt="" className="w-full h-full object-cover" />
+              <Image src={property.photo} alt="" className="w-full h-full object-cover" width={400} height={300} unoptimized />
               
               {layout === 'overlay' && (
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex flex-col justify-end p-6">

@@ -12,6 +12,7 @@ import { z } from 'zod'
 import { createClient } from '@/lib/supabase/server'
 import { adminSupabase } from '@/lib/supabase/admin'
 
+import { logger } from '@/lib/logger';
 // ── Zod schemas ───────────────────────────────────────────────────────────────
 
 const stepSchema = z.object({
@@ -107,7 +108,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ sequences: result })
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Failed to fetch sequences'
-    console.error('[Sequences] GET error:', message)
+    logger.error('[Sequences] GET error:', message)
     return NextResponse.json({ error: 'Failed to fetch sequences' }, { status: 500 })
   }
 }
@@ -155,7 +156,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ success: true, sequenceId: sequence.id })
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Failed to create sequence'
-    console.error('[Sequences] POST error:', message)
+    logger.error('[Sequences] POST error:', message)
     return NextResponse.json({ error: 'Failed to create sequence' }, { status: 500 })
   }
 }
@@ -218,7 +219,7 @@ export async function PATCH(request: NextRequest) {
     return NextResponse.json({ success: true })
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Failed to update sequence'
-    console.error('[Sequences] PATCH error:', message)
+    logger.error('[Sequences] PATCH error:', message)
     return NextResponse.json({ error: 'Failed to update sequence' }, { status: 500 })
   }
 }
@@ -266,7 +267,7 @@ export async function DELETE(request: NextRequest) {
     return NextResponse.json({ success: true })
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Failed to delete sequence'
-    console.error('[Sequences] DELETE error:', message)
+    logger.error('[Sequences] DELETE error:', message)
     return NextResponse.json({ error: 'Failed to delete sequence' }, { status: 500 })
   }
 }

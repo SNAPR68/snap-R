@@ -1,3 +1,4 @@
+import { logger } from '@/lib/logger';
 // Hotjar/Contentsquare Custom Events
 
 declare global {
@@ -20,7 +21,7 @@ export const trackEvent = (eventName: string, eventData?: Record<string, unknown
   
   // Console log in dev
   if (process.env.NODE_ENV === 'development') {
-    console.log('[Analytics Event]', eventName, eventData);
+    logger.info('[Analytics Event]', eventName, eventData);
   }
 };
 

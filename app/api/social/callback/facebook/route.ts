@@ -2,6 +2,7 @@ export const dynamic = 'force-dynamic';
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
+import { logger } from '@/lib/logger';
 function getSupabase() {
   return createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -31,23 +32,24 @@ export async function GET(req: NextRequest) {
 
     // Exchange code for access token
     const tokenResponse = await fetch(
-      `https://graph.facebook.com/v18.0/oauth/access_token?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&client_secret=${clientSecret}&code=${code}`
+      `https://graph.facebook.com/v18.0/oauth/access_token?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&client_secret=${clientSecret}&code=${code}`,
+      { signal: AbortSignal.timeout(15000) }
     );
     const tokenData = await tokenResponse.json();
 
     if (tokenData.error) {
-      console.error('Token error:', tokenData.error);
+      logger.error('Token error:', tokenData.error);
       return NextResponse.redirect(`${process.env.NEXT_PUBLIC_APP_URL}/dashboard/settings/social?error=token_error`);
     }
 
     const accessToken = tokenData.access_token;
 
     // Get user info
-    const userResponse = await fetch(`https://graph.facebook.com/me?fields=id,name&access_token=${accessToken}`);
+    const userResponse = await fetch(`https://graph.facebook.com/me?fields=id,name&access_token=${accessToken}`, { signal: AbortSignal.timeout(15000) });
     const userData = await userResponse.json();
 
     // Get user's pages
-    const pagesResponse = await fetch(`https://graph.facebook.com/me/accounts?access_token=${accessToken}`);
+    const pagesResponse = await fetch(`https://graph.facebook.com/me/accounts?access_token=${accessToken}`, { signal: AbortSignal.timeout(15000) });
     const pagesData = await pagesResponse.json();
 
     const page = pagesData.data?.[0]; // Use first page
@@ -69,13 +71,15 @@ export async function GET(req: NextRequest) {
     // If Instagram was requested, also get Instagram account
     if (platform === 'instagram' && page?.id) {
       const igResponse = await fetch(
-        `https://graph.facebook.com/v18.0/${page.id}?fields=instagram_business_account&access_token=${page.access_token}`
+        `https://graph.facebook.com/v18.0/${page.id}?fields=instagram_business_account&access_token=${page.access_token}`,
+        { signal: AbortSignal.timeout(15000) }
       );
       const igData = await igResponse.json();
 
       if (igData.instagram_business_account) {
         const igAccountResponse = await fetch(
-          `https://graph.facebook.com/v18.0/${igData.instagram_business_account.id}?fields=id,username,name&access_token=${page.access_token}`
+          `https://graph.facebook.com/v18.0/${igData.instagram_business_account.id}?fields=id,username,name&access_token=${page.access_token}`,
+          { signal: AbortSignal.timeout(15000) }
         );
         const igAccount = await igAccountResponse.json();
 
@@ -94,8 +98,8 @@ export async function GET(req: NextRequest) {
     }
 
     return NextResponse.redirect(`${process.env.NEXT_PUBLIC_APP_URL}/dashboard/settings/social?success=facebook`);
-  } catch (error) {
-    console.error('Facebook callback error:', error);
+  } catch (error: unknown) {
+    logger.error('Facebook callback error:', error);
     return NextResponse.redirect(`${process.env.NEXT_PUBLIC_APP_URL}/dashboard/settings/social?error=server_error`);
   }
 }

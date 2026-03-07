@@ -1,12 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { Resend } from 'resend'
 import { adminSupabase } from '@/lib/supabase/admin'
+import { propertyInquirySchema, parseBody } from '@/lib/validation/schemas'
 
+import { logger } from '@/lib/logger';
 export async function POST(request: NextRequest) {
   const resend = new Resend(process.env.RESEND_API_KEY)
 
   try {
     const body = await request.json()
+    const validated = parseBody(propertyInquirySchema, body); if (!validated.success) { return NextResponse.json({ error: validated.error, details: validated.details }, { status: 400 }); }
     const { name, email, phone, message, listingId, listingAddress, agentEmail } = body
 
     if (!name || !email || !message) {
@@ -49,7 +52,7 @@ export async function POST(request: NextRequest) {
         }
       } catch (dbError: unknown) {
         const dbMsg = dbError instanceof Error ? dbError.message : 'Unknown DB error'
-        console.error('[Property Inquiry] DB persist error (non-blocking):', dbMsg)
+        logger.error('[Property Inquiry] DB persist error (non-blocking):', dbMsg)
       }
     }
 
@@ -121,7 +124,7 @@ export async function POST(request: NextRequest) {
     })
 
     if (error) {
-      console.error('[Property Inquiry] Email error:', error)
+      logger.error('[Property Inquiry] Email error:', error)
       return NextResponse.json({ error: 'Failed to send email' }, { status: 500 })
     }
 
@@ -157,15 +160,15 @@ export async function POST(request: NextRequest) {
         `,
       })
     } catch {
-      console.error('[Property Inquiry] Confirmation email failed')
+      logger.error('[Property Inquiry] Confirmation email failed')
     }
 
-    console.log('[Property Inquiry] Email sent successfully:', data?.id)
+    logger.info('[Property Inquiry] Email sent successfully:', data?.id)
     return NextResponse.json({ success: true })
 
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Unknown error'
-    console.error('[Property Inquiry] Error:', message)
+    logger.error('[Property Inquiry] Error:', message)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

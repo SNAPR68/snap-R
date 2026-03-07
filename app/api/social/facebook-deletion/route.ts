@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import crypto from 'crypto';
 
+import { logger } from '@/lib/logger';
 function getSupabase() {
   return createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -41,8 +42,8 @@ export async function POST(req: NextRequest) {
       confirmation_code: confirmationCode
     });
 
-  } catch (error) {
-    console.error('Facebook deletion callback error:', error);
+  } catch (error: unknown) {
+    logger.error('Facebook deletion callback error:', error);
     // Still return success to Facebook
     return NextResponse.json({
       url: 'https://snap-r.com/deletion-status',

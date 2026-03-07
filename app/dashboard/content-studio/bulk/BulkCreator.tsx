@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
+import Image from 'next/image';
 import { ArrowLeft, Zap, Download, Instagram, Facebook, Linkedin, Home, Loader2, Check, Package } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 
@@ -51,7 +52,7 @@ export default function BulkCreatorClient() {
         }))
         setListings(processed)
       }
-    } catch (error) { console.error('Error loading listings:', error) }
+    } catch (error: unknown) { console.error('Error loading listings:', error) }
     setLoading(false)
   }
 
@@ -105,7 +106,7 @@ export default function BulkCreatorClient() {
       const imageUrl = canvas.toDataURL('image/jpeg', 0.95)
       const caption = generateCaption(listing, postType)
       return { listingId: listing.id, listingTitle: listing.title, platform, imageUrl, caption }
-    } catch (error) { console.error('Error generating post:', error); return null }
+    } catch (error: unknown) { console.error('Error generating post:', error); return null }
   }
 
   const generateCaption = (listing: Listing, type: PostType): string => {
@@ -156,7 +157,7 @@ export default function BulkCreatorClient() {
           <div className="flex items-center justify-between mb-6"><div><h2 className="text-2xl font-bold">Generated Posts</h2><p className="text-white/50">{generatedPosts.length} posts created</p></div><div className="flex gap-3"><button onClick={() => setShowResults(false)} className="px-4 py-2 bg-white/10 rounded-lg hover:bg-white/20">Create More</button><button onClick={copyAllCaptions} className="px-4 py-2 bg-white/10 rounded-lg hover:bg-white/20">Copy All Captions</button><button onClick={downloadAll} className="px-4 py-2 bg-purple-500 rounded-lg hover:bg-purple-600 flex items-center gap-2 font-semibold"><Download className="w-4 h-4" />Download All</button></div></div>
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">{generatedPosts.map((post, i) => (
             <div key={i} className="bg-[#111] rounded-xl overflow-hidden border border-white/5">
-              <div className="aspect-square relative"><img src={post.imageUrl} alt="" className="w-full h-full object-cover" /><div className="absolute top-2 right-2 px-2 py-1 bg-black/70 rounded text-xs capitalize">{post.platform}</div></div>
+              <div className="aspect-square relative"><Image src={post.imageUrl} alt="" className="w-full h-full object-cover" width={400} height={300} unoptimized /><div className="absolute top-2 right-2 px-2 py-1 bg-black/70 rounded text-xs capitalize">{post.platform}</div></div>
               <div className="p-3"><h4 className="font-medium text-sm truncate">{post.listingTitle}</h4><p className="text-white/40 text-xs mt-1 line-clamp-2">{post.caption.substring(0, 100)}...</p><div className="flex gap-2 mt-3"><button onClick={() => { const link = document.createElement('a'); link.href = post.imageUrl; link.download = post.listingTitle.replace(/[^a-z0-9]/gi, '_') + '_' + post.platform + '.jpg'; link.click() }} className="flex-1 py-2 bg-white/10 rounded-lg text-xs hover:bg-white/20">Download</button><button onClick={() => { navigator.clipboard.writeText(post.caption); alert('Caption copied!') }} className="flex-1 py-2 bg-white/10 rounded-lg text-xs hover:bg-white/20">Copy Caption</button></div></div>
             </div>
           ))}</div>
@@ -169,7 +170,7 @@ export default function BulkCreatorClient() {
             : listings.length === 0 ? <div className="text-center py-12 bg-[#111] rounded-xl border border-white/5"><Home className="w-12 h-12 text-white/10 mx-auto mb-3" /><p className="text-white/40">No listings found</p></div>
             : <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">{listings.map(listing => (
               <button key={listing.id} onClick={() => toggleListing(listing.id)} className={'relative bg-[#111] rounded-xl border-2 overflow-hidden text-left transition-all ' + (selectedListings.includes(listing.id) ? 'border-purple-500 ring-2 ring-purple-500/30' : 'border-white/5 hover:border-white/20')}>
-                <div className="aspect-video relative">{listing.thumbnail ? <img src={listing.thumbnail} alt="" className="w-full h-full object-cover" /> : <div className="w-full h-full bg-white/5 flex items-center justify-center"><Home className="w-8 h-8 text-white/10" /></div>}{selectedListings.includes(listing.id) && <div className="absolute top-2 right-2 w-6 h-6 bg-purple-500 rounded-full flex items-center justify-center"><Check className="w-4 h-4" /></div>}</div>
+                <div className="aspect-video relative">{listing.thumbnail ? <Image src={listing.thumbnail} alt="" className="w-full h-full object-cover" width={400} height={300} unoptimized /> : <div className="w-full h-full bg-white/5 flex items-center justify-center"><Home className="w-8 h-8 text-white/10" /></div>}{selectedListings.includes(listing.id) && <div className="absolute top-2 right-2 w-6 h-6 bg-purple-500 rounded-full flex items-center justify-center"><Check className="w-4 h-4" /></div>}</div>
                 <div className="p-3"><h3 className="font-medium truncate">{listing.title}</h3><p className="text-sm text-white/40 truncate">{listing.address}</p>{listing.price && <p className="text-sm text-purple-400 mt-1">${listing.price.toLocaleString()}</p>}</div>
               </button>
             ))}</div>}

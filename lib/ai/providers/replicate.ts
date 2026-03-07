@@ -2,6 +2,7 @@ import Replicate from 'replicate';
 import { SAMMasksClient, generateDeterministicLawnMask } from './sam-masks';
 import { enqueueReplicate } from './replicate-queue';
 
+import { logger } from '@/lib/logger';
 const replicate = new Replicate({
   auth: process.env.REPLICATE_API_TOKEN!,
 });
@@ -22,7 +23,7 @@ async function withTimeout<T>(promise: Promise<T>, ms: number, label: string): P
     const result = await Promise.race([promise, timeoutPromise]);
     clearTimeout(timeoutId!);
     return result;
-  } catch (error) {
+  } catch (error: unknown) {
     clearTimeout(timeoutId!);
     throw error;
   }
@@ -73,9 +74,9 @@ async function runFluxKontext(
   const { guidance = 3.0, steps = 28 } = options;
   const safePrompt = (prompt || '').trim() || 'Apply a subtle professional real estate enhancement. Keep structure unchanged.';
   
-  console.log('[Replicate] Running Flux Kontext...');
-  console.log('[Replicate] Prompt:', safePrompt.substring(0, 100) + '...');
-  console.log('[Replicate] Guidance:', guidance, 'Steps:', steps);
+  logger.info('[Replicate] Running Flux Kontext...');
+  logger.info('[Replicate] Prompt:', safePrompt.substring(0, 100) + '...');
+  logger.info('[Replicate] Guidance:', guidance, 'Steps:', steps);
 
   let output: unknown;
   for (let attempt = 0; attempt < 2; attempt += 1) {
@@ -103,7 +104,7 @@ async function runFluxKontext(
       if (attempt === 0 && message.includes('429')) {
         const retryAfter = message.match(/retry_after\\":\\s*(\\d+)/i)?.[1];
         const waitMs = retryAfter ? Number(retryAfter) * 1000 : 8000;
-        console.warn(`[Replicate] Flux Kontext rate limited, retrying in ${Math.round(waitMs / 1000)}s...`);
+        logger.warn(`[Replicate] Flux Kontext rate limited, retrying in ${Math.round(waitMs / 1000)}s...`);
         await sleep(waitMs);
         continue;
       }
@@ -111,7 +112,7 @@ async function runFluxKontext(
     }
   }
 
-  console.log('[Replicate] Flux Kontext complete');
+  logger.info('[Replicate] Flux Kontext complete');
   return extractUrl(output);
 }
 
@@ -130,8 +131,8 @@ export async function fluxFillInpaint(
     model = process.env.AI_INPAINT_PROVIDER || 'black-forest-labs/flux-fill-pro',
   } = options;
 
-  console.log('[Replicate] Running Flux Fill...');
-  console.log('[Replicate] Model:', model);
+  logger.info('[Replicate] Running Flux Fill...');
+  logger.info('[Replicate] Model:', model);
 
   let output: unknown;
   const maxAttempts = 2;
@@ -158,14 +159,14 @@ export async function fluxFillInpaint(
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : '';
       if (attempt < maxAttempts && message.toLowerCase().includes('timeout')) {
-        console.warn('[Replicate] Flux Fill timeout, retrying...');
+        logger.warn('[Replicate] Flux Fill timeout, retrying...');
         continue;
       }
       throw error;
     }
   }
 
-  console.log('[Replicate] Flux Fill complete');
+  logger.info('[Replicate] Flux Fill complete');
   return extractUrl(output);
 }
 
@@ -203,10 +204,10 @@ export async function skyReplacement(
   presetId?: string,
   options?: FluxOptions & { skipMask?: boolean }
 ): Promise<string> {
-  console.log('[Replicate] === SKY REPLACEMENT ===');
-  console.log('[Replicate] Custom prompt:', customPrompt || 'none');
+  logger.info('[Replicate] === SKY REPLACEMENT ===');
+  logger.info('[Replicate] Custom prompt:', customPrompt || 'none');
   if (presetId) {
-    console.log('[Replicate] Preset:', presetId);
+    logger.info('[Replicate] Preset:', presetId);
   }
 
   let prompt = SKY_PROMPTS['default'];
@@ -228,7 +229,7 @@ export async function skyReplacement(
       prompt = SKY_PROMPTS['cloudy'];
     } else if (lowerPrompt.includes('twilight') || lowerPrompt.includes('dusk')) {
       prompt = SKY_PROMPTS['twilight'];
-      console.log('[Replicate] Using TWILIGHT preset');
+      logger.info('[Replicate] Using TWILIGHT preset');
     } else if (lowerPrompt.includes('dramatic') || lowerPrompt.includes('cloud')) {
       prompt = SKY_PROMPTS['dramatic'];
     } else {
@@ -243,29 +244,29 @@ export async function skyReplacement(
     try {
       const maskResult = await new SAMMasksClient().generateMask({ imageUrl, maskType: 'sky' });
       if (maskResult.success && maskResult.maskUrl && maskResult.area >= 3) {
-        console.log('[Replicate] Sky mask generated (' + maskResult.area.toFixed(1) + '% area)');
+        logger.info('[Replicate] Sky mask generated (' + maskResult.area.toFixed(1) + '% area)');
         const inpainted = await fluxFillInpaint(imageUrl, maskResult.maskUrl, prompt, {
           guidance: 8,
           steps: 35,
         });
-        console.log('[Replicate] === SKY REPLACEMENT (MASKED) COMPLETE ===');
+        logger.info('[Replicate] === SKY REPLACEMENT (MASKED) COMPLETE ===');
         return inpainted;
       }
       if (maskResult.success) {
-        console.warn('[Replicate] Sky mask too small (' + maskResult.area.toFixed(1) + '%), falling back to Kontext');
+        logger.warn('[Replicate] Sky mask too small (' + maskResult.area.toFixed(1) + '%), falling back to Kontext');
       }
     } catch (maskError: unknown) {
       const message = maskError instanceof Error ? maskError.message : 'Unknown error';
-      console.warn('[Replicate] Sky mask failed, falling back to Kontext:', maskError instanceof Error ? maskError.message : 'Unknown error');
+      logger.warn('[Replicate] Sky mask failed, falling back to Kontext:', maskError instanceof Error ? maskError.message : 'Unknown error');
     }
   } else {
-    console.log('[Replicate] Skipping SAM mask (batch prepare mode)');
+    logger.info('[Replicate] Skipping SAM mask (batch prepare mode)');
   }
 
   // Kontext instruction-based
   const fluxOptions = withFluxDefaults({ guidance: 2.5, steps: 25 }, options);
   const result = await runFluxKontext(imageUrl, prompt, fluxOptions);
-  console.log('[Replicate] === SKY REPLACEMENT (KONTEXT) COMPLETE ===');
+  logger.info('[Replicate] === SKY REPLACEMENT (KONTEXT) COMPLETE ===');
   return result;
 }
 
@@ -308,10 +309,10 @@ export async function virtualTwilight(
   presetId?: string,
   options?: FluxOptions
 ): Promise<string> {
-  console.log('[Replicate] === VIRTUAL TWILIGHT ===');
-  console.log('[Replicate] Custom prompt:', customPrompt || 'none');
+  logger.info('[Replicate] === VIRTUAL TWILIGHT ===');
+  logger.info('[Replicate] Custom prompt:', customPrompt || 'none');
   if (presetId) {
-    console.log('[Replicate] Preset:', presetId);
+    logger.info('[Replicate] Preset:', presetId);
   }
 
   let prompt = TWILIGHT_PROMPTS['default'];
@@ -327,30 +328,30 @@ export async function virtualTwilight(
     // Match preset keywords - check most specific first
     if (lowerPrompt.includes('night') || lowerPrompt.includes('dark') || lowerPrompt.includes('star') || lowerPrompt.includes('midnight')) {
       prompt = TWILIGHT_PROMPTS['night'];
-      console.log('[Replicate] Using NIGHT preset');
+      logger.info('[Replicate] Using NIGHT preset');
     } else if (lowerPrompt.includes('dusk') || lowerPrompt.includes('early') || lowerPrompt.includes('soft')) {
       prompt = TWILIGHT_PROMPTS['dusk'];
-      console.log('[Replicate] Using DUSK preset');
+      logger.info('[Replicate] Using DUSK preset');
     } else if (lowerPrompt.includes('blue hour') || lowerPrompt.includes('blue') || lowerPrompt.includes('cool')) {
       prompt = TWILIGHT_PROMPTS['blue-hour'];
-      console.log('[Replicate] Using BLUE HOUR preset');
+      logger.info('[Replicate] Using BLUE HOUR preset');
     } else if (lowerPrompt.includes('golden') || lowerPrompt.includes('warm') || lowerPrompt.includes('orange') || lowerPrompt.includes('pink')) {
       prompt = TWILIGHT_PROMPTS['golden-hour'];
-      console.log('[Replicate] Using WARM/GOLDEN preset');
+      logger.info('[Replicate] Using WARM/GOLDEN preset');
     } else if (lowerPrompt.includes('dramatic') || lowerPrompt.includes('purple') || lowerPrompt.includes('spectacular')) {
       prompt = TWILIGHT_PROMPTS['dramatic'];
-      console.log('[Replicate] Using DRAMATIC preset');
+      logger.info('[Replicate] Using DRAMATIC preset');
     } else {
       // Custom prompt
       prompt = `${customPrompt}. Add warm light glowing from inside all windows. Keep the house structure exactly the same. Professional real estate twilight photography.`;
-      console.log('[Replicate] Using CUSTOM prompt');
+      logger.info('[Replicate] Using CUSTOM prompt');
     }
   }
 
   // Higher guidance for twilight - we want more dramatic transformation
   const fluxOptions = withFluxDefaults({ guidance: 3.5, steps: 30 }, options);
   const result = await runFluxKontext(imageUrl, prompt, fluxOptions);
-  console.log('[Replicate] === VIRTUAL TWILIGHT COMPLETE ===');
+  logger.info('[Replicate] === VIRTUAL TWILIGHT COMPLETE ===');
   return result;
 }
 
@@ -374,9 +375,9 @@ export async function lawnRepair(
   presetId?: string,
   options?: (FluxOptions & { useMask?: boolean; requireMask?: boolean; skipMask?: boolean })
 ): Promise<string> {
-  console.log('[Replicate] === LAWN REPAIR ===');
+  logger.info('[Replicate] === LAWN REPAIR ===');
   if (presetId) {
-    console.log('[Replicate] Preset:', presetId);
+    logger.info('[Replicate] Preset:', presetId);
   }
   const minMaskArea = Number(process.env.AI_LAWN_MASK_MIN_AREA || 4);
   const minMaskConfidence = Number(process.env.AI_LAWN_MASK_MIN_CONFIDENCE || 0.75);
@@ -418,27 +419,27 @@ export async function lawnRepair(
           guidance: 7,
           steps: 32,
         });
-        console.log('[Replicate] === LAWN REPAIR (MASKED) COMPLETE ===');
+        logger.info('[Replicate] === LAWN REPAIR (MASKED) COMPLETE ===');
         return inpainted;
       }
       if (maskResult.success) {
-        console.warn(
+        logger.warn(
           `[Replicate] Lawn mask rejected (area ${maskResult.area.toFixed(1)}%, confidence ${maskResult.confidence.toFixed(2)})`
         );
       }
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : 'Unknown error';
-      console.warn('[Replicate] Lawn mask failed:', error instanceof Error ? error.message : 'Unknown error');
+      logger.warn('[Replicate] Lawn mask failed:', error instanceof Error ? error.message : 'Unknown error');
     }
   } else if (skipMask) {
-    console.log('[Replicate] Skipping lawn mask (batch prepare mode)');
+    logger.info('[Replicate] Skipping lawn mask (batch prepare mode)');
   }
 
   // Mask unavailable or failed — fall through to Flux Kontext (no hard error)
-  console.log('[Replicate] Falling back to Flux Kontext for lawn repair');
+  logger.info('[Replicate] Falling back to Flux Kontext for lawn repair');
 
   const result = await runFluxKontext(imageUrl, prompt, fluxOptions);
-  console.log('[Replicate] === LAWN REPAIR (KONTEXT) COMPLETE ===');
+  logger.info('[Replicate] === LAWN REPAIR (KONTEXT) COMPLETE ===');
   return result;
 }
 
@@ -464,7 +465,7 @@ export async function declutter(
   customPrompt?: string,
   options?: FluxOptions
 ): Promise<string> {
-  console.log('[Replicate] === DECLUTTER ===');
+  logger.info('[Replicate] === DECLUTTER ===');
   
   let prompt = DECLUTTER_PROMPTS['default'];
   
@@ -486,7 +487,7 @@ export async function declutter(
 
   const fluxOptions = withFluxDefaults({ guidance: 3.0, steps: 28 }, options);
   const result = await runFluxKontext(imageUrl, prompt, fluxOptions);
-  console.log('[Replicate] === DECLUTTER COMPLETE ===');
+  logger.info('[Replicate] === DECLUTTER COMPLETE ===');
   return result;
 }
 
@@ -511,7 +512,7 @@ export async function virtualStaging(
   customPrompt?: string,
   options?: FluxOptions
 ): Promise<string> {
-  console.log('[Replicate] === VIRTUAL STAGING ===');
+  logger.info('[Replicate] === VIRTUAL STAGING ===');
   
   let prompt = STAGING_PROMPTS['default'];
   
@@ -533,7 +534,7 @@ export async function virtualStaging(
 
   const fluxOptions = withFluxDefaults({ guidance: 3.5, steps: 32 }, options);
   const result = await runFluxKontext(imageUrl, prompt, fluxOptions);
-  console.log('[Replicate] === VIRTUAL STAGING COMPLETE ===');
+  logger.info('[Replicate] === VIRTUAL STAGING COMPLETE ===');
   return result;
 }
 
@@ -547,7 +548,7 @@ export async function fireFireplace(
   customPrompt?: string,
   options?: FluxOptions
 ): Promise<string> {
-  console.log('[Replicate] === FIRE IN FIREPLACE ===');
+  logger.info('[Replicate] === FIRE IN FIREPLACE ===');
 
   const prompt = customPrompt
     ? `${customPrompt}. STRICT: Only add fire inside the existing fireplace opening. Do NOT change any walls, mantle, hearth, furniture, room layout, or proportions. Do NOT expand or resize the fireplace.`
@@ -556,7 +557,7 @@ export async function fireFireplace(
   // Lower guidance to prevent affecting whole room
   const fluxOptions = withFluxDefaults({ guidance: 2.0, steps: 22 }, options);
   const result = await runFluxKontext(imageUrl, prompt, fluxOptions);
-  console.log('[Replicate] === FIRE IN FIREPLACE COMPLETE ===');
+  logger.info('[Replicate] === FIRE IN FIREPLACE COMPLETE ===');
   return result;
 }
 
@@ -569,7 +570,7 @@ export async function tvScreen(
   customPrompt?: string,
   options?: FluxOptions
 ): Promise<string> {
-  console.log('[Replicate] === TV SCREEN REPLACE ===');
+  logger.info('[Replicate] === TV SCREEN REPLACE ===');
 
   const prompt = customPrompt
     ? `${customPrompt}. Only change the TV screen content. Keep the TV frame, stand, and rest of room exactly the same.`
@@ -577,7 +578,7 @@ export async function tvScreen(
 
   const fluxOptions = withFluxDefaults({ guidance: 2.5, steps: 25 }, options);
   const result = await runFluxKontext(imageUrl, prompt, fluxOptions);
-  console.log('[Replicate] === TV SCREEN REPLACE COMPLETE ===');
+  logger.info('[Replicate] === TV SCREEN REPLACE COMPLETE ===');
   return result;
 }
 
@@ -590,7 +591,7 @@ export async function lightsOn(
   customPrompt?: string,
   options?: FluxOptions
 ): Promise<string> {
-  console.log('[Replicate] === LIGHTS ON ===');
+  logger.info('[Replicate] === LIGHTS ON ===');
 
   const prompt = customPrompt
     ? `${customPrompt}. Keep everything else exactly the same.`
@@ -598,7 +599,7 @@ export async function lightsOn(
 
   const fluxOptions = withFluxDefaults({ guidance: 2.5, steps: 25 }, options);
   const result = await runFluxKontext(imageUrl, prompt, fluxOptions);
-  console.log('[Replicate] === LIGHTS ON COMPLETE ===');
+  logger.info('[Replicate] === LIGHTS ON COMPLETE ===');
   return result;
 }
 
@@ -611,7 +612,7 @@ export async function windowMasking(
   customPrompt?: string,
   options?: FluxOptions
 ): Promise<string> {
-  console.log('[Replicate] === WINDOW MASKING ===');
+  logger.info('[Replicate] === WINDOW MASKING ===');
 
   const prompt = customPrompt
     ? `${customPrompt}. Keep the interior room exactly the same.`
@@ -619,7 +620,7 @@ export async function windowMasking(
 
   const fluxOptions = withFluxDefaults({ guidance: 2.5, steps: 25 }, options);
   const result = await runFluxKontext(imageUrl, prompt, fluxOptions);
-  console.log('[Replicate] === WINDOW MASKING COMPLETE ===');
+  logger.info('[Replicate] === WINDOW MASKING COMPLETE ===');
   return result;
 }
 
@@ -632,7 +633,7 @@ export async function colorBalance(
   customPrompt?: string,
   options?: FluxOptions
 ): Promise<string> {
-  console.log('[Replicate] === COLOR BALANCE ===');
+  logger.info('[Replicate] === COLOR BALANCE ===');
 
   const prompt = customPrompt
     ? `${customPrompt}. Keep everything in the scene exactly the same. Only adjust colors.`
@@ -641,7 +642,7 @@ export async function colorBalance(
   // Very low guidance for subtle color adjustment
   const fluxOptions = withFluxDefaults({ guidance: 2.0, steps: 20 }, options);
   const result = await runFluxKontext(imageUrl, prompt, fluxOptions);
-  console.log('[Replicate] === COLOR BALANCE COMPLETE ===');
+  logger.info('[Replicate] === COLOR BALANCE COMPLETE ===');
   return result;
 }
 
@@ -650,55 +651,55 @@ export async function colorBalance(
 // ============================================
 
 export async function poolEnhance(imageUrl: string, options?: FluxOptions): Promise<string> {
-  console.log('[Replicate] === POOL ENHANCEMENT ===');
+  logger.info('[Replicate] === POOL ENHANCEMENT ===');
   const fluxOptions = withFluxDefaults({ guidance: 2.5, steps: 25 }, options);
   const result = await runFluxKontext(
     imageUrl,
     'Enhance the pool water to look crystal clear and premium. Rich turquoise-blue water with natural light reflections, no murkiness. Clean the pool surface. IMPORTANT: Do NOT darken the overall scene. Keep the pool shape, deck, landscaping, and everything else exactly the same.',
     fluxOptions
   );
-  console.log('[Replicate] === POOL ENHANCEMENT COMPLETE ===');
+  logger.info('[Replicate] === POOL ENHANCEMENT COMPLETE ===');
   return result;
 }
 
 export async function hdr(imageUrl: string, options?: FluxOptions): Promise<string> {
-  console.log('[Replicate] === HDR ENHANCEMENT ===');
+  logger.info('[Replicate] === HDR ENHANCEMENT ===');
   const fluxOptions = withFluxDefaults({ guidance: 2.0, steps: 22 }, options);
   const result = await runFluxKontext(
     imageUrl,
     'Apply professional HDR enhancement. Brighten dark shadows to reveal detail, balance highlights, make colors more vibrant. Keep everything in the scene exactly the same. Only improve lighting and exposure.',
     fluxOptions
   );
-  console.log('[Replicate] === HDR ENHANCEMENT COMPLETE ===');
+  logger.info('[Replicate] === HDR ENHANCEMENT COMPLETE ===');
   return result;
 }
 
 export async function perspectiveCorrection(imageUrl: string, options?: FluxOptions): Promise<string> {
-  console.log('[Replicate] === PERSPECTIVE CORRECTION ===');
+  logger.info('[Replicate] === PERSPECTIVE CORRECTION ===');
   const fluxOptions = withFluxDefaults({ guidance: 2.5, steps: 25 }, options);
   const result = await runFluxKontext(
     imageUrl,
     'Correct the perspective and vertical lines. Make all vertical lines perfectly straight and parallel. Fix any lens distortion or tilted angles. Keep everything else exactly the same.',
     fluxOptions
   );
-  console.log('[Replicate] === PERSPECTIVE CORRECTION COMPLETE ===');
+  logger.info('[Replicate] === PERSPECTIVE CORRECTION COMPLETE ===');
   return result;
 }
 
 export async function lensCorrection(imageUrl: string, options?: FluxOptions): Promise<string> {
-  console.log('[Replicate] === LENS CORRECTION ===');
+  logger.info('[Replicate] === LENS CORRECTION ===');
   const fluxOptions = withFluxDefaults({ guidance: 2.5, steps: 25 }, options);
   const result = await runFluxKontext(
     imageUrl,
     'Correct lens distortion. Fix barrel and pincushion distortion. Straighten curved lines. Remove vignetting. Keep everything else exactly the same.',
     fluxOptions
   );
-  console.log('[Replicate] === LENS CORRECTION COMPLETE ===');
+  logger.info('[Replicate] === LENS CORRECTION COMPLETE ===');
   return result;
 }
 
 export async function autoEnhance(imageUrl: string, options?: FluxOptions): Promise<string> {
-  console.log('[Replicate] === AUTO ENHANCE ===');
+  logger.info('[Replicate] === AUTO ENHANCE ===');
   return hdr(imageUrl, options);
 }
 
@@ -714,7 +715,7 @@ export async function upscale(
   if (typeof options === 'number') scale = options;
   else if (options && typeof options.scale === 'number') scale = options.scale;
 
-  console.log('[Replicate] Upscaling with scale:', scale);
+  logger.info('[Replicate] Upscaling with scale:', scale);
 
   const output = await withTimeout(
     replicate.run('nightmareai/real-esrgan', {
@@ -727,7 +728,7 @@ export async function upscale(
     180000,
     'Real-ESRGAN',
   );
-  console.log('[Replicate] Upscale complete');
+  logger.info('[Replicate] Upscale complete');
   return extractUrl(output);
 }
 
@@ -736,7 +737,7 @@ export async function upscale(
 // ========================================
 
 export async function snowRemoval(imageUrl: string): Promise<string> {
-  console.log('[Replicate] Snow Removal');
+  logger.info('[Replicate] Snow Removal');
   const output = await replicate.run(
     "bytedance/sdxl-lightning-4step:6f7a773af6fc3e8de9d5a3c00be77c17308914bf67772726aff83496ba1e3bbe",
     {
@@ -752,7 +753,7 @@ export async function snowRemoval(imageUrl: string): Promise<string> {
 }
 
 export async function seasonalSpring(imageUrl: string): Promise<string> {
-  console.log('[Replicate] Seasonal - Spring');
+  logger.info('[Replicate] Seasonal - Spring');
   const output = await replicate.run(
     "bytedance/sdxl-lightning-4step:6f7a773af6fc3e8de9d5a3c00be77c17308914bf67772726aff83496ba1e3bbe",
     {
@@ -768,7 +769,7 @@ export async function seasonalSpring(imageUrl: string): Promise<string> {
 }
 
 export async function seasonalSummer(imageUrl: string): Promise<string> {
-  console.log('[Replicate] Seasonal - Summer');
+  logger.info('[Replicate] Seasonal - Summer');
   const output = await replicate.run(
     "bytedance/sdxl-lightning-4step:6f7a773af6fc3e8de9d5a3c00be77c17308914bf67772726aff83496ba1e3bbe",
     {
@@ -784,7 +785,7 @@ export async function seasonalSummer(imageUrl: string): Promise<string> {
 }
 
 export async function seasonalFall(imageUrl: string): Promise<string> {
-  console.log('[Replicate] Seasonal - Fall');
+  logger.info('[Replicate] Seasonal - Fall');
   const output = await replicate.run(
     "bytedance/sdxl-lightning-4step:6f7a773af6fc3e8de9d5a3c00be77c17308914bf67772726aff83496ba1e3bbe",
     {
@@ -804,7 +805,7 @@ export async function seasonalFall(imageUrl: string): Promise<string> {
 // ========================================
 
 export async function reflectionRemoval(imageUrl: string, options?: FluxOptions): Promise<string> {
-  console.log('[Replicate] Reflection Removal');
+  logger.info('[Replicate] Reflection Removal');
   const fluxOptions = withFluxDefaults({ guidance: 2.5, steps: 25 }, options);
   const result = await runFluxKontext(
     imageUrl,
@@ -815,7 +816,7 @@ export async function reflectionRemoval(imageUrl: string, options?: FluxOptions)
 }
 
 export async function powerLineRemoval(imageUrl: string, options?: FluxOptions): Promise<string> {
-  console.log('[Replicate] Power Line Removal');
+  logger.info('[Replicate] Power Line Removal');
   const fluxOptions = withFluxDefaults({ guidance: 2.5, steps: 25 }, options);
   const result = await runFluxKontext(
     imageUrl,
@@ -830,7 +831,7 @@ export async function objectRemoval(
   prompt?: string,
   options?: FluxOptions
 ): Promise<string> {
-  console.log('[Replicate] Object Removal');
+  logger.info('[Replicate] Object Removal');
   const fluxOptions = withFluxDefaults({ guidance: 2.5, steps: 25 }, options);
   const result = await runFluxKontext(
     imageUrl,
@@ -841,7 +842,7 @@ export async function objectRemoval(
 }
 
 export async function flashFix(imageUrl: string, options?: FluxOptions): Promise<string> {
-  console.log('[Replicate] Flash Hotspot Fix');
+  logger.info('[Replicate] Flash Hotspot Fix');
   const fluxOptions = withFluxDefaults({ guidance: 2.0, steps: 22 }, options);
   const result = await runFluxKontext(
     imageUrl,

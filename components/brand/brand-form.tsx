@@ -75,7 +75,7 @@ export function BrandForm() {
       if (connData.connections) {
         setConnections(connData.connections)
       }
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Failed to fetch brand profile:', error)
     } finally {
       setLoading(false)
@@ -101,7 +101,7 @@ export function BrandForm() {
       } else {
         alert('Failed to save: ' + data.error)
       }
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Save error:', error)
       alert('Failed to save brand profile')
     } finally {

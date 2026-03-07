@@ -9,6 +9,7 @@ import { adminSupabase } from '@/lib/supabase/admin'
 import { voiceoverSchema, parseBody } from '@/lib/validation/schemas'
 import { z } from 'zod'
 
+import { logger } from '@/lib/logger';
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY
 const ELEVENLABS_API_KEY = process.env.ELEVENLABS_API_KEY
 
@@ -64,7 +65,7 @@ export async function POST(request: NextRequest) {
     }
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Server error'
-    console.error('Voiceover API error:', error)
+    logger.error('Voiceover API error:', error)
     return NextResponse.json({ error: message }, { status: 500 })
   }
 }
@@ -136,7 +137,7 @@ Write the script now:`
     return NextResponse.json({ script })
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Script generation failed'
-    console.error('Script generation error:', error)
+    logger.error('Script generation error:', error)
     return NextResponse.json({ error: message }, { status: 500 })
   }
 }
@@ -189,9 +190,9 @@ async function handleGenerateAudio(body: GenerateAudioBody) {
         })
       }
 
-      console.log('ElevenLabs failed, falling back to OpenAI TTS')
+      logger.info('ElevenLabs failed, falling back to OpenAI TTS')
     } catch {
-      console.log('ElevenLabs error, falling back to OpenAI TTS')
+      logger.info('ElevenLabs error, falling back to OpenAI TTS')
     }
   }
 
@@ -232,7 +233,7 @@ async function handleGenerateAudio(body: GenerateAudioBody) {
     })
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'TTS generation failed'
-    console.error('OpenAI TTS error:', error)
+    logger.error('OpenAI TTS error:', error)
     return NextResponse.json({ error: message }, { status: 500 })
   }
 }
@@ -256,7 +257,7 @@ async function handleUploadAudio(body: UploadAudioBody, userId: string) {
     })
 
   if (uploadError) {
-    console.error('Voiceover upload error:', uploadError)
+    logger.error('Voiceover upload error:', uploadError)
     return NextResponse.json({ error: 'Failed to upload voiceover' }, { status: 500 })
   }
 
@@ -266,7 +267,7 @@ async function handleUploadAudio(body: UploadAudioBody, userId: string) {
     .createSignedUrl(fileName, 3600)
 
   if (signedError || !signedData?.signedUrl) {
-    console.error('Signed URL error:', signedError)
+    logger.error('Signed URL error:', signedError)
     return NextResponse.json({ error: 'Failed to create signed URL' }, { status: 500 })
   }
 
