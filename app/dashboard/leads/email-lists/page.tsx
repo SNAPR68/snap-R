@@ -47,8 +47,10 @@ export default function EmailListsPage() {
       if (!res.ok) throw new Error('Failed')
       const json = await res.json() as { leads: Lead[] }
       setLeads(json.leads || [])
-    } catch {
-      // silently ignore
+    } catch (error: unknown) {
+      if (error instanceof DOMException && error.name === 'TimeoutError') {
+        console.error('Lead fetch timed out')
+      }
     } finally {
       setLoading(false)
     }

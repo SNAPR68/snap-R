@@ -186,7 +186,7 @@ function DescriptionGenerator({
           tone,
           length,
         }),
-        signal: AbortSignal.timeout(15000),
+        signal: AbortSignal.timeout(30000),
       });
 
       const data = await response.json();

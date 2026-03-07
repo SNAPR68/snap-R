@@ -1,6 +1,13 @@
 # SnapR Execution Changelog
 =================================
 
+## 2026-03-08 — AbortSignal.timeout CodeRabbit fixes
+
+- Upload page timeout: 15s → 120s (large file uploads need more time)
+- AI descriptions timeout: 15s → 30s (matches UI expectation text)
+- Email lists: surface timeout errors instead of silent empty state
+- Risk Level: Low
+
 ## 2026-03-08 — AbortSignal.timeout on fetch calls (batch 1)
 
 ### Prevent hanging requests from blocking Vercel functions
