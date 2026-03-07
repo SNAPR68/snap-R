@@ -58,7 +58,7 @@ export function BrandForm() {
 
   const fetchProfile = async () => {
     try {
-      const res = await fetch('/api/brand')
+      const res = await fetch('/api/brand', { signal: AbortSignal.timeout(15000) })
       const data = await res.json()
       
       if (data.brandProfile) {
@@ -70,7 +70,7 @@ export function BrandForm() {
       }
 
       // Fetch social connections
-      const connRes = await fetch('/api/social/connections')
+      const connRes = await fetch('/api/social/connections', { signal: AbortSignal.timeout(15000) })
       const connData = await connRes.json()
       if (connData.connections) {
         setConnections(connData.connections)
@@ -90,7 +90,8 @@ export function BrandForm() {
       const res = await fetch('/api/brand', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(profile)
+        body: JSON.stringify(profile),
+        signal: AbortSignal.timeout(15000),
       })
 
       const data = await res.json()

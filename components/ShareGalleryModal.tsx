@@ -22,7 +22,8 @@ export default function ShareGalleryModal({ listingId, listingTitle, onClose }: 
       const response = await fetch('/api/share', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ listingId, clientName, clientEmail, expiresInDays })
+        body: JSON.stringify({ listingId, clientName, clientEmail, expiresInDays }),
+        signal: AbortSignal.timeout(15000),
       })
       const data = await response.json()
       if (data.shareUrl) setShareUrl(data.shareUrl)

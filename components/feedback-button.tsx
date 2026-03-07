@@ -22,6 +22,7 @@ export function FeedbackButton() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ type, message, email }),
+        signal: AbortSignal.timeout(15000),
       });
       setSubmitted(true);
       setTimeout(() => {

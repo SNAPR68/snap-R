@@ -125,6 +125,7 @@ function ScheduleForm({ listings, onSaved, onClose }: ScheduleFormProps) {
           source: source || null,
           agentNotes: agentNotes || null,
         }),
+        signal: AbortSignal.timeout(15000),
       })
       const data = await res.json() as { error?: string }
       if (!res.ok) { setError(data.error ?? 'Failed'); return }
@@ -272,6 +273,7 @@ function OutcomeForm({ showing, onSaved, onClose }: OutcomeFormProps) {
           interestLevel: interestLevel || null,
           agentNotes: agentNotes || null,
         }),
+        signal: AbortSignal.timeout(15000),
       })
       onSaved()
       onClose()

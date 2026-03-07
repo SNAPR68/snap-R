@@ -48,7 +48,7 @@ export default function PartnerDashboardPage() {
 
   const loadPartnerStatus = async () => {
     try {
-      const res = await fetch('/api/partners/status');
+      const res = await fetch('/api/partners/status', { signal: AbortSignal.timeout(15000) });
       const data = await res.json();
       setPartnerData(data);
     } catch (err) {

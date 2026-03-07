@@ -28,7 +28,7 @@ export default function WatermarkSettings() {
 
   const fetchSettings = async () => {
     try {
-      const res = await fetch('/api/watermark')
+      const res = await fetch('/api/watermark', { signal: AbortSignal.timeout(15000) })
       const data = await res.json()
       if (data.settings) {
         setEnabled(data.settings.watermark_enabled || false)
@@ -48,7 +48,8 @@ export default function WatermarkSettings() {
       await fetch('/api/watermark', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ enabled, text: mode === 'text' ? text : null, logoUrl: mode === 'logo' ? logoUrl : null, position, opacity })
+        body: JSON.stringify({ enabled, text: mode === 'text' ? text : null, logoUrl: mode === 'logo' ? logoUrl : null, position, opacity }),
+        signal: AbortSignal.timeout(15000),
       })
       setSaved(true)
       setTimeout(() => setSaved(false), 2000)

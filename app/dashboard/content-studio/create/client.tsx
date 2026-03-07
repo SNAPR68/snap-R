@@ -46,7 +46,7 @@ export function CreateContentClient() {
   useEffect(() => {
     async function fetchBrandProfile() {
       try {
-        const res = await fetch('/api/brand')
+        const res = await fetch('/api/brand', { signal: AbortSignal.timeout(15000) })
         const data = await res.json()
         if (data.brandProfile) setBrandProfile(data.brandProfile)
       } catch (error: unknown) {

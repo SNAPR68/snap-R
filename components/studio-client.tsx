@@ -231,6 +231,7 @@ export function StudioClient({ listingId, userRole, showMlsFeatures = false, cre
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ listingId, options: { allowDownload: shareOptions.allowDownload, showComparison: shareOptions.showComparison } }),
+          signal: AbortSignal.timeout(15000),
         });
         const data = await res.json();
         if (!cancelled && data.success && data.shareUrl) setShareLink(data.shareUrl);
@@ -315,6 +316,7 @@ export function StudioClient({ listingId, userRole, showMlsFeatures = false, cre
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ imageId: selectedPhoto.id, toolId, options: selectedPreset ? { preset: selectedPreset.id, prompt: selectedPreset.prompt } : {} }),
+        signal: AbortSignal.timeout(30000),
       });
       if (!res.ok) {
         const errorData = await res.json().catch(() => ({ error: `Server error (${res.status})` }));
@@ -404,6 +406,7 @@ export function StudioClient({ listingId, userRole, showMlsFeatures = false, cre
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: 'trigger', listingId, userId: user.id, newStatus, previousStatus: marketingStatus }),
+        signal: AbortSignal.timeout(15000),
       });
       setMarketingStatus(newStatus);
     } catch (error: unknown) {
@@ -419,7 +422,7 @@ export function StudioClient({ listingId, userRole, showMlsFeatures = false, cre
 
   const fetchListingStatus = async () => {
     try {
-      const res = await fetch('/api/listing/status?listingId=' + listingId);
+      const res = await fetch('/api/listing/status?listingId=' + listingId, { signal: AbortSignal.timeout(15000) });
       const data = await res.json();
       if (data.status && data.status !== 'pending') {
         setListingStatus({ status: data.status, confidence: data.confidence || 0, heroPhotoId: data.heroPhotoId });
@@ -443,7 +446,7 @@ export function StudioClient({ listingId, userRole, showMlsFeatures = false, cre
 
     const fetchMarketingStatus = async () => {
       try {
-        const res = await fetch('/api/marketing/status?listingId=' + listingId);
+        const res = await fetch('/api/marketing/status?listingId=' + listingId, { signal: AbortSignal.timeout(15000) });
         if (!res.ok) return;
         const data = await res.json();
         if (cancelled) return;
@@ -493,6 +496,7 @@ export function StudioClient({ listingId, userRole, showMlsFeatures = false, cre
             heroPhotoId: prepareData.heroPhotoId,
           }
         }),
+        signal: AbortSignal.timeout(15000),
       });
     } catch {
       // Notification send failed silently
@@ -536,6 +540,7 @@ export function StudioClient({ listingId, userRole, showMlsFeatures = false, cre
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ listingId }),
+        signal: AbortSignal.timeout(30000),
       });
       if (!response.ok) throw new Error('Failed');
       const blob = await response.blob();

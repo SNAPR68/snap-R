@@ -480,6 +480,7 @@ function CullingInterface({
           listingId,
           targetCount,
         }),
+        signal: AbortSignal.timeout(15000),
       });
 
       const data = await response.json();

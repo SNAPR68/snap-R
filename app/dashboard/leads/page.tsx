@@ -148,6 +148,7 @@ function DripPanel({ lead }: { lead: Lead }) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ leadId: lead.id, sequenceId }),
+        signal: AbortSignal.timeout(15000),
       })
       const data = await res.json()
       if (!res.ok) {
@@ -170,6 +171,7 @@ function DripPanel({ lead }: { lead: Lead }) {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ enrollmentId }),
+        signal: AbortSignal.timeout(15000),
       })
       if (!res.ok) {
         showToast('Failed to unenroll')
@@ -380,6 +382,7 @@ function ActivityPanel({ lead }: { lead: Lead }) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ leadId: lead.id, activityType: logType, body: newNote.trim() }),
+        signal: AbortSignal.timeout(15000),
       })
       if (!res.ok) return
       setNewNote('')
@@ -397,6 +400,7 @@ function ActivityPanel({ lead }: { lead: Lead }) {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ leadId: lead.id, score: tempScore }),
+        signal: AbortSignal.timeout(15000),
       })
       setScore(tempScore)
       setEditingScore(false)
@@ -411,6 +415,7 @@ function ActivityPanel({ lead }: { lead: Lead }) {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ leadId: lead.id, notes }),
+        signal: AbortSignal.timeout(15000),
       })
     } catch {
       // silent
@@ -757,6 +762,7 @@ export default function LeadsPage() {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id: leadId, status: newStatus }),
+        signal: AbortSignal.timeout(15000),
       })
       if (!response.ok) throw new Error('Failed to update')
 

@@ -23,7 +23,7 @@ export function DashboardAnalytics({ userId }: { userId?: string }) {
   useEffect(() => {
     async function fetchAnalytics() {
       try {
-        const res = await fetch('/api/analytics');
+        const res = await fetch('/api/analytics', { signal: AbortSignal.timeout(15000) });
         if (!res.ok) throw new Error('Failed to fetch analytics');
         const data = await res.json();
         setAnalytics(data);

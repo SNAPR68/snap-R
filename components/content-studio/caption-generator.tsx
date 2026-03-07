@@ -59,7 +59,8 @@ export function CaptionGenerator({ property, platform, contentType, onCaptionGen
           includeEmojis,
           includeCallToAction: includeCTA,
           contentType: apiContentType
-        })
+        }),
+        signal: AbortSignal.timeout(15000),
       })
 
       const data = await res.json()
@@ -94,7 +95,8 @@ export function CaptionGenerator({ property, platform, contentType, onCaptionGen
           property,
           platform,
           count: 20
-        })
+        }),
+        signal: AbortSignal.timeout(15000),
       })
 
       const data = await res.json()

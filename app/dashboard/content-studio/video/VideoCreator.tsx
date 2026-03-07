@@ -267,7 +267,8 @@ export default function VideoCreatorClient() {
           },
           style: scriptStyle,
           duration: selectedPhotos.length * 3,
-        })
+        }),
+        signal: AbortSignal.timeout(30000),
       })
 
       const data = await res.json()
@@ -300,7 +301,8 @@ export default function VideoCreatorClient() {
           action: 'generate-audio',
           script,
           voiceId,
-        })
+        }),
+        signal: AbortSignal.timeout(30000),
       })
 
       const data = await res.json()
@@ -313,7 +315,8 @@ export default function VideoCreatorClient() {
             action: 'upload-audio',
             audioBase64: data.audioBase64,
             listingId,
-          })
+          }),
+          signal: AbortSignal.timeout(30000),
         })
 
         const uploadData = await uploadRes.json()

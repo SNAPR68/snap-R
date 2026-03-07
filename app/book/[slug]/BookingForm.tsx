@@ -142,6 +142,7 @@ export default function BookingForm({ photographer, brand, packages }: BookingFo
           specialInstructions: specialInstructions.trim() || undefined,
           accessInfo: accessInfo.trim() || undefined,
         }),
+        signal: AbortSignal.timeout(15000),
       })
 
       const data = await res.json()

@@ -116,6 +116,7 @@ export default function NotifyDashboard() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ to, message, listingId: selectedId || undefined }),
+        signal: AbortSignal.timeout(15000),
       })
       if (!res.ok) {
         const data = await res.json() as { error?: string }

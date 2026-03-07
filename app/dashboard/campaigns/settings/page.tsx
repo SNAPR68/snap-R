@@ -156,6 +156,7 @@ export default function CampaignSettingsPage() {
             template_id: trigger.template_id,
           },
         }),
+        signal: AbortSignal.timeout(15000),
       });
       const result = await res.json();
       if (!result.success) {

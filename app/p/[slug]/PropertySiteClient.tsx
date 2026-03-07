@@ -200,6 +200,7 @@ export default function PropertySiteClient({ photos, listing, agent, brand, vide
           listingAddress: fullAddress,
           agentEmail: agent?.email,
         }),
+        signal: AbortSignal.timeout(15000),
       })
       
       if (!response.ok) throw new Error('Failed to send message')
@@ -237,6 +238,7 @@ export default function PropertySiteClient({ photos, listing, agent, brand, vide
           utmCampaign: utmParams.campaign || null,
           utmContent: utmParams.content || null,
         }),
+        signal: AbortSignal.timeout(15000),
       })
 
       if (!response.ok) throw new Error('Failed to submit')

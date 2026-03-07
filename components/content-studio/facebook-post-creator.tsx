@@ -84,7 +84,7 @@ export function SocialPostCreator({ platform }: SocialPostCreatorProps) {
   useEffect(() => {
     async function fetchData() {
       try {
-        const brandRes = await fetch('/api/brand')
+        const brandRes = await fetch('/api/brand', { signal: AbortSignal.timeout(15000) })
         const brandData = await brandRes.json()
         if (brandData.brandProfile) {
           setBrand({

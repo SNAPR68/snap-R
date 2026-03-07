@@ -37,6 +37,7 @@ export default function ShowingFeedbackForm({ showingId, contactName, propertyLa
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ showingId, interestLevel: rating, comments: comments || undefined, wantsFollowUp }),
+        signal: AbortSignal.timeout(15000),
       });
       if (!res.ok) {
         const d = await res.json();

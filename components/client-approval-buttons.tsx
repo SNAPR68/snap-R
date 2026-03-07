@@ -34,6 +34,7 @@ export function ClientApprovalButtons({
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ photoId, shareToken, approved: isApproved, feedback: isApproved ? '' : feedback }),
+        signal: AbortSignal.timeout(15000),
       });
       if (res.ok) {
         const data = await res.json();
@@ -49,6 +50,7 @@ export function ClientApprovalButtons({
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ shareToken, clientName: clientName || 'Client' }),
+              signal: AbortSignal.timeout(15000),
             });
           } catch {
             // Non-critical — notification failure shouldn't break the UI
@@ -69,6 +71,7 @@ export function ClientApprovalButtons({
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ photoId, shareToken, approved: false, feedback }),
+        signal: AbortSignal.timeout(15000),
       });
       setShowFeedback(false);
     } catch {

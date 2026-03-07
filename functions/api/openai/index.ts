@@ -13,7 +13,8 @@ export async function onRequestPost(context: { request: Request; env: Record<str
       model: body.model || "gpt-4o-mini",
       messages: body.messages,
       temperature: body.temperature ?? 0.6
-    })
+    }),
+    signal: AbortSignal.timeout(30000),
   });
 
   return new Response(await response.text(), {

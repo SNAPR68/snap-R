@@ -40,7 +40,7 @@ export default function ScheduledPostsPage() {
 
   const fetchPosts = async () => {
     try {
-      const res = await fetch('/api/social/scheduled');
+      const res = await fetch('/api/social/scheduled', { signal: AbortSignal.timeout(15000) });
       const data = await res.json();
       setPosts(data.posts || []);
     } catch (error: unknown) {
@@ -71,6 +71,7 @@ export default function ScheduledPostsPage() {
           content: post.content,
           imageUrls: post.image_urls,
         }),
+        signal: AbortSignal.timeout(15000),
       });
       
       if (res.ok) {

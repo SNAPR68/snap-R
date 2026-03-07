@@ -100,6 +100,7 @@ function DeliverModal({ listing, clients, primaryColor, onClose, onDelivered }: 
           expiresInDays: expiresInDays ? parseInt(expiresInDays) : null,
           sendEmail,
         }),
+        signal: AbortSignal.timeout(15000),
       })
 
       const data = await res.json() as { success?: boolean; created?: Array<{ url: string; clientName: string }>; errors?: string[] }
@@ -457,6 +458,7 @@ function ClientsTab({ clients, primaryColor, onRefresh }: ClientsTabProps) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(form),
+        signal: AbortSignal.timeout(15000),
       })
       const data = await res.json() as { error?: string }
       if (!res.ok) { setError(data.error ?? 'Failed to add client'); return }

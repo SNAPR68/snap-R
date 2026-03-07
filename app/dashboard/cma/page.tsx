@@ -256,6 +256,7 @@ function CMAGenerator() {
           },
           agentInfo,
         }),
+        signal: AbortSignal.timeout(15000),
       });
 
       const data = await response.json();

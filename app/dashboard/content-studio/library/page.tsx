@@ -56,7 +56,8 @@ export default function ContentLibrary() {
     await fetch('/api/content-library', {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id, action: 'favorite' })
+      body: JSON.stringify({ id, action: 'favorite' }),
+      signal: AbortSignal.timeout(15000),
     })
     setContent(content.map(c => c.id === id ? { ...c, is_favorite: !c.is_favorite } : c))
   }
@@ -66,7 +67,8 @@ export default function ContentLibrary() {
     await fetch('/api/content-library', {
       method: 'DELETE',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id })
+      body: JSON.stringify({ id }),
+      signal: AbortSignal.timeout(15000),
     })
     setContent(content.filter(c => c.id !== id))
   }

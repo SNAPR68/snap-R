@@ -270,7 +270,7 @@ export default function SequencesPage() {
 
   const fetchSequences = useCallback(async () => {
     try {
-      const res = await fetch('/api/leads/sequences?include_steps=true')
+      const res = await fetch('/api/leads/sequences?include_steps=true', { signal: AbortSignal.timeout(15000) })
       if (res.ok) {
         const data = await res.json()
         setSequences(data.sequences || [])
@@ -294,6 +294,7 @@ export default function SequencesPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name: data.name, description: data.description || null, triggerEvent: data.triggerEvent, steps: data.steps }),
+        signal: AbortSignal.timeout(15000),
       })
       if (!res.ok) {
         const d = await res.json()
@@ -317,6 +318,7 @@ export default function SequencesPage() {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id, name: data.name, description: data.description || null, triggerEvent: data.triggerEvent, steps: data.steps }),
+        signal: AbortSignal.timeout(15000),
       })
       if (!res.ok) {
         const d = await res.json()
@@ -338,6 +340,7 @@ export default function SequencesPage() {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id: seq.id, is_active: !seq.is_active }),
+        signal: AbortSignal.timeout(15000),
       })
       setSequences(prev => prev.map(s => s.id === seq.id ? { ...s, is_active: !s.is_active } : s))
     } catch {
@@ -352,6 +355,7 @@ export default function SequencesPage() {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id }),
+        signal: AbortSignal.timeout(15000),
       })
       if (!res.ok) {
         const d = await res.json()

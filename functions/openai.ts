@@ -13,6 +13,7 @@ export const onRequestPost: PagesFunction<{
       model: "gpt-4o-mini",
       messages: body.messages,
     }),
+    signal: AbortSignal.timeout(30000),
   });
 
   const data = await res.json();

@@ -375,6 +375,7 @@ export function UnifiedCreator() {
           const uploadRes = await fetch('/api/upload-image', {
             method: 'POST',
             body: formData,
+            signal: AbortSignal.timeout(15000),
           })
           const uploadData = await uploadRes.json()
           const permanentImageUrl = uploadData.url || photoUrl
@@ -390,6 +391,7 @@ export function UnifiedCreator() {
               imageUrl: permanentImageUrl,
               caption: getFullCaption(),
             }),
+            signal: AbortSignal.timeout(15000),
           })
         } catch (libErr) {
           console.error('Failed to save to library:', libErr)
@@ -499,7 +501,7 @@ export function UnifiedCreator() {
     try {
       const zip = new JSZip()
       for (let i = 0; i < selectedPhotos.length; i++) {
-        const res = await fetch(selectedPhotos[i])
+        const res = await fetch(selectedPhotos[i], { signal: AbortSignal.timeout(15000) })
         const blob = await res.blob()
         zip.file(`slide-${String(i+1).padStart(2,'0')}.jpg`, blob)
       }
@@ -531,6 +533,7 @@ export function UnifiedCreator() {
           imageUrls: selectedPhotos,
           listingId,
         }),
+        signal: AbortSignal.timeout(15000),
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || 'Failed to publish')
@@ -719,7 +722,8 @@ export function UnifiedCreator() {
             propertyType: propertyData.propertyType,
             features: propertyData.features
           }
-        })
+        }),
+        signal: AbortSignal.timeout(15000),
       })
       if (!res.ok) throw new Error('API error')
       const data = await res.json()
@@ -750,7 +754,8 @@ export function UnifiedCreator() {
             propertyType: property.propertyType || 'House',
             features: []
           }
-        })
+        }),
+        signal: AbortSignal.timeout(15000),
       })
       if (!res.ok) throw new Error('API error')
       const data = await res.json()
@@ -826,7 +831,8 @@ export function UnifiedCreator() {
           caption: getFullCaption(),
           hashtags: hashtags,
           propertyData: { address: property.address, city: property.city, state: property.state, price: property.price, beds: property.bedrooms, baths: property.bathrooms, sqft: property.squareFeet }
-        })
+        }),
+        signal: AbortSignal.timeout(15000),
       })
       if (res.ok) { alert('Saved to library!'); } else { const err = await res.json(); alert('Save failed: ' + (err.error || 'Unknown error')); console.error('Save failed:', err); }
     } catch (error: unknown) { console.error('Save error:', error) }
@@ -850,6 +856,7 @@ export function UnifiedCreator() {
           imageUrls: [photoUrl],
           scheduledFor: scheduledAt,
         }),
+        signal: AbortSignal.timeout(15000),
       })
       if (!res.ok) {
         const err = await res.json()

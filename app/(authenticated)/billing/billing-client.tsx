@@ -30,6 +30,7 @@ export default function BillingClient({ profile }: { profile: { subscription_tie
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ packageId }),
+        signal: AbortSignal.timeout(15000),
       });
       const data = await res.json();
       if (data.url) {
