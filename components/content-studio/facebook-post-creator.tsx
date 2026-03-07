@@ -30,6 +30,13 @@ interface BrandData {
   tagline: string
 }
 
+interface ListingPhoto {
+  processed_url: string | null
+  signedProcessedUrl?: string
+  signedOriginalUrl?: string
+  original_url?: string
+}
+
 interface SocialPostCreatorProps {
   platform: 'facebook' | 'linkedin'
 }
@@ -103,16 +110,16 @@ export function SocialPostCreator({ platform }: SocialPostCreatorProps) {
               squareFeet: listingData.listing.square_feet || ''
             })
           }
-          
+
           if (listingData.photos && listingData.photos.length > 0) {
-            const enhancedPhotos = listingData.photos
-              .filter((p: any) => p.processed_url)
-              .map((p: any) => p.signedProcessedUrl || p.processed_url)
-            
-            const originalPhotos = listingData.photos
-              .map((p: any) => p.signedOriginalUrl || p.signedProcessedUrl || p.original_url)
+            const enhancedPhotos = (listingData.photos as ListingPhoto[])
+              .filter((p) => p.processed_url)
+              .map((p) => p.signedProcessedUrl || p.processed_url || '')
+
+            const originalPhotos = (listingData.photos as ListingPhoto[])
+              .map((p) => p.signedOriginalUrl || p.signedProcessedUrl || p.original_url || '')
               .filter(Boolean)
-            
+
             const allPhotos = enhancedPhotos.length > 0 ? enhancedPhotos : originalPhotos
             setPhotos(allPhotos)
             if (allPhotos.length > 0) {
@@ -271,6 +278,7 @@ export function SocialPostCreator({ platform }: SocialPostCreatorProps) {
                           : 'border-white/10 hover:border-white/30'
                       }`}
                     >
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img src={url} alt="" className="w-full h-full object-cover" />
                     </button>
                   ))}
@@ -298,7 +306,7 @@ export function SocialPostCreator({ platform }: SocialPostCreatorProps) {
               <div className="bg-white/5 rounded-xl border border-white/10 p-4">
                 {/* Scaled Preview */}
                 <div className="relative overflow-hidden rounded-lg" style={{ paddingBottom: platform === 'facebook' ? '52.5%' : '52.25%' }}>
-                  <div 
+                  <div
                     className="absolute inset-0 origin-top-left"
                     style={{ transform: 'scale(0.3)', width: '333.3%', height: '333.3%' }}
                   >
@@ -354,7 +362,7 @@ export function SocialPostCreator({ platform }: SocialPostCreatorProps) {
 
             <div className="bg-white/5 rounded-xl border border-white/10 p-4 space-y-4">
               <Label className="text-sm text-white/60 block">Property Details</Label>
-              
+
               <div>
                 <Label className="text-xs text-white/40">Address</Label>
                 <Input
@@ -441,9 +449,10 @@ export function SocialPostCreator({ platform }: SocialPostCreatorProps) {
 
               <div className="flex items-center gap-3 p-3 bg-white/5 rounded-lg">
                 {brand.logo_url ? (
+                  // eslint-disable-next-line @next/next/no-img-element
                   <img src={brand.logo_url} alt="" className="w-10 h-10 rounded-full object-cover" />
                 ) : (
-                  <div 
+                  <div
                     className="w-10 h-10 rounded-full flex items-center justify-center font-bold"
                     style={{ backgroundColor: brand.primary_color, color: brand.secondary_color }}
                   >

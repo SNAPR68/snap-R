@@ -1,4 +1,4 @@
-export async function onRequestPost(context: any) {
+export async function onRequestPost(context: { request: Request; env: Record<string, string>; params: Record<string, string> }) {
   const { request, env } = context;
   
   const body = await request.json();

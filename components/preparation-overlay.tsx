@@ -21,6 +21,16 @@ interface PrepareResult {
   processingTime?: number;
 }
 
+interface SSEData {
+  result?: PrepareResult;
+  error?: string;
+  phase?: string;
+  progress?: number;
+  message?: string;
+  photoProgress?: { current: number; total: number } | null;
+  type?: string;
+}
+
 interface PreparationOverlayProps {
   isOpen: boolean;
   listingId: string;
@@ -206,12 +216,12 @@ export function PreparationOverlay({
     };
   }, [isOpen, listingId]);
 
-  const handleSSEMessage = (data: any, event?: string) => {
+  const handleSSEMessage = (data: SSEData, event?: string) => {
     if (event === 'complete' && data.result) {
       setResult(data.result);
       setPhase('complete');
       setProgress(100);
-      setTimeout(() => onComplete(data.result), 1500);
+      setTimeout(() => onComplete(data.result as PrepareResult), 1500);
       return;
     }
 
@@ -247,7 +257,7 @@ export function PreparationOverlay({
       setResult(data.result);
       setPhase('complete');
       setProgress(100);
-      setTimeout(() => onComplete(data.result), 1500);
+      setTimeout(() => onComplete(data.result as PrepareResult), 1500);
     }
     if (data.type === 'error') {
       setError(data.error || 'Unknown error');

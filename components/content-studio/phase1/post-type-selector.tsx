@@ -1,35 +1,35 @@
 'use client'
 
-import { useState } from 'react'
-import { 
-  Megaphone, 
-  Clock, 
-  CalendarDays, 
-  TrendingDown, 
-  FileCheck, 
+import {
+  Megaphone,
+  Clock,
+  CalendarDays,
+  TrendingDown,
+  FileCheck,
   PartyPopper,
   Briefcase,
   Heart,
   Crown,
-  Zap
+  Zap,
+  type LucideIcon
 } from 'lucide-react'
 
 // ============================================
 // POST TYPES
 // ============================================
 
-export type PostType = 
-  | 'just_listed' 
-  | 'coming_soon' 
-  | 'open_house' 
-  | 'price_improvement' 
-  | 'under_contract' 
+export type PostType =
+  | 'just_listed'
+  | 'coming_soon'
+  | 'open_house'
+  | 'price_improvement'
+  | 'under_contract'
   | 'just_sold'
 
 export interface PostTypeConfig {
   id: PostType
   name: string
-  icon: any
+  icon: LucideIcon
   description: string
   color: string
   bgColor: string
@@ -109,7 +109,7 @@ export type ToneType = 'professional' | 'warm' | 'luxury' | 'urgent'
 export interface ToneConfig {
   id: ToneType
   name: string
-  icon: any
+  icon: LucideIcon
   description: string
   color: string
   bgColor: string
@@ -185,8 +185,8 @@ export function PostTypeSelector({ selected, onChange }: PostTypeSelectorProps) 
               onClick={() => onChange(type.id)}
               className={`
                 flex flex-col items-center gap-1 p-2 rounded-lg border transition-all
-                ${isSelected 
-                  ? `${type.bgColor} border-current ${type.color}` 
+                ${isSelected
+                  ? `${type.bgColor} border-current ${type.color}`
                   : 'bg-white/5 border-white/10 text-white/60 hover:bg-white/10'
                 }
               `}
@@ -228,8 +228,8 @@ export function ToneSelector({ selected, onChange }: ToneSelectorProps) {
               onClick={() => onChange(tone.id)}
               className={`
                 flex items-center gap-2 p-2 rounded-lg border transition-all
-                ${isSelected 
-                  ? `${tone.bgColor} border-current ${tone.color}` 
+                ${isSelected
+                  ? `${tone.bgColor} border-current ${tone.color}`
                   : 'bg-white/5 border-white/10 text-white/60 hover:bg-white/10'
                 }
               `}
@@ -262,11 +262,11 @@ interface ContentOptionsProps {
   onToneChange: (tone: ToneType) => void
 }
 
-export function ContentOptions({ 
-  postType, 
-  tone, 
-  onPostTypeChange, 
-  onToneChange 
+export function ContentOptions({
+  postType,
+  tone,
+  onPostTypeChange,
+  onToneChange
 }: ContentOptionsProps) {
   return (
     <div className="bg-white/5 rounded-xl p-3 border border-white/10 space-y-4">

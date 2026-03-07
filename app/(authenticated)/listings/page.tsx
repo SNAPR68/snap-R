@@ -58,10 +58,10 @@ export default async function ListingsPage() {
       <h1 className="text-2xl md:text-3xl font-semibold mb-6 md:mb-8">Your Listings</h1>
 
       <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-3">
-        {listings.map((listing: any) => {
+        {listings.map((listing: { id: string; address?: string; title?: string; created_at: string; preparation_status?: string; photos?: Array<{ id: string; raw_url?: string; processed_url?: string }> }) => {
           const cover = listing.photos?.[0]?.processed_url || listing.photos?.[0]?.raw_url;
           const count = listing.photos?.length ?? 0;
-          const coverUrl = getImageUrl(cover) || undefined;
+          const coverUrl = getImageUrl(cover ?? null) || undefined;
 
           return (
             <Link

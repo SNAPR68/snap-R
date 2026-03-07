@@ -651,8 +651,8 @@ function PhotoCullingContent() {
     if (listingsData) {
       const listingsWithThumbnails = await Promise.all(
         listingsData
-          .filter((l: any) => (l.photos || []).length > 0)
-          .map(async (listing: any) => {
+          .filter((l: { photos?: unknown[] }) => (l.photos || []).length > 0)
+          .map(async (listing: { id: string; address?: string; title?: string; city?: string; state?: string; photos?: Array<{ id: string; raw_url?: string; processed_url?: string }> }) => {
             const photos = listing.photos || [];
             const firstPhoto = photos[0];
             let thumbnail = null;
@@ -663,12 +663,12 @@ function PhotoCullingContent() {
                 thumbnail = data?.signedUrl;
               }
             }
-            return { 
-              id: listing.id, 
-              title: listing.title, 
+            return {
+              id: listing.id,
+              title: listing.title || listing.address || 'Untitled',
               address: listing.address,
-              thumbnail, 
-              photoCount: photos.length 
+              thumbnail: thumbnail ?? undefined,
+              photoCount: photos.length
             };
           })
       );

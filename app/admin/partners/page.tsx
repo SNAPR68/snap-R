@@ -46,7 +46,7 @@ export default async function AdminPartnersPage() {
       .in('referred_by', codes);
 
     if (referrals) {
-      referrals.forEach((r: any) => {
+      referrals.forEach((r: { referred_by?: string }) => {
         if (r.referred_by) {
           referralCounts[r.referred_by] = (referralCounts[r.referred_by] || 0) + 1;
         }

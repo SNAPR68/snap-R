@@ -11,7 +11,7 @@ const CREDIT_PACKAGES = [
   { id: 'enterprise', name: 'Enterprise', credits: 500, price: 199, priceDisplay: '$199/mo' },
 ];
 
-export default function BillingClient({ profile }: { profile: any }) {
+export default function BillingClient({ profile }: { profile: { subscription_tier?: string; stripe_customer_id?: string; full_name?: string; email?: string; credits?: number; plan?: string } }) {
   const [loading, setLoading] = useState<string | null>(null);
   const [showSuccess, setShowSuccess] = useState(false);
   const searchParams = useSearchParams();

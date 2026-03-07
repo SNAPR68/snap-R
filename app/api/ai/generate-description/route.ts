@@ -46,7 +46,7 @@ export async function POST(request: NextRequest) {
     }
 
     let photos: string[] = photoUrls || [];
-    let listing: any = listingData;
+    let listing: Record<string, unknown> = listingData as Record<string, unknown>;
 
     // If listingId provided, fetch listing and photos
     if (listingId) {

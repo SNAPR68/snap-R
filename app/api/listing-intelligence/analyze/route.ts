@@ -69,7 +69,7 @@ export async function POST(request: NextRequest) {
 
       if (scoresError) console.error('[Listing Intelligence] Scores error:', scoresError);
 
-      const recommendationInserts: any[] = [];
+      const recommendationInserts: Array<Record<string, unknown>> = [];
       result.photoScores.forEach(photo => {
         photo.recommendations.forEach(rec => {
           recommendationInserts.push({

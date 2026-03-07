@@ -52,7 +52,7 @@ export async function GET(
 
     // Get hotspots for each scene
     const scenesWithHotspots = await Promise.all(
-      (scenes || []).map(async (scene: any) => {
+      (scenes || []).map(async (scene: { id: string; image_url?: string; name?: string; order?: number }) => {
         const { data: hotspots } = await supabase
           .from('tour_hotspots')
           .select('*')

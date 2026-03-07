@@ -79,7 +79,7 @@ function formatVariantName(variant: string): string {
   return names[variant] || variant.replace(/_/g, ' ').replace(/\b\w/g, (l) => l.toUpperCase());
 }
 
-function getWeeklyActivity(jobs: any[]) {
+function getWeeklyActivity(jobs: Array<{ created_at: string; status?: string }>) {
   const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
   const today = new Date();
   const result = [];

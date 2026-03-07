@@ -4,7 +4,7 @@ import Link from 'next/link'
 import {
   Plus, Sparkles, Calendar, BarChart3, Home, Clock,
   CheckCircle, Megaphone, Eye, ArrowRight, Loader2,
-  Instagram, Facebook, Linkedin, FileText, Globe
+  type LucideIcon
 } from 'lucide-react'
 import { GettingStartedChecklist } from './getting-started-checklist'
 
@@ -13,14 +13,6 @@ interface MetricsData {
   scheduledPosts: number
   publishedPosts: number
   totalImpressions: number
-}
-
-interface RecentListing {
-  id: string
-  title: string
-  preparation_status: string
-  marketing_status: string | null
-  updated_at: string
 }
 
 interface RecentActivity {
@@ -55,7 +47,7 @@ interface DashboardHomeProps {
 function MetricCard({ label, value, icon: Icon, href, color }: {
   label: string
   value: number | string
-  icon: any
+  icon: LucideIcon
   href: string
   color: string
 }) {
@@ -76,7 +68,7 @@ function MetricCard({ label, value, icon: Icon, href, color }: {
 function QuickAction({ label, desc, icon: Icon, href, color }: {
   label: string
   desc: string
-  icon: any
+  icon: LucideIcon
   href: string
   color: string
 }) {

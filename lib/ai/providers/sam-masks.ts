@@ -18,7 +18,8 @@ import { deflateSync } from 'node:zlib';
 import { enqueueReplicate } from './replicate-queue';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-let sharpModule: Record<string, any> | null = null;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+let sharpModule: any = null;
 
 async function getSharp() {
   if (!sharpModule) {

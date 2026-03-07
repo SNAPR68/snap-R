@@ -75,7 +75,7 @@ const PRESETS: Record<string, { id: string; name: string }[]> = {
 };
 
 export default function CameraPage() {
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<{ id: string; email?: string } | null>(null);
   const [step, setStep] = useState<'capture' | 'tools' | 'presets' | 'processing' | 'result'>('capture');
   const [preview, setPreview] = useState<string | null>(null);
   const [originalFile, setOriginalFile] = useState<File | null>(null);

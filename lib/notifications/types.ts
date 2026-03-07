@@ -34,7 +34,7 @@ export interface NotificationPayload {
   userId: string;
   listingId?: string;
   clientName?: string;
-  data: Record<string, any>;
+  data: Record<string, unknown>;
 }
 
 export interface NotificationPreferences {

@@ -1,7 +1,39 @@
 # SnapR Execution Changelog
 =================================
 
-## 2026-03-06 — Phase F: Launch Polish
+## 2026-03-07 — Phase F Wave 2: Comprehensive Type Safety + Loading States + Error Boundaries
+
+### Type Safety — Zero `any` types (67 → 0)
+- 70+ files across `app/`, `lib/`, `components/`, `functions/`, `apps/processor/` — Eliminated ALL `any` types
+- `lib/ai/listing-engine/multi-pass-twilight.ts` — Full rewrite: `unknown` + `normalizeOutputUrl` helper
+- `lib/ai/listing-engine/window-masking.ts` — Full rewrite: same pattern as multi-pass-twilight
+- `lib/renovation/service.ts` — Full rewrite: `PredictionResult` interface, `extractOutputUrl` helper
+- `app/api/voiceover/route.ts` — `ScriptStyleKey`/`VoiceIdKey` type aliases replace `as any` casts
+- `app/dashboard/settings/notifications/page.tsx` — `useCallback`, `WeeklyDay` type, keyof-based select
+- `lib/cloudflare.ts` — `Record<string | symbol, unknown>` proxy getter
+- `lib/ai/listing-engine/provider-router.ts` — `Record<string, string | undefined>` for env access
+- `lib/ai/listing-engine/batch-processor.ts` — Index signature on `AutoEnhanceOptions`
+- `lib/ai/providers/replicate-queue.ts` — `Promise<T>` cast on queue return
+- `components/preparation-overlay.tsx` — `SSEData` interface for SSE message handler
+- All API routes, dashboard pages, admin pages — inline type widening for Supabase query results
+
+### Loading States — 54 new loading.tsx files
+- Every dashboard sub-route now has a loading.tsx skeleton screen (gold spinner)
+- Covers: ai-descriptions, approvals, auto-post, billing, brand, calendar, camera, campaigns, cma, content-studio (14 sub-routes), content/scheduled, how-it-works, leads (3 sub-routes), listing-intelligence, listings/new, mls, notify, open-houses, organization, partner, photo-culling, photographer (2), portfolio, print, renovation, settings (4 sub-routes), showings, staging, team, virtual-tours, voiceover
+
+### Error Boundaries — 10 new error.tsx files
+- `app/(authenticated)/error.tsx`, `app/checkout/error.tsx`, `app/onboarding/error.tsx`
+- `app/p/[slug]/error.tsx`, `app/tour/[slug]/error.tsx`, `app/open-house/[slug]/error.tsx`, `app/book/[slug]/error.tsx`
+- `app/dashboard/content-studio/error.tsx`, `app/dashboard/studio/error.tsx`, `app/dashboard/leads/error.tsx`
+
+### Accessibility
+- `components/skip-nav.tsx` — NEW: Skip-to-main-content link (sr-only, visible on focus)
+- `app/layout.tsx` — Wired SkipNav + `<div id="main-content">` wrapper
+
+### Cleanup
+- Deleted `components/content-studio/unified-creator.backup.tsx` and `components/studio-client.tsx.backup`
+
+## 2026-03-06 — Phase F Wave 1: Launch Polish
 
 ### Cleanup, Type Safety, Accessibility
 

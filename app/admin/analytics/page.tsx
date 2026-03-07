@@ -1,6 +1,31 @@
 import { adminSupabase } from '@/lib/supabase/admin';
-import { TrendingUp, Users, DollarSign, Zap, Clock, Server, Wrench, Cpu, BarChart3, PieChart, Activity } from 'lucide-react';
+import { Users, DollarSign, Zap, Server, Wrench, BarChart3, Activity } from 'lucide-react';
 export const dynamic = 'force-dynamic';
+
+interface CostRecord {
+  provider: string;
+  tool_id: string;
+  user_id: string;
+  cost_cents: number;
+  credits_charged: number;
+  processing_time_ms: number;
+  created_at: string;
+}
+
+interface ProfileRecord {
+  id: string;
+  email: string;
+  full_name: string | null;
+  plan: string;
+  created_at: string;
+}
+
+interface AnalyticsEvent {
+  event_type: string;
+  event_name: string;
+  device_type: string;
+  created_at: string;
+}
 
 export default async function AdminAnalytics() {
   const now = new Date();
@@ -21,17 +46,14 @@ export default async function AdminAnalytics() {
   const costByProvider: Record<string, { cost: number; count: number; time: number }> = {};
   const costByTool: Record<string, { cost: number; count: number }> = {};
   const costByUser: Record<string, { cost: number; count: number }> = {};
-  const costByModel: Record<string, { cost: number; count: number }> = {};
   const dailyCosts: Record<string, { cost: number; count: number }> = {};
-  
+
   let totalCostCents = 0;
   let totalCreditsCharged = 0;
-  let totalTokens = 0;
 
-  (costs || []).forEach((c: any) => {
+  (costs || []).forEach((c: CostRecord) => {
     const provider = c.provider || 'unknown';
     const tool = c.tool_id || 'unknown';
-    const model = c.model || 'unknown';
     const day = new Date(c.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 
     if (!costByProvider[provider]) costByProvider[provider] = { cost: 0, count: 0, time: 0 };
@@ -47,29 +69,23 @@ export default async function AdminAnalytics() {
     costByUser[c.user_id].cost += c.cost_cents || 0;
     costByUser[c.user_id].count += 1;
 
-    if (!costByModel[model]) costByModel[model] = { cost: 0, count: 0 };
-    costByModel[model].cost += c.cost_cents || 0;
-    costByModel[model].count += 1;
-
     if (!dailyCosts[day]) dailyCosts[day] = { cost: 0, count: 0 };
     dailyCosts[day].cost += c.cost_cents || 0;
     dailyCosts[day].count += 1;
 
     totalCostCents += c.cost_cents || 0;
     totalCreditsCharged += c.credits_charged || 0;
-    totalTokens += c.tokens_used || 0;
   });
 
   // User map for display
   const userMap: Record<string, string> = {};
-  (profiles || []).forEach((p: any) => {
+  (profiles || []).forEach((p: ProfileRecord) => {
     userMap[p.id] = p.email || p.full_name || p.id.slice(0, 8);
   });
 
   // Sort helpers
   const sortedTools = Object.entries(costByTool).sort((a, b) => b[1].count - a[1].count).slice(0, 10);
   const sortedUsers = Object.entries(costByUser).sort((a, b) => b[1].cost - a[1].cost).slice(0, 10);
-  const sortedModels = Object.entries(costByModel).sort((a, b) => b[1].cost - a[1].cost).slice(0, 10);
 
   // Daily chart data (last 14 days)
   const chartDays: string[] = [];
@@ -83,8 +99,8 @@ export default async function AdminAnalytics() {
   const eventsByType: Record<string, number> = {};
   const eventsByPage: Record<string, number> = {};
   const eventsByDevice: Record<string, number> = {};
-  
-  (events || []).forEach((e: any) => {
+
+  (events || []).forEach((e: AnalyticsEvent) => {
     eventsByType[e.event_type] = (eventsByType[e.event_type] || 0) + 1;
     if (e.event_type === 'page_view') {
       eventsByPage[e.event_name] = (eventsByPage[e.event_name] || 0) + 1;
@@ -149,7 +165,7 @@ export default async function AdminAnalytics() {
                     <p className="text-white/50">{data.count} calls</p>
                   </div>
                 </div>
-                <div 
+                <div
                   className="w-full bg-gradient-to-t from-[#D4A017] to-[#B8860B] rounded-t transition-all hover:opacity-80"
                   style={{ height: `${height}%`, minHeight: data.cost > 0 ? '4px' : '0' }}
                 />
@@ -199,24 +215,21 @@ export default async function AdminAnalytics() {
           </h2>
           {sortedTools.length > 0 ? (
             <div className="space-y-3">
-              {sortedTools.map(([tool, data], i) => {
-                const pct = totalCostCents > 0 ? (data.cost / totalCostCents) * 100 : 0;
-                return (
-                  <div key={tool} className="flex items-center gap-3">
-                    <span className="w-6 h-6 rounded-full bg-[#D4A017]/20 text-[#D4A017] text-xs flex items-center justify-center font-bold">{i + 1}</span>
-                    <div className="flex-1">
-                      <div className="flex justify-between mb-1">
-                        <span className="text-white text-sm capitalize">{tool.replace(/-/g, ' ')}</span>
-                        <span className="text-white/50 text-sm">{data.count} uses</span>
-                      </div>
-                      <div className="h-1.5 bg-white/10 rounded-full">
-                        <div className="h-full bg-[#D4A017] rounded-full" style={{ width: `${(data.count / (sortedTools[0]?.[1]?.count || 1)) * 100}%` }} />
-                      </div>
+              {sortedTools.map(([tool, data], i) => (
+                <div key={tool} className="flex items-center gap-3">
+                  <span className="w-6 h-6 rounded-full bg-[#D4A017]/20 text-[#D4A017] text-xs flex items-center justify-center font-bold">{i + 1}</span>
+                  <div className="flex-1">
+                    <div className="flex justify-between mb-1">
+                      <span className="text-white text-sm capitalize">{tool.replace(/-/g, ' ')}</span>
+                      <span className="text-white/50 text-sm">{data.count} uses</span>
                     </div>
-                    <span className="text-white/60 text-sm w-16 text-right">${(data.cost / 100).toFixed(2)}</span>
+                    <div className="h-1.5 bg-white/10 rounded-full">
+                      <div className="h-full bg-[#D4A017] rounded-full" style={{ width: `${(data.count / (sortedTools[0]?.[1]?.count || 1)) * 100}%` }} />
+                    </div>
                   </div>
-                );
-              })}
+                  <span className="text-white/60 text-sm w-16 text-right">${(data.cost / 100).toFixed(2)}</span>
+                </div>
+              ))}
             </div>
           ) : (
             <p className="text-white/40">No data</p>
@@ -233,7 +246,7 @@ export default async function AdminAnalytics() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {sortedUsers.map(([userId, data], i) => {
               const userName = userMap[userId] || userId.slice(0, 8) + '...';
-              const pct = totalCostCents > 0 ? (data.cost / totalCostCents) * 100 : 0;
+              const userPct = totalCostCents > 0 ? (data.cost / totalCostCents) * 100 : 0;
               return (
                 <div key={userId} className={`flex items-center gap-3 p-3 rounded-lg ${i === 0 ? 'bg-red-500/10 border border-red-500/30' : 'bg-white/5'}`}>
                   <span className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${i === 0 ? 'bg-red-500 text-white' : 'bg-[#D4A017]/20 text-[#D4A017]'}`}>{i + 1}</span>
@@ -243,7 +256,7 @@ export default async function AdminAnalytics() {
                   </div>
                   <div className="text-right">
                     <p className={`font-bold ${i === 0 ? 'text-red-400' : 'text-white'}`}>${(data.cost / 100).toFixed(2)}</p>
-                    <p className="text-white/40 text-xs">{pct.toFixed(1)}%</p>
+                    <p className="text-white/40 text-xs">{userPct.toFixed(1)}%</p>
                   </div>
                 </div>
               );

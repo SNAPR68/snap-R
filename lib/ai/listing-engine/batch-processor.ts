@@ -4,8 +4,9 @@
  * Smart routing to optimal providers
  */
 
-import { 
-  PhotoStrategy, 
+import type { SupabaseClient } from '@supabase/supabase-js';
+import {
+  PhotoStrategy,
   ListingStrategy,
   PhotoProcessingResult,
   ProcessingProgress,
@@ -13,10 +14,8 @@ import {
 } from './types';
 import { ToolId } from '../router';
 import { scoreEnhancementQuality, checkStructuralIntegrity } from '../providers/openai-vision';
-import { 
-  getProviderForTool, 
-  shouldUseAutoEnhance,
-  shouldUseMultiPass,
+import {
+  getProviderForTool,
   isAutoEnhanceConfigured,
   Provider,
 } from './provider-router';
@@ -139,6 +138,15 @@ const RETRYABLE_FLUX_TOOLS = new Set<ToolId>([
   'object-removal',
 ]);
 
+/** Options passed to the AutoEnhance.ai single-image API */
+interface AutoEnhanceOptions { [key: string]: unknown;
+  enhance?: boolean;
+  contrast_boost?: string;
+  saturation?: number;
+  vertical_correction?: boolean;
+  lens_correction?: boolean;
+}
+
 // ============================================
 // MAIN PROCESSOR
 // ============================================
@@ -150,17 +158,17 @@ export async function processListingBatch(
     lockedPresets: LockedPresets;
     planTier?: string;
     onProgress?: (progress: ProcessingProgress) => void;
-    supabase?: any;
+    supabase?: SupabaseClient;
   }
 ): Promise<PhotoProcessingResult[]> {
   console.log(`[BatchProcessor V3] ═══════════════════════════════════════`);
   console.log(`[BatchProcessor V3] Processing ${strategy.photoStrategies.length} photos`);
   console.log(`[BatchProcessor V3] AutoEnhance configured: ${isAutoEnhanceConfigured()}`);
   console.log(`[BatchProcessor V3] ═══════════════════════════════════════`);
-  
+
   const startTime = Date.now();
   const results: PhotoProcessingResult[] = [];
-  const supabase = context.supabase || await createClient();
+  const supabase = context.supabase || createClient();
 
   // Get signed URLs
   const photosWithUrls = await getSignedUrls(strategy.photoStrategies, supabase);
@@ -174,7 +182,7 @@ export async function processListingBatch(
     }
 
     const batch = photosWithUrls.slice(i, i + CONFIG.maxConcurrency);
-    
+
     // Report progress
     if (context.onProgress) {
       context.onProgress({
@@ -195,29 +203,29 @@ export async function processListingBatch(
         messages: [`Processing ${i + 1} to ${Math.min(i + CONFIG.maxConcurrency, photosWithUrls.length)}`],
       });
     }
-    
+
     // Process batch
-    const batchPromises = batch.map(photo => 
+    const batchPromises = batch.map(photo =>
       processPhoto(photo, context, supabase)
     );
     const batchResults = await Promise.all(batchPromises);
     results.push(...batchResults);
-    
+
     console.log(`[BatchProcessor V3] Progress: ${results.length}/${strategy.totalPhotos}`);
-    
+
     // Delay between batches
     if (i + CONFIG.maxConcurrency < photosWithUrls.length) {
       await delay(CONFIG.batchDelayMs);
     }
   }
-  
+
   const duration = Date.now() - startTime;
   const successCount = results.filter(r => r.success).length;
-  
+
   console.log(`[BatchProcessor V3] ═══════════════════════════════════════`);
   console.log(`[BatchProcessor V3] COMPLETE: ${successCount}/${results.length} in ${(duration / 1000).toFixed(1)}s`);
   console.log(`[BatchProcessor V3] ═══════════════════════════════════════`);
-  
+
   return results;
 }
 
@@ -227,10 +235,10 @@ export async function processListingBatch(
 async function processPhoto(
   photo: PhotoStrategy & { signedUrl: string },
   context: { listingId: string; userId: string; lockedPresets: LockedPresets; planTier?: string },
-  supabase: any
+  supabase: SupabaseClient
 ): Promise<PhotoProcessingResult> {
   const startTime = Date.now();
-  
+
   // Handle skipped photos
   if (photo.skip) {
     return {
@@ -248,14 +256,14 @@ async function processPhoto(
       skipReason: photo.skipReason,
     };
   }
-  
+
   let currentUrl = normalizeUrl(photo.signedUrl);
   const toolsApplied: ToolId[] = [];
   const toolsSkipped: ToolId[] = [];
   const toolResults: PhotoProcessingResult['toolResults'] = {};
   const postProcessing: string[] = [];
   let lastError: string | undefined;
-  
+
   if (photo.tools.length === 0) {
     return {
       photoId: photo.photoId,
@@ -272,14 +280,14 @@ async function processPhoto(
       skipped: false,
     };
   }
-  
+
   console.log(`[BatchProcessor V3] Photo ${photo.photoId}: ${photo.tools.join(' → ')}`);
-  
+
   // Process each tool
   for (const tool of photo.toolOrder) {
     const toolStart = Date.now();
     const config = getProviderForTool(tool);
-    
+
     try {
       const result = await processToolWithRouting(
         currentUrl,
@@ -293,7 +301,7 @@ async function processPhoto(
 
       const providerUsed = result.providerUsed || config.provider;
       const modelUsed = result.modelUsed;
-      
+
       if (result.success && result.enhancedUrl) {
         let nextUrl = normalizeUrl(result.enhancedUrl);
         let qualityPassed = true;
@@ -472,7 +480,7 @@ async function processPhoto(
       console.error(`[BatchProcessor V3] ✗ ${tool} error:`, message);
     }
   }
-  
+
   const success = toolsApplied.length > 0;
   const processingTime = Date.now() - startTime;
 
@@ -488,7 +496,7 @@ async function processPhoto(
       console.warn(`[BatchProcessor V3] ⚠ hero upscale failed: ${message || error}`);
     }
   }
-  
+
   // Save if successful
   let finalUrl = currentUrl;
   if (success && currentUrl !== photo.signedUrl) {
@@ -524,7 +532,7 @@ async function processPhoto(
       console.error(`[BatchProcessor V3] Save error:`, message);
     }
   }
-  
+
   return {
     photoId: photo.photoId,
     originalUrl: photo.signedUrl,
@@ -538,9 +546,9 @@ async function processPhoto(
     confidence: success ? photo.confidence : Math.max(photo.confidence - 30, 0),
     processingTime,
     needsReview: !success || toolsApplied.length < photo.tools.length,
-    reviewReason: !success 
-      ? `Failed: ${lastError}` 
-      : toolsApplied.length < photo.tools.length 
+    reviewReason: !success
+      ? `Failed: ${lastError}`
+      : toolsApplied.length < photo.tools.length
         ? `Only ${toolsApplied.length}/${photo.tools.length} tools applied`
         : undefined,
     skipped: false,
@@ -559,22 +567,22 @@ async function processToolWithRouting(
   planTier?: string,
   isHeroCandidate?: boolean
 ): Promise<{ success: boolean; enhancedUrl?: string; error?: string; providerUsed?: Provider; modelUsed?: string }> {
-  
+
   // Special handling for multi-pass twilight
   if (tool === 'virtual-twilight' && isTwilightTarget) {
     try {
       const result = await multiPassTwilight(imageUrl, {
-        preset: presets.twilightPreset as any,
+        preset: presets.twilightPreset,
         enhanceWindowGlow: true,
         glowIntensity: 'medium',
       });
       return { success: result.success, enhancedUrl: result.url, providerUsed: 'flux-multipass', modelUsed: 'black-forest-labs/flux-kontext-dev' };
-    } catch (error: unknown) {
+    } catch {
       // Fallback to single-pass
       console.log('[BatchProcessor V3] Multi-pass failed, trying single-pass');
     }
   }
-  
+
   // Special handling for window masking
   if (tool === 'window-masking') {
     try {
@@ -585,7 +593,7 @@ async function processToolWithRouting(
       return { success: false, error: message, providerUsed: 'sam-flux', modelUsed: 'sam2+black-forest-labs/flux-kontext-dev' };
     }
   }
-  
+
   // Route to provider
   switch (provider) {
     case 'autoenhance':
@@ -598,10 +606,10 @@ async function processToolWithRouting(
         return runFluxTool(imageUrl, tool, presets);
       }
       return runAutoEnhanceTool(imageUrl, tool);
-      
+
     case 'sdxl-lightning':
       return runSDXLTool(imageUrl, tool);
-      
+
     default:
       return runFluxTool(imageUrl, tool, presets);
   }
@@ -618,8 +626,8 @@ async function runAutoEnhanceTool(
   try {
     // AutoEnhance.ai single-image API options
     // Note: hdr=true requires HDR bracket workflow with orders, not for single images
-    const options: Record<string, any> = {};
-    
+    const options: AutoEnhanceOptions = {};
+
     switch (tool) {
       case 'hdr':
       case 'auto-enhance':
@@ -636,7 +644,7 @@ async function runAutoEnhanceTool(
         options.lens_correction = true;
         break;
     }
-    
+
     const enhancedUrl = await runAutoEnhance(imageUrl, options);
     return { success: true, enhancedUrl, providerUsed: 'autoenhance', modelUsed: 'autoenhance' };
   } catch (error: unknown) {
@@ -703,7 +711,7 @@ async function runFluxTool(
 ): Promise<{ success: boolean; enhancedUrl?: string; error?: string; providerUsed?: Provider; modelUsed?: string }> {
   try {
     let enhancedUrl: string;
-    
+
     // Get preset prompt if available
     const prompt = getPresetPrompt(tool, presets);
     const presetId = getPresetId(tool, presets);
@@ -787,7 +795,7 @@ async function runFluxTool(
       default:
         enhancedUrl = await replicate.autoEnhance(imageUrl, options);
     }
-    
+
     return { success: true, enhancedUrl, providerUsed: 'flux-kontext', modelUsed: 'black-forest-labs/flux-kontext-dev' };
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Internal server error';
@@ -873,7 +881,7 @@ async function runSDXLTool(
 ): Promise<{ success: boolean; enhancedUrl?: string; error?: string; providerUsed?: Provider; modelUsed?: string }> {
   try {
     let enhancedUrl: string;
-    
+
     switch (tool) {
       case 'snow-removal':
         enhancedUrl = await replicate.snowRemoval(imageUrl);
@@ -890,7 +898,7 @@ async function runSDXLTool(
       default:
         return { success: false, error: 'Unknown SDXL tool' };
     }
-    
+
     return { success: true, enhancedUrl, providerUsed: 'sdxl-lightning', modelUsed: 'bytedance/sdxl-lightning-4step' };
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Internal server error';
@@ -926,7 +934,7 @@ function getPresetId(tool: ToolId, presets: LockedPresets): string | undefined {
 
 async function getSignedUrls(
   strategies: PhotoStrategy[],
-  supabase: any
+  supabase: SupabaseClient
 ): Promise<(PhotoStrategy & { signedUrl: string })[]> {
   return Promise.all(
     strategies.map(async (strategy) => {
@@ -937,9 +945,9 @@ async function getSignedUrls(
     const { data } = await supabase.storage
       .from('raw-images')
       .createSignedUrl(strategy.photoUrl, 3600);
-    
+
       return {
-      ...strategy, 
+      ...strategy,
         signedUrl: data?.signedUrl || strategy.photoUrl,
       };
     })
@@ -951,7 +959,7 @@ async function saveEnhancedPhoto(
   photoId: string,
   listingId: string,
   userId: string,
-  supabase: any,
+  supabase: SupabaseClient,
   bufferOverride?: Buffer
 ): Promise<string> {
   let buffer: ArrayBuffer;
@@ -963,13 +971,13 @@ async function saveEnhancedPhoto(
     buffer = await response.arrayBuffer();
   }
   const storagePath = `enhanced/${userId}/${listingId}/${photoId}-prepared.jpg`;
-  
+
   const { error } = await supabase.storage
     .from('raw-images')
     .upload(storagePath, buffer, { contentType: 'image/jpeg', upsert: true });
-  
+
   if (error) throw new Error(`Upload failed: ${error.message}`);
-  
+
   await supabase
     .from('photos')
     .update({
@@ -979,11 +987,11 @@ async function saveEnhancedPhoto(
       updated_at: new Date().toISOString(),
     })
     .eq('id', photoId);
-  
+
   const { data } = await supabase.storage
     .from('raw-images')
     .createSignedUrl(storagePath, 3600);
-  
+
   return data?.signedUrl || enhancedUrl;
 }
 
@@ -996,7 +1004,10 @@ function estimateRemaining(strategy: ListingStrategy, processed: number): number
 function normalizeUrl(value: unknown): string {
   if (!value) return '';
   if (typeof value === 'string') return value;
-  if (typeof (value as any).url === 'function') return (value as any).url();
+  if (typeof value === 'object' && value !== null) {
+    const obj = value as Record<string, unknown>;
+    if (typeof obj.url === 'function') return (obj.url as () => string)();
+  }
   return String(value);
 }
 
@@ -1009,7 +1020,7 @@ function delay(ms: number): Promise<void> {
 // ============================================
 export function orderByPriority(strategies: PhotoStrategy[]): PhotoStrategy[] {
   const priorityOrder = { critical: 0, recommended: 1, optional: 2, none: 3 };
-  
+
   return [...strategies].sort((a, b) => {
     if (a.isHeroCandidate && !b.isHeroCandidate) return -1;
     if (!a.isHeroCandidate && b.isHeroCandidate) return 1;

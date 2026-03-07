@@ -1,5 +1,5 @@
 type QueueState = {
-  queue: Promise<any>;
+  queue: Promise<unknown>;
   lastAt: number;
 };
 
@@ -32,5 +32,5 @@ export async function enqueueReplicate<T>(
     return fn();
   };
   state.queue = state.queue.then(run, run);
-  return state.queue;
+  return state.queue as Promise<T>;
 }

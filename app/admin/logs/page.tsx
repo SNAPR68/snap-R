@@ -1,7 +1,22 @@
 import { adminSupabase } from '@/lib/supabase/admin';
-import { AlertTriangle, CheckCircle, XCircle, Clock, Code, User, RefreshCw } from 'lucide-react';
+import { AlertTriangle, CheckCircle, XCircle, Clock, Code, User } from 'lucide-react';
 import { revalidatePath } from 'next/cache';
 export const dynamic = 'force-dynamic';
+
+interface ErrorLog {
+  id: string;
+  severity: string;
+  message: string;
+  error_message: string;
+  error_type: string;
+  error_code: string | null;
+  error_stack: string | null;
+  endpoint: string | null;
+  user_id: string | null;
+  resolved: boolean;
+  resolved_at: string | null;
+  created_at: string;
+}
 
 async function resolveError(formData: FormData) {
   'use server';
@@ -25,9 +40,9 @@ export default async function AdminLogs() {
     .order('created_at', { ascending: false })
     .limit(100);
 
-  const unresolvedCount = errors?.filter((e: any) => !e.resolved).length || 0;
-  const criticalCount = errors?.filter((e: any) => e.severity === 'critical' && !e.resolved).length || 0;
-  const todayCount = errors?.filter((e: any) => {
+  const unresolvedCount = errors?.filter((e: ErrorLog) => !e.resolved).length || 0;
+  const criticalCount = errors?.filter((e: ErrorLog) => e.severity === 'critical' && !e.resolved).length || 0;
+  const todayCount = errors?.filter((e: ErrorLog) => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     return new Date(e.created_at) >= today;
@@ -97,7 +112,7 @@ export default async function AdminLogs() {
       <div className="bg-[#1A1A1A] border border-white/10 rounded-xl overflow-hidden">
         {errors && errors.length > 0 ? (
           <div className="divide-y divide-white/5">
-            {errors.map((error: any) => (
+            {errors.map((error: ErrorLog) => (
               <div key={error.id} className={`p-5 ${!error.resolved ? 'bg-red-500/5' : ''} hover:bg-white/5 transition`}>
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex-1 min-w-0">

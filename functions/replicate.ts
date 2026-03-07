@@ -66,11 +66,12 @@ function extractUrl(output: unknown): string {
 
   // Handle FileOutput objects (have .url() method)
   if (typeof output === 'object' && output !== null) {
-    if (typeof (output as any).url === 'function') {
-      return (output as any).url();
+    const obj = output as Record<string, unknown>;
+    if (typeof obj.url === 'function') {
+      return (obj.url as () => string)();
     }
-    if (typeof (output as any).url === 'string') {
-      return (output as any).url;
+    if (typeof obj.url === 'string') {
+      return obj.url;
     }
   }
 
@@ -79,8 +80,9 @@ function extractUrl(output: unknown): string {
     const first = output[0];
     if (typeof first === 'string') return first;
     if (typeof first === 'object' && first !== null) {
-      if (typeof (first as any).url === 'function') return (first as any).url();
-      if (typeof (first as any).url === 'string') return (first as any).url;
+      const obj = first as Record<string, unknown>;
+      if (typeof obj.url === 'function') return (obj.url as () => string)();
+      if (typeof obj.url === 'string') return obj.url;
     }
     return String(first);
   }

@@ -1,6 +1,12 @@
 import { adminSupabase } from '@/lib/supabase/admin';
-import { DollarSign, TrendingUp, TrendingDown, CreditCard, Users, Zap, ArrowUpRight, ArrowDownRight, Server } from 'lucide-react';
+import { DollarSign, TrendingUp, CreditCard, ArrowUpRight, ArrowDownRight, Server } from 'lucide-react';
 export const dynamic = 'force-dynamic';
+
+interface ProfileRecord {
+  plan: string | null;
+  subscription_tier: string | null;
+  created_at: string;
+}
 
 export default async function AdminRevenue() {
   const now = new Date();
@@ -36,7 +42,7 @@ export default async function AdminRevenue() {
     .lt('created_at', thirtyDaysAgo.toISOString());
 
   // Calculate plan counts (check both plan and subscription_tier)
-  const getPlan = (p: any) => p.plan || p.subscription_tier || 'free';
+  const getPlan = (p: ProfileRecord) => p.plan || p.subscription_tier || 'free';
   const paidPlans = {
     starter: profiles?.filter(p => getPlan(p) === 'starter').length || 0,
     pro: profiles?.filter(p => getPlan(p) === 'pro').length || 0,
@@ -71,7 +77,7 @@ export default async function AdminRevenue() {
 
   // Daily breakdown (last 14 days)
   const dailyData: Record<string, { revenue: number; cost: number; count: number }> = {};
-  
+
   // Initialize days
   for (let i = 13; i >= 0; i--) {
     const date = new Date(now.getTime() - i * 24 * 60 * 60 * 1000);
@@ -167,7 +173,7 @@ export default async function AdminRevenue() {
       <div className="bg-[#1A1A1A] border border-white/10 rounded-xl p-6 mb-8">
         <h2 className="text-xl font-semibold mb-2">Revenue vs Costs (14 days)</h2>
         <p className="text-white/40 text-sm mb-6">Green = Revenue, Red = AI Costs</p>
-        
+
         <div className="flex items-end justify-between h-48 gap-1">
           {Object.entries(dailyData).map(([day, data]) => (
             <div key={day} className="flex-1 flex flex-col items-center gap-1 group relative">
@@ -179,16 +185,16 @@ export default async function AdminRevenue() {
                   <p className="text-white/50">{data.count} calls</p>
                 </div>
               </div>
-              
+
               {/* Bars container */}
               <div className="w-full flex gap-0.5 items-end" style={{ height: '140px' }}>
                 {/* Revenue bar */}
-                <div 
+                <div
                   className="flex-1 bg-green-500/80 rounded-t transition-all hover:bg-green-400"
                   style={{ height: `${(data.revenue / maxDaily) * 100}%`, minHeight: data.revenue > 0 ? '2px' : '0' }}
                 />
                 {/* Cost bar */}
-                <div 
+                <div
                   className="flex-1 bg-red-500/80 rounded-t transition-all hover:bg-red-400"
                   style={{ height: `${(data.cost / maxDaily) * 100}%`, minHeight: data.cost > 0 ? '2px' : '0' }}
                 />
@@ -197,7 +203,7 @@ export default async function AdminRevenue() {
             </div>
           ))}
         </div>
-        
+
         {/* Legend */}
         <div className="flex items-center gap-6 mt-4 pt-4 border-t border-white/10">
           <div className="flex items-center gap-2">
@@ -222,7 +228,7 @@ export default async function AdminRevenue() {
                 <p className="text-white/50 text-sm">Limited access</p>
               </div>
               <div className="text-right">
-                <p className="text-2xl font-bold">{profiles?.filter((p: any) => !getPlan(p) || getPlan(p) === 'free').length || 0}</p>
+                <p className="text-2xl font-bold">{profiles?.filter((p: ProfileRecord) => !getPlan(p) || getPlan(p) === 'free').length || 0}</p>
               </div>
             </div>
             <div className="flex items-center justify-between p-4 bg-white/5 rounded-lg border-l-4 border-green-500">
@@ -231,7 +237,7 @@ export default async function AdminRevenue() {
                 <p className="text-white/50 text-sm">$12/listing</p>
               </div>
               <div className="text-right">
-                <p className="text-2xl font-bold">{profiles?.filter((p: any) => getPlan(p) === 'pro').length || 0}</p>
+                <p className="text-2xl font-bold">{profiles?.filter((p: ProfileRecord) => getPlan(p) === 'pro').length || 0}</p>
               </div>
             </div>
             <div className="flex items-center justify-between p-4 bg-white/5 rounded-lg border-l-4 border-purple-500">
@@ -240,7 +246,7 @@ export default async function AdminRevenue() {
                 <p className="text-white/50 text-sm">$12/listing + base fee</p>
               </div>
               <div className="text-right">
-                <p className="text-2xl font-bold">{profiles?.filter((p: any) => getPlan(p) === 'team').length || 0}</p>
+                <p className="text-2xl font-bold">{profiles?.filter((p: ProfileRecord) => getPlan(p) === 'team').length || 0}</p>
               </div>
             </div>
           </div>
@@ -258,13 +264,13 @@ export default async function AdminRevenue() {
                 <span className="text-green-400 font-medium">${mrr}</span>
               </div>
               <div className="h-3 bg-white/10 rounded-full overflow-hidden">
-                <div 
+                <div
                   className="h-full bg-green-500 rounded-full"
                   style={{ width: totalRevenue30d > 0 ? `${(mrr / totalRevenue30d) * 100}%` : '0%' }}
                 />
               </div>
             </div>
-            
+
             {/* Human Edits */}
             <div>
               <div className="flex justify-between mb-2">
@@ -272,7 +278,7 @@ export default async function AdminRevenue() {
                 <span className="text-[#D4A017] font-medium">${humanEditRevenue.toFixed(2)}</span>
               </div>
               <div className="h-3 bg-white/10 rounded-full overflow-hidden">
-                <div 
+                <div
                   className="h-full bg-[#D4A017] rounded-full"
                   style={{ width: totalRevenue30d > 0 ? `${(humanEditRevenue / totalRevenue30d) * 100}%` : '0%' }}
                 />

@@ -15,7 +15,7 @@ interface CalendarContainerProps {
   scheduledPosts: ScheduledPostItem[]
 }
 
-const PLATFORM_ICONS: Record<string, any> = {
+const PLATFORM_ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
   instagram: Instagram,
   facebook: Facebook,
   linkedin: Linkedin,

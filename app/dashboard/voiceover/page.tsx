@@ -1,12 +1,12 @@
 'use client';
 
-import React, { Suspense, useEffect, useState, useRef } from 'react';
+import React, { Suspense, useEffect, useState, useRef, useCallback } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import {
   Loader2, Home, ChevronRight, Mic, Play, Pause, Download,
-  Check, Volume2, VolumeX, RefreshCw, Sparkles, Clock,
-  DollarSign, FileText, Copy, Edit2, User, Phone, Lightbulb,
-  Wand2, Music, Settings, ChevronDown
+  Check, Volume2, RefreshCw, Sparkles, Clock,
+  FileText, Copy, User, Lightbulb,
+  Wand2
 } from 'lucide-react';
 
 // Voice Options
@@ -44,6 +44,12 @@ interface Listing {
   sqft?: number;
   features?: string[];
   thumbnail?: string | null;
+}
+
+interface ListingPhoto {
+  id: string;
+  raw_url: string;
+  processed_url?: string;
 }
 
 // Audio Player Component with better error handling
@@ -99,8 +105,8 @@ function AudioPlayer({ audioUrl }: { audioUrl: string }) {
     setError(false);
   };
 
-  const handleError = (e: any) => {
-    console.error('Audio failed to load:', e);
+  const handleError = () => {
+    console.error('Audio failed to load');
     setError(true);
   };
 
@@ -125,7 +131,7 @@ function AudioPlayer({ audioUrl }: { audioUrl: string }) {
   };
 
   // Convert base64 data URL to blob URL for better browser compatibility
-  const getAudioSrc = () => {
+  const getAudioSrc = useCallback(() => {
     if (audioUrl.startsWith('data:audio')) {
       try {
         const base64 = audioUrl.split(',')[1];
@@ -136,27 +142,27 @@ function AudioPlayer({ audioUrl }: { audioUrl: string }) {
         }
         const blob = new Blob([bytes], { type: 'audio/mpeg' });
         return URL.createObjectURL(blob);
-      } catch (e) {
-        console.error('Failed to convert base64 to blob:', e);
+      } catch {
+        console.error('Failed to convert base64 to blob');
         return audioUrl;
       }
     }
     return audioUrl;
-  };
+  }, [audioUrl]);
 
   const [blobUrl, setBlobUrl] = useState<string>('');
-  
+
   useEffect(() => {
     const url = getAudioSrc();
     setBlobUrl(url);
-    
+
     // Cleanup blob URL on unmount
     return () => {
       if (url.startsWith('blob:')) {
         URL.revokeObjectURL(url);
       }
     };
-  }, [audioUrl]);
+  }, [audioUrl, getAudioSrc]);
 
   const handleDownload = () => {
     try {
@@ -166,8 +172,8 @@ function AudioPlayer({ audioUrl }: { audioUrl: string }) {
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
-    } catch (e) {
-      console.error('Download failed:', e);
+    } catch {
+      console.error('Download failed');
     }
   };
 
@@ -183,11 +189,11 @@ function AudioPlayer({ audioUrl }: { audioUrl: string }) {
         onError={handleError}
         onEnded={handleEnded}
       />
-      
+
       {error ? (
         <div className="text-center py-4">
           <p className="text-red-400 text-sm mb-2">Audio failed to load</p>
-          <button 
+          <button
             onClick={handleDownload}
             className="text-pink-400 hover:text-pink-300 text-sm underline"
           >
@@ -211,9 +217,9 @@ function AudioPlayer({ audioUrl }: { audioUrl: string }) {
               <Play className="w-5 h-5 text-white ml-1" />
             )}
           </button>
-          
+
           <div className="flex-1">
-            <div 
+            <div
               className="h-2 bg-white/10 rounded-full overflow-hidden cursor-pointer"
               onClick={handleSeek}
             >
@@ -227,7 +233,7 @@ function AudioPlayer({ audioUrl }: { audioUrl: string }) {
               <span>{formatTime(duration)}</span>
             </div>
           </div>
-          
+
           <button
             onClick={handleDownload}
             className="p-3 bg-white/10 rounded-lg hover:bg-white/20 transition-colors"
@@ -246,7 +252,7 @@ function VoiceoverGenerator() {
   const [listings, setListings] = useState<Listing[]>([]);
   const [selectedListing, setSelectedListing] = useState<Listing | null>(null);
   const [loading, setLoading] = useState(true);
-  
+
   // Form state
   const [voiceId, setVoiceId] = useState('professional-male');
   const [style, setStyle] = useState('professional');
@@ -256,7 +262,7 @@ function VoiceoverGenerator() {
   const [agentPhone, setAgentPhone] = useState('');
   const [customScript, setCustomScript] = useState('');
   const [useCustomScript, setUseCustomScript] = useState(false);
-  
+
   // Result state
   const [processing, setProcessing] = useState(false);
   const [generatedScript, setGeneratedScript] = useState('');
@@ -281,27 +287,27 @@ function VoiceoverGenerator() {
 
     if (data) {
       const withThumbnails = await Promise.all(
-        data.map(async (listing: any) => {
-          const photos = listing.photos || [];
+        data.map(async (listing) => {
+          const photos = (listing.photos || []) as unknown as ListingPhoto[];
           const firstPhoto = photos[0];
-          let thumbnail = null;
+          let thumbnail: string | null = null;
           if (firstPhoto) {
             const path = firstPhoto.processed_url || firstPhoto.raw_url;
             if (path && !path.startsWith('http')) {
               const { data: urlData } = await supabase.storage.from('raw-images').createSignedUrl(path, 3600);
-              thumbnail = urlData?.signedUrl;
+              thumbnail = urlData?.signedUrl ?? null;
             }
           }
-          return { 
-            id: listing.id, 
-            title: listing.title, 
+          return {
+            id: listing.id,
+            title: listing.title,
             address: listing.address,
             price: listing.price,
             bedrooms: listing.bedrooms,
             bathrooms: listing.bathrooms,
             sqft: listing.sqft,
             features: listing.features,
-            thumbnail 
+            thumbnail
           };
         })
       );
@@ -429,7 +435,7 @@ function VoiceoverGenerator() {
               <div>
                 <h3 className="font-semibold text-pink-400 mb-1">How it works</h3>
                 <p className="text-sm text-white/70">
-                  AI generates a professional script based on your property details, then creates 
+                  AI generates a professional script based on your property details, then creates
                   a natural-sounding voiceover. Perfect for property videos, virtual tours, and social media.
                 </p>
               </div>
@@ -441,7 +447,7 @@ function VoiceoverGenerator() {
             <div className="flex items-center justify-between">
               <div>
                 <h3 className="font-semibold text-green-400">Pricing</h3>
-                <p className="text-sm text-white/70">Complete plan: 5 FREE/month • Extra: $2 each</p>
+                <p className="text-sm text-white/70">Complete plan: 5 FREE/month - Extra: $2 each</p>
               </div>
               <div className="text-2xl font-bold text-green-400">$2</div>
             </div>
@@ -471,7 +477,7 @@ function VoiceoverGenerator() {
                       listing.bedrooms && `${listing.bedrooms} bed`,
                       listing.bathrooms && `${listing.bathrooms} bath`,
                       listing.sqft && `${listing.sqft.toLocaleString()} sqft`,
-                    ].filter(Boolean).join(' • ') || 'No details'}
+                    ].filter(Boolean).join(' \u2022 ') || 'No details'}
                   </div>
                 </div>
                 <ChevronRight className="w-5 h-5 text-white/30" />
@@ -499,7 +505,7 @@ function VoiceoverGenerator() {
               </div>
             </div>
             <button onClick={() => setStep('select')} className="text-white/50 hover:text-white">
-              ← Change Listing
+              &larr; Change Listing
             </button>
           </div>
 
@@ -636,7 +642,7 @@ function VoiceoverGenerator() {
                     <span className="text-sm text-white/60">Use custom script</span>
                   </label>
                 </div>
-                
+
                 {useCustomScript ? (
                   <textarea
                     value={customScript}
@@ -685,7 +691,7 @@ function VoiceoverGenerator() {
               <div>
                 <span className="text-lg">Total</span>
                 <div className="text-sm text-white/50">
-                  {selectedDuration.label} • {selectedVoice.name} voice
+                  {selectedDuration.label} - {selectedVoice.name} voice
                 </div>
               </div>
               <div className="text-right">
@@ -693,7 +699,7 @@ function VoiceoverGenerator() {
                 <div className="text-sm text-white/40">or FREE with Complete plan</div>
               </div>
             </div>
-            
+
             <button
               onClick={generateVoiceover}
               disabled={processing || (useCustomScript && !customScript)}
@@ -782,8 +788,8 @@ function VoiceoverGenerator() {
                     a.click();
                     document.body.removeChild(a);
                     URL.revokeObjectURL(url);
-                  } catch (e) {
-                    console.error('Download failed:', e);
+                  } catch {
+                    console.error('Download failed');
                   }
                 } else {
                   const a = document.createElement('a');

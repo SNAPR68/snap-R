@@ -177,7 +177,7 @@ export async function PUT(request: NextRequest) {
     }
 
     // Transform camelCase to snake_case
-    const dbUpdates: any = {};
+    const dbUpdates: Record<string, unknown> = {};
     if (updates.beforeUrl !== undefined) dbUpdates.before_url = updates.beforeUrl;
     if (updates.afterUrl !== undefined) dbUpdates.after_url = updates.afterUrl;
     if (updates.title !== undefined) dbUpdates.title = updates.title;
@@ -308,7 +308,7 @@ export async function PATCH(request: NextRequest) {
     let orderCounter = (lastItem?.display_order || 0) + 1;
 
     // Prepare bulk insert
-    const inserts = items.map((item: any) => ({
+    const inserts = items.map((item: { beforeUrl?: string; afterUrl?: string; title?: string; description?: string; toolsUsed?: string[]; listingId?: string; enhancementType?: string; roomType?: string; tags?: string[] }) => ({
       portfolio_id: portfolioId,
       before_url: item.beforeUrl,
       after_url: item.afterUrl,

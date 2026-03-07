@@ -39,15 +39,15 @@ export default function BulkCreatorClient() {
       if (!user) return
       const { data: listingsData } = await supabase.from('listings').select('*, photos!photos_listing_id_fkey(id, raw_url, processed_url, status)').eq('user_id', user.id).order('created_at', { ascending: false })
       if (listingsData) {
-        const processed = await Promise.all(listingsData.map(async (listing: any) => {
+        const processed = await Promise.all(listingsData.map(async (listing: { id: string; address?: string; title?: string; city?: string; state?: string; price?: number | null; bedrooms?: number | null; bathrooms?: number | null; square_feet?: number | null; photos?: Array<{ id: string; raw_url?: string; processed_url?: string; status?: string }> }) => {
           const photos = listing.photos || []
-          const firstPhoto = photos.find((p: any) => p.processed_url) || photos[0]
+          const firstPhoto = photos.find((p: { processed_url?: string; raw_url?: string }) => p.processed_url) || photos[0]
           let thumbnail = null
           if (firstPhoto) {
             const path = firstPhoto.processed_url || firstPhoto.raw_url
-            if (path && !path.startsWith('http')) { const { data } = await supabase.storage.from('raw-images').createSignedUrl(path, 3600); thumbnail = data?.signedUrl } else thumbnail = path
+            if (path && !path.startsWith('http')) { const { data } = await supabase.storage.from('raw-images').createSignedUrl(path, 3600); thumbnail = data?.signedUrl ?? null } else thumbnail = path ?? null
           }
-          return { id: listing.id, title: listing.title || listing.address || 'Untitled', address: listing.address || '', city: listing.city || '', state: listing.state || '', price: listing.price, bedrooms: listing.bedrooms, bathrooms: listing.bathrooms, square_feet: listing.square_feet, thumbnail }
+          return { id: listing.id, title: listing.title || listing.address || 'Untitled', address: listing.address || '', city: listing.city || '', state: listing.state || '', price: listing.price ?? null, bedrooms: listing.bedrooms ?? null, bathrooms: listing.bathrooms ?? null, square_feet: listing.square_feet ?? null, thumbnail }
         }))
         setListings(processed)
       }

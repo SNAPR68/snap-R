@@ -248,8 +248,8 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({
         session,
         photos: photos || [],
-        selectedPhotos: (photos || []).filter((p: any) => p.is_selected),
-        rejectedPhotos: (photos || []).filter((p: any) => !p.is_selected),
+        selectedPhotos: (photos || []).filter((p: { is_selected?: boolean }) => p.is_selected),
+        rejectedPhotos: (photos || []).filter((p: { is_selected?: boolean }) => !p.is_selected),
       });
     }
 

@@ -58,7 +58,7 @@ export async function POST(request: NextRequest) {
     );
 
     console.log(`[PrepareNotification] Sent for listing ${listingId}:`,
-      results.map((r: any) => `${r.channel}: ${r.success}`));
+      results.map((r: { channel: string; success: boolean }) => `${r.channel}: ${r.success}`));
 
     return NextResponse.json({ success: true, results });
   } catch (error: unknown) {

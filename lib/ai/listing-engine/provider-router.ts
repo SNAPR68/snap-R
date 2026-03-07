@@ -379,14 +379,14 @@ const providerStatuses: Map<Provider, ProviderStatus> = new Map();
  * Check if AutoEnhance API is configured
  */
 export function isAutoEnhanceConfigured(): boolean {
-  return Boolean(((typeof process !== "undefined" ? process.env : {}) as any).AUTOENHANCE_API_KEY);
+  return Boolean(((typeof process !== "undefined" ? process.env : {}) as Record<string, string | undefined>).AUTOENHANCE_API_KEY);
 }
 
 /**
  * Check if Replicate is configured
  */
 export function isReplicateConfigured(): boolean {
-  return Boolean(((typeof process !== "undefined" ? process.env : {}) as any).REPLICATE_API_TOKEN);
+  return Boolean(((typeof process !== "undefined" ? process.env : {}) as Record<string, string | undefined>).REPLICATE_API_TOKEN);
 }
 
 /**

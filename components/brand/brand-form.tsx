@@ -49,7 +49,7 @@ export function BrandForm() {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
-  const [connections, setConnections] = useState<any[]>([])
+  const [connections, setConnections] = useState<Array<{ platform: string; connected: boolean; page_name?: string }>>([])
 
   // Fetch existing profile on mount
   useEffect(() => {

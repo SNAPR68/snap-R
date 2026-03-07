@@ -67,7 +67,7 @@ export async function PATCH(request: Request) {
 
     if (!id) return NextResponse.json({ error: 'Site ID required' }, { status: 400 })
 
-    const updates: Record<string, any> = {}
+    const updates: Record<string, unknown> = {}
     if (typeof is_published === 'boolean') updates.is_published = is_published
     if (template) updates.template = template
     if (custom_colors !== undefined) updates.custom_colors = custom_colors

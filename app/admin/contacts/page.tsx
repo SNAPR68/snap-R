@@ -1,7 +1,18 @@
 import { adminSupabase } from '@/lib/supabase/admin';
-import { Mail, Clock, CheckCircle, MessageSquare, AlertCircle, User, Calendar } from 'lucide-react';
+import { Mail, Clock, CheckCircle, MessageSquare, AlertCircle, Calendar } from 'lucide-react';
 import { revalidatePath } from 'next/cache';
 export const dynamic = 'force-dynamic';
+
+interface ContactSubmission {
+  id: string;
+  name: string | null;
+  email: string;
+  phone: string | null;
+  subject: string | null;
+  message: string | null;
+  status: string | null;
+  created_at: string;
+}
 
 async function updateStatus(formData: FormData) {
   'use server';
@@ -19,12 +30,12 @@ export default async function AdminContacts() {
     .order('created_at', { ascending: false });
 
   const total = submissions?.length || 0;
-  const newCount = submissions?.filter((s: any) => s.status === 'new' || !s.status).length || 0;
-  const pendingCount = submissions?.filter((s: any) => s.status === 'pending').length || 0;
-  const repliedCount = submissions?.filter((s: any) => s.status === 'replied').length || 0;
+  const newCount = submissions?.filter((s: ContactSubmission) => s.status === 'new' || !s.status).length || 0;
+  const pendingCount = submissions?.filter((s: ContactSubmission) => s.status === 'pending').length || 0;
+  const repliedCount = submissions?.filter((s: ContactSubmission) => s.status === 'replied').length || 0;
 
   const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
-  const thisWeekCount = submissions?.filter((s: any) => new Date(s.created_at) >= sevenDaysAgo).length || 0;
+  const thisWeekCount = submissions?.filter((s: ContactSubmission) => new Date(s.created_at) >= sevenDaysAgo).length || 0;
 
   const timeAgo = (date: string) => {
     const now = new Date();
@@ -84,7 +95,7 @@ export default async function AdminContacts() {
       <div className="bg-[#1A1A1A] border border-white/10 rounded-xl overflow-hidden">
         {submissions && submissions.length > 0 ? (
           <div className="divide-y divide-white/5">
-            {submissions.map((sub: any) => {
+            {submissions.map((sub: ContactSubmission) => {
               const status = sub.status || 'new';
               return (
                 <div key={sub.id} className={`p-6 hover:bg-white/5 transition ${status === 'new' ? 'bg-blue-500/5' : ''}`}>

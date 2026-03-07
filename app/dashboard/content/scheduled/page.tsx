@@ -16,7 +16,7 @@ interface ScheduledPost {
   listing?: { title: string };
 }
 
-const PLATFORM_ICONS: Record<string, any> = {
+const PLATFORM_ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
   facebook: Facebook,
   instagram: Instagram,
   linkedin: Linkedin,
