@@ -28,6 +28,7 @@
 // ============================================================================
 
 import { NextRequest, NextResponse } from 'next/server';
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { createClient } from '@/lib/supabase/server';
 
 const REPLICATE_API_TOKEN = process.env.REPLICATE_API_TOKEN;
@@ -168,7 +169,7 @@ const RENOVATION_ELEMENTS: Record<string, (opts: Record<string, string>) => stri
 // REPLICATE API POLLING
 // ============================================================================
 
-async function pollPrediction(predictionUrl: string, maxAttempts: number = 180): Promise<any> {
+async function pollPrediction(predictionUrl: string, maxAttempts: number = 180): Promise<{ status: string; output?: unknown; error?: string }> {
   let attempts = 0;
   
   while (attempts < maxAttempts) {
@@ -207,12 +208,12 @@ async function pollPrediction(predictionUrl: string, maxAttempts: number = 180):
   throw new Error('Prediction timed out after 6 minutes');
 }
 
-function extractOutputUrl(result: any): string {
+function extractOutputUrl(result: { output?: unknown }): string {
   if (typeof result.output === 'string') {
     return result.output;
   }
   if (Array.isArray(result.output) && result.output.length > 0) {
-    return result.output[0];
+    return result.output[0] as string;
   }
   throw new Error('No output URL in result');
 }
@@ -357,6 +358,7 @@ async function processWithFluxKontext(
 // Cost: ~$0.05/image | Speed: ~8 seconds
 // ============================================================================
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 async function processWithFluxFill(
   imageUrl: string,
   maskUrl: string,

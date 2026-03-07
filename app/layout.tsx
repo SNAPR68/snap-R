@@ -5,6 +5,7 @@ import './globals.css';
 import { CookieConsent } from '@/components/cookie-consent';
 import { AIChatbot } from '@/components/ai-chatbot';
 import { ToastProvider } from '@/components/toast';
+import { SkipNav } from '@/components/skip-nav';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -93,8 +94,11 @@ export default function RootLayout({
         />
       </head>
       <body className={inter.className}>
+        <SkipNav />
         <ToastProvider>
+        <div id="main-content">
         {children}
+        </div>
         </ToastProvider>
         <CookieConsent />
         <AIChatbot />

@@ -43,7 +43,7 @@ export interface WindowBalanceResult {
  */
 export async function detectWindows(imageUrl: string): Promise<WindowMask | null> {
   console.log('[WindowMasking] Detecting windows with SAM...');
-  
+
   try {
     const samClient = new SAMMasksClient();
     const result = await samClient.generateMask({ imageUrl, maskType: 'window' });
@@ -51,7 +51,7 @@ export async function detectWindows(imageUrl: string): Promise<WindowMask | null
       console.log('[WindowMasking] No windows detected');
       return null;
     }
-    
+
     console.log('[WindowMasking] Windows detected successfully');
     return {
       maskUrl: result.maskUrl,
@@ -64,7 +64,7 @@ export async function detectWindows(imageUrl: string): Promise<WindowMask | null
         confidence: result.confidence,
       }] : [],
     };
-    
+
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Processing failed';
     console.error('[WindowMasking] SAM detection failed:', message);
@@ -76,9 +76,10 @@ export async function detectWindows(imageUrl: string): Promise<WindowMask | null
  * Fallback window detection using targeted inpainting prompt
  * Less precise but more reliable
  */
-async function fallbackWindowDetection(imageUrl: string): Promise<WindowMask | null> {
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+async function fallbackWindowDetection(_imageUrl: string): Promise<WindowMask | null> {
   console.log('[WindowMasking] Using fallback detection method');
-  
+
   // For fallback, we return null and let the enhancement handle it
   // The multi-pass twilight already handles window glow enhancement
   return null;
@@ -96,39 +97,39 @@ export async function balanceWindowExposure(
   } = {}
 ): Promise<WindowBalanceResult> {
   console.log('[WindowMasking] Balancing window exposure...');
-  
+
   const { showOutdoorView = true, viewType = 'sky' } = options;
-  
+
   try {
     // First detect windows
     const windowMask = await detectWindows(imageUrl);
-    
+
     // Build prompt based on options
     let prompt: string;
-    
+
     if (showOutdoorView) {
       const viewPrompts = {
         'sky': 'through the windows, show a clear blue sky with some clouds, natural daylight',
         'garden': 'through the windows, show green trees, landscaping, and garden view',
         'neighborhood': 'through the windows, show a pleasant residential neighborhood view',
       };
-      
+
       prompt = `Balance the exposure in this interior photo. The windows should show ${viewPrompts[viewType]}.
-Fix any blown-out or overexposed windows to show a clear outdoor view.
+Fix blown-out or overexposed windows to show a clear outdoor view.
 Keep the interior exactly the same - same furniture, lighting, colors.
 IMPORTANT: Do NOT darken the overall interior. Maintain or slightly brighten the room.
 Only fix the window exposure to show what's outside.
 Professional HDR real estate photography look.`;
     } else {
       prompt = `Balance the exposure in this interior photo.
-Fix any blown-out or overexposed windows with soft, diffused natural light.
+Fix blown-out or overexposed windows with soft, diffused natural light.
 Keep the interior exactly the same - same furniture, lighting, colors.
 IMPORTANT: Do NOT darken the overall interior. Maintain or slightly brighten the room.
 Professional real estate photography with balanced exposure.`;
     }
-    
+
     // Run exposure balancing
-    const output = await replicate.run(KONTEXT_MODEL as `${string}/${string}`, {
+    const output: unknown = await replicate.run(KONTEXT_MODEL as `${string}/${string}`, {
       input: {
         prompt,
         input_image: imageUrl,
@@ -137,26 +138,26 @@ Professional real estate photography with balanced exposure.`;
         output_format: 'jpg',
         output_quality: 95,
       },
-    }) as any;
-    
+    });
+
     const resultUrl = normalizeOutputUrl(output);
-    
+
     if (!resultUrl) {
       throw new Error('Window balancing failed');
     }
-    
+
     console.log('[WindowMasking] Window exposure balanced');
-    
+
     return {
       url: resultUrl,
       windowsDetected: windowMask?.windowCount || 0,
       balanced: true,
     };
-    
+
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Internal server error';
     console.error('[WindowMasking] Balance failed:', message);
-    
+
     // Return original on failure
     return {
       url: imageUrl,
@@ -170,7 +171,8 @@ Professional real estate photography with balanced exposure.`;
  * Check if image has blown-out windows
  * Uses simple heuristic - can be enhanced with actual image analysis
  */
-export async function hasBlownOutWindows(imageUrl: string): Promise<boolean> {
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export async function hasBlownOutWindows(_imageUrl: string): Promise<boolean> {
   // For now, we assume interior photos may have blown windows
   // In production, this would analyze the actual histogram
   // Return true to be safe - window balancing is non-destructive
@@ -186,28 +188,28 @@ export async function enhanceWindowsOnly(
   enhancement: 'glow' | 'balance' | 'darken'
 ): Promise<string> {
   console.log('[WindowMasking] Enhancing windows only:', enhancement);
-  
+
   const prompts = {
     'glow': 'Add warm yellow-orange interior light glow to all windows. Windows should appear to have cozy interior lighting. Keep everything else exactly the same.',
-    'balance': 'Balance the exposure of windows to show outdoor view clearly. Fix any blown-out or overexposed windows. Keep interior exactly the same.',
+    'balance': 'Balance the exposure of windows to show outdoor view clearly. Fix blown-out or overexposed windows. Keep interior exactly the same.',
     'darken': 'Slightly darken the windows to reduce glare and show outdoor view better. Keep interior exactly the same.',
   };
-  
+
   try {
-    const output = await replicate.run(KONTEXT_MODEL as `${string}/${string}`, {
+    const output: unknown = await replicate.run(KONTEXT_MODEL as `${string}/${string}`, {
       input: {
         prompt: prompts[enhancement],
         input_image: imageUrl,
-        guidance: 2.0, // Low guidance for subtle changes
+        guidance: 2.0,
         num_inference_steps: 20,
         output_format: 'jpg',
         output_quality: 95,
       },
-    }) as any;
-    
+    });
+
     const resultUrl = normalizeOutputUrl(output);
     return resultUrl || imageUrl;
-    
+
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Processing failed';
     console.error('[WindowMasking] Enhancement failed:', message);
@@ -220,6 +222,7 @@ function normalizeOutputUrl(output: unknown): string {
   const result = Array.isArray(output) ? output[0] : output;
   if (!result) throw new Error('Replicate returned empty result');
   if (typeof result === 'string') return result;
-  if (typeof (result as any).url === 'function') return (result as any).url();
+  const obj = result as Record<string, unknown>;
+  if (typeof obj.url === 'function') return (obj.url as () => string)();
   return String(result);
 }

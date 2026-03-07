@@ -1,6 +1,7 @@
 'use client';
 
 import React, { Suspense, useEffect, useState, useRef } from 'react';
+import Image from 'next/image';
 import { createClient } from '@/lib/supabase/client';
 import Script from 'next/script';
 import {
@@ -46,9 +47,31 @@ interface AgentInfo {
   photo?: string;
 }
 
+interface Html2PdfInstance {
+  set: (options: Record<string, unknown>) => Html2PdfInstance;
+  from: (element: HTMLElement) => Html2PdfInstance;
+  save: () => Promise<void>;
+}
+
+interface ListingRow {
+  id: string;
+  title: string | null;
+  address: string | null;
+  city: string | null;
+  state: string | null;
+  zip: string | null;
+  price: number | null;
+  bedrooms: number | null;
+  bathrooms: number | null;
+  sqft: number | null;
+  year_built: number | null;
+  property_type: string | null;
+  photos: { id: string; raw_url: string | null; processed_url: string | null }[];
+}
+
 declare global {
   interface Window {
-    html2pdf: any;
+    html2pdf: (() => Html2PdfInstance) | undefined;
   }
 }
 
@@ -60,20 +83,19 @@ function CMAGenerator() {
   const [processing, setProcessing] = useState(false);
   const [downloading, setDownloading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [html2pdfLoaded, setHtml2pdfLoaded] = useState(false);
-  
+
   // Comps state
   const [comps, setComps] = useState<Comparable[]>([
     { id: '1', address: '', soldPrice: 0, soldDate: '', bedrooms: 0, bathrooms: 0, sqft: 0 },
     { id: '2', address: '', soldPrice: 0, soldDate: '', bedrooms: 0, bathrooms: 0, sqft: 0 },
     { id: '3', address: '', soldPrice: 0, soldDate: '', bedrooms: 0, bathrooms: 0, sqft: 0 },
   ]);
-  
+
   // Pricing state
   const [recommendedPrice, setRecommendedPrice] = useState<number>(0);
   const [priceRangeLow, setPriceRangeLow] = useState<number>(0);
   const [priceRangeHigh, setPriceRangeHigh] = useState<number>(0);
-  
+
   // Agent info
   const [agentInfo, setAgentInfo] = useState<AgentInfo>({
     name: '',
@@ -81,53 +103,15 @@ function CMAGenerator() {
     email: '',
     brokerage: '',
   });
-  
+
   // Result
   const [reportHtml, setReportHtml] = useState<string>('');
-  const [reportData, setReportData] = useState<any>(null);
   const [showPreview, setShowPreview] = useState(false);
   const reportContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     loadListings();
     loadAgentInfo();
-  }, []);
-
-  // Check for html2pdf library loading
-  useEffect(() => {
-    const checkHtml2pdf = () => {
-      if (window.html2pdf) {
-        console.log('[CMA] html2pdf library loaded successfully');
-        setHtml2pdfLoaded(true);
-        return true;
-      }
-      return false;
-    };
-
-    // Check immediately
-    if (checkHtml2pdf()) {
-      return;
-    }
-
-    // Check every second until loaded
-    const interval = setInterval(() => {
-      if (checkHtml2pdf()) {
-        clearInterval(interval);
-      }
-    }, 1000);
-
-    // Cleanup after 30 seconds (fallback)
-    const timeout = setTimeout(() => {
-      clearInterval(interval);
-      if (!window.html2pdf) {
-        console.warn('[CMA] html2pdf library failed to load after 30 seconds');
-      }
-    }, 30000);
-
-    return () => {
-      clearInterval(interval);
-      clearTimeout(timeout);
-    };
   }, []);
 
   const loadListings = async () => {
@@ -143,10 +127,10 @@ function CMAGenerator() {
 
     if (data) {
       const withThumbnails = await Promise.all(
-        data.map(async (listing: any) => {
+        data.map(async (listing: ListingRow) => {
           const photos = listing.photos || [];
           const photoUrls: { id: string; url: string }[] = [];
-          
+
           for (const photo of photos.slice(0, 6)) {
             const path = photo.processed_url || photo.raw_url;
             if (path) {
@@ -162,20 +146,20 @@ function CMAGenerator() {
               }
             }
           }
-          
+
           return {
             id: listing.id,
-            title: listing.title,
-            address: listing.address,
-            city: listing.city,
-            state: listing.state,
-            zip: listing.zip,
-            price: listing.price,
-            bedrooms: listing.bedrooms,
-            bathrooms: listing.bathrooms,
-            sqft: listing.sqft,
-            year_built: listing.year_built,
-            property_type: listing.property_type,
+            title: listing.title ?? '',
+            address: listing.address ?? undefined,
+            city: listing.city ?? undefined,
+            state: listing.state ?? undefined,
+            zip: listing.zip ?? undefined,
+            price: listing.price ?? undefined,
+            bedrooms: listing.bedrooms ?? undefined,
+            bathrooms: listing.bathrooms ?? undefined,
+            sqft: listing.sqft ?? undefined,
+            year_built: listing.year_built ?? undefined,
+            property_type: listing.property_type ?? undefined,
             thumbnail: photoUrls[0]?.url || null,
             photos: photoUrls,
           };
@@ -217,7 +201,7 @@ function CMAGenerator() {
     setStep('comps');
   };
 
-  const updateComp = (id: string, field: keyof Comparable, value: any) => {
+  const updateComp = (id: string, field: keyof Comparable, value: string | number) => {
     setComps(comps.map(c => c.id === id ? { ...c, [field]: value } : c));
   };
 
@@ -244,17 +228,17 @@ function CMAGenerator() {
   const calculateAverages = () => {
     const validComps = comps.filter(c => c.soldPrice > 0 && c.sqft > 0);
     if (validComps.length === 0) return { avgPrice: 0, avgPricePerSqft: 0, avgSqft: 0 };
-    
+
     const avgPrice = validComps.reduce((sum, c) => sum + c.soldPrice, 0) / validComps.length;
     const avgPricePerSqft = validComps.reduce((sum, c) => sum + (c.soldPrice / c.sqft), 0) / validComps.length;
     const avgSqft = validComps.reduce((sum, c) => sum + c.sqft, 0) / validComps.length;
-    
+
     return { avgPrice, avgPricePerSqft, avgSqft };
   };
 
   const generateReport = async () => {
     if (!selectedListing) return;
-    
+
     setProcessing(true);
     setError(null);
 
@@ -275,13 +259,12 @@ function CMAGenerator() {
       });
 
       const data = await response.json();
-      
+
       if (!response.ok) {
         throw new Error(data.error || 'Failed to generate report');
       }
 
       setReportHtml(data.html);
-      setReportData(data);
       setStep('result');
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Download failed';
@@ -292,8 +275,6 @@ function CMAGenerator() {
   };
 
   const downloadPDF = async () => {
-    console.log('[CMA] downloadPDF called');
-    
     if (!reportHtml) {
       console.error('[CMA] No report HTML available');
       setError('No report content available. Please generate the report first.');
@@ -302,13 +283,12 @@ function CMAGenerator() {
 
     setDownloading(true);
     setError(null);
-    
+
     let container: HTMLDivElement | null = null;
-    
+
     try {
       const html2canvas = (await import('html2canvas')).default;
       const { jsPDF } = await import('jspdf');
-      console.log('[CMA] Libraries loaded via npm');
 
       container = document.createElement('div');
       container.innerHTML = reportHtml;
@@ -328,18 +308,18 @@ function CMAGenerator() {
 
       const imgData = canvas.toDataURL('image/jpeg', 0.95);
       const pdf = new jsPDF('p', 'in', 'letter');
-      
+
       const pdfWidth = 8.5;
       const pdfHeight = 11;
       const imgWidth = pdfWidth;
       const imgHeight = (canvas.height * imgWidth) / canvas.width;
-      
+
       let heightLeft = imgHeight;
       let position = 0;
-      
+
       pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight);
       heightLeft -= pdfHeight;
-      
+
       while (heightLeft > 0) {
         position = heightLeft - imgHeight;
         pdf.addPage();
@@ -349,8 +329,7 @@ function CMAGenerator() {
 
       const filename = `CMA-${selectedListing?.address || 'Report'}-${new Date().toISOString().split('T')[0]}.pdf`;
       pdf.save(filename);
-      console.log('[CMA] PDF saved:', filename);
-      
+
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Generation failed';
       console.error('[CMA] PDF generation error:', err);
@@ -360,7 +339,6 @@ function CMAGenerator() {
         document.body.removeChild(container);
       }
       setDownloading(false);
-      console.log('[CMA] downloadPDF finished');
     }
   };
 
@@ -380,11 +358,10 @@ function CMAGenerator() {
     return (
       <div className="min-h-screen bg-[#0F0F0F] text-white p-6">
         {/* Load html2pdf library */}
-        <Script 
+        <Script
           src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"
-          onLoad={() => setHtml2pdfLoaded(true)}
         />
-        
+
         <div className="max-w-4xl mx-auto">
           <div className="flex items-center gap-3 mb-6">
             <div className="p-3 bg-gradient-to-br from-amber-500/20 to-orange-500/20 rounded-xl">
@@ -398,7 +375,7 @@ function CMAGenerator() {
 
           {/* Info Box */}
           <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-4 mb-8">
-            <h3 className="font-semibold text-amber-400 mb-2">What's included in your CMA Report:</h3>
+            <h3 className="font-semibold text-amber-400 mb-2">What&apos;s included in your CMA Report:</h3>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm text-white/70">
               {['Property photos', 'Comp comparison', 'Price analysis', 'Market narrative', '$/sqft charts', 'Agent branding', 'PDF download', 'Professional design'].map((item, i) => (
                 <div key={i} className="flex items-center gap-2">
@@ -417,9 +394,9 @@ function CMAGenerator() {
                 onClick={() => handleSelectListing(listing)}
                 className="w-full flex items-center gap-4 p-4 bg-white/5 border border-white/10 rounded-xl hover:bg-white/10 hover:border-amber-500/30 transition-all text-left"
               >
-                <div className="w-20 h-14 rounded-lg overflow-hidden bg-white/10 flex-shrink-0">
+                <div className="w-20 h-14 rounded-lg overflow-hidden bg-white/10 flex-shrink-0 relative">
                   {listing.thumbnail ? (
-                    <img src={listing.thumbnail} alt="" className="w-full h-full object-cover" />
+                    <Image src={listing.thumbnail} alt="" fill className="object-cover" unoptimized />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center">
                       <Home className="w-6 h-6 text-white/20" />
@@ -453,11 +430,10 @@ function CMAGenerator() {
   if (step === 'comps') {
     return (
       <div className="min-h-screen bg-[#0F0F0F] text-white p-6">
-        <Script 
+        <Script
           src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"
-          onLoad={() => setHtml2pdfLoaded(true)}
         />
-        
+
         <div className="max-w-5xl mx-auto">
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-3">
@@ -484,7 +460,9 @@ function CMAGenerator() {
           <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-4 mb-6">
             <div className="flex items-center gap-4">
               {selectedListing?.thumbnail && (
-                <img src={selectedListing.thumbnail} alt="" className="w-24 h-16 object-cover rounded-lg" />
+                <div className="w-24 h-16 relative rounded-lg overflow-hidden flex-shrink-0">
+                  <Image src={selectedListing.thumbnail} alt="" fill className="object-cover" unoptimized />
+                </div>
               )}
               <div className="flex-1 grid grid-cols-4 gap-4 text-sm">
                 <div><div className="text-white/50">Beds</div><div className="font-bold">{selectedListing?.bedrooms || '—'}</div></div>
@@ -507,7 +485,7 @@ function CMAGenerator() {
                     </button>
                   )}
                 </div>
-                
+
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                   <div className="col-span-2">
                     <label className="block text-xs text-white/50 mb-1">Address *</label>
@@ -575,11 +553,10 @@ function CMAGenerator() {
   if (step === 'review') {
     return (
       <div className="min-h-screen bg-[#0F0F0F] text-white p-6">
-        <Script 
+        <Script
           src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"
-          onLoad={() => setHtml2pdfLoaded(true)}
         />
-        
+
         <div className="max-w-4xl mx-auto">
           <div className="flex items-center gap-3 mb-6">
             <button onClick={() => setStep('comps')} className="p-2 bg-white/10 rounded-lg hover:bg-white/20 transition-colors">
@@ -599,7 +576,7 @@ function CMAGenerator() {
                   <DollarSign className="w-5 h-5 text-amber-400" />
                   Recommended Pricing
                 </h3>
-                
+
                 <div className="space-y-4">
                   <div>
                     <label className="block text-sm text-white/60 mb-2">Recommended List Price</label>
@@ -608,7 +585,7 @@ function CMAGenerator() {
                       <input type="number" value={recommendedPrice || ''} onChange={(e) => setRecommendedPrice(Number(e.target.value))} className="w-full pl-8 pr-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white text-xl font-bold focus:outline-none focus:border-amber-500/50" />
                     </div>
                   </div>
-                  
+
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <label className="block text-sm text-white/60 mb-2">Price Range Low</label>
@@ -666,7 +643,7 @@ function CMAGenerator() {
                   <User className="w-5 h-5 text-amber-400" />
                   Agent Information
                 </h3>
-                
+
                 <div className="space-y-4">
                   <div>
                     <label className="block text-sm text-white/60 mb-2">Your Name</label>
@@ -727,23 +704,15 @@ function CMAGenerator() {
   // Step 4: Result
   return (
     <div className="min-h-screen bg-[#0F0F0F] text-white p-6">
-      <Script 
+      <Script
         src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"
         strategy="afterInteractive"
-        onLoad={() => {
-          console.log('[CMA] html2pdf script loaded');
-          setHtml2pdfLoaded(true);
-          // Ensure it's available on window
-          if (typeof window !== 'undefined' && !window.html2pdf && (window as any).html2pdf) {
-            (window as any).html2pdf = (window as any).html2pdf;
-          }
-        }}
         onError={(e) => {
           console.error('[CMA] html2pdf script failed to load:', e);
           setError('Failed to load PDF library. Please refresh the page.');
         }}
       />
-      
+
       <div className="max-w-3xl mx-auto">
         <div className="text-center mb-8">
           <div className="p-4 bg-gradient-to-br from-green-500/20 to-emerald-500/20 rounded-full w-20 h-20 mx-auto mb-4 flex items-center justify-center">
@@ -830,7 +799,7 @@ function CMAGenerator() {
 
       {/* Preview Modal */}
       {showPreview && reportHtml && (
-        <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-label="Report Preview">
           <div className="bg-white rounded-xl w-full max-w-4xl max-h-[90vh] overflow-auto">
             <div className="sticky top-0 bg-gray-100 p-4 border-b flex justify-between items-center">
               <h3 className="font-bold text-gray-800">Report Preview</h3>
@@ -841,7 +810,7 @@ function CMAGenerator() {
                 Close
               </button>
             </div>
-            <div 
+            <div
               ref={reportContainerRef}
               dangerouslySetInnerHTML={{ __html: reportHtml }}
             />

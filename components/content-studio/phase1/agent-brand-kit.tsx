@@ -181,7 +181,7 @@ export function BrandKitEditor({
           return (
             <button
               key={tab.id}
-              onClick={() => setActiveTab(tab.id as any)}
+              onClick={() => setActiveTab(tab.id as typeof activeTab)}
               className={`
                 flex-1 flex items-center justify-center gap-2 py-3 text-sm font-medium transition
                 ${isActive 

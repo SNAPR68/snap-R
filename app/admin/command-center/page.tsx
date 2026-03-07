@@ -1,12 +1,42 @@
 import { adminSupabase } from '@/lib/supabase/admin';
-import { 
-  Activity, AlertTriangle, CheckCircle, Clock, DollarSign, 
-  Globe, Server, Users, Zap, TrendingUp, Eye 
+import {
+  Activity, AlertTriangle, CheckCircle, DollarSign,
+  Globe, Server, Users, Zap, TrendingUp, Eye
 } from 'lucide-react';
 import Link from 'next/link';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 60;
+
+interface ActivityEvent {
+  event_type: string;
+  user_id: string;
+  created_at: string;
+}
+
+interface CostRecord {
+  cost_cents: number;
+  provider: string;
+  created_at: string;
+}
+
+interface ErrorRecord {
+  id: string;
+  severity: string;
+  message: string;
+  created_at: string;
+}
+
+interface HumanEditOrder {
+  amount_paid: number;
+  created_at: string;
+}
+
+interface ProfileRecord {
+  id: string;
+  plan: string;
+  created_at: string;
+}
 
 export default async function CommandCenter() {
   const now = new Date();
@@ -30,14 +60,14 @@ export default async function CommandCenter() {
     adminSupabase().from('human_edit_orders').select('amount_paid, created_at').gte('created_at', thirtyDaysAgo.toISOString()),
   ]);
 
-  const activeUsersLastHour = new Set(recentActivity?.map((a: any) => a.user_id)).size;
-  const pageViewsLastHour = recentActivity?.filter((a: any) => a.event_type === 'page_view').length || 0;
-  const todaySpend = (todayCosts || []).reduce((sum: number, c: any) => sum + (c.cost_cents || 0), 0) / 100;
+  const activeUsersLastHour = new Set(recentActivity?.map((a: ActivityEvent) => a.user_id)).size;
+  const pageViewsLastHour = recentActivity?.filter((a: ActivityEvent) => a.event_type === 'page_view').length || 0;
+  const todaySpend = (todayCosts || []).reduce((sum: number, c: CostRecord) => sum + (c.cost_cents || 0), 0) / 100;
   const todayEnhancements = todayCosts?.length || 0;
-  const criticalErrors = recentErrors?.filter((e: any) => e.severity === 'critical').length || 0;
+  const criticalErrors = recentErrors?.filter((e: ErrorRecord) => e.severity === 'critical').length || 0;
   const totalErrors = recentErrors?.length || 0;
-  const monthlyRevenue = (humanEdits || []).reduce((sum: number, o: any) => sum + (o.amount_paid || 0), 0) / 100;
-  const proUsers = profiles?.filter((p: any) => p.plan === 'pro' || p.plan === 'team').length || 0;
+  const monthlyRevenue = (humanEdits || []).reduce((sum: number, o: HumanEditOrder) => sum + (o.amount_paid || 0), 0) / 100;
+  const proUsers = profiles?.filter((p: ProfileRecord) => p.plan === 'pro' || p.plan === 'team').length || 0;
   const systemStatus = criticalErrors > 0 ? 'critical' : totalErrors > 0 ? 'warning' : 'healthy';
 
   return (
@@ -113,7 +143,7 @@ export default async function CommandCenter() {
           </div>
           {recentErrors && recentErrors.length > 0 ? (
             <div className="space-y-3">
-              {recentErrors.map((error: any) => (
+              {recentErrors.map((error: ErrorRecord) => (
                 <div key={error.id} className={`p-3 rounded-lg border ${error.severity === 'critical' ? 'bg-red-500/10 border-red-500/30' : 'bg-yellow-500/10 border-yellow-500/30'}`}>
                   <div className="flex items-center gap-2 mb-1">
                     <span className={`text-xs px-2 py-0.5 rounded ${error.severity === 'critical' ? 'bg-red-500/30 text-red-400' : 'bg-yellow-500/30 text-yellow-400'}`}>{error.severity}</span>

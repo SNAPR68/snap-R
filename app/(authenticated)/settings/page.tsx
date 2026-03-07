@@ -10,7 +10,7 @@ export default function SettingsPage() {
   const [name, setName] = useState(user?.user_metadata?.name || "");
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
-  const [profile, setProfile] = useState<any>(null);
+  const [profile, setProfile] = useState<{ full_name?: string; email?: string; phone?: string; subscription_tier?: string; credits?: number; plan?: string } | null>(null);
   const [activeTab, setActiveTab] = useState("profile");
   const [notifications, setNotifications] = useState({ emailUpdates: true, marketingEmails: false, processingAlerts: true });
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);

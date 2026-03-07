@@ -1,8 +1,23 @@
 import { adminSupabase } from '@/lib/supabase/admin';
-import { Users, DollarSign, Zap, Clock, Crown, TrendingUp, Download, Search } from 'lucide-react';
+import { Users, DollarSign, Zap, Crown, TrendingUp, Download } from 'lucide-react';
 import { revalidatePath } from 'next/cache';
-import Link from 'next/link';
 export const dynamic = 'force-dynamic';
+
+interface ApiCostRecord {
+  user_id: string;
+  cost_cents: number;
+  credits_charged: number;
+  created_at: string;
+}
+
+interface UserProfile {
+  id: string;
+  email: string;
+  full_name: string | null;
+  plan: string | null;
+  credits: number;
+  created_at: string;
+}
 
 async function updateUserPlan(formData: FormData) {
   'use server';
@@ -28,7 +43,7 @@ export default async function AdminUsers() {
   const { data: apiCosts } = await adminSupabase().from('api_costs').select('user_id, cost_cents, credits_charged, created_at');
 
   const userStats: Record<string, { cost: number; credits: number; count: number; lastActive: string }> = {};
-  (apiCosts || []).forEach((c: any) => {
+  (apiCosts || []).forEach((c: ApiCostRecord) => {
     if (!userStats[c.user_id]) userStats[c.user_id] = { cost: 0, credits: 0, count: 0, lastActive: c.created_at };
     userStats[c.user_id].cost += c.cost_cents || 0;
     userStats[c.user_id].credits += c.credits_charged || 0;
@@ -42,13 +57,13 @@ export default async function AdminUsers() {
   const now = new Date();
   const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
   const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-  const newUsers30d = users?.filter((u: any) => new Date(u.created_at) >= thirtyDaysAgo).length || 0;
+  const newUsers30d = users?.filter((u: UserProfile) => new Date(u.created_at) >= thirtyDaysAgo).length || 0;
   const activeUsers7d = Object.values(userStats).filter(s => new Date(s.lastActive) >= sevenDaysAgo).length;
-  const paidUsers = users?.filter((u: any) => u.plan && u.plan !== 'free').length || 0;
+  const paidUsers = users?.filter((u: UserProfile) => u.plan && u.plan !== 'free').length || 0;
   const totalCost = Object.values(userStats).reduce((s, u) => s + u.cost, 0);
   const totalCreditsUsed = Object.values(userStats).reduce((s, u) => s + u.credits, 0);
 
-  const sortedUsers = [...(users || [])].sort((a: any, b: any) => (userStats[b.id]?.cost || 0) - (userStats[a.id]?.cost || 0));
+  const sortedUsers = [...(users || [])].sort((a: UserProfile, b: UserProfile) => (userStats[b.id]?.cost || 0) - (userStats[a.id]?.cost || 0));
 
   const timeAgo = (date: string) => {
     if (!date) return 'Never';
@@ -122,7 +137,7 @@ export default async function AdminUsers() {
               </tr>
             </thead>
             <tbody>
-              {sortedUsers.map((user: any, index: number) => {
+              {sortedUsers.map((user: UserProfile, index: number) => {
                 const stats = userStats[user.id] || { cost: 0, credits: 0, count: 0, lastActive: '' };
                 const plan = user.plan || 'free';
                 const isTopCost = index === 0 && stats.cost > 0;

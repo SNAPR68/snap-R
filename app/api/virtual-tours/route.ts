@@ -123,7 +123,7 @@ export async function POST(request: NextRequest) {
 
     // Create scenes if provided
     if (scenes.length > 0) {
-      const scenesData = scenes.map((scene: any, index: number) => ({
+      const scenesData = scenes.map((scene: { imageUrl?: string; name?: string; description?: string; thumbnailUrl?: string; is360?: boolean; initialYaw?: number; initialPitch?: number; initialZoom?: number; floorNumber?: number; floorName?: string }, index: number) => ({
         tour_id: tour.id,
         name: scene.name || `Scene ${index + 1}`,
         description: scene.description,
@@ -200,7 +200,7 @@ export async function PATCH(request: NextRequest) {
     }
 
     // Map camelCase to snake_case
-    const updateData: any = {};
+    const updateData: Record<string, unknown> = {};
     if (updates.name !== undefined) updateData.name = updates.name;
     if (updates.description !== undefined) updateData.description = updates.description;
     if (updates.status !== undefined) updateData.status = updates.status;

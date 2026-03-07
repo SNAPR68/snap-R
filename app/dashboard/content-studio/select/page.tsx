@@ -37,7 +37,7 @@ export default async function SelectPlatformPage({
     .eq('listing_id', listingId)
 
   // Fetch marketing job for this listing (wrapped in try/catch for resilience)
-  let marketingJob: any = null
+  let marketingJob: { id?: string; status?: string; description_result?: string | Record<string, unknown>; captions_result?: unknown; mls_result?: unknown } | null = null
   try {
     const { data } = await supabase
       .from('marketing_jobs')
@@ -55,7 +55,7 @@ export default async function SelectPlatformPage({
   const captionsResult = hasMarketingContent ? marketingJob?.captions_result : null
   const descriptionText = typeof descriptionResult === 'string'
     ? descriptionResult
-    : descriptionResult?.description || ''
+    : (descriptionResult as Record<string, unknown>)?.description as string || ''
   const captionPlatforms = captionsResult && typeof captionsResult === 'object'
     ? Object.keys(captionsResult)
     : []

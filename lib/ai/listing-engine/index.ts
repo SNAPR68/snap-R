@@ -2,7 +2,7 @@
  * SnapR AI Engine V2 - Listing Engine (Premium)
  * =============================================
  * Main orchestrator for listing-level photo preparation
- * 
+ *
  * PREMIUM FEATURES:
  * - GPT-4 Vision scene analysis
  * - Locked presets for consistency across listing
@@ -11,6 +11,7 @@
  * - Quality validation
  */
 
+import type { SupabaseClient } from '@supabase/supabase-js';
 import { createClient } from '@/lib/supabase/server';
 import { adminSupabase } from '@/lib/supabase/admin';
 import { analyzePhotos } from './photo-intelligence';
@@ -18,15 +19,19 @@ import { buildListingStrategy, getStrategySummary } from './strategy-builder';
 import { processListingBatch, orderByPriority } from './batch-processor';
 import { analyzeConsistency, getConsistencyReport } from './consistency';
 import { validateResults, getValidationReport, quickValidate } from './quality-validator';
-import { determineLockedPresets, LockedPresets } from './preset-locker';
+import { determineLockedPresets } from './preset-locker';
 import { COST_ESTIMATES } from '@/lib/cost-logger';
 import {
   ListingProcessingResult,
+  PhotoProcessingResult,
   ProcessingProgress,
   ProcessingStatus,
   PrepareListingRequest,
   PrepareListingResponse,
+  ValidationIssue,
+  ValidationResult,
 } from './types';
+import { ToolId } from '../router';
 
 // ============================================
 // CONFIGURATION
@@ -38,6 +43,56 @@ const CONFIG = {
   enableFullValidation: false,
   enableConsistencyPass: true,
 };
+
+// ============================================
+// AUDIT INTERFACES
+// ============================================
+
+/** Per-photo audit entry stored in preparation_metadata.photoAudit */
+interface PhotoAuditEntry {
+  toolsApplied: ToolId[];
+  toolsSkipped: ToolId[];
+  toolResults: PhotoProcessingResult['toolResults'];
+  postProcessing?: string[];
+  success: boolean;
+  processingTime: number;
+  needsReview: boolean;
+  reviewReason?: string;
+  validation?: {
+    needsReview: boolean;
+    recommendation?: ValidationResult['recommendation'];
+    confidence: number;
+    issues: ValidationIssue[];
+  };
+}
+
+/** Per-photo decision audit entry stored in preparation_metadata.decisionAudit */
+interface DecisionAuditEntry {
+  photoType: string;
+  heroScore: number;
+  lighting: string;
+  needsHDR: boolean;
+  verticalAlignment: boolean;
+  hasSky: boolean;
+  skyVisible: number;
+  skyQuality: string;
+  skyNeedsReplacement: boolean;
+  hasLawn: boolean;
+  lawnVisible: number;
+  lawnQuality: string;
+  lawnNeedsRepair: boolean;
+  hasPool: boolean;
+  poolNeedsEnhancement: boolean;
+  hasVisibleWindows: boolean;
+  windowExposureIssue: boolean;
+  clutterLevel: string;
+  roomEmpty: boolean;
+  isTwilightTarget: boolean;
+  toolsSelected: ToolId[];
+  toolReasons: Record<string, string>;
+  notSuggested: Record<string, string>;
+  confidence: number;
+}
 
 // ============================================
 // MAIN ENTRY POINT
@@ -69,13 +124,13 @@ export async function prepareListing(
     consistency: Number(process.env.AI_PROGRESS_CONSISTENCY || 92),
     validating: Number(process.env.AI_PROGRESS_VALIDATING || 96),
   };
-  
+
   console.log(`\n[ListingEngine] ========================================`);
   console.log(`[ListingEngine] PREPARE LISTING (PREMIUM): ${listingId}`);
   console.log(`[ListingEngine] ========================================\n`);
-  
-  const supabase = options.admin ? adminSupabase() : await createClient();
-  
+
+  const supabase = options.admin ? adminSupabase() : createClient();
+
   try {
     // Update listing status to 'preparing'
     await updateListingStatus(supabase, listingId, 'preparing');
@@ -89,35 +144,35 @@ export async function prepareListing(
         .eq('id', userId)
         .single();
       planTier = (profile?.subscription_tier || profile?.plan || 'free') as string;
-    } catch (error) {
+    } catch {
       console.warn('[ListingEngine] Failed to read plan tier, defaulting to free');
     }
-    
+
     // ========================================
     // PHASE 1: FETCH PHOTOS
     // ========================================
     reportProgress(onProgress, listingId, 'analyzing', 'Fetching photos...', startTime);
-    
+
     const fetchStart = Date.now();
     const photos = await fetchListingPhotos(supabase, listingId);
     phaseTimingsMs.fetchMs = Date.now() - fetchStart;
-    
+
     if (photos.length === 0) {
       throw new Error('No photos found for this listing');
     }
-    
+
     if (photos.length > CONFIG.maxPhotos) {
       console.warn(`[ListingEngine] Limiting to ${CONFIG.maxPhotos} photos`);
       photos.splice(CONFIG.maxPhotos);
     }
-    
+
     console.log(`[ListingEngine] Found ${photos.length} photos`);
-    
+
     // ========================================
     // PHASE 2: ANALYZE PHOTOS (GPT-4 Vision)
     // ========================================
     reportProgress(onProgress, listingId, 'analyzing', `Analyzing ${photos.length} photos with AI vision...`, startTime);
-    
+
     const analysisConcurrency = Number(process.env.ANALYSIS_CONCURRENCY || (options.prioritizeSpeed ? 4 : 3));
     const analysisBatchDelayMs = Number(process.env.ANALYSIS_BATCH_DELAY_MS || (options.prioritizeSpeed ? 900 : 1000));
     const analysisStart = Date.now();
@@ -143,9 +198,9 @@ export async function prepareListing(
       },
     });
     phaseTimingsMs.analysisMs = Date.now() - analysisStart;
-    
+
     console.log(`[ListingEngine] Analysis complete`);
-    
+
     // ========================================
     // PHASE 3: DETERMINE LOCKED PRESETS
     // ========================================
@@ -157,18 +212,18 @@ export async function prepareListing(
       skippedPhotos: 0,
       percentComplete: progressMarks.strategizing,
     });
-    
+
     const presetsStart = Date.now();
     const lockedPresets = determineLockedPresets(analyses);
     phaseTimingsMs.presetsMs = Date.now() - presetsStart;
-    
+
     console.log(`[ListingEngine] Presets locked:`, {
       sky: lockedPresets.skyPreset,
       twilight: lockedPresets.twilightPreset,
       staging: lockedPresets.stagingStyle,
       colorTemp: lockedPresets.colorTemp,
     });
-    
+
     // ========================================
     // PHASE 4: BUILD STRATEGY
     // ========================================
@@ -180,13 +235,13 @@ export async function prepareListing(
       skippedPhotos: 0,
       percentComplete: progressMarks.strategizing,
     });
-    
+
     const strategyStart = Date.now();
     const strategy = buildListingStrategy(listingId, analyses);
     phaseTimingsMs.strategyMs = Date.now() - strategyStart;
-    
+
     console.log(`\n${getStrategySummary(strategy)}\n`);
-    
+
     // ========================================
     // PHASE 5: PROCESS PHOTOS (PREMIUM)
     // ========================================
@@ -198,10 +253,10 @@ export async function prepareListing(
       skippedPhotos: 0,
       percentComplete: progressMarks.processingStart,
     });
-    
+
     // Order by priority (hero first, then critical, etc.)
     strategy.photoStrategies = orderByPriority(strategy.photoStrategies);
-    
+
     const processingStart = Date.now();
     const results = await processListingBatch(strategy, {
       listingId,
@@ -212,9 +267,9 @@ export async function prepareListing(
       supabase,
     });
     phaseTimingsMs.processingMs = Date.now() - processingStart;
-    
+
     console.log(`[ListingEngine] Processing complete: ${results.filter(r => r.success).length}/${results.length} successful`);
-    
+
     // ========================================
     // PHASE 6: CONSISTENCY PASS
     // ========================================
@@ -227,13 +282,13 @@ export async function prepareListing(
         skippedPhotos: strategy.skippedPhotos,
         percentComplete: progressMarks.consistency,
       });
-      
+
       const consistencyStart = Date.now();
       const consistency = await analyzeConsistency(results);
       phaseTimingsMs.consistencyMs = Date.now() - consistencyStart;
       console.log(`\n${getConsistencyReport(consistency.metrics, consistency.adjustments, consistency.consistencyScore)}\n`);
     }
-    
+
     // ========================================
     // PHASE 7: VALIDATION
     // ========================================
@@ -245,7 +300,7 @@ export async function prepareListing(
       skippedPhotos: strategy.skippedPhotos,
       percentComplete: progressMarks.validating,
     });
-    
+
     const validationStart = Date.now();
     let validations;
     if (CONFIG.enableFullValidation) {
@@ -254,22 +309,22 @@ export async function prepareListing(
       validations = results.map(r => quickValidate(r));
     }
     phaseTimingsMs.validationMs = Date.now() - validationStart;
-    
+
     console.log(`\n${getValidationReport(validations)}\n`);
-    
+
     // ========================================
     // PHASE 8: FINALIZE
     // ========================================
     const successfulPhotos = results.filter(r => r.success).length;
     const failedPhotos = results.filter(r => !r.success).length;
     const photosNeedingReview = validations.filter(v => v.needsReview).length;
-    
+
     const overallConfidence = Math.round(
       validations.reduce((sum, v) => sum + v.confidence, 0) / validations.length
     );
 
     const validationByPhotoId = new Map(validations.map(v => [v.photoId, v]));
-    const photoAudit = results.reduce<Record<string, any>>((acc, result) => {
+    const photoAudit = results.reduce<Record<string, PhotoAuditEntry>>((acc, result) => {
       const validation = validationByPhotoId.get(result.photoId);
       acc[result.photoId] = {
         toolsApplied: result.toolsApplied,
@@ -291,7 +346,7 @@ export async function prepareListing(
     }, {});
 
     const analysisByPhotoId = new Map(analyses.map((analysis) => [analysis.photoId, analysis]));
-    const decisionAudit = strategy.photoStrategies.reduce<Record<string, any>>((acc, strategyItem) => {
+    const decisionAudit = strategy.photoStrategies.reduce<Record<string, DecisionAuditEntry>>((acc, strategyItem) => {
       const analysis = analysisByPhotoId.get(strategyItem.photoId);
       if (!analysis) return acc;
       acc[strategyItem.photoId] = {
@@ -328,7 +383,7 @@ export async function prepareListing(
     costBreakdownCents.openai = (costBreakdownCents.openai || 0) + analysisCostCents;
     const totalCostUsd = Object.values(costBreakdownCents).reduce((sum, cents) => sum + cents, 0) / 100;
     const toolsApplied = countToolsApplied(results);
-    
+
     // Determine final status
     let finalStatus: ProcessingStatus = 'completed';
     if (failedPhotos > results.length * 0.3) {
@@ -336,7 +391,7 @@ export async function prepareListing(
     } else if (photosNeedingReview > 0 || overallConfidence < 70) {
       finalStatus = 'needs_review';
     }
-    
+
     // Update listing in database
     const finalizeStart = Date.now();
     await finalizeListing(supabase, listingId, {
@@ -362,10 +417,10 @@ export async function prepareListing(
       phaseTimingsMs,
     });
     phaseTimingsMs.finalizeMs = Date.now() - finalizeStart;
-    
+
     const totalTime = Date.now() - startTime;
     phaseTimingsMs.totalMs = totalTime;
-    
+
     console.log(`\n[ListingEngine] ========================================`);
     console.log(`[ListingEngine] COMPLETE: ${finalStatus.toUpperCase()}`);
     console.log(`[ListingEngine] Time: ${(totalTime / 1000).toFixed(1)}s`);
@@ -373,7 +428,7 @@ export async function prepareListing(
     console.log(`[ListingEngine] Confidence: ${overallConfidence}%`);
     console.log(`[ListingEngine] Presets used: sky=${lockedPresets.skyPreset}, twilight=${lockedPresets.twilightPreset}`);
     console.log(`[ListingEngine] ========================================\n`);
-    
+
     return {
       listingId,
       status: finalStatus,
@@ -394,13 +449,13 @@ export async function prepareListing(
       startedAt: new Date(startTime).toISOString(),
       completedAt: new Date().toISOString(),
     };
-    
+
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Processing failed';
     console.error(`[ListingEngine] FAILED:`, message);
-    
+
     await updateListingStatus(supabase, listingId, 'failed');
-    
+
     return {
       listingId,
       status: 'failed',
@@ -433,7 +488,7 @@ export async function prepareListing(
 // ============================================
 
 async function fetchListingPhotos(
-  supabase: any,
+  supabase: SupabaseClient,
   listingId: string
 ): Promise<Array<{ id: string; url: string }>> {
   type RawPhoto = { id: string; raw_url: string };
@@ -442,17 +497,17 @@ async function fetchListingPhotos(
     .select('id, raw_url')
     .eq('listing_id', listingId)
     .order('display_order', { ascending: true });
-  
+
   if (error) {
     throw new Error(`Failed to fetch photos: ${error.message}`);
   }
-  
+
   if (!photos || photos.length === 0) {
     return [];
   }
-  
+
   const photosWithUrls: Array<{ id: string; url: string }> = [];
-  
+
   const resolved = await Promise.all(
     (photos as RawPhoto[]).map(async (photo: RawPhoto) => {
       if (photo.raw_url.startsWith('http://') || photo.raw_url.startsWith('https://')) {
@@ -475,7 +530,7 @@ async function fetchListingPhotos(
 }
 
 async function updateListingStatus(
-  supabase: any,
+  supabase: SupabaseClient,
   listingId: string,
   status: string
 ): Promise<void> {
@@ -490,14 +545,14 @@ async function updateListingStatus(
     .from('listings')
     .update(payload)
     .eq('id', listingId);
-  
+
   if (error) {
     console.error(`[ListingEngine] Failed to update preparation_status:`, error.message);
   }
 }
 
 async function finalizeListing(
-  supabase: any,
+  supabase: SupabaseClient,
   listingId: string,
   data: {
     status: string;
@@ -505,8 +560,8 @@ async function finalizeListing(
     confidence: number;
     toolsApplied: Record<string, number>;
     lockedPresets: { sky: string; twilight: string; staging: string };
-    photoAudit?: Record<string, any>;
-    decisionAudit?: Record<string, any>;
+    photoAudit?: Record<string, PhotoAuditEntry>;
+    decisionAudit?: Record<string, DecisionAuditEntry>;
     phaseTimingsMs?: ListingProcessingResult['phaseTimingsMs'];
     validationSummary?: {
       total: number;
@@ -544,7 +599,7 @@ async function finalizeListing(
       updated_at: now,
     })
     .eq('id', listingId);
-  
+
   if (error) {
     console.error(`[ListingEngine] Failed to finalize listing:`, error.message);
   }
@@ -554,13 +609,13 @@ function countToolsApplied(
   results: Array<{ toolsApplied: string[] }>
 ): Record<string, number> {
   const counts: Record<string, number> = {};
-  
+
   for (const result of results) {
     for (const tool of result.toolsApplied) {
       counts[tool] = (counts[tool] || 0) + 1;
     }
   }
-  
+
   return counts;
 }
 
@@ -623,7 +678,7 @@ function reportProgress(
       ...overrides,
     });
   }
-  
+
   console.log(`[ListingEngine] ${message}`);
 }
 
@@ -643,7 +698,7 @@ export function buildPrepareResponse(
       error: result.error,
     };
   }
-  
+
   let message: string;
   switch (result.status) {
     case 'completed':
@@ -655,7 +710,7 @@ export function buildPrepareResponse(
     default:
       message = `Preparation ${result.status}`;
   }
-  
+
   return {
     success: true,
     listingId: result.listingId,

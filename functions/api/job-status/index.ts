@@ -1,6 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 
-export async function onRequestGet(context: any) {
+export async function onRequestGet(context: { request: Request; env: Record<string, string>; params: Record<string, string> }) {
   const { request, env } = context;
   
   try {

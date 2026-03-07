@@ -44,7 +44,7 @@ export async function GET(
 
   // Create signed URLs for each photo
   const photosWithSignedUrls = await Promise.all(
-    (photos || []).map(async (photo: any) => {
+    (photos || []).map(async (photo: { id: string; raw_url?: string; processed_url?: string; variant?: string; status?: string; created_at?: string }) => {
       let signedOriginalUrl: string | null = null;
       let signedProcessedUrl: string | null = null;
 

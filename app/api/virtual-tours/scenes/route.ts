@@ -4,7 +4,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 
 // Helper to verify tour ownership
-async function verifyTourOwnership(supabase: any, tourId: string, userId: string) {
+async function verifyTourOwnership(supabase: Awaited<ReturnType<typeof createClient>>, tourId: string, userId: string) {
   const { data } = await supabase
     .from('virtual_tours')
     .select('user_id')
@@ -181,7 +181,7 @@ export async function PATCH(request: NextRequest) {
     }
 
     // Map camelCase to snake_case
-    const updateData: any = {};
+    const updateData: Record<string, unknown> = {};
     if (updates.name !== undefined) updateData.name = updates.name;
     if (updates.description !== undefined) updateData.description = updates.description;
     if (updates.imageUrl !== undefined) updateData.image_url = updates.imageUrl;

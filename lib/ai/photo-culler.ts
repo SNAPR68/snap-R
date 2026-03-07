@@ -34,6 +34,28 @@ export interface CullSessionResult {
   processingTime: number;
 }
 
+interface RawPhotoAnalysis {
+  index: number;
+  quality_score: number;
+  blur_score: number;
+  exposure_score: number;
+  composition_score: number;
+  room_type: string;
+  is_exterior: boolean;
+  is_duplicate: boolean;
+  duplicate_of_index: number | null;
+  similarity_score: number | null;
+  is_selected: boolean;
+  selection_reason: string;
+  recommended_order: number | null;
+  feedback: string;
+}
+
+interface RawDuplicateGroup {
+  original: number;
+  duplicates: number[];
+}
+
 const BATCH_ANALYSIS_PROMPT = `You are an expert real estate photographer who must select the BEST photos for an MLS listing.
 
 Analyze ALL photos in this batch and for EACH photo provide:
@@ -95,21 +117,21 @@ export async function analyzePhotosForCulling(
   duplicateGroups: { original: number; duplicates: number[] }[];
 }> {
   console.log(`[Photo Culling] Analyzing ${photoUrls.length} photos, target: ${targetCount}`);
-  
+
   // For large batches, process in chunks of 20 (GPT-4V can handle ~20 images well)
   const chunkSize = 20;
   const allScores: PhotoCullScore[] = [];
   const allDuplicateGroups: { original: number; duplicates: number[] }[] = [];
-  
+
   for (let i = 0; i < photoUrls.length; i += chunkSize) {
     const chunk = photoUrls.slice(i, i + chunkSize);
     const chunkStartIndex = i;
-    
+
     console.log(`[Photo Culling] Processing chunk ${Math.floor(i / chunkSize) + 1} (photos ${i + 1}-${Math.min(i + chunkSize, photoUrls.length)})`);
-    
+
     try {
       const openai = getOpenAIClient(client);
-      const imageContent = chunk.map((url, idx) => ({
+      const imageContent = chunk.map((url) => ({
         type: 'image_url' as const,
         image_url: { url, detail: 'low' as const }
       }));
@@ -119,9 +141,9 @@ export async function analyzePhotosForCulling(
         messages: [{
           role: 'user',
           content: [
-            { 
-              type: 'text', 
-              text: `${BATCH_ANALYSIS_PROMPT}\n\nThere are ${chunk.length} photos in this batch (indices ${chunkStartIndex}-${chunkStartIndex + chunk.length - 1}). Target selection: ${targetCount} total photos. Analyze each photo:` 
+            {
+              type: 'text',
+              text: `${BATCH_ANALYSIS_PROMPT}\n\nThere are ${chunk.length} photos in this batch (indices ${chunkStartIndex}-${chunkStartIndex + chunk.length - 1}). Target selection: ${targetCount} total photos. Analyze each photo:`
             },
             ...imageContent
           ]
@@ -131,7 +153,7 @@ export async function analyzePhotosForCulling(
       });
 
       const content = response.choices[0]?.message?.content || '';
-      
+
       let jsonStr = content.trim();
       const codeBlockMatch = jsonStr.match(/```(?:json)?\s*([\s\S]*?)```/);
       if (codeBlockMatch) {
@@ -142,9 +164,9 @@ export async function analyzePhotosForCulling(
       }
 
       const result = JSON.parse(jsonStr);
-      
+
       // Map results to our format
-      const chunkScores: PhotoCullScore[] = (result.photos || []).map((p: any) => ({
+      const chunkScores: PhotoCullScore[] = ((result.photos || []) as RawPhotoAnalysis[]).map((p) => ({
         photoIndex: chunkStartIndex + (p.index || 0),
         photoUrl: photoUrls[chunkStartIndex + (p.index || 0)] || '',
         qualityScore: p.quality_score || 50,
@@ -155,24 +177,24 @@ export async function analyzePhotosForCulling(
         isExterior: p.is_exterior || p.room_type?.startsWith('exterior') || false,
         isDuplicate: p.is_duplicate || false,
         duplicateOfIndex: p.duplicate_of_index !== null ? chunkStartIndex + p.duplicate_of_index : undefined,
-        similarityScore: p.similarity_score,
+        similarityScore: p.similarity_score ?? undefined,
         isSelected: p.is_selected || false,
         selectionReason: p.selection_reason || '',
-        recommendedOrder: p.recommended_order,
+        recommendedOrder: p.recommended_order ?? undefined,
         aiFeedback: p.feedback || '',
       }));
-      
+
       allScores.push(...chunkScores);
-      
+
       // Adjust duplicate group indices to global
       if (result.duplicate_groups) {
-        const adjustedGroups = result.duplicate_groups.map((g: any) => ({
+        const adjustedGroups = ((result.duplicate_groups) as RawDuplicateGroup[]).map((g) => ({
           original: chunkStartIndex + g.original,
           duplicates: (g.duplicates || []).map((d: number) => chunkStartIndex + d)
         }));
         allDuplicateGroups.push(...adjustedGroups);
       }
-      
+
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : 'Internal server error';
       console.error(`[Photo Culling] Error in chunk ${Math.floor(i / chunkSize) + 1}:`, message);
@@ -194,16 +216,16 @@ export async function analyzePhotosForCulling(
         });
       });
     }
-    
+
     // Rate limit between chunks
     if (i + chunkSize < photoUrls.length) {
       await new Promise(resolve => setTimeout(resolve, 1000));
     }
   }
-  
+
   // Sort by quality and apply final selection logic
   const finalScores = applySelectionLogic(allScores, targetCount, allDuplicateGroups);
-  
+
   return {
     scores: finalScores,
     duplicateGroups: allDuplicateGroups,
@@ -220,7 +242,7 @@ function applySelectionLogic(
   duplicateGroups.forEach(group => {
     group.duplicates.forEach(d => duplicateIndices.add(d));
   });
-  
+
   scores.forEach(score => {
     if (duplicateIndices.has(score.photoIndex)) {
       score.isSelected = false;
@@ -228,16 +250,16 @@ function applySelectionLogic(
       score.selectionReason = 'Duplicate of another photo';
     }
   });
-  
+
   // Get non-duplicate photos sorted by quality
   const candidates = scores
     .filter(s => !duplicateIndices.has(s.photoIndex))
     .sort((a, b) => b.qualityScore - a.qualityScore);
-  
+
   // Selection strategy: ensure variety
   const selected: PhotoCullScore[] = [];
   const roomTypeSelected: Record<string, number> = {};
-  
+
   // Priority 1: Best exterior front (hero)
   const exteriorFronts = candidates.filter(s => s.roomType === 'exterior-front');
   if (exteriorFronts.length > 0) {
@@ -247,16 +269,16 @@ function applySelectionLogic(
     selected.push(exteriorFronts[0]);
     roomTypeSelected['exterior-front'] = 1;
   }
-  
+
   // Priority 2: One of each major room type
   const majorRoomTypes = [
     'kitchen', 'living-room', 'master-bedroom', 'master-bathroom',
     'dining-room', 'family-room', 'exterior-back', 'exterior-pool'
   ];
-  
+
   majorRoomTypes.forEach(roomType => {
     if (selected.length >= targetCount) return;
-    const roomPhotos = candidates.filter(s => 
+    const roomPhotos = candidates.filter(s =>
       s.roomType === roomType && !selected.includes(s)
     );
     if (roomPhotos.length > 0) {
@@ -266,25 +288,25 @@ function applySelectionLogic(
       roomTypeSelected[roomType] = (roomTypeSelected[roomType] || 0) + 1;
     }
   });
-  
+
   // Priority 3: Fill remaining slots with highest quality non-selected
   const remaining = candidates.filter(s => !selected.includes(s));
   let orderCounter = selected.length + 1;
-  
+
   for (const photo of remaining) {
     if (selected.length >= targetCount) break;
-    
+
     // Limit same room type to max 4
     const roomCount = roomTypeSelected[photo.roomType] || 0;
     if (roomCount >= 4) continue;
-    
+
     photo.isSelected = true;
     photo.recommendedOrder = orderCounter++;
     photo.selectionReason = `High quality ${photo.roomType.replace('-', ' ')}`;
     selected.push(photo);
     roomTypeSelected[photo.roomType] = roomCount + 1;
   }
-  
+
   // Apply recommended ordering based on MLS best practices
   const orderPriority: Record<string, number> = {
     'exterior-front': 1,
@@ -310,20 +332,19 @@ function applySelectionLogic(
     'garage': 45,
     'other': 50,
   };
-  
+
   selected.sort((a, b) => {
     const aOrder = orderPriority[a.roomType] || 50;
     const bOrder = orderPriority[b.roomType] || 50;
     if (aOrder !== bOrder) return aOrder - bOrder;
     return b.qualityScore - a.qualityScore;
   });
-  
+
   selected.forEach((photo, idx) => {
     photo.recommendedOrder = idx + 1;
   });
-  
+
   // Update original scores array with selection results
-  const selectedIndices = new Set(selected.map(s => s.photoIndex));
   scores.forEach(score => {
     const selectedPhoto = selected.find(s => s.photoIndex === score.photoIndex);
     if (selectedPhoto) {
@@ -335,7 +356,7 @@ function applySelectionLogic(
       score.selectionReason = score.selectionReason || 'Lower quality than selected photos';
     }
   });
-  
+
   return scores;
 }
 
@@ -347,26 +368,26 @@ export async function runCullSession(
   const startTime = Date.now();
 
   const { scores, duplicateGroups } = await analyzePhotosForCulling(photoUrls, targetCount, client);
-  
-  const selectedPhotos = scores.filter(s => s.isSelected).sort((a, b) => 
+
+  const selectedPhotos = scores.filter(s => s.isSelected).sort((a, b) =>
     (a.recommendedOrder || 999) - (b.recommendedOrder || 999)
   );
   const rejectedPhotos = scores.filter(s => !s.isSelected);
-  
+
   // Count room types
   const roomTypeCounts: Record<string, number> = {};
   scores.forEach(s => {
     roomTypeCounts[s.roomType] = (roomTypeCounts[s.roomType] || 0) + 1;
   });
-  
+
   const averageQuality = Math.round(
     scores.reduce((sum, s) => sum + s.qualityScore, 0) / scores.length
   );
-  
+
   const processingTime = Date.now() - startTime;
-  
+
   console.log(`[Photo Culling] Complete: ${selectedPhotos.length} selected, ${rejectedPhotos.length} rejected, ${duplicateGroups.length} duplicate groups`);
-  
+
   return {
     totalPhotos: photoUrls.length,
     selectedPhotos,
@@ -388,10 +409,10 @@ export function generateMLSExport(
   selectedPhotos: PhotoCullScore[],
   listingAddress?: string
 ): { filename: string; url: string; order: number }[] {
-  const prefix = listingAddress 
+  const prefix = listingAddress
     ? listingAddress.toLowerCase().replace(/[^a-z0-9]/g, '_').slice(0, 30)
     : 'listing';
-  
+
   return selectedPhotos
     .sort((a, b) => (a.recommendedOrder || 0) - (b.recommendedOrder || 0))
     .map((photo, idx) => ({

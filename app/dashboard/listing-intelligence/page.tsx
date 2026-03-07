@@ -14,6 +14,25 @@ interface Listing {
   photoCount: number;
 }
 
+interface ListingPhoto {
+  id: string;
+  raw_url: string;
+  processed_url?: string;
+}
+
+interface EnhancementRecommendation {
+  id: string;
+  photoIndex: number;
+  photoUrl: string;
+  toolId: string;
+  toolName: string;
+  priority: number;
+  impactEstimate: number;
+  impactDescription: string;
+  reason: string;
+  applied: boolean;
+}
+
 function ListingSelector({ listings, onSelect }: { listings: Listing[]; onSelect: (id: string) => void }) {
   return (
     <div className="min-h-screen bg-[#0F0F0F] text-white p-6">
@@ -62,7 +81,7 @@ function ListingSelector({ listings, onSelect }: { listings: Listing[]; onSelect
                 </div>
                 <div className="flex items-center gap-3">
                   <span className="flex items-center gap-1 text-sm text-white/40">
-                    <Image className="w-4 h-4" /> {listing.photoCount}
+                    <Image className="w-4 h-4" aria-label="Photo count" /> {listing.photoCount}
                   </span>
                   <ChevronRight className="w-5 h-5 text-white/30 group-hover:text-purple-400 transition-colors" />
                 </div>
@@ -79,7 +98,7 @@ function ListingIntelligenceContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const listingId = searchParams.get('listing');
-  
+
   const [listings, setListings] = useState<Listing[]>([]);
   const [listingPhotos, setListingPhotos] = useState<string[]>([]);
   const [listingTitle, setListingTitle] = useState<string>('');
@@ -106,10 +125,10 @@ function ListingIntelligenceContent() {
 
     if (listingsData) {
       const listingsWithThumbnails = await Promise.all(
-        listingsData.map(async (listing: any) => {
-          const photos = listing.photos || [];
-          const firstPhoto = photos.find((p: any) => p.processed_url) || photos[0];
-          let thumbnail = null;
+        listingsData.map(async (listing) => {
+          const photos = (listing.photos || []) as unknown as ListingPhoto[];
+          const firstPhoto = photos.find((p) => p.processed_url) || photos[0];
+          let thumbnail: string | undefined = undefined;
           if (firstPhoto) {
             const path = firstPhoto.processed_url || firstPhoto.raw_url;
             if (path && !path.startsWith('http')) {
@@ -129,13 +148,13 @@ function ListingIntelligenceContent() {
 
   const loadListingPhotos = async (id: string) => {
     const supabase = createClient();
-    
+
     const { data: listing } = await supabase
       .from('listings')
       .select('title')
       .eq('id', id)
       .single();
-    
+
     if (listing) {
       setListingTitle(listing.title);
     }
@@ -158,7 +177,7 @@ function ListingIntelligenceContent() {
       );
       setListingPhotos(photoUrls.filter(url => url !== ''));
     }
-    
+
     setLoading(false);
   };
 
@@ -175,7 +194,7 @@ function ListingIntelligenceContent() {
     }
   };
 
-  const handleApplyAll = (recommendations: any[]) => {
+  const handleApplyAll = (recommendations: EnhancementRecommendation[]) => {
     sessionStorage.setItem('batchEnhancements', JSON.stringify(recommendations));
     if (listingId) {
       router.push(`/dashboard/studio?id=${listingId}`);

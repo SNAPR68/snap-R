@@ -19,15 +19,13 @@ import {
   Mail,
   Video,
   Globe,
-  ChevronRight,
   RefreshCw,
   Settings,
-  BarChart3,
-  Filter,
+  type LucideIcon,
 } from "lucide-react";
 import Link from "next/link";
 
-const PLATFORM_ICONS: Record<string, any> = {
+const PLATFORM_ICONS: Record<string, LucideIcon> = {
   instagram: Instagram,
   facebook: Facebook,
   linkedin: Linkedin,
@@ -41,12 +39,18 @@ const STATUS_COLORS: Record<string, string> = {
   skipped: "bg-gray-500/20 text-gray-400 border-gray-500/30",
 };
 
-const CONTENT_TYPE_ICONS: Record<string, any> = {
+const CONTENT_TYPE_ICONS: Record<string, LucideIcon> = {
   social_post: Instagram,
   email: Mail,
   video: Video,
   property_site_update: Globe,
 };
+
+interface ContentData {
+  caption?: string;
+  imageUrl?: string;
+  [key: string]: unknown;
+}
 
 interface Campaign {
   id: string;
@@ -70,7 +74,7 @@ interface QueueItem {
   platform?: string;
   scheduled_for: string;
   status: string;
-  content_data: any;
+  content_data: ContentData;
   preview_image_url?: string;
   listings: { address: string; city: string; state: string };
   campaigns: { trigger_status: string };
@@ -84,13 +88,15 @@ interface Stats {
   publishedPosts: number;
 }
 
+type TabId = "queue" | "campaigns" | "history";
+
 export default function CampaignsPage() {
   const { user } = useSession();
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [queue, setQueue] = useState<QueueItem[]>([]);
   const [stats, setStats] = useState<Stats | null>(null);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<"queue" | "campaigns" | "history">("queue");
+  const [activeTab, setActiveTab] = useState<TabId>("queue");
   const [filter, setFilter] = useState<string>("all");
 
   useEffect(() => {
@@ -118,14 +124,15 @@ export default function CampaignsPage() {
       const queueRes = await fetch(`/api/campaigns?userId=${user?.id}&type=queue`);
       const queueData = await queueRes.json();
       setQueue(queueData.queue || []);
-    } catch (error) {
-      console.error("Failed to fetch campaign data:", error);
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : "Unknown error";
+      console.error("Failed to fetch campaign data:", message);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleAction = async (action: string, data: any) => {
+  const handleAction = async (action: string, data: Record<string, unknown>) => {
     try {
       const res = await fetch("/api/campaigns", {
         method: "POST",
@@ -138,8 +145,9 @@ export default function CampaignsPage() {
       } else {
         alert(result.error || "Action failed");
       }
-    } catch (error) {
-      console.error("Action error:", error);
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : "Unknown error";
+      console.error("Action error:", message);
     }
   };
 
@@ -160,6 +168,10 @@ export default function CampaignsPage() {
   const formatStatus = (status: string) => {
     return status.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase());
   };
+
+  // Suppress unused variable warning — filter is used for future filtering UI
+  void filter;
+  void setFilter;
 
   if (loading) {
     return (
@@ -224,12 +236,12 @@ export default function CampaignsPage() {
       {/* Tabs */}
       <div className="flex items-center gap-4 mb-6 border-b border-[#333]">
         {[
-          { id: "queue", label: "Content Queue", count: queue.length },
-          { id: "campaigns", label: "Campaigns", count: campaigns.length },
+          { id: "queue" as TabId, label: "Content Queue", count: queue.length },
+          { id: "campaigns" as TabId, label: "Campaigns", count: campaigns.length },
         ].map((tab) => (
           <button
             key={tab.id}
-            onClick={() => setActiveTab(tab.id as any)}
+            onClick={() => setActiveTab(tab.id)}
             className={`pb-3 px-2 border-b-2 transition-colors ${activeTab === tab.id
                 ? "border-[#B8860B] text-[#B8860B]"
                 : "border-transparent text-gray-400 hover:text-white"

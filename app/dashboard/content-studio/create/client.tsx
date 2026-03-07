@@ -30,7 +30,7 @@ export function CreateContentClient() {
   const [platform, setPlatform] = useState('instagram')
   const [caption, setCaption] = useState('')
   const [loading, setLoading] = useState(true)
-  const [brandProfile, setBrandProfile] = useState<any>(null)
+  const [brandProfile, setBrandProfile] = useState<{ business_name?: string; logo_url?: string; primary_color?: string } | null>(null)
   const [property, setProperty] = useState<PropertyDetails>({
     address: '',
     city: '',
@@ -164,7 +164,7 @@ export function CreateContentClient() {
           <div className="space-y-6">
             <div className="sticky top-8">
               <Label className="text-lg font-semibold mb-4 block">Preview</Label>
-              <ContentPreview platform={platform} caption={caption} brandProfile={brandProfile} />
+              <ContentPreview platform={platform} caption={caption} brandProfile={brandProfile ?? undefined} />
               {!brandProfile?.business_name && (
                 <Link href="/dashboard/brand">
                   <div className="mt-4 p-4 bg-[#D4AF37]/10 rounded-lg border border-[#D4AF37]/30 text-center">

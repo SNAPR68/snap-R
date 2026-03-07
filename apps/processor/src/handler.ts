@@ -1,6 +1,6 @@
 import { EnhancementExecutor } from './services/enhancement-executor.js';
 
-export async function processPhotos(photos: any[], strategy: any, env: any, supabase: any) {
+export async function processPhotos(photos: unknown[], strategy: Record<string, unknown>, env: Record<string, unknown>, supabase: Record<string, unknown>) {
   const executor = new EnhancementExecutor(env);
   
   for (let i = 0; i < photos.length; i++) {

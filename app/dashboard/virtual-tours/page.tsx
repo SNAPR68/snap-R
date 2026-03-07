@@ -1,17 +1,14 @@
 'use client';
 
 import React, { Suspense, useEffect, useState, useCallback, useRef } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import JSZip from 'jszip';
-import { 
-  Loader2, Home, ChevronRight, Upload, Sparkles, Download,
-  Eye, Link2, Trash2, Edit3, Plus, Image, ExternalLink, Copy, Check,
-  Camera, X, GripVertical, Play, Pause, ChevronLeft, RotateCcw,
-  Share2, Globe, Lock, Users, Settings, Grid, List, Calendar,
-  CheckCircle, AlertCircle, Info, Package
+import {
+  Loader2, Home, ChevronRight, Upload, Download,
+  Eye, Link2, Trash2, Edit3, Plus, Image, Check,
+  X, ChevronLeft, Calendar
 } from 'lucide-react';
-import Link from 'next/link';
 
 interface TourScene {
   id: string;
@@ -34,13 +31,28 @@ interface Tour {
   tour_scenes?: TourScene[];
 }
 
+interface ListingPhoto {
+  id: string;
+  raw_url: string;
+  processed_url?: string;
+  status?: string;
+  signedUrl?: string | null;
+}
+
+interface ListingWithPhotos {
+  id: string;
+  title: string;
+  address?: string;
+  photos: ListingPhoto[];
+}
+
 // Download helper - downloads all tour photos as ZIP
 async function downloadTourPhotosAsZip(tour: Tour) {
   if (!tour.tour_scenes || tour.tour_scenes.length === 0) return;
-  
+
   const zip = new JSZip();
   const folder = zip.folder(tour.name || 'gallery');
-  
+
   // Download each photo and add to ZIP
   for (let i = 0; i < tour.tour_scenes.length; i++) {
     const scene = tour.tour_scenes[i];
@@ -50,12 +62,12 @@ async function downloadTourPhotosAsZip(tour: Tour) {
       const blob = await response.blob();
       const fileName = `${scene.name || `photo-${i + 1}`}.jpg`;
       folder?.file(fileName, blob);
-    } catch (e) {
-      console.error('Failed to add to ZIP:', scene.name, e);
+    } catch (zipErr) {
+      console.error('Failed to add to ZIP:', scene.name, zipErr);
       // Try alternate method - download via canvas if image is already loaded
     }
   }
-  
+
   // Generate and download ZIP
   try {
     const zipBlob = await zip.generateAsync({ type: 'blob' });
@@ -67,8 +79,8 @@ async function downloadTourPhotosAsZip(tour: Tour) {
     a.click();
     window.URL.revokeObjectURL(url);
     document.body.removeChild(a);
-  } catch (e) {
-    console.error('ZIP generation failed:', e);
+  } catch {
+    console.error('ZIP generation failed');
     // Fallback: download individually
     await downloadTourPhotosIndividually(tour);
   }
@@ -77,7 +89,7 @@ async function downloadTourPhotosAsZip(tour: Tour) {
 // Fallback: Download photos individually
 async function downloadTourPhotosIndividually(tour: Tour) {
   if (!tour.tour_scenes || tour.tour_scenes.length === 0) return;
-  
+
   for (let i = 0; i < tour.tour_scenes.length; i++) {
     const scene = tour.tour_scenes[i];
     try {
@@ -93,7 +105,7 @@ async function downloadTourPhotosIndividually(tour: Tour) {
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
       await new Promise(r => setTimeout(r, 300));
-    } catch (e) {
+    } catch {
       // Fallback: open image in new tab
       window.open(scene.image_url, '_blank');
     }
@@ -103,7 +115,7 @@ async function downloadTourPhotosIndividually(tour: Tour) {
 // Generate video slideshow from tour photos
 async function generateTourVideo(tour: Tour, setProgress?: (progress: number) => void): Promise<Blob | null> {
   if (!tour.tour_scenes || tour.tour_scenes.length === 0) return null;
-  
+
   const canvas = document.createElement('canvas');
   canvas.width = 1920;
   canvas.height = 1080;
@@ -115,7 +127,7 @@ async function generateTourVideo(tour: Tour, setProgress?: (progress: number) =>
   for (let i = 0; i < tour.tour_scenes.length; i++) {
     const scene = tour.tour_scenes[i];
     setProgress?.(Math.round((i / tour.tour_scenes.length) * 30)); // 0-30% for loading
-    
+
     const img = document.createElement('img');
     img.crossOrigin = 'anonymous';
     await new Promise<void>((resolve) => {
@@ -129,11 +141,11 @@ async function generateTourVideo(tour: Tour, setProgress?: (progress: number) =>
 
   // Setup MediaRecorder
   const stream = canvas.captureStream(30);
-  const mediaRecorder = new MediaRecorder(stream, { 
+  const mediaRecorder = new MediaRecorder(stream, {
     mimeType: 'video/webm;codecs=vp9',
-    videoBitsPerSecond: 8000000 
+    videoBitsPerSecond: 8000000
   });
-  
+
   const chunks: Blob[] = [];
   mediaRecorder.ondataavailable = (e) => {
     if (e.data.size > 0) chunks.push(e.data);
@@ -152,12 +164,12 @@ async function generateTourVideo(tour: Tour, setProgress?: (progress: number) =>
       for (let i = 0; i < images.length; i++) {
         const img = images[i];
         setProgress?.(30 + Math.round((i / images.length) * 60)); // 30-90% for rendering
-        
+
         // Calculate scaling to cover canvas (cover, not contain)
         const scale = Math.max(canvas.width / img.width, canvas.height / img.height);
         const x = (canvas.width - img.width * scale) / 2;
         const y = (canvas.height - img.height * scale) / 2;
-        
+
         // Fade in
         for (let opacity = 0; opacity <= 1; opacity += 0.1) {
           ctx.fillStyle = '#000';
@@ -167,12 +179,12 @@ async function generateTourVideo(tour: Tour, setProgress?: (progress: number) =>
           ctx.globalAlpha = 1;
           await new Promise(r => setTimeout(r, 50)); // 500ms fade
         }
-        
+
         // Hold for 2.5 seconds
         ctx.drawImage(img, x, y, img.width * scale, img.height * scale);
         await new Promise(r => setTimeout(r, 2500));
       }
-      
+
       setProgress?.(100);
       mediaRecorder.stop();
     };
@@ -185,10 +197,10 @@ async function generateTourVideo(tour: Tour, setProgress?: (progress: number) =>
 async function downloadTourAsVideo(tour: Tour, setDownloading: (v: boolean) => void, setProgress: (v: number) => void) {
   setDownloading(true);
   setProgress(0);
-  
+
   try {
     const videoBlob = await generateTourVideo(tour, setProgress);
-    
+
     if (videoBlob) {
       const url = URL.createObjectURL(videoBlob);
       const a = document.createElement('a');
@@ -213,8 +225,8 @@ async function downloadTourAsVideo(tour: Tour, setDownloading: (v: boolean) => v
 }
 
 // Tour Card Component
-function TourCard({ tour, onView, onEdit, onDelete }: { 
-  tour: Tour; 
+function TourCard({ tour, onEdit, onDelete }: {
+  tour: Tour;
   onView: () => void;
   onEdit: () => void;
   onDelete: () => void;
@@ -239,17 +251,17 @@ function TourCard({ tour, onView, onEdit, onDelete }: {
       {/* Cover Image */}
       <div className="aspect-video bg-white/5 relative">
         {tour.cover_image_url || tour.tour_scenes?.[0]?.image_url ? (
-          <img 
-            src={tour.cover_image_url || tour.tour_scenes?.[0]?.image_url} 
+          <img
+            src={tour.cover_image_url || tour.tour_scenes?.[0]?.image_url}
             alt={tour.name}
             className="w-full h-full object-cover"
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center">
-            <Image className="w-12 h-12 text-white/20" />
+            <Image className="w-12 h-12 text-white/20" aria-label="No image placeholder" />
           </div>
         )}
-        
+
         {/* Status Badge */}
         <div className="absolute top-3 left-3">
           {tour.is_published ? (
@@ -262,13 +274,13 @@ function TourCard({ tour, onView, onEdit, onDelete }: {
             </span>
           )}
         </div>
-        
+
         {/* Photo Count */}
         <div className="absolute top-3 right-3 px-2 py-1 bg-black/60 text-white text-xs rounded-full">
           {tour.tour_scenes?.length || 0} photos
         </div>
       </div>
-      
+
       {/* Info */}
       <div className="p-4">
         <h3 className="font-semibold text-white mb-1 truncate">{tour.name}</h3>
@@ -282,7 +294,7 @@ function TourCard({ tour, onView, onEdit, onDelete }: {
             {new Date(tour.updated_at || tour.created_at).toLocaleDateString()}
           </span>
         </div>
-        
+
         {/* Actions */}
         <div className="flex items-center gap-2">
           <button
@@ -325,12 +337,12 @@ function TourCard({ tour, onView, onEdit, onDelete }: {
 }
 
 // Create/Edit Tour Modal
-function TourModal({ 
-  tour, 
+function TourModal({
+  tour,
   listingId,
-  onClose, 
-  onSave 
-}: { 
+  onClose,
+  onSave
+}: {
   tour?: Tour;
   listingId?: string;
   onClose: () => void;
@@ -354,9 +366,9 @@ function TourModal({
     for (let i = 0; i < files.length; i++) {
       const file = files[i];
       const fileName = `tour-${Date.now()}-${i}.${file.name.split('.').pop()}`;
-      
+
       try {
-        const { data, error } = await supabase.storage
+        const { error } = await supabase.storage
           .from('raw-images')
           .upload(fileName, file);
 
@@ -393,7 +405,7 @@ function TourModal({
     const newScenes = [...scenes];
     const targetIndex = direction === 'up' ? index - 1 : index + 1;
     [newScenes[index], newScenes[targetIndex]] = [newScenes[targetIndex], newScenes[index]];
-    newScenes.forEach((s, i) => s.order_index = i);
+    newScenes.forEach((s, idx) => s.order_index = idx);
     setScenes(newScenes);
   };
 
@@ -425,15 +437,15 @@ function TourModal({
 
         // Update scenes
         await supabase.from('tour_scenes').delete().eq('tour_id', tour.id);
-        
+
         if (scenes.length > 0) {
           const { error: scenesError } = await supabase
             .from('tour_scenes')
-            .insert(scenes.map((s, i) => ({
+            .insert(scenes.map((s) => ({
               tour_id: tour.id,
               name: s.name,
               image_url: s.image_url
-              
+
             })));
 
           if (scenesError) throw scenesError;
@@ -461,11 +473,11 @@ function TourModal({
         if (scenes.length > 0) {
           const { error: scenesError } = await supabase
             .from('tour_scenes')
-            .insert(scenes.map((s, i) => ({
+            .insert(scenes.map((s) => ({
               tour_id: newTour.id,
               name: s.name,
               image_url: s.image_url
-              
+
             })));
 
           if (scenesError) throw scenesError;
@@ -541,7 +553,7 @@ function TourModal({
             </div>
 
             {scenes.length === 0 ? (
-              <div 
+              <div
                 onClick={() => fileInputRef.current?.click()}
                 className="border-2 border-dashed border-white/20 rounded-xl p-8 text-center cursor-pointer hover:border-amber-500/50 transition-colors"
               >
@@ -644,7 +656,7 @@ function TourViewer({ tour, onClose }: { tour: Tour; onClose: () => void }) {
             <p className="text-sm text-white/50">{currentIndex + 1} / {scenes.length}</p>
           </div>
         </div>
-        
+
         {/* Download Button */}
         <button
           onClick={handleDownload}
@@ -717,11 +729,10 @@ function TourViewer({ tour, onClose }: { tour: Tour; onClose: () => void }) {
 // Main Content
 function VirtualToursContent() {
   const router = useRouter();
-  const searchParams = useSearchParams();
   const supabase = createClient();
-  
+
   const [tours, setTours] = useState<Tour[]>([]);
-  const [listings, setListings] = useState<any[]>([]);
+  const [listings, setListings] = useState<ListingWithPhotos[]>([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [editTour, setEditTour] = useState<Tour | undefined>();
@@ -764,21 +775,22 @@ function VirtualToursContent() {
         .order('created_at', { ascending: false });
 
       const listingsWithSignedUrls = await Promise.all(
-          (listingsData || []).map(async (listing: any) => {
+          (listingsData || []).map(async (listing) => {
+            const rawPhotos = (listing.photos || []) as unknown as ListingPhoto[];
             const photosWithUrls = await Promise.all(
-              (listing.photos || []).map(async (photo: any) => {
-                let signedUrl = null;
+              rawPhotos.map(async (photo) => {
+                let signedUrl: string | null = null;
                 const urlToSign = photo.processed_url || photo.raw_url;
                 if (urlToSign && !urlToSign.startsWith("http")) {
-                  const { data } = await supabase.storage.from("raw-images").createSignedUrl(urlToSign, 3600);
-                  signedUrl = data?.signedUrl;
+                  const { data: signedData } = await supabase.storage.from("raw-images").createSignedUrl(urlToSign, 3600);
+                  signedUrl = signedData?.signedUrl ?? null;
                 } else {
                   signedUrl = urlToSign;
                 }
                 return { ...photo, signedUrl };
               })
             );
-            return { ...listing, photos: photosWithUrls };
+            return { ...listing, photos: photosWithUrls } as ListingWithPhotos;
           })
         );
         setListings(listingsWithSignedUrls);
@@ -793,13 +805,13 @@ function VirtualToursContent() {
     loadData();
   }, [loadData]);
 
-  const handleCreateFromListing = async (listing: any) => {
+  const handleCreateFromListing = async (listing: ListingWithPhotos) => {
     // Pre-fill photos from listing
-    const photos = listing.photos?.map((p: any, i: number) => ({
+    const photos: TourScene[] = listing.photos?.map((p, i) => ({
       id: `listing-${i}`,
       name: `Photo ${i + 1}`,
       image_url: p.signedUrl || p.processed_url || p.raw_url,
-      
+      order_index: i,
     })) || [];
 
     setSelectedListingId(listing.id);
@@ -807,12 +819,13 @@ function VirtualToursContent() {
       id: '',
       name: listing.title || listing.address || 'Property Gallery',
       slug: '',
+      is_published: false,
       view_count: 0,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
       listing_id: listing.id,
       tour_scenes: photos
-    } as any);
+    });
     setShowModal(true);
   };
 
@@ -911,7 +924,7 @@ function VirtualToursContent() {
               <Home className="w-5 h-5 text-amber-400" />
               From Existing Listing
             </h3>
-            
+
             {listings.length === 0 ? (
               <p className="text-white/50 text-sm">No listings yet. Create a listing first to use its photos.</p>
             ) : (
@@ -923,14 +936,14 @@ function VirtualToursContent() {
                     className="w-full flex items-center gap-3 p-3 bg-white/5 rounded-lg hover:bg-white/10 transition-colors text-left"
                   >
                     {listing.photos?.[0] ? (
-                      <img 
-                        src={listing.photos[0].signedUrl || listing.photos[0].processed_url || listing.photos[0].raw_url} 
-                        alt="" 
+                      <img
+                        src={listing.photos[0].signedUrl || listing.photos[0].processed_url || listing.photos[0].raw_url}
+                        alt=""
                         className="w-12 h-12 rounded-lg object-cover"
                       />
                     ) : (
                       <div className="w-12 h-12 rounded-lg bg-white/10 flex items-center justify-center">
-                        <Image className="w-6 h-6 text-white/30" />
+                        <Image className="w-6 h-6 text-white/30" aria-label="No image" />
                       </div>
                     )}
                     <div className="flex-1 min-w-0">
@@ -945,7 +958,7 @@ function VirtualToursContent() {
           </div>
 
           {/* Upload New */}
-          <div 
+          <div
             onClick={() => {
               setEditTour(undefined);
               setSelectedListingId(undefined);
@@ -958,7 +971,7 @@ function VirtualToursContent() {
             </div>
             <h3 className="font-semibold mb-1">Upload Photos</h3>
             <p className="text-white/50 text-sm text-center">
-              Regular photos or 360° panoramas
+              Regular photos or 360 panoramas
             </p>
           </div>
         </div>

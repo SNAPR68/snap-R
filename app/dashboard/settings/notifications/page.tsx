@@ -1,9 +1,11 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { createClient } from '@/lib/supabase/client';
-import { Bell, Mail, MessageCircle, Clock, Moon, Save, Loader2, CheckCircle } from 'lucide-react';
+import { Bell, Mail, MessageCircle, Moon, Save, Loader2, CheckCircle } from 'lucide-react';
 import Link from 'next/link';
+
+type WeeklyDay = 'monday' | 'friday' | 'sunday';
 
 export default function NotificationSettingsPage() {
   const [loading, setLoading] = useState(true);
@@ -20,7 +22,7 @@ export default function NotificationSettingsPage() {
     dailyWhatsapp: false,
     dailyWhatsappTime: '08:00',
     weeklySummary: true,
-    weeklyDay: 'monday' as 'monday' | 'friday' | 'sunday',
+    weeklyDay: 'monday' as WeeklyDay,
     quietHoursEnabled: true,
     quietHoursStart: '22:00',
     quietHoursEnd: '07:00',
@@ -28,9 +30,7 @@ export default function NotificationSettingsPage() {
 
   const supabase = createClient();
 
-  useEffect(() => { loadPreferences(); }, []);
-
-  const loadPreferences = async () => {
+  const loadPreferences = useCallback(async () => {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
     const { data: profile } = await supabase.from('profiles').select('phone, notification_preferences').eq('id', user.id).single();
@@ -39,7 +39,9 @@ export default function NotificationSettingsPage() {
       if (profile.notification_preferences) setPrefs(prev => ({ ...prev, ...profile.notification_preferences }));
     }
     setLoading(false);
-  };
+  }, [supabase]);
+
+  useEffect(() => { loadPreferences(); }, [loadPreferences]);
 
   const savePreferences = async () => {
     setSaving(true);
@@ -58,7 +60,7 @@ export default function NotificationSettingsPage() {
     <div className="min-h-screen bg-[#0A0A0A] text-white">
       <div className="max-w-2xl mx-auto px-4 py-8">
         <div className="mb-8">
-          <Link href="/dashboard/settings" className="text-white/50 hover:text-white text-sm">← Back to Settings</Link>
+          <Link href="/dashboard/settings" className="text-white/50 hover:text-white text-sm">&larr; Back to Settings</Link>
           <h1 className="text-3xl font-bold mt-4 flex items-center gap-3"><Bell className="w-8 h-8 text-[#D4A017]" />Notification Preferences</h1>
           <p className="text-white/50 mt-2">Control how and when SnapR contacts you</p>
         </div>
@@ -115,7 +117,7 @@ export default function NotificationSettingsPage() {
               <div key={item.key} className="p-4 bg-white/5 rounded-xl">
                 <div className="flex items-center justify-between mb-2">
                   <p className="font-medium">{item.label}</p>
-                  <select value={(prefs as any)[item.key]} onChange={(e) => setPrefs({ ...prefs, [item.key]: e.target.value })} className="px-3 py-1 bg-white/10 border border-white/20 rounded-lg text-sm">
+                  <select value={prefs[item.key as keyof typeof prefs] as string} onChange={(e) => setPrefs({ ...prefs, [item.key]: e.target.value })} className="px-3 py-1 bg-white/10 border border-white/20 rounded-lg text-sm">
                     {item.options.map(o => <option key={o} value={o}>{o.charAt(0).toUpperCase() + o.slice(1)}</option>)}
                   </select>
                 </div>
@@ -159,7 +161,7 @@ export default function NotificationSettingsPage() {
             {prefs.weeklySummary && (
               <div className="ml-8 flex items-center gap-4">
                 <span className="text-sm text-white/50">Send on:</span>
-                <select value={prefs.weeklyDay} onChange={(e) => setPrefs({ ...prefs, weeklyDay: e.target.value as any })} className="px-3 py-1 bg-white/10 border border-white/20 rounded-lg text-sm">
+                <select value={prefs.weeklyDay} onChange={(e) => setPrefs({ ...prefs, weeklyDay: e.target.value as WeeklyDay })} className="px-3 py-1 bg-white/10 border border-white/20 rounded-lg text-sm">
                   <option value="monday">Monday</option><option value="friday">Friday</option><option value="sunday">Sunday</option>
                 </select>
               </div>

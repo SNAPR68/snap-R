@@ -5,7 +5,7 @@ import { createClient } from '@/lib/supabase/client';
 import {
   Loader2, Sofa, Bed, UtensilsCrossed, Briefcase, Baby, Crown,
   Plus, Minus, RefreshCw, Download, ChevronRight, Home, ArrowLeft,
-  Sparkles, Check, Star, Zap, Image as ImageIcon, X, RotateCcw
+  Sparkles, Check, Zap, Image as ImageIcon, X, RotateCcw
 } from 'lucide-react';
 
 // Furniture Styles
@@ -14,70 +14,70 @@ const FURNITURE_STYLES = {
     id: 'modern',
     label: 'Modern',
     description: 'Clean lines, minimalist',
-    preview: '🪑',
+    preview: '\u{1FA91}',
     colors: ['#FFFFFF', '#808080', '#000000', '#1a365d'],
   },
   scandinavian: {
     id: 'scandinavian',
     label: 'Scandinavian',
     description: 'Light, airy, Nordic',
-    preview: '🌿',
+    preview: '\u{1F33F}',
     colors: ['#FFFFFF', '#E5E5E5', '#B8D4E3', '#DEB887'],
   },
   farmhouse: {
     id: 'farmhouse',
     label: 'Farmhouse',
     description: 'Rustic, warm charm',
-    preview: '🏡',
+    preview: '\u{1F3E1}',
     colors: ['#FFFFFF', '#FFFDD0', '#9DC183', '#000080'],
   },
   luxury: {
     id: 'luxury',
     label: 'Luxury',
     description: 'High-end, opulent',
-    preview: '✨',
+    preview: '\u2728',
     colors: ['#FFFFFF', '#FFD700', '#F5F5F5', '#000000'],
   },
   coastal: {
     id: 'coastal',
     label: 'Coastal',
     description: 'Beach-inspired, relaxed',
-    preview: '🌊',
+    preview: '\u{1F30A}',
     colors: ['#FFFFFF', '#4169E1', '#C2B280', '#20B2AA'],
   },
   industrial: {
     id: 'industrial',
     label: 'Industrial',
     description: 'Urban loft, raw',
-    preview: '🏭',
+    preview: '\u{1F3ED}',
     colors: ['#808080', '#000000', '#8B4513', '#696969'],
   },
   midcentury: {
     id: 'midcentury',
     label: 'Mid-Century',
     description: 'Retro 1950s-60s',
-    preview: '🕰️',
+    preview: '\u{1F570}\uFE0F',
     colors: ['#DAA520', '#008080', '#FF8C00', '#8B4513'],
   },
   traditional: {
     id: 'traditional',
     label: 'Traditional',
     description: 'Classic, timeless',
-    preview: '🏛️',
+    preview: '\u{1F3DB}\uFE0F',
     colors: ['#800020', '#000080', '#FFD700', '#FFFDD0'],
   },
   bohemian: {
     id: 'bohemian',
     label: 'Bohemian',
     description: 'Eclectic, colorful',
-    preview: '🎨',
+    preview: '\u{1F3A8}',
     colors: ['#E2725B', '#DAA520', '#008080', '#C71585'],
   },
   transitional: {
     id: 'transitional',
     label: 'Transitional',
     description: 'Modern + Traditional',
-    preview: '⚖️',
+    preview: '\u2696\uFE0F',
     colors: ['#808080', '#B38B6D', '#FFFDD0', '#000080'],
   },
 };
@@ -139,14 +139,20 @@ interface Photo {
   name?: string;
 }
 
+interface StagingResult {
+  success: boolean;
+  stagedUrl?: string;
+  error?: string;
+}
+
 // Style Card Component
-function StyleCard({ 
-  style, 
-  selected, 
-  onClick 
-}: { 
-  style: typeof FURNITURE_STYLES[keyof typeof FURNITURE_STYLES]; 
-  selected: boolean; 
+function StyleCard({
+  style,
+  selected,
+  onClick
+}: {
+  style: typeof FURNITURE_STYLES[keyof typeof FURNITURE_STYLES];
+  selected: boolean;
   onClick: () => void;
 }) {
   return (
@@ -202,10 +208,10 @@ function VirtualStagingStudio({
   const [qualityTier, setQualityTier] = useState('standard');
   const [preset, setPreset] = useState('vacant-to-staged');
   const [customInstructions, setCustomInstructions] = useState('');
-  
+
   const [processing, setProcessing] = useState(false);
   const [regenerating, setRegenerating] = useState(false);
-  const [result, setResult] = useState<any>(null);
+  const [result, setResult] = useState<StagingResult | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [generationCount, setGenerationCount] = useState(0);
 
@@ -213,7 +219,7 @@ function VirtualStagingStudio({
 
   const handleStage = async (isRegenerate = false) => {
     if (!selectedPhoto) return;
-    
+
     if (isRegenerate) {
       setRegenerating(true);
     } else {
@@ -243,10 +249,10 @@ function VirtualStagingStudio({
         throw new Error(data.error || 'Staging failed');
       }
 
-      setResult(data);
+      setResult(data as StagingResult);
       setGenerationCount(prev => prev + 1);
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : 'Download failed';
+      const message = err instanceof Error ? err.message : 'Staging failed';
       setError(message);
     } finally {
       setProcessing(false);
@@ -268,8 +274,8 @@ function VirtualStagingStudio({
               <div>
                 <h1 className="text-2xl font-bold">Staging Complete!</h1>
                 <p className="text-white/50">
-                  {FURNITURE_STYLES[furnitureStyle as keyof typeof FURNITURE_STYLES]?.label} • 
-                  {ROOM_TYPES[roomType as keyof typeof ROOM_TYPES]?.label} • 
+                  {FURNITURE_STYLES[furnitureStyle as keyof typeof FURNITURE_STYLES]?.label} -
+                  {ROOM_TYPES[roomType as keyof typeof ROOM_TYPES]?.label} -
                   Generation #{generationCount}
                 </p>
               </div>
@@ -308,7 +314,7 @@ function VirtualStagingStudio({
             >
               Stage Another Photo
             </button>
-            
+
             <button
               onClick={() => handleStage(true)}
               disabled={regenerating}
@@ -326,7 +332,7 @@ function VirtualStagingStudio({
                 </>
               )}
             </button>
-            
+
             <a
               href={result.stagedUrl}
               download={`staged-${furnitureStyle}-${Date.now()}.jpg`}
@@ -419,7 +425,7 @@ function VirtualStagingStudio({
           <div>
             <h2 className="text-xl font-bold mb-2">Select a Photo to Stage</h2>
             <p className="text-white/50 mb-6">Choose an empty room photo for best results</p>
-            
+
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
               {photos.map((photo) => (
                 <button
@@ -440,14 +446,14 @@ function VirtualStagingStudio({
                 </button>
               ))}
             </div>
-            
+
             {photos.length === 0 && (
               <div className="text-center py-12 bg-white/5 rounded-xl">
                 <ImageIcon className="w-12 h-12 text-white/20 mx-auto mb-3" />
                 <p className="text-white/50">No photos available. Upload photos first.</p>
               </div>
             )}
-            
+
             <button
               onClick={() => setStep(2)}
               disabled={!selectedPhoto}
@@ -464,19 +470,19 @@ function VirtualStagingStudio({
             {/* Selected Photo Preview */}
             <div className="flex gap-6 mb-8">
               <div className="w-64 flex-shrink-0">
-                <img 
-                  src={selectedPhoto?.url} 
-                  alt="" 
+                <img
+                  src={selectedPhoto?.url}
+                  alt=""
                   className="w-full rounded-xl border border-white/10"
                 />
-                <button 
+                <button
                   onClick={() => setStep(1)}
                   className="w-full mt-2 text-sm text-white/50 hover:text-white"
                 >
                   Change photo
                 </button>
               </div>
-              
+
               <div className="flex-1">
                 {/* Room Type */}
                 <h3 className="text-lg font-bold mb-3">What room is this?</h3>
@@ -566,9 +572,9 @@ function VirtualStagingStudio({
               {/* Left: Preview & Options */}
               <div>
                 <div className="mb-6">
-                  <img 
-                    src={selectedPhoto?.url} 
-                    alt="" 
+                  <img
+                    src={selectedPhoto?.url}
+                    alt=""
                     className="w-full rounded-xl border border-white/10"
                   />
                 </div>
@@ -617,7 +623,7 @@ function VirtualStagingStudio({
                         <span className="flex items-center gap-1">
                           <Zap className="w-3 h-3" /> {tier.time}
                         </span>
-                        <span>{tier.features.join(' • ')}</span>
+                        <span>{tier.features.join(' \u2022 ')}</span>
                       </div>
                     </button>
                   ))}
@@ -692,7 +698,7 @@ function VirtualStagingStudio({
 function ListingSelector({
   onSelect,
 }: {
-  onSelect: (listing: any, photos: Photo[]) => void;
+  onSelect: (listing: Listing, photos: Photo[]) => void;
 }) {
   const [listings, setListings] = useState<Listing[]>([]);
   const [loading, setLoading] = useState(true);
@@ -740,7 +746,7 @@ function ListingSelector({
             id: listing.id,
             title: listing.title || listing.address || 'Untitled',
             address: listing.address,
-            thumbnail: thumbnailUrl,
+            thumbnail: thumbnailUrl ?? null,
             photoCount: count || 0,
           };
         })
@@ -798,9 +804,9 @@ function ListingSelector({
         {/* Feature Highlights */}
         <div className="grid grid-cols-3 gap-4 mb-8">
           {[
-            { icon: '🪑', label: '10 Furniture Styles', desc: 'Modern to Bohemian' },
-            { icon: '⚡', label: '30-60 Seconds', desc: 'Instant results' },
-            { icon: '✨', label: 'Photorealistic', desc: 'Magazine quality' },
+            { icon: '\u{1FA91}', label: '10 Furniture Styles', desc: 'Modern to Bohemian' },
+            { icon: '\u26A1', label: '30-60 Seconds', desc: 'Instant results' },
+            { icon: '\u2728', label: 'Photorealistic', desc: 'Magazine quality' },
           ].map((feature, i) => (
             <div key={i} className="bg-white/5 border border-white/10 rounded-xl p-4 text-center">
               <div className="text-2xl mb-2">{feature.icon}</div>
@@ -848,11 +854,11 @@ function ListingSelector({
 
 // Main Page
 function VirtualStagingContent() {
-  const [selectedListing, setSelectedListing] = useState<any>(null);
+  const [selectedListing, setSelectedListing] = useState<Listing | null>(null);
   const [photos, setPhotos] = useState<Photo[]>([]);
   const [showStudio, setShowStudio] = useState(false);
 
-  const handleSelectListing = (listing: any, photoList: Photo[]) => {
+  const handleSelectListing = (listing: Listing, photoList: Photo[]) => {
     setSelectedListing(listing);
     setPhotos(photoList);
     setShowStudio(true);

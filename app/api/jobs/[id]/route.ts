@@ -34,7 +34,7 @@ export async function GET(
 
   const photos = Array.isArray(job.photos) ? job.photos : [];
   photos.sort(
-    (a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+    (a: { created_at: string }, b: { created_at: string }) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
   );
 
   return NextResponse.json({ ...job, photos });
@@ -54,7 +54,7 @@ export async function POST(
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  let payload: any;
+  let payload: { action?: string; status?: string };
   try {
     payload = await request.json();
   } catch (err) {

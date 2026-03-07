@@ -17,7 +17,7 @@ interface Scene {
   sort_order: number;
   is_start_scene: boolean;
   floor_name?: string;
-  tour_hotspots?: any[];
+  tour_hotspots?: Array<{ id: string; x: number; y: number; label?: string }>;
 }
 
 interface Tour {

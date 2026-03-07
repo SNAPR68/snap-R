@@ -2,13 +2,16 @@ export const dynamic = 'force-dynamic';
 
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
-import { 
-  generateVoiceover, 
+import {
+  generateVoiceover,
   generateScript,
-  VOICE_OPTIONS, 
+  VOICE_OPTIONS,
   SCRIPT_STYLES,
-  VOICEOVER_PRICING 
+  VOICEOVER_PRICING,
 } from '@/lib/video/voiceover-service';
+
+type ScriptStyleKey = keyof typeof SCRIPT_STYLES;
+type VoiceIdKey = keyof typeof VOICE_OPTIONS;
 
 // POST - Generate voiceover
 export async function POST(request: NextRequest) {
@@ -31,27 +34,27 @@ export async function POST(request: NextRequest) {
       agentName,
       agentPhone,
       customScript,
-      scriptOnly = false, // If true, only generate script without audio
+      scriptOnly = false,
     } = body;
 
     // Validate inputs
-    if (!SCRIPT_STYLES[style as keyof typeof SCRIPT_STYLES]) {
+    if (!SCRIPT_STYLES[style as ScriptStyleKey]) {
       return NextResponse.json({ error: 'Invalid style' }, { status: 400 });
     }
 
-    if (!VOICE_OPTIONS[voiceId as keyof typeof VOICE_OPTIONS]) {
+    if (!VOICE_OPTIONS[voiceId as VoiceIdKey]) {
       return NextResponse.json({ error: 'Invalid voice' }, { status: 400 });
     }
 
     // Get pricing
-    const pricing = VOICEOVER_PRICING[duration.toString() as keyof typeof VOICEOVER_PRICING] 
+    const pricing = VOICEOVER_PRICING[duration.toString() as keyof typeof VOICEOVER_PRICING]
       || VOICEOVER_PRICING['60'];
 
     // If script only, just generate the script
     if (scriptOnly) {
       const script = await generateScript(
         propertyDetails || {},
-        style as any,
+        style as ScriptStyleKey,
         duration,
         includeCallToAction,
         agentName,
@@ -68,8 +71,8 @@ export async function POST(request: NextRequest) {
     // Generate full voiceover
     const result = await generateVoiceover({
       propertyDetails: propertyDetails || {},
-      style: style as any,
-      voiceId: voiceId as any,
+      style: style as ScriptStyleKey,
+      voiceId: voiceId as VoiceIdKey,
       duration,
       includeCallToAction,
       agentName,
@@ -91,7 +94,7 @@ export async function POST(request: NextRequest) {
         operation: 'voiceover',
         input_tokens: result.scriptText?.length || 0,
         output_tokens: 0,
-        estimated_cost: pricing.price * 0.1, // Rough API cost estimate
+        estimated_cost: pricing.price * 0.1,
         metadata: {
           listing_id: listingId,
           voice_id: voiceId,
@@ -123,7 +126,7 @@ export async function POST(request: NextRequest) {
 }
 
 // GET - Get available voices and styles
-export async function GET(request: NextRequest) {
+export async function GET() {
   return NextResponse.json({
     voices: Object.values(VOICE_OPTIONS),
     styles: Object.values(SCRIPT_STYLES),

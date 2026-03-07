@@ -19,10 +19,10 @@ function getOpenAIClient(client?: OpenAI): OpenAI {
 const CONFIG = {
   // Minimum confidence to pass validation
   minConfidence: 70,
-  
+
   // Skip validation for high-confidence results
   skipValidationThreshold: 90,
-  
+
   // Maximum concurrent validations
   maxConcurrency: 5,
 };
@@ -54,7 +54,7 @@ Return ONLY valid JSON:
       "location": "top-right"
     }
   ],
-  "recommendation": "approve" 
+  "recommendation": "approve"
 }
 
 Where:
@@ -63,6 +63,22 @@ Where:
 - type: artifact | distortion | color_shift | blur | inconsistency | other
 - severity: low | medium | high
 - recommendation: approve | review | reject`;
+
+/**
+ * Raw validation result parsed from GPT-4 JSON response.
+ * All fields optional since AI output needs normalization.
+ */
+interface RawValidationResult {
+  overallQuality?: number;
+  isAcceptable?: boolean;
+  issues?: Array<{
+    type?: string;
+    severity?: string;
+    description?: string;
+    location?: string;
+  }>;
+  recommendation?: string;
+}
 
 // ============================================
 // MAIN VALIDATION FUNCTION
@@ -86,7 +102,7 @@ export async function validateResult(
       needsReview: true,
     };
   }
-  
+
   // Skip validation for high-confidence results to save API calls
   if (result.confidence >= CONFIG.skipValidationThreshold) {
     console.log(`[Validator] Skipping validation for high-confidence photo ${result.photoId}`);
@@ -98,9 +114,9 @@ export async function validateResult(
       needsReview: false,
     };
   }
-  
+
   console.log(`[Validator] Validating photo ${result.photoId}`);
-  
+
   const openai = getOpenAIClient(client);
 
   try {
@@ -124,24 +140,24 @@ export async function validateResult(
       max_tokens: 500,
       temperature: 0.1,
     });
-    
+
     const content = response.choices[0]?.message?.content;
     if (!content) {
       throw new Error('No response from validation');
     }
-    
+
     const cleanContent = content
       .replace(/```json\n?/g, '')
       .replace(/```\n?/g, '')
       .trim();
-    
-    const validation = JSON.parse(cleanContent);
-    
+
+    const validation = JSON.parse(cleanContent) as RawValidationResult;
+
     return normalizeValidation(result.photoId, validation);
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Processing failed';
     console.error(`[Validator] Validation failed:`, message);
-    
+
     // On error, use confidence from processing result
     return {
       photoId: result.photoId,
@@ -172,17 +188,17 @@ export async function validateResults(
     const batchPromises = batch.map(result => validateResult(result, client));
     const batchValidations = await Promise.all(batchPromises);
     validations.push(...batchValidations);
-    
+
     // Small delay between batches
     if (i + CONFIG.maxConcurrency < results.length) {
       await new Promise(resolve => setTimeout(resolve, 300));
     }
   }
-  
+
   const duration = Date.now() - startTime;
   const passedCount = validations.filter(v => v.isValid).length;
   console.log(`[Validator] Complete: ${passedCount}/${results.length} passed in ${(duration / 1000).toFixed(1)}s`);
-  
+
   return validations;
 }
 
@@ -192,14 +208,14 @@ export async function validateResults(
 
 function normalizeValidation(
   photoId: string,
-  raw: any
+  raw: RawValidationResult
 ): ValidationResult {
-  const quality = typeof raw.overallQuality === 'number' 
+  const quality = typeof raw.overallQuality === 'number'
     ? Math.max(0, Math.min(100, raw.overallQuality))
     : 70;
-  
+
   const issues: ValidationIssue[] = [];
-  
+
   if (Array.isArray(raw.issues)) {
     for (const issue of raw.issues) {
       if (issue && typeof issue === 'object') {
@@ -212,17 +228,17 @@ function normalizeValidation(
       }
     }
   }
-  
+
   const hasHighSeverityIssue = issues.some(i => i.severity === 'high');
   const hasMediumSeverityIssue = issues.some(i => i.severity === 'medium');
-  
+
   // Determine if needs review
   let needsReview = false;
   if (hasHighSeverityIssue) needsReview = true;
   if (hasMediumSeverityIssue && quality < 80) needsReview = true;
   if (quality < CONFIG.minConfidence) needsReview = true;
   if (raw.recommendation === 'review' || raw.recommendation === 'reject') needsReview = true;
-  
+
   return {
     photoId,
     isValid: quality >= CONFIG.minConfidence && !hasHighSeverityIssue,
@@ -232,16 +248,16 @@ function normalizeValidation(
   };
 }
 
-function validateIssueType(value: any): ValidationIssue['type'] {
+function validateIssueType(value: string | undefined): ValidationIssue['type'] {
   const valid: ValidationIssue['type'][] = [
     'artifact', 'distortion', 'color_shift', 'blur', 'inconsistency', 'other'
   ];
-  return valid.includes(value) ? value : 'other';
+  return valid.includes(value as ValidationIssue['type']) ? (value as ValidationIssue['type']) : 'other';
 }
 
-function validateSeverity(value: any): ValidationIssue['severity'] {
+function validateSeverity(value: string | undefined): ValidationIssue['severity'] {
   const valid: ValidationIssue['severity'][] = ['low', 'medium', 'high'];
-  return valid.includes(value) ? value : 'low';
+  return valid.includes(value as ValidationIssue['severity']) ? (value as ValidationIssue['severity']) : 'low';
 }
 
 // ============================================
@@ -258,7 +274,7 @@ export function getValidationSummary(validations: ValidationResult[]): {
   const passed = validations.filter(v => v.isValid && !v.needsReview).length;
   const failed = validations.filter(v => !v.isValid).length;
   const needsReview = validations.filter(v => v.needsReview).length;
-  
+
   // Count issues by type
   const issueCounts: Record<string, number> = {};
   for (const validation of validations) {
@@ -266,17 +282,17 @@ export function getValidationSummary(validations: ValidationResult[]): {
       issueCounts[issue.type] = (issueCounts[issue.type] || 0) + 1;
     }
   }
-  
+
   const issues = Object.entries(issueCounts)
     .map(([type, count]) => ({ type, count }))
     .sort((a, b) => b.count - a.count);
-  
+
   // Calculate overall score
   const totalConfidence = validations.reduce((sum, v) => sum + v.confidence, 0);
-  const overallScore = validations.length > 0 
+  const overallScore = validations.length > 0
     ? Math.round(totalConfidence / validations.length)
     : 0;
-  
+
   return {
     passed,
     failed,
@@ -289,7 +305,7 @@ export function getValidationSummary(validations: ValidationResult[]): {
 export function getValidationReport(validations: ValidationResult[]): string {
   const summary = getValidationSummary(validations);
   const lines: string[] = [];
-  
+
   lines.push(`✅ Validation Report`);
   lines.push(`━━━━━━━━━━━━━━━━━━━━━`);
   lines.push(`Overall Score: ${summary.overallScore}%`);
@@ -298,7 +314,7 @@ export function getValidationReport(validations: ValidationResult[]): string {
   lines.push(`  ✓ Passed: ${summary.passed}`);
   lines.push(`  ✗ Failed: ${summary.failed}`);
   lines.push(`  ⚠ Needs Review: ${summary.needsReview}`);
-  
+
   if (summary.issues.length > 0) {
     lines.push(``);
     lines.push(`Issues Found:`);
@@ -306,15 +322,15 @@ export function getValidationReport(validations: ValidationResult[]): string {
       lines.push(`  ${issue.type}: ${issue.count}`);
     }
   }
-  
+
   // List photos needing review
   const reviewPhotos = validations.filter(v => v.needsReview);
   if (reviewPhotos.length > 0) {
     lines.push(``);
     lines.push(`Photos Needing Review:`);
     for (const photo of reviewPhotos.slice(0, 5)) {
-      const issueDesc = photo.issues.length > 0 
-        ? photo.issues[0].description 
+      const issueDesc = photo.issues.length > 0
+        ? photo.issues[0].description
         : 'Low confidence';
       lines.push(`  ${photo.photoId}: ${issueDesc}`);
     }
@@ -322,7 +338,7 @@ export function getValidationReport(validations: ValidationResult[]): string {
       lines.push(`  ... and ${reviewPhotos.length - 5} more`);
     }
   }
-  
+
   return lines.join('\n');
 }
 
@@ -335,7 +351,7 @@ export function getValidationReport(validations: ValidationResult[]): string {
  */
 export function quickValidate(result: PhotoProcessingResult): ValidationResult {
   const issues: ValidationIssue[] = [];
-  
+
   // Check for partial tool application
   const noToolsPlanned = result.toolsApplied.length === 0 && result.toolsSkipped.length === 0;
   if (result.toolsApplied.length === 0 && !noToolsPlanned) {
@@ -345,7 +361,7 @@ export function quickValidate(result: PhotoProcessingResult): ValidationResult {
       description: 'No enhancements were applied',
     });
   }
-  
+
   // Check processing time anomalies
   if (result.processingTime > 180000) { // > 3 minutes
     issues.push({
@@ -354,7 +370,7 @@ export function quickValidate(result: PhotoProcessingResult): ValidationResult {
       description: 'Unusually long processing time',
     });
   }
-  
+
   // Check confidence
   if (result.confidence < 50) {
     issues.push({
@@ -363,9 +379,9 @@ export function quickValidate(result: PhotoProcessingResult): ValidationResult {
       description: 'Low confidence in enhancement quality',
     });
   }
-  
+
   const hasHighSeverity = issues.some(i => i.severity === 'high');
-  
+
   if (noToolsPlanned && result.success) {
     return {
       photoId: result.photoId,

@@ -2,7 +2,7 @@
  * SnapR AI Engine V3 - Photo Intelligence
  * ========================================
  * Production-grade GPT-4o Vision analysis
- * 
+ *
  * KEY IMPROVEMENTS:
  * 1. Validates if photo is a real property photo
  * 2. Only suggests tools that will FIX actual problems
@@ -31,6 +31,53 @@ function getOpenAIClient(client?: OpenAI): OpenAI {
 
 const ANALYSIS_VERSION = '3.0.0';
 
+/**
+ * Raw analysis result from GPT-4 Vision or Replicate.
+ * All fields are optional/loosely typed because the AI response
+ * is parsed from JSON and needs normalization.
+ */
+interface RawPhotoAnalysis {
+  isValidPropertyPhoto?: boolean;
+  skipEnhancement?: boolean;
+  skipReason?: string | null;
+  photoType?: string;
+  hasSky?: boolean;
+  skyVisible?: number;
+  skyQuality?: string;
+  skyNeedsReplacement?: boolean;
+  twilightCandidate?: boolean;
+  twilightScore?: number;
+  hasVisibleWindows?: boolean;
+  windowCount?: number;
+  windowExposureIssue?: boolean;
+  hasLawn?: boolean;
+  lawnVisible?: number;
+  lawnQuality?: string;
+  lawnNeedsRepair?: boolean;
+  lighting?: string;
+  needsHDR?: boolean;
+  hasClutter?: boolean;
+  clutterLevel?: string;
+  roomEmpty?: boolean;
+  hasFireplace?: boolean;
+  fireplaceNeedsFire?: boolean;
+  hasPool?: boolean;
+  poolNeedsEnhancement?: boolean;
+  hasTV?: boolean;
+  tvNeedsReplacement?: boolean;
+  composition?: string;
+  sharpness?: string;
+  verticalAlignment?: boolean;
+  heroScore?: number;
+  heroReason?: string;
+  suggestedTools?: string[];
+  toolReasons?: Record<string, string>;
+  notSuggested?: Record<string, string>;
+  priority?: string;
+  confidence?: number;
+  confidenceReason?: string;
+}
+
 // ============================================
 // ENHANCED ANALYSIS PROMPT
 // ============================================
@@ -51,7 +98,7 @@ First, determine if this is a VALID real estate property photo:
 
 ✓ VALID: House exterior, interior room, aerial/drone view, backyard, pool area, specific room feature (fireplace, kitchen island, etc.)
 
-✗ INVALID: 
+✗ INVALID:
 - Texture/material close-ups (wood grain, marble, fabric)
 - Documents, floorplans, screenshots
 - People, pets, personal photos
@@ -189,60 +236,60 @@ Return ONLY valid JSON (no markdown, no explanation):
   "isValidPropertyPhoto": true,
   "skipEnhancement": false,
   "skipReason": null,
-  
+
   "photoType": "exterior_front",
-  
+
   "hasSky": true,
   "skyVisible": 35,
   "skyQuality": "blown_out",
   "skyNeedsReplacement": true,
-  
+
   "twilightCandidate": true,
   "twilightScore": 85,
   "hasVisibleWindows": true,
   "windowCount": 6,
   "windowExposureIssue": true,
-  
+
   "hasLawn": true,
   "lawnVisible": 25,
   "lawnQuality": "patchy",
   "lawnNeedsRepair": true,
-  
+
   "lighting": "well_lit",
   "needsHDR": false,
-  
+
   "hasClutter": false,
   "clutterLevel": "none",
   "roomEmpty": false,
-  
+
   "hasFireplace": false,
   "fireplaceNeedsFire": false,
-  
+
   "hasPool": false,
   "poolNeedsEnhancement": false,
-  
+
   "hasTV": false,
   "tvNeedsReplacement": false,
-  
+
   "composition": "good",
   "sharpness": "sharp",
   "verticalAlignment": true,
-  
+
   "heroScore": 82,
   "heroReason": "Strong front exterior, good composition, needs sky fix",
-  
+
   "suggestedTools": ["sky-replacement", "lawn-repair"],
   "toolReasons": {
     "sky-replacement": "Sky is blown out (white/washed out)",
     "lawn-repair": "Lawn has brown patches"
   },
-  
+
   "notSuggested": {
     "virtual-twilight": "Will be evaluated at listing level for top candidates",
     "declutter": "No clutter present",
     "tv-screen": "No TV visible"
   },
-  
+
   "priority": "critical",
   "confidence": 92,
   "confidenceReason": "Clear exterior photo with obvious issues identified"
@@ -332,15 +379,15 @@ export async function analyzePhoto(
       .replace(/```json\n?/g, '')
       .replace(/```\n?/g, '')
       .trim();
-    
-    let analysis;
+
+    let analysis: RawPhotoAnalysis;
     try {
-      analysis = JSON.parse(cleanContent);
-    } catch (parseError) {
+      analysis = JSON.parse(cleanContent) as RawPhotoAnalysis;
+    } catch {
       console.error('[PhotoIntelligence V3] JSON parse error:', cleanContent.substring(0, 200));
       throw new Error('Failed to parse GPT-4 response as JSON');
     }
-    
+
     const duration = Date.now() - startTime;
     console.log(`[PhotoIntelligence V3] Analysis complete in ${duration}ms`);
     console.log(`[PhotoIntelligence V3] Type: ${analysis.photoType}`);
@@ -369,7 +416,7 @@ export async function analyzePhoto(
 // ============================================
 export async function analyzePhotos(
   photos: Array<{ id: string; url: string }>,
-  options: { 
+  options: {
     maxConcurrency?: number;
     batchDelayMs?: number;
     client?: OpenAI;
@@ -382,12 +429,12 @@ export async function analyzePhotos(
   const openaiClient = getOpenAIClient(options.client);
 
   const results: PhotoAnalysis[] = [];
-  
+
   console.log(`[PhotoIntelligence V3] ═══════════════════════════════════════`);
   console.log(`[PhotoIntelligence V3] Analyzing ${photos.length} photos`);
   console.log(`[PhotoIntelligence V3] Concurrency: ${maxConcurrency}`);
   console.log(`[PhotoIntelligence V3] ═══════════════════════════════════════`);
-  
+
   const startTime = Date.now();
 
   // Process in batches for rate limiting
@@ -396,14 +443,14 @@ export async function analyzePhotos(
     const batchPromises = batch.map(photo => analyzePhoto(photo.id, photo.url, openaiClient));
     const batchResults = await Promise.all(batchPromises);
     results.push(...batchResults);
-    
+
     // Report progress
     if (onProgress) {
       onProgress(results.length, photos.length);
     }
-    
+
     console.log(`[PhotoIntelligence V3] Progress: ${results.length}/${photos.length}`);
-    
+
     // Delay between batches to avoid rate limits
     if (i + maxConcurrency < photos.length) {
       await new Promise(resolve => setTimeout(resolve, batchDelayMs));
@@ -411,12 +458,12 @@ export async function analyzePhotos(
   }
 
   const duration = Date.now() - startTime;
-  
+
   // Log summary
   const validPhotos = results.filter(r => r.isValidPropertyPhoto !== false).length;
   const skippedPhotos = results.filter(r => r.skipEnhancement).length;
   const avgConfidence = Math.round(results.reduce((sum, r) => sum + r.confidence, 0) / results.length);
-  
+
   console.log(`[PhotoIntelligence V3] ═══════════════════════════════════════`);
   console.log(`[PhotoIntelligence V3] ANALYSIS COMPLETE`);
   console.log(`[PhotoIntelligence V3] Time: ${(duration / 1000).toFixed(1)}s`);
@@ -434,12 +481,12 @@ export async function analyzePhotos(
 function normalizeAnalysis(
   photoId: string,
   photoUrl: string,
-  raw: any
+  raw: RawPhotoAnalysis
 ): PhotoAnalysis {
   // Check if photo should be skipped
   const isValid = raw.isValidPropertyPhoto !== false;
   const shouldSkip = raw.skipEnhancement === true || !isValid;
-  
+
   const normalizedSkyQuality = validateSkyQuality(raw.skyQuality);
   const normalizedLawnQuality = validateLawnQuality(raw.lawnQuality);
   const skyNeedsReplacement =
@@ -464,47 +511,47 @@ function normalizeAnalysis(
     lawnNeedsRepair,
     windowExposureIssue,
   });
-  
+
   return {
     photoId,
     photoUrl,
-    
+
     // Validity flags
     isValidPropertyPhoto: isValid,
     skipEnhancement: shouldSkip,
     skipReason: raw.skipReason || (shouldSkip && !isValid ? 'Not a valid property photo' : null),
-    
+
     // Classification
     photoType: validatePhotoType(raw.photoType),
-    
+
     // Sky
     hasSky: Boolean(raw.hasSky),
     skyVisible: clamp(raw.skyVisible || 0, 0, 100),
     skyQuality: normalizedSkyQuality,
     skyNeedsReplacement,
-    
+
     // Twilight
     twilightCandidate: Boolean(raw.twilightCandidate),
     twilightScore: clamp(raw.twilightScore || 0, 0, 100),
     hasVisibleWindows: Boolean(raw.hasVisibleWindows),
     windowCount: raw.windowCount || 0,
     windowExposureIssue,
-    
+
     // Lawn
     hasLawn: Boolean(raw.hasLawn),
     lawnVisible: clamp(raw.lawnVisible || 0, 0, 100),
     lawnQuality: normalizedLawnQuality,
     lawnNeedsRepair,
-    
+
     // Lighting
     lighting: validateLighting(raw.lighting),
     needsHDR: Boolean(raw.needsHDR),
-    
+
     // Interior
     hasClutter: Boolean(raw.hasClutter),
     clutterLevel: validateClutterLevel(raw.clutterLevel),
     roomEmpty: Boolean(raw.roomEmpty),
-    
+
     // Special features with "needs" flags
     hasFireplace: Boolean(raw.hasFireplace),
     fireplaceNeedsFire: Boolean(raw.fireplaceNeedsFire),
@@ -512,16 +559,16 @@ function normalizeAnalysis(
     poolNeedsEnhancement: Boolean(raw.poolNeedsEnhancement),
     hasTV: Boolean(raw.hasTV),
     tvNeedsReplacement: Boolean(raw.tvNeedsReplacement),
-    
+
     // Quality
     composition: validateComposition(raw.composition),
     sharpness: validateSharpness(raw.sharpness),
     verticalAlignment: raw.verticalAlignment !== false,
-    
+
     // Hero
     heroScore: clamp(raw.heroScore || 50, 0, 100),
     heroReason: raw.heroReason || '',
-    
+
     // Recommendations (validated)
     suggestedTools: validatedTools,
     toolReasons: raw.toolReasons || {},
@@ -529,7 +576,7 @@ function normalizeAnalysis(
     priority: shouldSkip ? 'none' : validatePriority(raw.priority),
     confidence: clamp(raw.confidence || 70, 0, 100),
     confidenceReason: raw.confidenceReason || '',
-    
+
     // Metadata
     analyzedAt: new Date().toISOString(),
     analysisVersion: ANALYSIS_VERSION,
@@ -537,97 +584,109 @@ function normalizeAnalysis(
 }
 
 /**
+ * Normalized raw analysis used for tool validation.
+ * Extends the raw analysis with already-validated sub-fields.
+ */
+interface NormalizedRawForToolValidation extends RawPhotoAnalysis {
+  skyQuality: SkyQuality;
+  lawnQuality: LawnQuality;
+  skyNeedsReplacement: boolean;
+  lawnNeedsRepair: boolean;
+  windowExposureIssue: boolean;
+}
+
+/**
  * Validate that suggested tools make sense given the analysis
  */
-function validateSuggestedTools(raw: any): ToolId[] {
+function validateSuggestedTools(raw: NormalizedRawForToolValidation): ToolId[] {
   const suggested = raw.suggestedTools || [];
   if (!Array.isArray(suggested)) return ['auto-enhance'];
-  
+
   const validated: ToolId[] = [];
-  
+
   for (const tool of suggested) {
     let isValid = false;
-    
+
     switch (tool) {
       case 'sky-replacement':
         // Only if sky is bad
         isValid = raw.skyNeedsReplacement === true;
         break;
-        
+
       case 'virtual-twilight':
         // Only if high twilight score and has windows
-        isValid = raw.twilightScore >= 80 && raw.hasVisibleWindows;
+        isValid = (raw.twilightScore ?? 0) >= 80 && Boolean(raw.hasVisibleWindows);
         break;
-        
+
       case 'lawn-repair':
         // Only if lawn is bad
         isValid = raw.lawnNeedsRepair === true;
         break;
-        
+
       case 'pool-enhance':
         // Only if pool needs it
         isValid = raw.poolNeedsEnhancement === true;
         break;
-        
+
       case 'declutter':
         // Only if moderate or heavy clutter
-        isValid = ['moderate', 'heavy'].includes(raw.clutterLevel);
+        isValid = ['moderate', 'heavy'].includes(raw.clutterLevel || '');
         break;
-        
+
       case 'virtual-staging':
         // Only if room is empty
         isValid = raw.roomEmpty === true;
         break;
-        
+
       case 'fire-fireplace':
         // Only if fireplace needs fire
         isValid = raw.fireplaceNeedsFire === true;
         break;
-        
+
       case 'tv-screen':
         // Only if TV needs replacement
         isValid = raw.tvNeedsReplacement === true;
         break;
-        
+
       case 'lights-on':
         // Only if dark
         isValid = raw.lighting === 'dark';
         break;
-        
+
       case 'window-masking':
         // Interior with potential blown windows
-        isValid = raw.photoType?.startsWith('interior') && raw.windowExposureIssue === true && raw.hasVisibleWindows && (raw.windowCount || 0) >= 2;
+        isValid = (raw.photoType?.startsWith('interior') ?? false) && raw.windowExposureIssue === true && Boolean(raw.hasVisibleWindows) && (raw.windowCount || 0) >= 2;
         break;
-        
+
       case 'hdr':
         isValid = raw.needsHDR === true || raw.lighting === 'mixed' || raw.lighting === 'dark';
         break;
-        
+
       case 'perspective-correction':
         isValid = raw.verticalAlignment === false;
         break;
-        
+
       case 'flash-fix':
         isValid = raw.lighting === 'flash_harsh';
         break;
-        
+
       case 'auto-enhance':
         // Only if explicitly suggested (no fallback default)
         isValid = true;
         break;
-        
+
       default:
         // Allow other valid tools
         isValid = isValidTool(tool);
     }
-    
+
     if (isValid) {
       validated.push(tool as ToolId);
     } else {
       console.log(`[PhotoIntelligence V3] Rejected invalid tool suggestion: ${tool}`);
     }
   }
-  
+
   return validated;
 }
 
@@ -758,7 +817,7 @@ function getFailOpenAnalysis(
   };
 }
 
-async function analyzeWithReplicate(photoUrl: string): Promise<any> {
+async function analyzeWithReplicate(photoUrl: string): Promise<RawPhotoAnalysis> {
   const token = process.env.REPLICATE_API_TOKEN;
   if (!token) {
     throw new Error('Missing REPLICATE_API_TOKEN');
@@ -775,7 +834,7 @@ async function analyzeWithReplicate(photoUrl: string): Promise<any> {
       max_tokens: 1600,
       temperature: 0.1,
     },
-  }) as any;
+  });
 
   const text = extractReplicateText(output);
   const cleanContent = String(text || '')
@@ -788,19 +847,25 @@ async function analyzeWithReplicate(photoUrl: string): Promise<any> {
   }
 
   try {
-    return JSON.parse(cleanContent);
+    return JSON.parse(cleanContent) as RawPhotoAnalysis;
   } catch {
     console.error('[PhotoIntelligence V3] Replicate JSON parse error:', cleanContent.substring(0, 200));
     throw new Error('Failed to parse Replicate response as JSON');
   }
 }
 
-function extractReplicateText(output: any): string {
+/** Replicate output can be a string, string array, or object with text/output fields */
+type ReplicateOutput = string | string[] | { text?: string; output?: string } | unknown;
+
+function extractReplicateText(output: ReplicateOutput): string {
   if (!output) return '';
   if (typeof output === 'string') return output;
   if (Array.isArray(output)) return output.join('');
-  if (typeof output?.text === 'string') return output.text;
-  if (typeof output?.output === 'string') return output.output;
+  if (typeof output === 'object' && output !== null) {
+    const obj = output as Record<string, unknown>;
+    if (typeof obj.text === 'string') return obj.text;
+    if (typeof obj.output === 'string') return obj.output;
+  }
   return JSON.stringify(output);
 }
 
@@ -811,49 +876,51 @@ function clamp(value: number, min: number, max: number): number {
   return Math.max(min, Math.min(max, value));
 }
 
-function validatePhotoType(value: any): PhotoType {
+function validatePhotoType(value: string | undefined): PhotoType {
   const valid: PhotoType[] = [
     'exterior_front', 'exterior_back', 'exterior_side',
     'interior_living', 'interior_kitchen', 'interior_bedroom',
     'interior_bathroom', 'interior_dining', 'interior_office', 'interior_other',
     'drone', 'detail', 'unknown'
   ];
-  return valid.includes(value) ? value : 'unknown';
+  return valid.includes(value as PhotoType) ? (value as PhotoType) : 'unknown';
 }
 
-function validateSkyQuality(value: any): SkyQuality {
+function validateSkyQuality(value: string | undefined): SkyQuality {
   const valid: SkyQuality[] = ['clear_blue', 'overcast', 'blown_out', 'ugly', 'good', 'none'];
-  return valid.includes(value) ? value : 'none';
+  return valid.includes(value as SkyQuality) ? (value as SkyQuality) : 'none';
 }
 
-function validateLawnQuality(value: any): LawnQuality {
+function validateLawnQuality(value: string | undefined): LawnQuality {
   const valid: LawnQuality[] = ['lush_green', 'patchy', 'brown', 'dead', 'none'];
-  return valid.includes(value) ? value : 'none';
+  return valid.includes(value as LawnQuality) ? (value as LawnQuality) : 'none';
 }
 
-function validateLighting(value: any): LightingQuality {
+function validateLighting(value: string | undefined): LightingQuality {
   const valid: LightingQuality[] = ['well_lit', 'dark', 'overexposed', 'mixed', 'flash_harsh'];
-  return valid.includes(value) ? value : 'well_lit';
+  return valid.includes(value as LightingQuality) ? (value as LightingQuality) : 'well_lit';
 }
 
-function validateClutterLevel(value: any): ClutterLevel {
+function validateClutterLevel(value: string | undefined): ClutterLevel {
   const valid: ClutterLevel[] = ['none', 'light', 'moderate', 'heavy'];
-  return valid.includes(value) ? value : 'none';
+  return valid.includes(value as ClutterLevel) ? (value as ClutterLevel) : 'none';
 }
 
-function validateComposition(value: any): 'excellent' | 'good' | 'average' | 'poor' {
-  const valid = ['excellent', 'good', 'average', 'poor'];
-  return valid.includes(value) ? value : 'average';
+function validateComposition(value: string | undefined): 'excellent' | 'good' | 'average' | 'poor' {
+  const valid = ['excellent', 'good', 'average', 'poor'] as const;
+  type CompositionType = typeof valid[number];
+  return (valid as readonly string[]).includes(value as string) ? (value as CompositionType) : 'average';
 }
 
-function validateSharpness(value: any): 'sharp' | 'acceptable' | 'soft' | 'blurry' {
-  const valid = ['sharp', 'acceptable', 'soft', 'blurry'];
-  return valid.includes(value) ? value : 'acceptable';
+function validateSharpness(value: string | undefined): 'sharp' | 'acceptable' | 'soft' | 'blurry' {
+  const valid = ['sharp', 'acceptable', 'soft', 'blurry'] as const;
+  type SharpnessType = typeof valid[number];
+  return (valid as readonly string[]).includes(value as string) ? (value as SharpnessType) : 'acceptable';
 }
 
-function validatePriority(value: any): Priority {
+function validatePriority(value: string | undefined): Priority {
   const valid: Priority[] = ['critical', 'recommended', 'optional', 'none'];
-  return valid.includes(value) ? value : 'optional';
+  return valid.includes(value as Priority) ? (value as Priority) : 'optional';
 }
 
 // ============================================
@@ -891,14 +958,14 @@ export function getPhotoTypeLabel(photoType: PhotoType): string {
  */
 export function getAnalysisSummary(analyses: PhotoAnalysis[]): string {
   const lines: string[] = [];
-  
+
   const valid = analyses.filter(a => a.isValidPropertyPhoto !== false);
   const skipped = analyses.filter(a => a.skipEnhancement);
   const exteriors = valid.filter(a => isExterior(a.photoType));
   const interiors = valid.filter(a => isInterior(a.photoType));
   const twilightCandidates = valid.filter(a => a.twilightScore >= 80);
   const heroCandidates = valid.filter(a => a.heroScore >= 70);
-  
+
   lines.push(`📊 Analysis Summary`);
   lines.push(`━━━━━━━━━━━━━━━━━━━`);
   lines.push(`Total photos: ${analyses.length}`);
@@ -907,7 +974,7 @@ export function getAnalysisSummary(analyses: PhotoAnalysis[]): string {
   lines.push(`Twilight candidates: ${twilightCandidates.length}`);
   lines.push(`Hero candidates: ${heroCandidates.length}`);
   lines.push(``);
-  
+
   // Tool summary
   const toolCounts: Record<string, number> = {};
   for (const analysis of valid) {
@@ -915,13 +982,13 @@ export function getAnalysisSummary(analyses: PhotoAnalysis[]): string {
       toolCounts[tool] = (toolCounts[tool] || 0) + 1;
     }
   }
-  
+
   lines.push(`🔧 Tools Needed:`);
   Object.entries(toolCounts)
     .sort((a, b) => b[1] - a[1])
     .forEach(([tool, count]) => {
       lines.push(`   ${tool}: ${count} photos`);
     });
-  
+
   return lines.join('\n');
 }

@@ -51,7 +51,7 @@ interface Trigger {
 export default function CampaignSettingsPage() {
   const { user } = useSession();
   const [triggers, setTriggers] = useState<Record<string, Trigger>>({});
-  const [templates, setTemplates] = useState<any[]>([]);
+  const [templates, setTemplates] = useState<Array<{ id: string; name: string; content?: string; platform?: string }>>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState<string | null>(null);
 

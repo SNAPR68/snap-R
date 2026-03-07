@@ -121,7 +121,7 @@ export default async function PropertySitePage({ params }: Props) {
       .single()
 
     if (fallbackSite) {
-      console.log('[PropertySite] Resolved via listing_id fallback:', slug)
+      // Resolved via listing_id fallback
       resolvedSite = fallbackSite
     }
   }

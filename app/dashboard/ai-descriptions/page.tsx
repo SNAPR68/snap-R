@@ -3,10 +3,10 @@
 import React, { Suspense, useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
-import { 
-  Loader2, FileText, Home, ChevronRight, Sparkles, Copy, Check, 
-  RefreshCw, Download, Wand2, Building, Heart, Users, Crown,
-  Hash, Eye, Clock, Image, AlertCircle, Lightbulb, ArrowRight
+import {
+  Loader2, FileText, Home, ChevronRight, Sparkles, Copy, Check,
+  RefreshCw, Wand2, Building, Heart, Users, Crown,
+  Hash, Clock, Image, AlertCircle, Lightbulb, ArrowRight
 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -20,13 +20,26 @@ interface Listing {
   photoCount: number;
 }
 
+interface DetectedFeature {
+  feature: string;
+  confidence: number;
+  source?: string;
+}
+
+interface PhotoAnalysisItem {
+  photoIndex: number;
+  features: string[];
+  roomType?: string;
+  quality?: number;
+}
+
 interface GeneratedDescription {
   descriptionId?: string;
   headline: string;
   description: string;
   seoKeywords: string[];
-  detectedFeatures: any;
-  photoAnalysis: any[];
+  detectedFeatures: DetectedFeature[];
+  photoAnalysis: PhotoAnalysisItem[];
   stats: {
     characterCount: number;
     wordCount: number;
@@ -35,6 +48,12 @@ interface GeneratedDescription {
     photosAnalyzed: number;
   };
   processingTime: number;
+}
+
+interface ListingPhoto {
+  id: string;
+  raw_url: string;
+  processed_url?: string;
 }
 
 const TONES = [
@@ -72,8 +91,8 @@ function ListingSelector({ listings, onSelect }: { listings: Listing[]; onSelect
             <div>
               <h3 className="font-semibold text-amber-400 mb-1">What this tool does</h3>
               <p className="text-sm text-white/70">
-                AI analyzes your listing photos to detect features (pool, fireplace, kitchen style, etc.) 
-                and writes compelling property descriptions ready for MLS, Zillow, or marketing materials. 
+                AI analyzes your listing photos to detect features (pool, fireplace, kitchen style, etc.)
+                and writes compelling property descriptions ready for MLS, Zillow, or marketing materials.
                 Choose from 4 tones and 3 lengths.
               </p>
               <div className="flex items-center gap-2 mt-2 text-xs text-white/50">
@@ -106,6 +125,7 @@ function ListingSelector({ listings, onSelect }: { listings: Listing[]; onSelect
               >
                 <div className="w-20 h-14 rounded-lg overflow-hidden bg-white/10 flex-shrink-0">
                   {listing.thumbnail ? (
+                    // eslint-disable-next-line @next/next/no-img-element
                     <img src={listing.thumbnail} alt="" className="w-full h-full object-cover" />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center">
@@ -123,7 +143,7 @@ function ListingSelector({ listings, onSelect }: { listings: Listing[]; onSelect
                 </div>
                 <div className="flex items-center gap-3">
                   <span className="flex items-center gap-1 text-sm text-white/40">
-                    <Image className="w-4 h-4" /> {listing.photoCount}
+                    <Image className="w-4 h-4" aria-label="Photo count" /> {listing.photoCount}
                   </span>
                   <ChevronRight className="w-5 h-5 text-white/30 group-hover:text-amber-400 transition-colors" />
                 </div>
@@ -136,11 +156,11 @@ function ListingSelector({ listings, onSelect }: { listings: Listing[]; onSelect
   );
 }
 
-function DescriptionGenerator({ 
-  listingId, 
+function DescriptionGenerator({
+  listingId,
   listingTitle,
-  photoUrls 
-}: { 
+  photoUrls
+}: {
   listingId: string;
   listingTitle: string;
   photoUrls: string[];
@@ -185,7 +205,7 @@ function DescriptionGenerator({
 
   const handleCopy = async () => {
     if (!result) return;
-    
+
     const textToCopy = `${result.headline}\n\n${result.description}`;
     await navigator.clipboard.writeText(textToCopy);
     setCopied(true);
@@ -213,11 +233,11 @@ function DescriptionGenerator({
               <p className="text-white/50">{listingTitle}</p>
             </div>
           </div>
-          <Link 
-            href="/dashboard/ai-descriptions" 
+          <Link
+            href="/dashboard/ai-descriptions"
             className="text-white/50 hover:text-white transition-colors"
           >
-            ← Back
+            &larr; Back
           </Link>
         </div>
 
@@ -284,14 +304,15 @@ function DescriptionGenerator({
             {/* Photo Preview */}
             <div className="bg-white/5 border border-white/10 rounded-2xl p-6">
               <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-                <Image className="w-5 h-5 text-amber-400" />
+                <Image className="w-5 h-5 text-amber-400" aria-label="Photos" />
                 Photos to Analyze ({photoUrls.length})
               </h3>
               <div className="flex gap-2 overflow-x-auto pb-2">
                 {photoUrls.slice(0, 10).map((url, i) => (
-                  <img 
-                    key={i} 
-                    src={url} 
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    key={i}
+                    src={url}
                     alt={`Photo ${i + 1}`}
                     className="w-20 h-14 object-cover rounded-lg flex-shrink-0"
                   />
@@ -356,7 +377,7 @@ function DescriptionGenerator({
                   </div>
                 )}
               </div>
-              
+
               <div className="p-4">
                 {!result && !generating ? (
                   <div className="text-center py-12 text-white/30">
@@ -403,7 +424,7 @@ function DescriptionGenerator({
                       </label>
                       <div className="mt-2 flex flex-wrap gap-2">
                         {result.seoKeywords.map((keyword, i) => (
-                          <span 
+                          <span
                             key={i}
                             className="px-2 py-1 bg-amber-500/10 text-amber-400 rounded text-xs"
                           >
@@ -449,7 +470,7 @@ function AIDescriptionsContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const listingId = searchParams.get('listing');
-  
+
   const [listings, setListings] = useState<Listing[]>([]);
   const [photoUrls, setPhotoUrls] = useState<string[]>([]);
   const [listingTitle, setListingTitle] = useState<string>('');
@@ -476,10 +497,10 @@ function AIDescriptionsContent() {
 
     if (listingsData) {
       const listingsWithThumbnails = await Promise.all(
-        listingsData.map(async (listing: any) => {
-          const photos = listing.photos || [];
-          const firstPhoto = photos.find((p: any) => p.processed_url) || photos[0];
-          let thumbnail = null;
+        listingsData.map(async (listing) => {
+          const photos = (listing.photos || []) as unknown as ListingPhoto[];
+          const firstPhoto = photos.find((p) => p.processed_url) || photos[0];
+          let thumbnail: string | undefined = undefined;
           if (firstPhoto) {
             const path = firstPhoto.processed_url || firstPhoto.raw_url;
             if (path && !path.startsWith('http')) {
@@ -489,14 +510,14 @@ function AIDescriptionsContent() {
               thumbnail = path;
             }
           }
-          return { 
-            id: listing.id, 
-            title: listing.title, 
+          return {
+            id: listing.id,
+            title: listing.title,
             address: listing.address,
             city: listing.city,
             state: listing.state,
-            thumbnail, 
-            photoCount: photos.length 
+            thumbnail: thumbnail ?? undefined,
+            photoCount: photos.length
           };
         })
       );
@@ -507,13 +528,13 @@ function AIDescriptionsContent() {
 
   const loadListingPhotos = async (id: string) => {
     const supabase = createClient();
-    
+
     const { data: listing } = await supabase
       .from('listings')
       .select('title, address, city, state')
       .eq('id', id)
       .single();
-    
+
     if (listing) {
       setListingTitle(listing.title || 'Untitled Listing');
     }
@@ -536,7 +557,7 @@ function AIDescriptionsContent() {
       );
       setPhotoUrls(urls.filter(url => url !== ''));
     }
-    
+
     setLoading(false);
   };
 

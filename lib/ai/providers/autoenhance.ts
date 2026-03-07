@@ -13,7 +13,7 @@ class AutoEnhanceProvider {
     this.baseUrl = SNAP_R_STACK.AUTOENHANCE.API_URL;
   }
 
-  async processImage(imageUrl: string, options: any): Promise<string> {
+  async processImage(imageUrl: string, options: Record<string, unknown>): Promise<string> {
     console.log('[AutoEnhance] Starting...');
 
     if (!this.apiKey) {
@@ -121,6 +121,6 @@ class AutoEnhanceProvider {
 
 export const autoEnhanceClient = new AutoEnhanceProvider();
 
-export async function autoEnhance(imageUrl: string, options: Record<string, any>): Promise<string> {
+export async function autoEnhance(imageUrl: string, options: Record<string, unknown>): Promise<string> {
   return autoEnhanceClient.processImage(imageUrl, options);
 }

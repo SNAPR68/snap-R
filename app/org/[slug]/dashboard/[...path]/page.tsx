@@ -69,7 +69,7 @@ export default function BrandedDashboardCatchAll() {
     setLoading(false);
   };
 
-  const NavLink = ({ href, icon: Icon, children }: { href: string; icon: any; children: React.ReactNode }) => {
+  const NavLink = ({ href, icon: Icon, children }: { href: string; icon: React.ComponentType<{ className?: string }>; children: React.ReactNode }) => {
     const orgHref = `/org/${slug}/dashboard${href === '/dashboard' ? '' : href.replace('/dashboard', '')}`;
     const isActive = pathname === orgHref || (href !== '/dashboard' && pathname.startsWith(orgHref));
 

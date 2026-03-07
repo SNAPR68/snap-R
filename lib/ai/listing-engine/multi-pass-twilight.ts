@@ -22,7 +22,8 @@ function normalizeOutputUrl(output: unknown): string {
   const result = Array.isArray(output) ? output[0] : output;
   if (!result) throw new Error('Replicate returned empty result');
   if (typeof result === 'string') return result;
-  if (typeof (result as any).url === 'function') return (result as any).url();
+  const obj = result as Record<string, unknown>;
+  if (typeof obj.url === 'function') return (obj.url as () => string)();
   return String(result);
 }
 
@@ -40,7 +41,7 @@ const DEFAULT_OPTIONS: TwilightOptions = {
 
 /**
  * Multi-pass twilight processing
- * 
+ *
  * Pass 1: Transform entire scene to twilight using FLUX Kontext
  * Pass 2: Enhance window glow for consistent warm light effect
  */
@@ -49,20 +50,20 @@ export async function multiPassTwilight(
   options: Partial<TwilightOptions> = {}
 ): Promise<{ url: string; passes: number; success: boolean }> {
   const opts = { ...DEFAULT_OPTIONS, ...options };
-  
+
   console.log('[MultiPassTwilight] Starting multi-pass twilight processing');
   console.log('[MultiPassTwilight] Preset:', opts.preset);
   console.log('[MultiPassTwilight] Enhance glow:', opts.enhanceWindowGlow);
-  
+
   try {
     // ========================================
     // PASS 1: Overall Twilight Transformation
     // ========================================
     console.log('[MultiPassTwilight] === PASS 1: Twilight Atmosphere ===');
-    
+
     const twilightPrompt = getTwilightPrompt(opts.preset);
-    
-    const pass1Output = await replicate.run(TWILIGHT_MODEL as `${string}/${string}`, {
+
+    const pass1Output: unknown = await replicate.run(TWILIGHT_MODEL as `${string}/${string}`, {
       input: {
         prompt: twilightPrompt,
         input_image: imageUrl,
@@ -72,29 +73,29 @@ export async function multiPassTwilight(
         output_quality: 95,
         safety_tolerance: 5,
       },
-    }) as any;
-    
+    });
+
     const pass1Url = normalizeOutputUrl(pass1Output);
-    
+
     if (!pass1Url) {
       throw new Error('Pass 1 failed - no output');
     }
-    
+
     console.log('[MultiPassTwilight] Pass 1 complete');
-    
+
     // If window glow enhancement is disabled, return after pass 1
     if (!opts.enhanceWindowGlow) {
       return { url: pass1Url, passes: 1, success: true };
     }
-    
+
     // ========================================
     // PASS 2: Window Glow Enhancement
     // ========================================
     console.log('[MultiPassTwilight] === PASS 2: Window Glow Enhancement ===');
-    
+
     const glowPrompt = getWindowGlowPrompt(opts.glowIntensity);
-    
-    const pass2Output = await replicate.run(TWILIGHT_MODEL as `${string}/${string}`, {
+
+    const pass2Output: unknown = await replicate.run(TWILIGHT_MODEL as `${string}/${string}`, {
       input: {
         prompt: glowPrompt,
         input_image: pass1Url,
@@ -104,19 +105,19 @@ export async function multiPassTwilight(
         output_quality: 95,
         safety_tolerance: 5,
       },
-    }) as any;
-    
+    });
+
     const pass2Url = normalizeOutputUrl(pass2Output);
-    
+
     if (!pass2Url) {
       console.warn('[MultiPassTwilight] Pass 2 failed, returning Pass 1 result');
       return { url: pass1Url, passes: 1, success: true };
     }
-    
+
     console.log('[MultiPassTwilight] Pass 2 complete - Full multi-pass twilight done');
-    
+
     return { url: pass2Url, passes: 2, success: true };
-    
+
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Processing failed';
     console.error('[MultiPassTwilight] Error:', message);
@@ -157,7 +158,7 @@ WINDOWS: ALL windows brightly lit with warm interior glow.
 CONTRAST: Strong but not overly dark.
 Keep the house structure, landscaping, and all details exactly the same.`,
   };
-  
+
   return prompts[preset];
 }
 
@@ -170,7 +171,7 @@ function getWindowGlowPrompt(intensity: TwilightOptions['glowIntensity']): strin
     'medium': 'clear, visible warm yellow-orange glow',
     'bright': 'bright, prominent warm golden glow',
   };
-  
+
   return `Enhance the window lighting in this twilight photo.
 Make ALL windows show ${intensityDesc[intensity]} from interior lights.
 The window glow should be CONSISTENT across all windows - same color temperature.
@@ -187,11 +188,11 @@ export async function singlePassTwilight(
   preset: TwilightOptions['preset'] = 'blue-hour'
 ): Promise<string> {
   console.log('[SinglePassTwilight] Running single-pass twilight');
-  
+
   const result = await multiPassTwilight(imageUrl, {
     preset,
     enhanceWindowGlow: false,
   });
-  
+
   return result.url;
 }

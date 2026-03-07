@@ -1,6 +1,56 @@
 # SnapR Execution Changelog
 =================================
 
+## 2026-03-07 — Phase F Wave 2: Comprehensive Type Safety + Loading States + Error Boundaries
+
+### Type Safety — Zero `any` types (67 → 0)
+- 70+ files across `app/`, `lib/`, `components/`, `functions/`, `apps/processor/` — Eliminated ALL `any` types
+- `lib/ai/listing-engine/multi-pass-twilight.ts` — Full rewrite: `unknown` + `normalizeOutputUrl` helper
+- `lib/ai/listing-engine/window-masking.ts` — Full rewrite: same pattern as multi-pass-twilight
+- `lib/renovation/service.ts` — Full rewrite: `PredictionResult` interface, `extractOutputUrl` helper
+- `app/api/voiceover/route.ts` — `ScriptStyleKey`/`VoiceIdKey` type aliases replace `as any` casts
+- `app/dashboard/settings/notifications/page.tsx` — `useCallback`, `WeeklyDay` type, keyof-based select
+- `lib/cloudflare.ts` — `Record<string | symbol, unknown>` proxy getter
+- `lib/ai/listing-engine/provider-router.ts` — `Record<string, string | undefined>` for env access
+- `lib/ai/listing-engine/batch-processor.ts` — Index signature on `AutoEnhanceOptions`
+- `lib/ai/providers/replicate-queue.ts` — `Promise<T>` cast on queue return
+- `components/preparation-overlay.tsx` — `SSEData` interface for SSE message handler
+- All API routes, dashboard pages, admin pages — inline type widening for Supabase query results
+
+### Loading States — 54 new loading.tsx files
+- Every dashboard sub-route now has a loading.tsx skeleton screen (gold spinner)
+- Covers: ai-descriptions, approvals, auto-post, billing, brand, calendar, camera, campaigns, cma, content-studio (14 sub-routes), content/scheduled, how-it-works, leads (3 sub-routes), listing-intelligence, listings/new, mls, notify, open-houses, organization, partner, photo-culling, photographer (2), portfolio, print, renovation, settings (4 sub-routes), showings, staging, team, virtual-tours, voiceover
+
+### Error Boundaries — 10 new error.tsx files
+- `app/(authenticated)/error.tsx`, `app/checkout/error.tsx`, `app/onboarding/error.tsx`
+- `app/p/[slug]/error.tsx`, `app/tour/[slug]/error.tsx`, `app/open-house/[slug]/error.tsx`, `app/book/[slug]/error.tsx`
+- `app/dashboard/content-studio/error.tsx`, `app/dashboard/studio/error.tsx`, `app/dashboard/leads/error.tsx`
+
+### Accessibility
+- `components/skip-nav.tsx` — NEW: Skip-to-main-content link (sr-only, visible on focus)
+- `app/layout.tsx` — Wired SkipNav + `<div id="main-content">` wrapper
+
+### Cleanup
+- Deleted `components/content-studio/unified-creator.backup.tsx` and `components/studio-client.tsx.backup`
+
+## 2026-03-06 — Phase F Wave 1: Launch Polish
+
+### Cleanup, Type Safety, Accessibility
+
+- `app/sentry-example-page/page.tsx` — DELETED: Removed Sentry example page (was leaking org/project ID publicly)
+- `app/page-backup.tsx`, `app/page-backup-20251229-134429.tsx` — DELETED: Removed backup page files (26K+ lines of dead code)
+- `*.bak` (7 files) — DELETED: Removed all .bak backup files from root
+- `app/dashboard/analytics/loading.tsx` — NEW: Skeleton loading state with gold spinner
+- `app/dashboard/broker/loading.tsx` — NEW: Skeleton loading state with gold spinner
+- `app/dashboard/content-studio/loading.tsx` — NEW: Skeleton loading state with gold spinner
+- `app/dashboard/leads/loading.tsx` — NEW: Skeleton loading state with gold spinner
+- `app/dashboard/listings/loading.tsx` — NEW: Skeleton loading state with gold spinner
+- `app/dashboard/settings/loading.tsx` — NEW: Skeleton loading state with gold spinner
+- `app/dashboard/studio/loading.tsx` — NEW: Skeleton loading state with gold spinner
+- `app/dashboard/cma/page.tsx` — Fixed all `any` types: `listing: ListingRow` typed map, `value: string | number` in updateComp, removed dead `(window as any)` code block. Removed unused `html2pdfLoaded` and `reportData` state. Converted 2 `<img>` to `next/image`. Fixed unescaped apostrophe in JSX.
+- `components/content-studio/facebook-renderer.tsx` — Added `alt=""` to all `<img>` tags (30+ occurrences). Added `/* eslint-disable @next/next/no-img-element */` — canvas rendering component cannot use next/image.
+- `app/p/[slug]/page.tsx` — Removed debug `console.log` from server component.
+
 ## 2026-03-06 — Phase E: Launch Readiness
 
 ### Pricing/Checkout Alignment (Gap 1)
