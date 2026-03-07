@@ -9,6 +9,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { openHouseCheckinSchema } from '@/lib/validation/schemas'
 import { adminSupabase } from '@/lib/supabase/admin'
 
+import { logger } from '@/lib/logger';
 export async function POST(request: NextRequest) {
   try {
     const body: unknown = await request.json()
@@ -64,7 +65,7 @@ export async function POST(request: NextRequest) {
       .single()
 
     if (insertError) {
-      console.error('[OpenHouse] Check-in insert error:', insertError.message)
+      logger.error('[OpenHouse] Check-in insert error:', insertError.message)
       return NextResponse.json({ error: 'Failed to check in. Please try again.' }, { status: 500 })
     }
 
@@ -75,12 +76,12 @@ export async function POST(request: NextRequest) {
       .eq('id', eventId)
 
     if (updateError) {
-      console.error('[OpenHouse] checkin_count update error:', updateError.message)
+      logger.error('[OpenHouse] checkin_count update error:', updateError.message)
     }
 
     return NextResponse.json({ success: true, attendeeId: attendee.id }, { status: 201 })
   } catch (error: unknown) {
-    console.error('[OpenHouse] Check-in error:', error instanceof Error ? error.message : 'Unknown error')
+    logger.error('[OpenHouse] Check-in error:', error instanceof Error ? error.message : 'Unknown error')
     return NextResponse.json(
       { error: error instanceof Error ? error.message : 'Internal server error' },
       { status: 500 }

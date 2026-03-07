@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
+import Image from 'next/image';
 import {
   ArrowLeft, Video, Download, Loader2, Clock, Sparkles, Check,
   Music, Instagram, Facebook, Linkedin, Calendar, ExternalLink,
@@ -620,11 +621,9 @@ export default function VideoCreatorClient() {
               </div>
             ) : selectedPhotos.length > 0 ? (
               <>
-                <img
-                  src={selectedPhotos[currentPreview]?.url}
+                <Image src={selectedPhotos[currentPreview]?.url}
                   alt=""
-                  className="w-full h-full object-cover"
-                />
+                  className="w-full h-full object-cover" width={400} height={300} unoptimized />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
                 <div className="absolute bottom-8 left-0 right-0 text-center">
                   <div className="text-white font-semibold text-xl mb-2">
@@ -1120,7 +1119,7 @@ export default function VideoCreatorClient() {
                           : 'border-transparent hover:border-white/20'
                       }`}
                     >
-                      <img src={photo.url} alt="" className="w-full h-full object-cover" />
+                      <Image src={photo.url} alt="" className="w-full h-full object-cover" width={400} height={300} unoptimized />
                       {photo.selected && (
                         <div className="absolute top-0.5 right-0.5 w-3.5 h-3.5 bg-pink-500 rounded-full flex items-center justify-center">
                           <Check className="w-2 h-2 text-white" />

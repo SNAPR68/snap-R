@@ -2,7 +2,9 @@ export const dynamic = 'force-dynamic';
 
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { approvePhotoSchema, parseBody } from '@/lib/validation/schemas'
 
+import { logger } from '@/lib/logger';
 function getSupabase() {
   return createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -12,7 +14,7 @@ function getSupabase() {
 
 export async function POST(req: NextRequest) {
   try {
-    const { photoId, shareToken, approved, feedback } = await req.json();
+    const body = await req.json(); const validated = parseBody(approvePhotoSchema, body); if (!validated.success) { return NextResponse.json({ error: validated.error, details: validated.details }, { status: 400 }); } const { photoId, shareToken, approved, feedback } = body;
 
     if (!photoId) {
       return NextResponse.json({ error: 'Missing photo ID' }, { status: 400 });
@@ -59,7 +61,7 @@ export async function POST(req: NextRequest) {
       .eq('listing_id', listingId);
 
     if (error) {
-      console.error('[Approve Photo] Update error:', error.message);
+      logger.error('[Approve Photo] Update error:', error.message);
       return NextResponse.json({ error: 'Failed to update approval' }, { status: 500 });
     }
 
@@ -96,7 +98,7 @@ export async function POST(req: NextRequest) {
     });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Server error';
-    console.error('[Approve Photo] Error:', message);
+    logger.error('[Approve Photo] Error:', message);
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }

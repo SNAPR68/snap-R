@@ -37,7 +37,7 @@ export default function BillingClient({ profile }: { profile: { subscription_tie
       } else {
         alert(data.error || 'Something went wrong');
       }
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Purchase error:', error);
       alert('Failed to start checkout');
     }

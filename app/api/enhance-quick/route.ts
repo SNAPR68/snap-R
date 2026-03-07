@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { autoEnhance } from '@/lib/ai/providers/sharp-enhance';
 import { adminSupabase } from '@/lib/supabase/admin';
 
+import { logger } from '@/lib/logger';
 /**
  * POST /api/enhance-quick
  *
@@ -39,7 +40,7 @@ export async function POST(request: NextRequest) {
   try {
     // --- Download image ---
     const downloadStart = Date.now();
-    const response = await fetch(imageUrl);
+    const response = await fetch(imageUrl, { signal: AbortSignal.timeout(15000) });
     if (!response.ok) {
       throw new Error(`Failed to download image: ${response.status}`);
     }
@@ -76,7 +77,7 @@ export async function POST(request: NextRequest) {
     const uploadMs = Date.now() - uploadStart;
     const totalMs = Date.now() - startTime;
 
-    console.log(
+    logger.info(
       `[enhance-quick] ${photoId}: ${result.preset.name} preset, ` +
       `download=${downloadMs}ms enhance=${enhanceMs}ms upload=${uploadMs}ms total=${totalMs}ms`
     );
@@ -95,7 +96,7 @@ export async function POST(request: NextRequest) {
     });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Processing failed';
-    console.error(`[enhance-quick] Error for ${photoId}:`, message);
+    logger.error(`[enhance-quick] Error for ${photoId}:`, message);
     return NextResponse.json(
       { error: message },
       { status: 500 }

@@ -12,6 +12,7 @@ import { Resend } from 'resend'
 import { createClient } from '@/lib/supabase/server'
 import { adminSupabase } from '@/lib/supabase/admin'
 
+import { logger } from '@/lib/logger';
 const resend = new Resend(process.env.RESEND_API_KEY)
 
 const sendSchema = z.object({
@@ -101,7 +102,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ sent, failed, total: recipientLeads.length, results })
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Send failed'
-    console.error('[BulkEmail] POST error:', message)
+    logger.error('[BulkEmail] POST error:', message)
     return NextResponse.json({ error: 'Failed to send emails' }, { status: 500 })
   }
 }
@@ -142,7 +143,7 @@ export async function GET() {
     return NextResponse.json({ sends })
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Fetch failed'
-    console.error('[BulkEmail] GET error:', message)
+    logger.error('[BulkEmail] GET error:', message)
     return NextResponse.json({ error: 'Failed to fetch send history' }, { status: 500 })
   }
 }

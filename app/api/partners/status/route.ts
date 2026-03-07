@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { adminSupabase } from '@/lib/supabase/admin';
 
+import { logger } from '@/lib/logger';
 export async function GET(request: NextRequest) {
   try {
     const supabase = await createClient();
@@ -44,7 +45,7 @@ export async function GET(request: NextRequest) {
     });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Internal server error';
-    console.error('[Partners] Status error:', message);
+    logger.error('[Partners] Status error:', message);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

@@ -1,3 +1,4 @@
+import { logger } from '@/lib/logger';
 export async function withRetry<T>(
   fn: () => Promise<T>,
   options: {
@@ -11,11 +12,11 @@ export async function withRetry<T>(
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
     try {
       return await fn();
-    } catch (error) {
+    } catch (error: unknown) {
       if (attempt === maxRetries) throw error;
       
       const delay = baseDelay * Math.pow(2, attempt - 1);
-      console.log(`[Retry] Attempt ${attempt} failed, retrying in ${delay}ms...`);
+      logger.info(`[Retry] Attempt ${attempt} failed, retrying in ${delay}ms...`);
       
       if (onRetry) onRetry(attempt, error);
       

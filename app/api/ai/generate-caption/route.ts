@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import OpenAI from 'openai'
 import { createClient } from '@/lib/supabase/server'
+import { generateCaptionSchema, parseBody } from '@/lib/validation/schemas'
 
+import { logger } from '@/lib/logger';
 function getOpenAIClient(): OpenAI {
   return new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
 }
@@ -15,7 +17,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const { prompt, platform } = await request.json()
+    const body = await request.json(); const validated = parseBody(generateCaptionSchema, body); if (!validated.success) { return NextResponse.json({ error: validated.error, details: validated.details }, { status: 400 }); } const { prompt, platform } = body;
 
     if (!prompt) {
       return NextResponse.json(
@@ -73,7 +75,7 @@ IMPORTANT RULES:
     })
 
   } catch (error: unknown) {
-    console.error('Caption generation error:', error)
+    logger.error('Caption generation error:', error)
 
     const isQuotaError = error instanceof Error && 'code' in error &&
       (error as { code: string }).code === 'insufficient_quota';

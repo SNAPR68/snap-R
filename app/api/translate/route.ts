@@ -1,7 +1,9 @@
 import { NextResponse } from 'next/server'
 import OpenAI from 'openai'
 import { createClient } from '@/lib/supabase/server'
+import { translateSchema, parseBody } from '@/lib/validation/schemas'
 
+import { logger } from '@/lib/logger';
 function getOpenAIClient(): OpenAI {
   return new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
 }
@@ -21,7 +23,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const { text, targetLanguage } = await request.json()
+    const body = await request.json(); const validated = parseBody(translateSchema, body); if (!validated.success) { return NextResponse.json({ error: validated.error, details: validated.details }, { status: 400 }); } const { text, targetLanguage } = body;
     if (!text || !targetLanguage) return NextResponse.json({ error: 'Text and target language required' }, { status: 400 })
 
     const openai = getOpenAIClient()
@@ -39,7 +41,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ translatedText: response.choices[0]?.message?.content?.trim() || '', language: languageName, languageCode: targetLanguage })
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Failed to translate';
-    console.error('Translation error:', message)
+    logger.error('Translation error:', message)
     return NextResponse.json({ error: 'Failed to translate' }, { status: 500 })
   }
 }

@@ -15,6 +15,7 @@ import { ToolId } from '../router';
 import { isExterior, isInterior } from './photo-intelligence';
 import { getProviderForTool, estimateProcessingTime, estimateCost } from './provider-router';
 
+import { logger } from '@/lib/logger';
 // ============================================
 // CONFIGURATION
 // ============================================
@@ -70,14 +71,14 @@ export function buildListingStrategy(
   listingId: string,
   analyses: PhotoAnalysis[]
 ): ListingStrategy {
-  console.log(`[StrategyBuilder V3] Building strategy for ${analyses.length} photos`);
+  logger.info(`[StrategyBuilder V3] Building strategy for ${analyses.length} photos`);
   
   // Separate valid and invalid
   const validAnalyses = analyses.filter(a => !a.skipEnhancement);
   const skippedAnalyses = analyses.filter(a => a.skipEnhancement);
   
   if (skippedAnalyses.length > 0) {
-    console.log(`[StrategyBuilder V3] Skipping ${skippedAnalyses.length} invalid photos`);
+    logger.info(`[StrategyBuilder V3] Skipping ${skippedAnalyses.length} invalid photos`);
   }
   
   // Make decisions
@@ -378,10 +379,10 @@ function buildPhotoStrategy(
     if (validateToolForPhoto(tool, analysis, isTwilightTarget, decisions)) {
       tools.push(tool);
       const reason = getToolReason(analysis, tool, isTwilightTarget);
-      console.log(`[Strategy] ${analysis.photoId}: ✓ ${tool}${reason ? ` — ${reason}` : ''}`);
+      logger.info(`[Strategy] ${analysis.photoId}: ✓ ${tool}${reason ? ` — ${reason}` : ''}`);
     } else {
       const reason = getToolBlockReason(analysis, tool, isTwilightTarget);
-      console.log(`[Strategy] ${analysis.photoId}: ✗ ${tool}${reason ? ` — ${reason}` : ''}`);
+      logger.info(`[Strategy] ${analysis.photoId}: ✗ ${tool}${reason ? ` — ${reason}` : ''}`);
     }
   }
   
@@ -484,7 +485,7 @@ function validateToolForPhoto(
     case 'tv-screen':
       if (!analysis.hasTV) return false;
       if (analysis.tvNeedsReplacement !== true) {
-        console.log(`[Validation] TV screen BLOCKED - content is acceptable`);
+        logger.info(`[Validation] TV screen BLOCKED - content is acceptable`);
         return false;
       }
       return true;

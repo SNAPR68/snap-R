@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import OpenAI from 'openai'
 
+import { logger } from '@/lib/logger';
 function getOpenAIClient(): OpenAI {
   return new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
 }
@@ -53,8 +54,8 @@ Return as JSON: { subject, preview, body, ctaText }`
     const emailData = JSON.parse(cleaned)
 
     return NextResponse.json({ email: emailData })
-  } catch (error) {
-    console.error('Email generation error:', error)
+  } catch (error: unknown) {
+    logger.error('Email generation error:', error)
     return NextResponse.json({ error: 'Failed to generate email' }, { status: 500 })
   }
 }

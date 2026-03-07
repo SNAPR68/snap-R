@@ -34,7 +34,7 @@ export function ApprovalSummaryPanel({ listingId, onRefresh }: ApprovalSummaryPa
       const res = await fetch(`/api/approval-summary?listingId=${listingId}`);
       const data = await res.json();
       setSummary(data);
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Failed to load approval summary:', error);
     }
     setLoading(false);

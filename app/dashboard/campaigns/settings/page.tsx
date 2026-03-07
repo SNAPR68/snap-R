@@ -112,7 +112,7 @@ export default function CampaignSettingsPage() {
         };
       }
       setTriggers(triggersMap);
-    } catch (error) {
+    } catch (error: unknown) {
       console.error("Failed to fetch settings:", error);
     } finally {
       setLoading(false);
@@ -161,7 +161,7 @@ export default function CampaignSettingsPage() {
       if (!result.success) {
         alert(result.error || "Failed to save");
       }
-    } catch (error) {
+    } catch (error: unknown) {
       console.error("Save error:", error);
     } finally {
       setSaving(null);

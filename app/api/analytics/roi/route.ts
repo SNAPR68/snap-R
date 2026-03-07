@@ -17,6 +17,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 
+import { logger } from '@/lib/logger';
 // ============================================
 // TYPES
 // ============================================
@@ -292,7 +293,7 @@ export async function GET(request: NextRequest) {
     });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Unknown error';
-    console.error('[ROI Analytics] Error:', message);
+    logger.error('[ROI Analytics] Error:', message);
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }

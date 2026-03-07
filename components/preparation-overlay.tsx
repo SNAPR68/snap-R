@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import { useState, useEffect, useRef } from 'react';
 import { X } from 'lucide-react';
 
@@ -406,8 +407,7 @@ export function PreparationOverlay({
                       'opacity-40'
                     }`}
                   >
-                  <img
-                    src={
+                  <Image src={
                       photo.thumbnailUrl ||
                       photo.url ||
                       photo.signedRawUrl ||
@@ -415,8 +415,7 @@ export function PreparationOverlay({
                       '/placeholder.jpg'
                     }
                       alt=""
-                      className="w-full h-full object-cover"
-                    />
+                      className="w-full h-full object-cover" width={400} height={300} unoptimized />
                     {idx < photoProgress.current && (
                       <div className="absolute inset-0 bg-green-500/30 flex items-center justify-center">
                         <svg className="w-4 h-4 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>

@@ -49,7 +49,7 @@ export function CreateContentClient() {
         const res = await fetch('/api/brand')
         const data = await res.json()
         if (data.brandProfile) setBrandProfile(data.brandProfile)
-      } catch (error) {
+      } catch (error: unknown) {
         console.error('Failed to fetch brand profile:', error)
       } finally {
         setLoading(false)

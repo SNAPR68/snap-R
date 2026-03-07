@@ -202,7 +202,7 @@ export default function ApprovalsPage() {
       const res = await fetch('/api/approval-summary');
       const data = await res.json();
       setListings(data.listings || []);
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Failed to fetch approvals:', error);
     } finally {
       setLoading(false);

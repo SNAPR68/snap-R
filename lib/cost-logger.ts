@@ -1,11 +1,12 @@
 import { createClient } from '@supabase/supabase-js';
 
+import { logger } from '@/lib/logger';
 const getSupabase = () => {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
   
   if (!url || !serviceKey) {
-    console.warn('[CostLogger] Missing env vars:', {
+    logger.warn('[CostLogger] Missing env vars:', {
       hasUrl: !!url,
       hasServiceKey: !!serviceKey,
     });
@@ -80,7 +81,7 @@ export async function logApiCost({
   try {
     const supabase = getSupabase();
     if (!supabase) {
-      console.error('[CostLogger] No Supabase client - check SUPABASE_SERVICE_ROLE_KEY');
+      logger.error('[CostLogger] No Supabase client - check SUPABASE_SERVICE_ROLE_KEY');
       return;
     }
 
@@ -101,14 +102,14 @@ export async function logApiCost({
     const { error } = await supabase.from('api_costs').insert(insertData);
 
     if (error) {
-      console.error('[CostLogger] Insert failed:', error.message);
-      console.error('[CostLogger] Data:', insertData);
+      logger.error('[CostLogger] Insert failed:', error.message);
+      logger.error('[CostLogger] Data:', insertData);
     } else {
-      console.log(`[CostLogger] ✓ ${provider}/${toolId}: ${costCents}¢ (${success ? 'success' : 'failed'})`);
+      logger.info(`[CostLogger] ✓ ${provider}/${toolId}: ${costCents}¢ (${success ? 'success' : 'failed'})`);
     }
   } catch (e: unknown) {
     const message = e instanceof Error ? e.message : 'Unknown error';
-    console.error('[CostLogger] Exception:', e instanceof Error ? e.message : 'Unknown error');
+    logger.error('[CostLogger] Exception:', e instanceof Error ? e.message : 'Unknown error');
   }
 }
 
@@ -126,7 +127,7 @@ export async function logSystemEvent({
   try {
     const supabase = getSupabase();
     if (!supabase) {
-      console.error('[SystemLog] No Supabase client');
+      logger.error('[SystemLog] No Supabase client');
       return;
     }
 
@@ -139,7 +140,7 @@ export async function logSystemEvent({
     });
 
     if (error) {
-      console.error('[SystemLog] Insert failed:', error.message);
+      logger.error('[SystemLog] Insert failed:', error.message);
     }
 
     if (level === 'critical') {
@@ -147,7 +148,7 @@ export async function logSystemEvent({
     }
   } catch (e: unknown) {
     const message = e instanceof Error ? e.message : 'Processing failed';
-    console.error('[SystemLog] Exception:', e instanceof Error ? e.message : 'Unknown error');
+    logger.error('[SystemLog] Exception:', e instanceof Error ? e.message : 'Unknown error');
   }
 }
 
@@ -173,7 +174,7 @@ async function sendCriticalAlert(source: string, message: string, metadata?: Rec
         </div>
       `,
     });
-  } catch (e) {
-    console.error('[Alert] Failed to send:', e);
+  } catch (error: unknown) {
+    logger.error('[Alert] Failed to send:', error);
   }
 }

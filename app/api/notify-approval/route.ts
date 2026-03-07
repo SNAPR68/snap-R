@@ -2,11 +2,13 @@ import { NextRequest, NextResponse } from 'next/server';
 import { Resend } from 'resend';
 import { adminSupabase } from '@/lib/supabase/admin';
 import { escapeHtml } from '@/lib/utils/html-escape';
+import { notifyApprovalSchema, parseBody } from '@/lib/validation/schemas'
 
+import { logger } from '@/lib/logger';
 export async function POST(req: NextRequest) {
   try {
     const resend = new Resend(process.env.RESEND_API_KEY);
-    const { shareToken, clientName } = await req.json();
+    const body = await req.json(); const validated = parseBody(notifyApprovalSchema, body); if (!validated.success) { return NextResponse.json({ error: validated.error, details: validated.details }, { status: 400 }); } const { shareToken, clientName } = body;
 
     const { data: share } = await adminSupabase()
       .from('shares')
@@ -96,7 +98,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ success: true });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Failed to send notification';
-    console.error('[Notify Approval] Error:', message);
+    logger.error('[Notify Approval] Error:', message);
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }

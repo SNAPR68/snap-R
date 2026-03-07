@@ -3,6 +3,7 @@
 
 import { createClient } from '@supabase/supabase-js';
 
+import { logger } from '@/lib/logger';
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
@@ -142,8 +143,8 @@ export async function generateSocialContent(
     try {
       const aiContent = await generateWithAI(listing, platform, status, style, tone, limits);
       if (aiContent) return aiContent;
-    } catch (error) {
-      console.error('AI generation failed, using template:', error);
+    } catch (error: unknown) {
+      logger.error('AI generation failed, using template:', error);
     }
   }
 
@@ -202,6 +203,7 @@ Respond in JSON format:
       temperature: 0.7,
       response_format: { type: 'json_object' },
     }),
+      signal: AbortSignal.timeout(30000),
   });
 
   if (!response.ok) return null;
@@ -419,8 +421,8 @@ export async function processQueueItem(queueItemId: string): Promise<{ success: 
       .eq('id', queueItemId);
 
     return { success: true };
-  } catch (error) {
-    console.error('Content generation error:', error);
+  } catch (error: unknown) {
+    logger.error('Content generation error:', error);
     return { success: false, error: 'Failed to generate content' };
   }
 }

@@ -2,7 +2,9 @@ export const dynamic = 'force-dynamic';
 
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { analyticsTrackSchema, parseBody } from '@/lib/validation/schemas'
 
+import { logger } from '@/lib/logger';
 function getSupabase() {
   return createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -12,7 +14,7 @@ function getSupabase() {
 
 export async function POST(req: NextRequest) {
   try {
-    const data = await req.json();
+    const data = await req.json(); const validated = parseBody(analyticsTrackSchema, data); if (!validated.success) { return NextResponse.json({ error: validated.error, details: validated.details }, { status: 400 }); }
 
     const ip = req.headers.get('x-forwarded-for')?.split(',')[0] ||
                req.headers.get('x-real-ip') ||
@@ -37,7 +39,7 @@ export async function POST(req: NextRequest) {
     });
 
     if (error) {
-      console.error('[Analytics Track] Insert error:', error.message);
+      logger.error('[Analytics Track] Insert error:', error.message);
       return NextResponse.json({ success: false });
     }
 

@@ -2,7 +2,9 @@ export const dynamic = 'force-dynamic';
 
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { virtualTourCreateSchema, parseBody } from '@/lib/validation/schemas'
 
+import { logger } from '@/lib/logger';
 // GET - Fetch user's virtual tours
 export async function GET(request: NextRequest) {
   try {
@@ -58,7 +60,7 @@ export async function GET(request: NextRequest) {
     const { data: tours, error } = await query;
 
     if (error) {
-      console.error('Fetch tours error:', error);
+      logger.error('Fetch tours error:', error);
       return NextResponse.json({ error: 'Failed to fetch tours' }, { status: 500 });
     }
 
@@ -66,7 +68,7 @@ export async function GET(request: NextRequest) {
 
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Internal server error';
-    console.error('Virtual tours GET error:', error);
+    logger.error('Virtual tours GET error:', error);
     return NextResponse.json(
       { error: message || 'Internal server error' },
       { status: 500 }
@@ -85,6 +87,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
+    const validated = parseBody(virtualTourCreateSchema, body); if (!validated.success) { return NextResponse.json({ error: validated.error, details: validated.details }, { status: 400 }); }
     const {
       listingId,
       name,
@@ -117,7 +120,7 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (tourError) {
-      console.error('Create tour error:', tourError);
+      logger.error('Create tour error:', tourError);
       return NextResponse.json({ error: 'Failed to create tour' }, { status: 500 });
     }
 
@@ -144,7 +147,7 @@ export async function POST(request: NextRequest) {
         .insert(scenesData);
 
       if (scenesError) {
-        console.error('Create scenes error:', scenesError);
+        logger.error('Create scenes error:', scenesError);
         // Don't fail the whole request, tour is created
       }
     }
@@ -163,7 +166,7 @@ export async function POST(request: NextRequest) {
 
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Internal server error';
-    console.error('Virtual tours POST error:', error);
+    logger.error('Virtual tours POST error:', error);
     return NextResponse.json(
       { error: message || 'Internal server error' },
       { status: 500 }
@@ -182,6 +185,7 @@ export async function PATCH(request: NextRequest) {
     }
 
     const body = await request.json();
+    const validated = parseBody(virtualTourCreateSchema, body); if (!validated.success) { return NextResponse.json({ error: validated.error, details: validated.details }, { status: 400 }); }
     const { id, ...updates } = body;
 
     if (!id) {
@@ -227,7 +231,7 @@ export async function PATCH(request: NextRequest) {
       .single();
 
     if (error) {
-      console.error('Update tour error:', error);
+      logger.error('Update tour error:', error);
       return NextResponse.json({ error: 'Failed to update tour' }, { status: 500 });
     }
 
@@ -235,7 +239,7 @@ export async function PATCH(request: NextRequest) {
 
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Internal server error';
-    console.error('Virtual tours PATCH error:', error);
+    logger.error('Virtual tours PATCH error:', error);
     return NextResponse.json(
       { error: message || 'Internal server error' },
       { status: 500 }
@@ -267,7 +271,7 @@ export async function DELETE(request: NextRequest) {
       .eq('user_id', user.id);
 
     if (error) {
-      console.error('Delete tour error:', error);
+      logger.error('Delete tour error:', error);
       return NextResponse.json({ error: 'Failed to delete tour' }, { status: 500 });
     }
 
@@ -275,7 +279,7 @@ export async function DELETE(request: NextRequest) {
 
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Internal server error';
-    console.error('Virtual tours DELETE error:', error);
+    logger.error('Virtual tours DELETE error:', error);
     return NextResponse.json(
       { error: message || 'Internal server error' },
       { status: 500 }

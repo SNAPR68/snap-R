@@ -17,6 +17,7 @@
 import { createHmac } from 'crypto'
 import { adminSupabase } from '@/lib/supabase/admin'
 
+import { logger } from '@/lib/logger';
 interface OutgoingWebhook {
   id: string
   url: string
@@ -51,7 +52,7 @@ export async function dispatchWebhookEvent(
     .contains('events', [event])
 
   if (fetchError) {
-    console.error('[Webhooks] Error fetching webhooks:', fetchError.message)
+    logger.error('[Webhooks] Error fetching webhooks:', fetchError.message)
     return
   }
 
@@ -137,10 +138,10 @@ async function deliverWithRetry(
       // Network error — retry with backoff
       if (attempt < MAX_ATTEMPTS - 1) {
         const delay = BASE_DELAY_MS * Math.pow(4, attempt)
-        console.warn(`[Webhooks] Attempt ${attempt + 1}/${MAX_ATTEMPTS} failed for ${webhook.url}: ${message}, retrying in ${delay}ms`)
+        logger.warn(`[Webhooks] Attempt ${attempt + 1}/${MAX_ATTEMPTS} failed for ${webhook.url}: ${message}, retrying in ${delay}ms`)
         await sleep(delay)
       } else {
-        console.error(`[Webhooks] All ${MAX_ATTEMPTS} attempts failed for ${webhook.url}: ${message}`)
+        logger.error(`[Webhooks] All ${MAX_ATTEMPTS} attempts failed for ${webhook.url}: ${message}`)
       }
     }
   }
@@ -158,7 +159,7 @@ async function deliverWithRetry(
     })
   } catch (logErr: unknown) {
     const msg = logErr instanceof Error ? logErr.message : 'Unknown error'
-    console.error('[Webhooks] Failed to log delivery:', msg)
+    logger.error('[Webhooks] Failed to log delivery:', msg)
   }
 }
 

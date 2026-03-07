@@ -1,5 +1,6 @@
 'use client'
 
+import Image from 'next/image';
 import { useState, useRef } from 'react'
 import { 
   Palette, 
@@ -211,7 +212,7 @@ export function BrandKitEditor({
                   className="w-24 h-24 rounded-xl border-2 border-dashed border-white/20 hover:border-[#D4AF37]/50 flex items-center justify-center cursor-pointer transition overflow-hidden bg-white/5"
                 >
                   {brandKit.logo_url ? (
-                    <img src={brandKit.logo_url} alt="Logo" className="w-full h-full object-contain" />
+                    <Image src={brandKit.logo_url} alt="Logo" className="w-full h-full object-contain" width={400} height={300} unoptimized />
                   ) : (
                     <Upload className="w-6 h-6 text-white/40" />
                   )}
@@ -334,7 +335,7 @@ export function BrandKitEditor({
                   className="w-20 h-20 rounded-full border-2 border-dashed border-white/20 hover:border-[#D4AF37]/50 flex items-center justify-center cursor-pointer transition overflow-hidden bg-white/5"
                 >
                   {brandKit.agent_photo_url ? (
-                    <img src={brandKit.agent_photo_url} alt="Agent" className="w-full h-full object-cover" />
+                    <Image src={brandKit.agent_photo_url} alt="Agent" className="w-full h-full object-cover" width={400} height={300} unoptimized />
                   ) : (
                     <Camera className="w-6 h-6 text-white/40" />
                   )}
@@ -446,7 +447,7 @@ export function BrandKitEditor({
                   className="w-32 h-16 rounded-lg border-2 border-dashed border-white/20 hover:border-[#D4AF37]/50 flex items-center justify-center cursor-pointer transition overflow-hidden bg-white/5"
                 >
                   {brandKit.brokerage_logo_url ? (
-                    <img src={brandKit.brokerage_logo_url} alt="Brokerage" className="w-full h-full object-contain p-2" />
+                    <Image src={brandKit.brokerage_logo_url} alt="Brokerage" className="w-full h-full object-contain p-2" width={400} height={300} unoptimized />
                   ) : (
                     <Building2 className="w-6 h-6 text-white/40" />
                   )}
@@ -516,12 +517,10 @@ export function BrandKitEditor({
         >
           <div className="flex items-center gap-3">
             {brandKit.agent_photo_url ? (
-              <img 
-                src={brandKit.agent_photo_url} 
+              <Image src={brandKit.agent_photo_url} 
                 alt="Agent" 
                 className="w-12 h-12 rounded-full object-cover border-2"
-                style={{ borderColor: brandKit.primary_color }}
-              />
+                style={{ borderColor: brandKit.primary_color }} width={400} height={300} unoptimized />
             ) : (
               <div 
                 className="w-12 h-12 rounded-full flex items-center justify-center"
@@ -547,11 +546,9 @@ export function BrandKitEditor({
               )}
             </div>
             {brandKit.logo_url && (
-              <img 
-                src={brandKit.logo_url} 
+              <Image src={brandKit.logo_url} 
                 alt="Logo" 
-                className="w-10 h-10 object-contain ml-auto"
-              />
+                className="w-10 h-10 object-contain ml-auto" width={400} height={300} unoptimized />
             )}
           </div>
           {brandKit.tagline && (

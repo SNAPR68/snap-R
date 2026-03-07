@@ -15,7 +15,7 @@ export default function SettingsPage() {
   const [notifications, setNotifications] = useState({ emailUpdates: true, marketingEmails: false, processingAlerts: true });
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
-  useEffect(() => { fetchProfile(); }, [user]);
+  useEffect(() => { fetchProfile(); }, [user]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const fetchProfile = async () => {
     if (!user?.id) return;

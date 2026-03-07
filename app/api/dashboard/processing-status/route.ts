@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 
+import { logger } from '@/lib/logger';
 /**
  * GET /api/dashboard/processing-status
  * Lightweight polling endpoint for processing container.
@@ -55,8 +56,8 @@ export async function GET() {
     }))
 
     return NextResponse.json({ items, recentlyCompleted })
-  } catch (error) {
-    console.error('Error fetching processing status:', error)
+  } catch (error: unknown) {
+    logger.error('Error fetching processing status:', error)
     return NextResponse.json({ error: 'Failed to fetch status' }, { status: 500 })
   }
 }

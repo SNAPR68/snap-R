@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import Link from 'next/link';
+import Image from 'next/image';
 import { 
   ArrowLeft, Users, Plus, Crown, Shield, Edit3, Eye, 
   Trash2, Mail, Copy, Check, Loader2, X, UserPlus,
@@ -337,7 +338,7 @@ function TeamPageContent() {
                       <div key={member.id} className="flex items-center justify-between p-4">
                         <div className="flex items-center gap-3">
                           {member.profiles.avatar_url ? (
-                            <img src={member.profiles.avatar_url} alt="" className="w-10 h-10 rounded-full" />
+                            <Image src={member.profiles.avatar_url} alt="" className="w-10 h-10 rounded-full" width={400} height={300} unoptimized />
                           ) : (
                             <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center">
                               {(member.profiles.full_name || member.profiles.email).charAt(0).toUpperCase()}

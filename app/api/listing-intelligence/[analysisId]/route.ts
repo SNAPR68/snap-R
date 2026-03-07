@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
 import { cookies } from 'next/headers';
 
+import { logger } from '@/lib/logger';
 export async function GET(
   request: NextRequest,
   { params }: { params: { analysisId: string } }
@@ -89,7 +90,7 @@ export async function GET(
 
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Internal server error';
-    console.error('[Listing Intelligence] Get Error:', error);
+    logger.error('[Listing Intelligence] Get Error:', error);
     return NextResponse.json({ error: message || 'Failed to get analysis' }, { status: 500 });
   }
 }

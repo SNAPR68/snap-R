@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { teamUpdateSchema, parseBody } from '@/lib/validation/schemas'
 
+import { logger } from '@/lib/logger';
 export const dynamic = 'force-dynamic';
 
 // GET - Get team details
@@ -31,8 +33,8 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
       .eq('team_id', id);
 
     return NextResponse.json({ team: { ...team, member_count: count } });
-  } catch (error) {
-    console.error('Get team error:', error);
+  } catch (error: unknown) {
+    logger.error('Get team error:', error);
     return NextResponse.json({ error: 'Server error' }, { status: 500 });
   }
 }
@@ -48,7 +50,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const updates = await req.json();
+    const updates = await req.json(); const validated = parseBody(teamUpdateSchema, updates); if (!validated.success) { return NextResponse.json({ error: validated.error, details: validated.details }, { status: 400 }); }
     
     // Only allow updating certain fields
     const allowedFields = ['name', 'logo_url', 'settings'];
@@ -73,8 +75,8 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     }
 
     return NextResponse.json({ team });
-  } catch (error) {
-    console.error('Update team error:', error);
+  } catch (error: unknown) {
+    logger.error('Update team error:', error);
     return NextResponse.json({ error: 'Server error' }, { status: 500 });
   }
 }
@@ -101,8 +103,8 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
     }
 
     return NextResponse.json({ success: true });
-  } catch (error) {
-    console.error('Delete team error:', error);
+  } catch (error: unknown) {
+    logger.error('Delete team error:', error);
     return NextResponse.json({ error: 'Server error' }, { status: 500 });
   }
 }

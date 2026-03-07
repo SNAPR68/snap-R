@@ -1,5 +1,6 @@
 'use client'
 
+import Image from 'next/image';
 import { useState, useEffect, useCallback } from 'react'
 import {
   Camera, Users, Send, Link, Copy, Check, ChevronDown, ChevronUp,
@@ -307,7 +308,7 @@ function ListingCard({ listing, clients, primaryColor, onRefresh }: ListingCardP
         <div style={{ width: 72, height: 52, borderRadius: 8, overflow: 'hidden', background: '#1A1A1A', flexShrink: 0 }}>
           {listing.hero_url ? (
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={listing.hero_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+            <Image src={listing.hero_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} unoptimized />
           ) : (
             <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <Camera size={20} style={{ color: '#333' }} />

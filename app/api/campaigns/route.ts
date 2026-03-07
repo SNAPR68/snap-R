@@ -17,7 +17,9 @@ import {
   LISTING_STATUSES,
 } from '@/lib/campaigns/engine';
 import { processQueueItem, processCampaignContent } from '@/lib/campaigns/content-generator';
+import { campaignsSchema, parseBody } from '@/lib/validation/schemas'
 
+import { logger } from '@/lib/logger';
 // GET - Fetch campaigns, queue, or triggers
 export async function GET(request: NextRequest) {
   try {
@@ -147,7 +149,7 @@ export async function GET(request: NextRequest) {
     }
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Failed to fetch data';
-    console.error('Campaign GET error:', message);
+    logger.error('Campaign GET error:', message);
     return NextResponse.json({ error: 'Failed to fetch data' }, { status: 500 });
   }
 }
@@ -164,6 +166,7 @@ export async function POST(request: NextRequest) {
 
     const userId = user.id;
     const body = await request.json();
+    const validated = parseBody(campaignsSchema, body); if (!validated.success) { return NextResponse.json({ error: validated.error, details: validated.details }, { status: 400 }); }
     const { action } = body;
 
     switch (action) {
@@ -267,7 +270,7 @@ export async function POST(request: NextRequest) {
     }
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Failed to process request';
-    console.error('Campaign POST error:', message);
+    logger.error('Campaign POST error:', message);
     return NextResponse.json({ error: 'Failed to process request' }, { status: 500 });
   }
 }

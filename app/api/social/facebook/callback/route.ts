@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 export const dynamic = "force-dynamic"
 import { createClient } from '@/lib/supabase/server'
 
+import { logger } from '@/lib/logger';
 const FB_APP_ID = process.env.NEXT_PUBLIC_FACEBOOK_APP_ID
 const FB_APP_SECRET = process.env.FACEBOOK_APP_SECRET
 const REDIRECT_URI = process.env.NEXT_PUBLIC_APP_URL + '/api/social/facebook/callback'
@@ -22,25 +23,28 @@ export async function GET(request: Request) {
 
     // Exchange code for access token
     const tokenRes = await fetch(
-      `https://graph.facebook.com/v18.0/oauth/access_token?client_id=${FB_APP_ID}&redirect_uri=${encodeURIComponent(REDIRECT_URI)}&client_secret=${FB_APP_SECRET}&code=${code}`
+      `https://graph.facebook.com/v18.0/oauth/access_token?client_id=${FB_APP_ID}&redirect_uri=${encodeURIComponent(REDIRECT_URI)}&client_secret=${FB_APP_SECRET}&code=${code}`,
+      { signal: AbortSignal.timeout(15000) }
     )
     const tokenData = await tokenRes.json()
 
     if (!tokenData.access_token) {
-      console.error('Failed to get access token:', tokenData)
+      logger.error('Failed to get access token:', tokenData)
       return NextResponse.redirect(new URL('/dashboard/content-studio?error=token_failed', request.url))
     }
 
     // Get long-lived token
     const longTokenRes = await fetch(
-      `https://graph.facebook.com/v18.0/oauth/access_token?grant_type=fb_exchange_token&client_id=${FB_APP_ID}&client_secret=${FB_APP_SECRET}&fb_exchange_token=${tokenData.access_token}`
+      `https://graph.facebook.com/v18.0/oauth/access_token?grant_type=fb_exchange_token&client_id=${FB_APP_ID}&client_secret=${FB_APP_SECRET}&fb_exchange_token=${tokenData.access_token}`,
+      { signal: AbortSignal.timeout(15000) }
     )
     const longTokenData = await longTokenRes.json()
     const accessToken = longTokenData.access_token || tokenData.access_token
 
     // Get user's Facebook pages
     const pagesRes = await fetch(
-      `https://graph.facebook.com/v18.0/me/accounts?access_token=${accessToken}`
+      `https://graph.facebook.com/v18.0/me/accounts?access_token=${accessToken}`,
+      { signal: AbortSignal.timeout(15000) }
     )
     const pagesData = await pagesRes.json()
 
@@ -57,13 +61,15 @@ export async function GET(request: Request) {
       })
 
       const igRes = await fetch(
-        `https://graph.facebook.com/v18.0/${page.id}?fields=instagram_business_account&access_token=${page.access_token}`
+        `https://graph.facebook.com/v18.0/${page.id}?fields=instagram_business_account&access_token=${page.access_token}`,
+        { signal: AbortSignal.timeout(15000) }
       )
       const igData = await igRes.json()
 
       if (igData.instagram_business_account) {
         const igAccountRes = await fetch(
-          `https://graph.facebook.com/v18.0/${igData.instagram_business_account.id}?fields=username,name&access_token=${page.access_token}`
+          `https://graph.facebook.com/v18.0/${igData.instagram_business_account.id}?fields=username,name&access_token=${page.access_token}`,
+          { signal: AbortSignal.timeout(15000) }
         )
         const igAccount = await igAccountRes.json()
 
@@ -97,8 +103,8 @@ export async function GET(request: Request) {
     }
 
     return NextResponse.redirect(new URL('/dashboard/content-studio?connected=true', request.url))
-  } catch (error) {
-    console.error('Facebook callback error:', error)
+  } catch (error: unknown) {
+    logger.error('Facebook callback error:', error)
     return NextResponse.redirect(new URL('/dashboard/content-studio?error=callback_failed', request.url))
   }
 }

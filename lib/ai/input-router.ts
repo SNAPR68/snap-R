@@ -14,6 +14,7 @@
 
 import ExifReader from 'exifreader';
 
+import { logger } from '@/lib/logger';
 // ============================================
 // TYPES
 // ============================================
@@ -155,8 +156,8 @@ export async function parseExif(
       metadata.exposureValue = calculateEV(metadata.fNumber, metadata.exposureTime, metadata.iso);
     }
     
-  } catch (error) {
-    console.warn(`[InputRouter] Failed to parse EXIF for ${filename}:`, error);
+  } catch (error: unknown) {
+    logger.warn(`[InputRouter] Failed to parse EXIF for ${filename}:`, error);
   }
   
   return metadata;
@@ -200,14 +201,14 @@ export function detectBrackets(images: ImageMetadata[]): {
   brackets: BracketGroup[];
   singles: ImageMetadata[];
 } {
-  console.log(`[InputRouter] Detecting brackets in ${images.length} images`);
+  logger.info(`[InputRouter] Detecting brackets in ${images.length} images`);
   
   // Filter images with valid timestamps
   const withTimestamp = images.filter(img => img.timestamp);
   const withoutTimestamp = images.filter(img => !img.timestamp);
   
   if (withTimestamp.length === 0) {
-    console.log('[InputRouter] No EXIF timestamps found, treating all as singles');
+    logger.info('[InputRouter] No EXIF timestamps found, treating all as singles');
     return { brackets: [], singles: images };
   }
   
@@ -256,7 +257,7 @@ export function detectBrackets(images: ImageMetadata[]): {
     }
   }
   
-  console.log(`[InputRouter] Found ${brackets.length} bracket sets, ${singles.length} singles`);
+  logger.info(`[InputRouter] Found ${brackets.length} bracket sets, ${singles.length} singles`);
   
   return { brackets, singles };
 }
@@ -328,7 +329,7 @@ function validateBracketGroup(images: ImageMetadata[]): BracketGroup {
  * Route images to Simple or Pro pipeline
  */
 export function routeImages(images: ImageMetadata[]): RoutingResult {
-  console.log(`[InputRouter] Routing ${images.length} images`);
+  logger.info(`[InputRouter] Routing ${images.length} images`);
   
   // Detect brackets
   const { brackets, singles } = detectBrackets(images);
@@ -357,7 +358,7 @@ export function routeImages(images: ImageMetadata[]): RoutingResult {
     summary += `Basic enhancement + creative tools will be applied.`;
   }
   
-  console.log(`[InputRouter] ${summary}`);
+  logger.info(`[InputRouter] ${summary}`);
   
   return {
     mode,
@@ -380,7 +381,7 @@ export function routeImages(images: ImageMetadata[]): RoutingResult {
 export async function processUploadBatch(
   files: Array<{ buffer: Buffer; filename: string } | { filepath: string; filename: string }>
 ): Promise<RoutingResult> {
-  console.log(`[InputRouter] Processing batch of ${files.length} files`);
+  logger.info(`[InputRouter] Processing batch of ${files.length} files`);
   
   // Parse EXIF for all files
   const metadataPromises = files.map(file => {

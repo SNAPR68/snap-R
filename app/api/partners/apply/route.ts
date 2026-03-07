@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { adminSupabase } from '@/lib/supabase/admin';
 import { partnerApplySchema } from '@/lib/validation/schemas';
 
+import { logger } from '@/lib/logger';
 // Simple in-memory rate limiting (3 requests per IP per hour)
 const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
 
@@ -99,7 +100,7 @@ export async function POST(request: NextRequest) {
     }
 
     if (insertError || !data) {
-      console.error('Supabase error:', insertError);
+      logger.error('Supabase error:', insertError);
       return NextResponse.json(
         { error: 'Failed to submit application' },
         { status: 500 }
@@ -139,15 +140,16 @@ export async function POST(request: NextRequest) {
               </p>
             </div>`,
           }),
+                  signal: AbortSignal.timeout(15000),
         });
-        console.log('[Partners] Confirmation email sent to:', email);
+        logger.info('[Partners] Confirmation email sent to:', email);
       } catch (emailErr) {
-        console.error('[Partners] Confirmation email failed:', emailErr);
+        logger.error('[Partners] Confirmation email failed:', emailErr);
         // Don't fail the request if email fails
       }
     }
 
-    console.log('[Partners] Application submitted:', data.id, 'referral:', referralCode);
+    logger.info('[Partners] Application submitted:', data.id, 'referral:', referralCode);
 
     return NextResponse.json({
       success: true,
@@ -155,8 +157,8 @@ export async function POST(request: NextRequest) {
       id: data.id,
     });
 
-  } catch (error) {
-    console.error('Partner application error:', error);
+  } catch (error: unknown) {
+    logger.error('Partner application error:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

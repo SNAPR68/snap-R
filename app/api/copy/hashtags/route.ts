@@ -2,7 +2,9 @@ import { createClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
 import { generateHashtags, PropertyDetails } from '@/lib/ai/providers/gpt-copy'
 import { canGenerateCaption, shouldResetUsage } from '@/lib/content/limits'
+import { copyHashtagsSchema, parseBody } from '@/lib/validation/schemas'
 
+import { logger } from '@/lib/logger';
 export async function POST(request: NextRequest) {
   try {
     const supabase = await createClient()
@@ -53,6 +55,7 @@ export async function POST(request: NextRequest) {
 
     // Parse request body
     const body = await request.json()
+    const validated = parseBody(copyHashtagsSchema, body); if (!validated.success) { return NextResponse.json({ error: validated.error, details: validated.details }, { status: 400 }); }
     const property: PropertyDetails = body.property || {}
     const platform = body.platform || 'instagram'
     const count = body.count || 20
@@ -93,8 +96,8 @@ export async function POST(request: NextRequest) {
         (profile?.plan === 'pro' ? 50 : 10) - (captionsUsed + 1)
     })
 
-  } catch (error) {
-    console.error('Hashtag generation error:', error)
+  } catch (error: unknown) {
+    logger.error('Hashtag generation error:', error)
     return NextResponse.json({ error: 'Failed to generate hashtags' }, { status: 500 })
   }
 }

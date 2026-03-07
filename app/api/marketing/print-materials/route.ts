@@ -11,6 +11,7 @@ import { FeatureSheetDocument } from '@/lib/print/feature-sheet-template';
 import { fetchImageAsBase64, generateQrCodeDataUri } from '@/lib/print/pdf-utils';
 import type { PrintMaterialsInput, PrintBrandData, PrintPhotoData, PrintListingData } from '@/lib/print/types';
 
+import { logger } from '@/lib/logger';
 const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || 'https://snap-r.com';
 
 interface ListingRow {
@@ -269,7 +270,7 @@ export async function POST(request: NextRequest) {
     });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Unknown error';
-    console.error('Print materials generation error:', message);
+    logger.error('Print materials generation error:', message);
     return NextResponse.json({ error: 'Failed to generate print materials' }, { status: 500 });
   }
 }

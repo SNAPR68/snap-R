@@ -135,7 +135,7 @@ export async function generateCaption(request: CaptionRequest): Promise<Generate
       characterCount: data.caption.length,
       platform: request.platform
     }
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Caption generation error:', error)
     throw error
   }

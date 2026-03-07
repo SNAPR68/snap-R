@@ -1,9 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { reorderPhotosSchema, parseBody } from '@/lib/validation/schemas'
 
+import { logger } from '@/lib/logger';
 export async function POST(req: NextRequest) {
   try {
-    const { listingId, photoOrder } = await req.json();
+    const body = await req.json(); const validated = parseBody(reorderPhotosSchema, body); if (!validated.success) { return NextResponse.json({ error: validated.error, details: validated.details }, { status: 400 }); } const { listingId, photoOrder } = body;
 
     if (!listingId || !photoOrder || !Array.isArray(photoOrder)) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
@@ -23,8 +25,8 @@ export async function POST(req: NextRequest) {
     await Promise.all(updates);
 
     return NextResponse.json({ success: true });
-  } catch (error) {
-    console.error('Reorder photos error:', error);
+  } catch (error: unknown) {
+    logger.error('Reorder photos error:', error);
     return NextResponse.json({ error: 'Server error' }, { status: 500 });
   }
 }

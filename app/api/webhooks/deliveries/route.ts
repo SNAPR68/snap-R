@@ -9,6 +9,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { adminSupabase } from '@/lib/supabase/admin'
 
+import { logger } from '@/lib/logger';
 export async function GET(request: NextRequest) {
   try {
     const supabase = await createClient()
@@ -60,7 +61,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ deliveries: deliveries || [] })
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Failed to fetch deliveries'
-    console.error('[WebhookDeliveries] GET error:', message)
+    logger.error('[WebhookDeliveries] GET error:', message)
     return NextResponse.json({ error: 'Failed to fetch deliveries' }, { status: 500 })
   }
 }

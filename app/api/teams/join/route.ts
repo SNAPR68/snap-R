@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 
+import { logger } from '@/lib/logger';
 export const dynamic = 'force-dynamic';
 
 // GET - Accept invite via token
@@ -73,7 +74,7 @@ export async function GET(req: NextRequest) {
       });
 
     if (memberError) {
-      console.error('Join team error:', memberError);
+      logger.error('Join team error:', memberError);
       return NextResponse.redirect(new URL('/dashboard?error=join_failed', req.url));
     }
 
@@ -90,8 +91,8 @@ export async function GET(req: NextRequest) {
       .eq('id', user.id);
 
     return NextResponse.redirect(new URL(`/dashboard/team?id=${invite.team_id}&joined=true`, req.url));
-  } catch (error) {
-    console.error('Join team error:', error);
+  } catch (error: unknown) {
+    logger.error('Join team error:', error);
     return NextResponse.redirect(new URL('/dashboard?error=server_error', req.url));
   }
 }

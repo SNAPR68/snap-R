@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { adminSupabase } from '@/lib/supabase/admin';
 
+import { logger } from '@/lib/logger';
 export async function GET(
   req: NextRequest,
   { params }: { params: { platform: string } }
@@ -31,7 +32,7 @@ export async function GET(
   }
 
   if (error) {
-    console.error('OAuth error:', error, errorDescription);
+    logger.error('OAuth error:', error, errorDescription);
     return NextResponse.redirect(`${redirectUrl}?error=${encodeURIComponent(errorDescription || error)}`);
   }
 
@@ -74,7 +75,7 @@ export async function GET(
     }
 
     if (stateUserId !== user.id) {
-      console.error('OAuth CSRF mismatch:', { stateUserId, userId: user.id });
+      logger.error('OAuth CSRF mismatch:', { stateUserId, userId: user.id });
       return NextResponse.redirect(`${redirectUrl}?error=OAuth state mismatch. Please try connecting again.`);
     }
 
@@ -91,7 +92,7 @@ export async function GET(
     return NextResponse.redirect(`${redirectUrl}?error=Unsupported platform`);
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : 'Connection failed';
-    console.error('OAuth callback error:', err);
+    logger.error('OAuth callback error:', err);
     return NextResponse.redirect(`${redirectUrl}?error=${encodeURIComponent(message)}`);
   }
 }

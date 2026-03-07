@@ -2,7 +2,9 @@ export const dynamic = 'force-dynamic';
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { analyzeImage } from '@/lib/ai/providers/openai-vision';
+import { analyzeSchema, parseBody } from '@/lib/validation/schemas'
 
+import { logger } from '@/lib/logger';
 /** Block private/internal IPs to prevent SSRF */
 function isUnsafeUrl(url: string): boolean {
   try {
@@ -28,7 +30,7 @@ function isUnsafeUrl(url: string): boolean {
 
 export async function POST(request: NextRequest) {
   try {
-    const { imageUrl } = await request.json();
+    const body = await request.json(); const validated = parseBody(analyzeSchema, body); if (!validated.success) { return NextResponse.json({ error: validated.error, details: validated.details }, { status: 400 }); } const { imageUrl } = body;
 
     if (!imageUrl) {
       return NextResponse.json({ error: 'Image URL required' }, { status: 400 });
@@ -53,7 +55,7 @@ export async function POST(request: NextRequest) {
     });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Internal server error';
-    console.error('[API/Analyze] Error:', error);
+    logger.error('[API/Analyze] Error:', error);
     return NextResponse.json({
       error: message || 'Analysis failed'
     }, { status: 500 });

@@ -14,6 +14,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { adminSupabase } from '@/lib/supabase/admin';
 import { refreshAccessToken, type SocialPlatform } from '@/lib/social/oauth-config';
 
+import { logger } from '@/lib/logger';
 const CRON_SECRET = process.env.CRON_SECRET;
 
 export async function GET(request: NextRequest) {
@@ -22,7 +23,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  console.log('[TokenRefresh] Starting proactive token refresh...');
+  logger.info('[TokenRefresh] Starting proactive token refresh...');
   const supabase = adminSupabase();
   const results = { refreshed: 0, failed: 0, skipped: 0 };
 
@@ -35,16 +36,16 @@ export async function GET(request: NextRequest) {
       .not('token_expires_at', 'is', null);
 
     if (fetchError) {
-      console.error('[TokenRefresh] Failed to fetch connections:', fetchError.message);
+      logger.error('[TokenRefresh] Failed to fetch connections:', fetchError.message);
       return NextResponse.json({ error: fetchError.message }, { status: 500 });
     }
 
     if (!connections || connections.length === 0) {
-      console.log('[TokenRefresh] No connections with token expiry found');
+      logger.info('[TokenRefresh] No connections with token expiry found');
       return NextResponse.json({ success: true, ...results });
     }
 
-    console.log(`[TokenRefresh] Checking ${connections.length} connections...`);
+    logger.info(`[TokenRefresh] Checking ${connections.length} connections...`);
 
     const buffer48h = Date.now() + 48 * 60 * 60 * 1000;
 
@@ -66,13 +67,13 @@ export async function GET(request: NextRequest) {
         : conn.refresh_token;
 
       if (!tokenToRefresh) {
-        console.warn(`[TokenRefresh] No ${isFacebookFamily ? 'access' : 'refresh'} token for ${platform} (user: ${conn.user_id})`);
+        logger.warn(`[TokenRefresh] No ${isFacebookFamily ? 'access' : 'refresh'} token for ${platform} (user: ${conn.user_id})`);
         results.skipped++;
         continue;
       }
 
       try {
-        console.log(`[TokenRefresh] Refreshing ${platform} token for user ${conn.user_id}...`);
+        logger.info(`[TokenRefresh] Refreshing ${platform} token for user ${conn.user_id}...`);
         const refreshed = await refreshAccessToken(platform, tokenToRefresh);
 
         const newExpiresAt = refreshed.expiresIn
@@ -88,11 +89,11 @@ export async function GET(request: NextRequest) {
           })
           .eq('id', conn.id);
 
-        console.log(`[TokenRefresh] Refreshed ${platform} token for user ${conn.user_id}`);
+        logger.info(`[TokenRefresh] Refreshed ${platform} token for user ${conn.user_id}`);
         results.refreshed++;
       } catch (err: unknown) {
         const message = err instanceof Error ? err.message : 'Unknown refresh error';
-        console.error(`[TokenRefresh] Failed to refresh ${platform} for user ${conn.user_id}:`, message);
+        logger.error(`[TokenRefresh] Failed to refresh ${platform} for user ${conn.user_id}:`, message);
 
         // Record the error on the connection for visibility
         await supabase
@@ -104,11 +105,11 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    console.log('[TokenRefresh] Done:', results);
+    logger.info('[TokenRefresh] Done:', results);
     return NextResponse.json({ success: true, ...results });
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : 'Unknown error';
-    console.error('[TokenRefresh] Fatal error:', message);
+    logger.error('[TokenRefresh] Fatal error:', message);
     return NextResponse.json({ error: message, ...results }, { status: 500 });
   }
 }

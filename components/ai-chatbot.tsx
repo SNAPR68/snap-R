@@ -60,7 +60,7 @@ export function AIChatbot() {
       } else {
         setMessages(prev => [...prev, { role: 'assistant', content: data.message }]);
       }
-    } catch (error) {
+    } catch (error: unknown) {
       setMessages(prev => [...prev, { 
         role: 'assistant', 
         content: "I'm sorry, something went wrong. Please try again later." 
@@ -91,7 +91,7 @@ export function AIChatbot() {
         setFeedbackMessage('');
         setFeedbackType(null);
       }, 2000);
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Feedback error:', error);
     }
   };

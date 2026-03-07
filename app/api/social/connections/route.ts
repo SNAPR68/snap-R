@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 
+import { logger } from '@/lib/logger';
 export async function GET() {
   try {
     const supabase = await createClient();
@@ -17,8 +18,8 @@ export async function GET() {
       .eq('is_active', true);
 
     return NextResponse.json({ connections: connections || [] });
-  } catch (error) {
-    console.error('Error fetching connections:', error);
+  } catch (error: unknown) {
+    logger.error('Error fetching connections:', error);
     return NextResponse.json({ connections: [] });
   }
 }

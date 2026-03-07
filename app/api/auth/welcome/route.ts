@@ -8,6 +8,7 @@ export const dynamic = 'force-dynamic';
 
 import { NextRequest, NextResponse } from 'next/server';
 import { Resend } from 'resend';
+import { authWelcomeSchema, parseBody } from '@/lib/validation/schemas'
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
@@ -19,7 +20,7 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const { email, name } = await request.json() as { email?: string; name?: string };
+    const body = await request.json(); const validated = parseBody(authWelcomeSchema, body); if (!validated.success) { return NextResponse.json({ error: validated.error, details: validated.details }, { status: 400 }); } const { email, name } = body;
 
     if (!email) {
       return NextResponse.json({ error: 'email required' }, { status: 400 });

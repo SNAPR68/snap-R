@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 
+import { logger } from '@/lib/logger';
 export async function POST(request: NextRequest) {
   try {
     const supabase = await createClient()
@@ -59,13 +60,14 @@ export async function POST(request: NextRequest) {
             description: caption || '',
             published: true,
           }),
+          signal: AbortSignal.timeout(30000),
         }
       )
       
       const result = await response.json()
       
       if (result.error) {
-        console.error('Facebook publish error:', result.error)
+        logger.error('Facebook publish error:', result.error)
         return NextResponse.json({ error: result.error.message }, { status: 400 })
       }
       
@@ -104,13 +106,14 @@ export async function POST(request: NextRequest) {
             video_url: videoUrl, // Must be public URL
             caption: caption || '',
           }),
+          signal: AbortSignal.timeout(30000),
         }
       )
       
       const container = await containerResponse.json()
       
       if (container.error) {
-        console.error('Instagram container error:', container.error)
+        logger.error('Instagram container error:', container.error)
         return NextResponse.json({ error: container.error.message }, { status: 400 })
       }
       
@@ -123,7 +126,8 @@ export async function POST(request: NextRequest) {
         await new Promise(r => setTimeout(r, 2000))
         
         const statusResponse = await fetch(
-          `https://graph.facebook.com/v18.0/${container.id}?fields=status_code&access_token=${accessToken}`
+          `https://graph.facebook.com/v18.0/${container.id}?fields=status_code&access_token=${accessToken}`,
+          { signal: AbortSignal.timeout(15000) }
         )
         const statusData = await statusResponse.json()
         status = statusData.status_code
@@ -144,13 +148,14 @@ export async function POST(request: NextRequest) {
             access_token: accessToken,
             creation_id: container.id,
           }),
+          signal: AbortSignal.timeout(15000),
         }
       )
       
       const publishResult = await publishResponse.json()
       
       if (publishResult.error) {
-        console.error('Instagram publish error:', publishResult.error)
+        logger.error('Instagram publish error:', publishResult.error)
         return NextResponse.json({ error: publishResult.error.message }, { status: 400 })
       }
       
@@ -171,8 +176,7 @@ export async function POST(request: NextRequest) {
     if (platform === 'linkedin') {
       // LinkedIn video publishing
       const linkedinId = connection.linkedin_id
-      const accessToken = connection.access_token
-      
+
       if (!linkedinId) {
         return NextResponse.json({ error: 'LinkedIn not connected' }, { status: 400 })
       }
@@ -184,8 +188,8 @@ export async function POST(request: NextRequest) {
     
     return NextResponse.json({ error: 'Platform not supported' }, { status: 400 })
     
-  } catch (error) {
-    console.error('Publish video error:', error)
+  } catch (error: unknown) {
+    logger.error('Publish video error:', error)
     return NextResponse.json({ error: 'Failed to publish video' }, { status: 500 })
   }
 }

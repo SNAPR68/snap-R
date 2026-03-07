@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 
+import { logger } from '@/lib/logger';
 export const dynamic = 'force-dynamic';
 
 export async function GET() {
@@ -65,7 +66,7 @@ export async function GET() {
     return NextResponse.json({ listings: result });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Server error';
-    console.error('[Approval Summary] Error:', message);
+    logger.error('[Approval Summary] Error:', message);
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }

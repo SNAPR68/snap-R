@@ -1,6 +1,6 @@
+/* eslint-disable @next/next/no-img-element */
+// Template renderer captures DOM via html2canvas — next/image cannot be used here.
 'use client'
-import { FacebookTemplateRenderer } from './facebook-renderer'
-import { VerticalTemplateRenderer } from './vertical-renderer'
 import { forwardRef } from 'react'
 
 interface PropertyData {
@@ -406,7 +406,7 @@ export const TemplateRenderer = forwardRef<HTMLDivElement, TemplateRendererProps
           </div>
           <div className="absolute inset-12 border-2 border-white/30" />
           <div className="absolute inset-0 flex flex-col items-center justify-center text-white text-center p-20">
-            <div className="text-lg tracking-[0.5em] mb-2 text-white/60">YOU'RE INVITED</div>
+            <div className="text-lg tracking-[0.5em] mb-2 text-white/60">YOU&apos;RE INVITED</div>
             <div className="text-5xl font-light mb-6">{headline || 'OPEN HOUSE'}</div>
             <div className="w-32 h-0.5 mb-8" style={{ backgroundColor: primaryColor }} />
             <div className="text-6xl font-bold mb-2" style={{ color: primaryColor }}>{openHouseDate || 'SAT & SUN'}</div>
@@ -825,7 +825,7 @@ export const TemplateRenderer = forwardRef<HTMLDivElement, TemplateRendererProps
             <div className="text-white/60 mb-6">{property.city}, {property.state}</div>
             <div className="text-4xl" style={{ color: primaryColor }}>{formatPrice(property.price || 0)}</div>
             <div className="mt-12 text-lg text-white/60">
-              Looking to buy or sell? Let's talk!
+              Looking to buy or sell? Let&apos;s talk!
             </div>
           </div>
           <div className="absolute bottom-8 left-0 right-0 text-center text-white">

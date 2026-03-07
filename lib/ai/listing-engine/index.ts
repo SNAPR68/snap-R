@@ -33,6 +33,7 @@ import {
 } from './types';
 import { ToolId } from '../router';
 
+import { logger } from '@/lib/logger';
 // ============================================
 // CONFIGURATION
 // ============================================
@@ -125,9 +126,9 @@ export async function prepareListing(
     validating: Number(process.env.AI_PROGRESS_VALIDATING || 96),
   };
 
-  console.log(`\n[ListingEngine] ========================================`);
-  console.log(`[ListingEngine] PREPARE LISTING (PREMIUM): ${listingId}`);
-  console.log(`[ListingEngine] ========================================\n`);
+  logger.info(`\n[ListingEngine] ========================================`);
+  logger.info(`[ListingEngine] PREPARE LISTING (PREMIUM): ${listingId}`);
+  logger.info(`[ListingEngine] ========================================\n`);
 
   const supabase = options.admin ? adminSupabase() : createClient();
 
@@ -145,7 +146,7 @@ export async function prepareListing(
         .single();
       planTier = (profile?.subscription_tier || profile?.plan || 'free') as string;
     } catch {
-      console.warn('[ListingEngine] Failed to read plan tier, defaulting to free');
+      logger.warn('[ListingEngine] Failed to read plan tier, defaulting to free');
     }
 
     // ========================================
@@ -162,11 +163,11 @@ export async function prepareListing(
     }
 
     if (photos.length > CONFIG.maxPhotos) {
-      console.warn(`[ListingEngine] Limiting to ${CONFIG.maxPhotos} photos`);
+      logger.warn(`[ListingEngine] Limiting to ${CONFIG.maxPhotos} photos`);
       photos.splice(CONFIG.maxPhotos);
     }
 
-    console.log(`[ListingEngine] Found ${photos.length} photos`);
+    logger.info(`[ListingEngine] Found ${photos.length} photos`);
 
     // ========================================
     // PHASE 2: ANALYZE PHOTOS (GPT-4 Vision)
@@ -199,7 +200,7 @@ export async function prepareListing(
     });
     phaseTimingsMs.analysisMs = Date.now() - analysisStart;
 
-    console.log(`[ListingEngine] Analysis complete`);
+    logger.info(`[ListingEngine] Analysis complete`);
 
     // ========================================
     // PHASE 3: DETERMINE LOCKED PRESETS
@@ -217,7 +218,7 @@ export async function prepareListing(
     const lockedPresets = determineLockedPresets(analyses);
     phaseTimingsMs.presetsMs = Date.now() - presetsStart;
 
-    console.log(`[ListingEngine] Presets locked:`, {
+    logger.info(`[ListingEngine] Presets locked:`, {
       sky: lockedPresets.skyPreset,
       twilight: lockedPresets.twilightPreset,
       staging: lockedPresets.stagingStyle,
@@ -240,7 +241,7 @@ export async function prepareListing(
     const strategy = buildListingStrategy(listingId, analyses);
     phaseTimingsMs.strategyMs = Date.now() - strategyStart;
 
-    console.log(`\n${getStrategySummary(strategy)}\n`);
+    logger.info(`\n${getStrategySummary(strategy)}\n`);
 
     // ========================================
     // PHASE 5: PROCESS PHOTOS (PREMIUM)
@@ -268,7 +269,7 @@ export async function prepareListing(
     });
     phaseTimingsMs.processingMs = Date.now() - processingStart;
 
-    console.log(`[ListingEngine] Processing complete: ${results.filter(r => r.success).length}/${results.length} successful`);
+    logger.info(`[ListingEngine] Processing complete: ${results.filter(r => r.success).length}/${results.length} successful`);
 
     // ========================================
     // PHASE 6: CONSISTENCY PASS
@@ -286,7 +287,7 @@ export async function prepareListing(
       const consistencyStart = Date.now();
       const consistency = await analyzeConsistency(results);
       phaseTimingsMs.consistencyMs = Date.now() - consistencyStart;
-      console.log(`\n${getConsistencyReport(consistency.metrics, consistency.adjustments, consistency.consistencyScore)}\n`);
+      logger.info(`\n${getConsistencyReport(consistency.metrics, consistency.adjustments, consistency.consistencyScore)}\n`);
     }
 
     // ========================================
@@ -310,7 +311,7 @@ export async function prepareListing(
     }
     phaseTimingsMs.validationMs = Date.now() - validationStart;
 
-    console.log(`\n${getValidationReport(validations)}\n`);
+    logger.info(`\n${getValidationReport(validations)}\n`);
 
     // ========================================
     // PHASE 8: FINALIZE
@@ -421,13 +422,13 @@ export async function prepareListing(
     const totalTime = Date.now() - startTime;
     phaseTimingsMs.totalMs = totalTime;
 
-    console.log(`\n[ListingEngine] ========================================`);
-    console.log(`[ListingEngine] COMPLETE: ${finalStatus.toUpperCase()}`);
-    console.log(`[ListingEngine] Time: ${(totalTime / 1000).toFixed(1)}s`);
-    console.log(`[ListingEngine] Success: ${successfulPhotos}/${results.length}`);
-    console.log(`[ListingEngine] Confidence: ${overallConfidence}%`);
-    console.log(`[ListingEngine] Presets used: sky=${lockedPresets.skyPreset}, twilight=${lockedPresets.twilightPreset}`);
-    console.log(`[ListingEngine] ========================================\n`);
+    logger.info(`\n[ListingEngine] ========================================`);
+    logger.info(`[ListingEngine] COMPLETE: ${finalStatus.toUpperCase()}`);
+    logger.info(`[ListingEngine] Time: ${(totalTime / 1000).toFixed(1)}s`);
+    logger.info(`[ListingEngine] Success: ${successfulPhotos}/${results.length}`);
+    logger.info(`[ListingEngine] Confidence: ${overallConfidence}%`);
+    logger.info(`[ListingEngine] Presets used: sky=${lockedPresets.skyPreset}, twilight=${lockedPresets.twilightPreset}`);
+    logger.info(`[ListingEngine] ========================================\n`);
 
     return {
       listingId,
@@ -452,7 +453,7 @@ export async function prepareListing(
 
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Processing failed';
-    console.error(`[ListingEngine] FAILED:`, message);
+    logger.error(`[ListingEngine] FAILED:`, message);
 
     await updateListingStatus(supabase, listingId, 'failed');
 
@@ -547,7 +548,7 @@ async function updateListingStatus(
     .eq('id', listingId);
 
   if (error) {
-    console.error(`[ListingEngine] Failed to update preparation_status:`, error.message);
+    logger.error(`[ListingEngine] Failed to update preparation_status:`, error.message);
   }
 }
 
@@ -601,7 +602,7 @@ async function finalizeListing(
     .eq('id', listingId);
 
   if (error) {
-    console.error(`[ListingEngine] Failed to finalize listing:`, error.message);
+    logger.error(`[ListingEngine] Failed to finalize listing:`, error.message);
   }
 }
 
@@ -679,7 +680,7 @@ function reportProgress(
     });
   }
 
-  console.log(`[ListingEngine] ${message}`);
+  logger.info(`[ListingEngine] ${message}`);
 }
 
 // ============================================

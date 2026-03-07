@@ -2,7 +2,9 @@ import { createClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
 import { generateCaption, PropertyDetails, CaptionOptions } from '@/lib/ai/providers/gpt-copy'
 import { canGenerateCaption, shouldResetUsage } from '@/lib/content/limits'
+import { copyCaptionSchema, parseBody } from '@/lib/validation/schemas'
 
+import { logger } from '@/lib/logger';
 export async function POST(request: NextRequest) {
   try {
     const supabase = await createClient()
@@ -42,6 +44,7 @@ export async function POST(request: NextRequest) {
 
     // Parse request body
     const body = await request.json()
+    const validated = parseBody(copyCaptionSchema, body); if (!validated.success) { return NextResponse.json({ error: validated.error, details: validated.details }, { status: 400 }); }
     
     const property: PropertyDetails = body.property || {}
     const contentType = body.contentType || 'just_listed'
@@ -81,8 +84,8 @@ export async function POST(request: NextRequest) {
         (plan === 'pro' ? 50 : 10) - (captionsUsed + 1)
     })
 
-  } catch (error) {
-    console.error('Caption generation error:', error)
+  } catch (error: unknown) {
+    logger.error('Caption generation error:', error)
     return NextResponse.json({ error: 'Failed to generate caption' }, { status: 500 })
   }
 }

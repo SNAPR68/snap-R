@@ -16,6 +16,7 @@ export const maxDuration = 60; // ZIP generation may take time
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 
+import { logger } from '@/lib/logger';
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
@@ -112,7 +113,7 @@ export async function GET(request: NextRequest) {
 
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Internal server error';
-    console.error('[MLS Export API] Error:', message);
+    logger.error('[MLS Export API] Error:', message);
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }

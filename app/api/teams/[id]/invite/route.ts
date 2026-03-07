@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { teamInviteSchema, parseBody } from '@/lib/validation/schemas'
 
+import { logger } from '@/lib/logger';
 export const dynamic = 'force-dynamic';
 
 // GET - List pending invites
@@ -26,8 +28,8 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     }
 
     return NextResponse.json({ invites });
-  } catch (error) {
-    console.error('Get invites error:', error);
+  } catch (error: unknown) {
+    logger.error('Get invites error:', error);
     return NextResponse.json({ error: 'Server error' }, { status: 500 });
   }
 }
@@ -43,7 +45,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { email, role = 'editor' } = await req.json();
+    const body = await req.json(); const validated = parseBody(teamInviteSchema, body); if (!validated.success) { return NextResponse.json({ error: validated.error, details: validated.details }, { status: 400 }); } const { email, role = 'editor' } = body;
 
     if (!email || !email.includes('@')) {
       return NextResponse.json({ error: 'Valid email required' }, { status: 400 });
@@ -100,7 +102,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       .single();
 
     if (error) {
-      console.error('Create invite error:', error);
+      logger.error('Create invite error:', error);
       return NextResponse.json({ error: 'Failed to create invite' }, { status: 500 });
     }
 
@@ -108,8 +110,8 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     const inviteUrl = `${process.env.NEXT_PUBLIC_APP_URL}/api/teams/join?token=${invite.token}`;
 
     return NextResponse.json({ invite: { ...invite, url: inviteUrl } });
-  } catch (error) {
-    console.error('Create invite error:', error);
+  } catch (error: unknown) {
+    logger.error('Create invite error:', error);
     return NextResponse.json({ error: 'Server error' }, { status: 500 });
   }
 }
@@ -138,8 +140,8 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
     }
 
     return NextResponse.json({ success: true });
-  } catch (error) {
-    console.error('Cancel invite error:', error);
+  } catch (error: unknown) {
+    logger.error('Cancel invite error:', error);
     return NextResponse.json({ error: 'Server error' }, { status: 500 });
   }
 }

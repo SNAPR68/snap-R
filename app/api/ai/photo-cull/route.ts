@@ -2,7 +2,9 @@ export const dynamic = 'force-dynamic';
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { runCullSession, calculateCullingCost, generateMLSExport } from '@/lib/ai/photo-culler';
+import { photoCullSchema, parseBody } from '@/lib/validation/schemas'
 
+import { logger } from '@/lib/logger';
 export const maxDuration = 300; // 5 minutes for large batches
 
 export async function POST(request: NextRequest) {
@@ -17,6 +19,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
+    const validated = parseBody(photoCullSchema, body); if (!validated.success) { return NextResponse.json({ error: validated.error, details: validated.details }, { status: 400 }); }
     const { 
       listingId, 
       photoUrls, 
@@ -80,7 +83,7 @@ export async function POST(request: NextRequest) {
       }, { status: 400 });
     }
 
-    console.log(`[Photo Culling] Starting session: ${photos.length} photos, target: ${targetCount}`);
+    logger.info(`[Photo Culling] Starting session: ${photos.length} photos, target: ${targetCount}`);
 
     // Create session record
     const { data: session, error: sessionError } = await supabase
@@ -97,7 +100,7 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (sessionError) {
-      console.error('[Photo Culling] Session create error:', sessionError);
+      logger.error('[Photo Culling] Session create error:', sessionError);
       return NextResponse.json({ error: 'Failed to create session' }, { status: 500 });
     }
 
@@ -132,7 +135,7 @@ export async function POST(request: NextRequest) {
         .insert(photoInserts);
 
       if (photosError) {
-        console.error('[Photo Culling] Photos insert error:', photosError);
+        logger.error('[Photo Culling] Photos insert error:', photosError);
       }
 
       // Update session with results
@@ -166,14 +169,14 @@ export async function POST(request: NextRequest) {
             processing_time_ms: result.processingTime,
           },
         });
-      } catch (e) {
-        console.error('[Photo Culling] Cost tracking error:', e);
+      } catch (error: unknown) {
+        logger.error('[Photo Culling] Cost tracking error:', error);
       }
 
       // Generate MLS export data
       const mlsExport = generateMLSExport(result.selectedPhotos, listingAddress);
 
-      console.log(`[Photo Culling] Complete in ${(result.processingTime / 1000).toFixed(1)}s`);
+      logger.info(`[Photo Culling] Complete in ${(result.processingTime / 1000).toFixed(1)}s`);
 
       return NextResponse.json({
         success: true,
@@ -205,7 +208,7 @@ export async function POST(request: NextRequest) {
 
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Internal server error';
-    console.error('[Photo Culling] Error:', error);
+    logger.error('[Photo Culling] Error:', error);
     return NextResponse.json({ 
       error: message || 'Culling failed' 
     }, { status: 500 });
@@ -274,7 +277,7 @@ export async function GET(request: NextRequest) {
 
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Internal server error';
-    console.error('[Photo Culling] GET Error:', error);
+    logger.error('[Photo Culling] GET Error:', error);
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }

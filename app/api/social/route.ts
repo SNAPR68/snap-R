@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { socialManageSchema, parseBody } from '@/lib/validation/schemas'
 
+import { logger } from '@/lib/logger';
 // GET - Fetch connected social accounts
 export async function GET() {
   try {
@@ -14,8 +16,8 @@ export async function GET() {
       .eq('user_id', user.id)
 
     return NextResponse.json({ connections: connections || [] })
-  } catch (error) {
-    console.error('Error fetching social connections:', error)
+  } catch (error: unknown) {
+    logger.error('Error fetching social connections:', error)
     return NextResponse.json({ error: 'Failed to fetch connections' }, { status: 500 })
   }
 }
@@ -27,7 +29,7 @@ export async function DELETE(request: Request) {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-    const { platform } = await request.json()
+    const body = await request.json(); const validated = parseBody(socialManageSchema, body); if (!validated.success) { return NextResponse.json({ error: validated.error, details: validated.details }, { status: 400 }); } const { platform } = body;
 
     await supabase
       .from('social_connections')
@@ -36,8 +38,8 @@ export async function DELETE(request: Request) {
       .eq('platform', platform)
 
     return NextResponse.json({ success: true })
-  } catch (error) {
-    console.error('Error disconnecting:', error)
+  } catch (error: unknown) {
+    logger.error('Error disconnecting:', error)
     return NextResponse.json({ error: 'Failed to disconnect' }, { status: 500 })
   }
 }

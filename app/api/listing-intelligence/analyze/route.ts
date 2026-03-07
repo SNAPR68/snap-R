@@ -2,7 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 
 import { analyzeListingPhotos, calculateAnalysisCost } from '@/lib/listing-intelligence/analyzer';
+import { listingIntelligenceAnalyzeSchema, parseBody } from '@/lib/validation/schemas'
 
+import { logger } from '@/lib/logger';
 export const maxDuration = 300;
 
 export async function POST(request: NextRequest) {
@@ -15,6 +17,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
+    const validated = parseBody(listingIntelligenceAnalyzeSchema, body); if (!validated.success) { return NextResponse.json({ error: validated.error, details: validated.details }, { status: 400 }); }
     const { photoUrls, listingId } = body;
 
     if (!photoUrls || !Array.isArray(photoUrls) || photoUrls.length === 0) {
@@ -37,7 +40,7 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (createError) {
-      console.error('[Listing Intelligence] Create error:', createError);
+      logger.error('[Listing Intelligence] Create error:', createError);
       return NextResponse.json({ error: 'Failed to create analysis record' }, { status: 500 });
     }
 
@@ -67,7 +70,7 @@ export async function POST(request: NextRequest) {
         .insert(photoScoreInserts)
         .select();
 
-      if (scoresError) console.error('[Listing Intelligence] Scores error:', scoresError);
+      if (scoresError) logger.error('[Listing Intelligence] Scores error:', scoresError);
 
       const recommendationInserts: Array<Record<string, unknown>> = [];
       result.photoScores.forEach(photo => {
@@ -92,7 +95,7 @@ export async function POST(request: NextRequest) {
         const { error: recError } = await supabase
           .from('enhancement_recommendations')
           .insert(recommendationInserts);
-        if (recError) console.error('[Listing Intelligence] Recommendations error:', recError);
+        if (recError) logger.error('[Listing Intelligence] Recommendations error:', recError);
       }
 
       await supabase
@@ -122,8 +125,8 @@ export async function POST(request: NextRequest) {
           cost: cost,
           metadata: { analysis_id: analysis.id, photo_count: photoUrls.length },
         });
-      } catch (e) {
-        console.error('[Listing Intelligence] Cost tracking error:', e);
+      } catch (error: unknown) {
+        logger.error('[Listing Intelligence] Cost tracking error:', error);
       }
 
       return NextResponse.json({
@@ -155,7 +158,7 @@ export async function POST(request: NextRequest) {
 
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Internal server error';
-    console.error('[Listing Intelligence] API Error:', error);
+    logger.error('[Listing Intelligence] API Error:', error);
     return NextResponse.json({ error: message || 'Analysis failed' }, { status: 500 });
   }
 }

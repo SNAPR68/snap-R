@@ -13,6 +13,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import type { SupabaseClient } from '@supabase/supabase-js';
 
+import { logger } from '@/lib/logger';
 function getSupabase(): SupabaseClient {
   return createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -33,7 +34,7 @@ export async function POST(request: NextRequest) {
     const from = formData.get('From')?.toString() || '';
     const body = formData.get('Body')?.toString().trim().toUpperCase() || '';
 
-    console.log('[WhatsApp Webhook] From:', from, 'Body:', body);
+    logger.info('[WhatsApp Webhook] From:', from, 'Body:', body);
 
     const phone = from.replace('whatsapp:', '');
 
@@ -53,7 +54,7 @@ export async function POST(request: NextRequest) {
 
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Unknown error';
-    console.error('[WhatsApp Webhook] Error:', message);
+    logger.error('[WhatsApp Webhook] Error:', message);
     return respondWithMessage('Sorry, something went wrong. Please try again.');
   }
 }

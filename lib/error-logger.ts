@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 
+import { logger } from '@/lib/logger';
 const getSupabase = () => {
   if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
     return null;
@@ -56,7 +57,7 @@ export async function logEvent({
       await sendAlertEmail(source, message, metadata);
     }
   } catch {
-    console.error('[ErrorLogger] Failed to log event');
+    logger.error('[ErrorLogger] Failed to log event');
   }
 }
 
@@ -114,6 +115,6 @@ async function sendAlertEmail(
       `,
     });
   } catch {
-    console.error('[Alert] Failed to send critical alert email');
+    logger.error('[Alert] Failed to send critical alert email');
   }
 }

@@ -5,6 +5,7 @@ import { addWatermark, requiresWatermark, getWatermarkText } from './watermark';
 import { generateResoMetadata, embedMetadata, createXmpSidecar } from './metadata';
 import { generateDisclosure, generatePhotoDescription } from './disclosure';
 
+import { logger } from '@/lib/logger';
 export interface ExportPhoto {
   url: string;
   toolId: string;
@@ -95,8 +96,8 @@ export async function generateMlsExportPackage(
     includeXmpSidecars = true,
   } = options;
 
-  console.log('[MLS Export] Starting package generation');
-  console.log('[MLS Export] MLS:', mlsId, '| Photos:', photos.length);
+  logger.info('[MLS Export] Starting package generation');
+  logger.info('[MLS Export] MLS:', mlsId, '| Photos:', photos.length);
 
   const mlsSpec = getMlsSpec(mlsId);
   const errors: string[] = [];
@@ -108,7 +109,7 @@ export async function generateMlsExportPackage(
   
   archive.on('data', (chunk) => chunks.push(chunk));
   archive.on('error', (err) => {
-    console.error('[MLS Export] Archive error:', err);
+    logger.error('[MLS Export] Archive error:', err);
     errors.push('Archive error: ' + err.message);
   });
 
@@ -120,40 +121,40 @@ export async function generateMlsExportPackage(
     const photo = photos[i];
     
     try {
-      console.log('[MLS Export] Processing photo', i + 1, 'of', photos.length);
-      console.log('[MLS Export] URL:', photo.url ? photo.url.substring(0, 80) + '...' : 'MISSING');
+      logger.info('[MLS Export] Processing photo', i + 1, 'of', photos.length);
+      logger.info('[MLS Export] URL:', photo.url ? photo.url.substring(0, 80) + '...' : 'MISSING');
       
       if (!photo.url) {
         const errMsg = 'Missing URL for ' + photo.filename;
-        console.error('[MLS Export]', errMsg);
+        logger.error('[MLS Export]', errMsg);
         errors.push(errMsg);
         continue;
       }
 
       // Fetch image
-      const response = await fetch(photo.url);
-      console.log('[MLS Export] Fetch response:', response.status, response.statusText);
+      const response = await fetch(photo.url, { signal: AbortSignal.timeout(15000) });
+      logger.info('[MLS Export] Fetch response:', response.status, response.statusText);
       
       if (!response.ok) {
         const errMsg = 'Failed to fetch ' + photo.filename + ': ' + response.status + ' ' + response.statusText;
-        console.error('[MLS Export]', errMsg);
+        logger.error('[MLS Export]', errMsg);
         errors.push(errMsg);
         continue;
       }
       
       const arrayBuffer = await response.arrayBuffer();
       const imageBuffer = Buffer.from(arrayBuffer);
-      console.log('[MLS Export] Image fetched, size:', imageBuffer.length, 'bytes');
+      logger.info('[MLS Export] Image fetched, size:', imageBuffer.length, 'bytes');
       
       // Process for MLS compliance
-      console.log('[MLS Export] Processing image for MLS compliance...');
+      logger.info('[MLS Export] Processing image for MLS compliance...');
       const processedBuffer = await processImageForMls(imageBuffer, photo.toolId, mlsSpec);
-      console.log('[MLS Export] Processed, new size:', processedBuffer.length, 'bytes');
+      logger.info('[MLS Export] Processed, new size:', processedBuffer.length, 'bytes');
       
       // Add to archive
       const filename = 'photos/' + String(i + 1).padStart(2, '0') + '_' + photo.filename;
       archive.append(processedBuffer, { name: filename });
-      console.log('[MLS Export] Added to archive:', filename);
+      logger.info('[MLS Export] Added to archive:', filename);
       
       // Generate XMP sidecar if requested
       if (includeXmpSidecars) {
@@ -175,17 +176,16 @@ export async function generateMlsExportPackage(
       });
       
       processedCount++;
-      console.log('[MLS Export] Photo', i + 1, 'complete');
+      logger.info('[MLS Export] Photo', i + 1, 'complete');
       
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : 'Upload failed';
       const errMsg = 'Error processing ' + photo.filename + ': ' + (err instanceof Error ? err.message : String(err));
-      console.error('[MLS Export]', errMsg);
+      logger.error('[MLS Export]', errMsg);
       errors.push(errMsg);
     }
   }
 
-  console.log('[MLS Export] All photos processed. Success:', processedCount, '| Errors:', errors.length);
+  logger.info('[MLS Export] All photos processed. Success:', processedCount, '| Errors:', errors.length);
 
   // Generate disclosure document
   const disclosure = generateDisclosure({
@@ -235,24 +235,24 @@ Questions? Contact support@snap-r.com
   archive.append(readme, { name: 'README.txt' });
 
   // Finalize archive
-  console.log('[MLS Export] Finalizing archive...');
+  logger.info('[MLS Export] Finalizing archive...');
   await archive.finalize();
   
   // Wait for all chunks with timeout
   await new Promise<void>((resolve) => {
     archive.on('end', () => {
-      console.log('[MLS Export] Archive finalized');
+      logger.info('[MLS Export] Archive finalized');
       resolve();
     });
     // Timeout after 30 seconds
     setTimeout(() => {
-      console.log('[MLS Export] Archive timeout - resolving anyway');
+      logger.info('[MLS Export] Archive timeout - resolving anyway');
       resolve();
     }, 30000);
   });
 
   const zipBuffer = Buffer.concat(chunks);
-  console.log('[MLS Export] ZIP created, size:', zipBuffer.length, 'bytes');
+  logger.info('[MLS Export] ZIP created, size:', zipBuffer.length, 'bytes');
 
   return {
     success: errors.length === 0 || processedCount > 0,

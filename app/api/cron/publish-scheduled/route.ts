@@ -29,6 +29,7 @@ import {
 import { refreshAccessToken, type SocialPlatform } from '@/lib/social/oauth-config';
 import { dispatchWebhookEvent } from '@/lib/webhooks/dispatch';
 
+import { logger } from '@/lib/logger';
 const CRON_SECRET = process.env.CRON_SECRET;
 
 interface PublishResult {
@@ -45,7 +46,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  console.log('[PublishCron] Starting scheduled post publisher...');
+  logger.info('[PublishCron] Starting scheduled post publisher...');
   const supabase = adminSupabase();
   const results = { published: 0, failed: 0, skipped: 0 };
 
@@ -85,14 +86,14 @@ export async function GET(request: NextRequest) {
             }
           }
           if (backfilled > 0) {
-            console.log(`[PublishCron] Backfilled video_url for ${backfilled} scheduled post(s)`);
+            logger.info(`[PublishCron] Backfilled video_url for ${backfilled} scheduled post(s)`);
           }
         }
       }
     }
   } catch (backfillError: unknown) {
     // Non-critical — log and continue with publishing
-    console.warn('[PublishCron] Video URL backfill error:', backfillError instanceof Error ? backfillError.message : backfillError);
+    logger.warn('[PublishCron] Video URL backfill error:', backfillError instanceof Error ? backfillError.message : backfillError);
   }
 
   // ── Campaign Queue → Publishing Bridge ───────────────────────────
@@ -148,7 +149,7 @@ export async function GET(request: NextRequest) {
                 .insert(insertPayload);
 
               if (insertError) {
-                console.error(`[PublishCron] Campaign bridge insert error:`, insertError.message);
+                logger.error(`[PublishCron] Campaign bridge insert error:`, insertError.message);
                 continue;
               }
               break;
@@ -200,7 +201,7 @@ export async function GET(request: NextRequest) {
                   }),
                   signal: AbortSignal.timeout(15000),
                 }).catch((videoErr: unknown) => {
-                  console.warn('[PublishCron] Campaign video trigger error:',
+                  logger.warn('[PublishCron] Campaign video trigger error:',
                     videoErr instanceof Error ? videoErr.message : videoErr);
                 });
               }
@@ -210,12 +211,12 @@ export async function GET(request: NextRequest) {
             case 'email': {
               // Email sending not wired into cron yet — mark as published
               // (content was generated and is available in campaign dashboard)
-              console.log(`[PublishCron] Email campaign item ${item.id} — content generated, manual send required`);
+              logger.info(`[PublishCron] Email campaign item ${item.id} — content generated, manual send required`);
               break;
             }
 
             default:
-              console.warn(`[PublishCron] Unknown campaign content_type: ${item.content_type}`);
+              logger.warn(`[PublishCron] Unknown campaign content_type: ${item.content_type}`);
               break;
           }
 
@@ -244,7 +245,7 @@ export async function GET(request: NextRequest) {
           bridged++;
         } catch (itemError: unknown) {
           const itemMsg = itemError instanceof Error ? itemError.message : 'Unknown error';
-          console.error(`[PublishCron] Campaign item ${item.id} error:`, itemMsg);
+          logger.error(`[PublishCron] Campaign item ${item.id} error:`, itemMsg);
 
           // Mark as failed so it doesn't retry forever
           await supabase
@@ -255,7 +256,7 @@ export async function GET(request: NextRequest) {
       }
 
       if (bridged > 0) {
-        console.log(`[PublishCron] Processed ${bridged} campaign queue item(s)`);
+        logger.info(`[PublishCron] Processed ${bridged} campaign queue item(s)`);
       }
 
       // Check if any campaigns are now fully completed
@@ -263,7 +264,7 @@ export async function GET(request: NextRequest) {
     }
   } catch (campaignBridgeError: unknown) {
     // Non-critical — log and continue with publishing
-    console.warn('[PublishCron] Campaign bridge error:', campaignBridgeError instanceof Error ? campaignBridgeError.message : campaignBridgeError);
+    logger.warn('[PublishCron] Campaign bridge error:', campaignBridgeError instanceof Error ? campaignBridgeError.message : campaignBridgeError);
   }
 
   try {
@@ -277,16 +278,16 @@ export async function GET(request: NextRequest) {
       .limit(50);
 
     if (fetchError) {
-      console.error('[PublishCron] Failed to fetch scheduled posts:', fetchError.message);
+      logger.error('[PublishCron] Failed to fetch scheduled posts:', fetchError.message);
       return NextResponse.json({ error: fetchError.message }, { status: 500 });
     }
 
     if (!duePosts || duePosts.length === 0) {
-      console.log('[PublishCron] No due posts found');
+      logger.info('[PublishCron] No due posts found');
       return NextResponse.json({ success: true, results, message: 'No due posts' });
     }
 
-    console.log(`[PublishCron] Found ${duePosts.length} due post(s)`);
+    logger.info(`[PublishCron] Found ${duePosts.length} due post(s)`);
 
     for (const post of duePosts) {
       try {
@@ -300,7 +301,7 @@ export async function GET(request: NextRequest) {
           .maybeSingle();
 
         if (connError || !connection) {
-          console.error(`[PublishCron] No active connection for ${post.platform} (user: ${post.user_id})`);
+          logger.error(`[PublishCron] No active connection for ${post.platform} (user: ${post.user_id})`);
           await markPostFailed(supabase, post.id, 'Platform disconnected — no active social connection');
           results.failed++;
           continue;
@@ -316,7 +317,7 @@ export async function GET(request: NextRequest) {
           const tokenToRefresh = isFbFamily ? connection.access_token : connection.refresh_token;
           if (expiresAt < buffer24h && tokenToRefresh) {
             try {
-              console.log(`[PublishCron] Token expiring soon for ${post.platform}, refreshing...`);
+              logger.info(`[PublishCron] Token expiring soon for ${post.platform}, refreshing...`);
               const refreshed = await refreshAccessToken(
                 post.platform as SocialPlatform,
                 tokenToRefresh
@@ -334,10 +335,10 @@ export async function GET(request: NextRequest) {
                 .eq('id', connection.id);
               // Update in-memory connection for this publish cycle
               connection.access_token = refreshed.accessToken;
-              console.log(`[PublishCron] Token refreshed for ${post.platform}`);
+              logger.info(`[PublishCron] Token refreshed for ${post.platform}`);
             } catch (refreshErr: unknown) {
               const refreshMsg = refreshErr instanceof Error ? refreshErr.message : 'Unknown refresh error';
-              console.error(`[PublishCron] Token refresh failed for ${post.platform}:`, refreshMsg);
+              logger.error(`[PublishCron] Token refresh failed for ${post.platform}:`, refreshMsg);
               await markPostFailed(supabase, post.id, 'Token expired — please reconnect your account');
               results.failed++;
               continue;
@@ -520,7 +521,7 @@ export async function GET(request: NextRequest) {
             publishedAt,
           }).catch(() => { /* non-critical */ });
 
-          console.log(`[PublishCron] Published ${post.platform} ${isVideoPost ? 'video' : 'post'} ${post.id} → ${publishResult.postId}`);
+          logger.info(`[PublishCron] Published ${post.platform} ${isVideoPost ? 'video' : 'post'} ${post.id} → ${publishResult.postId}`);
           results.published++;
         } else {
           await markPostFailed(supabase, post.id, publishResult.error || 'Unknown publish error');
@@ -529,17 +530,17 @@ export async function GET(request: NextRequest) {
 
       } catch (postError: unknown) {
         const postMsg = postError instanceof Error ? postError.message : 'Unknown error';
-        console.error(`[PublishCron] Error publishing post ${post.id}:`, postMsg);
+        logger.error(`[PublishCron] Error publishing post ${post.id}:`, postMsg);
         await markPostFailed(supabase, post.id, postMsg);
         results.failed++;
       }
     }
 
-    console.log('[PublishCron] Complete:', results);
+    logger.info('[PublishCron] Complete:', results);
     return NextResponse.json({ success: true, results });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Unknown error';
-    console.error('[PublishCron] Fatal error:', message);
+    logger.error('[PublishCron] Fatal error:', message);
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }
@@ -667,7 +668,7 @@ async function publishVideoToFacebook(
     };
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Unknown Facebook video error';
-    console.error('[PublishCron] Facebook video error:', message);
+    logger.error('[PublishCron] Facebook video error:', message);
     return { success: false, error: message };
   }
 }
@@ -753,7 +754,7 @@ async function publishVideoToInstagram(
     };
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Unknown Instagram video error';
-    console.error('[PublishCron] Instagram video error:', message);
+    logger.error('[PublishCron] Instagram video error:', message);
     return { success: false, error: message };
   }
 }
@@ -772,7 +773,7 @@ async function markPostFailed(
     })
     .eq('id', postId);
 
-  console.error(`[PublishCron] Post ${postId} failed: ${errorMessage}`);
+  logger.error(`[PublishCron] Post ${postId} failed: ${errorMessage}`);
 }
 
 // ============================================
@@ -817,7 +818,7 @@ async function checkCampaignCompletion(
         });
       }
 
-      console.log(`[PublishCron] Campaign ${campaignId} completed — all items published or skipped`);
+      logger.info(`[PublishCron] Campaign ${campaignId} completed — all items published or skipped`);
     }
   }
 }

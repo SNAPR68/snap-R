@@ -1,11 +1,13 @@
 export const dynamic = 'force-dynamic';
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
-import { 
-  generateListingDescription, 
+import { generateDescriptionSchema, parseBody } from '@/lib/validation/schemas'
+import { logger } from '@/lib/logger';
+import {
+  generateListingDescription,
   calculateDescriptionCost,
   DescriptionTone,
-  DescriptionLength 
+  DescriptionLength
 } from '@/lib/ai/description-generator';
 
 export const maxDuration = 120;
@@ -22,6 +24,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
+    const validated = parseBody(generateDescriptionSchema, body); if (!validated.success) { return NextResponse.json({ error: validated.error, details: validated.details }, { status: 400 }); }
     const { 
       listingId, 
       photoUrls, 
@@ -103,7 +106,7 @@ export async function POST(request: NextRequest) {
       }, { status: 400 });
     }
 
-    console.log(`[AI Description] Generating for ${photos.length} photos, tone: ${tone}, length: ${length}`);
+    logger.info(`[AI Description] Generating for ${photos.length} photos, tone: ${tone}, length: ${length}`);
 
     // Generate description
     const result = await generateListingDescription(
@@ -138,7 +141,7 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (saveError) {
-      console.error('[AI Description] Save error:', saveError);
+      logger.error('[AI Description] Save error:', saveError);
       // Continue anyway - return result even if save fails
     }
 
@@ -160,11 +163,11 @@ export async function POST(request: NextRequest) {
           processing_time_ms: processingTime,
         },
       });
-    } catch (e) {
-      console.error('[AI Description] Cost tracking error:', e);
+    } catch (error: unknown) {
+      logger.error('[AI Description] Cost tracking error:', error);
     }
 
-    console.log(`[AI Description] Complete in ${(processingTime / 1000).toFixed(1)}s`);
+    logger.info(`[AI Description] Complete in ${(processingTime / 1000).toFixed(1)}s`);
 
     return NextResponse.json({
       success: true,
@@ -187,7 +190,7 @@ export async function POST(request: NextRequest) {
 
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Generation failed';
-    console.error('[AI Description] Error:', error);
+    logger.error('[AI Description] Error:', error);
     return NextResponse.json({ 
       error: message || 'Failed to generate description' 
     }, { status: 500 });
@@ -245,7 +248,7 @@ export async function GET(request: NextRequest) {
 
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Internal server error';
-    console.error('[AI Description] GET Error:', error);
+    logger.error('[AI Description] GET Error:', error);
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }

@@ -3,6 +3,7 @@
 
 import { type SocialPlatform } from './oauth-config';
 
+import { logger } from '@/lib/logger';
 interface PublishRequest {
   platform: SocialPlatform;
   accessToken: string;
@@ -70,7 +71,7 @@ export async function publishToFacebook(
             const photoData = await photoResponse.json();
             photoIds.push(photoData.id);
           } else {
-            console.warn('[Facebook] Photo upload failed for:', imageUrl, photoResponse.status);
+            logger.warn('[Facebook] Photo upload failed for:', imageUrl, photoResponse.status);
           }
         }
 
@@ -122,7 +123,7 @@ export async function publishToFacebook(
     };
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Unknown Facebook error';
-    console.error('Facebook publish error:', error);
+    logger.error('Facebook publish error:', error);
     return {
       success: false,
       error: message,
@@ -216,7 +217,7 @@ export async function publishToInstagram(
           const data = await response.json();
           childContainers.push(data.id);
         } else {
-          console.warn('[Instagram] Carousel item failed for:', imageUrl, response.status);
+          logger.warn('[Instagram] Carousel item failed for:', imageUrl, response.status);
         }
       }
 
@@ -269,7 +270,7 @@ export async function publishToInstagram(
     return { success: false, error: 'Invalid content for Instagram' };
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Unknown Instagram error';
-    console.error('Instagram publish error:', error);
+    logger.error('Instagram publish error:', error);
     return {
       success: false,
       error: message,
@@ -305,7 +306,7 @@ async function uploadImageToLinkedIn(
     );
 
     if (!initResponse.ok) {
-      console.warn('[LinkedIn] Image upload init failed:', initResponse.status);
+      logger.warn('[LinkedIn] Image upload init failed:', initResponse.status);
       return null;
     }
 
@@ -330,13 +331,13 @@ async function uploadImageToLinkedIn(
     });
 
     if (!uploadResponse.ok) {
-      console.warn('[LinkedIn] Image binary upload failed:', uploadResponse.status);
+      logger.warn('[LinkedIn] Image binary upload failed:', uploadResponse.status);
       return null;
     }
 
     return imageUrn;
   } catch (err) {
-    console.warn('[LinkedIn] Image upload error:', err);
+    logger.warn('[LinkedIn] Image upload error:', err);
     return null;
   }
 }
@@ -426,7 +427,7 @@ export async function publishToLinkedIn(
     };
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Unknown LinkedIn error';
-    console.error('LinkedIn publish error:', error);
+    logger.error('LinkedIn publish error:', error);
     return {
       success: false,
       error: message,
@@ -484,7 +485,7 @@ export async function publishVideoToTikTok(
     };
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Unknown TikTok video error';
-    console.error('TikTok video publish error:', error);
+    logger.error('TikTok video publish error:', error);
     return {
       success: false,
       error: message,
@@ -542,7 +543,7 @@ export async function publishPhotoToTikTok(
     };
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Unknown TikTok photo error';
-    console.error('TikTok photo publish error:', error);
+    logger.error('TikTok photo publish error:', error);
     return {
       success: false,
       error: message,
@@ -580,7 +581,7 @@ async function uploadMediaToTwitter(
     });
 
     if (!initResponse.ok) {
-      console.warn('[Twitter] Media INIT failed:', initResponse.status);
+      logger.warn('[Twitter] Media INIT failed:', initResponse.status);
       return null;
     }
 
@@ -604,7 +605,7 @@ async function uploadMediaToTwitter(
     });
 
     if (!appendResponse.ok) {
-      console.warn('[Twitter] Media APPEND failed:', appendResponse.status);
+      logger.warn('[Twitter] Media APPEND failed:', appendResponse.status);
       return null;
     }
 
@@ -623,13 +624,13 @@ async function uploadMediaToTwitter(
     });
 
     if (!finalizeResponse.ok) {
-      console.warn('[Twitter] Media FINALIZE failed:', finalizeResponse.status);
+      logger.warn('[Twitter] Media FINALIZE failed:', finalizeResponse.status);
       return null;
     }
 
     return mediaId;
   } catch (err) {
-    console.warn('[Twitter] Media upload error:', err);
+    logger.warn('[Twitter] Media upload error:', err);
     return null;
   }
 }
@@ -685,7 +686,7 @@ export async function publishToTwitter(
     };
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Unknown Twitter error';
-    console.error('Twitter publish error:', error);
+    logger.error('Twitter publish error:', error);
     return {
       success: false,
       error: message,

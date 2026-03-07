@@ -3,7 +3,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { adminSupabase } from '@/lib/supabase/admin';
 import { Resend } from 'resend';
 import { escapeHtml } from '@/lib/utils/html-escape';
+import { adminCompleteHumanEditSchema, parseBody } from '@/lib/validation/schemas'
 
+import { logger } from '@/lib/logger';
 export async function POST(request: NextRequest) {
   // Admin auth — match pattern from users/export
   const authHeader = request.headers.get('authorization');
@@ -13,7 +15,7 @@ export async function POST(request: NextRequest) {
 
   try {
     const supabase = adminSupabase();
-    const { orderId, userEmail } = await request.json();
+    const body = await request.json(); const validated = parseBody(adminCompleteHumanEditSchema, body); if (!validated.success) { return NextResponse.json({ error: validated.error, details: validated.details }, { status: 400 }); } const { orderId, userEmail } = body;
 
     if (!orderId || typeof orderId !== 'string') {
       return NextResponse.json({ error: 'orderId is required' }, { status: 400 });
@@ -29,7 +31,7 @@ export async function POST(request: NextRequest) {
       .eq('id', orderId);
 
     if (updateError) {
-      console.error('[CompleteHumanEdit] Update error:', updateError.message);
+      logger.error('[CompleteHumanEdit] Update error:', updateError.message);
       return NextResponse.json({ error: 'Failed to update order' }, { status: 500 });
     }
 
@@ -55,7 +57,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ success: true });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Internal server error';
-    console.error('[CompleteHumanEdit] Error:', message);
+    logger.error('[CompleteHumanEdit] Error:', message);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

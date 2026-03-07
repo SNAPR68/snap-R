@@ -1,5 +1,6 @@
 'use client'
 
+import Image from 'next/image';
 import { useState, useEffect } from 'react'
 import { useSearchParams } from 'next/navigation'
 import {
@@ -161,7 +162,7 @@ export default function PrintDashboard() {
                 <div className="flex items-center gap-3">
                   {selected.thumbnail ? (
                     // eslint-disable-next-line @next/next/no-img-element
-                    <img src={selected.thumbnail} alt="" className="w-12 h-10 rounded-lg object-cover" />
+                    <Image src={selected.thumbnail} alt="" className="w-12 h-10 rounded-lg object-cover" width={400} height={300} unoptimized />
                   ) : (
                     <div className="w-12 h-10 rounded-lg bg-white/10 flex items-center justify-center">
                       <Home className="w-5 h-5 text-white/30" />
@@ -195,7 +196,7 @@ export default function PrintDashboard() {
                   >
                     {l.thumbnail ? (
                       // eslint-disable-next-line @next/next/no-img-element
-                      <img src={l.thumbnail} alt="" className="w-12 h-10 rounded-lg object-cover flex-shrink-0" />
+                      <Image src={l.thumbnail} alt="" className="w-12 h-10 rounded-lg object-cover flex-shrink-0" width={400} height={300} unoptimized />
                     ) : (
                       <div className="w-12 h-10 rounded-lg bg-white/10 flex items-center justify-center flex-shrink-0">
                         <Home className="w-5 h-5 text-white/30" />

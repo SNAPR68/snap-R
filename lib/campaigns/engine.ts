@@ -3,6 +3,7 @@
 
 import { createClient } from '@supabase/supabase-js';
 
+import { logger } from '@/lib/logger';
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 
@@ -100,8 +101,8 @@ export async function triggerCampaign({
         platforms: trigger.platforms || ['instagram', 'facebook', 'linkedin'],
       },
     });
-  } catch (error) {
-    console.error('Campaign trigger error:', error);
+  } catch (error: unknown) {
+    logger.error('Campaign trigger error:', error);
     return { success: false, error: 'Failed to trigger campaign' };
   }
 }
@@ -167,7 +168,7 @@ async function createCampaignWithTemplate({
     .single();
 
   if (campaignError) {
-    console.error('Campaign creation error:', campaignError);
+    logger.error('Campaign creation error:', campaignError);
     return { success: false, error: 'Failed to create campaign' };
   }
 
@@ -263,7 +264,7 @@ async function createCampaignWithTemplate({
     .insert(queueInserts);
 
   if (queueError) {
-    console.error('Queue insert error:', queueError);
+    logger.error('Queue insert error:', queueError);
   }
 
   // 5. Update campaign stats
@@ -457,7 +458,7 @@ export async function getUserTriggers(userId: string) {
     .order('trigger_status');
 
   if (error) {
-    console.error('Get triggers error:', error);
+    logger.error('Get triggers error:', error);
     return [];
   }
 
@@ -495,7 +496,7 @@ export async function upsertTrigger(
     .single();
 
   if (error) {
-    console.error('Upsert trigger error:', error);
+    logger.error('Upsert trigger error:', error);
     return { success: false, error: error.message };
   }
 

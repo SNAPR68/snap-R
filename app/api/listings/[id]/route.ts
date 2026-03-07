@@ -2,6 +2,7 @@ export const dynamic = 'force-dynamic';
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 
+import { logger } from '@/lib/logger';
 export async function GET(
   request: Request,
   { params }: { params: { id: string } }
@@ -14,7 +15,7 @@ export async function GET(
   }
 
   const listingId = params.id;
-  console.log(`[Listings API] Fetching single listing: ${listingId}`);
+  logger.info(`[Listings API] Fetching single listing: ${listingId}`);
 
   // Fetch the listing
   const { data: listing, error: listingError } = await supabase
@@ -25,7 +26,7 @@ export async function GET(
     .single();
 
   if (listingError || !listing) {
-    console.error("[Listings API] Listing not found:", listingError);
+    logger.error("[Listings API] Listing not found:", listingError);
     return NextResponse.json({ error: "Listing not found" }, { status: 404 });
   }
 
@@ -37,10 +38,10 @@ export async function GET(
     .order("created_at", { ascending: true });
 
   if (photosError) {
-    console.error("[Listings API] Photos fetch error:", photosError);
+    logger.error("[Listings API] Photos fetch error:", photosError);
   }
 
-  console.log(`[Listings API] Found ${photos?.length || 0} photos`);
+  logger.info(`[Listings API] Found ${photos?.length || 0} photos`);
 
   // Create signed URLs for each photo
   const photosWithSignedUrls = await Promise.all(
@@ -74,12 +75,12 @@ export async function GET(
           if (data?.signedUrl) {
             signedProcessedUrl = data.signedUrl;
           } else {
-            console.error(`[Listings API] Failed to sign: ${photo.processed_url}`, error?.message);
+            logger.error(`[Listings API] Failed to sign: ${photo.processed_url}`, error?.message);
           }
         }
       }
 
-      console.log(`[Listings API] Photo ${photo.id}: processed_url=${photo.processed_url ? 'YES' : 'NO'}, signed=${signedProcessedUrl ? 'YES' : 'NO'}`);
+      logger.info(`[Listings API] Photo ${photo.id}: processed_url=${photo.processed_url ? 'YES' : 'NO'}, signed=${signedProcessedUrl ? 'YES' : 'NO'}`);
 
       return {
         ...photo,
@@ -90,7 +91,7 @@ export async function GET(
   );
 
   const enhancedCount = photosWithSignedUrls.filter(p => p.signedProcessedUrl).length;
-  console.log(`[Listings API] Returning ${photosWithSignedUrls.length} photos, ${enhancedCount} with signed enhanced URLs`);
+  logger.info(`[Listings API] Returning ${photosWithSignedUrls.length} photos, ${enhancedCount} with signed enhanced URLs`);
 
   return NextResponse.json({
     listing,

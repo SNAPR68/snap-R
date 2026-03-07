@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import { useState, useRef } from 'react';
 import { GripVertical, X, Check, AlertCircle } from 'lucide-react';
 
@@ -156,13 +157,11 @@ export function DraggablePhotoStrip({
                 : 'border-transparent hover:border-white/30'
             } ${photo.status === 'completed' ? 'ring-1 ring-green-500/30' : ''}`}
           >
-            <img
-              src={photo.signedRawUrl}
+            <Image src={photo.signedRawUrl}
               alt=""
               className="w-full h-full object-cover"
               style={{ filter: getListingStyleFilter() }}
-              draggable={false}
-            />
+              draggable={false} width={400} height={300} unoptimized />
             {photo.status === 'completed' && (
               <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-green-500 to-emerald-500" />
             )}

@@ -6,6 +6,7 @@
 
 import { PhotoProcessingResult, ConsistencyMetrics, ConsistencyAdjustment } from './types';
 
+import { logger } from '@/lib/logger';
 // ============================================
 // CONFIGURATION
 // ============================================
@@ -43,7 +44,7 @@ export async function analyzeConsistency(
   isConsistent: boolean;
   consistencyScore: number;
 }> {
-  console.log(`[Consistency] Analyzing ${results.length} photos`);
+  logger.info(`[Consistency] Analyzing ${results.length} photos`);
   
   // Filter to only successful results
   const successfulResults = results.filter(r => r.success && r.enhancedUrl);
@@ -69,7 +70,7 @@ export async function analyzeConsistency(
   const adjustments = calculateAdjustments(successfulResults, metrics);
   const consistencyScore = calculateConsistencyScore(adjustments);
   
-  console.log(`[Consistency] Score: ${consistencyScore}%, ${adjustments.length} adjustments recommended`);
+  logger.info(`[Consistency] Score: ${consistencyScore}%, ${adjustments.length} adjustments recommended`);
   
   return {
     metrics,

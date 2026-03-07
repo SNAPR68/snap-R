@@ -5,6 +5,7 @@ import { Resend } from 'resend';
 import { createClient } from '@/lib/supabase/server';
 import { emailSendSchema, parseBody } from '@/lib/validation/schemas';
 
+import { logger } from '@/lib/logger';
 export async function POST(request: NextRequest) {
   try {
     // Authenticate user
@@ -46,7 +47,7 @@ export async function POST(request: NextRequest) {
 
     // Verify RESEND_API_KEY is configured
     if (!process.env.RESEND_API_KEY) {
-      console.error('[Email Send] RESEND_API_KEY is not configured');
+      logger.error('[Email Send] RESEND_API_KEY is not configured');
       return NextResponse.json(
         { error: 'Email service is not configured' },
         { status: 500 }
@@ -91,7 +92,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Log successful send
-    console.log(
+    logger.info(
       '[Email Send]',
       `type=${emailType ?? 'general'}`,
       `sent=${successCount}/${to.length}`,
@@ -101,7 +102,7 @@ export async function POST(request: NextRequest) {
     );
 
     if (errors.length > 0) {
-      console.warn('[Email Send] Partial failures:', errors.join('; '));
+      logger.warn('[Email Send] Partial failures:', errors.join('; '));
     }
 
     return NextResponse.json({
@@ -111,7 +112,7 @@ export async function POST(request: NextRequest) {
     });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Internal server error';
-    console.error('[Email Send] Unexpected error:', error);
+    logger.error('[Email Send] Unexpected error:', error);
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }

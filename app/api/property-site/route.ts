@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { propertySiteSchema, parseBody } from '@/lib/validation/schemas'
 
+import { logger } from '@/lib/logger';
 // GET - Fetch user's property sites
 export async function GET() {
   try {
@@ -15,7 +17,7 @@ export async function GET() {
       .order('created_at', { ascending: false })
 
     return NextResponse.json({ sites: sites || [] })
-  } catch (error) {
+  } catch (error: unknown) {
     return NextResponse.json({ error: 'Failed to fetch sites' }, { status: 500 })
   }
 }
@@ -28,6 +30,7 @@ export async function POST(request: Request) {
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
     const body = await request.json()
+    const validated = parseBody(propertySiteSchema, body); if (!validated.success) { return NextResponse.json({ error: validated.error, details: validated.details }, { status: 400 }); }
     const { listingId, slug, template, customColors, agentInfo } = body
 
     // Generate unique slug if not provided
@@ -49,8 +52,8 @@ export async function POST(request: Request) {
 
     if (error) throw error
     return NextResponse.json({ site, url: `/p/${finalSlug}` })
-  } catch (error) {
-    console.error('Error creating site:', error)
+  } catch (error: unknown) {
+    logger.error('Error creating site:', error)
     return NextResponse.json({ error: 'Failed to create site' }, { status: 500 })
   }
 }
@@ -63,6 +66,7 @@ export async function PATCH(request: Request) {
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
     const body = await request.json()
+    const validated = parseBody(propertySiteSchema, body); if (!validated.success) { return NextResponse.json({ error: validated.error, details: validated.details }, { status: 400 }); }
     const { id, is_published, template, custom_colors, agent_info } = body
 
     if (!id) return NextResponse.json({ error: 'Site ID required' }, { status: 400 })
@@ -83,8 +87,8 @@ export async function PATCH(request: Request) {
 
     if (error) throw error
     return NextResponse.json({ site })
-  } catch (error) {
-    console.error('Error updating site:', error)
+  } catch (error: unknown) {
+    logger.error('Error updating site:', error)
     return NextResponse.json({ error: 'Failed to update site' }, { status: 500 })
   }
 }
@@ -99,7 +103,7 @@ export async function DELETE(request: Request) {
     const { id } = await request.json()
     await supabase.from('property_sites').delete().eq('id', id).eq('user_id', user.id)
     return NextResponse.json({ success: true })
-  } catch (error) {
+  } catch (error: unknown) {
     return NextResponse.json({ error: 'Failed to delete' }, { status: 500 })
   }
 }

@@ -144,6 +144,20 @@ export const voiceoverSchema = z.discriminatedUnion('action', [
   }),
 ])
 
+// Voiceover (simple /api/voiceover route)
+export const voiceoverSimpleSchema = z.object({
+  listingId: z.string().uuid().optional(),
+  propertyDetails: z.record(z.unknown()).optional(),
+  style: z.string().max(50).optional(),
+  voiceId: z.string().max(50).optional(),
+  duration: z.number().int().min(5).max(300).optional(),
+  includeCallToAction: z.boolean().optional(),
+  agentName: z.string().max(200).optional(),
+  agentPhone: z.string().max(50).optional(),
+  customScript: z.string().max(10000).optional(),
+  scriptOnly: z.boolean().optional(),
+})
+
 // Contact form
 export const contactSchema = z.object({
   name: z.string().min(1).max(200),
@@ -315,6 +329,422 @@ export const webhookUpdateSchema = z.object({
 export const webhookDeleteSchema = z.object({
   id: z.string().uuid(),
 })
+
+// ============================================
+// ADDITIONAL SCHEMAS (Issue 1 remediation)
+// ============================================
+
+// Admin: complete human edit
+export const adminCompleteHumanEditSchema = z.object({
+  orderId: z.string().min(1).max(200),
+  userEmail: z.string().email().optional(),
+})
+
+// Admin: update contact status
+export const adminContactStatusSchema = z.object({
+  id: z.string().uuid(),
+  status: z.string().min(1).max(50),
+})
+
+// AI: generate caption
+export const generateCaptionSchema = z.object({
+  prompt: z.string().min(1).max(5000),
+  platform: z.string().max(50).optional(),
+})
+
+// AI: generate description
+export const generateDescriptionSchema = z.object({
+  listingId: z.string().uuid().optional(),
+  photoUrls: z.array(z.string().url()).max(50).optional(),
+  tone: z.string().max(50).optional(),
+  length: z.string().max(50).optional(),
+  listingData: z.record(z.unknown()).optional(),
+})
+
+// AI: photo cull
+export const photoCullSchema = z.object({
+  listingId: z.string().uuid(),
+  photoUrls: z.array(z.string().url()).max(200),
+  targetCount: z.number().int().min(1).max(200).optional(),
+  sessionName: z.string().max(200).optional(),
+})
+
+// Analytics: error tracking
+export const analyticsErrorSchema = z.object({
+  message: z.string().max(5000),
+  stack: z.string().max(10000).optional(),
+  context: z.record(z.unknown()).optional(),
+  timestamp: z.string().optional(),
+})
+
+// Analytics: event tracking
+export const analyticsTrackSchema = z.object({
+  event: z.string().min(1).max(200),
+  properties: z.record(z.unknown()).optional(),
+  timestamp: z.string().optional(),
+})
+
+// Analyze photos
+export const analyzeSchema = z.object({
+  listingId: z.string().uuid().optional(),
+  photoUrls: z.array(z.string().url()).max(50).optional(),
+})
+
+// Approve photo
+export const approvePhotoSchema = z.object({
+  photoId: z.string().uuid(),
+  approved: z.boolean(),
+})
+
+// Auth: welcome
+export const authWelcomeSchema = z.object({
+  firstName: z.string().max(100).optional(),
+  lastName: z.string().max(100).optional(),
+  email: z.string().email().optional(),
+})
+
+// Auto-post
+export const autoPostSchema = z.object({
+  listingId: z.string().uuid(),
+  scheduled: z.boolean().optional(),
+})
+
+// Brand
+export const brandSchema = z.object({
+  brandName: z.string().max(200).optional(),
+  color: z.string().max(20).optional(),
+  logoUrl: z.string().url().or(z.literal('')).optional().nullable(),
+}).passthrough()
+
+// Campaigns
+export const campaignsSchema = z.object({
+  action: z.string().min(1).max(50).optional(),
+  listingId: z.string().uuid().optional(),
+  campaignType: z.string().max(50).optional(),
+}).passthrough()
+
+// CMA
+export const cmaSchema = z.object({
+  address: z.string().max(500).optional(),
+  bedrooms: z.number().int().min(0).max(99).optional(),
+  bathrooms: z.number().min(0).max(99).optional(),
+}).passthrough()
+
+// Compliance: apply
+export const complianceApplySchema = z.object({
+  imageUrl: z.string().url(),
+  toolId: z.string().min(1).max(100),
+  options: z.object({
+    forceWatermark: z.boolean().optional(),
+    watermarkText: z.string().max(200).optional(),
+    watermarkPosition: z.enum(['bottom-left', 'bottom-right', 'bottom-center', 'top-left', 'top-right']).optional(),
+    watermarkOpacity: z.number().min(0).max(1).optional(),
+  }).optional(),
+})
+
+// Compliance: export
+export const complianceExportSchema = z.object({
+  mlsId: z.string().min(1).max(100),
+  photos: z.array(z.object({
+    url: z.string().url(),
+    toolId: z.string().min(1).max(100),
+    roomType: z.string().max(100).optional(),
+    filename: z.string().max(200),
+  })).min(1),
+  listingAddress: z.string().max(500).optional(),
+  mlsNumber: z.string().max(100).optional(),
+  agentName: z.string().max(200).optional(),
+  brokerageName: z.string().max(200).optional(),
+})
+
+// Content library
+export const contentLibrarySchema = z.object({
+  title: z.string().max(200).optional(),
+  content: z.string().max(10000).optional(),
+  category: z.string().max(100).optional(),
+  tags: z.array(z.string().max(50)).max(20).optional(),
+}).passthrough()
+
+// Copy: caption
+export const copyCaptionSchema = z.object({
+  listingId: z.string().uuid().optional(),
+  platform: z.string().max(50).optional(),
+  description: z.string().max(10000).optional(),
+})
+
+// Copy: description
+export const copyDescriptionSchema = z.object({
+  listingId: z.string().uuid().optional(),
+  photoUrls: z.array(z.string().url()).max(50).optional(),
+})
+
+// Copy: hashtags
+export const copyHashtagsSchema = z.object({
+  description: z.string().max(10000).optional(),
+  platform: z.string().max(50).optional(),
+})
+
+// Download all
+export const downloadAllSchema = z.object({
+  listingId: z.string().uuid(),
+  format: z.string().max(20).optional(),
+})
+
+// Enhance quick
+export const enhanceQuickSchema = z.object({
+  imageId: z.string().min(1).max(200),
+  toolId: z.string().min(1).max(50),
+  options: z.record(z.unknown()).optional(),
+})
+
+// Feedback
+export const feedbackSchema = z.object({
+  listingId: z.string().uuid().optional(),
+  rating: z.number().int().min(1).max(5).optional(),
+  comments: z.string().max(5000).optional(),
+}).passthrough()
+
+// Human editor
+export const humanEditorSchema = z.object({
+  photoId: z.string().uuid(),
+  instructions: z.string().max(5000).optional(),
+}).passthrough()
+
+// Internal: video generate
+export const internalVideoGenerateSchema = z.object({
+  listingId: z.string().uuid(),
+  style: z.string().max(50).optional(),
+  videoType: z.string().max(50).optional(),
+}).passthrough()
+
+// Listing intelligence: analyze
+export const listingIntelligenceAnalyzeSchema = z.object({
+  listingId: z.string().uuid(),
+  propertyData: z.record(z.unknown()).optional(),
+})
+
+// Listing: prepare
+export const listingPrepareSchema = z.object({
+  listingId: z.string().uuid(),
+  priority: z.string().max(20).optional(),
+})
+
+// Listing: status update
+export const listingStatusSchema = z.object({
+  listingId: z.string().uuid(),
+  marketingStatus: z.string().max(50).optional(),
+  status: z.string().max(50).optional(),
+}).passthrough()
+
+// Listings: status
+export const listingsStatusSchema = z.object({
+  listingId: z.string().uuid(),
+  status: z.string().max(50),
+})
+
+// Log error (client-side error logging)
+export const logErrorSchema = z.object({
+  message: z.string().max(5000),
+  stack: z.string().max(10000).optional(),
+  url: z.string().max(2000).optional(),
+  userAgent: z.string().max(500).optional(),
+})
+
+// Marketing: trigger
+export const marketingTriggerSchema = z.object({
+  listingId: z.string().uuid(),
+  triggerType: z.string().max(50).optional(),
+})
+
+// Mobile: register device
+export const mobileRegisterDeviceSchema = z.object({
+  pushToken: z.string().min(1).max(500),
+  platform: z.string().max(50).optional(),
+  deviceName: z.string().max(200).optional(),
+})
+
+// Notify approval
+export const notifyApprovalSchema = z.object({
+  photoId: z.string().uuid(),
+  approvalStatus: z.string().max(50).optional(),
+}).passthrough()
+
+// Portfolio create
+export const portfolioCreateSchema = z.object({
+  name: z.string().min(1).max(200),
+  description: z.string().max(2000).optional(),
+})
+
+// Portfolio items
+export const portfolioItemsSchema = z.object({
+  portfolioId: z.string().uuid().optional(),
+  items: z.array(z.object({
+    beforeUrl: z.string().url().optional(),
+    afterUrl: z.string().url().optional(),
+    title: z.string().max(200).optional(),
+    description: z.string().max(2000).optional(),
+    enhancementType: z.string().max(50).optional(),
+    roomType: z.string().max(50).optional(),
+    tags: z.array(z.string().max(50)).max(20).optional(),
+    toolsUsed: z.array(z.string().max(50)).max(20).optional(),
+    listingId: z.string().uuid().optional(),
+  })).optional(),
+}).passthrough()
+
+// Prepare notification
+export const prepareNotificationSchema = z.object({
+  listingId: z.string().uuid(),
+  type: z.string().max(50).optional(),
+  channels: z.array(z.string().max(30)).max(5).optional(),
+  data: z.record(z.unknown()).optional(),
+})
+
+// Property inquiry (public)
+export const propertyInquirySchema = z.object({
+  listingId: z.string().uuid(),
+  name: z.string().min(1).max(200),
+  email: z.string().email(),
+  phone: z.string().max(30).optional(),
+  inquiry: z.string().max(5000).optional(),
+})
+
+// Property site
+export const propertySiteSchema = z.object({
+  listingId: z.string().uuid(),
+  slug: z.string().max(200).optional(),
+  template: z.string().max(50).optional(),
+  customColors: z.record(z.string()).optional(),
+  agentInfo: z.record(z.unknown()).optional(),
+}).passthrough()
+
+// Publish video
+export const publishVideoSchema = z.object({
+  listingId: z.string().uuid(),
+  videoUrl: z.string().url(),
+})
+
+// QR code
+export const qrcodeSchema = z.object({
+  listingId: z.string().uuid(),
+  size: z.number().int().min(100).max(2000).optional(),
+})
+
+// Renovation revision
+export const renovationRevisionSchema = z.object({
+  enhancementId: z.string().min(1).max(200),
+  style: z.string().max(100).optional(),
+  options: z.record(z.unknown()).optional(),
+})
+
+// Renovation
+export const renovationSchema = z.object({
+  imageUrl: z.string().url(),
+  roomType: z.string().max(50).optional(),
+  style: z.string().max(100).optional(),
+  selectedRenovations: z.array(z.string().max(100)).max(20).optional(),
+  detailedOptions: z.record(z.unknown()).optional(),
+  model: z.string().max(50).optional(),
+  promptStrength: z.number().min(0).max(1).optional(),
+  quality: z.string().max(20).optional(),
+}).passthrough()
+
+// Reorder photos
+export const reorderPhotosSchema = z.object({
+  listingId: z.string().uuid(),
+  photoOrder: z.array(z.string()).max(200),
+})
+
+// Social manage
+export const socialManageSchema = z.object({
+  action: z.string().min(1).max(50),
+  platform: z.string().max(50).optional(),
+  data: z.record(z.unknown()).optional(),
+})
+
+// Stripe: addon purchase
+export const stripeAddonPurchaseSchema = z.object({
+  addonType: z.string().min(1).max(50),
+  listingId: z.string().uuid().optional(),
+  quantity: z.number().int().min(1).max(100).optional(),
+})
+
+// Stripe: human edit checkout
+export const stripeHumanEditCheckoutSchema = z.object({
+  photoId: z.string().uuid(),
+  isUrgent: z.boolean().optional(),
+  instructions: z.string().max(5000).optional(),
+})
+
+// Teams CRUD
+export const teamCreateSchema = z.object({
+  name: z.string().min(1).max(200),
+})
+
+export const teamUpdateSchema = z.object({
+  name: z.string().max(200).optional(),
+  logo_url: z.string().url().or(z.literal('')).optional().nullable(),
+  settings: z.record(z.unknown()).optional(),
+}).passthrough()
+
+export const teamInviteSchema = z.object({
+  email: z.string().email(),
+  role: z.string().max(50).optional(),
+})
+
+export const teamMemberActionSchema = z.object({
+  userId: z.string().uuid(),
+})
+
+// Translate
+export const translateSchema = z.object({
+  text: z.string().min(1).max(10000),
+  targetLanguage: z.string().min(2).max(10),
+})
+
+// Test imagen
+export const testImagenSchema = z.object({
+  imageUrl: z.string().url(),
+})
+
+// Virtual tours
+export const virtualTourCreateSchema = z.object({
+  listingId: z.string().uuid(),
+  name: z.string().max(200).optional(),
+  description: z.string().max(2000).optional(),
+  tourType: z.string().max(50).optional(),
+  settings: z.record(z.unknown()).optional(),
+  scenes: z.array(z.record(z.unknown())).max(100).optional(),
+})
+
+// Virtual tour scenes
+export const virtualTourSceneSchema = z.object({
+  tourId: z.string().uuid(),
+  name: z.string().max(200).optional(),
+  description: z.string().max(2000).optional(),
+  imageUrl: z.string().url().optional(),
+  thumbnailUrl: z.string().url().optional().nullable(),
+  is360: z.boolean().optional(),
+  initialYaw: z.number().optional(),
+  initialPitch: z.number().optional(),
+  initialZoom: z.number().optional(),
+  sortOrder: z.number().int().optional(),
+  isStartScene: z.boolean().optional(),
+  floorNumber: z.number().int().optional(),
+  floorName: z.string().max(100).optional(),
+})
+
+// Watermark
+export const watermarkSchema = z.object({
+  enabled: z.boolean().optional(),
+  text: z.string().max(200).optional(),
+  logoUrl: z.string().url().or(z.literal('')).optional().nullable(),
+  position: z.string().max(30).optional(),
+  opacity: z.number().min(0).max(100).optional(),
+}).passthrough()
+
+// ============================================
+// HELPERS
+// ============================================
 
 // Helper: Parse body with schema, return typed result or error response
 export function parseBody<T>(schema: z.ZodType<T>, data: unknown):

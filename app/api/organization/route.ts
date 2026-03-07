@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/server';
 import { createClient as createServiceClient } from '@supabase/supabase-js';
 import { organizationCreateSchema, organizationUpdateSchema, parseBody } from '@/lib/validation/schemas';
 
+import { logger } from '@/lib/logger';
 function getServiceSupabase() {
   return createServiceClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -52,7 +53,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'Missing parameters' }, { status: 400 });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Internal server error';
-    console.error('Organization GET error:', error);
+    logger.error('Organization GET error:', error);
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }
@@ -113,7 +114,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ org: newOrg });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Internal server error';
-    console.error('Organization POST error:', error);
+    logger.error('Organization POST error:', error);
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }
@@ -176,7 +177,7 @@ export async function PUT(request: NextRequest) {
     return NextResponse.json({ org: updatedOrg });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Internal server error';
-    console.error('Organization PUT error:', error);
+    logger.error('Organization PUT error:', error);
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }

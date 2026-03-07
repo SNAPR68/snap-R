@@ -8,6 +8,7 @@
 
 import { adminSupabase } from '@/lib/supabase/admin';
 
+import { logger } from '@/lib/logger';
 interface EvaluateParams {
   listingId: string;
   userId: string;
@@ -55,7 +56,7 @@ export async function evaluateAutoPostRules({
 
   if (fetchError || !rules || rules.length === 0) {
     if (fetchError) {
-      console.error('[AutoPost] Error fetching rules:', fetchError.message);
+      logger.error('[AutoPost] Error fetching rules:', fetchError.message);
     }
     return result;
   }
@@ -113,20 +114,20 @@ export async function evaluateAutoPostRules({
           });
 
         if (insertError) {
-          console.error(`[AutoPost] Failed to schedule ${platform} post for rule ${rule.id}:`, insertError.message);
+          logger.error(`[AutoPost] Failed to schedule ${platform} post for rule ${rule.id}:`, insertError.message);
           result.errors++;
         } else {
           result.scheduled++;
-          console.log(`[AutoPost] Scheduled ${platform} post for listing ${listingId} (rule: ${rule.name})`);
+          logger.info(`[AutoPost] Scheduled ${platform} post for listing ${listingId} (rule: ${rule.name})`);
         }
       } catch (err: unknown) {
         const message = err instanceof Error ? err.message : 'Unknown error';
-        console.error(`[AutoPost] Error scheduling ${platform} post:`, message);
+        logger.error(`[AutoPost] Error scheduling ${platform} post:`, message);
         result.errors++;
       }
     }
   }
 
-  console.log(`[AutoPost] Evaluation complete: ${result.scheduled} scheduled, ${result.errors} errors`);
+  logger.info(`[AutoPost] Evaluation complete: ${result.scheduled} scheduled, ${result.errors} errors`);
   return result;
 }

@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { Calendar, Clock, Facebook, Instagram, Linkedin, Loader2, Trash2, Send, CheckCircle, XCircle } from 'lucide-react';
 import Link from 'next/link';
 
+import Image from 'next/image';
 interface ScheduledPost {
   id: string;
   platform: string;
@@ -42,7 +43,7 @@ export default function ScheduledPostsPage() {
       const res = await fetch('/api/social/scheduled');
       const data = await res.json();
       setPosts(data.posts || []);
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Failed to fetch posts:', error);
     } finally {
       setLoading(false);
@@ -55,7 +56,7 @@ export default function ScheduledPostsPage() {
     try {
       await fetch(`/api/social/scheduled/${postId}`, { method: 'DELETE' });
       setPosts(prev => prev.filter(p => p.id !== postId));
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Delete error:', error);
     }
   };
@@ -78,7 +79,7 @@ export default function ScheduledPostsPage() {
         const data = await res.json();
         alert(data.error || 'Failed to publish');
       }
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Publish error:', error);
     }
   };
@@ -200,7 +201,7 @@ export default function ScheduledPostsPage() {
 
                     {post.image_urls?.[0] && (
                       <div className="w-16 h-16 rounded-lg overflow-hidden flex-shrink-0">
-                        <img src={post.image_urls[0]} alt="" className="w-full h-full object-cover" />
+                        <Image src={post.image_urls[0]} alt="" className="w-full h-full object-cover" width={400} height={300} unoptimized />
                       </div>
                     )}
 

@@ -45,7 +45,7 @@ function CreatePortfolioModal({
       if (data.portfolio) {
         onCreated(data.portfolio);
       }
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Create error:', error);
     } finally {
       setCreating(false);
@@ -135,7 +135,7 @@ function PortfolioCard({
     try {
       await fetch(`/api/portfolio?id=${portfolio.id}`, { method: 'DELETE' });
       onDelete(portfolio.id);
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Delete error:', error);
     } finally {
       setDeleting(false);
@@ -256,7 +256,7 @@ function PortfolioContent() {
       const response = await fetch('/api/portfolio');
       const data = await response.json();
       setPortfolios(data);
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Load error:', error);
     } finally {
       setLoading(false);

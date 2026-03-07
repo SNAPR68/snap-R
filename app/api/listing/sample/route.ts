@@ -3,6 +3,7 @@ export const dynamic = 'force-dynamic';
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 
+import { logger } from '@/lib/logger';
 /**
  * POST /api/listing/sample
  *
@@ -84,7 +85,7 @@ export async function POST() {
       .single();
 
     if (listingError || !listing) {
-      console.error('[sample-listing] Insert error:', listingError);
+      logger.error('[sample-listing] Insert error:', listingError);
       return NextResponse.json(
         { error: 'Failed to create sample listing' },
         { status: 500 }
@@ -106,7 +107,7 @@ export async function POST() {
       .insert(photoInserts);
 
     if (photosError) {
-      console.error('[sample-listing] Photo insert error:', photosError);
+      logger.error('[sample-listing] Photo insert error:', photosError);
       // Listing was created, photos failed — still return listing ID
     }
 
@@ -117,7 +118,7 @@ export async function POST() {
     });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Internal error';
-    console.error('[sample-listing] Error:', message);
+    logger.error('[sample-listing] Error:', message);
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }

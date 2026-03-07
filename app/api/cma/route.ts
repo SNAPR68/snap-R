@@ -4,7 +4,9 @@ export const maxDuration = 60;
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { createClient as createServiceClient } from '@supabase/supabase-js';
+import { cmaSchema, parseBody } from '@/lib/validation/schemas'
 
+import { logger } from '@/lib/logger';
 function getServiceSupabase() {
   return createServiceClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -105,6 +107,7 @@ Write a professional narrative explaining the pricing recommendation based on th
         max_tokens: 500,
         temperature: 0.7,
       }),
+          signal: AbortSignal.timeout(30000),
     });
 
     if (!response.ok) {
@@ -113,8 +116,8 @@ Write a professional narrative explaining the pricing recommendation based on th
 
     const data = await response.json();
     return data.choices[0]?.message?.content || '';
-  } catch (error) {
-    console.error('Narrative generation error:', error);
+  } catch (error: unknown) {
+    logger.error('Narrative generation error:', error);
     return `Based on an analysis of ${comparables.length} comparable properties in the area, we recommend listing this property at $${pricing.recommended.toLocaleString()}. The comparable sales range from $${Math.min(...comparables.map(c => c.soldPrice)).toLocaleString()} to $${Math.max(...comparables.map(c => c.soldPrice)).toLocaleString()}, with an average price per square foot of $${(comparables.reduce((sum, c) => sum + (c.soldPrice / c.sqft), 0) / comparables.length).toFixed(0)}.`;
   }
 }
@@ -522,6 +525,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body: CMARequest = await request.json();
+    const validated = parseBody(cmaSchema, body); if (!validated.success) { return NextResponse.json({ error: validated.error, details: validated.details }, { status: 400 }); }
     const { listing, comparables, pricing, agentInfo } = body;
 
     if (!listing || !comparables || comparables.length === 0 || !pricing) {
@@ -554,7 +558,7 @@ export async function POST(request: NextRequest) {
         .single();
       reportId = savedReport?.id || null;
     } catch {
-      console.log('[CMA API] Save skipped — cma_reports table may not exist yet');
+      logger.info('[CMA API] Save skipped — cma_reports table may not exist yet');
     }
 
     // Return HTML report for client-side PDF conversion
@@ -571,7 +575,7 @@ export async function POST(request: NextRequest) {
     });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Internal server error';
-    console.error('CMA API error:', error);
+    logger.error('CMA API error:', error);
     return NextResponse.json(
       { error: message || 'Internal server error' },
       { status: 500 }

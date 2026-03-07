@@ -36,7 +36,7 @@ export function DataPrivacyActions({ userId, userEmail, deleteOnly = false }: Da
       } else {
         alert('Failed to export data. Please try again.');
       }
-    } catch (e) {
+    } catch {
       alert('Error exporting data');
     } finally {
       setExportLoading(false);
@@ -58,7 +58,7 @@ export function DataPrivacyActions({ userId, userEmail, deleteOnly = false }: Da
       } else {
         alert('Failed to delete account. Please contact support.');
       }
-    } catch (e) {
+    } catch {
       alert('Error deleting account');
     } finally {
       setDeleteLoading(false);

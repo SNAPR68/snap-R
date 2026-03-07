@@ -5,6 +5,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { mobileRegisterDeviceSchema, parseBody } from '@/lib/validation/schemas'
 
 export async function POST(request: NextRequest) {
   const supabase = await createClient();
@@ -16,11 +17,11 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const body = (await request.json()) as {
-    pushToken?: string;
-    platform?: string;
-    deviceName?: string;
-  };
+  const body = await request.json();
+  const validated = parseBody(mobileRegisterDeviceSchema, body);
+  if (!validated.success) {
+    return NextResponse.json({ error: validated.error, details: validated.details }, { status: 400 });
+  }
 
   if (!body.pushToken || typeof body.pushToken !== 'string') {
     return NextResponse.json(

@@ -5,6 +5,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 
+import { logger } from '@/lib/logger';
 export async function GET(request: NextRequest) {
   try {
     const supabase = await createClient()
@@ -134,7 +135,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ listings: result })
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Unknown error'
-    console.error('[Analytics/Listings] Error:', message)
+    logger.error('[Analytics/Listings] Error:', message)
     return NextResponse.json({ error: 'Failed to fetch listing analytics' }, { status: 500 })
   }
 }

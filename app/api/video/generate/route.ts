@@ -10,6 +10,7 @@ import { generateVideoSchema } from '@/lib/validation/schemas';
 import { orderPhotosForWalkthrough } from '@/lib/video/photo-ordering';
 import { ZodError } from 'zod';
 
+import { logger } from '@/lib/logger';
 interface ListingWithPhotos {
   id: string;
   title: string | null;
@@ -69,7 +70,7 @@ export async function POST(request: NextRequest) {
     let validatedInput;
     try {
       validatedInput = generateVideoSchema.parse(body);
-    } catch (error) {
+    } catch (error: unknown) {
       if (error instanceof ZodError) {
         return NextResponse.json(
           {
@@ -92,7 +93,7 @@ export async function POST(request: NextRequest) {
       .single<ListingWithPhotos>();
 
     if (listingError || !listing) {
-      console.error('[video/generate] Listing query failed:', {
+      logger.error('[video/generate] Listing query failed:', {
         listingId: validatedInput.listingId,
         userId: user.id,
         error: listingError?.message,
@@ -127,7 +128,7 @@ export async function POST(request: NextRequest) {
     );
 
     if (missingEnvVars.length > 0) {
-      console.error('[video/generate] Missing env vars:', missingEnvVars);
+      logger.error('[video/generate] Missing env vars:', missingEnvVars);
       return NextResponse.json(
         {
           error: 'Video rendering not configured',
@@ -239,7 +240,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Log pre-render diagnostics
-    console.log('[video/generate] Pre-render:', {
+    logger.info('[video/generate] Pre-render:', {
       compositionId,
       photoCount: validPhotoUrls.length,
       hasAudio: !!validatedInput.audio,
@@ -277,7 +278,7 @@ export async function POST(request: NextRequest) {
       });
 
     if (insertError) {
-      console.error('[video/generate] Database insert failed:', insertError);
+      logger.error('[video/generate] Database insert failed:', insertError);
     }
 
     // Return success response
@@ -305,7 +306,7 @@ export async function POST(request: NextRequest) {
       : undefined;
     const displayMessage = causeMsg ? `${message} — ${causeMsg}` : message;
 
-    console.error('[video/generate] Full error:', {
+    logger.error('[video/generate] Full error:', {
       name: errorName,
       message: displayMessage,
       awsHttpStatus: httpStatusCode,

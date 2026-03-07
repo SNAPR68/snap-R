@@ -32,7 +32,8 @@ export async function GET(req: NextRequest) {
     const personId = connection.platform_user_id;
 
     const profileRes = await fetch('https://api.linkedin.com/v2/userinfo', {
-      headers: { 'Authorization': `Bearer ${accessToken}` }
+      headers: { 'Authorization': `Bearer ${accessToken}` },
+          signal: AbortSignal.timeout(15000),
     });
     const profileData = await profileRes.json();
 
@@ -60,6 +61,7 @@ export async function GET(req: NextRequest) {
         'X-Restli-Protocol-Version': '2.0.0',
       },
       body: JSON.stringify(ugcBody),
+          signal: AbortSignal.timeout(15000),
     });
     
     const ugcText = await ugcRes.text();
@@ -85,6 +87,7 @@ export async function GET(req: NextRequest) {
         'LinkedIn-Version': '202401',
       },
       body: JSON.stringify(postsBody),
+          signal: AbortSignal.timeout(15000),
     });
 
     const postsText = await postsRes.text();

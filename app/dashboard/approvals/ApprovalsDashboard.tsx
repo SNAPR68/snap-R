@@ -1,6 +1,7 @@
 'use client'
 import { useState } from 'react'
 import Link from 'next/link'
+import Image from 'next/image';
 import { CheckCircle2, XCircle, Clock, Home, ExternalLink, Copy, Check, Search, Download, ChevronDown, ChevronRight, AlertTriangle, Eye, Share2, BarChart3 } from 'lucide-react'
 
 interface Photo { id: string; status: 'pending' | 'approved' | 'rejected'; rejectionReason?: string; approvedBy?: string; approvedAt?: string }
@@ -65,7 +66,7 @@ export default function ApprovalsDashboard({ listings, overallStats }: { listing
               <div key={listing.id} className={`bg-[#111] border rounded-xl overflow-hidden transition-all ${getStatusColor(listing)}`}>
                 <div className="p-4 cursor-pointer hover:bg-white/5 transition-colors" onClick={() => setExpandedListing(expandedListing === listing.id ? null : listing.id)}>
                   <div className="flex items-center gap-4">
-                    <div className="w-20 h-14 rounded-lg overflow-hidden bg-white/5 flex-shrink-0">{listing.thumbnail ? <img src={listing.thumbnail} alt="" className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center"><Home className="w-6 h-6 text-white/20" /></div>}</div>
+                    <div className="w-20 h-14 rounded-lg overflow-hidden bg-white/5 flex-shrink-0">{listing.thumbnail ? <Image src={listing.thumbnail} alt="" className="w-full h-full object-cover" width={400} height={300} unoptimized /> : <div className="w-full h-full flex items-center justify-center"><Home className="w-6 h-6 text-white/20" /></div>}</div>
                     <div className="flex-1 min-w-0"><h3 className="font-semibold truncate">{listing.title}</h3><p className="text-sm text-white/50 truncate">{[listing.address, listing.city, listing.state].filter(Boolean).join(', ') || 'No address'}</p></div>
                     <div className="hidden md:flex items-center gap-6">
                       <div className="text-center"><p className="text-lg font-bold text-green-400">{listing.stats.approved}</p><p className="text-xs text-white/40">Approved</p></div>

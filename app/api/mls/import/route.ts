@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/server';
 import { getMLSProvider } from '@/lib/mls/provider';
 import { mlsImportSchema } from '@/lib/validation/schemas';
 
+import { logger } from '@/lib/logger';
 export async function POST(request: NextRequest) {
   try {
     const supabase = await createClient();
@@ -65,7 +66,7 @@ export async function POST(request: NextRequest) {
     });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Internal server error';
-    console.error('[MLS Import] Error:', message);
+    logger.error('[MLS Import] Error:', message);
     return NextResponse.json(
       { error: 'Failed to import from MLS' },
       { status: 500 }

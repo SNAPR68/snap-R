@@ -5,6 +5,7 @@ import { adminSupabase } from '@/lib/supabase/admin';
 import { escapeHtml } from '@/lib/utils/html-escape';
 import { contactSchema, parseBody } from '@/lib/validation/schemas';
 
+import { logger } from '@/lib/logger';
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
@@ -47,7 +48,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ success: true });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Internal server error';
-    console.error('Contact form error:', error);
+    logger.error('Contact form error:', error);
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }

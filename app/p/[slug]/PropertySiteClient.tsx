@@ -1,5 +1,6 @@
 'use client'
 
+import Image from 'next/image';
 import { useState, useEffect, useCallback } from 'react'
 import { 
   MapPin, Bed, Bath, Square, Phone, Mail, Share2, ChevronLeft, ChevronRight, 
@@ -205,7 +206,7 @@ export default function PropertySiteClient({ photos, listing, agent, brand, vide
       
       setFormSubmitted(true)
       setContactForm({ name: '', email: '', phone: '', message: '' })
-    } catch (error) {
+    } catch (error: unknown) {
       setSubmitError('Failed to send message. Please try again or contact the agent directly.')
     } finally {
       setIsSubmitting(false)
@@ -495,11 +496,9 @@ export default function PropertySiteClient({ photos, listing, agent, brand, vide
                       }`}
                     >
                       {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
-                        src={photo}
+                      <Image src={photo}
                         alt={`Property photo ${index + 1}`}
-                        className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-                      />
+                        className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" width={400} height={300} unoptimized />
                       <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors" />
                       {isUnlocked && index === 6 && photos.length > 7 && (
                         <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
@@ -516,11 +515,9 @@ export default function PropertySiteClient({ photos, listing, agent, brand, vide
                     {/* Blurred preview of next photo */}
                     <div className="absolute inset-0">
                       {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
-                        src={photos[GATE_PHOTO_COUNT]}
+                      <Image src={photos[GATE_PHOTO_COUNT]}
                         alt="More photos available"
-                        className="w-full h-full object-cover blur-xl scale-110 opacity-30"
-                      />
+                        className="w-full h-full object-cover blur-xl scale-110 opacity-30" width={400} height={300} unoptimized />
                     </div>
                     <div className="relative z-10 py-12 px-8 text-center bg-gradient-to-b from-[#0A0A0A]/80 to-[#0A0A0A]/95">
                       <div className="mb-2">
@@ -939,12 +936,10 @@ export default function PropertySiteClient({ photos, listing, agent, brand, vide
               <div className="bg-[#1A1A1A] rounded-2xl p-6 border border-white/10">
                 <div className="flex items-center gap-4 mb-6">
                   {agent.avatar ? (
-                    <img 
-                      src={agent.avatar} 
+                    <Image src={agent.avatar} 
                       alt={agent.name}
                       className="w-16 h-16 rounded-full object-cover border-2"
-                      style={{ borderColor: primaryColor }}
-                    />
+                      style={{ borderColor: primaryColor }} width={400} height={300} unoptimized />
                   ) : (
                     <div 
                       className="w-16 h-16 rounded-full flex items-center justify-center text-xl font-bold"
@@ -963,11 +958,9 @@ export default function PropertySiteClient({ photos, listing, agent, brand, vide
                 {/* Brand Logo */}
                 {brand?.logo && (
                   <div className="mb-6">
-                    <img 
-                      src={brand.logo} 
+                    <Image src={brand.logo} 
                       alt={agent.company || 'Company logo'}
-                      className="max-h-12 object-contain"
-                    />
+                      className="max-h-12 object-contain" width={400} height={300} unoptimized />
                   </div>
                 )}
                 
@@ -1103,11 +1096,13 @@ export default function PropertySiteClient({ photos, listing, agent, brand, vide
           )}
           
           {/* Image */}
-          <img
-            src={photos[currentPhoto]}
+          <Image src={photos[currentPhoto]}
             alt={`Photo ${currentPhoto + 1}`}
             className="max-h-[85vh] max-w-[90vw] object-contain"
             onClick={(e) => e.stopPropagation()}
+            width={400}
+            height={300}
+            unoptimized
           />
           
           {/* Counter */}
@@ -1127,7 +1122,7 @@ export default function PropertySiteClient({ photos, listing, agent, brand, vide
                   }`}
                   style={{ borderColor: index === currentPhoto ? primaryColor : 'transparent' }}
                 >
-                  <img src={photo} alt="" className="w-full h-full object-cover" />
+                  <Image src={photo} alt="" className="w-full h-full object-cover" width={400} height={300} unoptimized />
                 </button>
               ))}
             </div>

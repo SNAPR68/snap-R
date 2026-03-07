@@ -1,5 +1,6 @@
 import { MLSPropertyData, MLSPhoto, MLSProvider, MLSCredentials } from './types';
 
+import { logger } from '@/lib/logger';
 // SimplyRETS demo credentials for development
 const DEMO_USERNAME = 'simplyrets';
 const DEMO_PASSWORD = 'simplyrets';
@@ -91,7 +92,7 @@ export class SimplyRETSProvider implements MLSProvider {
     );
 
     if (!response.ok) {
-      console.error(`[SimplyRETS] API error: ${response.status} ${response.statusText}`);
+      logger.error(`[SimplyRETS] API error: ${response.status} ${response.statusText}`);
       return null;
     }
 

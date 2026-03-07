@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { useParams } from 'next/navigation';
 import {
@@ -235,12 +236,10 @@ export default function TourViewerPage() {
                   : kenBurns.transform
               }}
             >
-              <img
-                src={scene.image_url}
+              <Image src={scene.image_url}
                 alt={scene.name}
                 className="w-full h-full object-cover"
-                draggable={false}
-              />
+                draggable={false} width={400} height={300} unoptimized />
             </div>
             
             {/* Gradient overlays */}
@@ -254,7 +253,7 @@ export default function TourViewerPage() {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             {tour.logo_url ? (
-              <img src={tour.logo_url} alt="" className="h-8 w-auto" />
+              <Image src={tour.logo_url} alt="" className="h-8 w-auto" width={400} height={300} unoptimized />
             ) : (
               <div className="w-10 h-10 rounded-xl bg-amber-500/20 flex items-center justify-center">
                 <Home className="w-5 h-5 text-amber-400" />
@@ -385,11 +384,9 @@ export default function TourViewerPage() {
                   idx === currentIndex ? 'border-amber-400 scale-105' : 'border-transparent opacity-50 hover:opacity-100'
                 }`}
               >
-                <img
-                  src={scene.thumbnail_url || scene.image_url}
+                <Image src={scene.thumbnail_url || scene.image_url}
                   alt={scene.name}
-                  className="w-full h-full object-cover"
-                />
+                  className="w-full h-full object-cover" width={400} height={300} unoptimized />
               </button>
             ))}
           </div>
@@ -414,11 +411,9 @@ export default function TourViewerPage() {
                   idx === currentIndex ? 'ring-2 ring-amber-400' : ''
                 }`}
               >
-                <img
-                  src={scene.thumbnail_url || scene.image_url}
+                <Image src={scene.thumbnail_url || scene.image_url}
                   alt={scene.name}
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                />
+                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" width={400} height={300} unoptimized />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent" />
                 <div className="absolute bottom-2 left-2 right-2">
                   <p className="text-white text-sm font-medium truncate">{scene.name}</p>

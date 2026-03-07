@@ -30,7 +30,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { createClient } from '@/lib/supabase/server';
+import { renovationSchema, parseBody } from '@/lib/validation/schemas'
 
+import { logger } from '@/lib/logger';
 const REPLICATE_API_TOKEN = process.env.REPLICATE_API_TOKEN;
 
 // ============================================================================
@@ -178,6 +180,7 @@ async function pollPrediction(predictionUrl: string, maxAttempts: number = 180):
         'Authorization': `Token ${REPLICATE_API_TOKEN}`,
         'Content-Type': 'application/json'
       },
+          signal: AbortSignal.timeout(30000),
     });
     
     if (!response.ok) {
@@ -186,14 +189,14 @@ async function pollPrediction(predictionUrl: string, maxAttempts: number = 180):
     
     const result = await response.json();
     
-    console.log(`[Poll ${attempts}] Status: ${result.status}`);
+    logger.info(`[Poll ${attempts}] Status: ${result.status}`);
     
     if (result.status === 'succeeded') {
       return result;
     }
     
     if (result.status === 'failed') {
-      console.error('[Poll] Failed:', result.error);
+      logger.error('[Poll] Failed:', result.error);
       throw new Error(result.error || 'Prediction failed');
     }
     
@@ -231,8 +234,8 @@ async function processWithInteriorDesign(
   negativePrompt: string,
   promptStrength: number = 0.8
 ): Promise<string> {
-  console.log('[Interior Design] Starting - room structure will be preserved via ControlNets');
-  console.log('[Interior Design] Prompt:', prompt.slice(0, 200));
+  logger.info('[Interior Design] Starting - room structure will be preserved via ControlNets');
+  logger.info('[Interior Design] Prompt:', prompt.slice(0, 200));
   
   const response = await fetch('https://api.replicate.com/v1/predictions', {
     method: 'POST',
@@ -252,6 +255,7 @@ async function processWithInteriorDesign(
         num_outputs: 1,
       },
     }),
+      signal: AbortSignal.timeout(30000),
   });
 
   if (!response.ok) {
@@ -260,7 +264,7 @@ async function processWithInteriorDesign(
   }
 
   const prediction = await response.json();
-  console.log('[Interior Design] Prediction started:', prediction.id);
+  logger.info('[Interior Design] Prediction started:', prediction.id);
   
   const result = await pollPrediction(prediction.urls.get);
   return extractOutputUrl(result);
@@ -276,8 +280,8 @@ async function processWithFluxDepth(
   imageUrl: string,
   prompt: string
 ): Promise<string> {
-  console.log('[FLUX Depth Pro] Starting - structure-preserving transformation via depth map');
-  console.log('[FLUX Depth Pro] Prompt:', prompt.slice(0, 200));
+  logger.info('[FLUX Depth Pro] Starting - structure-preserving transformation via depth map');
+  logger.info('[FLUX Depth Pro] Prompt:', prompt.slice(0, 200));
   
   const response = await fetch('https://api.replicate.com/v1/models/black-forest-labs/flux-depth-pro/predictions', {
     method: 'POST',
@@ -294,6 +298,7 @@ async function processWithFluxDepth(
         output_format: 'png',
       },
     }),
+      signal: AbortSignal.timeout(30000),
   });
 
   if (!response.ok) {
@@ -302,7 +307,7 @@ async function processWithFluxDepth(
   }
 
   const prediction = await response.json();
-  console.log('[FLUX Depth Pro] Prediction started:', prediction.id);
+  logger.info('[FLUX Depth Pro] Prediction started:', prediction.id);
   
   const result = await pollPrediction(prediction.urls.get);
   return extractOutputUrl(result);
@@ -318,8 +323,8 @@ async function processWithFluxKontext(
   imageUrl: string,
   editInstruction: string
 ): Promise<string> {
-  console.log('[FLUX Kontext Pro] Starting - targeted text-guided edit');
-  console.log('[FLUX Kontext Pro] Instruction:', editInstruction.slice(0, 200));
+  logger.info('[FLUX Kontext Pro] Starting - targeted text-guided edit');
+  logger.info('[FLUX Kontext Pro] Instruction:', editInstruction.slice(0, 200));
   
   const response = await fetch('https://api.replicate.com/v1/models/black-forest-labs/flux-kontext-pro/predictions', {
     method: 'POST',
@@ -338,6 +343,7 @@ async function processWithFluxKontext(
         output_format: 'png',
       },
     }),
+      signal: AbortSignal.timeout(30000),
   });
 
   if (!response.ok) {
@@ -346,7 +352,7 @@ async function processWithFluxKontext(
   }
 
   const prediction = await response.json();
-  console.log('[FLUX Kontext Pro] Prediction started:', prediction.id);
+  logger.info('[FLUX Kontext Pro] Prediction started:', prediction.id);
   
   const result = await pollPrediction(prediction.urls.get);
   return extractOutputUrl(result);
@@ -364,8 +370,8 @@ async function processWithFluxFill(
   maskUrl: string,
   prompt: string
 ): Promise<string> {
-  console.log('[FLUX Fill Pro] Starting - inpainting with mask');
-  console.log('[FLUX Fill Pro] Prompt:', prompt.slice(0, 200));
+  logger.info('[FLUX Fill Pro] Starting - inpainting with mask');
+  logger.info('[FLUX Fill Pro] Prompt:', prompt.slice(0, 200));
   
   const response = await fetch('https://api.replicate.com/v1/models/black-forest-labs/flux-fill-pro/predictions', {
     method: 'POST',
@@ -383,6 +389,7 @@ async function processWithFluxFill(
         output_format: 'png',
       },
     }),
+      signal: AbortSignal.timeout(30000),
   });
 
   if (!response.ok) {
@@ -391,7 +398,7 @@ async function processWithFluxFill(
   }
 
   const prediction = await response.json();
-  console.log('[FLUX Fill Pro] Prediction started:', prediction.id);
+  logger.info('[FLUX Fill Pro] Prediction started:', prediction.id);
   
   const result = await pollPrediction(prediction.urls.get);
   return extractOutputUrl(result);
@@ -407,8 +414,8 @@ async function processWithIdeogram(
   imageUrl: string,
   prompt: string
 ): Promise<string> {
-  console.log('[Ideogram v3] Starting - premium quality render');
-  console.log('[Ideogram v3] Prompt:', prompt.slice(0, 200));
+  logger.info('[Ideogram v3] Starting - premium quality render');
+  logger.info('[Ideogram v3] Prompt:', prompt.slice(0, 200));
   
   const response = await fetch('https://api.replicate.com/v1/models/ideogram-ai/ideogram-v3-balanced/predictions', {
     method: 'POST',
@@ -424,6 +431,7 @@ async function processWithIdeogram(
         style_type: 'REALISTIC',
       },
     }),
+      signal: AbortSignal.timeout(30000),
   });
 
   if (!response.ok) {
@@ -432,7 +440,7 @@ async function processWithIdeogram(
   }
 
   const prediction = await response.json();
-  console.log('[Ideogram v3] Prediction started:', prediction.id);
+  logger.info('[Ideogram v3] Prediction started:', prediction.id);
   
   const result = await pollPrediction(prediction.urls.get);
   return extractOutputUrl(result);
@@ -581,13 +589,14 @@ export async function POST(request: NextRequest) {
   const addStep = (name: string, status: 'completed' | 'processing' | 'failed' = 'completed') => {
     const prefix = status === 'completed' ? 'Completed' : status === 'processing' ? 'Processing' : 'Failed';
     steps.push(`${prefix}: ${name}`);
-    console.log(`[Step] ${prefix}: ${name} (${Date.now() - startTime}ms)`);
+    logger.info(`[Step] ${prefix}: ${name} (${Date.now() - startTime}ms)`);
   };
   
   try {
     // Parse request
     addStep('Parsing request');
     const body: RenovationRequest = await request.json();
+    const validated = parseBody(renovationSchema, body); if (!validated.success) { return NextResponse.json({ error: validated.error, details: validated.details }, { status: 400 }); }
     
     const {
       imageUrl,
@@ -618,7 +627,7 @@ export async function POST(request: NextRequest) {
     // Select optimal model
     addStep('Selecting optimal AI model');
     const selectedModel = selectOptimalModel(roomType, selectedRenovations, requestedModel, quality);
-    console.log(`[Model Selection] Using: ${selectedModel}`);
+    logger.info(`[Model Selection] Using: ${selectedModel}`);
     
     // Build prompt
     addStep('Building optimized prompt');
@@ -628,7 +637,7 @@ export async function POST(request: NextRequest) {
       selectedRenovations,
       detailedOptions
     );
-    console.log(`[Prompt] ${prompt.slice(0, 300)}...`);
+    logger.info(`[Prompt] ${prompt.slice(0, 300)}...`);
     
     // Process with selected model
     addStep(`Processing with ${selectedModel}`, 'processing');
@@ -667,12 +676,12 @@ export async function POST(request: NextRequest) {
       addStep(modelUsed);
       
     } catch (modelError) {
-      console.error(`[${selectedModel}] Failed:`, modelError);
+      logger.error(`[${selectedModel}] Failed:`, modelError);
       addStep(`${selectedModel} failed, trying fallback`, 'processing');
       
       // Fallback: Try interior-design if another model failed
       if (selectedModel !== 'interior-design') {
-        console.log('[Fallback] Trying Interior Design model...');
+        logger.info('[Fallback] Trying Interior Design model...');
         resultUrl = await processWithInteriorDesign(imageUrl, prompt, negativePrompt, promptStrength);
         modelUsed = 'Interior Design AI (fallback)';
         addStep('Fallback succeeded');
@@ -687,13 +696,13 @@ export async function POST(request: NextRequest) {
     const estimatedApiCost = estimateCost(selectedModel);
     
     // Log success
-    console.log('============================================');
-    console.log('RENOVATION COMPLETE');
-    console.log('Model:', modelUsed);
-    console.log('Time:', Math.round(processingTime / 1000), 'seconds');
-    console.log('Credits:', credits);
-    console.log('API Cost:', `$${estimatedApiCost.toFixed(4)}`);
-    console.log('============================================');
+    logger.info('============================================');
+    logger.info('RENOVATION COMPLETE');
+    logger.info('Model:', modelUsed);
+    logger.info('Time:', Math.round(processingTime / 1000), 'seconds');
+    logger.info('Credits:', credits);
+    logger.info('API Cost:', `$${estimatedApiCost.toFixed(4)}`);
+    logger.info('============================================');
     
     return NextResponse.json({
       success: true,
@@ -706,8 +715,8 @@ export async function POST(request: NextRequest) {
       prompt: prompt.slice(0, 500),
     });
     
-  } catch (error) {
-    console.error('Renovation API error:', error);
+  } catch (error: unknown) {
+    logger.error('Renovation API error:', error);
     addStep(error instanceof Error ? error.message : 'Unknown error', 'failed');
     
     return NextResponse.json({

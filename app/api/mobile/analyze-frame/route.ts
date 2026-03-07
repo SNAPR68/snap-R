@@ -11,6 +11,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import OpenAI from 'openai';
 
+import { logger } from '@/lib/logger';
 const FRAME_ANALYSIS_PROMPT = `You are a real estate photography AI assistant analyzing a live camera frame.
 Your job is to give quick, actionable feedback to help the user take a better photo.
 
@@ -112,7 +113,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Failed to parse AI response' }, { status: 500 });
     }
     const message = error instanceof Error ? error.message : 'Analysis failed';
-    console.error('[analyze-frame] Error:', message);
+    logger.error('[analyze-frame] Error:', message);
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }

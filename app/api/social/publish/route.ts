@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { adminSupabase } from '@/lib/supabase/admin';
 
+import { logger } from '@/lib/logger';
 interface SocialConnection {
   access_token: string;
   page_access_token?: string;
@@ -64,7 +65,7 @@ export async function POST(req: NextRequest) {
         is_favorite: false,
         use_count: 0,
       });
-      if (saveError) console.error('Content library save error:', saveError);
+      if (saveError) logger.error('Content library save error:', saveError);
 
       return NextResponse.json({ 
         success: true, 
@@ -114,12 +115,12 @@ export async function POST(req: NextRequest) {
       is_favorite: false,
       use_count: 1,
     });
-    if (libError) console.error('Content library save error:', libError);
+    if (libError) logger.error('Content library save error:', libError);
 
     return NextResponse.json({ success: true, postId: result.postId, url: result.url });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Failed to publish';
-    console.error('Publish error:', error);
+    logger.error('Publish error:', error);
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }

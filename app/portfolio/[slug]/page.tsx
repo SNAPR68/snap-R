@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import { useEffect, useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { Loader2, Mail, Phone, Globe, Instagram, Facebook, Linkedin, ExternalLink } from 'lucide-react';
@@ -77,28 +78,24 @@ function BeforeAfterSlider({ beforeUrl, afterUrl, title }: {
       onTouchMove={handleTouchMove}
     >
       {/* After image (full) */}
-      <img 
-        src={afterUrl} 
+      <Image src={afterUrl} 
         alt="After"
         className="absolute inset-0 w-full h-full object-cover"
-        draggable={false}
-      />
+        draggable={false} width={400} height={300} unoptimized />
       
       {/* Before image (clipped) */}
       <div 
         className="absolute inset-0 overflow-hidden"
         style={{ width: `${sliderPosition}%` }}
       >
-        <img 
-          src={beforeUrl} 
+        <Image src={beforeUrl} 
           alt="Before"
           className="absolute inset-0 w-full h-full object-cover"
           style={{ 
             width: `${100 / (sliderPosition / 100)}%`,
             maxWidth: 'none'
           }}
-          draggable={false}
-        />
+          draggable={false} unoptimized />
       </div>
       
       {/* Slider line */}
@@ -141,7 +138,7 @@ function ContactForm({ portfolioId, accentColor }: { portfolioId: string; accent
         ...formData,
       });
       setSubmitted(true);
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Submit error:', error);
     } finally {
       setSubmitting(false);
@@ -215,7 +212,7 @@ export default function PublicPortfolioPage({ params }: { params: { slug: string
 
   useEffect(() => {
     loadPortfolio();
-  }, [params.slug]);
+  }, [params.slug]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const loadPortfolio = async () => {
     try {
@@ -262,11 +259,9 @@ export default function PublicPortfolioPage({ params }: { params: { slug: string
       <div className="relative">
         {portfolio.cover_image_url && (
           <div className="absolute inset-0 h-[400px]">
-            <img 
-              src={portfolio.cover_image_url} 
+            <Image src={portfolio.cover_image_url} 
               alt=""
-              className="w-full h-full object-cover opacity-30"
-            />
+              className="w-full h-full object-cover opacity-30" width={400} height={300} unoptimized />
             <div className="absolute inset-0 bg-gradient-to-b from-transparent to-[#0F0F0F]" />
           </div>
         )}
@@ -274,11 +269,9 @@ export default function PublicPortfolioPage({ params }: { params: { slug: string
         <div className="relative max-w-6xl mx-auto px-6 pt-20 pb-12">
           {/* Logo */}
           {portfolio.logo_url && (
-            <img 
-              src={portfolio.logo_url} 
+            <Image src={portfolio.logo_url} 
               alt={portfolio.title}
-              className="w-24 h-24 object-contain mb-6"
-            />
+              className="w-24 h-24 object-contain mb-6" width={400} height={300} unoptimized />
           )}
           
           <h1 className="text-4xl md:text-5xl font-bold mb-4">{portfolio.title}</h1>
@@ -366,11 +359,9 @@ export default function PublicPortfolioPage({ params }: { params: { slug: string
                 onClick={() => setSelectedItem(item)}
                 className="group relative aspect-square overflow-hidden rounded-xl"
               >
-                <img 
-                  src={item.after_url} 
+                <Image src={item.after_url} 
                   alt={item.title || 'Portfolio item'}
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                />
+                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" width={400} height={300} unoptimized />
                 <div className="absolute inset-0 bg-black/0 group-hover:bg-black/50 transition-colors flex items-center justify-center">
                   <span className="opacity-0 group-hover:opacity-100 transition-opacity text-white font-medium">
                     View

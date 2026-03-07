@@ -2,6 +2,7 @@ export const dynamic = 'force-dynamic';
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
+import { logger } from '@/lib/logger';
 export async function GET(req: NextRequest) {
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://snap-r.com';
   
@@ -39,12 +40,13 @@ export async function GET(req: NextRequest) {
         client_id: clientId!,
         client_secret: clientSecret!,
       }),
+          signal: AbortSignal.timeout(15000),
     });
 
     const tokenData = await tokenResponse.json();
 
     if (tokenData.error) {
-      console.error('LinkedIn token error:', tokenData);
+      logger.error('LinkedIn token error:', tokenData);
       return NextResponse.redirect(`${baseUrl}/dashboard/settings/social?error=token_error`);
     }
 
@@ -53,10 +55,11 @@ export async function GET(req: NextRequest) {
     // Get user profile using OpenID Connect userinfo endpoint
     const profileResponse = await fetch('https://api.linkedin.com/v2/userinfo', {
       headers: { Authorization: `Bearer ${accessToken}` },
+          signal: AbortSignal.timeout(15000),
     });
 
     const profileData = await profileResponse.json();
-    console.log('LinkedIn profile:', profileData);
+    logger.info('LinkedIn profile:', profileData);
 
     // Save LinkedIn connection
     const { error: dbError } = await supabase.from('social_connections').upsert({
@@ -72,13 +75,13 @@ export async function GET(req: NextRequest) {
     }, { onConflict: 'user_id,platform' });
 
     if (dbError) {
-      console.error('DB error:', dbError);
+      logger.error('DB error:', dbError);
       return NextResponse.redirect(`${baseUrl}/dashboard/settings/social?error=db_error`);
     }
 
     return NextResponse.redirect(`${baseUrl}/dashboard/settings/social?success=linkedin`);
-  } catch (error) {
-    console.error('LinkedIn callback error:', error);
+  } catch (error: unknown) {
+    logger.error('LinkedIn callback error:', error);
     return NextResponse.redirect(`${baseUrl}/dashboard/settings/social?error=server_error`);
   }
 }

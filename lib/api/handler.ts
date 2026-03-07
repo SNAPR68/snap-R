@@ -27,6 +27,7 @@ import { ZodSchema, ZodError } from 'zod'
 import * as Sentry from '@sentry/nextjs'
 import type { SupabaseClient } from '@supabase/supabase-js'
 
+import { logger } from '@/lib/logger';
 interface AuthResult {
   user: { id: string; email?: string } | null
   supabase: SupabaseClient
@@ -129,7 +130,7 @@ export function handleApiError(
         }
       })
 
-      console.error(`[${source}] Unhandled error:`, message)
+      logger.error(`[${source}] Unhandled error:`, message)
       return apiError('Internal server error', 500)
     }
   }

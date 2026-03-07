@@ -4,9 +4,10 @@ import { createClient } from '@/lib/supabase/server';
 import {
   generateMlsExportPackage,
   getMlsOptions,
-  type ExportPhoto,
 } from '@/lib/compliance';
+import { complianceExportSchema, parseBody } from '@/lib/validation/schemas';
 
+import { logger } from '@/lib/logger';
 export const maxDuration = 120;
 
 /**
@@ -24,6 +25,11 @@ export async function GET() {
  */
 export async function POST(request: NextRequest) {
   try {
+    const body = await request.json();
+    const validated = parseBody(complianceExportSchema, body);
+    if (!validated.success) {
+      return NextResponse.json({ error: validated.error, details: validated.details }, { status: 400 });
+    }
     const {
       mlsId,
       photos,
@@ -31,7 +37,7 @@ export async function POST(request: NextRequest) {
       mlsNumber,
       agentName,
       brokerageName,
-    } = await request.json();
+    } = validated.data;
 
     if (!mlsId || !photos || photos.length === 0) {
       return NextResponse.json(
@@ -47,11 +53,11 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    console.log('[MLS Export] Starting for', mlsId, '-', photos.length, 'photos');
+    logger.info('[MLS Export] Starting for', mlsId, '-', photos.length, 'photos');
 
     const result = await generateMlsExportPackage({
       mlsId,
-      photos: photos as ExportPhoto[],
+      photos,
       listingAddress,
       mlsNumber,
       agentName,
@@ -87,7 +93,7 @@ export async function POST(request: NextRequest) {
       .from('raw-images')
       .createSignedUrl(zipFilename, 3600);
 
-    console.log('[MLS Export] Complete -', result.manifest?.processedPhotos, 'photos processed');
+    logger.info('[MLS Export] Complete -', result.manifest?.processedPhotos, 'photos processed');
 
     return NextResponse.json({
       success: true,
@@ -97,7 +103,7 @@ export async function POST(request: NextRequest) {
     });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Internal server error';
-    console.error('[MLS Export] Error:', message);
+    logger.error('[MLS Export] Error:', message);
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }

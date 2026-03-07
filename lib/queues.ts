@@ -32,6 +32,7 @@ export async function enqueueImageJob(message: ImageJobMessage) {
         },
       ],
     }),
+      signal: AbortSignal.timeout(15000),
   });
 
   if (!res.ok) {

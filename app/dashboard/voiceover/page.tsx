@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import React, { Suspense, useEffect, useState, useRef, useCallback } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import {
@@ -463,7 +464,7 @@ function VoiceoverGenerator() {
               >
                 <div className="w-16 h-12 rounded-lg overflow-hidden bg-white/10">
                   {listing.thumbnail ? (
-                    <img src={listing.thumbnail} alt="" className="w-full h-full object-cover" />
+                    <Image src={listing.thumbnail} alt="" className="w-full h-full object-cover" width={400} height={300} unoptimized />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center">
                       <Home className="w-5 h-5 text-white/20" />

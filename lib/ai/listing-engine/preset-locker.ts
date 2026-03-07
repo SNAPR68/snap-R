@@ -7,6 +7,7 @@
 
 import { PhotoAnalysis } from './types';
 
+import { logger } from '@/lib/logger';
 export interface LockedPresets {
   // Sky preset locked for all exteriors
   skyPreset: 'clear-blue' | 'sunset' | 'dramatic-clouds' | 'twilight';
@@ -37,7 +38,7 @@ export interface LockedPresets {
  * These presets will be applied consistently across the entire listing
  */
 export function determineLockedPresets(analyses: PhotoAnalysis[]): LockedPresets {
-  console.log('[PresetLocker] Analyzing listing for optimal presets...');
+  logger.info('[PresetLocker] Analyzing listing for optimal presets...');
   
   // Analyze exterior photos to determine sky strategy
   const exteriors = analyses.filter(a => a.photoType.startsWith('exterior') || a.photoType === 'drone');
@@ -97,7 +98,7 @@ export function determineLockedPresets(analyses: PhotoAnalysis[]): LockedPresets
     declutterPrompt: DECLUTTER_PROMPTS[declutterLevel],
   };
   
-  console.log('[PresetLocker] Locked presets:', {
+  logger.info('[PresetLocker] Locked presets:', {
     sky: skyPreset,
     twilight: twilightPreset,
     staging: stagingStyle,

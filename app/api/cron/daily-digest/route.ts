@@ -11,6 +11,7 @@ import { adminSupabase } from '@/lib/supabase/admin';
 import { sendNotification } from '@/lib/notifications/sender';
 import type { DailySummaryData } from '@/lib/notifications/types';
 
+import { logger } from '@/lib/logger';
 const CRON_SECRET = process.env.CRON_SECRET;
 
 interface DigestUser {
@@ -34,7 +35,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  console.log('[DailyDigest] Starting...');
+  logger.info('[DailyDigest] Starting...');
   const supabase = adminSupabase();
   const results = { emailSent: 0, whatsappSent: 0, skipped: 0, failed: 0 };
 
@@ -142,12 +143,12 @@ export async function GET(request: NextRequest) {
 
       } catch (e: unknown) {
         const errMsg = e instanceof Error ? e.message : 'Internal server error';
-        console.error(`[DailyDigest] Error for ${user.id}:`, errMsg);
+        logger.error(`[DailyDigest] Error for ${user.id}:`, errMsg);
         results.failed++;
       }
     }
 
-    console.log('[DailyDigest] Complete:', results);
+    logger.info('[DailyDigest] Complete:', results);
     return NextResponse.json({ success: true, results });
   } catch (error: unknown) {
     const errMsg = error instanceof Error ? error.message : 'Internal server error';

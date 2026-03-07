@@ -9,6 +9,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { openHouseFeedbackSchema } from '@/lib/validation/schemas'
 import { adminSupabase } from '@/lib/supabase/admin'
 
+import { logger } from '@/lib/logger';
 export async function POST(request: NextRequest) {
   try {
     const body: unknown = await request.json()
@@ -51,13 +52,13 @@ export async function POST(request: NextRequest) {
       .eq('id', attendeeId)
 
     if (updateError) {
-      console.error('[OpenHouse] Feedback update error:', updateError.message)
+      logger.error('[OpenHouse] Feedback update error:', updateError.message)
       return NextResponse.json({ error: 'Failed to save feedback.' }, { status: 500 })
     }
 
     return NextResponse.json({ success: true })
   } catch (error: unknown) {
-    console.error('[OpenHouse] Feedback error:', error instanceof Error ? error.message : 'Unknown error')
+    logger.error('[OpenHouse] Feedback error:', error instanceof Error ? error.message : 'Unknown error')
     return NextResponse.json(
       { error: error instanceof Error ? error.message : 'Internal server error' },
       { status: 500 }

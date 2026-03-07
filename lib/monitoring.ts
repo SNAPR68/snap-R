@@ -1,3 +1,4 @@
+import { logger } from '@/lib/logger';
 // Monitoring and Error Tracking Utilities
 
 interface ErrorContext {
@@ -15,7 +16,7 @@ export async function logError(
   const errorMessage = error instanceof Error ? error.message : error;
   const errorStack = error instanceof Error ? error.stack : undefined;
 
-  console.error('[ERROR]', {
+  logger.error('[ERROR]', {
     message: errorMessage,
     stack: errorStack,
     ...context,
@@ -24,6 +25,7 @@ export async function logError(
 
   // Log to database via API (non-blocking)
   try {
+          signal: AbortSignal.timeout(10000),
     await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || ''}/api/log-error`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -33,8 +35,8 @@ export async function logError(
         context: { ...context, stack: errorStack },
       }),
     });
-  } catch (e) {
-    console.error('Failed to log error to database:', e);
+  } catch (error: unknown) {
+    logger.error('Failed to log error to database:', error);
   }
 }
 
@@ -43,16 +45,17 @@ export async function logWarning(
   message: string,
   context: ErrorContext = {}
 ): Promise<void> {
-  console.warn('[WARNING]', { message, ...context, timestamp: new Date().toISOString() });
+  logger.warn('[WARNING]', { message, ...context, timestamp: new Date().toISOString() });
 
   try {
+          signal: AbortSignal.timeout(10000),
     await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || ''}/api/log-error`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ level: 'warning', message, context }),
     });
-  } catch (e) {
-    console.error('Failed to log warning:', e);
+  } catch (error: unknown) {
+    logger.error('Failed to log warning:', error);
   }
 }
 
@@ -64,6 +67,7 @@ export async function trackApiCost(
   metadata: Record<string, unknown> = {}
 ): Promise<void> {
   try {
+          signal: AbortSignal.timeout(10000),
     await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || ''}/api/analytics`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -75,8 +79,8 @@ export async function trackApiCost(
         metadata,
       }),
     });
-  } catch (e) {
-    console.error('Failed to track API cost:', e);
+  } catch (error: unknown) {
+    logger.error('Failed to track API cost:', error);
   }
 }
 

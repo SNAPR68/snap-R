@@ -4,6 +4,7 @@
  * 23 tools: 15 original + 4 seasonal + 4 fix
  */
 
+import { logger } from '@/lib/logger';
 import {
   skyReplacement,
   virtualTwilight,
@@ -112,11 +113,11 @@ export async function processEnhancement(
 ): Promise<EnhancementResult> {
   const startTime = Date.now();
 
-  console.log('[Router] ===================================');
-  console.log('[Router] Tool:', toolId);
-  console.log('[Router] Preset:', options.preset || 'none');
-  console.log('[Router] Custom Prompt:', options.prompt ? 'YES' : 'NO');
-  console.log('[Router] ===================================');
+  logger.info('[Router] ===================================');
+  logger.info('[Router] Tool:', toolId);
+  logger.info('[Router] Preset:', options.preset || 'none');
+  logger.info('[Router] Custom Prompt:', options.prompt ? 'YES' : 'NO');
+  logger.info('[Router] ===================================');
 
   try {
     let enhancedUrl: string;
@@ -238,7 +239,7 @@ export async function processEnhancement(
     }
 
     const duration = Date.now() - startTime;
-    console.log(`[Router] ✅ SUCCESS in ${(duration / 1000).toFixed(1)}s`);
+    logger.info(`[Router] ✅ SUCCESS in ${(duration / 1000).toFixed(1)}s`);
 
     return {
       success: true,
@@ -249,12 +250,12 @@ export async function processEnhancement(
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Internal server error';
     const duration = Date.now() - startTime;
-    console.error(`[Router] Primary provider failed after ${(duration / 1000).toFixed(1)}s:`, message);
+    logger.error(`[Router] Primary provider failed after ${(duration / 1000).toFixed(1)}s:`, message);
 
     // Fallback: retry with auto-enhance if the original tool failed
     if (toolId !== 'auto-enhance') {
       try {
-        console.warn(`[Router] Attempting auto-enhance fallback for ${toolId}`);
+        logger.warn(`[Router] Attempting auto-enhance fallback for ${toolId}`);
         const fallbackUrl = await autoEnhance(imageUrl);
         const fallbackDuration = Date.now() - startTime;
         return {
@@ -265,7 +266,7 @@ export async function processEnhancement(
         };
       } catch (fallbackError: unknown) {
         const message = fallbackError instanceof Error ? fallbackError.message : 'Processing failed';
-        console.error(`[Router] Fallback also failed:`, message);
+        logger.error(`[Router] Fallback also failed:`, message);
       }
     }
 

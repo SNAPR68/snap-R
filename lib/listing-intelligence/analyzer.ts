@@ -1,5 +1,6 @@
 import OpenAI from 'openai';
 
+import { logger } from '@/lib/logger';
 function getOpenAIClient(client?: OpenAI): OpenAI {
   if (client) return client;
   return new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
@@ -130,7 +131,7 @@ export async function analyzePhoto(photoUrl: string, photoIndex: number, client?
     };
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Unknown error';
-    console.error(`[Listing Intelligence] Error analyzing photo ${photoIndex}:`, error instanceof Error ? error.message : error);
+    logger.error(`[Listing Intelligence] Error analyzing photo ${photoIndex}:`, error instanceof Error ? error.message : error);
     return {
       photoIndex, photoUrl, overallScore: 50, lightingScore: 50, compositionScore: 50,
       clarityScore: 50, appealScore: 50, roomType: 'unknown', isExterior: false,
@@ -158,7 +159,7 @@ export async function analyzePhotoBatch(photoUrls: string[], concurrency = 3, cl
 }
 
 export async function analyzeListingPhotos(photoUrls: string[], client?: OpenAI): Promise<ListingAnalysis> {
-  console.log(`[Listing Intelligence] Analyzing ${photoUrls.length} photos...`);
+  logger.info(`[Listing Intelligence] Analyzing ${photoUrls.length} photos...`);
 
   const photoScores = await analyzePhotoBatch(photoUrls, 3, client);
   
@@ -206,7 +207,7 @@ export async function analyzeListingPhotos(photoUrls: string[], client?: OpenAI)
   else if (overallScore >= 60) competitiveBenchmark = 'Average - Matches typical listings. Enhancements would differentiate.';
   else competitiveBenchmark = 'Below Average - Improvements needed to compete effectively.';
   
-  console.log(`[Listing Intelligence] Analysis complete. Score: ${overallScore}/100`);
+  logger.info(`[Listing Intelligence] Analysis complete. Score: ${overallScore}/100`);
   
   return {
     overallScore,

@@ -76,7 +76,7 @@ export function ListingStatusSelector({
       } else {
         alert(result.error || "Failed to update status");
       }
-    } catch (error) {
+    } catch (error: unknown) {
       console.error("Status change error:", error);
       alert("Failed to update status");
     } finally {

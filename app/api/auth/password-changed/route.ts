@@ -3,6 +3,7 @@ export const dynamic = 'force-dynamic';
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 
+import { logger } from '@/lib/logger';
 /**
  * POST /api/auth/password-changed
  *
@@ -100,7 +101,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ sent: true });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Failed to send notification';
-    console.error('[password-changed] Error:', message);
+    logger.error('[password-changed] Error:', message);
     return NextResponse.json({ sent: false, error: message }, { status: 500 });
   }
 }

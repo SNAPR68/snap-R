@@ -3,6 +3,7 @@ export const dynamic = 'force-dynamic';
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
+import { logger } from '@/lib/logger';
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ slug: string }> }
@@ -18,7 +19,7 @@ export async function GET(
     const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
     if (!supabaseUrl || !supabaseServiceKey) {
-      console.error('[Tour API] Missing env vars:', { 
+      logger.error('[Tour API] Missing env vars:', { 
         hasUrl: !!supabaseUrl, 
         hasKey: !!supabaseServiceKey 
       });
@@ -35,7 +36,7 @@ export async function GET(
       .single();
 
     if (tourError || !tour) {
-      console.error('[Tour API] Tour error:', tourError);
+      logger.error('[Tour API] Tour error:', tourError);
       return NextResponse.json({ error: 'Tour not found' }, { status: 404 });
     }
 
@@ -47,7 +48,7 @@ export async function GET(
       .order('sort_order', { ascending: true });
 
     if (scenesError) {
-      console.error('[Tour API] Scenes error:', scenesError);
+      logger.error('[Tour API] Scenes error:', scenesError);
     }
 
     // Get hotspots for each scene
@@ -71,7 +72,7 @@ export async function GET(
 
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Internal server error';
-    console.error('[Tour API] Error:', error);
+    logger.error('[Tour API] Error:', error);
     return NextResponse.json(
       { error: 'Internal server error', details: message },
       { status: 500 }

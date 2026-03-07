@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import React, { useState, useCallback, useEffect } from 'react';
 import { useDropzone } from 'react-dropzone';
 import { 
@@ -255,7 +256,7 @@ export default function ListingIntelligenceDashboard({ onApplyEnhancement, onApp
                       }}
                       className={`aspect-square rounded-lg overflow-hidden bg-white/10 cursor-pointer relative border-2 transition-all ${selectedPhotos.has(idx) ? 'border-[#D4A017] ring-2 ring-[#D4A017]/50' : 'border-transparent hover:border-white/30'}`}
                     >
-                      <img src={photo} alt={`Photo ${idx + 1}`} className="w-full h-full object-cover" />
+                      <Image src={photo} alt={`Photo ${idx + 1}`} className="w-full h-full object-cover" width={400} height={300} unoptimized />
                       <div className={`absolute top-2 right-2 w-6 h-6 rounded-full flex items-center justify-center ${selectedPhotos.has(idx) ? 'bg-[#D4A017] text-black' : 'bg-black/60 text-white'}`}>
                         {selectedPhotos.has(idx) ? <CheckCircle2 className="w-4 h-4" /> : <span className="text-xs font-medium">{idx + 1}</span>}
                       </div>
@@ -349,7 +350,7 @@ export default function ListingIntelligenceDashboard({ onApplyEnhancement, onApp
               </div>
               <div className="flex gap-6">
                 <div className="w-48 h-32 rounded-xl overflow-hidden border-2 border-[#D4A017]">
-                  <img src={analysisResult.heroImageUrl} alt="Hero image" className="w-full h-full object-cover" />
+                  <Image src={analysisResult.heroImageUrl} alt="Hero image" className="w-full h-full object-cover" width={400} height={300} unoptimized />
                 </div>
                 <div className="flex-1">
                   <p className="text-white/80 mb-2">This photo has the highest engagement potential and should be your lead image on MLS, Zillow, and social media.</p>
@@ -380,7 +381,7 @@ export default function ListingIntelligenceDashboard({ onApplyEnhancement, onApp
                 {recommendations.slice(0, 5).map((rec, idx) => (
                   <div key={rec.id || idx} className={`flex items-center gap-4 p-4 rounded-xl border transition ${rec.applied ? 'bg-green-500/10 border-green-500/30' : 'bg-white/5 border-white/10 hover:border-white/20'}`}>
                     <div className="w-16 h-16 rounded-lg overflow-hidden flex-shrink-0">
-                      <img src={rec.photoUrl} alt={`Photo ${rec.photoIndex + 1}`} className="w-full h-full object-cover" />
+                      <Image src={rec.photoUrl} alt={`Photo ${rec.photoIndex + 1}`} className="w-full h-full object-cover" width={400} height={300} unoptimized />
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1">
@@ -418,7 +419,7 @@ export default function ListingIntelligenceDashboard({ onApplyEnhancement, onApp
                 {photoScores.map((photo, idx) => (
                   <div key={photo.id || idx} onClick={() => setSelectedPhoto(photo)} className={`relative rounded-xl overflow-hidden cursor-pointer transition group ${selectedPhoto?.photoIndex === photo.photoIndex ? 'ring-2 ring-[#D4A017]' : 'hover:ring-1 hover:ring-white/30'}`}>
                     <div className="aspect-[4/3]">
-                      <img src={photo.photoUrl} alt={`Photo ${photo.photoIndex + 1}`} className="w-full h-full object-cover" />
+                      <Image src={photo.photoUrl} alt={`Photo ${photo.photoIndex + 1}`} className="w-full h-full object-cover" width={400} height={300} unoptimized />
                     </div>
                     <div className={`absolute top-2 right-2 px-2 py-1 rounded-lg text-sm font-bold ${getScoreBg(photo.overallScore)}`}>{photo.overallScore}</div>
                     {photo.photoIndex === analysisResult.heroImageIndex && (
@@ -442,7 +443,7 @@ export default function ListingIntelligenceDashboard({ onApplyEnhancement, onApp
                   <button onClick={() => setSelectedPhoto(null)} className="text-white/60 hover:text-white">Close</button>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div><img src={selectedPhoto.photoUrl} alt="Selected photo" className="w-full rounded-xl" /></div>
+                  <div><Image src={selectedPhoto.photoUrl} alt="Selected photo" className="w-full rounded-xl" width={400} height={300} unoptimized /></div>
                   <div className="space-y-4">
                     <div>
                       <p className="text-sm text-white/60 mb-1">Room Type</p>

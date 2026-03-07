@@ -14,6 +14,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { adminSupabase } from '@/lib/supabase/admin';
 import { refreshAccessToken, type SocialPlatform } from '@/lib/social/oauth-config';
 
+import { logger } from '@/lib/logger';
 const CRON_SECRET = process.env.CRON_SECRET;
 
 interface SocialConnectionRecord {
@@ -37,7 +38,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  console.log('[AnalyticsSync] Starting social analytics sync...');
+  logger.info('[AnalyticsSync] Starting social analytics sync...');
   const supabase = adminSupabase();
   const results = { synced: 0, failed: 0, skipped: 0, tokensRefreshed: 0 };
 
@@ -60,7 +61,7 @@ export async function GET(request: NextRequest) {
         .range(offset, offset + batchSize - 1);
 
       if (fetchError) {
-        console.error('[AnalyticsSync] Failed to fetch posts:', fetchError.message);
+        logger.error('[AnalyticsSync] Failed to fetch posts:', fetchError.message);
         return NextResponse.json({ error: fetchError.message }, { status: 500 });
       }
 
@@ -74,7 +75,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ success: true, results, message: 'Nothing to sync' });
     }
 
-    console.log(`[AnalyticsSync] Syncing ${postsToSync.length} post(s)`);
+    logger.info(`[AnalyticsSync] Syncing ${postsToSync.length} post(s)`);
 
     const userIds = [...new Set(postsToSync.map(p => p.user_id))];
 
@@ -116,11 +117,11 @@ export async function GET(request: NextRequest) {
                 .eq('id', conn.id);
 
               results.tokensRefreshed++;
-              console.log(`[AnalyticsSync] Refreshed token for ${conn.platform} user ${conn.user_id}`);
+              logger.info(`[AnalyticsSync] Refreshed token for ${conn.platform} user ${conn.user_id}`);
             }
           } catch (refreshErr: unknown) {
             const message = refreshErr instanceof Error ? refreshErr.message : 'Internal server error';
-            console.error(`[AnalyticsSync] Token refresh failed for ${conn.platform}:`, message);
+            logger.error(`[AnalyticsSync] Token refresh failed for ${conn.platform}:`, message);
           }
         }
       }
@@ -187,16 +188,16 @@ export async function GET(request: NextRequest) {
         }
       } catch (postError: unknown) {
         const message = postError instanceof Error ? postError.message : 'Internal server error';
-        console.error(`[AnalyticsSync] Error syncing post ${post.id}:`, message);
+        logger.error(`[AnalyticsSync] Error syncing post ${post.id}:`, message);
         results.failed++;
       }
     }
 
-    console.log('[AnalyticsSync] Complete:', results);
+    logger.info('[AnalyticsSync] Complete:', results);
     return NextResponse.json({ success: true, results });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Internal server error';
-    console.error('[AnalyticsSync] Fatal error:', message);
+    logger.error('[AnalyticsSync] Fatal error:', message);
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }
@@ -232,7 +233,7 @@ async function fetchFacebookMetrics(
     );
 
     if (!response.ok) {
-      console.error(`[AnalyticsSync] Facebook API error for ${postId}:`, response.status);
+      logger.error(`[AnalyticsSync] Facebook API error for ${postId}:`, response.status);
       return null;
     }
 
@@ -267,8 +268,8 @@ async function fetchFacebookMetrics(
       impressions,
       reach,
     };
-  } catch (error) {
-    console.error('[AnalyticsSync] Facebook fetch error:', error);
+  } catch (error: unknown) {
+    logger.error('[AnalyticsSync] Facebook fetch error:', error);
     return null;
   }
 }
@@ -320,8 +321,8 @@ async function fetchInstagramMetrics(
     }
 
     return { likes, comments, shares: 0, impressions, reach };
-  } catch (error) {
-    console.error('[AnalyticsSync] Instagram fetch error:', error);
+  } catch (error: unknown) {
+    logger.error('[AnalyticsSync] Instagram fetch error:', error);
     return null;
   }
 }
@@ -343,7 +344,7 @@ async function fetchLinkedInMetrics(
     );
 
     if (!response.ok) {
-      console.error(`[AnalyticsSync] LinkedIn API error for ${postUrn}:`, response.status);
+      logger.error(`[AnalyticsSync] LinkedIn API error for ${postUrn}:`, response.status);
       return null;
     }
 
@@ -356,8 +357,8 @@ async function fetchLinkedInMetrics(
       impressions: 0,
       reach: 0,
     };
-  } catch (error) {
-    console.error('[AnalyticsSync] LinkedIn fetch error:', error);
+  } catch (error: unknown) {
+    logger.error('[AnalyticsSync] LinkedIn fetch error:', error);
     return null;
   }
 }
@@ -376,7 +377,7 @@ async function fetchTwitterMetrics(
     );
 
     if (!response.ok) {
-      console.error(`[AnalyticsSync] Twitter API error for ${tweetId}:`, response.status);
+      logger.error(`[AnalyticsSync] Twitter API error for ${tweetId}:`, response.status);
       return null;
     }
 
@@ -391,8 +392,8 @@ async function fetchTwitterMetrics(
       impressions: metrics.impression_count || 0,
       reach: 0,
     };
-  } catch (error) {
-    console.error('[AnalyticsSync] Twitter fetch error:', error);
+  } catch (error: unknown) {
+    logger.error('[AnalyticsSync] Twitter fetch error:', error);
     return null;
   }
 }
@@ -418,7 +419,7 @@ async function fetchTikTokMetrics(
     );
 
     if (!response.ok) {
-      console.error(`[AnalyticsSync] TikTok API error for ${videoId}:`, response.status);
+      logger.error(`[AnalyticsSync] TikTok API error for ${videoId}:`, response.status);
       return null;
     }
 
@@ -433,8 +434,8 @@ async function fetchTikTokMetrics(
       impressions: video.view_count || 0,
       reach: 0,
     };
-  } catch (error) {
-    console.error('[AnalyticsSync] TikTok fetch error:', error);
+  } catch (error: unknown) {
+    logger.error('[AnalyticsSync] TikTok fetch error:', error);
     return null;
   }
 }

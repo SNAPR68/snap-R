@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
+import Image from 'next/image';
 import {
   ArrowLeft, Globe, Home, Loader2, ExternalLink, Copy, Check,
   ChevronDown, Pencil, Plus, Eye, ToggleRight, ToggleLeft, Trash2
@@ -204,7 +205,7 @@ export default function PropertySitesClient() {
                     <div className="flex items-center gap-3">
                       {selectedListing.thumbnail ? (
                         // eslint-disable-next-line @next/next/no-img-element
-                        <img src={selectedListing.thumbnail} alt="" className="w-10 h-10 rounded-lg object-cover" />
+                        <Image src={selectedListing.thumbnail} alt="" className="w-10 h-10 rounded-lg object-cover" width={400} height={300} unoptimized />
                       ) : (
                         <div className="w-10 h-10 rounded-lg bg-white/10 flex items-center justify-center">
                           <Home className="w-5 h-5 text-white/30" />
@@ -235,7 +236,7 @@ export default function PropertySitesClient() {
                       >
                         {l.thumbnail ? (
                           // eslint-disable-next-line @next/next/no-img-element
-                          <img src={l.thumbnail} alt="" className="w-10 h-10 rounded-lg object-cover flex-shrink-0" />
+                          <Image src={l.thumbnail} alt="" className="w-10 h-10 rounded-lg object-cover flex-shrink-0" width={400} height={300} unoptimized />
                         ) : (
                           <div className="w-10 h-10 rounded-lg bg-white/10 flex items-center justify-center flex-shrink-0">
                             <Home className="w-5 h-5 text-white/30" />
@@ -300,7 +301,7 @@ export default function PropertySitesClient() {
                 <div className="h-36 bg-[#1A1A1A] relative">
                   {site.listing?.thumbnail ? (
                     // eslint-disable-next-line @next/next/no-img-element
-                    <img src={site.listing.thumbnail} alt="" className="w-full h-full object-cover" />
+                    <Image src={site.listing.thumbnail} alt="" className="w-full h-full object-cover" width={400} height={300} unoptimized />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center">
                       <Home className="w-10 h-10 text-white/10" />

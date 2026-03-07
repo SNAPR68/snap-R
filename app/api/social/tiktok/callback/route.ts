@@ -3,6 +3,7 @@ export const dynamic = "force-dynamic"
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 
+import { logger } from '@/lib/logger';
 const TIKTOK_CLIENT_KEY = process.env.TIKTOK_CLIENT_KEY
 const TIKTOK_CLIENT_SECRET = process.env.TIKTOK_CLIENT_SECRET
 const REDIRECT_URI = process.env.NEXT_PUBLIC_APP_URL + '/api/social/tiktok/callback'
@@ -31,18 +32,20 @@ export async function GET(request: Request) {
         code,
         grant_type: 'authorization_code',
         redirect_uri: REDIRECT_URI!
-      })
+      }),
+          signal: AbortSignal.timeout(15000),
     })
     const tokenData = await tokenRes.json()
 
     if (!tokenData.access_token) {
-      console.error('TikTok token error:', tokenData)
+      logger.error('TikTok token error:', tokenData)
       return NextResponse.redirect(new URL('/dashboard/content-studio?error=token_failed', request.url))
     }
 
     // Get user info
     const userRes = await fetch('https://open.tiktokapis.com/v2/user/info/?fields=open_id,display_name,avatar_url', {
-      headers: { 'Authorization': `Bearer ${tokenData.access_token}` }
+      headers: { 'Authorization': `Bearer ${tokenData.access_token}` },
+          signal: AbortSignal.timeout(15000),
     })
     const userData = await userRes.json()
     const userInfo = userData.data?.user || {}
@@ -67,8 +70,8 @@ export async function GET(request: Request) {
     }
 
     return NextResponse.redirect(new URL('/dashboard/content-studio?connected=tiktok', request.url))
-  } catch (error) {
-    console.error('TikTok callback error:', error)
+  } catch (error: unknown) {
+    logger.error('TikTok callback error:', error)
     return NextResponse.redirect(new URL('/dashboard/content-studio?error=callback_failed', request.url))
   }
 }

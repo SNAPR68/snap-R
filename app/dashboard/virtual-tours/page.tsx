@@ -215,7 +215,7 @@ async function downloadTourAsVideo(tour: Tour, setDownloading: (v: boolean) => v
       // Fallback to ZIP
       await downloadTourPhotosAsZip(tour);
     }
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Video generation error:', error);
     await downloadTourPhotosAsZip(tour);
   } finally {

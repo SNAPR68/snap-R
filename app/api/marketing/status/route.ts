@@ -10,6 +10,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { adminSupabase } from '@/lib/supabase/admin';
 
+import { logger } from '@/lib/logger';
 interface VideoRenderJob {
   video_url: string | null;
   status: string;
@@ -129,7 +130,7 @@ export async function GET(request: NextRequest) {
 
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Unknown error';
-    console.error('[Marketing Status API] Error:', message);
+    logger.error('[Marketing Status API] Error:', message);
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }

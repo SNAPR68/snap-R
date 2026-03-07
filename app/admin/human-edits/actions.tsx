@@ -21,7 +21,7 @@ export function HumanEditActions({ orderId, status, userEmail }: { orderId: stri
       if (res.ok) {
         setCompleted(true);
       }
-    } catch (e) {
+    } catch {
       alert('Failed to update');
     } finally {
       setLoading(false);

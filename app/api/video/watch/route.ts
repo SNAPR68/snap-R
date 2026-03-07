@@ -33,7 +33,7 @@ export async function GET(request: NextRequest) {
     headers['Range'] = rangeHeader;
   }
 
-  const s3Response = await fetch(job.video_url, { headers });
+  const s3Response = await fetch(job.video_url, { headers, signal: AbortSignal.timeout(30000) });
 
   if (!s3Response.ok && s3Response.status !== 206) {
     return NextResponse.json({ error: 'Failed to fetch video' }, { status: 502 });

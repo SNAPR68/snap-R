@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 
+import { logger } from '@/lib/logger';
 // GET - Fetch published posts with analytics
 export async function GET(request: Request) {
   try {
@@ -40,8 +41,8 @@ export async function GET(request: Request) {
     }
 
     return NextResponse.json({ posts: posts || [], totals })
-  } catch (error) {
-    console.error('Error fetching analytics:', error)
+  } catch (error: unknown) {
+    logger.error('Error fetching analytics:', error)
     return NextResponse.json({ error: 'Failed to fetch analytics' }, { status: 500 })
   }
 }
@@ -74,8 +75,8 @@ export async function POST(request: Request) {
     if (error) throw error
 
     return NextResponse.json({ post })
-  } catch (error) {
-    console.error('Error recording post:', error)
+  } catch (error: unknown) {
+    logger.error('Error recording post:', error)
     return NextResponse.json({ error: 'Failed to record post' }, { status: 500 })
   }
 }

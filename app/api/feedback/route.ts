@@ -1,9 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { feedbackSchema, parseBody } from '@/lib/validation/schemas'
 
+import { logger } from '@/lib/logger';
 export async function POST(request: NextRequest) {
   try {
-    const { type, message, email, source, conversation } = await request.json();
+    const body = await request.json(); const validated = parseBody(feedbackSchema, body); if (!validated.success) { return NextResponse.json({ error: validated.error, details: validated.details }, { status: 400 }); } const { type, message, email, source, conversation } = body;
     
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
@@ -36,8 +38,8 @@ export async function POST(request: NextRequest) {
     if (error) throw error;
 
     return NextResponse.json({ success: true });
-  } catch (error) {
-    console.error('Feedback error:', error);
+  } catch (error: unknown) {
+    logger.error('Feedback error:', error);
     return NextResponse.json({ error: 'Failed to submit feedback' }, { status: 500 });
   }
 }

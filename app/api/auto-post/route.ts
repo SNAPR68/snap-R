@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { autoPostRuleCreateSchema, autoPostRuleToggleSchema, autoPostRuleDeleteSchema, parseBody } from '@/lib/validation/schemas'
 
+import { logger } from '@/lib/logger';
 // GET - Fetch auto-post rules
 export async function GET() {
   try {
@@ -16,8 +17,8 @@ export async function GET() {
       .order('created_at', { ascending: false })
 
     return NextResponse.json({ rules: rules || [] })
-  } catch (error) {
-    console.error('Error fetching rules:', error)
+  } catch (error: unknown) {
+    logger.error('Error fetching rules:', error)
     return NextResponse.json({ error: 'Failed to fetch rules' }, { status: 500 })
   }
 }
@@ -54,8 +55,8 @@ export async function POST(request: Request) {
 
     if (error) throw error
     return NextResponse.json({ rule })
-  } catch (error) {
-    console.error('Error creating rule:', error)
+  } catch (error: unknown) {
+    logger.error('Error creating rule:', error)
     return NextResponse.json({ error: 'Failed to create rule' }, { status: 500 })
   }
 }
@@ -82,8 +83,8 @@ export async function PATCH(request: Request) {
 
     if (error) throw error
     return NextResponse.json({ success: true })
-  } catch (error) {
-    console.error('Error updating rule:', error)
+  } catch (error: unknown) {
+    logger.error('Error updating rule:', error)
     return NextResponse.json({ error: 'Failed to update rule' }, { status: 500 })
   }
 }
@@ -105,8 +106,8 @@ export async function DELETE(request: Request) {
     await supabase.from('auto_post_rules').delete().eq('id', id).eq('user_id', user.id)
 
     return NextResponse.json({ success: true })
-  } catch (error) {
-    console.error('Error deleting rule:', error)
+  } catch (error: unknown) {
+    logger.error('Error deleting rule:', error)
     return NextResponse.json({ error: 'Failed to delete' }, { status: 500 })
   }
 }

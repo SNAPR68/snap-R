@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server';
 import { redirect, notFound } from 'next/navigation';
 import Link from 'next/link';
 
+import Image from 'next/image';
 interface PageProps {
   params: { slug: string };
 }
@@ -43,11 +44,9 @@ export default async function OrgLandingPage({ params }: PageProps) {
       {/* Logo & Name */}
       <div className="text-center mb-8">
         {org.logo_url ? (
-          <img 
-            src={org.logo_url} 
+          <Image src={org.logo_url} 
             alt={platformName} 
-            className="w-24 h-24 object-contain mx-auto mb-4"
-          />
+            className="w-24 h-24 object-contain mx-auto mb-4" width={400} height={300} unoptimized />
         ) : (
           <div 
             className="w-24 h-24 rounded-2xl mx-auto mb-4 flex items-center justify-center text-4xl font-bold text-white"

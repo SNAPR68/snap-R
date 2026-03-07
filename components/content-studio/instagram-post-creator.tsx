@@ -5,6 +5,7 @@ import { useSearchParams } from 'next/navigation'
 import html2canvas from 'html2canvas'
 import { ArrowLeft, Download, Loader2, Check, Sparkles } from 'lucide-react'
 import Link from 'next/link'
+import Image from 'next/image';
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -119,7 +120,7 @@ export function InstagramPostCreator() {
             }
           }
         }
-      } catch (error) {
+      } catch (error: unknown) {
         console.error('Failed to fetch data:', error)
       } finally {
         setLoading(false)
@@ -163,7 +164,7 @@ export function InstagramPostCreator() {
 
       setDownloaded(true)
       setTimeout(() => setDownloaded(false), 3000)
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Download failed:', error)
       alert('Failed to download image. Please try again.')
     } finally {
@@ -271,7 +272,7 @@ export function InstagramPostCreator() {
                       }`}
                     >
                       {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={url} alt="" className="w-full h-full object-cover" />
+                      <Image src={url} alt="" className="w-full h-full object-cover" width={400} height={300} unoptimized />
                     </button>
                   ))}
                 </div>
@@ -446,7 +447,7 @@ export function InstagramPostCreator() {
               <div className="flex items-center gap-3 p-3 bg-white/5 rounded-lg">
                 {brand.logo_url ? (
                   // eslint-disable-next-line @next/next/no-img-element
-                  <img src={brand.logo_url} alt="" className="w-10 h-10 rounded-full object-cover" />
+                  <Image src={brand.logo_url} alt="" className="w-10 h-10 rounded-full object-cover" width={400} height={300} unoptimized />
                 ) : (
                   <div
                     className="w-10 h-10 rounded-full flex items-center justify-center font-bold"

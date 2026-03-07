@@ -30,7 +30,7 @@ export function FeedbackButton() {
         setMessage('');
         setType('bug');
       }, 2000);
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Feedback error:', error);
     } finally {
       setIsSubmitting(false);

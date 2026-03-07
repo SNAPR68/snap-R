@@ -1,0 +1,1378 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SnapR — Platform Overview</title>
+<style>
+  :root {
+    --gold: #D4A017;
+    --gold-light: #F0C040;
+    --gold-dim: rgba(212,160,23,0.15);
+    --bg: #0A0A0A;
+    --bg2: #0F0F0F;
+    --bg3: #1A1A1A;
+    --bg4: #242424;
+    --text: #F5F5F5;
+    --text-muted: #888;
+    --border: rgba(255,255,255,0.07);
+    --green: #22C55E;
+    --blue: #3B82F6;
+    --purple: #A855F7;
+    --red: #EF4444;
+    --teal: #14B8A6;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-size: 14px;
+    line-height: 1.6;
+    padding: 48px 32px;
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+
+  /* ── HEADER ── */
+  .header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 56px;
+    padding-bottom: 28px;
+    border-bottom: 1px solid var(--border);
+  }
+  .logo { display: flex; align-items: center; gap: 12px; }
+  .logo-mark {
+    width: 44px; height: 44px;
+    background: linear-gradient(135deg, var(--gold), #F0C040);
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 22px;
+  }
+  .logo-text { font-size: 26px; font-weight: 700; letter-spacing: -0.5px; }
+  .logo-text span { color: var(--gold); }
+  .header-meta { text-align: right; color: var(--text-muted); font-size: 12px; }
+  .header-meta strong { color: var(--text); display: block; font-size: 13px; }
+
+  /* ── SECTION HEADERS ── */
+  .section { margin-bottom: 56px; }
+  .section-title {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 6px;
+  }
+  .section-heading {
+    font-size: 22px;
+    font-weight: 700;
+    margin-bottom: 24px;
+    letter-spacing: -0.3px;
+  }
+
+  /* ── TAGLINE BLOCK ── */
+  .tagline {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-left: 4px solid var(--gold);
+    border-radius: 12px;
+    padding: 28px 32px;
+    margin-bottom: 48px;
+  }
+  .tagline h2 {
+    font-size: 28px;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+    margin-bottom: 10px;
+    line-height: 1.3;
+  }
+  .tagline h2 em { color: var(--gold); font-style: normal; }
+  .tagline p { color: var(--text-muted); font-size: 15px; max-width: 680px; }
+
+  /* ── AUTOMATION LOOP ── */
+  .loop-row {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    margin-bottom: 40px;
+    overflow-x: auto;
+    padding-bottom: 4px;
+  }
+  .loop-step {
+    flex: 1;
+    min-width: 140px;
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 18px 16px;
+    text-align: center;
+    position: relative;
+  }
+  .loop-step .step-icon { font-size: 24px; margin-bottom: 8px; }
+  .loop-step .step-label { font-weight: 700; font-size: 13px; margin-bottom: 4px; }
+  .loop-step .step-desc { font-size: 11px; color: var(--text-muted); line-height: 1.4; }
+  .loop-arrow {
+    color: var(--gold);
+    font-size: 18px;
+    padding: 0 8px;
+    flex-shrink: 0;
+  }
+
+  /* ── PIPELINE ── */
+  .pipeline {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+  }
+  .pipeline-step {
+    display: grid;
+    grid-template-columns: 36px 1fr auto;
+    gap: 16px;
+    align-items: start;
+    padding: 20px 0;
+    border-bottom: 1px solid var(--border);
+    position: relative;
+  }
+  .pipeline-step:last-child { border-bottom: none; }
+  .pipeline-num {
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 800; font-size: 13px;
+    flex-shrink: 0;
+  }
+  .pipeline-body {}
+  .pipeline-name { font-weight: 700; font-size: 14px; margin-bottom: 3px; }
+  .pipeline-desc { color: var(--text-muted); font-size: 12px; }
+  .pipeline-tags { display: flex; gap: 6px; margin-top: 8px; flex-wrap: wrap; }
+  .tag {
+    font-size: 10px; font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 20px;
+    border: 1px solid;
+  }
+  .tag-gold { color: var(--gold); border-color: var(--gold-dim); background: var(--gold-dim); }
+  .tag-blue { color: var(--blue); border-color: rgba(59,130,246,0.2); background: rgba(59,130,246,0.1); }
+  .tag-green { color: var(--green); border-color: rgba(34,197,94,0.2); background: rgba(34,197,94,0.1); }
+  .tag-purple { color: var(--purple); border-color: rgba(168,85,247,0.2); background: rgba(168,85,247,0.1); }
+  .tag-muted { color: var(--text-muted); border-color: var(--border); background: var(--bg4); }
+  .pipeline-cost {
+    font-weight: 700; font-size: 13px;
+    color: var(--gold);
+    text-align: right;
+    flex-shrink: 0;
+    min-width: 50px;
+    padding-top: 2px;
+  }
+
+  /* ── GRID LAYOUTS ── */
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+  .grid-4 { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 14px; }
+
+  /* ── CARDS ── */
+  .card {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+  }
+  .card-title { font-weight: 700; font-size: 14px; margin-bottom: 8px; }
+  .card-sub { font-size: 11px; color: var(--text-muted); margin-bottom: 12px; }
+  .card.highlight { border-color: rgba(212,160,23,0.4); background: rgba(212,160,23,0.05); }
+
+  /* ── PRICING ── */
+  .pricing-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
+  .pricing-card {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 24px 20px;
+    display: flex; flex-direction: column;
+  }
+  .pricing-card.popular {
+    border-color: rgba(212,160,23,0.5);
+    background: rgba(212,160,23,0.04);
+  }
+  .popular-badge {
+    font-size: 9px; font-weight: 700; letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 12px;
+  }
+  .plan-name { font-size: 18px; font-weight: 700; margin-bottom: 4px; }
+  .plan-price { font-size: 13px; color: var(--gold); font-weight: 600; margin-bottom: 16px; }
+  .plan-features { list-style: none; flex: 1; }
+  .plan-features li {
+    font-size: 12px; color: var(--text-muted);
+    padding: 4px 0;
+    display: flex; align-items: flex-start; gap: 6px;
+  }
+  .plan-features li::before { content: '✓'; color: var(--green); font-weight: 700; flex-shrink: 0; }
+  .plan-features li.no::before { content: '–'; color: var(--text-muted); }
+
+  /* ── TOOLS GRID ── */
+  .tools-section { margin-bottom: 16px; }
+  .tools-section-label {
+    font-size: 10px; font-weight: 700; letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: 10px;
+    padding-left: 4px;
+  }
+  .tools-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+  .tool-pill {
+    background: var(--bg4);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 12px;
+    font-size: 12px;
+  }
+  .tool-pill-name { font-weight: 600; margin-bottom: 3px; }
+  .tool-pill-meta { font-size: 10px; color: var(--text-muted); }
+
+  /* ── VIDEO TEMPLATES ── */
+  .template-card {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+  }
+  .template-icon { font-size: 28px; margin-bottom: 10px; }
+  .template-name { font-weight: 700; margin-bottom: 6px; }
+  .template-desc { font-size: 12px; color: var(--text-muted); margin-bottom: 12px; line-height: 1.5; }
+  .template-formats { display: flex; gap: 6px; }
+  .format-badge {
+    font-size: 10px; font-weight: 700;
+    padding: 3px 8px;
+    border-radius: 6px;
+    background: var(--bg4);
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+  }
+
+  /* ── SOCIAL PLATFORMS ── */
+  .platform-row {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 12px;
+  }
+  .platform-card {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 18px 14px;
+    text-align: center;
+  }
+  .platform-icon { font-size: 26px; margin-bottom: 8px; }
+  .platform-name { font-weight: 700; font-size: 13px; margin-bottom: 8px; }
+  .platform-features { list-style: none; }
+  .platform-features li { font-size: 11px; color: var(--text-muted); padding: 2px 0; }
+  .platform-note { font-size: 10px; color: var(--red); margin-top: 8px; }
+
+  /* ── VOICEOVER ── */
+  .voice-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+  .voice-card {
+    background: var(--bg4);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px;
+  }
+  .voice-name { font-weight: 700; font-size: 13px; }
+  .voice-meta { font-size: 11px; color: var(--text-muted); }
+  .style-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+  .style-card {
+    background: var(--bg4);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px;
+    text-align: center;
+  }
+  .style-icon { font-size: 22px; margin-bottom: 6px; }
+  .style-name { font-weight: 700; font-size: 12px; margin-bottom: 4px; }
+  .style-desc { font-size: 10px; color: var(--text-muted); line-height: 1.4; }
+
+  /* ── BRAND / ANALYTICS ── */
+  .brand-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+  .metric-row { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--border); }
+  .metric-row:last-child { border-bottom: none; }
+  .metric-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+  .metric-name { font-weight: 600; font-size: 13px; flex: 1; }
+  .metric-desc { font-size: 11px; color: var(--text-muted); }
+
+  /* ── ONBOARDING ── */
+  .onboarding-steps { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; }
+  .onboard-step {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px 10px;
+    text-align: center;
+  }
+  .onboard-num {
+    width: 28px; height: 28px;
+    background: var(--gold-dim);
+    border: 1px solid var(--gold);
+    border-radius: 50%;
+    color: var(--gold);
+    font-weight: 800; font-size: 12px;
+    display: flex; align-items: center; justify-content: center;
+    margin: 0 auto 8px;
+  }
+  .onboard-name { font-weight: 700; font-size: 11px; margin-bottom: 4px; }
+  .onboard-desc { font-size: 10px; color: var(--text-muted); line-height: 1.4; }
+
+  /* ── STATS BAR ── */
+  .stats-bar {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 12px;
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 24px;
+    margin-bottom: 48px;
+  }
+  .stat { text-align: center; }
+  .stat-value { font-size: 28px; font-weight: 800; color: var(--gold); letter-spacing: -1px; }
+  .stat-label { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+
+  /* ── CRON ── */
+  .cron-list { display: flex; flex-direction: column; gap: 8px; }
+  .cron-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: var(--bg4);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px 16px;
+  }
+  .cron-icon { font-size: 18px; }
+  .cron-name { font-weight: 600; font-size: 13px; flex: 1; }
+  .cron-schedule {
+    font-family: 'SF Mono', 'Fira Code', monospace;
+    font-size: 11px;
+    color: var(--gold);
+    background: var(--gold-dim);
+    padding: 3px 8px;
+    border-radius: 6px;
+  }
+
+  /* ── USER JOURNEY ── */
+  .journey {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 0;
+    position: relative;
+    margin-bottom: 8px;
+  }
+  .journey::before {
+    content: '';
+    position: absolute;
+    top: 36px;
+    left: 10%;
+    right: 10%;
+    height: 2px;
+    background: linear-gradient(90deg, var(--gold), var(--gold-light));
+    z-index: 0;
+  }
+  .journey-step {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    padding: 0 8px;
+    position: relative;
+    z-index: 1;
+  }
+  .journey-bubble {
+    width: 72px; height: 72px;
+    background: var(--bg3);
+    border: 2px solid var(--gold);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 28px;
+    margin-bottom: 12px;
+    position: relative;
+    z-index: 1;
+  }
+  .journey-label { font-weight: 700; font-size: 13px; margin-bottom: 4px; }
+  .journey-desc { font-size: 11px; color: var(--text-muted); line-height: 1.4; }
+  .journey-sub {
+    margin-top: 6px;
+    font-size: 10px;
+    color: var(--gold);
+    font-weight: 600;
+  }
+
+  /* ── DIVIDER ── */
+  .divider {
+    height: 1px;
+    background: var(--border);
+    margin: 48px 0;
+  }
+
+  /* ── FOOTER ── */
+  .footer {
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 11px;
+    padding-top: 32px;
+    border-top: 1px solid var(--border);
+  }
+  .footer strong { color: var(--text); }
+
+  /* ── MISC ── */
+  .note {
+    font-size: 11px;
+    color: var(--text-muted);
+    background: var(--bg4);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 14px;
+    margin-top: 12px;
+  }
+  .note strong { color: var(--text); }
+
+  @media print {
+    body { padding: 24px; font-size: 12px; }
+    .pricing-grid, .grid-4, .tools-grid, .platform-row, .onboarding-steps { grid-template-columns: repeat(2, 1fr); }
+    .journey, .stats-bar { grid-template-columns: repeat(3, 1fr); }
+    .journey::before { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="logo">
+    <div class="logo-mark">📸</div>
+    <div>
+      <div class="logo-text">Snap<span>R</span></div>
+      <div style="font-size:11px;color:var(--text-muted);margin-top:1px;">Platform Overview — Investor Brief</div>
+    </div>
+  </div>
+  <div class="header-meta">
+    <strong>Confidential</strong>
+    February 2026
+  </div>
+</div>
+
+<!-- TAGLINE -->
+<div class="tagline">
+  <h2>One upload. <em>Everything automated.</em></h2>
+  <p>SnapR transforms ordinary property photos into luxury showcases, then auto-generates every marketing asset a real estate professional needs — descriptions, captions, property websites, scheduled social posts, and branded videos — without touching another tool.</p>
+</div>
+
+<!-- STATS BAR -->
+<div class="stats-bar">
+  <div class="stat"><div class="stat-value">15</div><div class="stat-label">AI Enhancement Tools</div></div>
+  <div class="stat"><div class="stat-value">6</div><div class="stat-label">Pipeline Steps</div></div>
+  <div class="stat"><div class="stat-value">15</div><div class="stat-label">Video Variants</div></div>
+  <div class="stat"><div class="stat-value">5</div><div class="stat-label">Social Platforms</div></div>
+  <div class="stat"><div class="stat-value">$1.95</div><div class="stat-label">Cost per Listing</div></div>
+  <div class="stat"><div class="stat-value">15m</div><div class="stat-label">Publish Cadence</div></div>
+</div>
+
+<!-- ─────────────────────────────────── -->
+<!-- 1. USER JOURNEY -->
+<!-- ─────────────────────────────────── -->
+<div class="section">
+  <div class="section-title">End-to-End Flow</div>
+  <div class="section-heading">The Full User Journey</div>
+
+  <div class="journey">
+    <div class="journey-step">
+      <div class="journey-bubble">📤</div>
+      <div class="journey-label">Upload</div>
+      <div class="journey-desc">Agent uploads property photos via dashboard or mobile camera</div>
+      <div class="journey-sub">Supabase Storage · 50MB/photo</div>
+    </div>
+    <div class="journey-step">
+      <div class="journey-bubble">✨</div>
+      <div class="journey-label">Prepare</div>
+      <div class="journey-desc">AI pipeline enhances every photo — sky, staging, HDR, twilight</div>
+      <div class="journey-sub">Cloudflare Worker · 15 tools</div>
+    </div>
+    <div class="journey-step">
+      <div class="journey-bubble">📣</div>
+      <div class="journey-label">Market</div>
+      <div class="journey-desc">6-step pipeline auto-fires: description → captions → MLS → site → posts → video</div>
+      <div class="journey-sub">GPT-4o · GPT-4o-mini · Remotion</div>
+    </div>
+    <div class="journey-step">
+      <div class="journey-bubble">🚀</div>
+      <div class="journey-label">Distribute</div>
+      <div class="journey-desc">Posts auto-publish to 5 platforms every 15 minutes via cron</div>
+      <div class="journey-sub">FB · IG · LinkedIn · TikTok · Twitter</div>
+    </div>
+    <div class="journey-step">
+      <div class="journey-bubble">📊</div>
+      <div class="journey-label">Measure</div>
+      <div class="journey-desc">Analytics sync pulls engagement data every 6 hours. Loop re-triggers on status changes.</div>
+      <div class="journey-sub">Likes · Reach · Engagement rate</div>
+    </div>
+  </div>
+
+  <div class="note" style="margin-top:20px;">
+    <strong>Always-complete semantics:</strong> Each pipeline step is independent. One step failing never blocks the others — all 6 steps attempt to complete regardless of upstream errors.
+  </div>
+</div>
+
+<div class="divider"></div>
+
+<!-- ─────────────────────────────────── -->
+<!-- 2. ONBOARDING -->
+<!-- ─────────────────────────────────── -->
+<div class="section">
+  <div class="section-title">Getting Started</div>
+  <div class="section-heading">7-Step Onboarding Flow</div>
+
+  <div class="onboarding-steps">
+    <div class="onboard-step">
+      <div class="onboard-num">1</div>
+      <div class="onboard-name">Profile</div>
+      <div class="onboard-desc">Name, brokerage, region, role</div>
+    </div>
+    <div class="onboard-step">
+      <div class="onboard-num">2</div>
+      <div class="onboard-name">Volume</div>
+      <div class="onboard-desc">Listings/month to set expectations</div>
+    </div>
+    <div class="onboard-step">
+      <div class="onboard-num">3</div>
+      <div class="onboard-name">Skill Check</div>
+      <div class="onboard-desc">Guided vs. self-serve mode</div>
+    </div>
+    <div class="onboard-step">
+      <div class="onboard-num">4</div>
+      <div class="onboard-name">Brand</div>
+      <div class="onboard-desc">Logo, colors, contact info</div>
+    </div>
+    <div class="onboard-step">
+      <div class="onboard-num">5</div>
+      <div class="onboard-name">Connect Social</div>
+      <div class="onboard-desc">OAuth to FB, IG, LinkedIn</div>
+    </div>
+    <div class="onboard-step">
+      <div class="onboard-num">6</div>
+      <div class="onboard-name">WhatsApp</div>
+      <div class="onboard-desc">Optional SMS/WhatsApp alerts</div>
+    </div>
+    <div class="onboard-step">
+      <div class="onboard-num">7</div>
+      <div class="onboard-name">First Listing</div>
+      <div class="onboard-desc">Guided walkthrough to first upload</div>
+    </div>
+  </div>
+</div>
+
+<div class="divider"></div>
+
+<!-- ─────────────────────────────────── -->
+<!-- 3. PRICING -->
+<!-- ─────────────────────────────────── -->
+<div class="section">
+  <div class="section-title">Monetization</div>
+  <div class="section-heading">Pricing Tiers</div>
+
+  <div class="pricing-grid">
+    <div class="pricing-card">
+      <div class="plan-name">Free</div>
+      <div class="plan-price">$0 forever</div>
+      <ul class="plan-features">
+        <li>3 listings/month</li>
+        <li>30 photos/listing</li>
+        <li>All 15 AI tools</li>
+        <li>Watermarked exports</li>
+        <li class="no">No social publishing</li>
+        <li class="no">No content studio</li>
+        <li class="no">No video generation</li>
+        <li class="no">No marketing pipeline</li>
+      </ul>
+    </div>
+    <div class="pricing-card popular">
+      <div class="popular-badge">★ Most Popular</div>
+      <div class="plan-name">Gold</div>
+      <div class="plan-price">$20–$28/listing (volume-tiered)</div>
+      <ul class="plan-features">
+        <li>Up to 300 listings/month</li>
+        <li>50 photos/listing</li>
+        <li>HD watermark-free exports</li>
+        <li>Full marketing pipeline</li>
+        <li>Content studio</li>
+        <li>Social publishing (5 platforms)</li>
+        <li>Auto-generated videos</li>
+        <li>30 content posts/month</li>
+      </ul>
+    </div>
+    <div class="pricing-card">
+      <div class="plan-name">Platinum</div>
+      <div class="plan-price">$22–$30/listing (volume-tiered)</div>
+      <ul class="plan-features">
+        <li>Everything in Gold</li>
+        <li>75 photos/listing</li>
+        <li>White-label branding</li>
+        <li>Dedicated account manager</li>
+        <li>Priority support</li>
+        <li>Team analytics</li>
+        <li>Client approval workflows</li>
+        <li>Priority AI queue</li>
+      </ul>
+    </div>
+    <div class="pricing-card">
+      <div class="plan-name">Enterprise</div>
+      <div class="plan-price">Custom pricing</div>
+      <ul class="plan-features">
+        <li>Unlimited listings</li>
+        <li>Unlimited photos</li>
+        <li>Unlimited content</li>
+        <li>Custom volume deals</li>
+        <li>Unlimited team seats</li>
+        <li>SLA guarantee</li>
+        <li>Customer success manager</li>
+        <li>API access</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="note" style="margin-top:16px;">
+    <strong>Volume discounts:</strong> 40% off monthly commitment · 60% off annual commitment · Pay-as-you-go available at $28–$30/listing
+  </div>
+</div>
+
+<div class="divider"></div>
+
+<!-- ─────────────────────────────────── -->
+<!-- 4. AI ENHANCEMENT TOOLS -->
+<!-- ─────────────────────────────────── -->
+<div class="section">
+  <div class="section-title">Phase 1 — Prepare</div>
+  <div class="section-heading">15 AI Enhancement Tools</div>
+
+  <div class="tools-section">
+    <div class="tools-section-label">🏡 Exterior (4 tools)</div>
+    <div class="tools-grid">
+      <div class="tool-pill">
+        <div class="tool-pill-name">Sky Replacement</div>
+        <div class="tool-pill-meta">Clear Blue · Sunset · Dramatic Clouds · Twilight Sky</div>
+      </div>
+      <div class="tool-pill">
+        <div class="tool-pill-name">Virtual Twilight</div>
+        <div class="tool-pill-meta">Dusk · Blue Hour · Golden Hour · Night</div>
+      </div>
+      <div class="tool-pill">
+        <div class="tool-pill-name">Lawn Repair</div>
+        <div class="tool-pill-meta">Lush Green · Natural Green</div>
+      </div>
+      <div class="tool-pill">
+        <div class="tool-pill-name">Pool Enhancement</div>
+        <div class="tool-pill-meta">Automatic enhancement</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="tools-section" style="margin-top:16px;">
+    <div class="tools-section-label">🛋️ Interior (6 tools)</div>
+    <div class="tools-grid" style="grid-template-columns: repeat(3,1fr);">
+      <div class="tool-pill">
+        <div class="tool-pill-name">Declutter</div>
+        <div class="tool-pill-meta">Light · Moderate · Full Clear · Staging Ready</div>
+      </div>
+      <div class="tool-pill">
+        <div class="tool-pill-name">Virtual Staging</div>
+        <div class="tool-pill-meta">Modern · Traditional · Scandinavian · Luxury</div>
+      </div>
+      <div class="tool-pill">
+        <div class="tool-pill-name">Fire in Fireplace</div>
+        <div class="tool-pill-meta">Cozy Embers · Warm Fire · Roaring Fire · Romantic</div>
+      </div>
+      <div class="tool-pill">
+        <div class="tool-pill-name">TV Screen Replace</div>
+        <div class="tool-pill-meta">Nature · Abstract Art · Ocean View · Off</div>
+      </div>
+      <div class="tool-pill">
+        <div class="tool-pill-name">Lights On</div>
+        <div class="tool-pill-meta">Warm Glow · Bright White · Ambient · Max</div>
+      </div>
+      <div class="tool-pill">
+        <div class="tool-pill-name">Window Masking</div>
+        <div class="tool-pill-meta">Balanced · Sunny Day · Garden View · Soft Light</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="tools-section" style="margin-top:16px;">
+    <div class="tools-section-label">⚡ Enhance (5 tools)</div>
+    <div class="tools-grid">
+      <div class="tool-pill">
+        <div class="tool-pill-name">HDR Enhancement</div>
+        <div class="tool-pill-meta">Auto HDR processing</div>
+      </div>
+      <div class="tool-pill">
+        <div class="tool-pill-name">Auto Enhance</div>
+        <div class="tool-pill-meta">One-click optimization</div>
+      </div>
+      <div class="tool-pill">
+        <div class="tool-pill-name">Perspective Fix</div>
+        <div class="tool-pill-meta">Correct lens distortion</div>
+      </div>
+      <div class="tool-pill">
+        <div class="tool-pill-name">Lens Correction</div>
+        <div class="tool-pill-meta">Barrel/pincushion fix</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="divider"></div>
+
+<!-- ─────────────────────────────────── -->
+<!-- 5. MARKETING PIPELINE -->
+<!-- ─────────────────────────────────── -->
+<div class="section">
+  <div class="section-title">Phase 2 — Market</div>
+  <div class="section-heading">6-Step Marketing Pipeline</div>
+  <p style="color:var(--text-muted);font-size:13px;margin-bottom:24px;">Auto-triggers the moment preparation completes. All steps are independent — failure in one never blocks the others.</p>
+
+  <div class="pipeline">
+
+    <div class="pipeline-step">
+      <div class="pipeline-num" style="background:rgba(59,130,246,0.15);color:#3B82F6;">1</div>
+      <div class="pipeline-body">
+        <div class="pipeline-name">Property Description</div>
+        <div class="pipeline-desc">MLS-quality 200+ word listing description generated from hero photo + property metadata</div>
+        <div class="pipeline-tags">
+          <span class="tag tag-blue">GPT-4o Vision</span>
+          <span class="tag tag-muted">Hero photo + metadata input</span>
+          <span class="tag tag-muted">Auto-dedup on re-run</span>
+        </div>
+      </div>
+      <div class="pipeline-cost">~15¢</div>
+    </div>
+
+    <div class="pipeline-step">
+      <div class="pipeline-num" style="background:rgba(168,85,247,0.15);color:#A855F7;">2</div>
+      <div class="pipeline-body">
+        <div class="pipeline-name">Platform Captions</div>
+        <div class="pipeline-desc">5 platform-specific social captions with hashtags — one per: Instagram, Facebook, LinkedIn, TikTok, Twitter</div>
+        <div class="pipeline-tags">
+          <span class="tag tag-purple">GPT-4o-mini × 5</span>
+          <span class="tag tag-muted">~3¢ per platform</span>
+          <span class="tag tag-muted">Hashtag optimized</span>
+        </div>
+      </div>
+      <div class="pipeline-cost">~15¢</div>
+    </div>
+
+    <div class="pipeline-step">
+      <div class="pipeline-num" style="background:rgba(20,184,166,0.15);color:#14B8A6;">3</div>
+      <div class="pipeline-body">
+        <div class="pipeline-name">MLS Package</div>
+        <div class="pipeline-desc">Photo manifest + property metadata assembled into MLS-ready format. All processed photos organized and tagged.</div>
+        <div class="pipeline-tags">
+          <span class="tag tag-green">No AI cost</span>
+          <span class="tag tag-muted">Metadata assembly</span>
+          <span class="tag tag-muted">Photo manifest</span>
+        </div>
+      </div>
+      <div class="pipeline-cost">0¢</div>
+    </div>
+
+    <div class="pipeline-step">
+      <div class="pipeline-num" style="background:rgba(212,160,23,0.15);color:#D4A017;">4</div>
+      <div class="pipeline-body">
+        <div class="pipeline-name">Property Website</div>
+        <div class="pipeline-desc">Auto-generates a public property site with photo gallery, details, contact form, and SEO. 4 themes available.</div>
+        <div class="pipeline-tags">
+          <span class="tag tag-gold">4 Themes</span>
+          <span class="tag tag-muted">Modern · Classic · Minimal · Luxury</span>
+          <span class="tag tag-muted">No AI cost</span>
+        </div>
+      </div>
+      <div class="pipeline-cost">0¢</div>
+    </div>
+
+    <div class="pipeline-step">
+      <div class="pipeline-num" style="background:rgba(34,197,94,0.15);color:#22C55E;">5</div>
+      <div class="pipeline-body">
+        <div class="pipeline-name">Scheduled Social Posts</div>
+        <div class="pipeline-desc">All 5 platforms auto-scheduled with UTM-tagged property site links. Cron publishes every 15 minutes.</div>
+        <div class="pipeline-tags">
+          <span class="tag tag-green">Auto-publish</span>
+          <span class="tag tag-muted">UTM tracking built-in</span>
+          <span class="tag tag-muted">No AI cost</span>
+        </div>
+      </div>
+      <div class="pipeline-cost">0¢</div>
+    </div>
+
+    <div class="pipeline-step" style="border-bottom:none;">
+      <div class="pipeline-num" style="background:rgba(239,68,68,0.15);color:#EF4444;">6</div>
+      <div class="pipeline-body">
+        <div class="pipeline-name">Branded Property Video</div>
+        <div class="pipeline-desc">Remotion Lambda renders a branded slideshow video in all 3 aspect ratios. Template auto-selected by listing status. Fire-and-forget — non-blocking.</div>
+        <div class="pipeline-tags">
+          <span class="tag tag-muted" style="color:#EF4444;border-color:rgba(239,68,68,0.3);background:rgba(239,68,68,0.1);">Remotion 4.0</span>
+          <span class="tag tag-muted">AWS Lambda · 15 min render</span>
+          <span class="tag tag-muted">9:16 · 1:1 · 16:9</span>
+          <span class="tag tag-gold">Pro/Agency only</span>
+        </div>
+      </div>
+      <div class="pipeline-cost" style="color:var(--text);">~$1.50</div>
+    </div>
+
+  </div>
+
+  <div style="display:flex;justify-content:flex-end;margin-top:16px;padding-right:0;">
+    <div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:12px 20px;text-align:right;">
+      <div style="font-size:11px;color:var(--text-muted);margin-bottom:2px;">Total cost per listing</div>
+      <div style="font-size:22px;font-weight:800;color:var(--gold);">~$1.95</div>
+      <div style="font-size:10px;color:var(--text-muted);">Description + Captions + Video</div>
+    </div>
+  </div>
+</div>
+
+<div class="divider"></div>
+
+<!-- ─────────────────────────────────── -->
+<!-- 6. VIDEO TEMPLATES -->
+<!-- ─────────────────────────────────── -->
+<div class="section">
+  <div class="section-title">Video Engine — Remotion Lambda</div>
+  <div class="section-heading">5 Property Video Templates × 3 Formats = 15 Variants</div>
+
+  <div class="grid-3" style="gap:14px;">
+    <div class="template-card">
+      <div class="template-icon">🏠</div>
+      <div class="template-name">Property Showcase</div>
+      <div class="template-desc">Ken Burns zoom/pan slideshow with branded closing card. Default template for all listings. Fade transitions.</div>
+      <div class="template-formats">
+        <span class="format-badge">9:16</span>
+        <span class="format-badge">1:1</span>
+        <span class="format-badge">16:9</span>
+      </div>
+    </div>
+    <div class="template-card">
+      <div class="template-icon">🆕</div>
+      <div class="template-name">Just Listed</div>
+      <div class="template-desc">Urgency pacing with "JUST LISTED" intro card, event badge, feature callouts, and slide transitions.</div>
+      <div class="template-formats">
+        <span class="format-badge">9:16</span>
+        <span class="format-badge">1:1</span>
+        <span class="format-badge">16:9</span>
+      </div>
+    </div>
+    <div class="template-card">
+      <div class="template-icon">🚪</div>
+      <div class="template-name">Open House</div>
+      <div class="template-desc">Date/time urgency badge with open house event details. Wipe transitions. Auto-selected for open house status.</div>
+      <div class="template-formats">
+        <span class="format-badge">9:16</span>
+        <span class="format-badge">1:1</span>
+        <span class="format-badge">16:9</span>
+      </div>
+    </div>
+    <div class="template-card">
+      <div class="template-icon">📉</div>
+      <div class="template-name">Price Drop</div>
+      <div class="template-desc">Red urgency styling with old price strikethrough, percentage drop badge. Accelerated 2–3s pacing.</div>
+      <div class="template-formats">
+        <span class="format-badge">9:16</span>
+        <span class="format-badge">1:1</span>
+        <span class="format-badge">16:9</span>
+      </div>
+    </div>
+    <div class="template-card">
+      <div class="template-icon">🎉</div>
+      <div class="template-name">Sold</div>
+      <div class="template-desc">Purple celebration styling with "Sold in X Days" social proof badge. Highlights final price and days on market.</div>
+      <div class="template-formats">
+        <span class="format-badge">9:16</span>
+        <span class="format-badge">1:1</span>
+        <span class="format-badge">16:9</span>
+      </div>
+    </div>
+    <div class="card" style="background:rgba(212,160,23,0.04);border-color:rgba(212,160,23,0.3);">
+      <div style="font-size:11px;font-weight:700;color:var(--gold);letter-spacing:1px;margin-bottom:10px;">WHAT'S IN EVERY VIDEO</div>
+      <div style="font-size:12px;color:var(--text-muted);line-height:1.8;">
+        📷 Smart photo ordering (hero → exterior → interior)<br>
+        🎵 Royalty-free background music (6 tracks)<br>
+        🎤 AI voiceover (optional, ElevenLabs)<br>
+        🔊 Volume ducking (music dips under voice)<br>
+        🏷️ Agent watermark logo (slideshow)<br>
+        📇 Branded closing card (contact + brokerage)<br>
+        🎨 Custom brand colors applied throughout
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="divider"></div>
+
+<!-- ─────────────────────────────────── -->
+<!-- 7. VOICEOVER -->
+<!-- ─────────────────────────────────── -->
+<div class="section">
+  <div class="section-title">Audio — ElevenLabs + OpenAI TTS</div>
+  <div class="section-heading">AI Voiceover System</div>
+
+  <div style="margin-bottom:20px;">
+    <div class="tools-section-label" style="margin-bottom:12px;">4 Script Styles</div>
+    <div class="style-grid">
+      <div class="style-card">
+        <div class="style-icon">👔</div>
+        <div class="style-name">Professional</div>
+        <div class="style-desc">Formal, business-like tone for high-end real estate</div>
+      </div>
+      <div class="style-card">
+        <div class="style-icon">💎</div>
+        <div class="style-name">Luxury</div>
+        <div class="style-desc">Elegant, sophisticated — emphasizes exclusivity</div>
+      </div>
+      <div class="style-card">
+        <div class="style-icon">😊</div>
+        <div class="style-name">Friendly</div>
+        <div class="style-desc">Warm, approachable — makes viewers feel welcome</div>
+      </div>
+      <div class="style-card">
+        <div class="style-icon">🏡</div>
+        <div class="style-name">First-Time Buyer</div>
+        <div class="style-desc">Helpful, informative — highlights practical value</div>
+      </div>
+    </div>
+  </div>
+
+  <div>
+    <div class="tools-section-label" style="margin-bottom:12px;">6 AI Voices (3 Male + 3 Female)</div>
+    <div class="voice-grid">
+      <div class="voice-card">
+        <div class="voice-name">James</div>
+        <div class="voice-meta">♂ · Professional · ElevenLabs</div>
+      </div>
+      <div class="voice-card">
+        <div class="voice-name">Sarah</div>
+        <div class="voice-meta">♀ · Professional · ElevenLabs</div>
+      </div>
+      <div class="voice-card">
+        <div class="voice-name">Richard</div>
+        <div class="voice-meta">♂ · Luxury · ElevenLabs</div>
+      </div>
+      <div class="voice-card">
+        <div class="voice-name">Victoria</div>
+        <div class="voice-meta">♀ · Luxury · ElevenLabs</div>
+      </div>
+      <div class="voice-card">
+        <div class="voice-name">Mike</div>
+        <div class="voice-meta">♂ · Friendly · ElevenLabs</div>
+      </div>
+      <div class="voice-card">
+        <div class="voice-name">Emma</div>
+        <div class="voice-meta">♀ · Friendly · ElevenLabs</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="note" style="margin-top:16px;">
+    <strong>Script generation:</strong> GPT-4o generates personalized scripts from listing data (address, price, beds, baths, sqft). 130 words/min pacing. Duration auto-calculated from photo count × 3s. Pricing: 30s=$5 · 60s=$8 · 90s=$12 · 120s=$15.
+    <strong style="margin-left:8px;">Fallback:</strong> OpenAI TTS HD (shimmer voice) if ElevenLabs is unavailable.
+  </div>
+</div>
+
+<div class="divider"></div>
+
+<!-- ─────────────────────────────────── -->
+<!-- 8. AGENT BRANDING -->
+<!-- ─────────────────────────────────── -->
+<div class="section">
+  <div class="section-title">Brand Identity</div>
+  <div class="section-heading">Agent Branding in Every Asset</div>
+
+  <div class="grid-2">
+    <div>
+      <div style="margin-bottom:16px;">
+        <div class="tools-section-label" style="margin-bottom:10px;">Brand Profile Data</div>
+        <div class="card">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:12px;">
+            <div style="padding:8px;background:var(--bg4);border-radius:6px;">🏢 Brokerage name</div>
+            <div style="padding:8px;background:var(--bg4);border-radius:6px;">👤 Agent name</div>
+            <div style="padding:8px;background:var(--bg4);border-radius:6px;">📞 Contact phone</div>
+            <div style="padding:8px;background:var(--bg4);border-radius:6px;">📧 Email address</div>
+            <div style="padding:8px;background:var(--bg4);border-radius:6px;">🌐 Website URL</div>
+            <div style="padding:8px;background:var(--bg4);border-radius:6px;">🎨 Brand colors</div>
+            <div style="padding:8px;background:var(--bg4);border-radius:6px;">🖼️ Logo upload</div>
+            <div style="padding:8px;background:var(--bg4);border-radius:6px;">📸 Agent photo</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div>
+      <div class="tools-section-label" style="margin-bottom:10px;">Where Brand Appears</div>
+      <div class="cron-list">
+        <div class="cron-row">
+          <div class="cron-icon">🎬</div>
+          <div>
+            <div class="cron-name">Video Watermark</div>
+            <div style="font-size:11px;color:var(--text-muted);">Agent logo, top-right corner, 85% opacity, throughout slideshow</div>
+          </div>
+        </div>
+        <div class="cron-row">
+          <div class="cron-icon">📇</div>
+          <div>
+            <div class="cron-name">Video Closing Card</div>
+            <div style="font-size:11px;color:var(--text-muted);">Name · Phone · Email · Brokerage logo · Brand color accents</div>
+          </div>
+        </div>
+        <div class="cron-row">
+          <div class="cron-icon">🌐</div>
+          <div>
+            <div class="cron-name">Property Website</div>
+            <div style="font-size:11px;color:var(--text-muted);">Agent contact section, brand colors on CTA buttons</div>
+          </div>
+        </div>
+        <div class="cron-row">
+          <div class="cron-icon">📄</div>
+          <div>
+            <div class="cron-name">Print Materials (Flyer + Sheet)</div>
+            <div style="font-size:11px;color:var(--text-muted);">Logo, contact info, brand colors on all PDF exports</div>
+          </div>
+        </div>
+        <div class="cron-row">
+          <div class="cron-icon">📱</div>
+          <div>
+            <div class="cron-name">Social Posts</div>
+            <div style="font-size:11px;color:var(--text-muted);">Agent handle tagged in scheduled posts, watermark on images</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="divider"></div>
+
+<!-- ─────────────────────────────────── -->
+<!-- 9. SOCIAL PLATFORMS -->
+<!-- ─────────────────────────────────── -->
+<div class="section">
+  <div class="section-title">Phase 3 — Distribute</div>
+  <div class="section-heading">5-Platform Social Publishing</div>
+
+  <div class="platform-row">
+    <div class="platform-card">
+      <div class="platform-icon">📘</div>
+      <div class="platform-name">Facebook</div>
+      <ul class="platform-features">
+        <li>Single photo posts</li>
+        <li>Multi-photo albums</li>
+        <li>Video (via /videos)</li>
+        <li>Long-lived token auth</li>
+        <li>Page publishing</li>
+      </ul>
+    </div>
+    <div class="platform-card">
+      <div class="platform-icon">📸</div>
+      <div class="platform-name">Instagram</div>
+      <ul class="platform-features">
+        <li>Single photo posts</li>
+        <li>Photo carousels</li>
+        <li>Reels (video)</li>
+        <li>3-step container flow</li>
+        <li>Business account</li>
+      </ul>
+    </div>
+    <div class="platform-card">
+      <div class="platform-icon">💼</div>
+      <div class="platform-name">LinkedIn</div>
+      <ul class="platform-features">
+        <li>Text posts</li>
+        <li>Single image</li>
+        <li>Document carousels</li>
+        <li>Community Mgmt API v2</li>
+        <li>3-step image upload</li>
+      </ul>
+    </div>
+    <div class="platform-card">
+      <div class="platform-icon">🎵</div>
+      <div class="platform-name">TikTok</div>
+      <ul class="platform-features">
+        <li>Video (PULL_FROM_URL)</li>
+        <li>Photo carousels</li>
+        <li>v2 Content Posting API</li>
+        <li>H.264 1080×1920</li>
+      </ul>
+      <div class="platform-note">⚠ Unaudited: posts private until app audit</div>
+    </div>
+    <div class="platform-card">
+      <div class="platform-icon">🐦</div>
+      <div class="platform-name">Twitter / X</div>
+      <ul class="platform-features">
+        <li>Text posts</li>
+        <li>Single image</li>
+        <li>Thread support</li>
+        <li>PKCE S256 OAuth</li>
+        <li>Media upload v1.1</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="note" style="margin-top:16px;">
+    <strong>UTM tracking auto-applied:</strong> Every scheduled post caption gets a UTM-tagged property site link — utm_source=platform · utm_medium=social · utm_campaign=post_type · utm_content=listing_id
+  </div>
+</div>
+
+<div class="divider"></div>
+
+<!-- ─────────────────────────────────── -->
+<!-- 10. ANALYTICS -->
+<!-- ─────────────────────────────────── -->
+<div class="section">
+  <div class="section-title">Phase 4 — Measure</div>
+  <div class="section-heading">Analytics & Automation</div>
+
+  <div class="grid-2">
+    <div>
+      <div class="tools-section-label" style="margin-bottom:12px;">Metrics Tracked Per Post</div>
+      <div class="card" style="padding:0 20px;">
+        <div class="metric-row">
+          <div class="metric-dot" style="background:#EF4444;"></div>
+          <div class="metric-name">Likes</div>
+          <div class="metric-desc">Raw like count per platform</div>
+        </div>
+        <div class="metric-row">
+          <div class="metric-dot" style="background:#3B82F6;"></div>
+          <div class="metric-name">Comments</div>
+          <div class="metric-desc">Comment count</div>
+        </div>
+        <div class="metric-row">
+          <div class="metric-dot" style="background:#22C55E;"></div>
+          <div class="metric-name">Shares</div>
+          <div class="metric-desc">Reshares/reposts</div>
+        </div>
+        <div class="metric-row">
+          <div class="metric-dot" style="background:#A855F7;"></div>
+          <div class="metric-name">Impressions</div>
+          <div class="metric-desc">Total views (non-unique)</div>
+        </div>
+        <div class="metric-row">
+          <div class="metric-dot" style="background:#F59E0B;"></div>
+          <div class="metric-name">Reach</div>
+          <div class="metric-desc">Unique accounts reached</div>
+        </div>
+        <div class="metric-row">
+          <div class="metric-dot" style="background:#14B8A6;"></div>
+          <div class="metric-name">Engagement Rate</div>
+          <div class="metric-desc">(likes+comments+shares) ÷ impressions</div>
+        </div>
+      </div>
+    </div>
+    <div>
+      <div class="tools-section-label" style="margin-bottom:12px;">Automation Schedules</div>
+      <div class="cron-list">
+        <div class="cron-row">
+          <div class="cron-icon">🚀</div>
+          <div class="cron-name" style="flex:1;">Publish Scheduled Posts</div>
+          <div class="cron-schedule">Every 15 min</div>
+        </div>
+        <div class="cron-row">
+          <div class="cron-icon">📊</div>
+          <div class="cron-name" style="flex:1;">Sync Analytics</div>
+          <div class="cron-schedule">Every 6 hours</div>
+        </div>
+        <div class="cron-row">
+          <div class="cron-icon">🔑</div>
+          <div class="cron-name" style="flex:1;">Refresh OAuth Tokens</div>
+          <div class="cron-schedule">Every 4 hours</div>
+        </div>
+        <div class="cron-row">
+          <div class="cron-icon">📬</div>
+          <div class="cron-name" style="flex:1;">Daily Digest Email</div>
+          <div class="cron-schedule">8 AM UTC daily</div>
+        </div>
+      </div>
+
+      <div style="margin-top:16px;">
+        <div class="tools-section-label" style="margin-bottom:10px;">Status-Triggered Re-Marketing</div>
+        <div class="card">
+          <div style="font-size:12px;color:var(--text-muted);line-height:1.8;">
+            ↺ <strong style="color:var(--text);">Price Drop</strong> → triggers PriceDrop video + new captions<br>
+            ↺ <strong style="color:var(--text);">Open House</strong> → triggers OpenHouse video + urgency posts<br>
+            ↺ <strong style="color:var(--text);">Sold</strong> → triggers Sold video + celebration posts<br>
+            ↺ <strong style="color:var(--text);">Back on Market</strong> → triggers JustListed sequence
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="divider"></div>
+
+<!-- ─────────────────────────────────── -->
+<!-- 11. CONTENT STUDIO -->
+<!-- ─────────────────────────────────── -->
+<div class="section">
+  <div class="section-title">Content Studio</div>
+  <div class="section-heading">Full-Featured Content Command Center</div>
+
+  <div class="grid-4">
+    <div class="card">
+      <div style="font-size:18px;margin-bottom:8px;">📝</div>
+      <div class="card-title">Post Creator</div>
+      <div class="card-sub">Single post + bulk create. 150+ pre-made templates. AI caption generation.</div>
+    </div>
+    <div class="card">
+      <div style="font-size:18px;margin-bottom:8px;">📅</div>
+      <div class="card-title">Content Calendar</div>
+      <div class="card-sub">Visual timeline of scheduled and published posts across all platforms.</div>
+    </div>
+    <div class="card">
+      <div style="font-size:18px;margin-bottom:8px;">🎬</div>
+      <div class="card-title">Video Creator</div>
+      <div class="card-sub">Choose template, aspect ratio, music, voiceover. Triggers Remotion Lambda render.</div>
+    </div>
+    <div class="card">
+      <div style="font-size:18px;margin-bottom:8px;">🌐</div>
+      <div class="card-title">Property Sites</div>
+      <div class="card-sub">Manage all public listing pages. Edit theme, content, SEO settings.</div>
+    </div>
+    <div class="card">
+      <div style="font-size:18px;margin-bottom:8px;">⚡</div>
+      <div class="card-title">Auto-Post Rules</div>
+      <div class="card-sub">Set trigger-based posting schedules per listing, per platform, per status.</div>
+    </div>
+    <div class="card">
+      <div style="font-size:18px;margin-bottom:8px;">📧</div>
+      <div class="card-title">Email Marketing</div>
+      <div class="card-sub">Campaign builder with 50+ templates. AI-written email copy. Schedule & send.</div>
+    </div>
+    <div class="card">
+      <div style="font-size:18px;margin-bottom:8px;">📚</div>
+      <div class="card-title">Content Library</div>
+      <div class="card-sub">Saved drafts, reusable content blocks, approved post archive.</div>
+    </div>
+    <div class="card">
+      <div style="font-size:18px;margin-bottom:8px;">✅</div>
+      <div class="card-title">Client Approvals</div>
+      <div class="card-sub">Share token link for client review. Client approves → posts auto-schedule.</div>
+    </div>
+  </div>
+</div>
+
+<div class="divider"></div>
+
+<!-- ─────────────────────────────────── -->
+<!-- 12. ADD-ON FEATURES -->
+<!-- ─────────────────────────────────── -->
+<div class="section">
+  <div class="section-title">Premium Add-Ons</div>
+  <div class="section-heading">Additional Revenue Streams</div>
+
+  <div class="grid-3">
+    <div class="card">
+      <div style="font-size:18px;margin-bottom:8px;">🏗️</div>
+      <div class="card-title">Virtual Renovation</div>
+      <div class="card-sub" style="margin-bottom:10px;">Digital remodeling simulator</div>
+      <div style="font-size:12px;color:var(--text-muted);">Paint colors · Flooring · Cabinets · Countertops · Siding · Roofing · Landscaping</div>
+      <div style="margin-top:10px;font-weight:700;color:var(--gold);">$15 / $25 / $50</div>
+    </div>
+    <div class="card">
+      <div style="font-size:18px;margin-bottom:8px;">🎤</div>
+      <div class="card-title">AI Voiceovers</div>
+      <div class="card-sub" style="margin-bottom:10px;">ElevenLabs professional narration</div>
+      <div style="font-size:12px;color:var(--text-muted);">6 voices · 4 script styles · GPT-4o script generation · ElevenLabs or OpenAI TTS HD</div>
+      <div style="margin-top:10px;font-weight:700;color:var(--gold);">$2 flat per video</div>
+    </div>
+    <div class="card">
+      <div style="font-size:18px;margin-bottom:8px;">✏️</div>
+      <div class="card-title">Human Editing</div>
+      <div class="card-sub" style="margin-bottom:10px;">Professional photo retouching</div>
+      <div style="font-size:12px;color:var(--text-muted);">Human expert applies manual corrections on top of AI enhancements</div>
+      <div style="margin-top:10px;font-weight:700;color:var(--gold);">From $5/image</div>
+    </div>
+    <div class="card">
+      <div style="font-size:18px;margin-bottom:8px;">📄</div>
+      <div class="card-title">Print Materials</div>
+      <div class="card-sub" style="margin-bottom:10px;">PDF property flyer + feature sheet</div>
+      <div style="font-size:12px;color:var(--text-muted);">8.5×11 branded flyer · Feature sheet with full specs · Uses AI-generated description</div>
+      <div style="margin-top:10px;font-weight:700;color:var(--gold);">Included (Gold+)</div>
+    </div>
+    <div class="card">
+      <div style="font-size:18px;margin-bottom:8px;">📊</div>
+      <div class="card-title">CMA Reports</div>
+      <div class="card-sub" style="margin-bottom:10px;">Comparative market analysis</div>
+      <div style="font-size:12px;color:var(--text-muted);">AI-assisted market analysis with comparable sales. PDF export. Client-shareable.</div>
+      <div style="margin-top:10px;font-weight:700;color:var(--gold);">Free</div>
+    </div>
+    <div class="card">
+      <div style="font-size:18px;margin-bottom:8px;">🖼️</div>
+      <div class="card-title">Photo Culling</div>
+      <div class="card-sub" style="margin-bottom:10px;">AI quality scoring + deduplication</div>
+      <div style="font-size:12px;color:var(--text-muted);">AI scores every photo, flags duplicates, recommends keep/delete. Saves editing time.</div>
+      <div style="margin-top:10px;font-weight:700;color:var(--gold);">Included</div>
+    </div>
+  </div>
+</div>
+
+<div class="divider"></div>
+
+<!-- ─────────────────────────────────── -->
+<!-- 13. TECH STACK -->
+<!-- ─────────────────────────────────── -->
+<div class="section">
+  <div class="section-title">Infrastructure</div>
+  <div class="section-heading">Technology Stack</div>
+
+  <div class="grid-4">
+    <div class="card">
+      <div class="card-title" style="color:var(--blue);">Frontend</div>
+      <div style="font-size:12px;color:var(--text-muted);line-height:1.8;">
+        Next.js 14 (App Router)<br>
+        React 18 · TypeScript<br>
+        Tailwind CSS · shadcn/ui<br>
+        Vercel deployment
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title" style="color:var(--green);">Backend</div>
+      <div style="font-size:12px;color:var(--text-muted);line-height:1.8;">
+        Supabase (Postgres + Auth + RLS)<br>
+        Cloudflare Workers (async AI)<br>
+        Vercel Serverless Functions<br>
+        Vercel Cron (4 jobs)
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title" style="color:var(--purple);">AI & Video</div>
+      <div style="font-size:12px;color:var(--text-muted);line-height:1.8;">
+        OpenAI GPT-4o + GPT-4o-mini<br>
+        Replicate · Runware · Fal.ai<br>
+        Remotion 4.0 + AWS Lambda<br>
+        ElevenLabs TTS
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title" style="color:var(--gold);">Storage & Payments</div>
+      <div style="font-size:12px;color:var(--text-muted);line-height:1.8;">
+        Supabase Storage (raw images)<br>
+        Cloudflare R2 (processed)<br>
+        Cloudinary CDN<br>
+        Stripe (4-tier billing)
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- FOOTER -->
+<div class="footer">
+  <strong>SnapR — Confidential Investor Overview</strong><br>
+  Generated February 2026 · All data sourced from production codebase
+</div>
+
+</body>
+</html>

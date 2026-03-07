@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import Link from 'next/link';
+import Image from 'next/image';
 import {
   Loader2, Building2, Palette, Shield, Save, Upload,
   Check, AlertCircle, Copy, ExternalLink, Sparkles,
@@ -503,7 +504,7 @@ export default function OrganizationPage() {
               >
                 {formData.logo_url ? (
                   // eslint-disable-next-line @next/next/no-img-element
-                  <img src={formData.logo_url} alt="Logo" className="w-full h-full object-contain p-2" />
+                  <Image src={formData.logo_url} alt="Logo" className="w-full h-full object-contain p-2" width={400} height={300} unoptimized />
                 ) : (
                   <Upload className="w-8 h-8 text-white/30" />
                 )}
@@ -595,7 +596,7 @@ export default function OrganizationPage() {
               <div className="flex items-center gap-3">
                 {formData.logo_url ? (
                   // eslint-disable-next-line @next/next/no-img-element
-                  <img src={formData.logo_url} alt="" className="w-10 h-10 object-contain" />
+                  <Image src={formData.logo_url} alt="" className="w-10 h-10 object-contain" width={400} height={300} unoptimized />
                 ) : (
                   <div className="w-10 h-10 rounded-lg" style={{ backgroundColor: formData.primary_color }} />
                 )}

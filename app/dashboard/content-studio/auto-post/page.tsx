@@ -51,7 +51,7 @@ export default function AutoPostSettings() {
       const res = await fetch('/api/auto-post')
       const data = await res.json()
       setRules(data.rules || [])
-    } catch (e) { console.error(e) }
+    } catch (error: unknown) { console.error(error) }
     finally { setLoading(false) }
   }
 
@@ -77,7 +77,7 @@ export default function AutoPostSettings() {
         setShowCreate(false)
         setNewRule({ trigger: '', platforms: [], name: '' })
       }
-    } catch (e) { console.error(e) }
+    } catch (error: unknown) { console.error(error) }
     finally { setCreating(false) }
   }
 
@@ -89,7 +89,7 @@ export default function AutoPostSettings() {
         body: JSON.stringify({ id, isActive: !isActive })
       })
       setRules(rules.map(r => r.id === id ? { ...r, is_active: !isActive } : r))
-    } catch (e) { console.error(e) }
+    } catch (error: unknown) { console.error(error) }
   }
 
   const deleteRule = async (id: string) => {
@@ -100,7 +100,7 @@ export default function AutoPostSettings() {
         body: JSON.stringify({ id })
       })
       setRules(rules.filter(r => r.id !== id))
-    } catch (e) { console.error(e) }
+    } catch (error: unknown) { console.error(error) }
   }
 
   const togglePlatform = (platformId: string) => {

@@ -13,6 +13,7 @@ import { adminSupabase } from '@/lib/supabase/admin'
 import { createClient } from '@/lib/supabase/server'
 import { dispatchWebhookEvent } from '@/lib/webhooks/dispatch'
 
+import { logger } from '@/lib/logger';
 // ============================================
 // Zod Schemas
 // ============================================
@@ -82,7 +83,7 @@ export async function POST(request: NextRequest) {
       })
 
     if (insertError) {
-      console.error('[Leads] Insert error:', insertError.message)
+      logger.error('[Leads] Insert error:', insertError.message)
       return NextResponse.json({ error: 'Failed to save lead' }, { status: 500 })
     }
 
@@ -184,7 +185,7 @@ export async function POST(request: NextRequest) {
       })
     } catch (emailError: unknown) {
       const msg = emailError instanceof Error ? emailError.message : 'Unknown email error'
-      console.error('[Leads] Email notification error:', msg)
+      logger.error('[Leads] Email notification error:', msg)
       // Don't fail the lead submission if email fails
     }
 
@@ -273,7 +274,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ success: true })
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Unknown error'
-    console.error('[Leads] POST error:', message)
+    logger.error('[Leads] POST error:', message)
     return NextResponse.json({ error: message }, { status: 500 })
   }
 }
@@ -328,7 +329,7 @@ export async function GET(request: NextRequest) {
     const { data: leads, error } = await query
 
     if (error) {
-      console.error('[Leads] GET error:', error.message)
+      logger.error('[Leads] GET error:', error.message)
       return NextResponse.json({ error: error.message }, { status: 500 })
     }
 
@@ -355,7 +356,7 @@ export async function GET(request: NextRequest) {
     })
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Unknown error'
-    console.error('[Leads] GET error:', message)
+    logger.error('[Leads] GET error:', message)
     return NextResponse.json({ error: message }, { status: 500 })
   }
 }
@@ -392,7 +393,7 @@ export async function PATCH(request: NextRequest) {
       .eq('user_id', user.id) // Extra safety: only update own leads
 
     if (error) {
-      console.error('[Leads] PATCH error:', error.message)
+      logger.error('[Leads] PATCH error:', error.message)
       return NextResponse.json({ error: error.message }, { status: 500 })
     }
 
@@ -403,7 +404,7 @@ export async function PATCH(request: NextRequest) {
     return NextResponse.json({ success: true })
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Unknown error'
-    console.error('[Leads] PATCH error:', message)
+    logger.error('[Leads] PATCH error:', message)
     return NextResponse.json({ error: message }, { status: 500 })
   }
 }
