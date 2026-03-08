@@ -1,7 +1,18 @@
 import { Suspense } from 'react'
-import EmailMarketingClient from './EmailMarketing'
+import nextDynamic from 'next/dynamic'
 
 export const dynamic = 'force-dynamic'
+
+const EmailMarketingClient = nextDynamic(
+  () => import('./EmailMarketing'),
+  {
+    loading: () => (
+      <div className="min-h-screen bg-[#0A0A0A] flex items-center justify-center">
+        <div className="w-8 h-8 border-2 border-[#D4A017] border-t-transparent rounded-full animate-spin" />
+      </div>
+    ),
+  }
+)
 
 function Loading() {
   return (

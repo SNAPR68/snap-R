@@ -1,5 +1,16 @@
 import { notFound } from 'next/navigation'
-import PropertySiteClient from './PropertySiteClient'
+import dynamic from 'next/dynamic'
+
+const PropertySiteClient = dynamic(
+  () => import('./PropertySiteClient'),
+  {
+    loading: () => (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <div className="w-8 h-8 border-2 border-[#D4A017] border-t-transparent rounded-full animate-spin" />
+      </div>
+    ),
+  }
+)
 import { Metadata } from 'next'
 import { adminSupabase } from '@/lib/supabase/admin'
 import { normalizeTier, PLAN_LIMITS } from '@/lib/content/limits'

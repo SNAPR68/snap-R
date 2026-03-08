@@ -12,7 +12,7 @@ export default function PlansPage() {
       
       <main className="max-w-4xl mx-auto px-6 py-12">
         <h1 className="text-3xl font-bold mb-4">Plans & Pricing</h1>
-        <p className="text-white/60 mb-8">Understanding SnapR's simple listing-based pricing model.</p>
+        <p className="text-white/60 mb-8">Understanding SnapR&apos;s simple listing-based pricing model.</p>
         
         {/* Key Concept */}
         <div className="bg-gradient-to-r from-[#D4A017]/20 to-transparent border border-[#D4A017]/30 rounded-xl p-6 mb-8">

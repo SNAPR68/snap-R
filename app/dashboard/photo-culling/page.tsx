@@ -1,14 +1,15 @@
 'use client';
 
-import React, { Suspense, useEffect, useState, useCallback } from 'react';
+import React, { Suspense, useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
-import { 
-  Loader2, Image, Camera, Check, X, ChevronRight, Home, 
-  Sparkles, Download, Filter, Grid, List, Eye, RotateCcw,
-  Copy, CheckCircle, AlertCircle, Layers, Trash2, Lightbulb, 
+import {
+  Loader2, Image as ImageIcon, Camera, Check, X, ChevronRight, Home,
+  Sparkles, Download, Eye, RotateCcw,
+  CheckCircle, AlertCircle, Layers, Lightbulb,
   ArrowRight, Scissors, Target, Zap
 } from 'lucide-react';
+import NextImage from 'next/image';
 import Link from 'next/link';
 
 interface PhotoScore {
@@ -74,7 +75,7 @@ function ListingSelector({ listings, onSelect }: { listings: Listing[]; onSelect
             <div>
               <h3 className="font-semibold text-purple-400 mb-1">What this tool does</h3>
               <p className="text-sm text-white/70">
-                Shot 100+ photos? MLS only allows 25-50. This AI analyzes every photo for quality (sharpness, exposure, composition), 
+                Shot 100+ photos? MLS only allows 25-50. This AI analyzes every photo for quality (sharpness, exposure, composition),
                 identifies duplicates, detects room types, and selects the best photos in MLS-optimized order.
               </p>
               <div className="flex items-center gap-2 mt-3 text-xs text-white/50">
@@ -124,9 +125,9 @@ function ListingSelector({ listings, onSelect }: { listings: Listing[]; onSelect
                 onClick={() => onSelect(listing.id)}
                 className="flex items-center gap-4 p-4 bg-white/5 border border-white/10 rounded-xl hover:border-purple-500/50 hover:bg-purple-500/5 transition-all text-left group"
               >
-                <div className="w-20 h-14 rounded-lg overflow-hidden bg-white/10 flex-shrink-0">
+                <div className="w-20 h-14 rounded-lg overflow-hidden bg-white/10 flex-shrink-0 relative">
                   {listing.thumbnail ? (
-                    <img src={listing.thumbnail} alt="" className="w-full h-full object-cover" />
+                    <NextImage src={listing.thumbnail} alt={`${listing.title} thumbnail`} fill className="object-cover" unoptimized />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center">
                       <Home className="w-6 h-6 text-white/20" />
@@ -143,7 +144,7 @@ function ListingSelector({ listings, onSelect }: { listings: Listing[]; onSelect
                 </div>
                 <div className="flex items-center gap-3">
                   <span className="flex items-center gap-1 text-sm text-white/40">
-                    <Image className="w-4 h-4" /> {listing.photoCount}
+                    <ImageIcon className="w-4 h-4" aria-hidden="true" /> {listing.photoCount}
                   </span>
                   <ChevronRight className="w-5 h-5 text-white/30 group-hover:text-purple-400 transition-colors" />
                 </div>
@@ -156,12 +157,12 @@ function ListingSelector({ listings, onSelect }: { listings: Listing[]; onSelect
   );
 }
 
-function PhotoCard({ 
-  photo, 
+function PhotoCard({
+  photo,
   showDetails,
-  onToggleSelect 
-}: { 
-  photo: PhotoScore; 
+  onToggleSelect
+}: {
+  photo: PhotoScore;
   showDetails: boolean;
   onToggleSelect?: (index: number) => void;
 }) {
@@ -177,20 +178,22 @@ function PhotoCard({
 
   return (
     <div className={`relative rounded-xl overflow-hidden border transition-all ${
-      photo.isSelected 
-        ? 'border-green-500/50 bg-green-500/5' 
+      photo.isSelected
+        ? 'border-green-500/50 bg-green-500/5'
         : photo.isDuplicate
         ? 'border-yellow-500/30 bg-yellow-500/5'
         : 'border-white/10 bg-white/5'
     }`}>
       {/* Image */}
       <div className="aspect-[4/3] relative">
-        <img 
-          src={photo.photoUrl} 
+        <NextImage
+          src={photo.photoUrl}
           alt={`Photo ${photo.photoIndex + 1}`}
-          className="w-full h-full object-cover"
+          fill
+          className="object-cover"
+          unoptimized
         />
-        
+
         {/* Selection indicator */}
         <div className="absolute top-2 left-2">
           {photo.isSelected ? (
@@ -277,10 +280,10 @@ function PhotoCard({
   );
 }
 
-function CullingResults({ 
-  result, 
-  onReset 
-}: { 
+function CullingResults({
+  result,
+  onReset
+}: {
   result: CullResult;
   onReset: () => void;
 }) {
@@ -317,7 +320,7 @@ function CullingResults({
     const selected = allPhotos
       .filter(p => localSelected.has(p.photoIndex))
       .sort((a, b) => (a.recommendedOrder || 999) - (b.recommendedOrder || 999));
-    
+
     // For now, just copy URLs to clipboard
     const urls = selected.map((p, i) => `${i + 1}. ${p.photoUrl}`).join('\n');
     navigator.clipboard.writeText(urls);
@@ -354,9 +357,9 @@ function CullingResults({
           <div className="flex items-start gap-3">
             <Lightbulb className="w-5 h-5 text-green-400 mt-0.5 flex-shrink-0" />
             <div>
-              <h3 className="font-semibold text-green-400 mb-1">What's next?</h3>
+              <h3 className="font-semibold text-green-400 mb-1">What&apos;s next?</h3>
               <p className="text-sm text-white/70">
-                Now enhance only the selected photos using AI tools (sky replacement, twilight, etc.). 
+                Now enhance only the selected photos using AI tools (sky replacement, twilight, etc.).
                 This saves credits and time by focusing on your best shots.
               </p>
             </div>
@@ -443,7 +446,7 @@ function CullingResults({
 
         {displayPhotos.length === 0 && (
           <div className="text-center py-16 text-white/40">
-            <Image className="w-12 h-12 mx-auto mb-3 opacity-50" />
+            <ImageIcon className="w-12 h-12 mx-auto mb-3 opacity-50" aria-hidden="true" />
             <p>No photos in this view</p>
           </div>
         )}
@@ -452,12 +455,12 @@ function CullingResults({
   );
 }
 
-function CullingInterface({ 
-  listingId, 
+function CullingInterface({
+  listingId,
   listingTitle,
   photoUrls,
-  onBack 
-}: { 
+  onBack
+}: {
   listingId: string;
   listingTitle: string;
   photoUrls: string[];
@@ -524,17 +527,20 @@ function CullingInterface({
         {/* Photo Preview */}
         <div className="bg-white/5 border border-white/10 rounded-2xl p-6 mb-6">
           <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-            <Image className="w-5 h-5 text-purple-400" />
+            <ImageIcon className="w-5 h-5 text-purple-400" aria-hidden="true" />
             {photoUrls.length} Photos to Analyze
           </h3>
           <div className="grid grid-cols-6 md:grid-cols-10 gap-2 max-h-64 overflow-y-auto">
             {photoUrls.map((url, i) => (
-              <img 
-                key={i} 
-                src={url} 
-                alt={`Photo ${i + 1}`}
-                className="aspect-square object-cover rounded-lg"
-              />
+              <div key={i} className="aspect-square relative rounded-lg overflow-hidden">
+                <NextImage
+                  src={url}
+                  alt={`Photo ${i + 1}`}
+                  fill
+                  className="object-cover"
+                  unoptimized
+                />
+              </div>
             ))}
           </div>
         </div>
@@ -543,7 +549,7 @@ function CullingInterface({
         <div className="bg-white/5 border border-white/10 rounded-2xl p-6 mb-6">
           <h3 className="text-lg font-semibold mb-4">How many photos to select?</h3>
           <p className="text-white/50 mb-4">
-            MLS typically allows 25-50 photos. We'll pick the best ones.
+            MLS typically allows 25-50 photos. We&apos;ll pick the best ones.
           </p>
           <div className="flex items-center gap-4">
             <input
@@ -624,7 +630,7 @@ function PhotoCullingContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const listingId = searchParams.get('listing');
-  
+
   const [listings, setListings] = useState<Listing[]>([]);
   const [photoUrls, setPhotoUrls] = useState<string[]>([]);
   const [listingTitle, setListingTitle] = useState<string>('');
@@ -680,13 +686,13 @@ function PhotoCullingContent() {
 
   const loadListingPhotos = async (id: string) => {
     const supabase = createClient();
-    
+
     const { data: listing } = await supabase
       .from('listings')
       .select('title, address')
       .eq('id', id)
       .single();
-    
+
     if (listing) {
       setListingTitle(listing.title || listing.address || 'Untitled Listing');
     }
@@ -709,7 +715,7 @@ function PhotoCullingContent() {
       );
       setPhotoUrls(urls.filter(url => url !== ''));
     }
-    
+
     setLoading(false);
   };
 

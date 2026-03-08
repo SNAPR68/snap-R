@@ -194,7 +194,7 @@ export function AIAnalysisTab({ listingId, photos, onApplyEnhancement, onRequest
             <div className="p-4 bg-white/5 rounded-xl border border-white/10">
               <UserCheck className="w-6 h-6 text-[#D4A017] mb-2" />
               <p className="text-sm font-medium">Human Edit Flags</p>
-              <p className="text-xs text-white/50">Issues AI can't fix</p>
+              <p className="text-xs text-white/50">Issues AI can&apos;t fix</p>
             </div>
           </div>
         </div>

@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { Check, ArrowRight, Sparkles, DollarSign, Users, Camera, Gift, TrendingUp, Zap, Mail, BarChart3, ChevronDown, Loader2 } from 'lucide-react';
+import { Check, ArrowRight, DollarSign, Users, Camera, Gift, TrendingUp, Zap, Mail, BarChart3, ChevronDown, Loader2 } from 'lucide-react';
 
 // FAQ items
 const FAQ = [
@@ -149,7 +149,7 @@ export default function PartnersPage() {
           <div className="max-w-6xl mx-auto">
             <h2 className="text-3xl font-bold text-center mb-4">Why Become a SnapR Partner?</h2>
             <p className="text-white/60 text-center mb-12 max-w-2xl mx-auto">
-              Whether you're a photographer, coach, or consultant - if you know agents, you can earn.
+              Whether you&apos;re a photographer, coach, or consultant - if you know agents, you can earn.
             </p>
 
             <div className="grid md:grid-cols-3 gap-8">
@@ -169,7 +169,7 @@ export default function PartnersPage() {
                 </div>
                 <h3 className="text-xl font-bold mb-3">No Caps</h3>
                 <p className="text-white/60">
-                  Refer 5 clients or 500. There's no limit on how much you can earn. Top partners make $2,000+/month.
+                  Refer 5 clients or 500. There&apos;s no limit on how much you can earn. Top partners make $2,000+/month.
                 </p>
               </div>
 
@@ -263,7 +263,7 @@ export default function PartnersPage() {
         <section className="py-16 px-4">
           <div className="max-w-6xl mx-auto">
             <h2 className="text-3xl font-bold text-center mb-4">Who Is This For?</h2>
-            <p className="text-white/60 text-center mb-12">If you work with real estate professionals, you're a great fit</p>
+            <p className="text-white/60 text-center mb-12">If you work with real estate professionals, you&apos;re a great fit</p>
 
             <div className="grid md:grid-cols-4 gap-6">
               {[
@@ -351,7 +351,7 @@ export default function PartnersPage() {
                   </div>
                   <h3 className="text-2xl font-bold mb-2">Application Received!</h3>
                   <p className="text-white/60">
-                    We'll review your application and get back to you within 24 hours.
+                    We&apos;ll review your application and get back to you within 24 hours.
                   </p>
                 </div>
               ) : (

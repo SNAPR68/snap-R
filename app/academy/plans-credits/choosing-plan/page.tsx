@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { ArrowLeft, User, Users, Building2, Check } from 'lucide-react';
+import { ArrowLeft, User, Users, Building2 } from 'lucide-react';
 
 export default function ChoosingPlanPage() {
   return (
@@ -28,7 +28,7 @@ export default function ChoosingPlanPage() {
                 <li>• Handle 1-3 listings per month</li>
                 <li>• Want to test the platform</li>
                 <li>• Are just getting started</li>
-                <li>• Don't mind watermarks</li>
+                <li>• Don&apos;t mind watermarks</li>
               </ul>
             </div>
             <div>
