@@ -40,10 +40,10 @@ interface Portfolio {
   portfolio_items: PortfolioItem[];
 }
 
-function BeforeAfterSlider({ beforeUrl, afterUrl, title }: { 
-  beforeUrl: string; 
-  afterUrl: string; 
-  title?: string 
+function BeforeAfterSlider({ beforeUrl, afterUrl }: {
+  beforeUrl: string;
+  afterUrl: string;
+  title?: string
 }) {
   const [sliderPosition, setSliderPosition] = useState(50);
   const [isDragging, setIsDragging] = useState(false);
@@ -154,7 +154,7 @@ function ContactForm({ portfolioId, accentColor }: { portfolioId: string; accent
           </svg>
         </div>
         <h3 className="text-xl font-semibold mb-2">Message Sent!</h3>
-        <p className="text-white/60">We'll get back to you soon.</p>
+        <p className="text-white/60">We&apos;ll get back to you soon.</p>
       </div>
     );
   }
@@ -332,7 +332,7 @@ export default function PublicPortfolioPage({ params }: { params: { slug: string
                 )}
                 {item.client_testimonial && (
                   <blockquote className="border-l-2 pl-4 italic text-white/70" style={{ borderColor: accentColor }}>
-                    "{item.client_testimonial}"
+                    &quot;{item.client_testimonial}&quot;
                     {item.client_name && (
                       <cite className="block text-sm mt-2 not-italic text-white/50">
                         — {item.client_name}

@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { ArrowLeft, Building2, Zap, Check, Info } from 'lucide-react';
+import { ArrowLeft, Zap, Info } from 'lucide-react';
 
 export default function UnderstandingListingsPage() {
   return (
@@ -12,7 +12,7 @@ export default function UnderstandingListingsPage() {
       
       <main className="max-w-3xl mx-auto px-6 py-12">
         <h1 className="text-3xl font-bold mb-4">Understanding Listing-Based Pricing</h1>
-        <p className="text-white/60 mb-8">How SnapR's simple pricing model works.</p>
+        <p className="text-white/60 mb-8">How SnapR&apos;s simple pricing model works.</p>
         
         {/* Key Point */}
         <div className="bg-green-500/10 border border-green-500/30 rounded-xl p-6 mb-8">
@@ -60,7 +60,7 @@ export default function UnderstandingListingsPage() {
               </div>
               <div>
                 <h3 className="font-semibold mb-2">Enhance Unlimited Times</h3>
-                <p className="text-white/60">Use any of the 15 AI tools as many times as you want. Try different effects, re-enhance, experiment — it's all free.</p>
+                <p className="text-white/60">Use any of the 15 AI tools as many times as you want. Try different effects, re-enhance, experiment — it&apos;s all free.</p>
               </div>
             </div>
           </div>
@@ -110,7 +110,7 @@ export default function UnderstandingListingsPage() {
             Monthly Reset
           </h2>
           <p className="text-white/60">
-            Your listing count resets on the first of each month. Unused listings don't roll over, 
+            Your listing count resets on the first of each month. Unused listings don&apos;t roll over,
             but all your existing listings and content remain accessible forever.
           </p>
         </div>

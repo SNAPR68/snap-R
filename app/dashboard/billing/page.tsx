@@ -110,9 +110,9 @@ export default async function BillingPage() {
           </div>
         </section>
 
-        {/* What's Included */}
+        {/* What&apos;s Included */}
         <section className="bg-[#1A1A1A] border border-white/10 rounded-xl p-6 mb-6">
-          <h2 className="text-xl font-semibold mb-4">What's Included</h2>
+          <h2 className="text-xl font-semibold mb-4">What&apos;s Included</h2>
           <div className="grid grid-cols-2 gap-3">
             {[
               '15 AI Enhancement Tools',

@@ -103,7 +103,7 @@ export default function FAQPage() {
         
         <div className="mt-12 p-6 bg-gradient-to-r from-[#D4A017]/20 to-transparent border border-[#D4A017]/30 rounded-xl text-center">
           <h3 className="text-xl font-bold mb-2">Still have questions?</h3>
-          <p className="text-white/60 mb-4">We're here to help. Reach out to our team.</p>
+          <p className="text-white/60 mb-4">We&apos;re here to help. Reach out to our team.</p>
           <Link href="/contact" className="inline-flex items-center gap-2 px-6 py-3 bg-[#D4A017] text-black font-semibold rounded-xl hover:bg-[#B8860B] transition-all">
             Contact Us
           </Link>

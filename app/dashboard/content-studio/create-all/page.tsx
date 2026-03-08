@@ -1,6 +1,17 @@
 import { Suspense } from 'react'
-import { UnifiedCreator } from '@/components/content-studio/unified-creator'
+import dynamic from 'next/dynamic'
 import { Loader2 } from 'lucide-react'
+
+const UnifiedCreator = dynamic(
+  () => import('@/components/content-studio/unified-creator').then(m => ({ default: m.UnifiedCreator })),
+  {
+    loading: () => (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <Loader2 className="w-8 h-8 animate-spin text-[#D4AF37]" />
+      </div>
+    ),
+  }
+)
 
 export default function UnifiedCreatorPage() {
   return (

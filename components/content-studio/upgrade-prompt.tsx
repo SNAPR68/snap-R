@@ -29,7 +29,7 @@ export function UpgradePrompt({ feature, currentPlan, requiredPlan = 'Starter' }
           <div className="flex items-center gap-3 text-left">
             <Sparkles className="w-5 h-5 text-[#D4AF37] flex-shrink-0" />
             <div>
-              <p className="text-white font-medium">What you'll get:</p>
+              <p className="text-white font-medium">What you&apos;ll get:</p>
               <ul className="text-white/60 text-sm mt-1 space-y-1">
                 <li>• AI-generated captions & descriptions</li>
                 <li>• Instagram, Facebook, TikTok templates</li>

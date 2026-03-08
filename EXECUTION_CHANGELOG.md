@@ -1,6 +1,18 @@
 # SnapR Execution Changelog
 =================================
 
+## 2026-03-08 — Code quality batch: code splitting, entities, unused imports, next/image
+
+### Bundle size reduction + lint cleanup across 18 files
+
+- **Code splitting (5 pages)**: Added `next/dynamic` lazy loading for heavy client components — StudioClient, VideoCreator, UnifiedCreator, EmailMarketing, PropertySiteClient
+- **Unescaped entities (9 files)**: Fixed all `'` → `&apos;` in JSX text content across partners, billing, FAQ, academy, photo-culling, not-found, upgrade-prompt, ai-analysis-tab
+- **next/image conversion (1 file)**: Converted 3 `<img>` tags to `next/image` with `unoptimized` in photo-culling page; renamed Lucide `Image` → `ImageIcon` to avoid ESLint collision
+- **Unused imports (3 files)**: Removed unused `Check`, `Building2`, `Sparkles`, `useCallback`, `Filter`, `Grid`, `List`, `Copy`, `Trash2` imports; removed unused `title` param
+- **ESLint**: 0 warnings across all modified files
+- **TypeScript**: 0 errors
+- Risk Level: Low (no behavioral changes)
+
 ## 2026-03-08 — AbortSignal.timeout CodeRabbit fixes
 
 - Upload page timeout: 15s → 120s (large file uploads need more time)
