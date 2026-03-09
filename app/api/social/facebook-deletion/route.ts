@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import crypto from 'crypto';
+import { z } from 'zod';
 
 import { logger } from '@/lib/logger';
 function getSupabase() {
@@ -9,6 +10,12 @@ function getSupabase() {
     process.env.SUPABASE_SERVICE_ROLE_KEY!
   );
 }
+
+// Schema for Facebook signed_request payload
+const facebookDeletionPayloadSchema = z.object({
+  algorithm: z.string(),
+  user_id: z.string().min(1),
+});
 
 // Facebook sends a signed request when user requests data deletion
 export async function POST(req: NextRequest) {
@@ -26,37 +33,44 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Invalid signed_request format' }, { status: 400 });
     }
 
-    // Verify HMAC-SHA256 signature using Facebook App Secret
+    // Verify HMAC-SHA256 signature using Facebook App Secret (fail closed)
     const appSecret = process.env.FACEBOOK_APP_SECRET;
-    if (appSecret) {
-      const expectedSig = crypto
-        .createHmac('sha256', appSecret)
-        .update(payload)
-        .digest();
-      const actualSig = Buffer.from(encodedSig, 'base64url');
-
-      if (
-        actualSig.length !== expectedSig.length ||
-        !crypto.timingSafeEqual(actualSig, expectedSig)
-      ) {
-        return NextResponse.json({ error: 'Invalid signature' }, { status: 400 });
-      }
+    if (!appSecret) {
+      logger.error('FACEBOOK_APP_SECRET not configured — rejecting deletion callback');
+      return NextResponse.json({ error: 'Server configuration error' }, { status: 500 });
     }
 
-    const data = JSON.parse(Buffer.from(payload, 'base64url').toString('utf-8'));
-    const userId = data.user_id;
+    const expectedSig = crypto
+      .createHmac('sha256', appSecret)
+      .update(payload)
+      .digest();
+    const actualSig = Buffer.from(encodedSig, 'base64url');
+
+    if (
+      actualSig.length !== expectedSig.length ||
+      !crypto.timingSafeEqual(actualSig, expectedSig)
+    ) {
+      return NextResponse.json({ error: 'Invalid signature' }, { status: 400 });
+    }
+
+    // Decode and validate the payload
+    const rawData: unknown = JSON.parse(Buffer.from(payload, 'base64url').toString('utf-8'));
+    const parsed = facebookDeletionPayloadSchema.safeParse(rawData);
+    if (!parsed.success) {
+      return NextResponse.json({ error: 'Invalid payload structure' }, { status: 400 });
+    }
+
+    const userId = parsed.data.user_id;
 
     // Delete user's social connection data
-    if (userId) {
-      await getSupabase()
-        .from('social_connections')
-        .delete()
-        .eq('platform_user_id', userId);
-    }
+    await getSupabase()
+      .from('social_connections')
+      .delete()
+      .eq('platform_user_id', userId);
 
     // Generate a confirmation code
     const confirmationCode = crypto.randomBytes(16).toString('hex');
-    
+
     // Facebook expects this specific response format
     return NextResponse.json({
       url: `https://snap-r.com/deletion-status?code=${confirmationCode}`,
@@ -76,10 +90,9 @@ export async function POST(req: NextRequest) {
 // GET endpoint for status check page
 export async function GET(req: NextRequest) {
   const code = req.nextUrl.searchParams.get('code');
-  return NextResponse.json({ 
+  return NextResponse.json({
     status: 'complete',
     message: 'Your data has been deleted from SnapR',
-    confirmation_code: code 
+    confirmation_code: code
   });
 }
-

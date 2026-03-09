@@ -1757,7 +1757,6 @@ Replaced all `catch (error: any)` with `catch (error: unknown)` across 83 source
 - Added `canGenerateVideo` to all tiers in `lib/content/limits.ts`.
 - Free/Starter: false, Pro/Agency: true.
 - Added `canGenerateVideo()` convenience function export.
->>>>>>> origin/main
 
 ---
 

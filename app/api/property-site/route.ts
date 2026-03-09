@@ -54,7 +54,7 @@ export async function POST(request: Request) {
     if (error) throw error
     return NextResponse.json({ site, url: `/p/${finalSlug}` })
   } catch (error: unknown) {
-    logger.error('Error creating site:', error)
+    logger.error('Error creating site:', error instanceof Error ? error.message : error)
     return NextResponse.json({ error: 'Failed to create site' }, { status: 500 })
   }
 }
@@ -89,7 +89,7 @@ export async function PATCH(request: Request) {
     if (error) throw error
     return NextResponse.json({ site })
   } catch (error: unknown) {
-    logger.error('Error updating site:', error)
+    logger.error('Error updating site:', error instanceof Error ? error.message : error)
     return NextResponse.json({ error: 'Failed to update site' }, { status: 500 })
   }
 }

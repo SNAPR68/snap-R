@@ -39,7 +39,7 @@ export async function generateCaption(
 ): Promise<GenerationResult> {
   const { platform, tone, includeEmojis = true, includeCallToAction = true, maxLength, contentType } = options
 
-  const _featuresText = Array.isArray(property.features) 
+  const featuresText = Array.isArray(property.features)
     ? property.features.join(', ')
     : (property.features || '')
 
@@ -145,6 +145,7 @@ PROPERTY DETAILS:
 - Bathrooms: ${property.bathrooms || 'N/A'}
 - Square Feet: ${property.squareFeet ? Number(property.squareFeet).toLocaleString() + ' sq ft' : 'N/A'}
 - Property Type: ${property.propertyType || 'Home'}
+- Key Features: ${featuresText || 'Modern finishes'}
 
 ${selectedExample}
 
