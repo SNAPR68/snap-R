@@ -29,7 +29,9 @@ export default function BulkCreatorClient() {
   const [showResults, setShowResults] = useState(false)
   const canvasRef = useRef<HTMLCanvasElement>(null)
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { loadListings() }, [])
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { if (preselectedId && listings.length > 0 && !selectedListings.includes(preselectedId)) setSelectedListings([preselectedId]) }, [preselectedId, listings])
 
   const loadListings = async () => {

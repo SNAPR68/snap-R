@@ -6,7 +6,7 @@ import {
   MapPin, Bed, Bath, Square, Phone, Mail, Share2, ChevronLeft, ChevronRight, 
   X, Calendar, Home, Car, Sparkles, Play, DollarSign, Calculator,
   Facebook, Twitter, Linkedin, Link2, Check, MessageCircle, Building,
-  ChevronDown, ChevronUp, ExternalLink, Heart, Grid, Copy
+  ChevronDown, ChevronUp, ExternalLink, Heart, Grid
 } from 'lucide-react'
 
 // ============================================
@@ -131,6 +131,7 @@ export default function PropertySiteClient({ photos, listing, agent, brand, vide
     }
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [lightboxOpen])
   
   // Close share menu when clicking outside
@@ -207,7 +208,7 @@ export default function PropertySiteClient({ photos, listing, agent, brand, vide
       
       setFormSubmitted(true)
       setContactForm({ name: '', email: '', phone: '', message: '' })
-    } catch (error: unknown) {
+    } catch {
       setSubmitError('Failed to send message. Please try again or contact the agent directly.')
     } finally {
       setIsSubmitting(false)

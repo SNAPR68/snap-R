@@ -1,12 +1,12 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { createClient as createServiceClient } from '@supabase/supabase-js';
 
-export async function GET(req: NextRequest) {
+export async function GET() {
   try {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
-    
+
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
@@ -38,7 +38,7 @@ export async function GET(req: NextRequest) {
     const profileData = await profileRes.json();
 
     const testContent = `Test post from SnapR - ${new Date().toISOString()}`;
-    
+
     const ugcBody = {
       author: `urn:li:person:${personId}`,
       lifecycleState: 'PUBLISHED',
@@ -63,7 +63,7 @@ export async function GET(req: NextRequest) {
       body: JSON.stringify(ugcBody),
           signal: AbortSignal.timeout(15000),
     });
-    
+
     const ugcText = await ugcRes.text();
 
     const postsBody = {

@@ -4,6 +4,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import ListingIntelligenceDashboard from '@/components/listing-intelligence/ListingIntelligenceDashboard';
 import { Loader2, Brain, Home, Image, ChevronRight } from 'lucide-react';
+import NextImage from 'next/image';
 import Link from 'next/link';
 
 interface Listing {
@@ -66,7 +67,7 @@ function ListingSelector({ listings, onSelect }: { listings: Listing[]; onSelect
               >
                 <div className="w-20 h-14 rounded-lg overflow-hidden bg-white/10 flex-shrink-0">
                   {listing.thumbnail ? (
-                    <img src={listing.thumbnail} alt="" className="w-full h-full object-cover" />
+                    <NextImage src={listing.thumbnail} alt="" className="w-full h-full object-cover" width={80} height={56} unoptimized />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center">
                       <Home className="w-6 h-6 text-white/20" />

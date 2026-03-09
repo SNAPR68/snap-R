@@ -22,7 +22,7 @@ export async function POST(req: NextRequest) {
     const buffer = Buffer.from(await file.arrayBuffer())
     const fileName = `${user.id}/${folder}/${Date.now()}-${file.name}`
     
-    const { data, error } = await supabase.storage
+    const { error } = await supabase.storage
       .from('content-images')
       .upload(fileName, buffer, {
         contentType: file.type,
@@ -31,7 +31,7 @@ export async function POST(req: NextRequest) {
 
     if (error) {
       // Try raw-images bucket as fallback
-      const { data: fallbackData, error: fallbackError } = await supabase.storage
+      const { error: fallbackError } = await supabase.storage
         .from('raw-images')
         .upload(fileName, buffer, {
           contentType: file.type,

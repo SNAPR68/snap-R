@@ -37,7 +37,7 @@ export default function TermsOfService() {
           <section>
             <h2 className="text-2xl font-semibold text-[#D4A017] mb-4">1. Agreement to Terms</h2>
             <p className="text-white/80 leading-relaxed">
-              By accessing or using SnapR's AI-powered real estate photo enhancement platform ("Service") at snap-r.com, you agree to be bound by these Terms of Service ("Terms"). If you do not agree to these Terms, do not use the Service.
+              By accessing or using SnapR&apos;s AI-powered real estate photo enhancement platform (&quot;Service&quot;) at snap-r.com, you agree to be bound by these Terms of Service (&quot;Terms&quot;). If you do not agree to these Terms, do not use the Service.
             </p>
             <p className="text-white/80 leading-relaxed mt-4">
               We may modify these Terms at any time. Continued use of the Service after changes constitutes acceptance of the modified Terms.
@@ -86,7 +86,7 @@ export default function TermsOfService() {
             
             <h3 className="text-xl font-medium mt-6 mb-3">5.1 Your Content</h3>
             <p className="text-white/80">
-              You retain all ownership rights to the photos you upload ("Your Content"). By uploading content, you grant SnapR a limited license to process, enhance, store, and display Your Content solely for the purpose of providing the Service to you.
+              You retain all ownership rights to the photos you upload (&quot;Your Content&quot;). By uploading content, you grant SnapR a limited license to process, enhance, store, and display Your Content solely for the purpose of providing the Service to you.
             </p>
 
             <h3 className="text-xl font-medium mt-6 mb-3">5.2 Enhanced Content</h3>
@@ -137,7 +137,7 @@ export default function TermsOfService() {
             <h2 className="text-2xl font-semibold text-[#D4A017] mb-4">7. Disclaimers</h2>
             <div className="p-4 bg-white/5 rounded-lg text-white/80">
               <p className="mb-4">
-                THE SERVICE IS PROVIDED "AS IS" AND "AS AVAILABLE" WITHOUT WARRANTIES OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND NON-INFRINGEMENT.
+                THE SERVICE IS PROVIDED &quot;AS IS&quot; AND &quot;AS AVAILABLE&quot; WITHOUT WARRANTIES OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND NON-INFRINGEMENT.
               </p>
               <p className="mb-4">
                 WE DO NOT WARRANT THAT:

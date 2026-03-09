@@ -87,7 +87,6 @@ export function MlsExportModal({ photos, listingTitle, listingAddress, onClose }
         setResult({ success: false, error: data.error || 'Export failed' });
       }
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : 'Unknown error';
       setResult({ success: false, error: err instanceof Error ? err.message : 'Export failed' });
     } finally {
       setLoading(false);

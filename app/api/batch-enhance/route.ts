@@ -10,7 +10,7 @@ export async function POST(req: NextRequest) {
     if (!parsed.success) {
       return NextResponse.json({ error: parsed.error, details: parsed.details }, { status: 400 });
     }
-    const { listingId, toolId, preset } = parsed.data;
+    const { listingId } = parsed.data;
 
     const supabase = await createClient();
     

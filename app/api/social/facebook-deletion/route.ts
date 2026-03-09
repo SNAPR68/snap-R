@@ -21,7 +21,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Parse the signed request
-    const [encodedSig, payload] = signedRequest.split('.');
+    const [, payload] = signedRequest.split('.');
     const data = JSON.parse(Buffer.from(payload, 'base64').toString('utf-8'));
     const userId = data.user_id;
 

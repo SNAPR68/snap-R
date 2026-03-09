@@ -8,7 +8,7 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     const validated = parseBody(prepareNotificationSchema, body); if (!validated.success) { return NextResponse.json({ error: validated.error, details: validated.details }, { status: 400 }); }
-    const { listingId, type, channels, data } = body;
+    const { listingId, data } = body;
 
     if (!listingId) {
       return NextResponse.json({ error: 'listingId required' }, { status: 400 });

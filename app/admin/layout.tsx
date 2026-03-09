@@ -1,7 +1,7 @@
 import { createClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
-import { LayoutDashboard, Users, Zap, DollarSign, Clock, Settings, TrendingUp, AlertTriangle, Mail, Server, Command, Brain, Handshake, MessageCircle } from 'lucide-react';
+import { LayoutDashboard, Users, DollarSign, Clock, TrendingUp, AlertTriangle, Mail, Server, Command, Brain, Handshake, MessageCircle } from 'lucide-react';
 
 const ADMIN_EMAILS = ['rajesh@snap-r.com'];
 

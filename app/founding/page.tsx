@@ -5,7 +5,6 @@ import Link from 'next/link'
 import { 
   Sparkles, 
   Clock, 
-  DollarSign, 
   Check, 
   X, 
   Play, 
@@ -15,8 +14,6 @@ import {
   Video,
   Mail,
   Globe,
-  Share2,
-  BarChart3,
   Users,
   Lock,
   Gift,
@@ -25,13 +22,9 @@ import {
   Camera,
   Palette,
   Send,
-  MousePointer,
   Timer,
   TrendingUp,
   Shield,
-  Layers,
-  Target,
-  Award,
   Rocket
 } from 'lucide-react'
 
@@ -306,7 +299,7 @@ function CTAButton({ variant = 'primary', children, href = '/signup?plan=foundin
 // MAIN LANDING PAGE COMPONENT
 // ============================================
 export default function FoundingLandingPage() {
-  const [spotsRemaining, setSpotsRemaining] = useState(73)
+  const [spotsRemaining] = useState(73)
   const [timeLeft, setTimeLeft] = useState({ days: 6, hours: 14, minutes: 23, seconds: 45 })
 
   // Countdown timer
@@ -581,7 +574,7 @@ export default function FoundingLandingPage() {
               Everything You Need. <span className="text-amber-500">One Platform.</span>
             </h2>
             <p className="text-base md:text-lg text-zinc-400 max-w-2xl mx-auto">
-              What Fotello does in 10 seconds, we do in 60. Plus everything else they can't.
+              What Fotello does in 10 seconds, we do in 60. Plus everything else they can&apos;t.
             </p>
           </div>
 
@@ -702,7 +695,7 @@ export default function FoundingLandingPage() {
           {/* Section CTA */}
           <div className="text-center">
             <p className="text-base text-zinc-400 mb-6">
-              To match SnapR, you'd need <span className="text-white font-medium">Fotello + Canva + Hootsuite + Mailchimp</span>
+              To match SnapR, you&apos;d need <span className="text-white font-medium">Fotello + Canva + Hootsuite + Mailchimp</span>
               <br />
               <span className="text-red-400 font-bold">= $200+/month</span> vs <span className="text-green-400 font-bold">SnapR at $5/listing</span>
             </p>
@@ -725,7 +718,7 @@ export default function FoundingLandingPage() {
               The <span className="bg-gradient-to-r from-amber-400 to-amber-600 bg-clip-text text-transparent">Founding 100</span> Deal
             </h2>
             <p className="text-base md:text-lg text-zinc-400 max-w-2xl mx-auto">
-              100 founding member spots. Once they're gone, this offer disappears forever.
+              100 founding member spots. Once they&apos;re gone, this offer disappears forever.
             </p>
           </div>
 
@@ -860,7 +853,7 @@ export default function FoundingLandingPage() {
                     <Star key={j} className="w-4 h-4 text-amber-500 fill-amber-500" />
                   ))}
                 </div>
-                <p className="text-zinc-300 mb-4 text-sm italic">"{testimonial.quote}"</p>
+                <p className="text-zinc-300 mb-4 text-sm italic">&quot;{testimonial.quote}&quot;</p>
                 <div className="flex items-center justify-between pt-4 border-t border-zinc-800">
                   <div className="flex items-center gap-3">
                     <div className="w-8 h-8 bg-gradient-to-br from-amber-500 to-amber-600 rounded-full flex items-center justify-center text-black font-bold text-xs">

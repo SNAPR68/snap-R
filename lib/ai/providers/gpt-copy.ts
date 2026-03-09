@@ -37,9 +37,9 @@ export async function generateCaption(
   options: CaptionOptions,
   client?: OpenAI
 ): Promise<GenerationResult> {
-  const { platform, tone, includeEmojis = true, includeCallToAction = true, maxLength = 2000, contentType } = options
+  const { platform, tone, includeEmojis = true, contentType } = options
 
-  const featuresText = Array.isArray(property.features) 
+  const _featuresText = Array.isArray(property.features) 
     ? property.features.join(', ')
     : (property.features || '')
 

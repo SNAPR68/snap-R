@@ -40,18 +40,6 @@ export async function GET(req: NextRequest) {
       return NextResponse.redirect(new URL('/dashboard?error=invite_expired', req.url));
     }
 
-    // Get user's email
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('email')
-      .eq('id', user.id)
-      .single();
-
-    // Check if invite email matches (optional - can be removed for open invites)
-    // if (profile?.email?.toLowerCase() !== invite.email.toLowerCase()) {
-    //   return NextResponse.redirect(new URL('/dashboard?error=email_mismatch', req.url));
-    // }
-
     // Check if already a member
     const { data: existingMember } = await supabase
       .from('team_members')

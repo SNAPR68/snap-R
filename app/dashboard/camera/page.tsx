@@ -82,10 +82,10 @@ export default function CameraPage() {
   const [originalFile, setOriginalFile] = useState<File | null>(null);
   const [selectedTool, setSelectedTool] = useState<typeof AI_TOOLS[0] | null>(null);
   const [selectedPreset, setSelectedPreset] = useState<string | null>(null);
-  const [processing, setProcessing] = useState(false);
+  const [, setProcessing] = useState(false);
   const [result, setResult] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [photoId, setPhotoId] = useState<string | null>(null);
+  const [, setPhotoId] = useState<string | null>(null);
   const [listingId, setListingId] = useState<string | null>(null);
   const [activeCategory, setActiveCategory] = useState<string>('EXTERIOR');
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -97,6 +97,7 @@ export default function CameraPage() {
       if (data.user) setUser(data.user);
       else router.push('/auth/login');
     });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {

@@ -8,8 +8,6 @@ import { logger } from '@/lib/logger';
 export const maxDuration = 300; // 5 minutes for large batches
 
 export async function POST(request: NextRequest) {
-  const startTime = Date.now();
-  
   try {
     const supabase = await createClient();
     const { data: { user }, error: authError } = await supabase.auth.getUser();

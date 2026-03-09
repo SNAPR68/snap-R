@@ -17,7 +17,7 @@ export async function GET() {
       .order('created_at', { ascending: false })
 
     return NextResponse.json({ sites: sites || [] })
-  } catch (error: unknown) {
+  } catch {
     return NextResponse.json({ error: 'Failed to fetch sites' }, { status: 500 })
   }
 }
@@ -103,7 +103,7 @@ export async function DELETE(request: Request) {
     const { id } = await request.json()
     await supabase.from('property_sites').delete().eq('id', id).eq('user_id', user.id)
     return NextResponse.json({ success: true })
-  } catch (error: unknown) {
+  } catch {
     return NextResponse.json({ error: 'Failed to delete' }, { status: 500 })
   }
 }

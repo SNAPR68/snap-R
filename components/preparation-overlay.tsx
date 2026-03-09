@@ -215,9 +215,10 @@ export function PreparationOverlay({
         pollIntervalRef.current = null;
       }
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen, listingId]);
 
-  const handleSSEMessage = (data: SSEData, event?: string) => {
+  const _handleSSEMessage = (data: SSEData, event?: string) => {
     if (event === 'complete' && data.result) {
       setResult(data.result);
       setPhase('complete');

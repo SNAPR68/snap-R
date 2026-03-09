@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server'
 
 const TIKTOK_CLIENT_KEY = process.env.TIKTOK_CLIENT_KEY
-const TIKTOK_CLIENT_SECRET = process.env.TIKTOK_CLIENT_SECRET
 const REDIRECT_URI = process.env.NEXT_PUBLIC_APP_URL + '/api/social/tiktok/callback'
 
 // GET - Start TikTok OAuth flow

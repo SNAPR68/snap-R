@@ -4,16 +4,15 @@
  * Smart tool selection with strict validation
  */
 
-import { 
-  PhotoAnalysis, 
-  PhotoStrategy, 
+import {
+  PhotoAnalysis,
+  PhotoStrategy,
   ListingStrategy,
   LockedPresets,
-  Priority,
 } from './types';
 import { ToolId } from '../router';
 import { isExterior, isInterior } from './photo-intelligence';
-import { getProviderForTool, estimateProcessingTime, estimateCost } from './provider-router';
+import { estimateProcessingTime, estimateCost } from './provider-router';
 
 import { logger } from '@/lib/logger';
 // ============================================
@@ -268,7 +267,7 @@ function buildSkipStrategy(analysis: PhotoAnalysis): PhotoStrategy {
 function deriveToolsFromAnalysis(
   analysis: PhotoAnalysis,
   isTwilightTarget: boolean,
-  decisions: ListingDecisions
+  _decisions: ListingDecisions
 ): ToolId[] {
   const derived: ToolId[] = [];
 
@@ -337,7 +336,7 @@ function deriveToolsFromAnalysis(
   return derived;
 }
 
-function shouldApplyAutoEnhance(analysis: PhotoAnalysis, isHeroCandidate: boolean): boolean {
+function _shouldApplyAutoEnhance(analysis: PhotoAnalysis, isHeroCandidate: boolean): boolean {
   if (analysis.skipEnhancement) return false;
   if (analysis.sharpness === 'blurry') return false;
 
@@ -363,7 +362,7 @@ function buildPhotoStrategy(
   analysis: PhotoAnalysis,
   decisions: ListingDecisions,
   twilightPhotoIds: string[],
-  presets: LockedPresets
+  _presets: LockedPresets
 ): PhotoStrategy {
   const isTwilightTarget = twilightPhotoIds.includes(analysis.photoId);
   const isHeroCandidate = analysis.heroScore >= CONFIG.minHeroScore;
@@ -422,7 +421,7 @@ function validateToolForPhoto(
   tool: ToolId,
   analysis: PhotoAnalysis,
   isTwilightTarget: boolean,
-  decisions: ListingDecisions
+  _decisions: ListingDecisions
 ): boolean {
   const isRiskyTool = [
     'sky-replacement',

@@ -3,7 +3,7 @@
 import { useEffect, useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
-import { Loader2, CreditCard, Shield, Check } from 'lucide-react';
+import { Loader2, CreditCard, Shield } from 'lucide-react';
 import Link from 'next/link';
 
 function CheckoutContent() {
@@ -15,7 +15,7 @@ function CheckoutContent() {
   const listings = searchParams.get('listings') || '30';
   const billing = searchParams.get('billing') || 'monthly';
 
-  const [loading, setLoading] = useState(true);
+  const [, setLoading] = useState(true);
   const [error, setError] = useState('');
 
   useEffect(() => {
@@ -52,7 +52,7 @@ function CheckoutContent() {
           setError(data.error || 'Failed to create checkout session');
           setLoading(false);
         }
-      } catch (err) {
+      } catch {
         setError('Something went wrong. Please try again.');
         setLoading(false);
       }

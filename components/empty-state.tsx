@@ -1,7 +1,7 @@
 'use client';
 
 import { ReactNode } from 'react';
-import { Upload, Image, Sparkles, Share2, Download } from 'lucide-react';
+import { Upload, Sparkles, Share2, Download } from 'lucide-react';
 
 type EmptyStateType = 'no-photos' | 'no-enhanced' | 'no-shared' | 'no-downloads';
 

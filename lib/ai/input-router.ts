@@ -402,10 +402,12 @@ export async function processUploadBatch(
 // EXPORTS
 // ============================================
 
-export default {
+const inputRouter = {
   parseExif,
   detectBrackets,
   routeImages,
   processUploadBatch,
   CONFIG,
 };
+
+export default inputRouter;

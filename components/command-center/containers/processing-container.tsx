@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import Link from 'next/link'
 import Image from 'next/image';
-import { Loader2, CheckCircle, Sparkles, Image as ImageIcon } from 'lucide-react'
+import { Loader2, CheckCircle, Image as ImageIcon } from 'lucide-react'
 import { useToast } from '@/components/toast'
 
 export interface ProcessingItem {

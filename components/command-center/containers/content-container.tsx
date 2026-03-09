@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { Sparkles, CheckCircle, FileText, MessageSquare, Globe, Calendar } from 'lucide-react'
+import { Sparkles, CheckCircle, FileText } from 'lucide-react'
 
 export interface MarketingStatus {
   status: string

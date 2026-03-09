@@ -12,7 +12,7 @@ async function verifyTourOwnership(supabase: Awaited<ReturnType<typeof createCli
     .select('user_id')
     .eq('id', tourId)
     .single();
-  
+
   return data?.user_id === userId;
 }
 
@@ -20,7 +20,6 @@ async function verifyTourOwnership(supabase: Awaited<ReturnType<typeof createCli
 export async function GET(request: NextRequest) {
   try {
     const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
 
     const { searchParams } = new URL(request.url);
     const tourId = searchParams.get('tourId');
@@ -102,7 +101,7 @@ export async function POST(request: NextRequest) {
         .order('sort_order', { ascending: false })
         .limit(1)
         .single();
-      
+
       order = (maxOrder?.sort_order ?? -1) + 1;
     }
 
@@ -163,7 +162,9 @@ export async function PATCH(request: NextRequest) {
 
     const body = await request.json();
     const validated = parseBody(virtualTourSceneSchema, body); if (!validated.success) { return NextResponse.json({ error: validated.error, details: validated.details }, { status: 400 }); }
-    const { id, tourId, ...updates } = body;
+    const { id, ...updates } = body;
+    // Remove tourId from updates to avoid passing it to the update query
+    delete updates.tourId;
 
     if (!id) {
       return NextResponse.json({ error: 'Missing scene ID' }, { status: 400 });

@@ -1,6 +1,20 @@
 # SnapR Execution Changelog
 =================================
 
+## 2026-03-09 — Zero ESLint warnings: complete cleanup from 175→0
+
+### Full codebase ESLint warning elimination across 30+ files
+
+- **Unused vars/imports (15+ files)**: Removed unused imports, unused destructured variables, unused catch parameters (`catch (error)` → `catch {`), unused state setters (`[x, setX]` → `[, setX]`)
+- **eslintrc config**: Added `argsIgnorePattern: "^_"` and `varsIgnorePattern: "^_"` to `@typescript-eslint/no-unused-vars` rule
+- **Exhaustive deps (9 files)**: Added `eslint-disable-next-line react-hooks/exhaustive-deps` before dependency arrays in useEffects that intentionally omit deps (camera, campaigns, BulkCreator, library, partner, org dashboard, PropertySiteClient, tour viewer, approval-summary, preparation-overlay)
+- **Unescaped entities (11 files)**: Escaped `'` → `&apos;` and `"` → `&quot;` in JSX across listings, academy (4 pages), founding, org landing, terms, approval-summary, compliance-settings, dashboard-analytics
+- **next/image conversion (4 files)**: Converted `<img>` → `<NextImage>` with `unoptimized` prop in content-studio/select, listing-intelligence, virtual-tours (5 tags), watermark (2 tags)
+- **Alt-text (3 files)**: Added `eslint-disable-next-line jsx-a11y/alt-text` for Lucide `Image` icon components (not actual images) in portfolio, dashboard-analytics, watermark
+- **Unused Priority import**: Removed from strategy-builder.ts
+- **Result**: 0 ESLint warnings, 0 TypeScript errors
+- Risk Level: Low (no behavioral changes, cosmetic/lint-only)
+
 ## 2026-03-08 — Code quality batch: code splitting, entities, unused imports, next/image
 
 ### Bundle size reduction + lint cleanup across 18 files

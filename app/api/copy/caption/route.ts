@@ -1,7 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
 import { generateCaption, PropertyDetails, CaptionOptions } from '@/lib/ai/providers/gpt-copy'
-import { canGenerateCaption, shouldResetUsage } from '@/lib/content/limits'
+import { shouldResetUsage } from '@/lib/content/limits'
 import { copyCaptionSchema, parseBody } from '@/lib/validation/schemas'
 
 import { logger } from '@/lib/logger';

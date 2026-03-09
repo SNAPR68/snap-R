@@ -62,7 +62,7 @@ interface Props {
   isLoading?: boolean;
 }
 
-export default function ListingIntelligenceDashboard({ onApplyEnhancement, onApplyAll, preloadedPhotos = [], listingId, listingTitle, isLoading = false }: Props) {
+export default function ListingIntelligenceDashboard({ onApplyEnhancement, onApplyAll, preloadedPhotos = [], listingId }: Props) {
   const [photos, setPhotos] = useState<string[]>([]);
   const [selectedPhotos, setSelectedPhotos] = useState<Set<number>>(new Set());
   const [isAnalyzing, setIsAnalyzing] = useState(false);
@@ -75,6 +75,7 @@ export default function ListingIntelligenceDashboard({ onApplyEnhancement, onApp
       // Auto-select all preloaded photos
       setSelectedPhotos(new Set(preloadedPhotos.map((_, i) => i)));
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [preloadedPhotos]);
 
   const [photoScores, setPhotoScores] = useState<PhotoScore[]>([]);
@@ -149,7 +150,6 @@ export default function ListingIntelligenceDashboard({ onApplyEnhancement, onApp
       setPhotoScores(data.result.photoScores);
       setRecommendations(data.result.topRecommendations);
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : 'Processing failed';
       setError(err instanceof Error ? err.message : 'Failed to analyze photos');
     } finally {
       setIsAnalyzing(false);

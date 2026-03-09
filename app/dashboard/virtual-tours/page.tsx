@@ -9,6 +9,7 @@ import {
   Eye, Link2, Trash2, Edit3, Plus, Image, Check,
   X, ChevronLeft, Calendar
 } from 'lucide-react';
+import NextImage from 'next/image';
 
 interface TourScene {
   id: string;
@@ -251,10 +252,11 @@ function TourCard({ tour, onEdit, onDelete }: {
       {/* Cover Image */}
       <div className="aspect-video bg-white/5 relative">
         {tour.cover_image_url || tour.tour_scenes?.[0]?.image_url ? (
-          <img
-            src={tour.cover_image_url || tour.tour_scenes?.[0]?.image_url}
+          <NextImage
+            src={tour.cover_image_url || tour.tour_scenes?.[0]?.image_url || ''}
             alt={tour.name}
             className="w-full h-full object-cover"
+            width={640} height={360} unoptimized
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center">
@@ -565,7 +567,7 @@ function TourModal({
               <div className="grid grid-cols-4 gap-3">
                 {scenes.map((scene, index) => (
                   <div key={scene.id} className="relative group aspect-square rounded-lg overflow-hidden bg-white/5">
-                    <img src={scene.image_url} alt={scene.name} className="w-full h-full object-cover" />
+                    <NextImage src={scene.image_url} alt={scene.name} className="w-full h-full object-cover" width={200} height={200} unoptimized />
                     <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
                       <button
                         onClick={() => moveScene(index, 'up')}
@@ -679,10 +681,11 @@ function TourViewer({ tour, onClose }: { tour: Tour; onClose: () => void }) {
 
       {/* Main Image */}
       <div className="flex-1 relative flex items-center justify-center p-4 overflow-hidden">
-        <img
+        <NextImage
           src={scenes[currentIndex].image_url}
           alt={scenes[currentIndex].name}
           className="max-w-full max-h-full object-contain"
+          width={1280} height={720} unoptimized
         />
 
         {/* Navigation */}
@@ -717,7 +720,7 @@ function TourViewer({ tour, onClose }: { tour: Tour; onClose: () => void }) {
                 index === currentIndex ? 'border-amber-500' : 'border-transparent hover:border-white/30'
               }`}
             >
-              <img src={scene.image_url} alt={scene.name} className="w-full h-full object-cover" />
+              <NextImage src={scene.image_url} alt={scene.name} className="w-full h-full object-cover" width={64} height={64} unoptimized />
             </button>
           ))}
         </div>
@@ -936,10 +939,11 @@ function VirtualToursContent() {
                     className="w-full flex items-center gap-3 p-3 bg-white/5 rounded-lg hover:bg-white/10 transition-colors text-left"
                   >
                     {listing.photos?.[0] ? (
-                      <img
+                      <NextImage
                         src={listing.photos[0].signedUrl || listing.photos[0].processed_url || listing.photos[0].raw_url}
                         alt=""
                         className="w-12 h-12 rounded-lg object-cover"
+                        width={48} height={48} unoptimized
                       />
                     ) : (
                       <div className="w-12 h-12 rounded-lg bg-white/10 flex items-center justify-center">

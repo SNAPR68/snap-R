@@ -108,7 +108,6 @@ export async function logApiCost({
       logger.info(`[CostLogger] ✓ ${provider}/${toolId}: ${costCents}¢ (${success ? 'success' : 'failed'})`);
     }
   } catch (e: unknown) {
-    const message = e instanceof Error ? e.message : 'Unknown error';
     logger.error('[CostLogger] Exception:', e instanceof Error ? e.message : 'Unknown error');
   }
 }
@@ -147,7 +146,6 @@ export async function logSystemEvent({
       await sendCriticalAlert(source, message, metadata);
     }
   } catch (e: unknown) {
-    const message = e instanceof Error ? e.message : 'Processing failed';
     logger.error('[SystemLog] Exception:', e instanceof Error ? e.message : 'Unknown error');
   }
 }

@@ -21,7 +21,7 @@ export async function GET(request: Request) {
 
     const { data: content } = await query
     return NextResponse.json({ content: content || [] })
-  } catch (error: unknown) {
+  } catch {
     return NextResponse.json({ error: 'Failed to fetch' }, { status: 500 })
   }
 }
@@ -74,7 +74,7 @@ export async function PATCH(request: Request) {
     }
 
     return NextResponse.json({ success: true })
-  } catch (error: unknown) {
+  } catch {
     return NextResponse.json({ error: 'Failed to update' }, { status: 500 })
   }
 }
@@ -89,7 +89,7 @@ export async function DELETE(request: Request) {
     const { id } = await request.json()
     await supabase.from('content_library').delete().eq('id', id).eq('user_id', user.id)
     return NextResponse.json({ success: true })
-  } catch (error: unknown) {
+  } catch {
     return NextResponse.json({ error: 'Failed to delete' }, { status: 500 })
   }
 }

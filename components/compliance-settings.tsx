@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Shield, CheckCircle, Loader2 } from 'lucide-react';
+import { CheckCircle, Loader2 } from 'lucide-react';
 
 interface MlsOption {
   value: string;
@@ -17,7 +17,7 @@ interface ComplianceSettingsProps {
   };
 }
 
-export function ComplianceSettings({ userId, initialSettings }: ComplianceSettingsProps) {
+export function ComplianceSettings({ initialSettings }: ComplianceSettingsProps) {
   const [autoWatermark, setAutoWatermark] = useState(initialSettings?.autoWatermark ?? true);
   const [defaultMls, setDefaultMls] = useState(initialSettings?.defaultMls ?? 'crmls');
   const [mlsOptions, setMlsOptions] = useState<MlsOption[]>([]);
@@ -56,7 +56,7 @@ export function ComplianceSettings({ userId, initialSettings }: ComplianceSettin
         <div>
           <h3 className="font-medium">Auto-Watermark Virtual Staging</h3>
           <p className="text-sm text-white/50">
-            Automatically add "VIRTUALLY STAGED" watermark to applicable photos
+            Automatically add &quot;VIRTUALLY STAGED&quot; watermark to applicable photos
           </p>
         </div>
         <button

@@ -67,6 +67,7 @@ export default function TourViewerPage() {
 
   useEffect(() => {
     if (slug) loadTour();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [slug]);
 
   useEffect(() => {
@@ -95,6 +96,7 @@ export default function TourViewerPage() {
       if (intervalRef.current) clearInterval(intervalRef.current);
       if (progressRef.current) clearInterval(progressRef.current);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tour, isPlaying, currentIndex]);
 
   const loadTour = async () => {

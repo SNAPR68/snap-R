@@ -69,6 +69,7 @@ export function DashboardAnalytics({ userId }: { userId?: string }) {
         <div className="bg-gradient-to-br from-[#D4A017]/20 to-[#D4A017]/5 rounded-xl p-4 border border-[#D4A017]/20">
           <div className="flex items-center gap-3 mb-2">
             <div className="p-2 bg-[#D4A017]/20 rounded-lg">
+              {/* eslint-disable-next-line jsx-a11y/alt-text */}
               <Image className="w-5 h-5 text-[#D4A017]" />
             </div>
             <span className="text-white/60 text-sm">Photos Enhanced</span>
@@ -175,7 +176,7 @@ export function DashboardAnalytics({ userId }: { userId?: string }) {
             <div>
               <h3 className="text-white font-semibold text-lg">Your SnapR Impact</h3>
               <p className="text-white/60">
-                You've saved <span className="text-[#D4A017] font-semibold">{formatTime(analytics.timeSaved)}</span> of editing time and{' '}
+                You&apos;ve saved <span className="text-[#D4A017] font-semibold">{formatTime(analytics.timeSaved)}</span> of editing time and{' '}
                 <span className="text-[#D4A017] font-semibold">${analytics.moneySaved}</span> in outsourcing costs!
               </p>
             </div>
@@ -186,6 +187,7 @@ export function DashboardAnalytics({ userId }: { userId?: string }) {
       {/* Empty State */}
       {analytics.totalEnhancements === 0 && (
         <div className="bg-white/5 rounded-xl p-8 border border-white/10 text-center">
+          {/* eslint-disable-next-line jsx-a11y/alt-text */}
           <Image className="w-12 h-12 text-white/20 mx-auto mb-4" />
           <h3 className="text-white font-semibold mb-2">No enhancements yet</h3>
           <p className="text-white/50 mb-4">Start enhancing your photos to see your analytics here</p>

@@ -3,7 +3,6 @@
 import { useState, useEffect } from "react";
 import { useSession } from "@/app/providers/session-provider";
 import {
-  Zap,
   Settings,
   Instagram,
   Facebook,
@@ -51,7 +50,7 @@ interface Trigger {
 export default function CampaignSettingsPage() {
   const { user } = useSession();
   const [triggers, setTriggers] = useState<Record<string, Trigger>>({});
-  const [templates, setTemplates] = useState<Array<{ id: string; name: string; content?: string; platform?: string }>>([]);
+  const [, setTemplates] = useState<Array<{ id: string; name: string; content?: string; platform?: string }>>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState<string | null>(null);
 
@@ -61,6 +60,7 @@ export default function CampaignSettingsPage() {
     } else {
       setLoading(false);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id]);
   // Initialize with defaults if no user
   useEffect(() => {

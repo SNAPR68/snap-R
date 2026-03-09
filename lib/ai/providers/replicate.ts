@@ -100,9 +100,9 @@ async function runFluxKontext(
   );
       break;
     } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : '';
-      if (attempt === 0 && message.includes('429')) {
-        const retryAfter = message.match(/retry_after\\":\\s*(\\d+)/i)?.[1];
+      const errMsg = error instanceof Error ? error.message : String(error);
+      if (attempt === 0 && errMsg.includes('429')) {
+        const retryAfter = errMsg.match(/retry_after\\":\\s*(\\d+)/i)?.[1];
         const waitMs = retryAfter ? Number(retryAfter) * 1000 : 8000;
         logger.warn(`[Replicate] Flux Kontext rate limited, retrying in ${Math.round(waitMs / 1000)}s...`);
         await sleep(waitMs);
@@ -157,8 +157,8 @@ export async function fluxFillInpaint(
       );
       break;
     } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : '';
-      if (attempt < maxAttempts && message.toLowerCase().includes('timeout')) {
+      const errMsg = error instanceof Error ? error.message : String(error);
+      if (attempt < maxAttempts && errMsg.toLowerCase().includes('timeout')) {
         logger.warn('[Replicate] Flux Fill timeout, retrying...');
         continue;
       }
@@ -256,7 +256,6 @@ export async function skyReplacement(
         logger.warn('[Replicate] Sky mask too small (' + maskResult.area.toFixed(1) + '%), falling back to Kontext');
       }
     } catch (maskError: unknown) {
-      const message = maskError instanceof Error ? maskError.message : 'Unknown error';
       logger.warn('[Replicate] Sky mask failed, falling back to Kontext:', maskError instanceof Error ? maskError.message : 'Unknown error');
     }
   } else {
@@ -428,7 +427,6 @@ export async function lawnRepair(
         );
       }
     } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : 'Unknown error';
       logger.warn('[Replicate] Lawn mask failed:', error instanceof Error ? error.message : 'Unknown error');
     }
   } else if (skipMask) {

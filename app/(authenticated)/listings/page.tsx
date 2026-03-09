@@ -38,7 +38,7 @@ export default async function ListingsPage() {
       <div className="text-center py-20">
         <h2 className="text-2xl font-semibold mb-2">No Listings</h2>
         <p className="text-[var(--text-soft)]">
-          You haven't created any listings yet.
+          You haven&apos;t created any listings yet.
         </p>
         <Link href="/upload" className="btn-gold inline-block mt-6">
           Upload Photos

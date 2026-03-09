@@ -163,7 +163,6 @@ export async function analyzePhotosForDescription(photoUrls: string[], client?: 
       atmosphere: result.atmosphere || 'inviting',
     };
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : 'Unknown error';
     logger.error('[Description Generator] Photo analysis error:', error instanceof Error ? error.message : 'Unknown error');
     return {
       features: {},
@@ -289,7 +288,6 @@ RESPOND IN THIS EXACT JSON FORMAT:
       wordCount: description.split(/\s+/).filter(Boolean).length,
     };
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : 'Unknown error';
     const msg = error instanceof Error ? error.message : 'Unknown error';
     logger.error('[Description Generator] Generation error:', msg);
     throw new Error(`Failed to generate description: ${msg}`);

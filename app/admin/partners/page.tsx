@@ -22,7 +22,7 @@ export default async function AdminPartnersPage() {
   const supabase = adminSupabase();
 
   // Fetch all partner applications
-  const { data: applications, error } = await supabase
+  const { data: applications } = await supabase
     .from('partner_applications')
     .select('*')
     .order('created_at', { ascending: false });
