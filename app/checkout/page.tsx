@@ -15,7 +15,6 @@ function CheckoutContent() {
   const listings = searchParams.get('listings') || '30';
   const billing = searchParams.get('billing') || 'monthly';
 
-  const [, setLoading] = useState(true);
   const [error, setError] = useState('');
 
   useEffect(() => {
@@ -50,11 +49,9 @@ function CheckoutContent() {
           router.push(data.redirect);
         } else {
           setError(data.error || 'Failed to create checkout session');
-          setLoading(false);
         }
       } catch {
         setError('Something went wrong. Please try again.');
-        setLoading(false);
       }
     }
 
@@ -72,7 +69,7 @@ function CheckoutContent() {
           <p className="text-white/60 mb-6">{error}</p>
           <div className="flex gap-3 justify-center">
             <button
-              onClick={() => { setError(''); setLoading(true); window.location.reload(); }}
+              onClick={() => { setError(''); window.location.reload(); }}
               className="px-6 py-3 bg-[#D4A017] text-black font-semibold rounded-xl hover:bg-[#B8860B]"
             >
               Try Again

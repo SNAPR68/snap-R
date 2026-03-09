@@ -10,7 +10,6 @@ interface MlsOption {
 }
 
 interface ComplianceSettingsProps {
-  userId: string;
   initialSettings?: {
     autoWatermark: boolean;
     defaultMls: string;
@@ -32,8 +31,8 @@ export function ComplianceSettings({ initialSettings }: ComplianceSettingsProps)
         if (data.mlsOptions) {
           setMlsOptions(data.mlsOptions);
         }
-      } catch (err) {
-        console.error('Failed to fetch MLS options:', err);
+      } catch (error: unknown) {
+        console.error('Failed to fetch MLS options:', error instanceof Error ? error.message : error);
       }
     }
     fetchMlsOptions();
@@ -60,6 +59,9 @@ export function ComplianceSettings({ initialSettings }: ComplianceSettingsProps)
           </p>
         </div>
         <button
+          type="button"
+          aria-label="Toggle auto-watermark virtual staging"
+          aria-pressed={autoWatermark}
           onClick={() => setAutoWatermark(!autoWatermark)}
           className={`relative w-14 h-8 rounded-full transition-colors ${
             autoWatermark ? 'bg-[#D4A017]' : 'bg-white/20'
@@ -75,11 +77,13 @@ export function ComplianceSettings({ initialSettings }: ComplianceSettingsProps)
 
       {/* Default MLS Selection */}
       <div>
-        <label className="block font-medium mb-2">Default MLS</label>
+        <label htmlFor="default-mls" className="block font-medium mb-2">Default MLS</label>
         <p className="text-sm text-white/50 mb-3">
           Pre-select your primary MLS for faster exports
         </p>
         <select
+          id="default-mls"
+          aria-label="Default MLS"
           value={defaultMls}
           onChange={(e) => setDefaultMls(e.target.value)}
           className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white focus:border-[#D4A017] focus:outline-none"
@@ -96,8 +100,8 @@ export function ComplianceSettings({ initialSettings }: ComplianceSettingsProps)
       <div className="bg-blue-500/10 border border-blue-500/30 rounded-xl p-4">
         <h4 className="font-medium text-blue-400 mb-2">About MLS Compliance</h4>
         <p className="text-sm text-white/70">
-          NAR Code of Ethics requires disclosure of virtual staging and digital alterations. 
-          SnapR automatically adds compliant watermarks and generates disclosure documents 
+          NAR Code of Ethics requires disclosure of virtual staging and digital alterations.
+          SnapR automatically adds compliant watermarks and generates disclosure documents
           for your MLS submissions.
         </p>
       </div>

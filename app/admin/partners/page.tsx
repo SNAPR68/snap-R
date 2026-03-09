@@ -22,12 +22,16 @@ export default async function AdminPartnersPage() {
   const supabase = adminSupabase();
 
   // Fetch all partner applications
-  const { data: applications } = await supabase
+  const { data: applications, error: _fetchError } = await supabase
     .from('partner_applications')
     .select('*')
     .order('created_at', { ascending: false });
 
-  const partners = applications || [];
+  if (_fetchError) {
+    console.error('Failed to fetch partner applications:', _fetchError.message);
+  }
+
+  const partners = applications ?? [];
 
   // Stats
   const pending = partners.filter(p => p.status === 'pending').length;

@@ -42,10 +42,14 @@ export async function onRequestGet(context: { request: Request; env: Record<stri
     }
 
     // Get associated photos
-    const { data: photos } = await supabase
+    const { data: photos, error: photosError } = await supabase
       .from('photos')
       .select('*')
       .eq('job_id', jobId);
+
+    if (photosError) {
+      console.error('Photos query error:', photosError.message);
+    }
 
     return Response.json({
       job,

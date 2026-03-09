@@ -20,9 +20,30 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Missing signed_request' }, { status: 400 });
     }
 
-    // Parse the signed request
-    const [, payload] = signedRequest.split('.');
-    const data = JSON.parse(Buffer.from(payload, 'base64').toString('utf-8'));
+    // Parse and verify the signed request
+    const [encodedSig, payload] = signedRequest.split('.');
+    if (!encodedSig || !payload) {
+      return NextResponse.json({ error: 'Invalid signed_request format' }, { status: 400 });
+    }
+
+    // Verify HMAC-SHA256 signature using Facebook App Secret
+    const appSecret = process.env.FACEBOOK_APP_SECRET;
+    if (appSecret) {
+      const expectedSig = crypto
+        .createHmac('sha256', appSecret)
+        .update(payload)
+        .digest();
+      const actualSig = Buffer.from(encodedSig, 'base64url');
+
+      if (
+        actualSig.length !== expectedSig.length ||
+        !crypto.timingSafeEqual(actualSig, expectedSig)
+      ) {
+        return NextResponse.json({ error: 'Invalid signature' }, { status: 400 });
+      }
+    }
+
+    const data = JSON.parse(Buffer.from(payload, 'base64url').toString('utf-8'));
     const userId = data.user_id;
 
     // Delete user's social connection data

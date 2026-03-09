@@ -1,6 +1,23 @@
 # SnapR Execution Changelog
 =================================
 
+## 2026-03-09 — CodeRabbit review fixes for PR #94
+
+### Address 10 inline + 6 outside-diff findings from automated code review
+
+- **Security**: Verify Facebook signed_request HMAC-SHA256 signature before trusting user_id (was forgeable)
+- **Security**: Change LinkedIn test endpoint from GET to POST (prevent accidental publishes via crawlers)
+- **Bug fix**: Restore canGenerateCaption limit guard in caption route (over-limit users could generate unlimited)
+- **Bug fix**: Use validated.data instead of raw body in prepare-notification route (bypassed Zod coercions)
+- **Bug fix**: Thread includeCallToAction and maxLength CaptionOptions into prompt (were silently dropped)
+- **Cleanup**: Remove dead setLoading state and all calls in checkout page
+- **Cleanup**: Capture template query param in content-studio customize (was no-op)
+- **Cleanup**: Remove unused userId prop from ComplianceSettings interface + caller
+- **Observability**: Add error logging to property-site GET/DELETE catch blocks, job-status photos query, admin partners query
+- **Accessibility**: Add aria-label, aria-pressed, htmlFor to compliance-settings toggle and select
+- **Typing**: Fix catch clause in compliance-settings to use `catch (error: unknown)` pattern
+- Risk Level: Medium (security + bug fixes, no schema changes)
+
 ## 2026-03-09 — Zero ESLint warnings: complete cleanup from 175→0
 
 ### Full codebase ESLint warning elimination across 30+ files

@@ -35,8 +35,8 @@ const LAYOUT_OPTIONS = [
 
 function TemplateCustomizerContent() {
   const searchParams = useSearchParams()
-  searchParams.get('template') // templateId used via searchParams
-  
+  const _templateId = searchParams.get('template')
+
   const [font, setFont] = useState('inter')
   const [colorPreset, setColorPreset] = useState('gold')
   const [colors, setColors] = useState({ primary: '#D4AF37', secondary: '#1A1A1A', accent: '#FFFFFF' })

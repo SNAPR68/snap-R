@@ -1,7 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
 import { generateCaption, PropertyDetails, CaptionOptions } from '@/lib/ai/providers/gpt-copy'
-import { shouldResetUsage } from '@/lib/content/limits'
+import { canGenerateCaption, shouldResetUsage } from '@/lib/content/limits'
 import { copyCaptionSchema, parseBody } from '@/lib/validation/schemas'
 
 import { logger } from '@/lib/logger';
@@ -41,6 +41,10 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // Check caption limit
+    if (!canGenerateCaption(plan, captionsUsed)) {
+      return NextResponse.json({ error: 'Caption limit reached' }, { status: 429 })
+    }
 
     // Parse request body
     const body = await request.json()
