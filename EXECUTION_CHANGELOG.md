@@ -1,6 +1,11 @@
 # SnapR Execution Changelog
 =================================
 
+## 2026-03-10 — Fix: add max length to imageBase64 schema
+
+- `mobileAnalyzeFrameSchema.imageBase64`: added `.max(15_000_000)` (~10 MB base64 cap)
+- Addresses PR #95 review: unbounded base64 string could cause memory pressure
+
 ## 2026-03-10 — Zod validation blitz: 86→99 validated API routes
 
 ### Add Zod input validation to 13 previously unvalidated API routes
