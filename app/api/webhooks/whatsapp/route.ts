@@ -34,6 +34,14 @@ export async function POST(request: NextRequest) {
     const from = formData.get('From')?.toString() || '';
     const body = formData.get('Body')?.toString().trim().toUpperCase() || '';
 
+    // Validate Twilio webhook inputs
+    if (!from || !from.startsWith('whatsapp:')) {
+      return respondWithMessage('Invalid request.');
+    }
+    if (body.length > 500) {
+      return respondWithMessage('Message too long.');
+    }
+
     logger.info('[WhatsApp Webhook] From:', from, 'Body:', body);
 
     const phone = from.replace('whatsapp:', '');

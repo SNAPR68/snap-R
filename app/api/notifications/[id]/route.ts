@@ -4,6 +4,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { z } from 'zod';
 
 export async function PATCH(
   _request: NextRequest,
@@ -14,6 +15,12 @@ export async function PATCH(
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   const { id } = await params;
+
+  // Validate UUID format
+  const uuidResult = z.string().uuid().safeParse(id);
+  if (!uuidResult.success) {
+    return NextResponse.json({ error: 'Invalid notification ID' }, { status: 400 });
+  }
 
   const { error } = await supabase
     .from('notifications')
