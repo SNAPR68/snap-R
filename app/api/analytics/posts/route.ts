@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { analyticsPostRecordSchema, parseBody } from '@/lib/validation/schemas'
 
 import { logger } from '@/lib/logger';
 // GET - Fetch published posts with analytics
@@ -55,7 +56,9 @@ export async function POST(request: Request) {
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
     const body = await request.json()
-    const { listingId, platform, platformPostId, postType, templateId, imageUrl, caption } = body
+    const validated = parseBody(analyticsPostRecordSchema, body)
+    if (!validated.success) { return NextResponse.json({ error: validated.error, details: validated.details }, { status: 400 }) }
+    const { listingId, platform, platformPostId, postType, templateId, imageUrl, caption } = validated.data
 
     const { data: post, error } = await supabase
       .from('published_posts')

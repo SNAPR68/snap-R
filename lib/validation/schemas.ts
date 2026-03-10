@@ -756,6 +756,176 @@ export const watermarkSchema = z.object({
   opacity: z.number().min(0).max(100).optional(),
 }).passthrough()
 
+// Social publish (extended with scheduling)
+export const socialPublishExtendedSchema = z.object({
+  platform: z.enum(['instagram', 'facebook', 'linkedin', 'tiktok']),
+  content: z.string().min(1).max(5000),
+  imageUrls: z.array(z.string().url()).max(10).optional(),
+  listingId: z.string().uuid().optional().nullable(),
+  scheduleFor: z.string().datetime().optional().nullable(),
+})
+
+// Publish video to social platform
+export const publishVideoExtendedSchema = z.object({
+  platform: z.enum(['facebook', 'instagram', 'linkedin', 'tiktok']),
+  videoUrl: z.string().url(),
+  caption: z.string().max(5000).optional(),
+  listingId: z.string().uuid().optional().nullable(),
+})
+
+// Email template generation
+export const emailTemplateSchema = z.object({
+  property: z.object({
+    address: z.string().max(500).optional(),
+    city: z.string().max(100).optional(),
+    state: z.string().max(50).optional(),
+    price: z.number().optional(),
+    bedrooms: z.number().int().min(0).max(99).optional(),
+    bathrooms: z.number().min(0).max(99).optional(),
+    sqft: z.number().int().min(0).optional(),
+  }).passthrough(),
+  postType: z.string().max(50).optional(),
+  agentInfo: z.object({
+    name: z.string().max(200).optional(),
+    phone: z.string().max(30).optional(),
+    email: z.string().email().optional(),
+  }).optional(),
+  tone: z.enum(['professional', 'friendly', 'luxury', 'urgent']).optional(),
+})
+
+// Enhance quick (worker-to-worker)
+export const enhanceQuickExtendedSchema = z.object({
+  imageUrl: z.string().url(),
+  photoId: z.string().min(1).max(200),
+  listingId: z.string().uuid(),
+  userId: z.string().uuid(),
+})
+
+// Compliance apply (extended)
+export const complianceApplyExtendedSchema = z.object({
+  imageUrl: z.string().url(),
+  toolId: z.string().min(1).max(100),
+  options: z.object({
+    forceWatermark: z.boolean().optional(),
+    watermarkText: z.string().max(200).optional(),
+    watermarkPosition: z.enum(['bottom-left', 'bottom-right', 'bottom-center', 'top-left', 'top-right']).optional(),
+    watermarkOpacity: z.number().min(0).max(1).optional(),
+  }).optional(),
+})
+
+// Download all (ZIP)
+export const downloadAllExtendedSchema = z.object({
+  listingId: z.string().uuid(),
+})
+
+// Marketing trigger (extended)
+export const marketingTriggerExtendedSchema = z.object({
+  listingId: z.string().uuid(),
+})
+
+// OAuth callback query params
+export const oauthCallbackSchema = z.object({
+  code: z.string().min(1).max(5000),
+  state: z.string().min(1).max(5000),
+})
+
+// Analytics posts query
+export const analyticsPostsQuerySchema = z.object({
+  platform: z.string().max(50).optional(),
+  from: z.string().optional(),
+  to: z.string().optional(),
+  limit: z.string().optional(),
+  listingId: z.string().uuid().optional(),
+})
+
+// Video convert
+export const videoConvertSchema = z.object({
+  videoUrl: z.string().url().optional(),
+  videoBase64: z.string().optional(),
+  format: z.enum(['mp4', 'webm', 'gif']).optional(),
+  listingId: z.string().uuid().optional(),
+})
+
+// Jobs update
+export const jobUpdateSchema = z.object({
+  status: z.string().max(50).optional(),
+  progress: z.number().min(0).max(100).optional(),
+  result: z.record(z.unknown()).optional(),
+}).passthrough()
+
+// Listing intelligence update
+export const listingIntelligenceUpdateSchema = z.object({
+  status: z.string().max(50).optional(),
+  insights: z.record(z.unknown()).optional(),
+}).passthrough()
+
+// Notifications query
+export const notificationsQuerySchema = z.object({
+  unread: z.string().optional(),
+  limit: z.string().optional(),
+})
+
+// Teams join
+export const teamsJoinQuerySchema = z.object({
+  code: z.string().min(1).max(200),
+})
+
+// Mobile analyze frame
+export const mobileAnalyzeFrameSchema = z.object({
+  imageBase64: z.string().min(1),
+  listingId: z.string().uuid().optional(),
+})
+
+// Analytics posts POST (record a published post)
+export const analyticsPostRecordSchema = z.object({
+  listingId: z.string().uuid().optional().nullable(),
+  platform: z.enum(['instagram', 'facebook', 'linkedin', 'tiktok']),
+  platformPostId: z.string().max(500).optional(),
+  postType: z.string().max(50).optional(),
+  templateId: z.string().uuid().optional().nullable(),
+  imageUrl: z.string().url().optional().nullable(),
+  caption: z.string().max(5000).optional(),
+})
+
+// Listing intelligence PATCH (mark recommendation applied)
+export const listingIntelligencePatchSchema = z.object({
+  recommendationId: z.string().uuid(),
+  resultUrl: z.string().url().optional().nullable(),
+})
+
+// Jobs POST (action)
+export const jobActionSchema = z.object({
+  action: z.enum(['retry']),
+  status: z.string().max(50).optional(),
+})
+
+// Download query params
+export const downloadQuerySchema = z.object({
+  url: z.string().url().optional(),
+  filename: z.string().max(500).optional(),
+  photoId: z.string().uuid().optional(),
+})
+
+// Download approved query params
+export const downloadApprovedQuerySchema = z.object({
+  listingId: z.string().uuid(),
+})
+
+// Query params helper
+export function parseQuery<T>(schema: z.ZodType<T>, params: Record<string, string | null>):
+  { success: true; data: T } | { success: false; error: string; details: ReturnType<z.ZodError['flatten']> } {
+  // Strip null values to undefined for Zod
+  const cleaned: Record<string, string | undefined> = {}
+  for (const [key, value] of Object.entries(params)) {
+    if (value !== null) cleaned[key] = value
+  }
+  const result = schema.safeParse(cleaned)
+  if (result.success) {
+    return { success: true, data: result.data }
+  }
+  return { success: false, error: 'Invalid query parameters', details: result.error.flatten() }
+}
+
 // ============================================
 // HELPERS
 // ============================================

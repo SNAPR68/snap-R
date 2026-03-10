@@ -1,12 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { z } from 'zod'
 
 import { logger } from '@/lib/logger';
 export async function POST(req: NextRequest) {
   try {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
-    
+
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
@@ -14,13 +15,15 @@ export async function POST(req: NextRequest) {
     const formData = await req.formData()
     const file = formData.get('file') as File
     const folder = formData.get('folder') as string || 'content-library'
+    const folderParsed = z.string().max(100).regex(/^[a-zA-Z0-9-_/]+$/).safeParse(folder);
+    const safeFolder = folderParsed.success ? folderParsed.data : 'content-library';
     
     if (!file) {
       return NextResponse.json({ error: 'No file provided' }, { status: 400 })
     }
 
     const buffer = Buffer.from(await file.arrayBuffer())
-    const fileName = `${user.id}/${folder}/${Date.now()}-${file.name}`
+    const fileName = `${user.id}/${safeFolder}/${Date.now()}-${file.name}`
     
     const { error } = await supabase.storage
       .from('content-images')

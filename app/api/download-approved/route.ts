@@ -1,16 +1,18 @@
 export const dynamic = 'force-dynamic';
 
 import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
 import { createClient } from '@/lib/supabase/server';
 
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
-    const listingId = searchParams.get('listingId');
-
-    if (!listingId) {
-      return NextResponse.json({ error: 'Missing listingId' }, { status: 400 });
+    const rawListingId = searchParams.get('listingId');
+    const parsed = z.string().uuid().safeParse(rawListingId);
+    if (!parsed.success) {
+      return NextResponse.json({ error: 'Invalid or missing listingId' }, { status: 400 });
     }
+    const listingId = parsed.data;
 
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();

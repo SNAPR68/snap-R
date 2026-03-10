@@ -14,16 +14,15 @@ export const dynamic = 'force-dynamic';
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { adminSupabase } from '@/lib/supabase/admin';
+import { marketingTriggerExtendedSchema, parseBody } from '@/lib/validation/schemas';
 
 import { logger } from '@/lib/logger';
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { listingId } = body;
-
-    if (!listingId) {
-      return NextResponse.json({ error: 'listingId required' }, { status: 400 });
-    }
+    const validated = parseBody(marketingTriggerExtendedSchema, body);
+    if (!validated.success) { return NextResponse.json({ error: validated.error, details: validated.details }, { status: 400 }); }
+    const { listingId } = validated.data;
 
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
