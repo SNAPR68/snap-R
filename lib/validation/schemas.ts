@@ -872,7 +872,7 @@ export const teamsJoinQuerySchema = z.object({
 
 // Mobile analyze frame
 export const mobileAnalyzeFrameSchema = z.object({
-  imageBase64: z.string().min(1),
+  imageBase64: z.string().min(1).max(15_000_000), // ~10 MB base64
   listingId: z.string().uuid().optional(),
 })
 
