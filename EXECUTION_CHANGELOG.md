@@ -1,6 +1,19 @@
 # SnapR Execution Changelog
 =================================
 
+## 2026-03-10 — CodeRabbit round-3 review fixes for PR #94
+
+### Address round-3 findings: GDPR compliance, validated.data usage, Zod schemas
+
+- **GDPR compliance**: Check Supabase delete result in facebook-deletion callback — return 500 if deletion fails instead of false success
+- **Security**: Tighten Facebook deletion payload schema to `z.literal('HMAC-SHA256')` (reject unexpected algorithm claims)
+- **Security**: Validate `code` query param in deletion status GET endpoint (hex format check)
+- **Bug fix**: Use `validated.data` instead of raw `body` in property-site POST and PATCH handlers (bypassed Zod transforms/restrictions)
+- **Validation**: Add `propertySiteUpdateSchema` for PATCH with snake_case DB field names (`id`, `is_published`, `custom_colors`, `agent_info`)
+- **Validation**: Add `propertySiteDeleteSchema` for DELETE with UUID `id` validation
+- **Cleanup**: Remove `.passthrough()` from `propertySiteSchema` to enforce strict schema matching
+- Risk Level: Medium (GDPR + validation improvements, no schema migrations)
+
 ## 2026-03-09 — CodeRabbit review fixes for PR #94
 
 ### Address 10 inline + 6 outside-diff findings from automated code review
