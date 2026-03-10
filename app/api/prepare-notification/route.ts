@@ -8,7 +8,7 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     const validated = parseBody(prepareNotificationSchema, body); if (!validated.success) { return NextResponse.json({ error: validated.error, details: validated.details }, { status: 400 }); }
-    const { listingId, type, channels, data } = body;
+    const { listingId, data } = validated.data;
 
     if (!listingId) {
       return NextResponse.json({ error: 'listingId required' }, { status: 400 });
@@ -55,8 +55,8 @@ export async function POST(request: NextRequest) {
       profile.full_name || 'there',
       listingId,
       listingTitle,
-      data?.confidence || 0,
-      data?.photosProcessed || 0,
+      Number(data?.confidence) || 0,
+      Number(data?.photosProcessed) || 0,
       preferences
     );
 

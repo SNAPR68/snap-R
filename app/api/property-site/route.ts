@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
-import { propertySiteSchema, parseBody } from '@/lib/validation/schemas'
+import { propertySiteSchema, propertySiteUpdateSchema, propertySiteDeleteSchema, parseBody } from '@/lib/validation/schemas'
 
 import { logger } from '@/lib/logger';
 // GET - Fetch user's property sites
@@ -18,6 +18,7 @@ export async function GET() {
 
     return NextResponse.json({ sites: sites || [] })
   } catch (error: unknown) {
+    logger.error('Error fetching sites:', error instanceof Error ? error.message : error)
     return NextResponse.json({ error: 'Failed to fetch sites' }, { status: 500 })
   }
 }
@@ -31,7 +32,7 @@ export async function POST(request: Request) {
 
     const body = await request.json()
     const validated = parseBody(propertySiteSchema, body); if (!validated.success) { return NextResponse.json({ error: validated.error, details: validated.details }, { status: 400 }); }
-    const { listingId, slug, template, customColors, agentInfo } = body
+    const { listingId, slug, template, customColors, agentInfo } = validated.data
 
     // Generate unique slug if not provided
     const finalSlug = slug || `property-${Date.now().toString(36)}`
@@ -53,7 +54,7 @@ export async function POST(request: Request) {
     if (error) throw error
     return NextResponse.json({ site, url: `/p/${finalSlug}` })
   } catch (error: unknown) {
-    logger.error('Error creating site:', error)
+    logger.error('Error creating site:', error instanceof Error ? error.message : error)
     return NextResponse.json({ error: 'Failed to create site' }, { status: 500 })
   }
 }
@@ -66,10 +67,8 @@ export async function PATCH(request: Request) {
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
     const body = await request.json()
-    const validated = parseBody(propertySiteSchema, body); if (!validated.success) { return NextResponse.json({ error: validated.error, details: validated.details }, { status: 400 }); }
-    const { id, is_published, template, custom_colors, agent_info } = body
-
-    if (!id) return NextResponse.json({ error: 'Site ID required' }, { status: 400 })
+    const validated = parseBody(propertySiteUpdateSchema, body); if (!validated.success) { return NextResponse.json({ error: validated.error, details: validated.details }, { status: 400 }); }
+    const { id, is_published, template, custom_colors, agent_info } = validated.data
 
     const updates: Record<string, unknown> = {}
     if (typeof is_published === 'boolean') updates.is_published = is_published
@@ -88,7 +87,7 @@ export async function PATCH(request: Request) {
     if (error) throw error
     return NextResponse.json({ site })
   } catch (error: unknown) {
-    logger.error('Error updating site:', error)
+    logger.error('Error updating site:', error instanceof Error ? error.message : error)
     return NextResponse.json({ error: 'Failed to update site' }, { status: 500 })
   }
 }
@@ -100,10 +99,13 @@ export async function DELETE(request: Request) {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-    const { id } = await request.json()
+    const body = await request.json()
+    const validated = parseBody(propertySiteDeleteSchema, body); if (!validated.success) { return NextResponse.json({ error: validated.error, details: validated.details }, { status: 400 }); }
+    const { id } = validated.data
     await supabase.from('property_sites').delete().eq('id', id).eq('user_id', user.id)
     return NextResponse.json({ success: true })
   } catch (error: unknown) {
+    logger.error('Error deleting site:', error instanceof Error ? error.message : error)
     return NextResponse.json({ error: 'Failed to delete' }, { status: 500 })
   }
 }

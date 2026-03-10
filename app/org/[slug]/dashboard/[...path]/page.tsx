@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useParams, useRouter, usePathname } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import Link from 'next/link';
+import NextImage from 'next/image';
 import {
   Home, Zap, Users, Hammer, LayoutGrid, Image, Palette, FileText,
   Settings, CheckSquare, Camera, Mic, Sparkles, CreditCard,
@@ -36,6 +37,7 @@ export default function BrandedDashboardCatchAll() {
 
   useEffect(() => {
     loadOrg();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [slug]);
 
   const loadOrg = async () => {
@@ -134,7 +136,7 @@ export default function BrandedDashboardCatchAll() {
       >
         <Link href={`/org/${slug}/dashboard`} className="flex items-center gap-2 mb-8">
           {logo_url ? (
-            <img src={logo_url} alt="" className="w-10 h-10 object-contain" />
+            <NextImage src={logo_url} alt="Organization logo" width={40} height={40} className="w-10 h-10 object-contain" unoptimized />
           ) : (
             <div 
               className="w-10 h-10 rounded-lg flex items-center justify-center text-white font-bold"

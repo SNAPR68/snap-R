@@ -64,7 +64,7 @@ export function determineLockedPresets(analyses: PhotoAnalysis[]): LockedPresets
   
   // Determine staging style based on interior analysis
   const interiors = analyses.filter(a => a.photoType.startsWith('interior'));
-  const emptyRooms = interiors.filter(a => a.roomEmpty);
+  const _emptyRooms = interiors.filter(a => a.roomEmpty);
   let stagingStyle: LockedPresets['stagingStyle'] = 'modern'; // Default modern
   
   // Analyze overall composition quality to infer property style

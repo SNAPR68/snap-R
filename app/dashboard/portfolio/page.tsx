@@ -1,11 +1,10 @@
 'use client';
 
 import React, { Suspense, useEffect, useState } from 'react';
-import { createClient } from '@/lib/supabase/client';
 import { 
-  Loader2, Plus, Eye, Edit, Trash2, ExternalLink, Image, 
-  Copy, Check, Globe, Instagram, Settings, Sparkles, Users,
-  Lightbulb, Share2, MessageSquare, TrendingUp, Link as LinkIcon
+  Loader2, Plus, Eye, Edit, Trash2, Image, 
+  Copy, Check, Globe, Users,
+  Lightbulb, Share2, MessageSquare, TrendingUp
 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -223,6 +222,7 @@ function PortfolioCard({
           href={`/dashboard/portfolio/${portfolio.id}/items`}
           className="flex-1 py-2 bg-amber-500/20 text-amber-400 rounded-lg text-sm font-medium hover:bg-amber-500/30 transition-colors flex items-center justify-center gap-2"
         >
+          {/* eslint-disable-next-line jsx-a11y/alt-text */}
           <Image className="w-4 h-4" />
           Items
         </Link>
@@ -288,6 +288,7 @@ function PortfolioContent() {
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-3">
             <div className="p-3 bg-gradient-to-br from-amber-500/20 to-orange-500/20 rounded-xl">
+              {/* eslint-disable-next-line jsx-a11y/alt-text */}
               <Image className="w-8 h-8 text-amber-400" />
             </div>
             <div>
@@ -327,6 +328,7 @@ function PortfolioContent() {
             <div className="text-xs text-white/40 mt-1">Anyone can view</div>
           </div>
           <div className="bg-white/5 border border-white/10 rounded-xl p-4 text-center">
+            {/* eslint-disable-next-line jsx-a11y/alt-text */}
             <Image className="w-6 h-6 text-amber-400 mx-auto mb-2" />
             <div className="text-sm font-medium">Before/After Sliders</div>
             <div className="text-xs text-white/40 mt-1">Interactive comparisons</div>

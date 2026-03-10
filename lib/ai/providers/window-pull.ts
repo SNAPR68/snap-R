@@ -17,7 +17,7 @@
 
 import Replicate from 'replicate';
 import sharp from 'sharp';
-import { SAMMasksClient, MaskResult } from './sam-masks';
+import { SAMMasksClient } from './sam-masks';
 
 import { logger } from '@/lib/logger';
 // ============================================
@@ -312,7 +312,9 @@ export async function hasBlownOutWindows(imageUrl: string): Promise<boolean> {
   }
 }
 
-export default {
+const windowPullModule = {
   windowPull,
   hasBlownOutWindows,
 };
+
+export default windowPullModule;

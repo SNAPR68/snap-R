@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server'
 
 const NEXT_PUBLIC_LINKEDIN_CLIENT_ID = process.env.NEXT_PUBLIC_LINKEDIN_CLIENT_ID
-const LINKEDIN_CLIENT_SECRET = process.env.LINKEDIN_CLIENT_SECRET
 const REDIRECT_URI = process.env.NEXT_PUBLIC_APP_URL + '/api/social/linkedin/callback'
 
 // GET - Start LinkedIn OAuth flow

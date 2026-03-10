@@ -47,6 +47,10 @@ export async function onRequestGet(context: { request: Request; env: Record<stri
       .select('*')
       .eq('job_id', jobId);
 
+    if (photosError) {
+      console.error('Photos query error:', photosError.message);
+    }
+
     return Response.json({
       job,
       photos: photos || [],

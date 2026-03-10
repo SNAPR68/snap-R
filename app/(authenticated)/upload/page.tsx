@@ -78,7 +78,6 @@ export default function UploadPage() {
         setSelectedListing(data[0].id);
       }
     } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : 'Request failed';
       console.error(error);
       setError(error instanceof Error ? error.message : "Failed to load listings");
     } finally {
@@ -119,7 +118,6 @@ export default function UploadPage() {
       await fetchListings();
       setSuccess("Listing created successfully. You can now upload photos.");
     } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : 'Upload failed';
       setError(error instanceof Error ? error.message : "Failed to create listing");
     } finally {
       setCreatingListing(false);
@@ -157,7 +155,6 @@ export default function UploadPage() {
       const json = await response.json();
       router.push(`/jobs/${json.jobId}`);
     } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : 'Upload failed';
       console.error(error);
       setError(error instanceof Error ? error.message : "Upload failed");
     } finally {

@@ -608,14 +608,28 @@ export const propertyInquirySchema = z.object({
   inquiry: z.string().max(5000).optional(),
 })
 
-// Property site
+// Property site (POST - create)
 export const propertySiteSchema = z.object({
   listingId: z.string().uuid(),
   slug: z.string().max(200).optional(),
   template: z.string().max(50).optional(),
   customColors: z.record(z.string()).optional(),
   agentInfo: z.record(z.unknown()).optional(),
-}).passthrough()
+})
+
+// Property site (PATCH - update)
+export const propertySiteUpdateSchema = z.object({
+  id: z.string().uuid(),
+  is_published: z.boolean().optional(),
+  template: z.string().max(50).optional(),
+  custom_colors: z.record(z.string()).optional().nullable(),
+  agent_info: z.record(z.unknown()).optional().nullable(),
+})
+
+// Property site (DELETE)
+export const propertySiteDeleteSchema = z.object({
+  id: z.string().uuid(),
+})
 
 // Publish video
 export const publishVideoSchema = z.object({

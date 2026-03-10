@@ -292,7 +292,6 @@ export function DashboardClient({ user }: { user: { id: string; email: string } 
       fetchProjects(); // Refresh listings to show new one
       
     } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : 'Upload failed';
       console.error('Upload error:', error);
       setUploadError(error instanceof Error ? error.message : 'Failed to upload photo. Please try again.');
     } finally {

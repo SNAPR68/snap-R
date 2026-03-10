@@ -373,7 +373,7 @@ interface ProviderStatus {
   errorMessage?: string;
 }
 
-const providerStatuses: Map<Provider, ProviderStatus> = new Map();
+const _providerStatuses: Map<Provider, ProviderStatus> = new Map();
 
 /**
  * Check if AutoEnhance API is configured

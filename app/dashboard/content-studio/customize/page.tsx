@@ -1,8 +1,8 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState } from 'react'
 import { Button } from '@/components/ui/button'
-import { ArrowLeft, Loader2, Palette, Type, Layout, Download, RotateCcw, Save, Check } from 'lucide-react'
+import { ArrowLeft, Loader2, Palette, Type, Layout, RotateCcw, Save, Check } from 'lucide-react'
 import Link from 'next/link'
 import Image from 'next/image';
 import { useSearchParams } from 'next/navigation'
@@ -35,8 +35,8 @@ const LAYOUT_OPTIONS = [
 
 function TemplateCustomizerContent() {
   const searchParams = useSearchParams()
-  const templateId = searchParams.get('template') || 'luxury-1'
-  
+  const _templateId = searchParams.get('template')
+
   const [font, setFont] = useState('inter')
   const [colorPreset, setColorPreset] = useState('gold')
   const [colors, setColors] = useState({ primary: '#D4AF37', secondary: '#1A1A1A', accent: '#FFFFFF' })

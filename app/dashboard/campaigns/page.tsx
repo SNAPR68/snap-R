@@ -106,6 +106,7 @@ export default function CampaignsPage() {
     } else {
       setLoading(false);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id]);
 
   const fetchData = async () => {

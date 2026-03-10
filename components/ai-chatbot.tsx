@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { X, Send, User, Loader2, Minimize2, ThumbsUp, ThumbsDown, Flag } from 'lucide-react';
+import { X, Send, User, Loader2, ThumbsUp, ThumbsDown, Flag } from 'lucide-react';
 
 interface Message {
   role: 'user' | 'assistant';
@@ -61,7 +61,7 @@ export function AIChatbot() {
       } else {
         setMessages(prev => [...prev, { role: 'assistant', content: data.message }]);
       }
-    } catch (error: unknown) {
+    } catch {
       setMessages(prev => [...prev, { 
         role: 'assistant', 
         content: "I'm sorry, something went wrong. Please try again later." 

@@ -44,6 +44,7 @@ export default function PartnerDashboardPage() {
       loadPartnerStatus();
     };
     checkAuth();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const loadPartnerStatus = async () => {

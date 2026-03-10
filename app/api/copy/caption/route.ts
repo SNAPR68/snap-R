@@ -41,6 +41,10 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // Check caption limit
+    if (!canGenerateCaption(plan, captionsUsed)) {
+      return NextResponse.json({ error: 'Caption limit reached' }, { status: 429 })
+    }
 
     // Parse request body
     const body = await request.json()

@@ -37,9 +37,9 @@ export async function generateCaption(
   options: CaptionOptions,
   client?: OpenAI
 ): Promise<GenerationResult> {
-  const { platform, tone, includeEmojis = true, includeCallToAction = true, maxLength = 2000, contentType } = options
+  const { platform, tone, includeEmojis = true, includeCallToAction = true, maxLength, contentType } = options
 
-  const featuresText = Array.isArray(property.features) 
+  const featuresText = Array.isArray(property.features)
     ? property.features.join(', ')
     : (property.features || '')
 
@@ -145,6 +145,7 @@ PROPERTY DETAILS:
 - Bathrooms: ${property.bathrooms || 'N/A'}
 - Square Feet: ${property.squareFeet ? Number(property.squareFeet).toLocaleString() + ' sq ft' : 'N/A'}
 - Property Type: ${property.propertyType || 'Home'}
+- Key Features: ${featuresText || 'Modern finishes'}
 
 ${selectedExample}
 
@@ -154,11 +155,11 @@ STRICT REQUIREMENTS:
 3. Include specific property details (beds, baths, sqft, price)
 4. Highlight 2-3 compelling features or benefits
 5. Use line breaks between sections for readability
-6. End with a strong call-to-action appropriate for ${capitalizedContentLabel}
+6. ${includeCallToAction ? `End with a strong call-to-action appropriate for ${capitalizedContentLabel}` : 'Do NOT include a call-to-action at the end'}
 ${includeEmojis ? '7. Use 4-6 relevant emojis: 🏡 🔑 ✨ 📍 💰 🏠 🛏️ 🛁 📐 🎉 📝 👀 🚨 📞 📅 🕐' : '7. Do NOT use any emojis'}
 8. Follow ${platform} best practices (Instagram: hashtags, Facebook: conversational, LinkedIn: professional)
 9. Sound professional, warm, and create urgency
-10. This MUST clearly be a ${capitalizedContentLabel} post - make it obvious!
+10. This MUST clearly be a ${capitalizedContentLabel} post - make it obvious!${maxLength ? `\n11. Keep the caption under ${maxLength} characters total` : ''}
 
 Generate the caption now:`
 

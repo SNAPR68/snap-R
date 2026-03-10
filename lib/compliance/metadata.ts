@@ -98,7 +98,7 @@ export async function embedMetadata(
  * Create metadata sidecar file (XMP format)
  * This can be uploaded alongside images for full metadata support
  */
-export function createXmpSidecar(metadata: ResoMetadata, filename: string): string {
+export function createXmpSidecar(metadata: ResoMetadata, _filename: string): string {
   return `<?xml version="1.0" encoding="UTF-8"?>
 <x:xmpmeta xmlns:x="adobe:ns:meta/">
   <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">

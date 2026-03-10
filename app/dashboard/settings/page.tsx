@@ -118,7 +118,7 @@ export default async function SettingsPage() {
             <h2 className="text-xl font-semibold">MLS Compliance</h2>
             <span className="px-2 py-0.5 bg-green-500/20 text-green-400 text-xs rounded-full">US Ready</span>
           </div>
-          <ComplianceSettings userId={user.id} />
+          <ComplianceSettings />
         </section>
 
         {/* Data Privacy Section */}

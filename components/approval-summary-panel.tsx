@@ -42,6 +42,7 @@ export function ApprovalSummaryPanel({ listingId, onRefresh }: ApprovalSummaryPa
 
   useEffect(() => {
     loadSummary();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [listingId]);
 
   if (loading || !summary || summary.total === 0) {
@@ -126,7 +127,7 @@ export function ApprovalSummaryPanel({ listingId, onRefresh }: ApprovalSummaryPa
                 <div key={photo.id} className="flex gap-3 p-3 bg-red-500/10 rounded-lg border border-red-500/20">
                   <div className="text-xs text-red-400 font-medium">{photo.variant}</div>
                   {photo.client_feedback && (
-                    <p className="text-xs text-white/60 italic">"{photo.client_feedback}"</p>
+                    <p className="text-xs text-white/60 italic">&quot;{photo.client_feedback}&quot;</p>
                   )}
                 </div>
               ))}

@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { ArrowLeft, Loader2, Image, Type, Move, Eye, Save, Check } from 'lucide-react'
+import NextImage from 'next/image'
 import Link from 'next/link'
 
 const POSITIONS = [
@@ -69,7 +70,10 @@ export default function WatermarkSettings() {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
             <Link href="/dashboard/settings"><Button variant="ghost" size="sm" className="text-white/60 hover:text-white"><ArrowLeft className="w-4 h-4 mr-2" />Back</Button></Link>
-            <h1 className="text-xl font-bold flex items-center gap-2"><Image className="w-5 h-5 text-[#D4AF37]" />Watermark Settings</h1>
+            <h1 className="text-xl font-bold flex items-center gap-2">
+              {/* eslint-disable-next-line jsx-a11y/alt-text */}
+              <Image className="w-5 h-5 text-[#D4AF37]" />Watermark Settings
+            </h1>
           </div>
           <Button onClick={saveSettings} disabled={saving} className="bg-[#D4AF37] hover:bg-[#B8960C] text-black font-bold">
             {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : saved ? <><Check className="w-4 h-4 mr-2" />Saved!</> : <><Save className="w-4 h-4 mr-2" />Save</>}
@@ -83,10 +87,10 @@ export default function WatermarkSettings() {
             <div>
               <h2 className="text-lg font-bold mb-4">Preview</h2>
               <div className="aspect-[4/3] rounded-2xl overflow-hidden relative bg-gray-800">
-                <img src={samplePhoto} alt="" className="w-full h-full object-cover" />
+                <NextImage src={samplePhoto} alt="" className="w-full h-full object-cover" width={640} height={480} unoptimized />
                 {enabled && (
                   <div className={`absolute ${getPositionClasses(position)}`} style={{ opacity: opacity / 100 }}>
-                    {mode === 'text' ? <div className="bg-black/50 backdrop-blur-sm px-3 py-1.5 rounded text-white font-medium text-sm">{text || 'Your Watermark'}</div> : logoUrl ? <img src={logoUrl} alt="Watermark" className="h-12 w-auto" /> : <div className="bg-black/50 backdrop-blur-sm px-3 py-1.5 rounded text-white/50 font-medium text-sm">Logo</div>}
+                    {mode === 'text' ? <div className="bg-black/50 backdrop-blur-sm px-3 py-1.5 rounded text-white font-medium text-sm">{text || 'Your Watermark'}</div> : logoUrl ? <NextImage src={logoUrl} alt="Watermark" className="h-12 w-auto" width={120} height={48} unoptimized /> : <div className="bg-black/50 backdrop-blur-sm px-3 py-1.5 rounded text-white/50 font-medium text-sm">Logo</div>}
                   </div>
                 )}
               </div>
@@ -103,7 +107,10 @@ export default function WatermarkSettings() {
                   <h3 className="text-sm font-medium text-white/60 mb-3 flex items-center gap-2"><Type className="w-4 h-4" />Watermark Type</h3>
                   <div className="grid grid-cols-2 gap-2">
                     <button onClick={() => setMode('text')} className={`p-3 rounded-lg transition ${mode === 'text' ? 'bg-[#D4AF37]/20 border border-[#D4AF37]' : 'bg-white/5 border border-transparent'}`}><Type className="w-5 h-5 mx-auto mb-1" /><div className="text-sm">Text</div></button>
-                    <button onClick={() => setMode('logo')} className={`p-3 rounded-lg transition ${mode === 'logo' ? 'bg-[#D4AF37]/20 border border-[#D4AF37]' : 'bg-white/5 border border-transparent'}`}><Image className="w-5 h-5 mx-auto mb-1" /><div className="text-sm">Logo</div></button>
+                    <button onClick={() => setMode('logo')} className={`p-3 rounded-lg transition ${mode === 'logo' ? 'bg-[#D4AF37]/20 border border-[#D4AF37]' : 'bg-white/5 border border-transparent'}`}>
+                      {/* eslint-disable-next-line jsx-a11y/alt-text */}
+                      <Image className="w-5 h-5 mx-auto mb-1" /><div className="text-sm">Logo</div>
+                    </button>
                   </div>
                   {mode === 'text' && <div className="mt-4"><label className="text-xs text-white/50 block mb-1">Text</label><input type="text" value={text} onChange={e => setText(e.target.value)} placeholder="© Your Name" className="w-full bg-black/40 border border-white/20 rounded-lg px-4 py-2 text-white" /></div>}
                   {mode === 'logo' && <div className="mt-4"><label className="text-xs text-white/50 block mb-1">Logo URL</label><input type="url" value={logoUrl} onChange={e => setLogoUrl(e.target.value)} placeholder="https://..." className="w-full bg-black/40 border border-white/20 rounded-lg px-4 py-2 text-white" /></div>}

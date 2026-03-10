@@ -1,6 +1,6 @@
 import { createClient } from '@/lib/supabase/server';
 export const dynamic = 'force-dynamic';
-import { CheckCircle, XCircle, AlertTriangle, Server, Database, Mail, CreditCard, Zap, Clock } from 'lucide-react';
+import { CheckCircle, XCircle, AlertTriangle, Server, Database, Zap, Clock } from 'lucide-react';
 
 async function checkService(name: string, checkFn: () => Promise<boolean>) {
   try {

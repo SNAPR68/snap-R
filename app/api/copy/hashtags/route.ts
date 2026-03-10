@@ -1,7 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
 import { generateHashtags, PropertyDetails } from '@/lib/ai/providers/gpt-copy'
-import { canGenerateCaption, shouldResetUsage } from '@/lib/content/limits'
+import { shouldResetUsage } from '@/lib/content/limits'
 import { copyHashtagsSchema, parseBody } from '@/lib/validation/schemas'
 
 import { logger } from '@/lib/logger';
@@ -16,7 +16,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Get user profile with plan and usage
-    const { data: profile, error: profileError } = await supabase
+    const { data: profile } = await supabase
       .from('profiles')
       .select('plan, ai_captions_used, ai_captions_reset_at')
       .eq('id', user.id)

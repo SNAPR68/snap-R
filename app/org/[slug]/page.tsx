@@ -91,7 +91,7 @@ export default async function OrgLandingPage({ params }: PageProps) {
             className="text-sm hover:underline"
             style={{ color: 'rgba(255,255,255,0.5)' }}
           >
-            Don't have an account? Sign up
+            Don&apos;t have an account? Sign up
           </Link>
         </div>
       </div>

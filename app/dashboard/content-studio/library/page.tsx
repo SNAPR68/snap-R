@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
-import { ArrowLeft, Loader2, FolderOpen, Heart, Trash2, Copy, Search, Filter, Grid, List } from 'lucide-react'
+import { ArrowLeft, Loader2, FolderOpen, Heart, Trash2, Copy, Search, Grid, List } from 'lucide-react'
 import Link from 'next/link'
 
 import Image from 'next/image';
@@ -37,6 +37,7 @@ export default function ContentLibrary() {
   const [search, setSearch] = useState('')
   const [view, setView] = useState<'grid' | 'list'>('grid')
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { fetchContent() }, [category, favoritesOnly])
 
   const fetchContent = async () => {

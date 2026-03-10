@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
-import { Instagram, Facebook, Linkedin, Video, Image, ArrowLeft, Home, Check, Sparkles, FileText, MessageSquare, Globe, Calendar, Copy, ChevronRight } from 'lucide-react'
+import { Instagram, Facebook, Linkedin, Video, Image, Home, Check, Sparkles, FileText, MessageSquare, ChevronRight } from 'lucide-react'
+import NextImage from 'next/image'
 import Link from 'next/link'
 
 export const dynamic = 'force-dynamic'
@@ -92,7 +93,7 @@ export default async function SelectPlatformPage({
           <div className="flex items-start gap-6">
             <div className="w-24 h-20 rounded-lg overflow-hidden bg-white/10 flex-shrink-0">
               {validPhotos[0] ? (
-                <img src={validPhotos[0]} alt="" className="w-full h-full object-cover" />
+                <NextImage src={validPhotos[0]} alt="" className="w-full h-full object-cover" width={96} height={80} unoptimized />
               ) : (
                 <div className="w-full h-full flex items-center justify-center">
                   <Home className="w-6 h-6 text-white/20" />

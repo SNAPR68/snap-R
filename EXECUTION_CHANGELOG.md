@@ -1,6 +1,50 @@
 # SnapR Execution Changelog
 =================================
 
+## 2026-03-10 — CodeRabbit round-3 review fixes for PR #94
+
+### Address round-3 findings: GDPR compliance, validated.data usage, Zod schemas
+
+- **GDPR compliance**: Check Supabase delete result in facebook-deletion callback — return 500 if deletion fails instead of false success
+- **Security**: Tighten Facebook deletion payload schema to `z.literal('HMAC-SHA256')` (reject unexpected algorithm claims)
+- **Security**: Validate `code` query param in deletion status GET endpoint (hex format check)
+- **Bug fix**: Use `validated.data` instead of raw `body` in property-site POST and PATCH handlers (bypassed Zod transforms/restrictions)
+- **Validation**: Add `propertySiteUpdateSchema` for PATCH with snake_case DB field names (`id`, `is_published`, `custom_colors`, `agent_info`)
+- **Validation**: Add `propertySiteDeleteSchema` for DELETE with UUID `id` validation
+- **Cleanup**: Remove `.passthrough()` from `propertySiteSchema` to enforce strict schema matching
+- Risk Level: Medium (GDPR + validation improvements, no schema migrations)
+
+## 2026-03-09 — CodeRabbit review fixes for PR #94
+
+### Address 10 inline + 6 outside-diff findings from automated code review
+
+- **Security**: Verify Facebook signed_request HMAC-SHA256 signature before trusting user_id (was forgeable)
+- **Security**: Change LinkedIn test endpoint from GET to POST (prevent accidental publishes via crawlers)
+- **Bug fix**: Restore canGenerateCaption limit guard in caption route (over-limit users could generate unlimited)
+- **Bug fix**: Use validated.data instead of raw body in prepare-notification route (bypassed Zod coercions)
+- **Bug fix**: Thread includeCallToAction and maxLength CaptionOptions into prompt (were silently dropped)
+- **Cleanup**: Remove dead setLoading state and all calls in checkout page
+- **Cleanup**: Capture template query param in content-studio customize (was no-op)
+- **Cleanup**: Remove unused userId prop from ComplianceSettings interface + caller
+- **Observability**: Add error logging to property-site GET/DELETE catch blocks, job-status photos query, admin partners query
+- **Accessibility**: Add aria-label, aria-pressed, htmlFor to compliance-settings toggle and select
+- **Typing**: Fix catch clause in compliance-settings to use `catch (error: unknown)` pattern
+- Risk Level: Medium (security + bug fixes, no schema changes)
+
+## 2026-03-09 — Zero ESLint warnings: complete cleanup from 175→0
+
+### Full codebase ESLint warning elimination across 30+ files
+
+- **Unused vars/imports (15+ files)**: Removed unused imports, unused destructured variables, unused catch parameters (`catch (error)` → `catch {`), unused state setters (`[x, setX]` → `[, setX]`)
+- **eslintrc config**: Added `argsIgnorePattern: "^_"` and `varsIgnorePattern: "^_"` to `@typescript-eslint/no-unused-vars` rule
+- **Exhaustive deps (9 files)**: Added `eslint-disable-next-line react-hooks/exhaustive-deps` before dependency arrays in useEffects that intentionally omit deps (camera, campaigns, BulkCreator, library, partner, org dashboard, PropertySiteClient, tour viewer, approval-summary, preparation-overlay)
+- **Unescaped entities (11 files)**: Escaped `'` → `&apos;` and `"` → `&quot;` in JSX across listings, academy (4 pages), founding, org landing, terms, approval-summary, compliance-settings, dashboard-analytics
+- **next/image conversion (4 files)**: Converted `<img>` → `<NextImage>` with `unoptimized` prop in content-studio/select, listing-intelligence, virtual-tours (5 tags), watermark (2 tags)
+- **Alt-text (3 files)**: Added `eslint-disable-next-line jsx-a11y/alt-text` for Lucide `Image` icon components (not actual images) in portfolio, dashboard-analytics, watermark
+- **Unused Priority import**: Removed from strategy-builder.ts
+- **Result**: 0 ESLint warnings, 0 TypeScript errors
+- Risk Level: Low (no behavioral changes, cosmetic/lint-only)
+
 ## 2026-03-08 — Code quality batch: code splitting, entities, unused imports, next/image
 
 ### Bundle size reduction + lint cleanup across 18 files
@@ -1726,7 +1770,6 @@ Replaced all `catch (error: any)` with `catch (error: unknown)` across 83 source
 - Added `canGenerateVideo` to all tiers in `lib/content/limits.ts`.
 - Free/Starter: false, Pro/Agency: true.
 - Added `canGenerateVideo()` convenience function export.
->>>>>>> origin/main
 
 ---
 

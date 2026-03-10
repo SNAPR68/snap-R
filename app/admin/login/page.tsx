@@ -43,7 +43,7 @@ export default function AdminLoginPage() {
         router.push('/admin');
         router.refresh();
       }
-    } catch (err) {
+    } catch {
       setError('An unexpected error occurred');
       setLoading(false);
     }
