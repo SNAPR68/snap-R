@@ -1,12 +1,10 @@
 'use client';
 
 import { useState } from 'react';
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+import { createClient } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Lock, Mail, ArrowLeft, Shield } from 'lucide-react';
-
-const ADMIN_EMAILS = ['rajesh@snap-r.com'];
 
 export default function AdminLoginPage() {
   const [email, setEmail] = useState('');
@@ -14,18 +12,12 @@ export default function AdminLoginPage() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const router = useRouter();
-  const supabase = createClientComponentClient();
+  const supabase = createClient();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     setLoading(true);
-
-    if (!ADMIN_EMAILS.includes(email.toLowerCase())) {
-      setError('Access denied. Admin privileges required.');
-      setLoading(false);
-      return;
-    }
 
     try {
       const { data, error: signInError } = await supabase.auth.signInWithPassword({
@@ -40,6 +32,8 @@ export default function AdminLoginPage() {
       }
 
       if (data.user) {
+        // Server-side admin layout enforces the allow-list;
+        // non-admins are silently redirected to /dashboard.
         router.push('/admin');
         router.refresh();
       }

@@ -1,4 +1,5 @@
 import { adminSupabase } from '@/lib/supabase/admin';
+import { getStripe } from '@/lib/stripe';
 import { DollarSign, TrendingUp, CreditCard, ArrowUpRight, ArrowDownRight, Server } from 'lucide-react';
 export const dynamic = 'force-dynamic';
 
@@ -6,6 +7,37 @@ interface ProfileRecord {
   plan: string | null;
   subscription_tier: string | null;
   created_at: string;
+}
+
+async function fetchMRR(): Promise<number> {
+  try {
+    const stripe = getStripe();
+    const subscriptions = await stripe.subscriptions.list({
+      status: 'active',
+      limit: 100,
+      expand: ['data.items.data.price'],
+    });
+
+    // Sum monthly recurring revenue from all active subscriptions
+    let totalCents = 0;
+    for (const sub of subscriptions.data) {
+      for (const item of sub.items.data) {
+        const price = item.price;
+        if (!price?.unit_amount) continue;
+        const amount = price.unit_amount * (item.quantity || 1);
+        // Normalize annual subscriptions to monthly
+        if (price.recurring?.interval === 'year') {
+          totalCents += Math.round(amount / 12);
+        } else {
+          totalCents += amount;
+        }
+      }
+    }
+    return totalCents / 100; // Convert cents to dollars
+  } catch {
+    // Stripe not configured or API error — return 0 gracefully
+    return 0;
+  }
 }
 
 export default async function AdminRevenue() {
@@ -49,8 +81,8 @@ export default async function AdminRevenue() {
     agency: profiles?.filter(p => getPlan(p) === 'agency').length || 0,
   };
 
-  // Per-listing model - actual revenue tracked via Stripe
-  const mrr = 0; // Placeholder - integrate Stripe for real data
+  // Fetch real MRR from Stripe active subscriptions
+  const mrr = await fetchMRR();
   const totalPaidUsers = paidPlans.starter + paidPlans.pro + paidPlans.agency;
 
   // Calculate human edit revenue

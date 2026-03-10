@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import OpenAI from 'openai'
+import { createClient } from '@/lib/supabase/server'
 
 import { logger } from '@/lib/logger';
 import { emailTemplateSchema, parseBody } from '@/lib/validation/schemas'
@@ -9,6 +10,12 @@ function getOpenAIClient(): OpenAI {
 
 export async function POST(request: Request) {
   try {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
     const body = await request.json()
     const validated = parseBody(emailTemplateSchema, body)
     if (!validated.success) { return NextResponse.json({ error: validated.error, details: validated.details }, { status: 400 }) }

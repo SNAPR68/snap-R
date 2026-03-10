@@ -342,6 +342,310 @@ async function uploadImageToLinkedIn(
   }
 }
 
+// Upload video to LinkedIn via registerUpload → binary PUT → poll processing
+async function uploadVideoToLinkedIn(
+  accessToken: string,
+  personUrn: string,
+  videoUrl: string
+): Promise<string | null> {
+  try {
+    // Step 1: Initialize video upload
+    const initResponse = await fetch(
+      'https://api.linkedin.com/rest/videos?action=initializeUpload',
+      {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${accessToken}`,
+          'Content-Type': 'application/json',
+          'LinkedIn-Version': '202401',
+          'X-Restli-Protocol-Version': '2.0.0',
+        },
+        body: JSON.stringify({
+          initializeUploadRequest: {
+            owner: personUrn,
+            fileSizeBytes: 0, // LinkedIn allows 0 for server-side detection
+            uploadCaptions: false,
+            uploadThumbnail: false,
+          },
+        }),
+        signal: AbortSignal.timeout(15000),
+      }
+    );
+
+    if (!initResponse.ok) {
+      logger.warn('[LinkedIn] Video upload init failed:', initResponse.status);
+      return null;
+    }
+
+    const initData = await initResponse.json();
+    const uploadUrl = initData.value?.uploadInstructions?.[0]?.uploadUrl;
+    const videoUrn = initData.value?.video;
+
+    if (!uploadUrl || !videoUrn) {
+      logger.warn('[LinkedIn] Video init response missing uploadUrl or video URN');
+      return null;
+    }
+
+    // Step 2: Download video from source
+    const videoResponse = await fetch(videoUrl, {
+      signal: AbortSignal.timeout(60000), // Videos can be large
+    });
+    if (!videoResponse.ok) {
+      logger.warn('[LinkedIn] Source video download failed:', videoResponse.status);
+      return null;
+    }
+    const videoBuffer = await videoResponse.arrayBuffer();
+
+    // Step 3: Upload binary to LinkedIn
+    const uploadResponse = await fetch(uploadUrl, {
+      method: 'PUT',
+      headers: {
+        'Authorization': `Bearer ${accessToken}`,
+        'Content-Type': 'application/octet-stream',
+      },
+      body: videoBuffer,
+      signal: AbortSignal.timeout(120000), // 2 min for large videos
+    });
+
+    if (!uploadResponse.ok) {
+      logger.warn('[LinkedIn] Video binary upload failed:', uploadResponse.status);
+      return null;
+    }
+
+    return videoUrn;
+  } catch (err) {
+    logger.warn('[LinkedIn] Video upload error:', err);
+    return null;
+  }
+}
+
+// Publish video to LinkedIn
+export async function publishVideoToLinkedIn(
+  accessToken: string,
+  personUrn: string,
+  videoUrl: string,
+  caption: string
+): Promise<PublishResult> {
+  try {
+    const videoUrn = await uploadVideoToLinkedIn(accessToken, personUrn, videoUrl);
+    if (!videoUrn) {
+      return { success: false, error: 'Failed to upload video to LinkedIn' };
+    }
+
+    const postBody = {
+      author: personUrn,
+      commentary: caption,
+      visibility: 'PUBLIC',
+      distribution: {
+        feedDistribution: 'MAIN_FEED',
+        targetEntities: [],
+        thirdPartyDistributionChannels: [],
+      },
+      lifecycleState: 'PUBLISHED',
+      content: {
+        media: {
+          id: videoUrn,
+        },
+      },
+    };
+
+    const response = await fetch('https://api.linkedin.com/rest/posts', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${accessToken}`,
+        'Content-Type': 'application/json',
+        'LinkedIn-Version': '202401',
+        'X-Restli-Protocol-Version': '2.0.0',
+      },
+      body: JSON.stringify(postBody),
+      signal: AbortSignal.timeout(30000),
+    });
+
+    if (!response.ok) {
+      throw new Error(await response.text());
+    }
+
+    const postUrn = response.headers.get('x-restli-id') || '';
+    return {
+      success: true,
+      postId: postUrn,
+      postUrl: postUrn ? `https://www.linkedin.com/feed/update/${postUrn}` : undefined,
+    };
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Unknown LinkedIn video error';
+    logger.error('LinkedIn video publish error:', error);
+    return { success: false, error: message };
+  }
+}
+
+// Upload video to Twitter via chunked media upload (INIT → APPEND → FINALIZE → poll STATUS)
+async function uploadVideoToTwitter(
+  accessToken: string,
+  videoUrl: string
+): Promise<string | null> {
+  try {
+    // Download video
+    const videoResponse = await fetch(videoUrl, { signal: AbortSignal.timeout(60000) });
+    if (!videoResponse.ok) {
+      logger.warn('[Twitter] Source video download failed:', videoResponse.status);
+      return null;
+    }
+    const videoBuffer = await videoResponse.arrayBuffer();
+    const mimeType = videoResponse.headers.get('content-type') || 'video/mp4';
+    const totalBytes = videoBuffer.byteLength;
+
+    // INIT with media_category=tweet_video
+    const initResponse = await fetch('https://upload.twitter.com/1.1/media/upload.json', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${accessToken}`,
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body: new URLSearchParams({
+        command: 'INIT',
+        total_bytes: String(totalBytes),
+        media_type: mimeType,
+        media_category: 'tweet_video',
+      }),
+      signal: AbortSignal.timeout(15000),
+    });
+
+    if (!initResponse.ok) {
+      logger.warn('[Twitter] Video INIT failed:', initResponse.status);
+      return null;
+    }
+
+    const initData = await initResponse.json();
+    const mediaId = initData.media_id_string;
+
+    // APPEND in 5MB chunks
+    const chunkSize = 5 * 1024 * 1024;
+    const buffer = Buffer.from(videoBuffer);
+    let segmentIndex = 0;
+
+    for (let offset = 0; offset < totalBytes; offset += chunkSize) {
+      const chunk = buffer.subarray(offset, Math.min(offset + chunkSize, totalBytes));
+      const base64Chunk = chunk.toString('base64');
+
+      const appendResponse = await fetch('https://upload.twitter.com/1.1/media/upload.json', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${accessToken}`,
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: new URLSearchParams({
+          command: 'APPEND',
+          media_id: mediaId,
+          segment_index: String(segmentIndex),
+          media_data: base64Chunk,
+        }),
+        signal: AbortSignal.timeout(60000),
+      });
+
+      if (!appendResponse.ok) {
+        logger.warn('[Twitter] Video APPEND failed at segment', segmentIndex, ':', appendResponse.status);
+        return null;
+      }
+      segmentIndex++;
+    }
+
+    // FINALIZE
+    const finalizeResponse = await fetch('https://upload.twitter.com/1.1/media/upload.json', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${accessToken}`,
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body: new URLSearchParams({
+        command: 'FINALIZE',
+        media_id: mediaId,
+      }),
+      signal: AbortSignal.timeout(15000),
+    });
+
+    if (!finalizeResponse.ok) {
+      logger.warn('[Twitter] Video FINALIZE failed:', finalizeResponse.status);
+      return null;
+    }
+
+    const finalizeData = await finalizeResponse.json();
+
+    // Poll STATUS until processing completes (videos are async on Twitter)
+    if (finalizeData.processing_info) {
+      let checkAfterSecs = finalizeData.processing_info.check_after_secs || 5;
+      for (let attempt = 0; attempt < 30; attempt++) {
+        await new Promise(resolve => setTimeout(resolve, checkAfterSecs * 1000));
+
+        const statusResponse = await fetch(
+          `https://upload.twitter.com/1.1/media/upload.json?command=STATUS&media_id=${mediaId}`,
+          {
+            headers: { 'Authorization': `Bearer ${accessToken}` },
+            signal: AbortSignal.timeout(15000),
+          }
+        );
+
+        if (!statusResponse.ok) break;
+        const statusData = await statusResponse.json();
+        const state = statusData.processing_info?.state;
+
+        if (state === 'succeeded') return mediaId;
+        if (state === 'failed') {
+          logger.warn('[Twitter] Video processing failed:', statusData.processing_info?.error);
+          return null;
+        }
+        checkAfterSecs = statusData.processing_info?.check_after_secs || 5;
+      }
+    }
+
+    return mediaId;
+  } catch (err) {
+    logger.warn('[Twitter] Video upload error:', err);
+    return null;
+  }
+}
+
+// Publish video to Twitter/X
+export async function publishVideoToTwitter(
+  accessToken: string,
+  videoUrl: string,
+  caption: string
+): Promise<PublishResult> {
+  try {
+    const mediaId = await uploadVideoToTwitter(accessToken, videoUrl);
+    if (!mediaId) {
+      return { success: false, error: 'Failed to upload video to Twitter' };
+    }
+
+    const response = await fetch('https://api.twitter.com/2/tweets', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${accessToken}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        text: caption,
+        media: { media_ids: [mediaId] },
+      }),
+      signal: AbortSignal.timeout(15000),
+    });
+
+    if (!response.ok) {
+      throw new Error(await response.text());
+    }
+
+    const data = await response.json();
+    return {
+      success: true,
+      postId: data.data?.id,
+      postUrl: data.data?.id ? `https://twitter.com/i/status/${data.data.id}` : undefined,
+    };
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Unknown Twitter video error';
+    logger.error('Twitter video publish error:', error);
+    return { success: false, error: message };
+  }
+}
+
 // Publish to LinkedIn (using modern rest/posts API)
 export async function publishToLinkedIn(
   accessToken: string,
@@ -454,7 +758,7 @@ export async function publishVideoToTikTok(
         body: JSON.stringify({
           post_info: {
             title: caption.slice(0, 150), // TikTok title max ~150 chars
-            privacy_level: 'SELF_ONLY', // Unaudited apps default to private
+            privacy_level: process.env.TIKTOK_PRIVACY_LEVEL || 'SELF_ONLY',
             disable_comment: false,
             disable_duet: false,
             disable_stitch: false,
@@ -511,7 +815,7 @@ export async function publishPhotoToTikTok(
         body: JSON.stringify({
           post_info: {
             title: caption.slice(0, 150),
-            privacy_level: 'SELF_ONLY',
+            privacy_level: process.env.TIKTOK_PRIVACY_LEVEL || 'SELF_ONLY',
             disable_comment: false,
           },
           source_info: {

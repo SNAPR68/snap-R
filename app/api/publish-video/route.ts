@@ -177,15 +177,31 @@ export async function POST(request: NextRequest) {
     
     if (platform === 'linkedin') {
       // LinkedIn video publishing
-      const linkedinId = connection.linkedin_id
+      const linkedinUrn = connection.linkedin_urn ?? connection.linkedin_id
 
-      if (!linkedinId) {
+      if (!linkedinUrn) {
         return NextResponse.json({ error: 'LinkedIn not connected' }, { status: 400 })
       }
-      
-      // LinkedIn requires registering upload, uploading binary, then creating post
-      // This is complex - for now return not implemented
-      return NextResponse.json({ error: 'LinkedIn video publishing coming soon' }, { status: 501 })
+
+      const urn: string = linkedinUrn
+      const { publishVideoToLinkedIn } = await import('@/lib/social/publish-service')
+      const linkedInResult = await publishVideoToLinkedIn(connection.access_token, urn, videoUrl, caption || '')
+      if (!linkedInResult.success) {
+        return NextResponse.json({ error: linkedInResult.error }, { status: 500 })
+      }
+
+      // Log successful LinkedIn publish
+      await supabase.from('published_content').insert({
+        user_id: user.id,
+        listing_id: listingId,
+        platform,
+        content_type: 'video',
+        platform_post_id: linkedInResult.postId,
+        caption,
+        published_at: new Date().toISOString()
+      })
+
+      return NextResponse.json({ success: true, postId: linkedInResult.postId })
     }
     
     return NextResponse.json({ error: 'Platform not supported' }, { status: 400 })

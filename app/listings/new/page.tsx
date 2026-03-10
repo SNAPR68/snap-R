@@ -321,7 +321,7 @@ function NewListingContent() {
               <div className="grid grid-cols-4 gap-3 mt-4">
                 {previews.map((preview, i) => (
                   <div key={i} className="relative aspect-square rounded-lg overflow-hidden bg-white/5">
-                    <Image src={preview} alt="" className="w-full h-full object-cover" width={400} height={300} unoptimized />
+                    <Image src={preview} alt={`Upload preview ${i + 1}`} className="w-full h-full object-cover" width={400} height={300} unoptimized />
                     <button type="button" onClick={() => removeFile(i)} className="absolute top-1 right-1 p-1 bg-black/70 rounded-full hover:bg-red-500"><X className="w-4 h-4" /></button>
                   </div>
                 ))}
