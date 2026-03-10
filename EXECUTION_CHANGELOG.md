@@ -1,6 +1,39 @@
 # SnapR Execution Changelog
 =================================
 
+## 2026-03-10 — Zod validation blitz: 86→99 validated API routes
+
+### Add Zod input validation to 13 previously unvalidated API routes
+
+**New schemas added (16 schemas in lib/validation/schemas.ts):**
+- `socialPublishExtendedSchema`, `publishVideoExtendedSchema`, `emailTemplateSchema`
+- `enhanceQuickExtendedSchema`, `complianceApplyExtendedSchema`
+- `downloadAllExtendedSchema`, `marketingTriggerExtendedSchema`
+- `oauthCallbackSchema`, `analyticsPostsQuerySchema`, `videoConvertSchema`
+- `analyticsPostRecordSchema`, `listingIntelligencePatchSchema`, `jobActionSchema`
+- `downloadApprovedQuerySchema` + `parseQuery` helper for query param validation
+- `mobileAnalyzeFrameSchema`, `notificationsQuerySchema`, `teamsJoinQuerySchema`
+
+**Routes wired with Zod validation:**
+- `POST /api/social/publish` — platform, content, imageUrls, scheduleFor
+- `POST /api/publish-video` — platform, videoUrl, caption
+- `POST /api/email-template` — property, postType, agentInfo, tone
+- `POST /api/download-all` — listingId (UUID)
+- `POST /api/marketing/trigger` — listingId (UUID)
+- `POST /api/enhance-quick` — imageUrl, photoId, listingId, userId
+- `POST /api/compliance/apply` — imageUrl, toolId, watermark options
+- `POST /api/analytics/posts` — platform, listingId, caption
+- `PATCH /api/listing-intelligence/[analysisId]` — recommendationId (UUID)
+- `POST /api/jobs/[id]` — action enum ('retry')
+- `GET /api/download-approved` — listingId query param (UUID)
+- `POST /api/upload` — listingId FormData field (UUID)
+- `POST /api/upload-image` — folder FormData field (sanitized regex)
+
+**Coverage: 99/163 routes validated (60%, up from 53%)**
+- Remaining 64 unvalidated routes are GET-only (cron, admin, OAuth initiation, status checks)
+- Only 4 body-reading routes remain unvalidated (FormData with existing runtime checks)
+- Risk Level: Low (additive validation, no behavior changes for valid inputs)
+
 ## 2026-03-10 — CodeRabbit round-3 review fixes for PR #94
 
 ### Address round-3 findings: GDPR compliance, validated.data usage, Zod schemas

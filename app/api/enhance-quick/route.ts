@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { autoEnhance } from '@/lib/ai/providers/sharp-enhance';
 import { adminSupabase } from '@/lib/supabase/admin';
+import { enhanceQuickExtendedSchema, parseBody } from '@/lib/validation/schemas';
 
 import { logger } from '@/lib/logger';
 /**
@@ -24,18 +25,15 @@ export async function POST(request: NextRequest) {
   // --- Parse body ---
   let body: { imageUrl: string; photoId: string; listingId: string; userId: string };
   try {
-    body = await request.json();
+    const rawBody = await request.json();
+    const validated = parseBody(enhanceQuickExtendedSchema, rawBody);
+    if (!validated.success) { return NextResponse.json({ error: validated.error, details: validated.details }, { status: 400 }); }
+    body = validated.data;
   } catch {
     return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
   }
 
-  const { imageUrl, photoId, listingId, userId } = body;
-  if (!imageUrl || !photoId || !listingId || !userId) {
-    return NextResponse.json(
-      { error: 'Missing required fields: imageUrl, photoId, listingId, userId' },
-      { status: 400 }
-    );
-  }
+  const { imageUrl, photoId, listingId, userId: _userId } = body;
 
   try {
     // --- Download image ---

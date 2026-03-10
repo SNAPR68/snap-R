@@ -2,13 +2,17 @@ import { NextResponse } from 'next/server'
 import OpenAI from 'openai'
 
 import { logger } from '@/lib/logger';
+import { emailTemplateSchema, parseBody } from '@/lib/validation/schemas'
 function getOpenAIClient(): OpenAI {
   return new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
 }
 
 export async function POST(request: Request) {
   try {
-    const { property, postType, agentInfo, tone = 'professional' } = await request.json()
+    const body = await request.json()
+    const validated = parseBody(emailTemplateSchema, body)
+    if (!validated.success) { return NextResponse.json({ error: validated.error, details: validated.details }, { status: 400 }) }
+    const { property, postType, agentInfo, tone } = validated.data
 
     const openai = getOpenAIClient()
 
@@ -29,7 +33,7 @@ Agent: ${agentInfo?.name || 'Agent'}
 Phone: ${agentInfo?.phone || ''}
 Email: ${agentInfo?.email || ''}
 
-Tone: ${toneGuide[tone] || 'professional'}
+Tone: ${toneGuide[tone || 'professional'] || 'professional'}
 
 Generate:
 1. Subject line (compelling, under 60 chars)

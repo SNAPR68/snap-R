@@ -4,6 +4,7 @@ export const maxDuration = 60;
 
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { z } from 'zod';
 
 const MAX_FILES_PER_JOB = 50;
 const MAX_FILE_SIZE = 25 * 1024 * 1024;
@@ -19,7 +20,8 @@ export async function POST(request: NextRequest) {
     const listingId = formData.get("listingId")?.toString();
     const variant = formData.get("variant")?.toString()?.trim() || "sky-replacement";
 
-    if (!listingId) return NextResponse.json({ error: "listingId is required" }, { status: 400 });
+    const listingIdParsed = z.string().uuid().safeParse(listingId);
+    if (!listingIdParsed.success) return NextResponse.json({ error: "Valid listingId (UUID) is required" }, { status: 400 });
 
     // Check ownership first
     const { data: ownListing } = await supabase

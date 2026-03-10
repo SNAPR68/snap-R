@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import JSZip from 'jszip';
 import { addWatermark, requiresWatermark, getWatermarkText } from '@/lib/compliance/watermark';
+import { downloadAllExtendedSchema, parseBody } from '@/lib/validation/schemas';
 
 import { logger } from '@/lib/logger';
 interface WatermarkSettings {
@@ -21,10 +22,10 @@ function isValidPosition(pos: string | null): pos is WatermarkPosition {
 
 export async function POST(req: NextRequest) {
   try {
-    const { listingId } = await req.json();
-    if (!listingId) {
-      return NextResponse.json({ error: 'Listing ID required' }, { status: 400 });
-    }
+    const body = await req.json();
+    const validated = parseBody(downloadAllExtendedSchema, body);
+    if (!validated.success) { return NextResponse.json({ error: validated.error, details: validated.details }, { status: 400 }); }
+    const { listingId } = validated.data;
 
     const supabase = await createClient();
 

@@ -3,6 +3,7 @@ import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
 import { cookies } from 'next/headers';
 
 import { logger } from '@/lib/logger';
+import { listingIntelligencePatchSchema, parseBody } from '@/lib/validation/schemas';
 export async function GET(
   request: NextRequest,
   { params }: { params: { analysisId: string } }
@@ -106,11 +107,9 @@ export async function PATCH(
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
     const body = await request.json();
-    const { recommendationId, resultUrl } = body;
-
-    if (!recommendationId) {
-      return NextResponse.json({ error: 'recommendationId is required' }, { status: 400 });
-    }
+    const validated = parseBody(listingIntelligencePatchSchema, body);
+    if (!validated.success) { return NextResponse.json({ error: validated.error, details: validated.details }, { status: 400 }); }
+    const { recommendationId, resultUrl } = validated.data;
 
     const { data: analysis } = await supabase
       .from('listing_analyses')

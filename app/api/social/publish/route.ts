@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server';
 import { adminSupabase } from '@/lib/supabase/admin';
 
 import { logger } from '@/lib/logger';
+import { socialPublishExtendedSchema, parseBody } from '@/lib/validation/schemas';
 interface SocialConnection {
   access_token: string;
   page_access_token?: string;
@@ -20,7 +21,10 @@ export async function POST(req: NextRequest) {
     }
 
     const serviceSupabase = adminSupabase();
-    const { platform, content, imageUrls, listingId, scheduleFor } = await req.json();
+    const body = await req.json();
+    const validated = parseBody(socialPublishExtendedSchema, body);
+    if (!validated.success) { return NextResponse.json({ error: validated.error, details: validated.details }, { status: 400 }); }
+    const { platform, content, imageUrls, listingId, scheduleFor } = validated.data;
 
     const { data: connection, error: connError } = await serviceSupabase
       .from('social_connections')
@@ -79,13 +83,13 @@ export async function POST(req: NextRequest) {
     
     switch (platform) {
       case 'facebook':
-        result = await publishToFacebook(connection, content, imageUrls);
+        result = await publishToFacebook(connection, content, imageUrls ?? []);
         break;
       case 'instagram':
-        result = await publishToInstagram(connection, content, imageUrls);
+        result = await publishToInstagram(connection, content, imageUrls ?? []);
         break;
       case 'linkedin':
-        result = await publishToLinkedIn(connection, content, imageUrls);
+        result = await publishToLinkedIn(connection, content, imageUrls ?? []);
         break;
       default:
         return NextResponse.json({ error: 'Unsupported platform' }, { status: 400 });

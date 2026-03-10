@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { publishVideoExtendedSchema, parseBody } from '@/lib/validation/schemas'
 
 import { logger } from '@/lib/logger';
 export async function POST(request: NextRequest) {
@@ -11,11 +12,12 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
     
-    const { platform, videoUrl, caption, listingId } = await request.json()
-    
-    if (!platform || !videoUrl) {
-      return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
+    const body = await request.json()
+    const validated = parseBody(publishVideoExtendedSchema, body)
+    if (!validated.success) {
+      return NextResponse.json({ error: validated.error, details: validated.details }, { status: 400 })
     }
+    const { platform, videoUrl, caption, listingId } = validated.data
     
     // Get social connection for this platform
     const { data: connection } = await supabase

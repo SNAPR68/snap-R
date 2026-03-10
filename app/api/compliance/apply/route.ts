@@ -9,6 +9,7 @@ import {
   generateResoMetadata,
   embedMetadata,
 } from '@/lib/compliance';
+import { complianceApplyExtendedSchema, parseBody } from '@/lib/validation/schemas';
 
 export const maxDuration = 60;
 
@@ -18,14 +19,11 @@ export const maxDuration = 60;
  */
 export async function POST(request: NextRequest) {
   try {
-    const { imageUrl, toolId, options = {} } = await request.json();
-
-    if (!imageUrl || !toolId) {
-      return NextResponse.json(
-        { error: 'imageUrl and toolId are required' },
-        { status: 400 }
-      );
-    }
+    const body = await request.json();
+    const validated = parseBody(complianceApplyExtendedSchema, body);
+    if (!validated.success) { return NextResponse.json({ error: validated.error, details: validated.details }, { status: 400 }); }
+    const { imageUrl, toolId, options } = validated.data;
+    const opts = options || {};
 
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
@@ -47,13 +45,13 @@ export async function POST(request: NextRequest) {
     let processedBuffer: Buffer = Buffer.from(arrayBuffer);
 
     // Apply watermark if required (or forced)
-    const shouldWatermark = options.forceWatermark || requiresWatermark(toolId);
+    const shouldWatermark = opts.forceWatermark || requiresWatermark(toolId);
     if (shouldWatermark) {
-      const watermarkText = options.watermarkText || getWatermarkText(toolId);
+      const watermarkText = opts.watermarkText || getWatermarkText(toolId);
       processedBuffer = await addWatermark(processedBuffer, {
         text: watermarkText,
-        position: options.watermarkPosition || 'bottom-left',
-        opacity: options.watermarkOpacity || 0.85,
+        position: opts.watermarkPosition || 'bottom-left',
+        opacity: opts.watermarkOpacity || 0.85,
       });
     }
 

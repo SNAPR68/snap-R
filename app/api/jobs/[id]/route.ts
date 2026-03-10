@@ -2,6 +2,7 @@ export const dynamic = 'force-dynamic';
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { createRouteHandlerClient } from "@supabase/auth-helpers-nextjs";
+import { jobActionSchema, parseBody } from '@/lib/validation/schemas';
 
 export async function GET(
   request: Request,
@@ -54,14 +55,17 @@ export async function POST(
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  let payload: { action?: string; status?: string };
+  let payload: { action: 'retry'; status?: string };
   try {
-    payload = await request.json();
+    const body = await request.json();
+    const validated = parseBody(jobActionSchema, body);
+    if (!validated.success) { return NextResponse.json({ error: validated.error, details: validated.details }, { status: 400 }); }
+    payload = validated.data;
   } catch {
     return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
   }
 
-  switch (payload?.action) {
+  switch (payload.action) {
     case "retry":
       await supabase
         .from("jobs")
