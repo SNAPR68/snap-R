@@ -554,6 +554,7 @@ interface ConnectionData {
   default_page_id: string | null;
   instagram_account: unknown;
   linkedin_urn: string | null;
+  linkedin_id?: string | null;
   pages: unknown;
 }
 
@@ -611,7 +612,7 @@ async function publishVideoPost(
     }
 
     case 'linkedin': {
-      const linkedinUrn = connection.linkedin_urn;
+      const linkedinUrn = connection.linkedin_urn ?? connection.linkedin_id;
       if (!linkedinUrn) {
         return { success: false, error: 'No LinkedIn URN configured' };
       }

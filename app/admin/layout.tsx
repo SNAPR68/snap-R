@@ -3,13 +3,17 @@ import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { LayoutDashboard, Users, DollarSign, Clock, TrendingUp, AlertTriangle, Mail, Server, Command, Brain, Handshake, MessageCircle } from 'lucide-react';
 
-const ADMIN_EMAILS = (process.env.NEXT_PUBLIC_ADMIN_EMAILS || 'rajesh@snap-r.com').split(',').map(e => e.trim().toLowerCase());
+const ADMIN_EMAILS = (process.env.ADMIN_EMAILS ?? '')
+  .split(',')
+  .map(e => e.trim().toLowerCase())
+  .filter(Boolean);
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
-  if (!user || !ADMIN_EMAILS.includes(user.email || '')) {
+  // Fail closed: redirect if no admin list configured, no user, or email not in list
+  if (!user?.email || ADMIN_EMAILS.length === 0 || !ADMIN_EMAILS.includes(user.email.toLowerCase())) {
     redirect('/dashboard');
   }
 

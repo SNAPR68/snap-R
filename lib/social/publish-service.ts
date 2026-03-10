@@ -390,6 +390,10 @@ async function uploadVideoToLinkedIn(
     const videoResponse = await fetch(videoUrl, {
       signal: AbortSignal.timeout(60000), // Videos can be large
     });
+    if (!videoResponse.ok) {
+      logger.warn('[LinkedIn] Source video download failed:', videoResponse.status);
+      return null;
+    }
     const videoBuffer = await videoResponse.arrayBuffer();
 
     // Step 3: Upload binary to LinkedIn
@@ -482,6 +486,10 @@ async function uploadVideoToTwitter(
   try {
     // Download video
     const videoResponse = await fetch(videoUrl, { signal: AbortSignal.timeout(60000) });
+    if (!videoResponse.ok) {
+      logger.warn('[Twitter] Source video download failed:', videoResponse.status);
+      return null;
+    }
     const videoBuffer = await videoResponse.arrayBuffer();
     const mimeType = videoResponse.headers.get('content-type') || 'video/mp4';
     const totalBytes = videoBuffer.byteLength;

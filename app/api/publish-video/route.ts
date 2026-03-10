@@ -189,6 +189,18 @@ export async function POST(request: NextRequest) {
       if (!linkedInResult.success) {
         return NextResponse.json({ error: linkedInResult.error }, { status: 500 })
       }
+
+      // Log successful LinkedIn publish
+      await supabase.from('published_content').insert({
+        user_id: user.id,
+        listing_id: listingId,
+        platform,
+        content_type: 'video',
+        platform_post_id: linkedInResult.postId,
+        caption,
+        published_at: new Date().toISOString()
+      })
+
       return NextResponse.json({ success: true, postId: linkedInResult.postId })
     }
     

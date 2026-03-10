@@ -6,8 +6,6 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Lock, Mail, ArrowLeft, Shield } from 'lucide-react';
 
-const ADMIN_EMAILS = (process.env.NEXT_PUBLIC_ADMIN_EMAILS || 'rajesh@snap-r.com').split(',').map(e => e.trim().toLowerCase());
-
 export default function AdminLoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -20,12 +18,6 @@ export default function AdminLoginPage() {
     e.preventDefault();
     setError('');
     setLoading(true);
-
-    if (!ADMIN_EMAILS.includes(email.toLowerCase())) {
-      setError('Access denied. Admin privileges required.');
-      setLoading(false);
-      return;
-    }
 
     try {
       const { data, error: signInError } = await supabase.auth.signInWithPassword({
@@ -40,6 +32,8 @@ export default function AdminLoginPage() {
       }
 
       if (data.user) {
+        // Server-side admin layout enforces the allow-list;
+        // non-admins are silently redirected to /dashboard.
         router.push('/admin');
         router.refresh();
       }

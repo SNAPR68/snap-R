@@ -2,7 +2,7 @@
  * Tests for lib/utils.ts — Core utility functions
  */
 
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, vi, afterEach } from 'vitest'
 import { cn, getR2PublicUrl } from '@/lib/utils'
 
 describe('cn (class name merger)', () => {
@@ -34,7 +34,7 @@ describe('cn (class name merger)', () => {
 })
 
 describe('getR2PublicUrl', () => {
-  beforeEach(() => {
+  afterEach(() => {
     vi.unstubAllEnvs()
   })
 

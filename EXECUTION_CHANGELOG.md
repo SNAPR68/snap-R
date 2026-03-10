@@ -28,7 +28,7 @@
 
 ### Deprecated Package Removal
 - **Deleted `lib/auth/protect.ts`**: Dead re-export file
-- **Migrated 5 files** from `@supabase/auth-helpers-nextjs` to `@/lib/supabase/server` or `@/lib/supabase/client`:
+- **Migrated 6 files** from `@supabase/auth-helpers-nextjs` to `@/lib/supabase/server` or `@/lib/supabase/client`:
   - `app/admin/login/page.tsx`, `app/api/listing-intelligence/[analysisId]/route.ts`,
   - `app/api/jobs/[id]/route.ts`, `app/(authenticated)/jobs/page.tsx`,
   - `app/(authenticated)/listings/[id]/page.tsx`, `app/(authenticated)/listings/page.tsx`
