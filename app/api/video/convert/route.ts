@@ -14,6 +14,12 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'No video file provided' }, { status: 400 })
     }
 
+    // Validate MIME type
+    const ALLOWED_VIDEO_TYPES = ['video/webm', 'video/mp4', 'video/quicktime']
+    if (!videoFile.type || !ALLOWED_VIDEO_TYPES.includes(videoFile.type)) {
+      return NextResponse.json({ error: 'Unsupported video format. Use WebM, MP4, or MOV.' }, { status: 400 })
+    }
+
     // Validate file size (max 100MB)
     const MAX_VIDEO_SIZE = 100 * 1024 * 1024
     if (videoFile.size > MAX_VIDEO_SIZE) {
@@ -23,14 +29,14 @@ export async function POST(request: NextRequest) {
     logger.info('Starting video conversion for user:', user.id)
     logger.info('Video size:', videoFile.size, 'bytes')
 
-    // Upload WebM to Supabase storage temporarily
+    // Upload to Supabase storage temporarily
     const arrayBuffer = await videoFile.arrayBuffer()
     const buffer = Buffer.from(arrayBuffer)
     const fileName = `temp-videos/${user.id}/${Date.now()}.webm`
-    
+
     const { error: uploadError } = await supabase.storage
       .from('raw-images')
-      .upload(fileName, buffer, { contentType: 'video/webm', upsert: true })
+      .upload(fileName, buffer, { contentType: videoFile.type, upsert: true })
     
     if (uploadError) {
       logger.error('Upload error:', uploadError)

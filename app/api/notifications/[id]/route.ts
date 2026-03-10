@@ -4,7 +4,8 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
-import { z } from 'zod';
+import { uuidSchema } from '@/lib/validation/schemas';
+import { logger } from '@/lib/logger';
 
 export async function PATCH(
   _request: NextRequest,
@@ -17,7 +18,7 @@ export async function PATCH(
   const { id } = await params;
 
   // Validate UUID format
-  const uuidResult = z.string().uuid().safeParse(id);
+  const uuidResult = uuidSchema.safeParse(id);
   if (!uuidResult.success) {
     return NextResponse.json({ error: 'Invalid notification ID' }, { status: 400 });
   }
@@ -29,7 +30,8 @@ export async function PATCH(
     .eq('user_id', user.id);
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    logger.error('Notification update failed:', error);
+    return NextResponse.json({ error: 'Failed to update notification' }, { status: 500 });
   }
 
   return NextResponse.json({ success: true });

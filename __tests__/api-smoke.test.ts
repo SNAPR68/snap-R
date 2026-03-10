@@ -240,14 +240,14 @@ describe('Security - UUID validation', () => {
     expect(result.success).toBe(false)
   })
 
-  it('rejects XSS in string fields', async () => {
+  it('allows HTML-like strings; escaping happens at the rendering layer', async () => {
     const { partnerApplySchema } = await import('@/lib/validation/schemas')
     const result = partnerApplySchema.safeParse({
       name: '<script>alert("xss")</script>',
       email: 'test@example.com',
       partner_type: 'agent',
     })
-    // Name field accepts strings but length check still passes — XSS prevention is at rendering layer
+    // Zod validates shape/length; XSS prevention happens at rendering layer via escapeHtml()
     expect(result.success).toBe(true)
   })
 

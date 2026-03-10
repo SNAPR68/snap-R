@@ -117,7 +117,7 @@ describe('Social Publishing - UTM Tracking', () => {
     expect(url).toContain('utm_source=facebook')
     expect(url).toContain('utm_medium=social')
     expect(url).toContain('utm_campaign=just_listed')
-    expect(url).toContain('utm_content=12345678')
+    expect(url).toContain('utm_content=12345678-1234-1234-1234-123456789012')
   })
 
   it('handles URL with existing query params', async () => {
@@ -313,6 +313,7 @@ describe('R2 Public URL Resolution', () => {
 describe('Stripe Configuration', () => {
   afterEach(() => {
     vi.unstubAllEnvs()
+    vi.resetModules()
   })
 
   it('throws when STRIPE_SECRET_KEY is not set', async () => {

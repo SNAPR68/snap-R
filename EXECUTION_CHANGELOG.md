@@ -1,6 +1,14 @@
 # SnapR Execution Changelog
 =================================
 
+## 2026-03-11 — CodeRabbit review fixes: error leakage, MIME validation, shared schema
+
+- **Notification route**: Return generic error instead of leaking Supabase `error.message`
+- **Notification route**: Use shared `uuidSchema` from `lib/validation/schemas.ts` (not inline `z`)
+- **Video convert**: Add MIME type allowlist (`video/webm`, `video/mp4`, `video/quicktime`) + use actual content type for storage
+- **Shared schema**: Add reusable `uuidSchema` export to `lib/validation/schemas.ts`
+- **Tests**: Rename misleading XSS test, fix UTM assertion to match full UUID, add `vi.resetModules()` for Stripe singleton isolation
+
 ## 2026-03-10 — Final hardening: auth guards, security audit, legacy cleanup, 204 tests
 
 ### Security — Auth Guards
