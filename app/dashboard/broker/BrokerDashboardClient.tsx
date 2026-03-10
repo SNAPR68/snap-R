@@ -299,7 +299,7 @@ export default function BrokerDashboardClient({ team, members, listings, stats }
                 <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center flex-shrink-0">
                   {m.avatar_url ? (
                     // eslint-disable-next-line @next/next/no-img-element
-                    <Image src={m.avatar_url} alt="" className="w-10 h-10 rounded-full object-cover" width={400} height={300} unoptimized />
+                    <Image src={m.avatar_url} alt={m.full_name || 'Agent avatar'} className="w-10 h-10 rounded-full object-cover" width={400} height={300} unoptimized />
                   ) : (
                     <span className="text-sm font-bold text-white/60">
                       {(m.full_name ?? m.email ?? '?')[0]?.toUpperCase()}

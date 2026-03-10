@@ -42,11 +42,13 @@ export const metadata: Metadata = {
     siteName: 'SnapR',
     title: 'SnapR - AI Real Estate Photo Enhancement',
     description: 'Transform ordinary property listings into luxury showcases in seconds. AI-powered photo enhancement for real estate professionals.',
+    images: [{ url: '/og-image.jpg', width: 1200, height: 630, alt: 'SnapR - AI Real Estate Photo Enhancement' }],
   },
   twitter: {
     card: 'summary_large_image',
     title: 'SnapR - AI Real Estate Photo Enhancement',
     description: 'Transform ordinary property listings into luxury showcases in seconds.',
+    images: ['/og-image.jpg'],
   },
   icons: {
     icon: '/favicon.ico',

@@ -423,7 +423,7 @@ function ShowingCard({ showing, onUpdate }: { showing: Showing; onUpdate: () => 
       </div>
 
       {showOutcome && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div role="dialog" aria-modal="true" aria-label="Update Showing" className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={() => setShowOutcome(false)} />
           <div className="relative bg-[#141414] border border-white/10 rounded-2xl w-full max-w-md max-h-[90vh] overflow-y-auto">
             <OutcomeForm showing={showing} onSaved={onUpdate} onClose={() => setShowOutcome(false)} />
@@ -606,7 +606,7 @@ export default function ShowingsDashboard() {
 
       {/* Schedule modal */}
       {showForm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div role="dialog" aria-modal="true" aria-label="Schedule Showing" className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={() => setShowForm(false)} />
           <div className="relative bg-[#141414] border border-white/10 rounded-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
             <ScheduleForm listings={listings} onSaved={load} onClose={() => setShowForm(false)} />

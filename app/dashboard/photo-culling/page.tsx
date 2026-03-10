@@ -316,15 +316,44 @@ function CullingResults({
   };
 
   const handleDownloadSelected = () => {
-    // Create download list
     const selected = allPhotos
       .filter(p => localSelected.has(p.photoIndex))
       .sort((a, b) => (a.recommendedOrder || 999) - (b.recommendedOrder || 999));
 
-    // For now, just copy URLs to clipboard
+    // Generate MLS-ready JSON manifest
+    const manifest = {
+      exportDate: new Date().toISOString(),
+      totalSelected: selected.length,
+      totalAvailable: allPhotos.length,
+      photos: selected.map((p, i) => ({
+        order: i + 1,
+        url: p.photoUrl,
+        roomType: p.roomType,
+        qualityScore: p.qualityScore,
+        isExterior: p.isExterior,
+        selectionReason: p.selectionReason,
+        feedback: p.aiFeedback,
+      })),
+    };
+
+    const blob = new Blob([JSON.stringify(manifest, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `photo-selection-${new Date().toISOString().slice(0, 10)}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
+  const handleCopyUrls = () => {
+    const selected = allPhotos
+      .filter(p => localSelected.has(p.photoIndex))
+      .sort((a, b) => (a.recommendedOrder || 999) - (b.recommendedOrder || 999));
+
     const urls = selected.map((p, i) => `${i + 1}. ${p.photoUrl}`).join('\n');
     navigator.clipboard.writeText(urls);
-    alert(`${selected.length} photo URLs copied to clipboard!`);
   };
 
   return (
@@ -418,6 +447,14 @@ function CullingResults({
               title="Show details"
             >
               <Eye className="w-5 h-5" />
+            </button>
+            <button
+              onClick={handleCopyUrls}
+              className="flex items-center gap-2 px-4 py-2 text-white/60 hover:text-white border border-white/10 rounded-lg text-sm transition-colors"
+              title="Copy photo URLs to clipboard"
+            >
+              <Layers className="w-4 h-4" />
+              Copy URLs
             </button>
             <button
               onClick={handleDownloadSelected}

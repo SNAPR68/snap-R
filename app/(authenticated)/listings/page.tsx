@@ -1,5 +1,5 @@
 export const dynamic = "force-dynamic";
-import { protect } from "@/lib/auth/protect";
+import { protect } from "@/lib/supabase/server";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import Link from "next/link";
 import Image from "next/image";

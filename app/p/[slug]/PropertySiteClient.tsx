@@ -2,12 +2,13 @@
 
 import Image from 'next/image';
 import { useState, useEffect, useCallback } from 'react'
-import { 
-  MapPin, Bed, Bath, Square, Phone, Mail, Share2, ChevronLeft, ChevronRight, 
+import {
+  MapPin, Bed, Bath, Square, Phone, Mail, Share2, ChevronLeft, ChevronRight,
   X, Calendar, Home, Car, Sparkles, Play, DollarSign, Calculator,
   Facebook, Twitter, Linkedin, Link2, Check, MessageCircle, Building,
   ChevronDown, ChevronUp, ExternalLink, Heart, Grid
 } from 'lucide-react'
+import { trackPageView } from '@/lib/analytics/tracker'
 
 // ============================================
 // TYPE DEFINITIONS
@@ -143,7 +144,7 @@ export default function PropertySiteClient({ photos, listing, agent, brand, vide
     }
   }, [showShareMenu])
   
-  // Capture UTM params from URL on mount
+  // Capture UTM params from URL on mount + track page view
   useEffect(() => {
     if (typeof window === 'undefined') return
     const params = new URLSearchParams(window.location.search)
@@ -159,7 +160,17 @@ export default function PropertySiteClient({ photos, listing, agent, brand, vide
         content: content ?? undefined,
       })
     }
-  }, [])
+
+    // Track property site page view
+    trackPageView('property_site_view', {
+      listingId: listing.id,
+      propertySiteId,
+      address: listing.address,
+      utm_source: source ?? undefined,
+      utm_medium: medium ?? undefined,
+      utm_campaign: campaign ?? undefined,
+    })
+  }, [listing.id, listing.address, propertySiteId])
 
   // ============================================
   // HANDLERS

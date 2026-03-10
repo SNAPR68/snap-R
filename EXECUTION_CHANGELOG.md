@@ -1,6 +1,55 @@
 # SnapR Execution Changelog
 =================================
 
+## 2026-03-10 — Battle-ready: security, features, tests, deprecated code removal
+
+### Security & Critical Fixes
+- **OG/Twitter images**: Added social preview metadata to `app/layout.tsx`
+- **Deleted unauthenticated test endpoint**: Removed `app/api/v3/test-imagen/route.ts` (exposed API key info)
+- **Added auth to email-template**: `app/api/email-template/route.ts` now requires Supabase auth
+- **Rate limiting**: Added to `app/api/notify-approval/route.ts` (5 req/min)
+- **Admin emails configurable**: `NEXT_PUBLIC_ADMIN_EMAILS` env var in admin layout + login
+- **R2 env var fallback**: `lib/utils.ts` checks both `NEXT_PUBLIC_CLOUDFLARE_R2_PUBLIC_URL` and `CLOUDFLARE_R2_PUBLIC_URL`
+
+### Social Publishing — Video Support
+- **LinkedIn video publishing**: New `uploadVideoToLinkedIn()` + `publishVideoToLinkedIn()` in `lib/social/publish-service.ts`
+- **Twitter video publishing**: New `uploadVideoToTwitter()` (chunked upload) + `publishVideoToTwitter()` in `lib/social/publish-service.ts`
+- **TikTok privacy configurable**: `TIKTOK_PRIVACY_LEVEL` env var (was hardcoded `SELF_ONLY`)
+- **Wired into cron publisher**: LinkedIn + Twitter video cases in `app/api/cron/publish-scheduled/route.ts`
+- **Wired into publish-video API**: LinkedIn video in `app/api/publish-video/route.ts`
+
+### Analytics & Property Sites
+- **Property site analytics**: Wired `trackPageView` in `app/p/[slug]/PropertySiteClient.tsx` with UTM params
+
+### Error Boundaries & Accessibility
+- **31 new error.tsx files**: Coverage for all dashboard sub-routes with Sentry integration
+- **Modal accessibility**: `role="dialog"` + `aria-modal="true"` on ShowingsDashboard modals
+- **Alt text fixes**: BrokerDashboardClient, listings/new page
+
+### Deprecated Package Removal
+- **Deleted `lib/auth/protect.ts`**: Dead re-export file
+- **Migrated 5 files** from `@supabase/auth-helpers-nextjs` to `@/lib/supabase/server` or `@/lib/supabase/client`:
+  - `app/admin/login/page.tsx`, `app/api/listing-intelligence/[analysisId]/route.ts`,
+  - `app/api/jobs/[id]/route.ts`, `app/(authenticated)/jobs/page.tsx`,
+  - `app/(authenticated)/listings/[id]/page.tsx`, `app/(authenticated)/listings/page.tsx`
+- **Removed `@supabase/auth-helpers-nextjs`** from package.json entirely
+
+### Feature Fixes
+- **Photo culling export**: Replaced clipboard-only with JSON manifest file download + separate Copy URLs button
+- **Admin MRR**: Replaced hardcoded `$0` with real Stripe API integration (`fetchMRR()` queries active subscriptions)
+
+### Test Foundation (93→149 tests)
+- **4 new test files** (56 tests):
+  - `__tests__/html-escape.test.ts` — XSS prevention (8 tests)
+  - `__tests__/mls-specs.test.ts` — MLS validation rules (16 tests)
+  - `__tests__/disclosure.test.ts` — MLS disclosure generation (17 tests)
+  - `__tests__/utils.test.ts` — Core utilities + R2 URL resolution (15 tests)
+
+### Verification
+- 0 TypeScript errors (`tsc --noEmit`)
+- 0 ESLint warnings
+- 149 tests passing (9 test files)
+
 ## 2026-03-10 — Fix: add max length to imageBase64 schema
 
 - `mobileAnalyzeFrameSchema.imageBase64`: added `.max(15_000_000)` (~10 MB base64 cap)

@@ -1,12 +1,12 @@
 'use client';
 
 import { useState } from 'react';
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+import { createClient } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Lock, Mail, ArrowLeft, Shield } from 'lucide-react';
 
-const ADMIN_EMAILS = ['rajesh@snap-r.com'];
+const ADMIN_EMAILS = (process.env.NEXT_PUBLIC_ADMIN_EMAILS || 'rajesh@snap-r.com').split(',').map(e => e.trim().toLowerCase());
 
 export default function AdminLoginPage() {
   const [email, setEmail] = useState('');
@@ -14,7 +14,7 @@ export default function AdminLoginPage() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const router = useRouter();
-  const supabase = createClientComponentClient();
+  const supabase = createClient();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();

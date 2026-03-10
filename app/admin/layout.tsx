@@ -3,7 +3,7 @@ import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { LayoutDashboard, Users, DollarSign, Clock, TrendingUp, AlertTriangle, Mail, Server, Command, Brain, Handshake, MessageCircle } from 'lucide-react';
 
-const ADMIN_EMAILS = ['rajesh@snap-r.com'];
+const ADMIN_EMAILS = (process.env.NEXT_PUBLIC_ADMIN_EMAILS || 'rajesh@snap-r.com').split(',').map(e => e.trim().toLowerCase());
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createClient();

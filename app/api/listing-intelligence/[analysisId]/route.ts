@@ -1,16 +1,49 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
-import { cookies } from 'next/headers';
+import { createClient } from '@/lib/supabase/server';
 
 import { logger } from '@/lib/logger';
 import { listingIntelligencePatchSchema, parseBody } from '@/lib/validation/schemas';
+
+interface PhotoScore {
+  id: string;
+  photo_index: number;
+  photo_url: string | null;
+  overall_score: number | null;
+  lighting_score: number | null;
+  composition_score: number | null;
+  clarity_score: number | null;
+  appeal_score: number | null;
+  room_type: string | null;
+  is_exterior: boolean | null;
+  is_hero_candidate: boolean | null;
+  hero_potential: number | null;
+  recommendations: unknown;
+  enhancement_potential: number | null;
+  ai_feedback: string | null;
+}
+
+interface Recommendation {
+  id: string;
+  photo_index: number | null;
+  photo_url: string | null;
+  tool_id: string | null;
+  tool_name: string | null;
+  priority: number | null;
+  impact_estimate: number | null;
+  impact_description: string | null;
+  reason: string | null;
+  applied: boolean | null;
+  applied_at: string | null;
+  result_url: string | null;
+}
+
 export async function GET(
   request: NextRequest,
   { params }: { params: { analysisId: string } }
 ) {
   try {
-    const supabase = createRouteHandlerClient({ cookies });
-    
+    const supabase = await createClient();
+
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     if (authError || !user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -56,7 +89,7 @@ export async function GET(
         status: analysis.status,
         createdAt: analysis.created_at,
       },
-      photoScores: photoScores?.map(ps => ({
+      photoScores: (photoScores as PhotoScore[] | null)?.map(ps => ({
         id: ps.id,
         photoIndex: ps.photo_index,
         photoUrl: ps.photo_url,
@@ -73,7 +106,7 @@ export async function GET(
         enhancementPotential: ps.enhancement_potential,
         aiFeedback: ps.ai_feedback,
       })) || [],
-      recommendations: recommendations?.map(rec => ({
+      recommendations: (recommendations as Recommendation[] | null)?.map(rec => ({
         id: rec.id,
         photoIndex: rec.photo_index,
         photoUrl: rec.photo_url,
@@ -101,8 +134,8 @@ export async function PATCH(
   { params }: { params: { analysisId: string } }
 ) {
   try {
-    const supabase = createRouteHandlerClient({ cookies });
-    
+    const supabase = await createClient();
+
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 

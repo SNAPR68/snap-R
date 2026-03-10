@@ -1,7 +1,6 @@
 export const dynamic = 'force-dynamic';
 import { NextResponse } from "next/server";
-import { cookies } from "next/headers";
-import { createRouteHandlerClient } from "@supabase/auth-helpers-nextjs";
+import { createClient } from '@/lib/supabase/server';
 import { jobActionSchema, parseBody } from '@/lib/validation/schemas';
 
 export async function GET(
@@ -9,7 +8,7 @@ export async function GET(
   { params }: { params: { id: string } }
 ) {
   const jobId = params.id;
-  const supabase = createRouteHandlerClient({ cookies });
+  const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -46,7 +45,7 @@ export async function POST(
   { params }: { params: { id: string } }
 ) {
   const jobId = params.id;
-  const supabase = createRouteHandlerClient({ cookies });
+  const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();

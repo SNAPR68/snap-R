@@ -19,7 +19,7 @@ export function getR2PublicUrl(r2Key: string | null | undefined): string | null 
   }
   
   // If it's an R2 key, prepend the public URL
-  const publicUrl = process.env.NEXT_PUBLIC_CLOUDFLARE_R2_PUBLIC_URL;
+  const publicUrl = process.env.NEXT_PUBLIC_CLOUDFLARE_R2_PUBLIC_URL || process.env.CLOUDFLARE_R2_PUBLIC_URL;
   if (publicUrl && r2Key.startsWith("raw/")) {
     return `${publicUrl}/${r2Key}`;
   }

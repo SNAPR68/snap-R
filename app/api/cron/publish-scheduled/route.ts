@@ -611,9 +611,12 @@ async function publishVideoPost(
     }
 
     case 'linkedin': {
-      // LinkedIn video publishing requires registerUpload → upload binary → create post
-      // Complex flow — defer to future phase
-      return { success: false, error: 'LinkedIn video publishing coming soon' };
+      const linkedinUrn = connection.linkedin_urn;
+      if (!linkedinUrn) {
+        return { success: false, error: 'No LinkedIn URN configured' };
+      }
+      const { publishVideoToLinkedIn } = await import('@/lib/social/publish-service');
+      return publishVideoToLinkedIn(connection.access_token, linkedinUrn, videoUrl, content.text);
     }
 
     case 'tiktok': {
@@ -621,8 +624,8 @@ async function publishVideoPost(
     }
 
     case 'twitter': {
-      // Twitter supports video via the same media upload flow
-      return publishToTwitter(connection.access_token, { text: content.text, imageUrls: [videoUrl] });
+      const { publishVideoToTwitter } = await import('@/lib/social/publish-service');
+      return publishVideoToTwitter(connection.access_token, videoUrl, content.text);
     }
 
     default:

@@ -5,8 +5,17 @@ import { escapeHtml } from '@/lib/utils/html-escape';
 import { notifyApprovalSchema, parseBody } from '@/lib/validation/schemas'
 
 import { logger } from '@/lib/logger';
+import { checkRateLimitAsync } from '@/lib/rate-limit';
+
 export async function POST(req: NextRequest) {
   try {
+    // Rate limit: 5 notifications per minute per IP to prevent spam
+    const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown'
+    const { success: withinLimit } = await checkRateLimitAsync(`notify-approval:${ip}`, 5, 60_000)
+    if (!withinLimit) {
+      return NextResponse.json({ error: 'Too many requests' }, { status: 429 })
+    }
+
     const resend = new Resend(process.env.RESEND_API_KEY);
     const body = await req.json(); const validated = parseBody(notifyApprovalSchema, body); if (!validated.success) { return NextResponse.json({ error: validated.error, details: validated.details }, { status: 400 }); } const { shareToken, clientName } = body;
 
