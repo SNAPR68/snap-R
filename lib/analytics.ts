@@ -115,6 +115,9 @@ export const SnapREvents = {
   VIDEO_GENERATED: 'video_generated',
   POST_PUBLISHED: 'post_published',
 
+  // Lead Capture
+  GUIDE_REQUESTED: 'guide_requested',
+
   // Errors
   ERROR_OCCURRED: 'error_occurred',
 };
