@@ -12,6 +12,7 @@ import { sendNotification } from '@/lib/notifications/sender';
 import type { DailySummaryData } from '@/lib/notifications/types';
 
 import { logger } from '@/lib/logger';
+import { startCronHeartbeat } from '@/lib/monitoring/cron-heartbeat';
 const CRON_SECRET = process.env.CRON_SECRET;
 
 interface DigestUser {
@@ -36,6 +37,7 @@ export async function GET(request: NextRequest) {
   }
 
   logger.info('[DailyDigest] Starting...');
+  const heartbeat = startCronHeartbeat('daily-digest');
   const supabase = adminSupabase();
   const results = { emailSent: 0, whatsappSent: 0, skipped: 0, failed: 0 };
 
@@ -46,6 +48,7 @@ export async function GET(request: NextRequest) {
       .select('id, email, full_name, phone, notification_preferences, notifications_paused_until');
 
     if (!users?.length) {
+      await heartbeat.succeed(results as unknown as Record<string, unknown>);
       return NextResponse.json({ success: true, results });
     }
 
@@ -149,9 +152,11 @@ export async function GET(request: NextRequest) {
     }
 
     logger.info('[DailyDigest] Complete:', results);
+    await heartbeat.succeed(results as unknown as Record<string, unknown>);
     return NextResponse.json({ success: true, results });
   } catch (error: unknown) {
     const errMsg = error instanceof Error ? error.message : 'Internal server error';
+    await heartbeat.fail(error);
     return NextResponse.json({ error: errMsg }, { status: 500 });
   }
 }

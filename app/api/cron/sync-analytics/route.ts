@@ -15,6 +15,7 @@ import { adminSupabase } from '@/lib/supabase/admin';
 import { refreshAccessToken, type SocialPlatform } from '@/lib/social/oauth-config';
 
 import { logger } from '@/lib/logger';
+import { startCronHeartbeat } from '@/lib/monitoring/cron-heartbeat';
 const CRON_SECRET = process.env.CRON_SECRET;
 
 interface SocialConnectionRecord {
@@ -39,6 +40,7 @@ export async function GET(request: NextRequest) {
   }
 
   logger.info('[AnalyticsSync] Starting social analytics sync...');
+  const heartbeat = startCronHeartbeat('sync-analytics');
   const supabase = adminSupabase();
   const results = { synced: 0, failed: 0, skipped: 0, tokensRefreshed: 0 };
 
@@ -62,6 +64,7 @@ export async function GET(request: NextRequest) {
 
       if (fetchError) {
         logger.error('[AnalyticsSync] Failed to fetch posts:', fetchError.message);
+        await heartbeat.fail(new Error(fetchError.message));
         return NextResponse.json({ error: fetchError.message }, { status: 500 });
       }
 
@@ -72,6 +75,7 @@ export async function GET(request: NextRequest) {
     }
 
     if (postsToSync.length === 0) {
+      await heartbeat.succeed(results as unknown as Record<string, unknown>);
       return NextResponse.json({ success: true, results, message: 'Nothing to sync' });
     }
 
@@ -194,10 +198,12 @@ export async function GET(request: NextRequest) {
     }
 
     logger.info('[AnalyticsSync] Complete:', results);
+    await heartbeat.succeed(results as unknown as Record<string, unknown>);
     return NextResponse.json({ success: true, results });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Internal server error';
     logger.error('[AnalyticsSync] Fatal error:', message);
+    await heartbeat.fail(error);
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }

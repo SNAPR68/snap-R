@@ -20,6 +20,7 @@ import { Resend } from 'resend'
 import { adminSupabase } from '@/lib/supabase/admin'
 
 import { logger } from '@/lib/logger';
+import { startCronHeartbeat } from '@/lib/monitoring/cron-heartbeat';
 interface DripEmail {
   id: string
   enrollment_id: string
@@ -91,6 +92,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
+  const heartbeat = startCronHeartbeat('drip-sequences')
   const admin = adminSupabase()
   const resend = new Resend(process.env.RESEND_API_KEY)
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://snap-r.com'
@@ -117,6 +119,7 @@ export async function GET(request: NextRequest) {
 
     if (fetchError) {
       logger.error('[DripCron] Fetch error:', fetchError.message)
+      await heartbeat.fail(new Error(fetchError.message))
       return NextResponse.json({ error: fetchError.message }, { status: 500 })
     }
 
@@ -235,11 +238,13 @@ export async function GET(request: NextRequest) {
     }
 
     logger.info(`[DripCron] Done — sent=${sent} failed=${failed} skipped=${skipped}`)
+    await heartbeat.succeed({ sent, failed, skipped })
 
     return NextResponse.json({ success: true, sent, failed, skipped })
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Unknown error'
     logger.error('[DripCron] Fatal error:', message)
+    await heartbeat.fail(error)
     return NextResponse.json({ error: message }, { status: 500 })
   }
 }

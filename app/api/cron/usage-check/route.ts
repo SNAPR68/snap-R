@@ -14,6 +14,7 @@ import { Resend } from 'resend';
 import { normalizeTier, LISTING_LIMITS, type PlanType } from '@/lib/content/limits';
 
 import { logger } from '@/lib/logger';
+import { startCronHeartbeat } from '@/lib/monitoring/cron-heartbeat';
 const resend = new Resend(process.env.RESEND_API_KEY);
 const CRON_SECRET = process.env.CRON_SECRET;
 
@@ -126,6 +127,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
+  const heartbeat = startCronHeartbeat('usage-check');
   const supabase = adminSupabase();
   const results = { warned: 0, limitReached: 0, skipped: 0, failed: 0 };
 
@@ -140,6 +142,7 @@ export async function GET(request: NextRequest) {
       .select('id, email, full_name, subscription_tier, plan');
 
     if (!users?.length) {
+      await heartbeat.succeed(results as unknown as Record<string, unknown>);
       return NextResponse.json({ success: true, results });
     }
 
@@ -209,10 +212,12 @@ export async function GET(request: NextRequest) {
     }
 
     logger.info('[UsageCheck] Complete:', results);
+    await heartbeat.succeed(results as unknown as Record<string, unknown>);
     return NextResponse.json({ success: true, results });
   } catch (error: unknown) {
     const msg = error instanceof Error ? error.message : 'Unknown error';
     logger.error('[UsageCheck] Fatal error:', msg);
+    await heartbeat.fail(error);
     return NextResponse.json({ error: msg }, { status: 500 });
   }
 }

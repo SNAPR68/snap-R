@@ -15,6 +15,7 @@ import { adminSupabase } from '@/lib/supabase/admin';
 import { refreshAccessToken, type SocialPlatform } from '@/lib/social/oauth-config';
 
 import { logger } from '@/lib/logger';
+import { startCronHeartbeat } from '@/lib/monitoring/cron-heartbeat';
 const CRON_SECRET = process.env.CRON_SECRET;
 
 export async function GET(request: NextRequest) {
@@ -24,6 +25,7 @@ export async function GET(request: NextRequest) {
   }
 
   logger.info('[TokenRefresh] Starting proactive token refresh...');
+  const heartbeat = startCronHeartbeat('refresh-tokens');
   const supabase = adminSupabase();
   const results = { refreshed: 0, failed: 0, skipped: 0 };
 
@@ -37,11 +39,13 @@ export async function GET(request: NextRequest) {
 
     if (fetchError) {
       logger.error('[TokenRefresh] Failed to fetch connections:', fetchError.message);
+      await heartbeat.fail(new Error(fetchError.message));
       return NextResponse.json({ error: fetchError.message }, { status: 500 });
     }
 
     if (!connections || connections.length === 0) {
       logger.info('[TokenRefresh] No connections with token expiry found');
+      await heartbeat.succeed(results as unknown as Record<string, unknown>);
       return NextResponse.json({ success: true, ...results });
     }
 
@@ -106,10 +110,12 @@ export async function GET(request: NextRequest) {
     }
 
     logger.info('[TokenRefresh] Done:', results);
+    await heartbeat.succeed(results as unknown as Record<string, unknown>);
     return NextResponse.json({ success: true, ...results });
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : 'Unknown error';
     logger.error('[TokenRefresh] Fatal error:', message);
+    await heartbeat.fail(err);
     return NextResponse.json({ error: message, ...results }, { status: 500 });
   }
 }
