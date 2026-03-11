@@ -7,6 +7,8 @@ import { createClient as createServiceClient } from '@supabase/supabase-js';
 import { stagingSchema, parseBody } from '@/lib/validation/schemas';
 
 import { logger } from '@/lib/logger';
+import { checkRateLimitAsync } from '@/lib/rate-limit';
+
 function getServiceSupabase() {
   return createServiceClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -309,6 +311,13 @@ export async function POST(request: NextRequest) {
   const startTime = Date.now();
 
   try {
+    // Rate limit: 5 req/min per IP — consumes paid Replicate credits (uses Upstash Redis in production)
+    const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown';
+    const { success: withinLimit } = await checkRateLimitAsync(`staging:${ip}`, 5, 60_000);
+    if (!withinLimit) {
+      return NextResponse.json({ error: 'Too many requests. Please slow down.' }, { status: 429 });
+    }
+
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
 

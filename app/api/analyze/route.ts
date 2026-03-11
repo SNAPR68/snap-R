@@ -5,6 +5,8 @@ import { analyzeImage } from '@/lib/ai/providers/openai-vision';
 import { analyzeSchema, parseBody } from '@/lib/validation/schemas'
 
 import { logger } from '@/lib/logger';
+import { checkRateLimitAsync } from '@/lib/rate-limit';
+
 /** Block private/internal IPs to prevent SSRF */
 function isUnsafeUrl(url: string): boolean {
   try {
@@ -30,6 +32,13 @@ function isUnsafeUrl(url: string): boolean {
 
 export async function POST(request: NextRequest) {
   try {
+    // Rate limit: 20 req/min per IP — consumes OpenAI Vision credits (uses Upstash Redis in production)
+    const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown';
+    const { success: withinLimit } = await checkRateLimitAsync(`analyze:${ip}`, 20, 60_000);
+    if (!withinLimit) {
+      return NextResponse.json({ error: 'Too many requests. Please slow down.' }, { status: 429 });
+    }
+
     const body = await request.json(); const validated = parseBody(analyzeSchema, body); if (!validated.success) { return NextResponse.json({ error: validated.error, details: validated.details }, { status: 400 }); } const { imageUrl } = body;
 
     if (!imageUrl) {

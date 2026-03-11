@@ -133,7 +133,7 @@ npx next build && grep -o "\.glass-luxury[^}]*}" .next/static/css/*.css
 - **Type safety**: No `any` types — use `unknown` for catch blocks, define interfaces for complex objects, use `Record<string, unknown>` instead of `Record<string, any>`
 - **Catch blocks**: `catch (error: unknown)` with `error instanceof Error` guard; empty catch uses `catch {` (no variable binding)
 - **Null coercion**: Supabase returns `null` for missing fields; coerce to `undefined` at data boundaries with `?? undefined` when passing to React component props
-- **Input validation**: All API routes validate inputs with Zod schemas (`lib/validation/schemas.ts`) before processing
+- **Input validation**: All API routes validate inputs with Zod schemas (`lib/validation/schemas.ts`) before processing. Use `parseBody(schema, body)` for JSON bodies, `parseQuery(schema, params)` for query strings, and inline `z.string().uuid().safeParse()` for FormData fields
 - **Network calls**: All external API fetches use `AbortSignal.timeout(15000)` to prevent hanging requests
 - **Accessibility**: Modals use `role="dialog"` + `aria-modal="true"` + `aria-label`; forms use `aria-label` on inputs; pages use semantic HTML (`<nav>`, `<section>`, `<footer>`)
 
@@ -505,7 +505,7 @@ Default:       100 req/min
 - **Facebook token refresh**: Short-lived tokens exchanged for long-lived tokens via `fb_exchange_token`
 - **TikTok token refresh**: 24-hour access tokens auto-refreshed via cron publisher; refresh tokens last ~365 days
 - **Centralized auth middleware**: `middleware.ts` protects `/dashboard/*`, `/admin/*`, `/checkout/*`, `/onboarding/*` — redirects unauthenticated users with `?redirect=` param
-- **Zod validation**: All API inputs parsed through Zod schemas before processing (`lib/validation/schemas.ts`)
+- **Zod validation**: 99/163 API routes validated via Zod schemas (`lib/validation/schemas.ts`). Helpers: `parseBody()` for JSON, `parseQuery()` for query params. FormData routes use inline safeParse
 
 ## Hardening Patterns
 
@@ -565,7 +565,7 @@ Key settings:
 7. **Marketing pipeline uses always-complete semantics** — each step is independent; one failing doesn't block others
 8. **Free-tier users are gated** at both marketing handler (skipped) and cron publisher (canPublish: false)
 9. **Build strictness enforced**: `next.config.mjs` sets `typescript.ignoreBuildErrors: false` and `eslint.ignoreDuringBuilds: false` — builds fail on any TS error or ESLint violation
-10. **ESLint enforces no-any**: `.eslintrc.json` has `@typescript-eslint/no-explicit-any: "warn"` — any `any` usage shows warnings in IDE and CI
+10. **ESLint enforces no-any**: `.eslintrc.json` has `@typescript-eslint/no-explicit-any: "warn"` — zero `any` types and zero ESLint warnings in codebase as of PR #94
 11. **Zod version**: Pinned to `3.22.3` (Remotion 4.0.424 requires this exact version; Zod v4 breaks Remotion internals)
 12. **Remotion Lambda requires `serverExternalPackages`** in `next.config.mjs` — the `@remotion/lambda-client` is a 76K-line pre-built bundle containing the AWS SDK; re-bundling by webpack breaks `.map()` calls
 13. **AWS Lambda concurrency limit is low** — always use `framesPerLambda: 20000` to force single-lambda rendering; splitting across multiple concurrent lambdas causes `TooManyRequestsException`
@@ -584,3 +584,4 @@ Key settings:
 26. **Lead auto-scoring**: `POST /api/leads/activity` auto-increments `property_leads.score` on each activity. SCORE_DELTAS: call=+10, showing=+20, form_submitted=+15, property_site_viewed=+8, email/text=+5, drip_email_sent=+2. Score capped at 100.
 27. **Bulk email**: `POST /api/leads/bulk-email` sends via Resend to selected lead IDs. Supports `{{name}}` and `{{first_name}}` template vars. Logs each send as a `lead_activities` row (activity_type='email', metadata.bulk=true).
 28. **Webhook delivery log**: `GET /api/webhooks/deliveries` returns last 50 deliveries from `webhook_deliveries` table. Filterable by `?webhookId=`. UI is in `/dashboard/settings/webhooks` — click any row to expand response body.
+29. **Codebase quality status** (as of PR #100): 0 TypeScript errors, 0 ESLint warnings, 0 `any` types, 99/163 API routes Zod-validated, AbortSignal.timeout on all ~200 external fetches, 61 loading.tsx + 13 error.tsx files, 210 unit tests, 15 routes with Redis-backed rate limiting, 38 middleware rate limit entries, HSTS + CSP security headers. Remaining gaps: E2E test coverage

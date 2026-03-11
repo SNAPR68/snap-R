@@ -4,20 +4,53 @@ import { checkRateLimit } from '@/lib/rate-limit'
 
 // ── Rate limit configuration per endpoint ──────────────────────────
 const RATE_LIMITS: Record<string, { limit: number; windowMs: number }> = {
+  // ── AI / cost-sensitive routes ────────────────────────────────────
   '/api/enhance': { limit: 10, windowMs: 60_000 },
+  '/api/enhance-quick': { limit: 10, windowMs: 60_000 },
+  '/api/batch-enhance': { limit: 5, windowMs: 60_000 },
   '/api/analyze': { limit: 20, windowMs: 60_000 },
-  '/api/upload': { limit: 30, windowMs: 60_000 },
-  '/api/contact': { limit: 3, windowMs: 60_000 },
-  '/api/stripe': { limit: 10, windowMs: 60_000 },
-  '/api/auth': { limit: 5, windowMs: 60_000 },
-  '/api/log-error': { limit: 10, windowMs: 60_000 },
-  '/api/social/publish': { limit: 15, windowMs: 60_000 },
-  '/api/leads/bulk-email': { limit: 5, windowMs: 60_000 },
-  '/api/user/delete-account': { limit: 2, windowMs: 3_600_000 },
-  '/api/campaigns': { limit: 20, windowMs: 60_000 },
   '/api/renovation': { limit: 5, windowMs: 60_000 },
-  '/api/video': { limit: 10, windowMs: 60_000 },
+  '/api/staging': { limit: 5, windowMs: 60_000 },
+  '/api/ai': { limit: 15, windowMs: 60_000 },
+  '/api/copy': { limit: 20, windowMs: 60_000 },
+  '/api/translate': { limit: 10, windowMs: 60_000 },
+  // ── Upload / storage routes ───────────────────────────────────────
+  '/api/upload': { limit: 30, windowMs: 60_000 },
+  '/api/upload-image': { limit: 30, windowMs: 60_000 },
+  '/api/download-all': { limit: 10, windowMs: 60_000 },
+  // ── Public / unauthenticated routes ───────────────────────────────
+  '/api/contact': { limit: 3, windowMs: 60_000 },
+  '/api/feedback': { limit: 5, windowMs: 60_000 },
+  '/api/property-inquiry': { limit: 5, windowMs: 60_000 },
+  '/api/open-house': { limit: 10, windowMs: 60_000 },
   '/api/partners/apply': { limit: 3, windowMs: 3_600_000 },
+  // ── Auth / account routes ─────────────────────────────────────────
+  '/api/auth': { limit: 5, windowMs: 60_000 },
+  '/api/user/delete-account': { limit: 2, windowMs: 3_600_000 },
+  '/api/user/export-data': { limit: 3, windowMs: 60_000 },
+  // ── Billing / payment routes ──────────────────────────────────────
+  '/api/stripe': { limit: 10, windowMs: 60_000 },
+  // ── Social / publishing routes ────────────────────────────────────
+  '/api/social/publish': { limit: 15, windowMs: 60_000 },
+  '/api/publish-video': { limit: 5, windowMs: 60_000 },
+  '/api/schedule': { limit: 20, windowMs: 60_000 },
+  '/api/auto-post': { limit: 10, windowMs: 60_000 },
+  // ── Marketing / campaigns ─────────────────────────────────────────
+  '/api/campaigns': { limit: 20, windowMs: 60_000 },
+  '/api/marketing': { limit: 10, windowMs: 60_000 },
+  // ── Leads / CRM ───────────────────────────────────────────────────
+  '/api/leads/bulk-email': { limit: 5, windowMs: 60_000 },
+  '/api/leads': { limit: 30, windowMs: 60_000 },
+  // ── Video / media ─────────────────────────────────────────────────
+  '/api/video': { limit: 10, windowMs: 60_000 },
+  '/api/voiceover': { limit: 5, windowMs: 60_000 },
+  // ── Misc ──────────────────────────────────────────────────────────
+  '/api/log-error': { limit: 10, windowMs: 60_000 },
+  '/api/notify': { limit: 10, windowMs: 60_000 },
+  '/api/email': { limit: 10, windowMs: 60_000 },
+  '/api/mls': { limit: 5, windowMs: 60_000 },
+  '/api/share': { limit: 10, windowMs: 60_000 },
+  '/api/photographer': { limit: 15, windowMs: 60_000 },
 }
 const DEFAULT_RATE_LIMIT = { limit: 100, windowMs: 60_000 }
 

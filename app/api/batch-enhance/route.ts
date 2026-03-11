@@ -3,8 +3,17 @@ import { createClient } from '@/lib/supabase/server';
 import { batchEnhanceSchema, parseBody } from '@/lib/validation/schemas';
 
 import { logger } from '@/lib/logger';
+import { checkRateLimitAsync } from '@/lib/rate-limit';
+
 export async function POST(req: NextRequest) {
   try {
+    // Rate limit: 5 req/min per IP — triggers multiple AI enhancements (uses Upstash Redis in production)
+    const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown';
+    const { success: withinLimit } = await checkRateLimitAsync(`batch-enhance:${ip}`, 5, 60_000);
+    if (!withinLimit) {
+      return NextResponse.json({ error: 'Too many requests. Please slow down.' }, { status: 429 });
+    }
+
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {

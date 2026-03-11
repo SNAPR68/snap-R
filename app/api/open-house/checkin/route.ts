@@ -10,8 +10,17 @@ import { openHouseCheckinSchema } from '@/lib/validation/schemas'
 import { adminSupabase } from '@/lib/supabase/admin'
 
 import { logger } from '@/lib/logger';
+import { checkRateLimitAsync } from '@/lib/rate-limit';
+
 export async function POST(request: NextRequest) {
   try {
+    // Rate limit: 10 req/min per IP — public endpoint, prevent spam (uses Upstash Redis in production)
+    const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown'
+    const { success: withinLimit } = await checkRateLimitAsync(`open-house-checkin:${ip}`, 10, 60_000)
+    if (!withinLimit) {
+      return NextResponse.json({ error: 'Too many requests. Please slow down.' }, { status: 429 })
+    }
+
     const body: unknown = await request.json()
     const parsed = openHouseCheckinSchema.safeParse(body)
 

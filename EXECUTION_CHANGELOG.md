@@ -1,6 +1,31 @@
 # SnapR Execution Changelog
 =================================
 
+## 2026-03-11 — Security headers hardening + expanded rate limiting
+
+### Security Headers (`next.config.mjs`)
+- Added `Strict-Transport-Security: max-age=31536000; includeSubDomains` (HSTS)
+- Enhanced CSP: added `wasm-unsafe-eval`, `worker-src 'self' blob:`, `object-src 'none'`, `base-uri 'self'`
+- Expanded `connect-src` with `api.replicate.com`, `api.runware.ai`, `graph.facebook.com`, `*.contentsquare.net`
+- Added `data:` to `font-src`, `unpkg.com` to `script-src`
+
+### Middleware — Expanded Rate Limits (14 → 38 entries)
+- AI/cost-sensitive: `/api/enhance-quick`, `/api/batch-enhance`, `/api/staging`, `/api/ai`, `/api/copy`, `/api/translate`
+- Upload/storage: `/api/upload-image`, `/api/download-all`
+- Public endpoints: `/api/feedback`, `/api/property-inquiry`, `/api/open-house`
+- Auth/billing: `/api/user/export-data`
+- Social/marketing: `/api/publish-video`, `/api/schedule`, `/api/auto-post`, `/api/marketing`
+- Leads/CRM: `/api/leads`
+- Video/misc: `/api/voiceover`, `/api/notify`, `/api/email`, `/api/mls`, `/api/share`, `/api/photographer`
+
+### API Routes — Redis-backed `checkRateLimitAsync` wired into 6 more routes
+- `app/api/analyze/route.ts` — 20 req/min (OpenAI Vision credits)
+- `app/api/batch-enhance/route.ts` — 5 req/min (triggers multiple AI enhancements)
+- `app/api/staging/route.ts` — 5 req/min (paid Replicate credits)
+- `app/api/open-house/checkin/route.ts` — 10 req/min (public endpoint spam prevention)
+- `app/api/property-inquiry/route.ts` — 5 req/min (public endpoint spam prevention)
+- `app/api/feedback/route.ts` — 5 req/min (public endpoint spam prevention)
+
 ## 2026-03-11 — Redis-backed rate limiting across all high-value API routes
 
 ### Rate Limit Infrastructure

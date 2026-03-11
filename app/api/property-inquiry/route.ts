@@ -4,10 +4,19 @@ import { adminSupabase } from '@/lib/supabase/admin'
 import { propertyInquirySchema, parseBody } from '@/lib/validation/schemas'
 
 import { logger } from '@/lib/logger';
+import { checkRateLimitAsync } from '@/lib/rate-limit';
+
 export async function POST(request: NextRequest) {
   const resend = new Resend(process.env.RESEND_API_KEY)
 
   try {
+    // Rate limit: 5 req/min per IP — public endpoint, prevent spam (uses Upstash Redis in production)
+    const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown'
+    const { success: withinLimit } = await checkRateLimitAsync(`property-inquiry:${ip}`, 5, 60_000)
+    if (!withinLimit) {
+      return NextResponse.json({ error: 'Too many requests. Please try again later.' }, { status: 429 })
+    }
+
     const body = await request.json()
     const validated = parseBody(propertyInquirySchema, body); if (!validated.success) { return NextResponse.json({ error: validated.error, details: validated.details }, { status: 400 }); }
     const { name, email, phone, message, listingId, listingAddress, agentEmail } = body

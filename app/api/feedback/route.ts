@@ -3,8 +3,17 @@ import { createClient } from '@/lib/supabase/server';
 import { feedbackSchema, parseBody } from '@/lib/validation/schemas'
 
 import { logger } from '@/lib/logger';
+import { checkRateLimitAsync } from '@/lib/rate-limit';
+
 export async function POST(request: NextRequest) {
   try {
+    // Rate limit: 5 req/min per IP (uses Upstash Redis in production)
+    const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown';
+    const { success: withinLimit } = await checkRateLimitAsync(`feedback:${ip}`, 5, 60_000);
+    if (!withinLimit) {
+      return NextResponse.json({ error: 'Too many requests. Please try again later.' }, { status: 429 });
+    }
+
     const body = await request.json(); const validated = parseBody(feedbackSchema, body); if (!validated.success) { return NextResponse.json({ error: validated.error, details: validated.details }, { status: 400 }); } const { type, message, email, source, conversation } = body;
     
     const supabase = await createClient();
