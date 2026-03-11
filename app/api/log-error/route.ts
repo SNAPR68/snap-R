@@ -2,35 +2,22 @@ export const dynamic = 'force-dynamic';
 import { NextRequest, NextResponse } from 'next/server';
 import { adminSupabase } from '@/lib/supabase/admin';
 import { logErrorSchema, parseBody } from '@/lib/validation/schemas'
-
-// Simple in-memory rate limiter for error logging (max 30 per minute per IP)
-const rateLimiter = new Map<string, { count: number; resetAt: number }>();
+import { checkRateLimitAsync } from '@/lib/rate-limit';
 
 export async function POST(request: NextRequest) {
   try {
-    // Rate limit by IP
-    const ip = request.headers.get('x-forwarded-for') || 'unknown';
-    const now = Date.now();
-    const entry = rateLimiter.get(ip);
-
-    if (entry && now < entry.resetAt) {
-      if (entry.count >= 30) {
-        return NextResponse.json({ error: 'Rate limited' }, { status: 429 });
-      }
-      entry.count++;
-    } else {
-      rateLimiter.set(ip, { count: 1, resetAt: now + 60_000 });
-    }
-
-    // Clean up old entries periodically
-    if (rateLimiter.size > 1000) {
-      for (const [key, val] of rateLimiter) {
-        if (now > val.resetAt) rateLimiter.delete(key);
-      }
+    // Rate limit: 30 req/min per IP (uses Upstash Redis in production)
+    const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown';
+    const { success: withinLimit } = await checkRateLimitAsync(`log-error:${ip}`, 30, 60_000);
+    if (!withinLimit) {
+      return NextResponse.json({ error: 'Rate limited' }, { status: 429 });
     }
 
     const body = await request.json();
-    const validated = parseBody(logErrorSchema, body); if (!validated.success) { return NextResponse.json({ error: validated.error, details: validated.details }, { status: 400 }); }
+    const validated = parseBody(logErrorSchema, body);
+    if (!validated.success) {
+      return NextResponse.json({ error: validated.error, details: validated.details }, { status: 400 });
+    }
     const supabase = adminSupabase();
 
     // Sanitize and limit input

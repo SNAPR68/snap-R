@@ -13,6 +13,8 @@ import { createClient } from '@/lib/supabase/server'
 import { adminSupabase } from '@/lib/supabase/admin'
 
 import { logger } from '@/lib/logger';
+import { checkRateLimitAsync } from '@/lib/rate-limit';
+
 const resend = new Resend(process.env.RESEND_API_KEY)
 
 const sendSchema = z.object({
@@ -24,6 +26,13 @@ const sendSchema = z.object({
 
 export async function POST(request: NextRequest) {
   try {
+    // Rate limit: 5 req/min per IP (uses Upstash Redis in production)
+    const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown'
+    const { success: withinLimit } = await checkRateLimitAsync(`bulk-email:${ip}`, 5, 60_000)
+    if (!withinLimit) {
+      return NextResponse.json({ error: 'Too many requests. Please slow down.' }, { status: 429 })
+    }
+
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })

@@ -32,6 +32,8 @@ import { createClient } from '@/lib/supabase/server';
 import { renovationSchema, parseBody } from '@/lib/validation/schemas'
 
 import { logger } from '@/lib/logger';
+import { checkRateLimitAsync } from '@/lib/rate-limit';
+
 const REPLICATE_API_TOKEN = process.env.REPLICATE_API_TOKEN;
 
 // ============================================================================
@@ -592,6 +594,13 @@ export async function POST(request: NextRequest) {
   };
 
   try {
+    // Rate limit: 5 req/min per IP — consumes paid Replicate credits (uses Upstash Redis in production)
+    const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown';
+    const { success: withinLimit } = await checkRateLimitAsync(`renovation:${ip}`, 5, 60_000);
+    if (!withinLimit) {
+      return NextResponse.json({ error: 'Too many requests. Please slow down.' }, { status: 429 });
+    }
+
     // Auth guard — renovation consumes paid Replicate API credits
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
