@@ -1,21 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { adminSupabase } from '@/lib/supabase/admin';
 import { partnerApplySchema } from '@/lib/validation/schemas';
+import { checkRateLimitAsync } from '@/lib/rate-limit';
 
 import { logger } from '@/lib/logger';
-// Simple in-memory rate limiting (3 requests per IP per hour)
-const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
-
-function isRateLimited(ip: string): boolean {
-  const now = Date.now();
-  const entry = rateLimitMap.get(ip);
-  if (!entry || now > entry.resetAt) {
-    rateLimitMap.set(ip, { count: 1, resetAt: now + 3600000 });
-    return false;
-  }
-  entry.count++;
-  return entry.count > 3;
-}
 
 function generateReferralCode(name: string): string {
   const slug = name.toLowerCase().replace(/[^a-z]/g, '').slice(0, 6).padEnd(4, 'x');
@@ -25,9 +13,10 @@ function generateReferralCode(name: string): string {
 
 export async function POST(request: NextRequest) {
   try {
-    // Rate limit by IP
+    // Rate limit: 3 req/hour per IP (uses Upstash Redis in production)
     const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown';
-    if (isRateLimited(ip)) {
+    const { success: withinLimit } = await checkRateLimitAsync(`partners-apply:${ip}`, 3, 3_600_000);
+    if (!withinLimit) {
       return NextResponse.json(
         { error: 'Too many requests. Please try again later.' },
         { status: 429 }

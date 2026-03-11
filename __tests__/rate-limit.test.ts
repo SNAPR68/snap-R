@@ -3,20 +3,26 @@
  * ===================================================
  * The rate limiter protects all API routes. Getting this wrong means
  * either DoS vulnerability (too permissive) or blocking legitimate users.
+ *
+ * Two paths tested:
+ * 1. checkRateLimit (sync) — used by Edge middleware
+ * 2. checkRateLimitAsync — used by API routes (Upstash Redis when configured, in-memory fallback)
  */
 
 import { describe, it, expect, beforeEach } from 'vitest'
 
 // We need to reset the module state between tests since the Map is module-level
 let checkRateLimit: typeof import('@/lib/rate-limit').checkRateLimit
+let checkRateLimitAsync: typeof import('@/lib/rate-limit').checkRateLimitAsync
 
 beforeEach(async () => {
   // Force re-import to reset the in-memory Map
   const mod = await import('@/lib/rate-limit')
   checkRateLimit = mod.checkRateLimit
+  checkRateLimitAsync = mod.checkRateLimitAsync
 })
 
-describe('checkRateLimit', () => {
+describe('checkRateLimit (sync — middleware)', () => {
   it('allows first request', () => {
     const result = checkRateLimit('test-ip-1', 10, 60000)
     expect(result.success).toBe(true)
@@ -83,6 +89,75 @@ describe('checkRateLimit', () => {
 
     // Next request should fail
     const blocked = checkRateLimit(id, limit, 60000)
+    expect(blocked.success).toBe(false)
+    expect(blocked.remaining).toBe(0)
+  })
+})
+
+describe('checkRateLimitAsync (API routes — Redis with in-memory fallback)', () => {
+  it('allows first request', async () => {
+    const result = await checkRateLimitAsync('async-test-1', 10, 60000)
+    expect(result.success).toBe(true)
+    expect(result.remaining).toBe(9)
+  })
+
+  it('blocks requests at the limit', async () => {
+    const id = 'async-limit-test'
+    const limit = 3
+
+    await checkRateLimitAsync(id, limit, 60000)
+    await checkRateLimitAsync(id, limit, 60000)
+    await checkRateLimitAsync(id, limit, 60000)
+
+    const blocked = await checkRateLimitAsync(id, limit, 60000)
+    expect(blocked.success).toBe(false)
+    expect(blocked.remaining).toBe(0)
+  })
+
+  it('uses different counters per identifier', async () => {
+    const r1 = await checkRateLimitAsync('async-a', 2, 60000)
+    const r2 = await checkRateLimitAsync('async-b', 2, 60000)
+    expect(r1.success).toBe(true)
+    expect(r2.success).toBe(true)
+
+    await checkRateLimitAsync('async-a', 2, 60000)
+    const r3 = await checkRateLimitAsync('async-a', 2, 60000)
+    const r4 = await checkRateLimitAsync('async-b', 2, 60000)
+
+    expect(r3.success).toBe(false)
+    expect(r4.success).toBe(true)
+  })
+
+  it('returns same shape as sync version', async () => {
+    const result = await checkRateLimitAsync('async-shape', 100, 60000)
+    expect(result).toHaveProperty('success')
+    expect(result).toHaveProperty('remaining')
+    expect(typeof result.success).toBe('boolean')
+    expect(typeof result.remaining).toBe('number')
+  })
+
+  it('supports per-route rate limits (e.g., 3/hour for partner apply)', async () => {
+    const id = 'partner-apply:192.168.1.1'
+    const limit = 3
+    const windowMs = 3_600_000 // 1 hour
+
+    await checkRateLimitAsync(id, limit, windowMs)
+    await checkRateLimitAsync(id, limit, windowMs)
+    await checkRateLimitAsync(id, limit, windowMs)
+
+    const blocked = await checkRateLimitAsync(id, limit, windowMs)
+    expect(blocked.success).toBe(false)
+  })
+
+  it('supports tight limits for destructive operations (e.g., 2/hour for delete-account)', async () => {
+    const id = 'delete-account:10.0.0.1'
+    const limit = 2
+    const windowMs = 3_600_000
+
+    await checkRateLimitAsync(id, limit, windowMs)
+    await checkRateLimitAsync(id, limit, windowMs)
+
+    const blocked = await checkRateLimitAsync(id, limit, windowMs)
     expect(blocked.success).toBe(false)
     expect(blocked.remaining).toBe(0)
   })

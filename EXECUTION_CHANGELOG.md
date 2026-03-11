@@ -1,6 +1,40 @@
 # SnapR Execution Changelog
 =================================
 
+## 2026-03-11 — Redis-backed rate limiting across all high-value API routes
+
+### Rate Limit Infrastructure
+- **Refactored `lib/rate-limit.ts`**: Per-endpoint Redis limiters created lazily and cached (no single shared limiter)
+- **Dual-layer defense**: Sync in-memory (Edge middleware) + async Upstash Redis (API routes)
+- **Graceful degradation**: Redis failure auto-falls back to in-memory; no Redis env vars = in-memory only
+
+### Middleware — New Rate Limit Entries (7 added)
+- `/api/social/publish`: 15 req/min
+- `/api/leads/bulk-email`: 5 req/min
+- `/api/user/delete-account`: 2 req/hour
+- `/api/campaigns`: 20 req/min
+- `/api/renovation`: 5 req/min
+- `/api/video`: 10 req/min
+- `/api/partners/apply`: 3 req/hour
+
+### API Routes — Redis-backed `checkRateLimitAsync` wired into 9 routes
+- `app/api/enhance/route.ts` — 10 req/min (AI cost protection)
+- `app/api/upload/route.ts` — 30 req/min (storage abuse prevention)
+- `app/api/contact/route.ts` — 3 req/min (spam prevention)
+- `app/api/social/publish/route.ts` — 15 req/min (social API abuse)
+- `app/api/leads/bulk-email/route.ts` — 5 req/min (email cost control)
+- `app/api/user/delete-account/route.ts` — 2 req/hour (destructive op)
+- `app/api/campaigns/route.ts` — 20 req/min (campaign abuse)
+- `app/api/renovation/route.ts` — 5 req/min (paid Replicate credits)
+- `app/api/notify-approval/route.ts` — already wired (5 req/min)
+
+### Consolidated Custom Rate Limiters
+- `app/api/log-error/route.ts` — replaced 25-line custom Map limiter with `checkRateLimitAsync`
+- `app/api/partners/apply/route.ts` — replaced 12-line custom Map limiter with `checkRateLimitAsync`
+
+### Tests (210 total, +6 new)
+- 6 new async rate limit tests: first request, blocking, per-identifier isolation, response shape, per-route limits, destructive op limits
+
 ## 2026-03-11 — CodeRabbit review fixes: error leakage, MIME validation, shared schema
 
 - **Notification route**: Return generic error instead of leaking Supabase `error.message`

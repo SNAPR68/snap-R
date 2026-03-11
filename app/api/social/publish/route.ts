@@ -3,7 +3,9 @@ import { createClient } from '@/lib/supabase/server';
 import { adminSupabase } from '@/lib/supabase/admin';
 
 import { logger } from '@/lib/logger';
+import { checkRateLimitAsync } from '@/lib/rate-limit';
 import { socialPublishExtendedSchema, parseBody } from '@/lib/validation/schemas';
+
 interface SocialConnection {
   access_token: string;
   page_access_token?: string;
@@ -13,9 +15,16 @@ interface SocialConnection {
 
 export async function POST(req: NextRequest) {
   try {
+    // Rate limit: 15 req/min per IP (uses Upstash Redis in production)
+    const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown';
+    const { success: withinLimit } = await checkRateLimitAsync(`social-publish:${ip}`, 15, 60_000);
+    if (!withinLimit) {
+      return NextResponse.json({ error: 'Too many requests. Please slow down.' }, { status: 429 });
+    }
+
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
-    
+
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }

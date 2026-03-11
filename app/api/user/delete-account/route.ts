@@ -1,11 +1,20 @@
 export const dynamic = 'force-dynamic';
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { createClient as createAdminClient } from '@supabase/supabase-js';
+import { checkRateLimitAsync } from '@/lib/rate-limit';
 
 import { logger } from '@/lib/logger';
-export async function POST() {
+
+export async function POST(request: NextRequest) {
   try {
+    // Rate limit: 2 req/hour per IP — destructive operation (uses Upstash Redis in production)
+    const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown';
+    const { success: withinLimit } = await checkRateLimitAsync(`delete-account:${ip}`, 2, 3_600_000);
+    if (!withinLimit) {
+      return NextResponse.json({ error: 'Too many requests. Please try again later.' }, { status: 429 });
+    }
+
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
 

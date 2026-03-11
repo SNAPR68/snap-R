@@ -6,6 +6,8 @@ import { logApiCost } from '@/lib/cost-logger';
 import { enhanceSchema, parseBody } from '@/lib/validation/schemas'
 
 import { logger } from '@/lib/logger';
+import { checkRateLimitAsync } from '@/lib/rate-limit';
+
 const VALID_TOOL_IDS = new Set(Object.keys(TOOL_CREDITS));
 
 export const maxDuration = 180;
@@ -13,6 +15,13 @@ export const maxDuration = 180;
 export async function POST(request: NextRequest) {
   const startTime = Date.now();
   try {
+    // Rate limit: 10 req/min per IP (uses Upstash Redis in production)
+    const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown';
+    const { success: withinLimit } = await checkRateLimitAsync(`enhance:${ip}`, 10, 60_000);
+    if (!withinLimit) {
+      return NextResponse.json({ error: 'Too many requests. Please slow down.' }, { status: 429 });
+    }
+
     const body = await request.json(); const validated = parseBody(enhanceSchema, body); if (!validated.success) { return NextResponse.json({ error: validated.error, details: validated.details }, { status: 400 }); } const { imageId, toolId, options = {} } = body;
 
     // Validate toolId before processing
