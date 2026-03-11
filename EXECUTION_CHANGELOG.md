@@ -1,6 +1,19 @@
 # SnapR Execution Changelog
 =================================
 
+## 2026-03-11 — Fix broken Calendly "Book a Demo" embed on /contact page
+
+### CSP Fix
+- `next.config.js` + `next.config.mjs` — Added Calendly domains to Content-Security-Policy:
+  - `frame-src`: `https://calendly.com` (allows iframe embed)
+  - `script-src`: `https://assets.calendly.com` (allows Calendly widget JS)
+  - `style-src`: `https://assets.calendly.com` (allows Calendly widget CSS)
+  - `connect-src`: `https://calendly.com` (allows Calendly API calls from within embed)
+- Root cause: CSP `frame-src` only whitelisted Stripe domains, blocking the Calendly
+  iframe from loading. The embed rendered as an empty dark box on production.
+- Note: Both config files updated — `next.config.js` is the active config (wrapped by
+  Sentry), `next.config.mjs` kept in sync.
+
 ## 2026-03-11 — User guide with PDF generation and email delivery (+ review fixes)
 
 ### Code Review Fixes (CodeRabbit)
