@@ -5,13 +5,22 @@ import { reorderPhotosSchema, parseBody } from '@/lib/validation/schemas'
 import { logger } from '@/lib/logger';
 export async function POST(req: NextRequest) {
   try {
-    const body = await req.json(); const validated = parseBody(reorderPhotosSchema, body); if (!validated.success) { return NextResponse.json({ error: validated.error, details: validated.details }, { status: 400 }); } const { listingId, photoOrder } = body;
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const body = await req.json();
+    const validated = parseBody(reorderPhotosSchema, body);
+    if (!validated.success) {
+      return NextResponse.json({ error: validated.error, details: validated.details }, { status: 400 });
+    }
+    const { listingId, photoOrder } = body;
 
     if (!listingId || !photoOrder || !Array.isArray(photoOrder)) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
-
-    const supabase = await createClient();
 
     // Update each photo's display_order
     const updates = photoOrder.map((photoId, index) => 

@@ -5,14 +5,18 @@ import { batchEnhanceSchema, parseBody } from '@/lib/validation/schemas';
 import { logger } from '@/lib/logger';
 export async function POST(req: NextRequest) {
   try {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     const body = await req.json();
     const parsed = parseBody(batchEnhanceSchema, body);
     if (!parsed.success) {
       return NextResponse.json({ error: parsed.error, details: parsed.details }, { status: 400 });
     }
     const { listingId } = parsed.data;
-
-    const supabase = await createClient();
     
     // Get all pending photos
     const { data: photos, error } = await supabase

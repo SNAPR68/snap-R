@@ -1,6 +1,47 @@
 # SnapR Execution Changelog
 =================================
 
+## 2026-03-11 — CodeRabbit review fixes: error leakage, MIME validation, shared schema
+
+- **Notification route**: Return generic error instead of leaking Supabase `error.message`
+- **Notification route**: Use shared `uuidSchema` from `lib/validation/schemas.ts` (not inline `z`)
+- **Video convert**: Add MIME type allowlist (`video/webm`, `video/mp4`, `video/quicktime`) + use actual content type for storage
+- **Shared schema**: Add reusable `uuidSchema` export to `lib/validation/schemas.ts`
+- **Tests**: Rename misleading XSS test, fix UTM assertion to match full UUID, add `vi.resetModules()` for Stripe singleton isolation
+
+## 2026-03-10 — Final hardening: auth guards, security audit, legacy cleanup, 204 tests
+
+### Security — Auth Guards
+- **Renovation API**: Added `getUser()` auth guard — previously unauthenticated, consumed paid Replicate credits
+- **Batch enhance API**: Added explicit `getUser()` auth check before processing
+- **Reorder photos API**: Added explicit `getUser()` auth check before modifying display order
+
+### Security — Legacy OAuth Route Removal (6 files deleted)
+- Deleted `app/api/social/facebook/route.ts` — no auth, no CSRF state validation
+- Deleted `app/api/social/linkedin/route.ts` — `Math.random()` CSRF state (predictable)
+- Deleted `app/api/social/tiktok/route.ts` — `Math.random()` CSRF state (predictable)
+- Deleted `app/api/social/facebook/callback/route.ts` — paired with insecure initiator
+- Deleted `app/api/social/linkedin/callback/route.ts` — paired with insecure initiator
+- Deleted `app/api/social/tiktok/callback/route.ts` — paired with insecure initiator
+- Proper routes exist at `/api/social/connect/[platform]` + `/api/social/oauth/[platform]`
+
+### Security — Audit Fixes
+- **Hardcoded test credentials removed**: `app/api/admin/create-test-account/route.ts` now reads from `TEST_ACCOUNT_EMAIL` and `TEST_ACCOUNT_PASSWORD` env vars
+- **Share token entropy**: Increased from 12 chars (48-bit) to full 32-char UUID (128-bit)
+- **Error message leakage**: Share API no longer exposes internal error messages to clients
+- **Video upload validation**: Added 100MB file size limit + Blob type check to `/api/video/convert`
+- **WhatsApp webhook validation**: Added `whatsapp:` prefix check + 500-char message length limit
+- **Notification UUID validation**: Added Zod UUID safeParse on `[id]` param
+
+### Test Foundation (149 → 204 tests, 11 files)
+- **`__tests__/api-smoke.test.ts`** (33 tests): Route module exports, Zod schema validation, SQL injection/XSS/DoS prevention, parseBody helper
+- **`__tests__/critical-path.test.ts`** (22 tests): Enhancement pipeline, billing gates, UTM tracking, MLS compliance pipeline, XSS prevention, rate limiting, R2 URL resolution, Stripe config
+
+### Verification
+- 0 TypeScript errors (`tsc --noEmit`)
+- 0 ESLint warnings
+- 204 tests passing (11 test files)
+
 ## 2026-03-10 — Battle-ready: security, features, tests, deprecated code removal
 
 ### Security & Critical Fixes

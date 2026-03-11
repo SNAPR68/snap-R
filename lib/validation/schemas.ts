@@ -1,5 +1,8 @@
 import { z } from 'zod'
 
+// Shared UUID schema — reusable across all routes
+export const uuidSchema = z.string().uuid()
+
 // Stripe checkout
 export const stripeCheckoutSchema = z.object({
   plan: z.string().min(1).max(30),

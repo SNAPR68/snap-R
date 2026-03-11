@@ -33,7 +33,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Listing not found' }, { status: 404 });
     }
 
-    const shareToken = randomUUID().replace(/-/g, '').substring(0, 12);
+    const shareToken = randomUUID().replace(/-/g, '');
     
     const { data: share, error } = await supabase
       .from('shares')
@@ -65,8 +65,7 @@ export async function POST(request: NextRequest) {
       token,
     });
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : 'Internal server error';
     logger.error('[Share] Error:', error);
-    return NextResponse.json({ error: message }, { status: 500 });
+    return NextResponse.json({ error: 'Failed to create share link' }, { status: 500 });
   }
 }

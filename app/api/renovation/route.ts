@@ -28,7 +28,6 @@
 // ============================================================================
 
 import { NextRequest, NextResponse } from 'next/server';
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { createClient } from '@/lib/supabase/server';
 import { renovationSchema, parseBody } from '@/lib/validation/schemas'
 
@@ -585,14 +584,21 @@ function estimateCost(model: ModelChoice): number {
 export async function POST(request: NextRequest) {
   const startTime = Date.now();
   const steps: string[] = [];
-  
+
   const addStep = (name: string, status: 'completed' | 'processing' | 'failed' = 'completed') => {
     const prefix = status === 'completed' ? 'Completed' : status === 'processing' ? 'Processing' : 'Failed';
     steps.push(`${prefix}: ${name}`);
     logger.info(`[Step] ${prefix}: ${name} (${Date.now() - startTime}ms)`);
   };
-  
+
   try {
+    // Auth guard — renovation consumes paid Replicate API credits
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     // Parse request
     addStep('Parsing request');
     const body: RenovationRequest = await request.json();
