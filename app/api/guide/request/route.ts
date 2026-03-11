@@ -14,6 +14,13 @@ import { checkRateLimitAsync } from '@/lib/rate-limit';
 
 const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || 'https://snap-r.com';
 
+function escapeHtml(str: string): string {
+  return str.replace(/[&<>"']/g, (c) => {
+    const map: Record<string, string> = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
+    return map[c] || c;
+  });
+}
+
 // Module-level cache — persists across warm invocations
 let cachedPdfBuffer: Buffer | null = null;
 
@@ -49,12 +56,16 @@ export async function POST(request: NextRequest) {
 
     // Save to contact_submissions
     const supabase = adminSupabase();
-    await supabase.from('contact_submissions').insert({
+    const { error: dbError } = await supabase.from('contact_submissions').insert({
       name: name || 'Guide Request',
       email,
       message: `guide_request:${source || 'unknown'}`,
       status: 'new',
     });
+    if (dbError) {
+      logger.error('[GuideRequest] DB insert failed:', dbError.message);
+      // Continue anyway — don't block email delivery for DB issues
+    }
 
     // Send email with PDF attachment
     if (!process.env.RESEND_API_KEY) {
@@ -63,7 +74,7 @@ export async function POST(request: NextRequest) {
     }
 
     const resend = new Resend(process.env.RESEND_API_KEY);
-    await resend.emails.send({
+    const { error: emailError } = await resend.emails.send({
       from: 'SnapR <notifications@snap-r.com>',
       to: email,
       subject: 'Your SnapR Real Estate Marketing Guide',
@@ -75,14 +86,22 @@ export async function POST(request: NextRequest) {
         },
       ],
     });
+    if (emailError) {
+      logger.error('[GuideRequest] Email send failed:', emailError.message);
+      return NextResponse.json({ error: 'Failed to send email. Please try again.' }, { status: 500 });
+    }
 
     // Also notify team
-    await resend.emails.send({
+    const { error: notifyError } = await resend.emails.send({
       from: 'SnapR <notifications@snap-r.com>',
       to: 'support@snap-r.com',
       subject: `Guide requested: ${email}`,
-      html: `<p><strong>Name:</strong> ${name || 'Not provided'}</p><p><strong>Email:</strong> ${email}</p><p><strong>Source:</strong> ${source || 'unknown'}</p>`,
+      html: `<p><strong>Name:</strong> ${escapeHtml(name || 'Not provided')}</p><p><strong>Email:</strong> ${escapeHtml(email)}</p><p><strong>Source:</strong> ${escapeHtml(source || 'unknown')}</p>`,
     });
+    if (notifyError) {
+      logger.warn('[GuideRequest] Team notification failed:', notifyError.message);
+      // Don't fail the request for internal notification issues
+    }
 
     return NextResponse.json({ success: true });
   } catch (error: unknown) {
@@ -93,7 +112,7 @@ export async function POST(request: NextRequest) {
 }
 
 function buildGuideEmail(name?: string): string {
-  const greeting = name ? `Hi ${name},` : 'Hi there,';
+  const greeting = name ? `Hi ${escapeHtml(name)},` : 'Hi there,';
 
   return `<!DOCTYPE html>
 <html>

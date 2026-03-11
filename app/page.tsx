@@ -845,6 +845,7 @@ export default function HomePage() {
                       onChange={(e) => setNotifyEmail(e.target.value)}
                       placeholder="Enter your email"
                       required
+                      aria-label="Email for iOS app notification"
                       className="w-full px-4 py-3 bg-white/5 border border-white/20 rounded-xl text-white placeholder-white/40 focus:border-[#D4A017] focus:outline-none transition-colors"
                     />
                   </div>

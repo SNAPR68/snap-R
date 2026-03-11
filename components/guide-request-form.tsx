@@ -39,8 +39,12 @@ export function GuideRequestForm({ source, variant = 'card' }: GuideRequestFormP
 
       setSubmitted(true);
       trackEvent(SnapREvents.GUIDE_REQUESTED, { source });
-    } catch {
-      setError('Request timed out. Please try again.');
+    } catch (err: unknown) {
+      if (err instanceof DOMException && err.name === 'TimeoutError') {
+        setError('Request timed out. Please try again.');
+      } else {
+        setError('Network error. Please check your connection and try again.');
+      }
     } finally {
       setLoading(false);
     }

@@ -1,7 +1,16 @@
 # SnapR Execution Changelog
 =================================
 
-## 2026-03-11 — User guide with PDF generation and email delivery
+## 2026-03-11 — User guide with PDF generation and email delivery (+ review fixes)
+
+### Code Review Fixes (CodeRabbit)
+- `app/api/guide/request/route.ts` — Added error handling for DB insert and both
+  Resend email sends. Added `escapeHtml()` to sanitize user-provided name in email
+  templates (prevents HTML injection). Team notification uses escaped interpolation.
+- `components/guide-request-form.tsx` — Differentiated timeout vs network errors
+  in catch block (checks `DOMException` + `TimeoutError` name).
+- `app/page.tsx` — Added `aria-label="Email for iOS app notification"` to the
+  iOS notify modal email input for accessibility compliance.
 
 ### PDF Marketing Guide (NEW)
 - `lib/print/guide-template.tsx` — 8-page PDF document built with `@react-pdf/renderer`.
