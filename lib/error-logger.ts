@@ -1,6 +1,9 @@
 import { createClient } from '@supabase/supabase-js';
 
 import { logger } from '@/lib/logger';
+import { shouldSendAlert } from '@/lib/monitoring/alert-throttle';
+import { sendSlackAlert } from '@/lib/monitoring/slack-alert';
+
 const getSupabase = () => {
   if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
     return null;
@@ -52,9 +55,12 @@ export async function logEvent({
       },
     });
 
-    // Send alert for critical errors
-    if (level === 'critical') {
-      await sendAlertEmail(source, message, metadata);
+    // Send alert for critical errors (with throttle to prevent spam)
+    if (level === 'critical' && shouldSendAlert(source)) {
+      await Promise.all([
+        sendAlertEmail(source, message, metadata),
+        sendSlackAlert(source, message, metadata),
+      ]);
     }
   } catch {
     logger.error('[ErrorLogger] Failed to log event');

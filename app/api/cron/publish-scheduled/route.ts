@@ -30,6 +30,7 @@ import { refreshAccessToken, type SocialPlatform } from '@/lib/social/oauth-conf
 import { dispatchWebhookEvent } from '@/lib/webhooks/dispatch';
 
 import { logger } from '@/lib/logger';
+import { startCronHeartbeat } from '@/lib/monitoring/cron-heartbeat';
 const CRON_SECRET = process.env.CRON_SECRET;
 
 interface PublishResult {
@@ -47,6 +48,7 @@ export async function GET(request: NextRequest) {
   }
 
   logger.info('[PublishCron] Starting scheduled post publisher...');
+  const heartbeat = startCronHeartbeat('publish-scheduled');
   const supabase = adminSupabase();
   const results = { published: 0, failed: 0, skipped: 0 };
 
@@ -537,10 +539,12 @@ export async function GET(request: NextRequest) {
     }
 
     logger.info('[PublishCron] Complete:', results);
+    await heartbeat.succeed(results as unknown as Record<string, unknown>);
     return NextResponse.json({ success: true, results });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Unknown error';
     logger.error('[PublishCron] Fatal error:', message);
+    await heartbeat.fail(error);
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }

@@ -1,6 +1,38 @@
 # SnapR Execution Changelog
 =================================
 
+## 2026-03-11 — Monitoring & alerting infrastructure
+
+### Cron Heartbeat System (NEW)
+- `lib/monitoring/cron-heartbeat.ts` — `startCronHeartbeat()` records execution time,
+  success/failure, and results to `system_logs` table. `checkCronHealth()` detects
+  overdue crons by comparing last heartbeat against expected schedule (2× buffer).
+- Wired into all 6 existing crons: publish-scheduled, sync-analytics, daily-digest,
+  refresh-tokens, drip-sequences, usage-check.
+
+### Alert Throttle (NEW)
+- `lib/monitoring/alert-throttle.ts` — In-memory deduplication prevents alert spam
+  during cascading failures. Max 1 alert per source per 15 minutes.
+- Integrated into `lib/error-logger.ts` `logEvent()` — critical alerts now throttled.
+
+### Slack Alerting (NEW)
+- `lib/monitoring/slack-alert.ts` — Optional Slack webhook integration. Sends
+  structured Block Kit messages to `SLACK_ALERT_WEBHOOK_URL` (no-ops if not set).
+- Fires alongside email for all critical errors.
+
+### Health Endpoint Expanded
+- `app/api/health/route.ts` — Now checks: database, storage, Redis (if configured),
+  cron staleness. Returns per-check latency and cron status details.
+
+### Health Check Watchdog Cron (NEW)
+- `app/api/cron/health-check/route.ts` — Hourly cron that checks DB, storage, Redis,
+  and cron staleness. Sends critical alert (email + Slack) if any check fails.
+- Added to `vercel.json` crons: `0 * * * *` (hourly).
+
+### Tests
+- `__tests__/monitoring.test.ts` — 10 new tests for alert throttle, Slack alerts,
+  and cron heartbeat. Total: 220 tests (up from 210).
+
 ## 2026-03-11 — Redis-backed rate limiting across all high-value API routes
 
 ### Rate Limit Infrastructure
