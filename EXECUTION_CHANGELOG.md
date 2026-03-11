@@ -1,6 +1,50 @@
 # SnapR Execution Changelog
 =================================
 
+## 2026-03-11 — User guide with PDF generation and email delivery (+ review fixes)
+
+### Code Review Fixes (CodeRabbit)
+- `app/api/guide/request/route.ts` — Added error handling for DB insert and both
+  Resend email sends. Added `escapeHtml()` to sanitize user-provided name in email
+  templates (prevents HTML injection). Team notification uses escaped interpolation.
+- `components/guide-request-form.tsx` — Differentiated timeout vs network errors
+  in catch block (checks `DOMException` + `TimeoutError` name).
+- `app/page.tsx` — Added `aria-label="Email for iOS app notification"` to the
+  iOS notify modal email input for accessibility compliance.
+
+### PDF Marketing Guide (NEW)
+- `lib/print/guide-template.tsx` — 8-page PDF document built with `@react-pdf/renderer`.
+  Covers: professional photo stats, 5-step workflow, AI enhancement tools, marketing
+  automation, social media/analytics strategy, getting started guide. Dark theme with
+  gold accents, QR code on final page.
+
+### Guide Request API (NEW)
+- `app/api/guide/request/route.ts` — POST endpoint that validates email (Zod),
+  generates PDF (cached in module-level variable), sends via Resend with attachment,
+  saves to `contact_submissions` table. Rate limited: 3 req/min per IP.
+
+### GuideRequestForm Component (NEW)
+- `components/guide-request-form.tsx` — Reusable client component with two variants:
+  `inline` (horizontal, for footer) and `card` (vertical, for sections/pages).
+  Handles loading, success, and error states with analytics tracking.
+
+### Landing Page Updates
+- Added "Free Marketing Guide" section between Testimonials and Pricing with
+  2-column layout (chapter preview + email form).
+- Replaced footer lead capture with `GuideRequestForm` component.
+- Added "Free Guide" nav link to desktop and mobile navigation.
+- Added `/guide` to footer links.
+
+### Dedicated Guide Page (NEW)
+- `app/guide/page.tsx` — Full landing page with hero, 6-chapter card grid,
+  3 persona cards (agents, brokers, photographers), bottom CTA. SEO metadata.
+
+### Schema & Analytics
+- Added `guideRequestSchema` to `lib/validation/schemas.ts`.
+- Added `GUIDE_REQUESTED` event to `lib/analytics.ts`.
+
+---
+
 ## 2026-03-11 — Monitoring & alerting infrastructure
 
 ### Cron Heartbeat System (NEW)

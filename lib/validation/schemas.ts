@@ -119,6 +119,13 @@ export const notifySchema = z.object({
   email: z.string().email().max(200),
 })
 
+// Guide request (lead magnet)
+export const guideRequestSchema = z.object({
+  email: z.string().email().max(200),
+  name: z.string().max(200).optional(),
+  source: z.enum(['homepage', 'guide-page', 'other']).optional(),
+})
+
 // Video voiceover (discriminated union)
 export const voiceoverSchema = z.discriminatedUnion('action', [
   z.object({
