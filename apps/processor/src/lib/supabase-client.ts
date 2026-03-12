@@ -122,7 +122,7 @@ export async function updatePhotoStatus(
 export async function getListingPhotos(
   listingId: string,
   env: { SUPABASE_URL: string; SUPABASE_SERVICE_KEY: string }
-): Promise<Array<{ id: string; raw_url: string; status?: string; signedUrl?: string | null }>> {
+): Promise<Array<{ id: string; raw_url: string; status?: string; signedUrl?: string }>> {
   const supabase = createSupabaseClient(env);
   
   const { data: photos, error } = await supabase
@@ -161,7 +161,7 @@ export async function getListingPhotos(
         id: photo.id,
         raw_url: photo.raw_url,
         status: photo.status,
-        signedUrl: signedError ? null : signedData?.signedUrl
+        signedUrl: signedError ? undefined : signedData?.signedUrl ?? undefined
       };
     })
   );

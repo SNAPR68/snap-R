@@ -1,6 +1,39 @@
 # SnapR Execution Changelog
 =================================
 
+## 2026-03-12 — P2 security fixes: share password gating, show_comparison enforcement, processor TS
+
+### Password-Protected Shares — Server-Side Data Gating
+- `app/share/[token]/page.tsx` — Password-protected shares no longer fetch listing data or
+  sign photo URLs. Server returns empty listing/photos; client shows password prompt first.
+- `components/share-view.tsx` — Added password gate UI (lock icon, form input). On successful
+  verification via `/api/share/verify`, listing data and signed URLs are populated client-side.
+- `app/api/share/verify/route.ts` — NEW endpoint: accepts `{token, password}`, verifies
+  SHA-256 hash with `timingSafeEqual`, returns listing + signed photo URLs (respecting
+  `show_comparison` setting).
+- `app/api/share/route.ts` — Passwords now hashed with SHA-256 before storage.
+
+### show_comparison Server-Side Enforcement
+- `app/share/[token]/page.tsx` — `signPhotos()` only signs raw URLs when `show_comparison`
+  is true; rawUrl omitted entirely when comparison is disabled.
+- `app/api/share/verify/route.ts` — Same server-side enforcement in the verify endpoint.
+
+### CodeRabbit Review Fixes
+- `app/api/share/verify/route.ts` — Replaced manual type checks with Zod schema validation
+  via `parseBody`; replaced inline `createClient` with shared `adminSupabase()`.
+- `apps/processor/src/index.ts` — Added `jobId` validation before enqueuing.
+- `package.json` — Aligned root `openai` to `^6.21.0` to match processor.
+
+### Processor TypeScript Fixes
+- `apps/processor/src/index.ts` — Fixed virtualTwilight call signature (added missing arg),
+  typed request body, added `SupabaseWorkerClient` type alias, cast OpenAI client at boundary.
+- `apps/processor/src/marketing-handler.ts` — Cast `openaiClient` at 4 call sites to resolve
+  cross-package OpenAI type incompatibilities (separate node_modules copies).
+- `apps/processor/src/handler.ts` — Replaced dead code with properly typed stub interfaces.
+- `apps/processor/src/lib/supabase-client.ts` — Fixed signedUrl type (null → undefined).
+- `apps/processor/tsconfig.json` — Added `baseUrl`/`paths` for `@/*` path alias resolution.
+- `lib/ai/providers/sam-masks.ts` — Typed `response.json()` calls.
+
 ## 2026-03-12 — Auto-publish to connected social platforms via API
 
 ### Content Studio Direct Publishing

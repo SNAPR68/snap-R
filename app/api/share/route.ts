@@ -1,10 +1,15 @@
 export const dynamic = 'force-dynamic';
-import { randomUUID } from 'node:crypto';
+import { randomUUID, createHash } from 'node:crypto';
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { shareSchema, parseBody } from '@/lib/validation/schemas'
 
 import { logger } from '@/lib/logger';
+
+function hashPassword(password: string): string {
+  return createHash('sha256').update(password).digest('hex');
+}
+
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json(); const validated = parseBody(shareSchema, body); if (!validated.success) { return NextResponse.json({ error: validated.error, details: validated.details }, { status: 400 }); } const { listingId, options = {} } = body;
@@ -17,7 +22,7 @@ export async function POST(request: NextRequest) {
 
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
-    
+
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
@@ -34,7 +39,7 @@ export async function POST(request: NextRequest) {
     }
 
     const shareToken = randomUUID().replace(/-/g, '');
-    
+
     const { data: share, error } = await supabase
       .from('shares')
       .insert({
@@ -43,7 +48,7 @@ export async function POST(request: NextRequest) {
         token: shareToken,
         allow_download: options.allowDownload ?? true,
         show_comparison: options.showComparison ?? true,
-        password: options.password || null,
+        password: options.password ? hashPassword(options.password as string) : null,
         expires_at: options.expiresIn 
           ? new Date(Date.now() + options.expiresIn * 24 * 60 * 60 * 1000).toISOString()
           : null,

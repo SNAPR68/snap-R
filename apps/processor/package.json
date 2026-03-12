@@ -10,7 +10,7 @@
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.39.0",
-    "openai": "^6.10.0",
+    "openai": "^6.21.0",
     "p-limit": "^5.0.0",
     "replicate": "^1.4.0"
   },

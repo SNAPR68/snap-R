@@ -133,8 +133,9 @@ export async function handleMarketingJob(
   const photoUrls = photos.map(p => p.processed_url || p.raw_url).filter(Boolean);
 
   // Create OpenAI client from worker env (DI — same pattern as preparation)
+  // Cast via unknown: processor's openai has different #private fields than root's
   const { default: OpenAI } = await import('openai');
-  const openaiClient = new OpenAI({ apiKey: env.OPENAI_API_KEY });
+  const openaiClient = new OpenAI({ apiKey: env.OPENAI_API_KEY }) as unknown;
 
   const costBreakdown: MarketingCostBreakdown = {
     description: { status: 'skipped', durationMs: 0, costCents: 0 },
@@ -202,7 +203,7 @@ export async function handleMarketingJob(
         },
         'professional',
         'medium',
-        openaiClient
+        openaiClient as Parameters<typeof generateListingDescription>[4]
       );
 
       const descMs = Date.now() - descStart;
@@ -271,7 +272,7 @@ export async function handleMarketingJob(
             includeCallToAction: true,
             contentType: 'just_listed',
           },
-          openaiClient
+          openaiClient as Parameters<typeof generateCaption>[2]
         );
 
         const hashtags = await generateHashtags(
@@ -283,7 +284,7 @@ export async function handleMarketingJob(
           },
           platform,
           15,
-          openaiClient
+          openaiClient as Parameters<typeof generateHashtags>[3]
         );
 
         captionsResult[platform] = {

@@ -12,33 +12,75 @@ function getSupabase() {
   );
 }
 
+interface ShareSettings {
+  allow_download: boolean;
+  show_comparison: boolean;
+  allow_approval: boolean;
+  requirePassword: boolean;
+}
+
+interface PhotoWithUrls {
+  id: string;
+  rawUrl?: string;
+  processedUrl: string;
+  variant: string;
+  clientApproved?: boolean | null;
+  clientFeedback?: string | null;
+}
+
+/**
+ * Sign photo URLs for a listing.
+ * When show_comparison is false, rawUrl is omitted (server-enforced).
+ */
+async function signPhotos(
+  supabase: ReturnType<typeof getSupabase>,
+  listingId: string,
+  showComparison: boolean
+): Promise<PhotoWithUrls[]> {
+  const { data: photos } = await supabase
+    .from('photos')
+    .select('*')
+    .eq('listing_id', listingId)
+    .eq('status', 'completed')
+    .order('created_at', { ascending: false });
+
+  return await Promise.all((photos || []).map(async (photo) => {
+    // Only sign rawUrl when comparison is enabled — server-enforced
+    let rawSignedUrl: string | undefined;
+    if (showComparison && photo.raw_url) {
+      const { data: rawUrl } = await supabase.storage
+        .from('raw-images')
+        .createSignedUrl(photo.raw_url, 3600);
+      rawSignedUrl = rawUrl?.signedUrl ?? undefined;
+    }
+
+    const { data: processedUrl } = photo.processed_url
+      ? await supabase.storage.from('raw-images').createSignedUrl(photo.processed_url, 3600)
+      : { data: null };
+
+    return {
+      id: photo.id,
+      rawUrl: rawSignedUrl,
+      processedUrl: processedUrl?.signedUrl || rawSignedUrl || '',
+      variant: photo.variant || 'original',
+      clientApproved: photo.client_approved ?? undefined,
+      clientFeedback: photo.client_feedback ?? undefined,
+    };
+  }));
+}
+
 export default async function SharePage({ params }: { params: Promise<{ token: string }> }) {
   const { token } = await params;
   const supabase = getSupabase();
-  
-  // First, try to find the share by token
+
+  // Find the share by token
   const { data: share } = await supabase
     .from('shares')
     .select('*')
     .eq('token', token)
     .single();
 
-  let listing = null;
-  let shareToken = token;
-  let shareSettings: {
-    allow_download: boolean;
-    show_comparison: boolean;
-    allow_approval: boolean;
-    requirePassword?: boolean;
-    passwordHash?: string;
-  } = {
-    allow_download: true,
-    show_comparison: true,
-    allow_approval: true,
-  };
-
   if (!share) {
-    // No valid share token — deny access
     notFound();
   }
 
@@ -47,62 +89,48 @@ export default async function SharePage({ params }: { params: Promise<{ token: s
     notFound();
   }
 
-  // Check password-protected shares — require ?pw= query param
-  if (share.password) {
-    // Password verification is handled client-side via ShareView
-    // The share page will prompt for password before showing content
-    shareSettings.requirePassword = true;
-    shareSettings.passwordHash = share.password;
+  const isPasswordProtected = !!share.password;
+  const showComparison = share.show_comparison ?? true;
+
+  const shareSettings: ShareSettings = {
+    allow_download: share.allow_download ?? true,
+    show_comparison: showComparison,
+    allow_approval: true,
+    requirePassword: isPasswordProtected,
+  };
+
+  // If password-protected, do NOT fetch listing data or sign any URLs.
+  // The client will call /api/share/verify to unlock content.
+  if (isPasswordProtected) {
+    return (
+      <ShareView
+        listing={null}
+        photos={[]}
+        settings={shareSettings}
+        shareToken={token}
+      />
+    );
   }
 
-  // Share found - get the listing
-  const { data: listingData } = await supabase
+  // No password required — fetch listing + photos
+  const { data: listing } = await supabase
     .from('listings')
     .select('*')
     .eq('id', share.listing_id)
     .single();
 
-  listing = listingData;
-
-  shareSettings = {
-    ...shareSettings,
-    allow_download: share.allow_download ?? true,
-    show_comparison: share.show_comparison ?? true,
-    allow_approval: true,
-  };
-
   if (!listing) {
     notFound();
   }
 
-  const { data: photos } = await supabase
-    .from('photos')
-    .select('*')
-    .eq('listing_id', listing.id)
-    .eq('status', 'completed')
-    .order('created_at', { ascending: false });
-
-  const photosWithUrls = await Promise.all((photos || []).map(async (photo) => {
-    const { data: rawUrl } = await supabase.storage.from('raw-images').createSignedUrl(photo.raw_url, 3600);
-    const { data: processedUrl } = photo.processed_url 
-      ? await supabase.storage.from('raw-images').createSignedUrl(photo.processed_url, 3600)
-      : { data: null };
-    
-    return {
-      ...photo,
-      rawUrl: rawUrl?.signedUrl,
-      processedUrl: processedUrl?.signedUrl || rawUrl?.signedUrl,
-      clientApproved: photo.client_approved,
-      clientFeedback: photo.client_feedback,
-    };
-  }));
+  const photosWithUrls = await signPhotos(supabase, listing.id, showComparison);
 
   return (
-    <ShareView 
-      listing={listing} 
-      photos={photosWithUrls} 
+    <ShareView
+      listing={listing}
+      photos={photosWithUrls}
       settings={shareSettings}
-      shareToken={shareToken}
+      shareToken={token}
     />
   );
 }

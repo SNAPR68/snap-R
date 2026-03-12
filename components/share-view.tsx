@@ -1,31 +1,44 @@
 'use client';
 
 import Image from 'next/image';
-import { useState, useEffect, useRef } from 'react';
-import { Download, Check, X, ChevronLeft, ChevronRight, MessageSquare, Send, Loader2, CheckCircle } from 'lucide-react';
+import { useState, useEffect, useRef, useCallback } from 'react';
+import { Download, Check, X, ChevronLeft, ChevronRight, MessageSquare, Send, Loader2, CheckCircle, Lock } from 'lucide-react';
 import { trackEvent, SnapREvents } from '@/lib/analytics';
 
 interface Photo {
   id: string;
-  rawUrl: string;
+  rawUrl?: string;
   processedUrl: string;
   variant: string;
   clientApproved?: boolean | null;
   clientFeedback?: string | null;
 }
 
+interface ShareSettings {
+  allow_download: boolean;
+  show_comparison: boolean;
+  allow_approval?: boolean;
+  requirePassword?: boolean;
+}
+
 interface ShareViewProps {
-  listing: { title: string };
+  listing: { title: string } | null;
   photos: Photo[];
-  settings: {
-    allow_download: boolean;
-    show_comparison: boolean;
-    allow_approval?: boolean;
-  };
+  settings: ShareSettings;
   shareToken?: string;
 }
 
-export function ShareView({ listing, photos, settings, shareToken }: ShareViewProps) {
+export function ShareView({ listing: initialListing, photos: initialPhotos, settings, shareToken }: ShareViewProps) {
+  // Mutable state for password-protected shares that load data after verification
+  const [listing, setListing] = useState(initialListing);
+  const [photos, setPhotos] = useState(initialPhotos);
+
+  // Password gate state
+  const [passwordInput, setPasswordInput] = useState('');
+  const [passwordError, setPasswordError] = useState('');
+  const [verifying, setVerifying] = useState(false);
+  const [unlocked, setUnlocked] = useState(!settings.requirePassword);
+
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [sliderPosition, setSliderPosition] = useState(50);
   const [approvalStatus, setApprovalStatus] = useState<Record<string, 'approved' | 'rejected' | null>>({});
@@ -39,6 +52,7 @@ export function ShareView({ listing, photos, settings, shareToken }: ShareViewPr
   const sliderRef = useRef<HTMLDivElement>(null);
 
   const selectedPhoto = photos[selectedIndex];
+  const listingTitle = listing?.title || 'Shared Photos';
 
   useEffect(() => {
     const initialStatus: Record<string, 'approved' | 'rejected' | null> = {};
@@ -53,6 +67,33 @@ export function ShareView({ listing, photos, settings, shareToken }: ShareViewPr
     setFeedbackText(initialFeedback);
   }, [photos]);
 
+  const handlePasswordSubmit = useCallback(async () => {
+    if (!shareToken || !passwordInput.trim()) return;
+    setVerifying(true);
+    setPasswordError('');
+    try {
+      const response = await fetch('/api/share/verify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token: shareToken, password: passwordInput }),
+        signal: AbortSignal.timeout(15000),
+      });
+      if (response.ok) {
+        const data = await response.json() as { listing: { title: string }; photos: Photo[] };
+        setListing(data.listing);
+        setPhotos(data.photos);
+        setUnlocked(true);
+      } else {
+        const err = await response.json() as { error?: string };
+        setPasswordError(err.error || 'Incorrect password');
+      }
+    } catch {
+      setPasswordError('Failed to verify password. Please try again.');
+    } finally {
+      setVerifying(false);
+    }
+  }, [shareToken, passwordInput]);
+
   const handleSliderMove = (e: React.MouseEvent<HTMLDivElement> | React.TouchEvent<HTMLDivElement>) => {
     if (!sliderRef.current) return;
     const rect = sliderRef.current.getBoundingClientRect();
@@ -61,7 +102,6 @@ export function ShareView({ listing, photos, settings, shareToken }: ShareViewPr
   };
 
   const handleApproval = async (photoId: string, approved: boolean) => {
-    // Allow approval with or without shareToken
     setSaving(photoId);
     try {
       const response = await fetch('/api/approve-photo', {
@@ -87,7 +127,6 @@ export function ShareView({ listing, photos, settings, shareToken }: ShareViewPr
   };
 
   const handleSubmitReview = async () => {
-    // Allow approval with or without shareToken
     setSubmitting(true);
     try {
       await fetch('/api/notify-approval', {
@@ -119,7 +158,7 @@ export function ShareView({ listing, photos, settings, shareToken }: ShareViewPr
   const handleDownloadApproved = async () => {
     const approvedPhotos = photos.filter(p => approvalStatus[p.id] === 'approved');
     for (let i = 0; i < approvedPhotos.length; i++) {
-      await handleDownload(approvedPhotos[i].processedUrl, `${listing.title}-approved-${i + 1}.jpg`);
+      await handleDownload(approvedPhotos[i].processedUrl, `${listingTitle}-approved-${i + 1}.jpg`);
     }
   };
 
@@ -127,6 +166,43 @@ export function ShareView({ listing, photos, settings, shareToken }: ShareViewPr
   const rejectedCount = Object.values(approvalStatus).filter(s => s === 'rejected').length;
   const pendingCount = photos.length - approvedCount - rejectedCount;
   const reviewComplete = pendingCount === 0;
+
+  // Password gate
+  if (!unlocked) {
+    return (
+      <div className="min-h-screen bg-[#0F0F0F] flex items-center justify-center text-white p-4">
+        <div className="max-w-sm w-full">
+          <div className="flex justify-center mb-6">
+            <div className="w-16 h-16 bg-[#D4A017]/20 rounded-full flex items-center justify-center">
+              <Lock className="w-8 h-8 text-[#D4A017]" />
+            </div>
+          </div>
+          <h1 className="text-xl font-bold text-center mb-2">Password Required</h1>
+          <p className="text-white/60 text-sm text-center mb-6">Enter the password to view these photos.</p>
+          <form onSubmit={(e) => { e.preventDefault(); handlePasswordSubmit(); }} className="space-y-4">
+            <input
+              type="password"
+              value={passwordInput}
+              onChange={(e) => setPasswordInput(e.target.value)}
+              placeholder="Enter password"
+              aria-label="Share password"
+              className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl focus:border-[#D4A017]/50 focus:outline-none text-white"
+              autoFocus
+            />
+            {passwordError && <p className="text-red-400 text-sm">{passwordError}</p>}
+            <button
+              type="submit"
+              disabled={verifying || !passwordInput.trim()}
+              className="w-full py-3 bg-gradient-to-r from-[#D4A017] to-[#B8860B] rounded-xl font-semibold text-black flex items-center justify-center gap-2 disabled:opacity-50"
+            >
+              {verifying ? <Loader2 className="w-5 h-5 animate-spin" /> : null}
+              {verifying ? 'Verifying...' : 'Unlock'}
+            </button>
+          </form>
+        </div>
+      </div>
+    );
+  }
 
   if (photos.length === 0) {
     return (
@@ -172,7 +248,7 @@ export function ShareView({ listing, photos, settings, shareToken }: ShareViewPr
       <header className="h-16 bg-[#1A1A1A] border-b border-white/10 flex items-center justify-between px-6">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#D4A017] to-[#B8860B] flex items-center justify-center font-bold text-black text-xl">S</div>
-          <span className="font-semibold">{listing.title}</span>
+          <span className="font-semibold">{listingTitle}</span>
         </div>
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-3 text-sm">
@@ -196,7 +272,7 @@ export function ShareView({ listing, photos, settings, shareToken }: ShareViewPr
       <div className="flex h-[calc(100vh-64px)]">
         <main className="flex-1 p-6 flex flex-col">
           <div className="flex-1 relative bg-[#0A0A0A] rounded-xl overflow-hidden flex items-center justify-center">
-            {settings.show_comparison && selectedPhoto.rawUrl ? (
+            {selectedPhoto && settings.show_comparison && selectedPhoto.rawUrl ? (
               <div ref={sliderRef} className="relative w-full h-full cursor-col-resize select-none" onMouseMove={handleSliderMove} onTouchMove={handleSliderMove}>
                 <Image src={selectedPhoto.processedUrl} alt="Enhanced" className="absolute inset-0 w-full h-full object-contain pointer-events-none" draggable={false} width={400} height={300} unoptimized />
                 <div className="absolute inset-0 overflow-hidden pointer-events-none" style={{ clipPath: `inset(0 ${100 - sliderPosition}% 0 0)` }}>
@@ -210,10 +286,10 @@ export function ShareView({ listing, photos, settings, shareToken }: ShareViewPr
                 <div className="absolute top-4 left-4 px-3 py-1.5 bg-black/80 backdrop-blur rounded-lg text-sm font-medium">Before</div>
                 <div className="absolute top-4 right-4 px-3 py-1.5 bg-black/80 backdrop-blur rounded-lg text-sm font-medium">After</div>
               </div>
-            ) : (
+            ) : selectedPhoto ? (
               <Image src={selectedPhoto.processedUrl} alt="Enhanced" className="w-full h-full object-contain" width={400} height={300} unoptimized />
-            )}
-            {approvalStatus[selectedPhoto.id] && (
+            ) : null}
+            {selectedPhoto && approvalStatus[selectedPhoto.id] && (
               <div className={`absolute top-4 left-1/2 -translate-x-1/2 px-4 py-2 rounded-full font-medium ${approvalStatus[selectedPhoto.id] === 'approved' ? 'bg-emerald-500/90 text-white' : 'bg-red-500/90 text-white'}`}>
                 {approvalStatus[selectedPhoto.id] === 'approved' ? '✓ Approved' : '✗ Rejected'}
               </div>
@@ -226,7 +302,7 @@ export function ShareView({ listing, photos, settings, shareToken }: ShareViewPr
             )}
           </div>
 
-          {settings.allow_approval !== false && (
+          {selectedPhoto && settings.allow_approval !== false && (
             <div className="flex flex-col items-center gap-3 mt-4">
               <div className="flex items-center gap-3">
                 <button onClick={() => handleApproval(selectedPhoto.id, true)} disabled={saving === selectedPhoto.id} className={`flex items-center gap-2 px-6 py-3 rounded-xl font-medium transition-all ${approvalStatus[selectedPhoto.id] === 'approved' ? 'bg-emerald-500 text-white' : 'bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30 border border-emerald-500/50'}`}>
@@ -236,7 +312,7 @@ export function ShareView({ listing, photos, settings, shareToken }: ShareViewPr
                   <X className="w-5 h-5" /> Reject
                 </button>
                 {settings.allow_download && (
-                  <button onClick={() => handleDownload(selectedPhoto.processedUrl, `${listing.title}-${selectedIndex + 1}.jpg`)} className="flex items-center gap-2 px-6 py-3 bg-white/10 hover:bg-white/20 rounded-xl font-medium transition-all">
+                  <button onClick={() => handleDownload(selectedPhoto.processedUrl, `${listingTitle}-${selectedIndex + 1}.jpg`)} className="flex items-center gap-2 px-6 py-3 bg-white/10 hover:bg-white/20 rounded-xl font-medium transition-all">
                     <Download className="w-5 h-5" /> Download
                   </button>
                 )}
@@ -268,7 +344,7 @@ export function ShareView({ listing, photos, settings, shareToken }: ShareViewPr
       </div>
 
       {showSubmitModal && (
-        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
+        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4" role="dialog" aria-modal="true" aria-label="Submit review">
           <div className="bg-[#1A1A1A] rounded-2xl max-w-md w-full p-6">
             <h2 className="text-xl font-bold mb-2">Submit Your Review</h2>
             <p className="text-white/60 text-sm mb-6">The photographer will be notified of your selections.</p>
