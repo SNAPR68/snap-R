@@ -138,7 +138,7 @@ describe('API Input Validation', () => {
   it('schedule-post route rejects invalid platform', async () => {
     const { schedulePostSchema } = await import('@/lib/validation/schemas')
     const result = schedulePostSchema.safeParse({
-      platform: 'twitter', // not in allowed list
+      platform: 'snapchat', // not in allowed list
       scheduledFor: new Date().toISOString(),
     })
     expect(result.success).toBe(false)
@@ -146,7 +146,7 @@ describe('API Input Validation', () => {
 
   it('schedule-post route accepts all valid platforms', async () => {
     const { schedulePostSchema } = await import('@/lib/validation/schemas')
-    for (const platform of ['instagram', 'facebook', 'linkedin', 'tiktok']) {
+    for (const platform of ['instagram', 'facebook', 'linkedin', 'tiktok', 'twitter']) {
       const result = schedulePostSchema.safeParse({
         platform,
         scheduledFor: new Date().toISOString(),
