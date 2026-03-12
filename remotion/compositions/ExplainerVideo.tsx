@@ -90,72 +90,85 @@ const CONTENT_HEIGHT = 1040;
 
 const SCENES: SceneConfig[] = [
   {
-    id: 'homepage-hero',
+    id: 'homepage',
     label: 'Meet SnapR',
-    caption: 'The AI-powered platform for real estate marketing',
+    caption: 'The AI platform that turns property photos into a marketing engine',
     image: 'homepage.png',
-    imageHeight: 8704,
+    imageHeight: 9136,
     durationSec: 8,
     scroll: 'smooth',
     url: 'snap-r.com',
     scrollStartPx: 0,
-    scrollEndPx: 1400,
+    scrollEndPx: 2800,
   },
   {
-    id: 'homepage-gallery',
-    label: 'Before & After',
-    caption: '15 AI tools — sky, twilight, staging, declutter, and more',
-    image: 'homepage.png',
-    imageHeight: 8704,
+    id: 'dashboard',
+    label: 'Dashboard',
+    caption: 'Every listing at a glance — preparation, marketing, and publishing',
+    image: 'dashboard.png',
+    imageHeight: 1392,
+    durationSec: 8,
+    scroll: 'pauseAtTop',
+    url: 'snap-r.com/dashboard',
+  },
+  {
+    id: 'ai-studio',
+    label: 'AI Studio',
+    caption: '15 enhancement tools — sky, staging, twilight, declutter, and more',
+    image: 'studio.png',
+    imageHeight: 1265,
+    durationSec: 9,
+    scroll: 'pauseAtTop',
+    url: 'snap-r.com/dashboard/studio',
+    cursorWaypoints: [
+      { x: 120, y: 400, frame: 60 },
+      { x: 120, y: 500, frame: 100, click: true },
+      { x: 960, y: 540, frame: 160 },
+    ],
+  },
+  {
+    id: 'content-studio',
+    label: 'Content Studio',
+    caption: 'Auto-generated posts with captions, hashtags, and branded templates',
+    image: 'content-studio.png',
+    imageHeight: 1267,
+    durationSec: 8,
+    scroll: 'pauseAtTop',
+    url: 'snap-r.com/dashboard/content-studio',
+    cursorWaypoints: [
+      { x: 400, y: 350, frame: 70 },
+      { x: 700, y: 400, frame: 120, click: true },
+    ],
+  },
+  {
+    id: 'social-publish',
+    label: 'Social Publish',
+    caption: 'Connected to Facebook, Instagram, LinkedIn, Twitter, and TikTok',
+    image: 'social-settings.png',
+    imageHeight: 1080,
     durationSec: 7,
-    scroll: 'smooth',
-    url: 'snap-r.com',
-    scrollStartPx: 1400,
-    scrollEndPx: 3200,
+    scroll: 'none',
+    url: 'snap-r.com/dashboard/settings/social',
   },
   {
-    id: 'homepage-problem',
-    label: 'The Problem → The Fix',
-    caption: 'One platform replaces 5+ tools',
-    image: 'homepage.png',
-    imageHeight: 8704,
-    durationSec: 5,
-    scroll: 'smooth',
-    url: 'snap-r.com',
-    scrollStartPx: 3200,
-    scrollEndPx: 4800,
-  },
-  {
-    id: 'homepage-how',
-    label: 'How It Works',
-    caption: 'Upload → Enhance → Market → Publish → Measure',
-    image: 'homepage.png',
-    imageHeight: 8704,
-    durationSec: 6,
-    scroll: 'smooth',
-    url: 'snap-r.com',
-    scrollStartPx: 4800,
-    scrollEndPx: 6400,
+    id: 'analytics',
+    label: 'Analytics',
+    caption: 'Track reach, engagement, clicks, and ROI across every platform',
+    image: 'analytics.png',
+    imageHeight: 1267,
+    durationSec: 8,
+    scroll: 'pauseAtTop',
+    url: 'snap-r.com/dashboard/analytics',
   },
   {
     id: 'pricing',
     label: 'Pricing',
-    caption: 'All 15 AI tools on every plan',
+    caption: 'All 15 AI tools on every plan — start free, upgrade when ready',
     image: 'pricing.png',
     imageHeight: 2273,
     durationSec: 6,
     scroll: 'pauseAtTop',
     url: 'snap-r.com/pricing',
-  },
-  {
-    id: 'signup',
-    label: 'Getting Started',
-    caption: 'Start your free trial today',
-    image: 'signup.png',
-    imageHeight: 1080,
-    durationSec: 3,
-    scroll: 'none',
-    url: 'snap-r.com/auth/signup',
   },
 ];
 
@@ -495,7 +508,7 @@ const IntroCard: React.FC = () => {
             lineHeight: 1.5,
           }}
         >
-          Photos to published listing in under 10 minutes
+          Photos to published listing in under ten minutes
         </div>
       </div>
     </AbsoluteFill>
@@ -585,7 +598,7 @@ const ClosingCTA: React.FC = () => {
             lineHeight: 1.5,
           }}
         >
-          From photos to published listing in under 10 minutes.
+          From photos to fully published listing in under ten minutes.
         </div>
 
         <div

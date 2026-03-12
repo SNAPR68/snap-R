@@ -2,7 +2,7 @@
   {
     "filename": "homepage.png",
     "label": "Homepage full scroll",
-    "scrollHeight": 8704,
+    "scrollHeight": 9136,
     "viewportHeight": 1080
   },
   {
@@ -24,15 +24,21 @@
     "viewportHeight": 1080
   },
   {
+    "filename": "dashboard.png",
+    "label": "Dashboard",
+    "scrollHeight": 1392,
+    "viewportHeight": 1080
+  },
+  {
     "filename": "studio.png",
     "label": "AI Studio",
-    "scrollHeight": 1080,
+    "scrollHeight": 1265,
     "viewportHeight": 1080
   },
   {
     "filename": "content-studio.png",
     "label": "Content Studio",
-    "scrollHeight": 1080,
+    "scrollHeight": 1267,
     "viewportHeight": 1080
   },
   {
@@ -44,6 +50,12 @@
   {
     "filename": "analytics.png",
     "label": "Analytics",
+    "scrollHeight": 1267,
+    "viewportHeight": 1080
+  },
+  {
+    "filename": "social-settings.png",
+    "label": "Social Settings",
     "scrollHeight": 1080,
     "viewportHeight": 1080
   },
