@@ -1,6 +1,7 @@
 export const dynamic = 'force-dynamic';
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { createClient as createServerClient } from '@/lib/supabase/server';
 
 import { logger } from '@/lib/logger';
 function getSupabase() {
@@ -24,7 +25,16 @@ export async function GET(req: NextRequest) {
       return NextResponse.redirect(`${process.env.NEXT_PUBLIC_APP_URL}/dashboard/settings/social?error=missing_params`);
     }
 
-    const [userId, platform] = state.includes('_') ? state.split('_') : [state, 'facebook'];
+    const [stateUserId, platform] = state.includes('_') ? state.split('_') : [state, 'facebook'];
+
+    // Verify current session matches the user ID from state
+    const supabaseAuth = await createServerClient();
+    const { data: { user: sessionUser } } = await supabaseAuth.auth.getUser();
+    if (!sessionUser || sessionUser.id !== stateUserId) {
+      logger.warn('[Facebook OAuth] Session mismatch — state userId:', stateUserId, 'session:', sessionUser?.id);
+      return NextResponse.redirect(`${process.env.NEXT_PUBLIC_APP_URL}/dashboard/settings/social?error=session_mismatch`);
+    }
+    const userId = sessionUser.id;
     
     const clientId = process.env.NEXT_PUBLIC_FACEBOOK_APP_ID;
     const clientSecret = process.env.FACEBOOK_APP_SECRET;

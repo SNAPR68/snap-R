@@ -203,7 +203,7 @@ export async function getCheckpoint(
 export async function incrementUsageIfNotCounted(
   listingId: string,
   userId: string,
-  env: Env
+  env: { SUPABASE_URL: string; SUPABASE_SERVICE_KEY: string }
 ) {
   const supabase = createSupabaseClient(env);
 

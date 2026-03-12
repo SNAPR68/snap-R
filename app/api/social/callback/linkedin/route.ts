@@ -1,11 +1,12 @@
 export const dynamic = 'force-dynamic';
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { createClient as createServerClient } from '@/lib/supabase/server';
 
 import { logger } from '@/lib/logger';
 export async function GET(req: NextRequest) {
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://snap-r.com';
-  
+
   try {
     const supabase = createClient(
       process.env.SUPABASE_URL!,
@@ -24,7 +25,16 @@ export async function GET(req: NextRequest) {
       return NextResponse.redirect(`${baseUrl}/dashboard/settings/social?error=missing_params`);
     }
 
-    const userId = state;
+    const stateUserId = state;
+
+    // Verify current session matches the user ID from state
+    const supabaseAuth = await createServerClient();
+    const { data: { user: sessionUser } } = await supabaseAuth.auth.getUser();
+    if (!sessionUser || sessionUser.id !== stateUserId) {
+      logger.warn('[LinkedIn OAuth] Session mismatch — state userId:', stateUserId, 'session:', sessionUser?.id);
+      return NextResponse.redirect(`${baseUrl}/dashboard/settings/social?error=session_mismatch`);
+    }
+    const userId = sessionUser.id;
     const clientId = process.env.NEXT_PUBLIC_LINKEDIN_CLIENT_ID;
     const clientSecret = process.env.LINKEDIN_CLIENT_SECRET;
     const redirectUri = `${baseUrl}/api/social/callback/linkedin`;

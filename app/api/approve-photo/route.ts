@@ -20,34 +20,29 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Missing photo ID' }, { status: 400 });
     }
 
-    const supabase = getSupabase();
-    let listingId: string | null = null;
-
-    // If shareToken provided, verify it
-    if (shareToken) {
-      const { data: share } = await supabase
-        .from('shares')
-        .select('listing_id')
-        .eq('token', shareToken)
-        .single();
-
-      if (!share) {
-        return NextResponse.json({ error: 'Invalid share token' }, { status: 403 });
-      }
-      listingId = share.listing_id;
-    } else {
-      // No shareToken - get listing from photo directly
-      const { data: photo } = await supabase
-        .from('photos')
-        .select('listing_id')
-        .eq('id', photoId)
-        .single();
-
-      if (!photo) {
-        return NextResponse.json({ error: 'Photo not found' }, { status: 404 });
-      }
-      listingId = photo.listing_id;
+    if (!shareToken) {
+      return NextResponse.json({ error: 'Share token is required' }, { status: 403 });
     }
+
+    const supabase = getSupabase();
+
+    // Verify share token and get listing
+    const { data: share } = await supabase
+      .from('shares')
+      .select('listing_id, expires_at')
+      .eq('token', shareToken)
+      .single();
+
+    if (!share) {
+      return NextResponse.json({ error: 'Invalid share token' }, { status: 403 });
+    }
+
+    // Check expiry
+    if (share.expires_at && new Date(share.expires_at) < new Date()) {
+      return NextResponse.json({ error: 'Share link has expired' }, { status: 403 });
+    }
+
+    const listingId = share.listing_id;
 
     // Update photo approval
     const { error } = await supabase

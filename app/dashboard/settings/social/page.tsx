@@ -112,9 +112,16 @@ function SocialSettingsContent() {
   const initiateOAuth = async (platform: string) => {
     setConnecting(platform);
 
-    // Generate state for CSRF protection
-    const state = Math.random().toString(36).substring(7);
-    sessionStorage.setItem(`oauth_state_${platform}`, state);
+    // Get current user ID — used as OAuth state for CSRF validation
+    // The callback verifies state === session user ID to prevent account-linking attacks
+    const supabase = createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      setConnecting(null);
+      setMessage({ type: 'error', text: 'Please sign in to connect accounts' });
+      return;
+    }
+    const state = user.id;
 
     // Redirect to OAuth initiation endpoint
     const baseUrl = window.location.origin;
@@ -147,6 +154,7 @@ function SocialSettingsContent() {
       const scopes = 'tweet.read%20tweet.write%20users.read%20offline.access';
 
       // Embed code_verifier in state JSON so the callback can use it
+      // csrf field contains user ID for CSRF validation on callback
       const statePayload = JSON.stringify({ csrf: state, code_verifier: codeVerifier });
       const encodedState = btoa(statePayload);
 

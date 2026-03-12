@@ -4,11 +4,11 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
+import { createClientFromRequest } from '@/lib/supabase/server';
 import { mobileRegisterDeviceSchema, parseBody } from '@/lib/validation/schemas'
 
 export async function POST(request: NextRequest) {
-  const supabase = await createClient();
+  const supabase = createClientFromRequest(request);
   const {
     data: { user },
   } = await supabase.auth.getUser();
