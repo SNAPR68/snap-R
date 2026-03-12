@@ -1,4 +1,6 @@
 // CRITICAL: Set up process.env BEFORE any V2 imports
+import type { createSupabaseClient } from './lib/supabase-client';
+
 type MessageBatch<T> = {
   messages: Array<{
     body: T;
@@ -37,7 +39,7 @@ function ensureProcessReportStub() {
     });
   } catch {
     try {
-      proc.report.getReport = () => ({});
+      (proc as Record<string, unknown>).report = { getReport: () => ({}) };
     } catch {}
   }
 }
@@ -877,7 +879,7 @@ const worker = {
               const analysis = analysesById.get(photo.id);
 
               return processOnePhoto(
-                photo,
+                { ...photo, signedUrl: photo.signedUrl ?? undefined },
                 globalIdx,
                 photos.length,
                 strategyForPhoto,
@@ -1111,7 +1113,7 @@ const worker = {
       }
 
       try {
-        const body = await request.json();
+        const body = await request.json() as Record<string, unknown>;
         console.log(`[HTTP] Enqueuing job ${body.jobId}`);
 
         await env.SNAPR_QUEUE.send(body);

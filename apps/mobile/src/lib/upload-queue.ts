@@ -103,10 +103,10 @@ async function uploadSingle(item: QueuedUpload): Promise<void> {
       bytes[i] = binaryStr.charCodeAt(i);
     }
 
-    const storagePath = `raw-images/${session.user.id}/${item.listingId}/${Date.now()}-${item.fileName}`;
+    const storagePath = `${session.user.id}/${item.listingId}/${Date.now()}-${item.fileName}`;
 
     const { error: uploadError } = await supabase.storage
-      .from('uploads')
+      .from('raw-images')
       .upload(storagePath, bytes.buffer, {
         contentType: 'image/jpeg',
         upsert: false,

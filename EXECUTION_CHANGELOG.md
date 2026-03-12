@@ -1,7 +1,31 @@
 # SnapR Execution Changelog
 =================================
 
-## 2026-03-12 — Security audit P1-P3: OAuth CSRF, auth guards, input validation
+## 2026-03-12 — Security audit: auth guards, OAuth CSRF, webhook signing, mobile auth
+
+### P1 Fixes (Critical)
+- `app/share/[token]/page.tsx` — Removed direct listing-by-UUID fallback; require valid share token
+  - Also added password-protected share support (P2 merged into this fix)
+- `app/api/approve-photo/route.ts` — Require valid share token for photo approval; reject bare photoId
+  - Also validates share expiry before allowing approval
+- `app/api/social/callback/facebook/route.ts` — Verify session matches state userId before persisting
+- `app/api/social/callback/linkedin/route.ts` — Same session validation as Facebook
+
+### P2 Fixes (Important)
+- `app/api/webhooks/whatsapp/route.ts` — Verify Twilio HMAC-SHA1 request signature
+- `lib/supabase/server.ts` — New `createClientFromRequest()` supporting Bearer token auth for mobile
+- `app/api/mobile/*.ts` (4 routes) — Use `createClientFromRequest()` for mobile Bearer token auth
+- `app/api/listings/[id]/photos/route.ts` — New endpoint for mobile photo fetching (was 404)
+
+### P2 Partial (Processor TS errors)
+- `apps/processor/src/handler.ts` — Fixed dead import, typed parameters properly
+- `apps/processor/src/lib/supabase-client.ts` — Fixed unresolved `Env` type reference
+- `apps/processor/src/index.ts` — Fixed `createSupabaseClient` type import, `body` typing, `proc.report` stub
+  - Note: OpenAI duplicate type mismatch + FluxOptions remain (need node_modules dedup)
+
+### P3 Fixes (Minor)
+- `app/api/photographer/deliver/route.ts` — Fixed `total_deliveries` update (was query object, now numeric increment)
+- `apps/mobile/src/lib/upload-queue.ts` — Fixed bucket name (`uploads` → `raw-images`) and storage path
 
 ### OAuth CSRF Fix (P1 — Facebook/LinkedIn connect broken)
 - `app/dashboard/settings/social/page.tsx` — OAuth state parameter now uses `user.id`

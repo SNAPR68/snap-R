@@ -145,10 +145,17 @@ export async function POST(request: NextRequest) {
 
         // Update client stats if client_id provided
         if (delivery.clientId) {
+          const { data: clientRow } = await admin
+            .from('photographer_clients')
+            .select('total_deliveries')
+            .eq('id', delivery.clientId)
+            .eq('photographer_id', user.id)
+            .single()
+
           await admin
             .from('photographer_clients')
             .update({
-              total_deliveries: admin.from('photographer_clients').select('total_deliveries'),
+              total_deliveries: ((clientRow?.total_deliveries as number) ?? 0) + 1,
               last_delivery_at: new Date().toISOString(),
               updated_at: new Date().toISOString(),
             })
