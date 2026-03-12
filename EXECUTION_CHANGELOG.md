@@ -1,6 +1,16 @@
 # SnapR Execution Changelog
 =================================
 
+## 2026-03-12 — Auto-publish to connected social platforms via API
+
+### Content Studio Direct Publishing
+- `components/content-studio/unified-creator.tsx` — When a social platform (Facebook,
+  Instagram, LinkedIn) is connected, clicking the platform button now publishes directly
+  via `/api/social/publish` (Graph API) instead of downloading the image and opening
+  the platform URL. Falls back to download+open for unconnected platforms.
+- Added `connectedPlatforms` state fetched from `/api/social/connections` on mount
+- Success messages now differentiate "Published to Facebook!" vs "Ready to upload"
+
 ## 2026-03-12 — Security audit P1-P3: OAuth CSRF, auth guards, input validation
 
 ### OAuth CSRF Fix (P1 — Facebook/LinkedIn connect broken)

@@ -127,6 +127,7 @@ export function UnifiedCreator() {
   const [videoProgress, setVideoProgress] = useState(0)
 
   const [showScheduleModal, setShowScheduleModal] = useState(false)
+  const [connectedPlatforms, setConnectedPlatforms] = useState<Set<string>>(new Set())
 
   const [property, setProperty] = useState({ address: '', city: '', state: '', price: null as number | null, bedrooms: null as number | null, bathrooms: null as number | null, squareFeet: null as number | null, propertyType: 'House' as string })
   const [listingData, setListingData] = useState<ListingData | null>(null)
@@ -147,6 +148,24 @@ export function UnifiedCreator() {
       } catch (error: unknown) { console.error('FFmpeg load error:', error) }
     }
     //loadFFmpeg()
+  }, [])
+
+  // Fetch connected social platforms for direct API publishing
+  useEffect(() => {
+    const loadConnections = async () => {
+      try {
+        const res = await fetch('/api/social/connections', { signal: AbortSignal.timeout(15000) })
+        if (!res.ok) return
+        const data = await res.json()
+        const platforms = new Set<string>(
+          (data.connections || []).map((c: { platform: string }) => c.platform)
+        )
+        setConnectedPlatforms(platforms)
+      } catch {
+        // Silently ignore — fallback to download+open behavior
+      }
+    }
+    loadConnections()
   }, [])
 
   // Load listing data and photos
@@ -343,43 +362,62 @@ export function UnifiedCreator() {
         })
         setUploadSuccess(targetPlatform)
       } else {
-        // Desktop fallback: Download image, copy caption, open platform
-        // Desktop fallback: download image, copy caption, open platform
-        // 1. Download the image
-        const link = document.createElement('a')
-        link.href = URL.createObjectURL(imageBlob)
-        link.download = fileName
-        document.body.appendChild(link)
-        link.click()
-        document.body.removeChild(link)
-        URL.revokeObjectURL(link.href)
+        // Determine the publish key (story maps to instagram)
+        const publishKey = targetPlatform === 'story' ? 'instagram' : targetPlatform
+        const isConnected = connectedPlatforms.has(publishKey)
 
-        // 2. Copy caption to clipboard
-        if (fullCaption) {
-          await navigator.clipboard.writeText(fullCaption)
+        // Upload the generated image to storage for permanent URL
+        const formData = new FormData()
+        formData.append('file', imageBlob, fileName)
+        formData.append('folder', isConnected ? 'social-posts' : 'content-library')
+
+        const uploadRes = await fetch('/api/upload-image', {
+          method: 'POST',
+          body: formData,
+          signal: AbortSignal.timeout(15000),
+        })
+        const uploadData = await uploadRes.json()
+        const permanentImageUrl = uploadData.url || photoUrl
+
+        if (isConnected) {
+          // Connected platform: Publish directly via API
+          const publishRes = await fetch('/api/social/publish', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              platform: publishKey,
+              content: fullCaption,
+              imageUrls: [permanentImageUrl],
+              listingId: listingId || undefined,
+            }),
+            signal: AbortSignal.timeout(30000),
+          })
+          const publishData = await publishRes.json()
+          if (!publishRes.ok) throw new Error(publishData.error || 'Failed to publish')
+
+          setUploadSuccess(`published-${targetPlatform}`)
+        } else {
+          // Not connected: Download image, copy caption, open platform
+          const link = document.createElement('a')
+          link.href = URL.createObjectURL(imageBlob)
+          link.download = fileName
+          document.body.appendChild(link)
+          link.click()
+          document.body.removeChild(link)
+          URL.revokeObjectURL(link.href)
+
+          if (fullCaption) {
+            await navigator.clipboard.writeText(fullCaption)
+          }
+
+          const platformUrl = PLATFORM_URLS[targetPlatform] || PLATFORM_URLS[platform]
+          window.open(platformUrl, '_blank')
+
+          setUploadSuccess(targetPlatform)
         }
 
-        // 3. Open the platform in new tab
-        const platformUrl = PLATFORM_URLS[targetPlatform] || PLATFORM_URLS[platform]
-        window.open(platformUrl, '_blank')
-
-        setUploadSuccess(targetPlatform)
-
-        // Save to content library - upload generated image first
+        // Save to content library
         try {
-          // Upload the generated image to storage for permanent URL
-          const formData = new FormData()
-          formData.append('file', imageBlob, fileName)
-          formData.append('folder', 'content-library')
-
-          const uploadRes = await fetch('/api/upload-image', {
-            method: 'POST',
-            body: formData,
-            signal: AbortSignal.timeout(15000),
-          })
-          const uploadData = await uploadRes.json()
-          const permanentImageUrl = uploadData.url || photoUrl
-
           await fetch('/api/content-library', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -984,6 +1022,7 @@ export function UnifiedCreator() {
                    uploadSuccess === 'carousel' ? 'Carousel downloaded!' :
                    uploadSuccess === 'whatsapp' ? 'Shared to WhatsApp!' :
                    uploadSuccess === 'schedule' ? 'Post Scheduled!' :
+                   uploadSuccess.startsWith('published-') ? `Published to ${uploadSuccess.replace('published-', '').charAt(0).toUpperCase() + uploadSuccess.replace('published-', '').slice(1)}!` :
                    `Ready to upload to ${uploadSuccess}!`}
                 </p>
                 <p className="text-xs text-green-400/70">
@@ -991,6 +1030,7 @@ export function UnifiedCreator() {
                    uploadSuccess === 'carousel' ? 'ZIP file saved with all slides' :
                    uploadSuccess === 'whatsapp' ? 'Image shared successfully' :
                    uploadSuccess === 'schedule' ? 'Your post will be published automatically at the scheduled time' :
+                   uploadSuccess.startsWith('published-') ? 'Your post is now live on your page!' :
                    'Caption copied • Platform opened • Just upload the image!'}
                 </p>
               </div>
