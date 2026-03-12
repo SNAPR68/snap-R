@@ -13,7 +13,7 @@ export const stripeCheckoutSchema = z.object({
 // Schedule a post
 export const schedulePostSchema = z.object({
   listingId: z.string().uuid().optional().nullable(),
-  platform: z.enum(['instagram', 'facebook', 'linkedin', 'tiktok']),
+  platform: z.enum(['instagram', 'facebook', 'linkedin', 'tiktok', 'twitter']),
   postType: z.string().max(50).optional(),
   content: z.string().max(5000).optional(),
   imageUrls: z.array(z.string().url()).max(10).optional(),
@@ -768,7 +768,7 @@ export const watermarkSchema = z.object({
 
 // Social publish (extended with scheduling)
 export const socialPublishExtendedSchema = z.object({
-  platform: z.enum(['instagram', 'facebook', 'linkedin', 'tiktok']),
+  platform: z.enum(['instagram', 'facebook', 'linkedin', 'tiktok', 'twitter']),
   content: z.string().min(1).max(5000),
   imageUrls: z.array(z.string().url()).max(10).optional(),
   listingId: z.string().uuid().optional().nullable(),

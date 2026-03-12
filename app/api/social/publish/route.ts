@@ -100,6 +100,12 @@ export async function POST(req: NextRequest) {
       case 'linkedin':
         result = await publishToLinkedIn(connection, content, imageUrls ?? []);
         break;
+      case 'twitter':
+        result = await publishToTwitterX(connection, content, imageUrls ?? []);
+        break;
+      case 'tiktok':
+        result = await publishToTikTok(connection, content, imageUrls ?? []);
+        break;
       default:
         return NextResponse.json({ error: 'Unsupported platform' }, { status: 400 });
     }
@@ -348,4 +354,155 @@ async function publishToLinkedIn(connection: Record<string, string>, content: st
     : 'https://www.linkedin.com/feed/';
 
   return { postId: postUrn || 'unknown', url: postUrl };
+}
+
+async function publishToTwitterX(connection: SocialConnection, content: string, imageUrls: string[]) {
+  const accessToken = connection.access_token;
+
+  // Upload images if provided (Twitter allows up to 4)
+  const mediaIds: string[] = [];
+  if (imageUrls?.length > 0) {
+    for (const imageUrl of imageUrls.slice(0, 4)) {
+      // Download image
+      const imgRes = await fetch(imageUrl, { signal: AbortSignal.timeout(15000) });
+      const imgBuffer = await imgRes.arrayBuffer();
+      const base64Data = Buffer.from(imgBuffer).toString('base64');
+      const mimeType = imgRes.headers.get('content-type') || 'image/jpeg';
+
+      // INIT
+      const initRes = await fetch('https://upload.twitter.com/1.1/media/upload.json', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${accessToken}`,
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: new URLSearchParams({
+          command: 'INIT',
+          total_bytes: String(imgBuffer.byteLength),
+          media_type: mimeType,
+        }),
+        signal: AbortSignal.timeout(15000),
+      });
+
+      if (!initRes.ok) continue;
+      const initData = await initRes.json();
+      const mediaId = initData.media_id_string;
+
+      // APPEND
+      const appendRes = await fetch('https://upload.twitter.com/1.1/media/upload.json', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${accessToken}`,
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: new URLSearchParams({
+          command: 'APPEND',
+          media_id: mediaId,
+          segment_index: '0',
+          media_data: base64Data,
+        }),
+        signal: AbortSignal.timeout(30000),
+      });
+
+      if (!appendRes.ok) continue;
+
+      // FINALIZE
+      const finalizeRes = await fetch('https://upload.twitter.com/1.1/media/upload.json', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${accessToken}`,
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: new URLSearchParams({
+          command: 'FINALIZE',
+          media_id: mediaId,
+        }),
+        signal: AbortSignal.timeout(15000),
+      });
+
+      if (finalizeRes.ok) {
+        mediaIds.push(mediaId);
+      }
+    }
+  }
+
+  // Create tweet
+  const tweetBody: Record<string, unknown> = { text: content };
+  if (mediaIds.length > 0) {
+    tweetBody.media = { media_ids: mediaIds };
+  }
+
+  const response = await fetch('https://api.twitter.com/2/tweets', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${accessToken}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(tweetBody),
+    signal: AbortSignal.timeout(15000),
+  });
+
+  if (!response.ok) {
+    const errText = await response.text();
+    throw new Error(errText || `Twitter error: ${response.status}`);
+  }
+
+  const data = await response.json();
+  const tweetId = data.data?.id;
+
+  return {
+    postId: tweetId || 'unknown',
+    url: tweetId ? `https://x.com/i/status/${tweetId}` : 'https://x.com',
+  };
+}
+
+async function publishToTikTok(connection: SocialConnection, content: string, imageUrls: string[]) {
+  const accessToken = connection.access_token;
+
+  if (!imageUrls || imageUrls.length === 0) {
+    throw new Error('TikTok requires at least one image');
+  }
+
+  // Use TikTok Photo Posting API (creates photo carousel)
+  const response = await fetch(
+    'https://open.tiktokapis.com/v2/post/publish/content/init/',
+    {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${accessToken}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        post_info: {
+          title: content.slice(0, 150),
+          privacy_level: process.env.TIKTOK_PRIVACY_LEVEL || 'SELF_ONLY',
+          disable_comment: false,
+        },
+        source_info: {
+          source: 'PULL_FROM_URL',
+          photo_cover_index: 0,
+          photo_images: imageUrls,
+        },
+        post_mode: 'DIRECT_POST',
+        media_type: 'PHOTO',
+      }),
+      signal: AbortSignal.timeout(30000),
+    }
+  );
+
+  if (!response.ok) {
+    const errText = await response.text();
+    throw new Error(errText || `TikTok error: ${response.status}`);
+  }
+
+  const data = await response.json();
+
+  if (data.error?.code !== 'ok' && data.error?.code) {
+    throw new Error(`TikTok API error: ${data.error.message || data.error.code}`);
+  }
+
+  return {
+    postId: data.data?.publish_id || 'unknown',
+    url: 'https://www.tiktok.com',
+  };
 }
