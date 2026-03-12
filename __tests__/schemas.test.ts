@@ -61,7 +61,7 @@ describe('schedulePostSchema', () => {
   })
 
   it('accepts all supported platforms', () => {
-    for (const platform of ['instagram', 'facebook', 'linkedin', 'tiktok']) {
+    for (const platform of ['instagram', 'facebook', 'linkedin', 'tiktok', 'twitter']) {
       expect(
         schedulePostSchema.safeParse({ ...validPost, platform }).success
       ).toBe(true)
@@ -70,7 +70,7 @@ describe('schedulePostSchema', () => {
 
   it('rejects unsupported platform', () => {
     expect(
-      schedulePostSchema.safeParse({ ...validPost, platform: 'twitter' }).success
+      schedulePostSchema.safeParse({ ...validPost, platform: 'snapchat' }).success
     ).toBe(false)
   })
 
