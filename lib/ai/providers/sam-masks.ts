@@ -325,7 +325,7 @@ export class SAMMasksClient {
       if (!response.ok) {
         return model;
       }
-      const data = await response.json();
+      const data = await response.json() as { latest_version?: { id?: string } };
       const versionId = data?.latest_version?.id;
       if (!versionId) {
         return model;
@@ -642,7 +642,7 @@ async function uploadMaskToSupabase(maskBuffer: Buffer): Promise<string | null> 
     return null;
   }
 
-  const signed = await signRes.json();
+  const signed = await signRes.json() as { signedURL?: string; signedUrl?: string };
   const signedUrl = signed?.signedURL || signed?.signedUrl;
   if (!signedUrl) return null;
   if (signedUrl.startsWith('http')) return signedUrl;

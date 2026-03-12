@@ -37,7 +37,7 @@ function ensureProcessReportStub() {
     });
   } catch {
     try {
-      proc.report.getReport = () => ({});
+      (proc.report as Record<string, unknown>).getReport = () => ({});
     } catch {}
   }
 }
@@ -68,6 +68,7 @@ import type { ToolId } from '../../../lib/ai/router.js';
 import type { PhotoAnalysis, PhotoStrategy } from '../../../lib/ai/listing-engine/types.js';
 
 type WorkerDeps = typeof import('./lib/supabase-client.js');
+type SupabaseWorkerClient = ReturnType<WorkerDeps['createSupabaseClient']>;
 let cachedWorkerDeps: WorkerDeps | null = null;
 
 async function loadWorkerDeps() {
@@ -503,7 +504,7 @@ async function runTool(
       case 'sky-replacement':
         return replicate.skyReplacement(imageUrl, presetPrompt, undefined, { ...toolOptions, skipMask: true });
       case 'virtual-twilight':
-        return replicate.virtualTwilight(imageUrl, presetPrompt, toolOptions);
+        return replicate.virtualTwilight(imageUrl, presetPrompt, undefined, toolOptions);
       case 'lawn-repair':
         return replicate.lawnRepair(imageUrl, presetPrompt, undefined, { ...toolOptions, skipMask: true });
       case 'pool-enhance':
@@ -548,7 +549,7 @@ async function runTool(
 }
 
 async function uploadToSupabase(
-  supabase: ReturnType<typeof createSupabaseClient>,
+  supabase: SupabaseWorkerClient,
   userId: string,
   listingId: string,
   photoId: string,
@@ -587,7 +588,7 @@ async function processOnePhoto(
   analysis: PhotoAnalysis | undefined,
   presets: LockedPresets,
   costTracker: CostTracker,
-  supabase: ReturnType<typeof createSupabaseClient>,
+  supabase: SupabaseWorkerClient,
   userId: string,
   listingId: string,
   env: Env
@@ -806,10 +807,11 @@ const worker = {
         const { default: OpenAI } = await import('openai');
         const openaiClient = new OpenAI({ apiKey: env.OPENAI_API_KEY });
 
+        // Cast via unknown: processor's openai has different #private fields than root's
         const analyses = await analyzePhotos(photosForAnalysis, {
           maxConcurrency: Number.isFinite(analysisConcurrency) ? analysisConcurrency : 8,
           batchDelayMs: Number.isFinite(analysisBatchDelayMs) ? analysisBatchDelayMs : 300,
-          client: openaiClient,
+          client: openaiClient as unknown as NonNullable<Parameters<typeof analyzePhotos>[1]>['client'],
         });
         const analysisMs = Date.now() - analysisStart;
         console.log(`[Worker] Analysis complete: ${analyses.length} photos in ${(analysisMs / 1000).toFixed(1)}s`);
@@ -1111,14 +1113,14 @@ const worker = {
       }
 
       try {
-        const body = await request.json();
+        const body = await request.json() as Record<string, unknown>;
         console.log(`[HTTP] Enqueuing job ${body.jobId}`);
 
         await env.SNAPR_QUEUE.send(body);
 
         return Response.json({
           status: "queued",
-          jobId: body.jobId,
+          jobId: body.jobId as string,
           message: "Job enqueued successfully"
         });
       } catch (error) {
