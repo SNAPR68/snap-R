@@ -1,6 +1,21 @@
 # SnapR Execution Changelog
 =================================
 
+## 2026-03-12 — Add Twitter/X and TikTok direct publishing
+
+### Publish Route (`app/api/social/publish/route.ts`)
+- Added `twitter` and `tiktok` cases to platform switch statement
+- `publishToTwitterX()` — chunked media upload (INIT→APPEND→FINALIZE) + tweet via v2 API
+- `publishToTikTok()` — photo posting via TikTok Content Posting API (PULL_FROM_URL)
+
+### Content Studio (`components/content-studio/unified-creator.tsx`)
+- Added Twitter/X button (dark gradient) and TikTok button to single-post publish grid
+- Added `Twitter` icon import, `twitter` to PLATFORM_URLS
+- Connected platforms auto-publish; unconnected fall back to download+open
+
+### Validation (`lib/validation/schemas.ts`)
+- Added `'twitter'` to `schedulePostSchema` and `socialPublishExtendedSchema` platform enums
+
 ## 2026-03-12 — P2 security fixes: share password gating, show_comparison enforcement, processor TS
 
 ### Password-Protected Shares — Server-Side Data Gating

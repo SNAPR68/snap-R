@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useSearchParams } from 'next/navigation'
 import html2canvas from 'html2canvas'
 import JSZip from 'jszip'
-import { Download, Loader2, Check, Sparkles, Instagram, Facebook, Linkedin, Video, Image, Hash, ClipboardCopy, MessageCircle, Images, ImageIcon, CheckCircle, AlertCircle, FolderOpen, Calendar, ChevronRight } from "lucide-react"
+import { Download, Loader2, Check, Sparkles, Instagram, Facebook, Linkedin, Twitter, Video, Image, Hash, ClipboardCopy, MessageCircle, Images, ImageIcon, CheckCircle, AlertCircle, FolderOpen, Calendar, ChevronRight } from "lucide-react"
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -87,6 +87,7 @@ const PLATFORM_URLS: Record<string, string> = {
   facebook: 'https://www.facebook.com/',
   linkedin: 'https://www.linkedin.com/feed/',
   tiktok: 'https://www.tiktok.com/upload',
+  twitter: 'https://x.com/compose/post',
   story: 'https://www.instagram.com/',
 }
 
@@ -1099,6 +1100,24 @@ export function UnifiedCreator() {
                   className="h-11 bg-gradient-to-r from-blue-700 to-blue-500 hover:from-blue-800 hover:to-blue-600 text-white font-semibold"
                 >
                   {uploading === 'linkedin' ? <Loader2 className="w-4 h-4 animate-spin" /> : <><Linkedin className="w-4 h-4 mr-2" />LinkedIn</>}
+                </Button>
+
+                {/* Twitter/X */}
+                <Button
+                  onClick={() => uploadToPlatform('twitter')}
+                  disabled={uploading !== null}
+                  className="h-11 bg-gradient-to-r from-gray-900 to-gray-700 hover:from-black hover:to-gray-800 text-white font-semibold"
+                >
+                  {uploading === 'twitter' ? <Loader2 className="w-4 h-4 animate-spin" /> : <><Twitter className="w-4 h-4 mr-2" />X / Twitter</>}
+                </Button>
+
+                {/* TikTok */}
+                <Button
+                  onClick={() => uploadToPlatform('tiktok')}
+                  disabled={uploading !== null}
+                  className="h-11 bg-gradient-to-r from-gray-800 to-black hover:from-gray-900 hover:to-gray-800 text-white font-semibold"
+                >
+                  {uploading === 'tiktok' ? <Loader2 className="w-4 h-4 animate-spin" /> : <><Video className="w-4 h-4 mr-2" />TikTok</>}
                 </Button>
 
                 {/* WhatsApp */}
