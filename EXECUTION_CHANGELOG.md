@@ -1,6 +1,29 @@
 # SnapR Execution Changelog
 =================================
 
+## 2026-03-12 — Security audit P1-P3: OAuth CSRF, auth guards, input validation
+
+### OAuth CSRF Fix (P1 — Facebook/LinkedIn connect broken)
+- `app/dashboard/settings/social/page.tsx` — OAuth state parameter now uses `user.id`
+  instead of random string, matching what callbacks expect for CSRF validation
+- `app/api/social/callback/facebook/route.ts` — Added session verification via
+  `createServerClient()` to prevent account-linking attacks
+- `app/api/social/callback/linkedin/route.ts` — Same session verification added
+
+### Auth Guards (P2)
+- `app/api/approve-photo/route.ts` — Added auth guard + refactored to use server client
+- `app/api/mobile/analyze-frame/route.ts` — Added auth guard
+- `app/api/mobile/content-stats/route.ts` — Added auth guard
+- `app/api/mobile/dashboard-stats/route.ts` — Added auth guard
+- `app/api/mobile/register-device/route.ts` — Added auth guard
+
+### Input Validation & Hardening (P3)
+- `app/api/webhooks/whatsapp/route.ts` — Added Zod validation for webhook payload
+- `app/api/listings/[id]/photos/route.ts` — New endpoint with auth + validation
+- `app/share/[token]/page.tsx` — Input sanitization and error handling
+- `lib/supabase/server.ts` — Improved cookie handling for server client
+- `apps/processor/src/lib/supabase-client.ts` — Fixed schema config
+
 ## 2026-03-11 — Fix broken Calendly "Book a Demo" embed on /contact page
 
 ### CSP Fix

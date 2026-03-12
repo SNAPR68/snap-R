@@ -25,46 +25,51 @@ export default async function SharePage({ params }: { params: Promise<{ token: s
 
   let listing = null;
   let shareToken = token;
-  let shareSettings = {
+  let shareSettings: {
+    allow_download: boolean;
+    show_comparison: boolean;
+    allow_approval: boolean;
+    requirePassword?: boolean;
+    passwordHash?: string;
+  } = {
     allow_download: true,
     show_comparison: true,
     allow_approval: true,
   };
 
-  if (share) {
-    // Share found - get the listing separately
-    const { data: listingData } = await supabase
-      .from('listings')
-      .select('*')
-      .eq('id', share.listing_id)
-      .single();
-    
-    listing = listingData;
-    
-    shareSettings = {
-      allow_download: share.allow_download ?? true,
-      show_comparison: share.show_comparison ?? true,
-      allow_approval: true,
-    };
-    
-    // Check expiry
-    if (share.expires_at && new Date(share.expires_at) < new Date()) {
-      notFound();
-    }
-  } else {
-    // No share found - try direct listing access by ID
-    const { data: directListing } = await supabase
-      .from('listings')
-      .select('*')
-      .eq('id', token)
-      .single();
-    
-    if (!directListing) {
-      notFound();
-    }
-    listing = directListing;
-    shareToken = '';
+  if (!share) {
+    // No valid share token — deny access
+    notFound();
   }
+
+  // Check expiry before loading any data
+  if (share.expires_at && new Date(share.expires_at) < new Date()) {
+    notFound();
+  }
+
+  // Check password-protected shares — require ?pw= query param
+  if (share.password) {
+    // Password verification is handled client-side via ShareView
+    // The share page will prompt for password before showing content
+    shareSettings.requirePassword = true;
+    shareSettings.passwordHash = share.password;
+  }
+
+  // Share found - get the listing
+  const { data: listingData } = await supabase
+    .from('listings')
+    .select('*')
+    .eq('id', share.listing_id)
+    .single();
+
+  listing = listingData;
+
+  shareSettings = {
+    ...shareSettings,
+    allow_download: share.allow_download ?? true,
+    show_comparison: share.show_comparison ?? true,
+    allow_approval: true,
+  };
 
   if (!listing) {
     notFound();

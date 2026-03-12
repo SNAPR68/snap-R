@@ -8,7 +8,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
+import { createClientFromRequest } from '@/lib/supabase/server';
 import OpenAI from 'openai';
 
 import { logger } from '@/lib/logger';
@@ -43,7 +43,7 @@ TIPS (max 3, short actionable phrases):
 - "Open curtains for natural light"`;
 
 export async function POST(request: NextRequest) {
-  const supabase = await createClient();
+  const supabase = createClientFromRequest(request);
   const { data: { user }, error: authError } = await supabase.auth.getUser();
 
   if (authError || !user) {

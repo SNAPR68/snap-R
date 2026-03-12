@@ -10,6 +10,7 @@
 export const dynamic = 'force-dynamic';
 
 import { NextRequest, NextResponse } from 'next/server';
+import { createHmac, timingSafeEqual } from 'node:crypto';
 import { createClient } from '@supabase/supabase-js';
 import type { SupabaseClient } from '@supabase/supabase-js';
 
@@ -21,6 +22,38 @@ function getSupabase(): SupabaseClient {
   );
 }
 
+/**
+ * Verify Twilio request signature.
+ * See: https://www.twilio.com/docs/usage/security#validating-requests
+ */
+function verifyTwilioSignature(req: NextRequest, body: URLSearchParams): boolean {
+  const authToken = process.env.TWILIO_AUTH_TOKEN;
+  if (!authToken) {
+    logger.warn('[WhatsApp Webhook] TWILIO_AUTH_TOKEN not configured — skipping signature verification');
+    return true; // Allow in dev if not configured
+  }
+
+  const signature = req.headers.get('x-twilio-signature');
+  if (!signature) return false;
+
+  // Build the data string: URL + sorted POST params
+  const url = req.url;
+  const sortedParams = [...body.entries()]
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([k, v]) => `${k}${v}`)
+    .join('');
+
+  const expected = createHmac('sha1', authToken)
+    .update(url + sortedParams)
+    .digest('base64');
+
+  try {
+    return timingSafeEqual(Buffer.from(signature), Buffer.from(expected));
+  } catch {
+    return false;
+  }
+}
+
 interface ListingRow {
   id: string;
   title: string | null;
@@ -29,10 +62,18 @@ interface ListingRow {
 
 export async function POST(request: NextRequest) {
   try {
-    const formData = await request.formData();
+    // Read raw body for signature verification, then parse as form
+    const rawBody = await request.text();
+    const formParams = new URLSearchParams(rawBody);
 
-    const from = formData.get('From')?.toString() || '';
-    const body = formData.get('Body')?.toString().trim().toUpperCase() || '';
+    // Verify Twilio signature
+    if (!verifyTwilioSignature(request, formParams)) {
+      logger.warn('[WhatsApp Webhook] Invalid Twilio signature');
+      return new NextResponse('Forbidden', { status: 403 });
+    }
+
+    const from = formParams.get('From')?.toString() || '';
+    const body = formParams.get('Body')?.toString().trim().toUpperCase() || '';
 
     // Validate Twilio webhook inputs
     if (!from || !from.startsWith('whatsapp:')) {
