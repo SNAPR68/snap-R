@@ -1114,13 +1114,17 @@ const worker = {
 
       try {
         const body = await request.json() as Record<string, unknown>;
-        console.log(`[HTTP] Enqueuing job ${body.jobId}`);
+        const jobId = typeof body.jobId === 'string' ? body.jobId : '';
+        if (!jobId) {
+          return Response.json({ error: 'jobId is required' }, { status: 400 });
+        }
+        console.log(`[HTTP] Enqueuing job ${jobId}`);
 
         await env.SNAPR_QUEUE.send(body);
 
         return Response.json({
           status: "queued",
-          jobId: body.jobId as string,
+          jobId,
           message: "Job enqueued successfully"
         });
       } catch (error) {

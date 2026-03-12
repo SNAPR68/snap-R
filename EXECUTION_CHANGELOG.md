@@ -18,6 +18,12 @@
   is true; rawUrl omitted entirely when comparison is disabled.
 - `app/api/share/verify/route.ts` — Same server-side enforcement in the verify endpoint.
 
+### CodeRabbit Review Fixes
+- `app/api/share/verify/route.ts` — Replaced manual type checks with Zod schema validation
+  via `parseBody`; replaced inline `createClient` with shared `adminSupabase()`.
+- `apps/processor/src/index.ts` — Added `jobId` validation before enqueuing.
+- `package.json` — Aligned root `openai` to `^6.21.0` to match processor.
+
 ### Processor TypeScript Fixes
 - `apps/processor/src/index.ts` — Fixed virtualTwilight call signature (added missing arg),
   typed request body, added `SupabaseWorkerClient` type alias, cast OpenAI client at boundary.

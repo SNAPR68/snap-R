@@ -1,16 +1,16 @@
 export const dynamic = 'force-dynamic';
 
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
 import { createHash, timingSafeEqual } from 'node:crypto';
+import { adminSupabase } from '@/lib/supabase/admin';
 import { logger } from '@/lib/logger';
+import { z } from 'zod';
+import { parseBody } from '@/lib/validation/schemas';
 
-function getSupabase() {
-  return createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-  );
-}
+const verifySchema = z.object({
+  token: z.string().min(1),
+  password: z.string().min(1),
+});
 
 /**
  * Verify a share password and return listing + signed photo URLs.
@@ -18,15 +18,14 @@ function getSupabase() {
  */
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json() as Record<string, unknown>;
-    const token = typeof body.token === 'string' ? body.token : '';
-    const password = typeof body.password === 'string' ? body.password : '';
-
-    if (!token || !password) {
-      return NextResponse.json({ error: 'Token and password are required' }, { status: 400 });
+    const body = await request.json();
+    const validated = parseBody(verifySchema, body);
+    if (!validated.success) {
+      return NextResponse.json({ error: 'Token and password are required', details: validated.details }, { status: 400 });
     }
+    const { token, password } = validated.data;
 
-    const supabase = getSupabase();
+    const supabase = adminSupabase();
 
     const { data: share } = await supabase
       .from('shares')
@@ -86,18 +85,21 @@ export async function POST(request: NextRequest) {
       .eq('status', 'completed')
       .order('created_at', { ascending: false });
 
-    const photosWithUrls = await Promise.all((photos || []).map(async (photo) => {
+    const photosWithUrls = await Promise.all((photos || []).map(async (photo: Record<string, unknown>) => {
+      const rawPath = photo.raw_url as string | null;
+      const processedPath = photo.processed_url as string | null;
+
       // Only sign rawUrl when comparison is enabled — server-enforced
       let rawSignedUrl: string | undefined;
-      if (showComparison && photo.raw_url) {
+      if (showComparison && rawPath) {
         const { data: rawUrl } = await supabase.storage
           .from('raw-images')
-          .createSignedUrl(photo.raw_url, 3600);
+          .createSignedUrl(rawPath, 3600);
         rawSignedUrl = rawUrl?.signedUrl ?? undefined;
       }
 
-      const { data: processedUrl } = photo.processed_url
-        ? await supabase.storage.from('raw-images').createSignedUrl(photo.processed_url, 3600)
+      const { data: processedUrl } = processedPath
+        ? await supabase.storage.from('raw-images').createSignedUrl(processedPath, 3600)
         : { data: null };
 
       return {
