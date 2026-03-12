@@ -1,6 +1,23 @@
 # SnapR Execution Changelog
 =================================
 
+## 2026-03-12 — Full product demo video (ExplainerVideo v4)
+
+### ExplainerVideo Composition (`remotion/compositions/ExplainerVideo.tsx`)
+- Replaced 6 homepage-scroll-only scenes with 7 distinct product walkthrough scenes
+- New scenes: Homepage → Dashboard → AI Studio → Content Studio → Social Publish → Analytics → Pricing
+- Added cursor waypoints to AI Studio and Content Studio scenes
+- Updated captions and labels to match new voiceover script
+- Adjusted scene durations to sync with ~59s voiceover
+
+### Screenshots (`public/explainer-frames-v3/`)
+- Fresh full-page captures of all authenticated pages (dashboard, studio, content-studio, analytics)
+- New social-settings.png capture for Social Publish scene
+- Updated manifest.json with correct scrollHeight values
+
+### Video Player (`components/explainer-video-player.tsx`)
+- Updated Cloudinary version to v1773330599 for new rendered video
+
 ## 2026-03-12 — Add Twitter/X and TikTok direct publishing
 
 ### Publish Route (`app/api/social/publish/route.ts`)
