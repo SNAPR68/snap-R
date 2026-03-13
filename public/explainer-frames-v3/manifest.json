@@ -64,5 +64,35 @@
     "label": "Calendar",
     "scrollHeight": 1080,
     "viewportHeight": 1080
+  },
+  {
+    "filename": "leads.png",
+    "label": "Lead CRM",
+    "scrollHeight": 1267,
+    "viewportHeight": 1080
+  },
+  {
+    "filename": "open-houses.png",
+    "label": "Open Houses",
+    "scrollHeight": 1267,
+    "viewportHeight": 1080
+  },
+  {
+    "filename": "broker.png",
+    "label": "Broker Dashboard",
+    "scrollHeight": 1267,
+    "viewportHeight": 1080
+  },
+  {
+    "filename": "photographer.png",
+    "label": "Photographer Bookings",
+    "scrollHeight": 1267,
+    "viewportHeight": 1080
+  },
+  {
+    "filename": "booking-form.png",
+    "label": "Public Booking Form",
+    "scrollHeight": 1080,
+    "viewportHeight": 1080
   }
 ]

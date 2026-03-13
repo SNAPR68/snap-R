@@ -89,84 +89,157 @@ interface SceneConfig {
 const CONTENT_HEIGHT = 1040;
 
 const SCENES: SceneConfig[] = [
+  // ── 1. Homepage (10s) — Opening hook ──────────────────────────────────────
   {
     id: 'homepage',
     label: 'Meet SnapR',
-    caption: 'The AI platform that turns property photos into a marketing engine',
+    caption: 'The AI platform that turns property photos into a full marketing engine',
     image: 'homepage.png',
     imageHeight: 9136,
-    durationSec: 8,
+    durationSec: 12,
     scroll: 'smooth',
     url: 'snap-r.com',
     scrollStartPx: 0,
-    scrollEndPx: 2800,
+    scrollEndPx: 3200,
   },
+  // ── 2. Dashboard (12s) — Command center ───────────────────────────────────
   {
     id: 'dashboard',
     label: 'Dashboard',
-    caption: 'Every listing at a glance — preparation, marketing, and publishing',
+    caption: 'Your command center — every listing, status, and activity in one place',
     image: 'dashboard.png',
     imageHeight: 1392,
-    durationSec: 8,
+    durationSec: 12,
     scroll: 'pauseAtTop',
     url: 'snap-r.com/dashboard',
   },
+  // ── 3. AI Studio (12s) — Enhancement tools ────────────────────────────────
   {
     id: 'ai-studio',
     label: 'AI Studio',
-    caption: '15 enhancement tools — sky, staging, twilight, declutter, and more',
+    caption: '15 AI tools — sky replacement, staging, twilight, declutter, and more',
     image: 'studio.png',
     imageHeight: 1265,
-    durationSec: 9,
+    durationSec: 12,
     scroll: 'pauseAtTop',
     url: 'snap-r.com/dashboard/studio',
     cursorWaypoints: [
-      { x: 120, y: 400, frame: 60 },
-      { x: 120, y: 500, frame: 100, click: true },
-      { x: 960, y: 540, frame: 160 },
+      { x: 120, y: 400, frame: 80 },
+      { x: 120, y: 500, frame: 140, click: true },
+      { x: 960, y: 540, frame: 220 },
     ],
   },
+  // ── 4. Content Studio (10s) — Marketing automation ────────────────────────
   {
     id: 'content-studio',
     label: 'Content Studio',
-    caption: 'Auto-generated posts with captions, hashtags, and branded templates',
+    caption: 'Descriptions, captions, hashtags, and a property website — all automated',
     image: 'content-studio.png',
     imageHeight: 1267,
-    durationSec: 8,
+    durationSec: 10,
     scroll: 'pauseAtTop',
     url: 'snap-r.com/dashboard/content-studio',
     cursorWaypoints: [
-      { x: 400, y: 350, frame: 70 },
-      { x: 700, y: 400, frame: 120, click: true },
+      { x: 400, y: 350, frame: 90 },
+      { x: 700, y: 400, frame: 160, click: true },
     ],
   },
+  // ── 5. Video Creator (9s) — AI videos ─────────────────────────────────────
+  {
+    id: 'video-creator',
+    label: 'Video Creator',
+    caption: 'Cinematic property videos with AI voiceover — four styles, six voices',
+    image: 'video-creator.png',
+    imageHeight: 1080,
+    durationSec: 9,
+    scroll: 'none',
+    url: 'snap-r.com/dashboard/content-studio/video',
+  },
+  // ── 6. Social Publish (9s) — 5 platforms ──────────────────────────────────
   {
     id: 'social-publish',
     label: 'Social Publish',
-    caption: 'Connected to Facebook, Instagram, LinkedIn, Twitter, and TikTok',
+    caption: 'Facebook, Instagram, LinkedIn, TikTok, and Twitter — all connected',
     image: 'social-settings.png',
     imageHeight: 1080,
-    durationSec: 7,
+    durationSec: 9,
     scroll: 'none',
     url: 'snap-r.com/dashboard/settings/social',
   },
+  // ── 7. Calendar (9s) — Scheduling ─────────────────────────────────────────
+  {
+    id: 'calendar',
+    label: 'Calendar',
+    caption: 'Drag-and-drop scheduling — every post, every platform, every date',
+    image: 'calendar.png',
+    imageHeight: 1080,
+    durationSec: 9,
+    scroll: 'none',
+    url: 'snap-r.com/dashboard/content-studio/calendar',
+  },
+  // ── 8. Analytics (12s) — Performance tracking ─────────────────────────────
   {
     id: 'analytics',
     label: 'Analytics',
-    caption: 'Track reach, engagement, clicks, and ROI across every platform',
+    caption: 'Impressions, engagement, clicks, and cost per lead — by platform and listing',
     image: 'analytics.png',
     imageHeight: 1267,
-    durationSec: 8,
+    durationSec: 12,
     scroll: 'pauseAtTop',
     url: 'snap-r.com/dashboard/analytics',
   },
+  // ── 9. Lead CRM (11s) — Lead management ───────────────────────────────────
+  {
+    id: 'leads',
+    label: 'Lead CRM',
+    caption: 'Kanban pipeline, auto-scoring, drip sequences, and bulk email — built in',
+    image: 'leads.png',
+    imageHeight: 1267,
+    durationSec: 11,
+    scroll: 'pauseAtTop',
+    url: 'snap-r.com/dashboard/leads',
+  },
+  // ── 10. Open Houses (9s) — Event management ───────────────────────────────
+  {
+    id: 'open-houses',
+    label: 'Open Houses',
+    caption: 'Guest check-in pages, attendee tracking, and automatic lead capture',
+    image: 'open-houses.png',
+    imageHeight: 1267,
+    durationSec: 9,
+    scroll: 'pauseAtTop',
+    url: 'snap-r.com/dashboard/open-houses',
+  },
+  // ── 11. Broker Dashboard (14s) — Team oversight ───────────────────────────
+  {
+    id: 'broker',
+    label: 'Broker Dashboard',
+    caption: 'Team command center — agent roster, listings, leads, and performance charts',
+    image: 'broker.png',
+    imageHeight: 1267,
+    durationSec: 14,
+    scroll: 'pauseAtTop',
+    url: 'snap-r.com/dashboard/broker',
+  },
+  // ── 12. Photographer Portal (13s) — Delivery & booking ────────────────────
+  {
+    id: 'photographer',
+    label: 'Photographer Portal',
+    caption: 'White-label delivery, branded galleries, booking pipeline — your brand, not ours',
+    image: 'photographer.png',
+    imageHeight: 1267,
+    durationSec: 13,
+    scroll: 'pauseAtTop',
+    url: 'snap-r.com/dashboard/photographer/bookings',
+  },
+  // ── 13. Pricing (9s) — Plans ──────────────────────────────────────────────
   {
     id: 'pricing',
     label: 'Pricing',
     caption: 'All 15 AI tools on every plan — start free, upgrade when ready',
     image: 'pricing.png',
     imageHeight: 2273,
-    durationSec: 6,
+    durationSec: 9,
     scroll: 'pauseAtTop',
     url: 'snap-r.com/pricing',
   },
@@ -174,8 +247,8 @@ const SCENES: SceneConfig[] = [
 
 const FPS = 30;
 const TRANSITION_FRAMES = 18; // 0.6s crossfade between scenes
-const INTRO_DURATION = 3 * FPS;
-const CLOSING_CARD_DURATION = 5 * FPS;
+const INTRO_DURATION = 4 * FPS; // 4s intro
+const CLOSING_CARD_DURATION = 6 * FPS; // 6s closing CTA
 
 // ============================================
 // DURATION CALCULATION
