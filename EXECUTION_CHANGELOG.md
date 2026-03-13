@@ -1,6 +1,32 @@
 # SnapR Execution Changelog
 =================================
 
+## 2026-03-13 — Full product demo video v5 (2:23, 13 scenes)
+
+### ExplainerVideo Composition (`remotion/compositions/ExplainerVideo.tsx`)
+- Expanded from 7 scenes (57s) to 13 scenes (142.6s / 2:23)
+- New scenes: Video Creator, Calendar, Lead CRM, Open Houses, Broker Dashboard, Photographer Portal
+- Increased per-scene durations (8-14s each) for slower, more digestible pacing
+- Intro card 4s, closing CTA 6s
+- Broker dashboard gets 14s, photographer portal gets 13s — both key audiences
+
+### Screenshots (`public/explainer-frames-v3/`)
+- 5 new captures: leads.png, open-houses.png, broker.png, photographer.png, booking-form.png
+- Updated capture script with 5 additional pages (sections 12-16)
+- Total: 16 screenshot captures
+
+### Voiceover (`scripts/generate-voiceover.mjs` + `public/explainer-voiceover.mp3`)
+- Complete rewrite: ~290 words covering all 13 scenes
+- Dedicated narration for broker team management and photographer white-label portal
+- OpenAI TTS HD shimmer voice, 136s duration
+
+### Video Player (`components/explainer-video-player.tsx`)
+- Updated Cloudinary version to v1773382498
+
+### Documentation (`docs/`)
+- `app-workflow-document.md` — Complete feature map for agents, brokers, photographers
+- `video-script.md` — Scene plan with timing, voiceover text, screenshot requirements
+
 ## 2026-03-12 — Full product demo video (ExplainerVideo v4)
 
 ### ExplainerVideo Composition (`remotion/compositions/ExplainerVideo.tsx`)
