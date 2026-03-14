@@ -1,6 +1,38 @@
 # SnapR Execution Changelog
 =================================
 
+## 2026-03-14 — Demo data population + video v6 (2:14, 14 scenes)
+
+### Demo Account Data Seeded
+- Created "Sunset Luxury Realty" team with demo user as owner
+- Inserted 10 leads across all CRM statuses (new/contacted/qualified/converted/archived), scores 5-92
+- Inserted 16 lead activities (calls, emails, showings, notes, drip emails)
+- Created 3 open house events (upcoming/active/completed) with 11 attendees
+- Added 4 photographer packages ($199-$899) and 5 booking requests (pending/confirmed/editing/delivered)
+
+### Bug Fix: Teams RLS Infinite Recursion
+- Root cause: `team_members` SELECT policy was self-referential, causing infinite recursion when querying teams
+- Fix: Created `is_team_member()` SECURITY DEFINER function to check membership without triggering RLS
+- Migration: `supabase/migrations/20260314_fix_teams_rls_recursion.sql`
+
+### ExplainerVideo v6 (`remotion/compositions/ExplainerVideo.tsx`)
+- Added Scene 13: Booking Form (public booking page, 8s)
+- Updated scene durations to match voiceover pacing (total: 14 scenes, 2:14)
+- Updated imageHeight for leads.png (1267→1311)
+
+### Screenshots Re-captured (`public/explainer-frames-v3/`)
+- All 16 pages now show populated data (previously blank: broker, leads, open-houses, photographer)
+- Increased capture script timeouts to 60s for reliability
+- Capture script dismisses cookie consent + chatbot overlays
+
+### Voiceover v6 (`scripts/generate-voiceover.mjs` + `public/explainer-voiceover.mp3`)
+- Split photographer paragraph into two: photographer portal (Scene 12) + booking form (Scene 13)
+- 14 paragraphs matching 14 scenes, ~310 words, 139s duration
+- OpenAI TTS HD shimmer voice
+
+### Video Player (`components/explainer-video-player.tsx`)
+- Updated Cloudinary version to v1773481208
+
 ## 2026-03-13 — Full product demo video v5 (2:23, 13 scenes)
 
 ### ExplainerVideo Composition (`remotion/compositions/ExplainerVideo.tsx`)

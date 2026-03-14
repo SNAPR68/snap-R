@@ -24,26 +24,27 @@ if (!match) {
 const apiKey = match[1].trim().replace(/^["']|["']$/g, '');
 console.log('Found OPENAI_API_KEY (length: %d)', apiKey.length);
 
-// 2. Voiceover text — synced to v5 scenes (full product walkthrough, ~141s of scene content)
+// 2. Voiceover text — synced to v6 scenes (full product walkthrough, 14 scenes + intro + closing)
 //
 // Scene timing plan (must match SCENES in ExplainerVideo.tsx):
 //   Intro card:             0-4s     (no voiceover)
-//   1. Homepage:            4-16s    → paragraph 1 (~10s)
-//   2. Dashboard:          16-28s    → paragraph 2 (~10s)
-//   3. AI Studio:          28-40s    → paragraph 3 (~11s)
-//   4. Content Studio:     40-50s    → paragraph 4 (~9s)
-//   5. Video Creator:      50-59s    → paragraph 5 (~8s)
-//   6. Social Publish:     59-68s    → paragraph 6 (~8s)
-//   7. Calendar:           68-77s    → paragraph 7 (~8s)
-//   8. Analytics:          77-89s    → paragraph 8 (~10s)
-//   9. Lead CRM:           89-100s   → paragraph 9 (~10s)
-//   10. Open Houses:      100-109s   → paragraph 10 (~8s)
-//   11. Broker Dashboard: 109-123s   → paragraph 11 (~12s)
-//   12. Photographer:     123-136s   → paragraph 12 (~12s)
-//   13. Pricing:          136-145s   → paragraph 13 (~8s)
-//   Closing CTA:          145-151s   (no voiceover — music only)
+//   1. Homepage:            4-14s    → paragraph 1 (~10s)
+//   2. Dashboard:          14-24s    → paragraph 2 (~10s)
+//   3. AI Studio:          24-36s    → paragraph 3 (~12s)
+//   4. Content Studio:     36-46s    → paragraph 4 (~10s)
+//   5. Video Creator:      46-54s    → paragraph 5 (~8s)
+//   6. Social Publish:     54-63s    → paragraph 6 (~9s)
+//   7. Calendar:           63-71s    → paragraph 7 (~8s)
+//   8. Analytics:          71-81s    → paragraph 8 (~10s)
+//   9. Lead CRM:           81-91s    → paragraph 9 (~10s)
+//   10. Open Houses:       91-99s    → paragraph 10 (~8s)
+//   11. Broker Dashboard:  99-111s   → paragraph 11 (~12s)
+//   12. Photographer:     111-121s   → paragraph 12 (~10s)
+//   13. Booking Form:     121-129s   → paragraph 13 (~8s)
+//   14. Pricing:          129-137s   → paragraph 14 (~8s)
+//   Closing CTA:          137-143s   (no voiceover — music only)
 //
-// Target: ~290 words at 130 words/minute = ~134 seconds
+// Target: ~310 words at 130 words/minute = ~143 seconds
 //
 const text = `SnapR is the AI-powered marketing platform built for real estate. Upload your property photos, and we handle everything else.
 
@@ -65,9 +66,11 @@ Every lead flows into a built-in CRM. View them as a list, or drag them through 
 
 Manage open house events with guest check-in pages. Attendees register on their phones, and their data flows straight into your lead pipeline.
 
-Brokers get a team command center. See every agent's listings, lead counts, and performance. Invite agents with role-based access — admins manage the team, editors create content, viewers observe. One dashboard for the entire brokerage.
+Brokers get a team command center. See every agent's listings, lead counts, and performance charts. Invite agents with role-based access — admins manage the team, editors create content, viewers observe. One dashboard for the entire brokerage.
 
-Photographers get their own white-label portal. Deliver enhanced photos to clients with branded gallery links — your logo, your colors, zero SnapR branding. Agents book shoots through your public page. You manage the pipeline from pending to delivered.
+Photographers get their own portal. Manage packages, track bookings from pending to delivered, and monitor revenue — all from a single pipeline view.
+
+Agents book shoots through your branded public page. They pick a package, enter property details, choose a date, and submit. You get notified instantly.
 
 Start free with all fifteen AI tools. Upgrade when you're ready — Starter, Pro, or Agency. Social publishing and full automation unlock on Pro.`;
 

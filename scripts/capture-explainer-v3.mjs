@@ -270,7 +270,7 @@ async function injectAuthCookies(page, session) {
 
   // ── 1. HOMEPAGE (full page) ─────────────────────────────────────────────
   console.log('\n--- 1. Homepage ---');
-  await page.goto(BASE, { waitUntil: 'networkidle2', timeout: 30000 });
+  await page.goto(BASE, { waitUntil: 'networkidle2', timeout: 60000 });
   await wait(3000);
   await dismissOverlays(page);
   await wait(500);
@@ -279,21 +279,21 @@ async function injectAuthCookies(page, session) {
 
   // ── 2. PRICING (full page) ──────────────────────────────────────────────
   console.log('\n--- 2. Pricing ---');
-  await page.goto(`${BASE}/pricing`, { waitUntil: 'networkidle2', timeout: 30000 });
+  await page.goto(`${BASE}/pricing`, { waitUntil: 'networkidle2', timeout: 60000 });
   await wait(2000);
   await dismissOverlays(page);
   await captureFullPage(page, 'pricing.png', 'Pricing page');
 
   // ── 3. SIGNUP (viewport only) ───────────────────────────────────────────
   console.log('\n--- 3. Signup ---');
-  await page.goto(`${BASE}/auth/signup`, { waitUntil: 'networkidle2', timeout: 30000 });
+  await page.goto(`${BASE}/auth/signup`, { waitUntil: 'networkidle2', timeout: 60000 });
   await wait(2000);
   await dismissOverlays(page);
   await captureViewport(page, 'signup.png', 'Signup page');
 
   // ── 4. LOGIN (viewport — filled) ───────────────────────────────────────
   console.log('\n--- 4. Login ---');
-  await page.goto(`${BASE}/auth/login`, { waitUntil: 'networkidle2', timeout: 30000 });
+  await page.goto(`${BASE}/auth/login`, { waitUntil: 'networkidle2', timeout: 60000 });
   await wait(2000);
   await dismissOverlays(page);
   try {
@@ -315,7 +315,7 @@ async function injectAuthCookies(page, session) {
 
   // ── 5. DASHBOARD (full page) ────────────────────────────────────────────
   console.log('\n--- 5. Dashboard ---');
-  await page.goto(`${BASE}/dashboard`, { waitUntil: 'networkidle2', timeout: 30000 });
+  await page.goto(`${BASE}/dashboard`, { waitUntil: 'networkidle2', timeout: 60000 });
   await wait(4000);
   await dismissOverlays(page);
   await wait(1000);
@@ -333,7 +333,7 @@ async function injectAuthCookies(page, session) {
   if (session) await injectAuthCookies(page, session);
   await page.goto(`${BASE}/dashboard/studio?id=${LISTING_ID}`, {
     waitUntil: 'networkidle2',
-    timeout: 30000,
+    timeout: 60000,
   });
   await wait(5000);
   await dismissOverlays(page);
@@ -343,7 +343,7 @@ async function injectAuthCookies(page, session) {
   // ── 7. CONTENT STUDIO (full page) ──────────────────────────────────────
   console.log('\n--- 7. Content Studio ---');
   if (session) await injectAuthCookies(page, session);
-  await page.goto(`${BASE}/dashboard/content-studio`, { waitUntil: 'networkidle2', timeout: 30000 });
+  await page.goto(`${BASE}/dashboard/content-studio`, { waitUntil: 'networkidle2', timeout: 60000 });
   await wait(3000);
   await dismissOverlays(page);
   try {
@@ -367,7 +367,7 @@ async function injectAuthCookies(page, session) {
   if (session) await injectAuthCookies(page, session);
   await page.goto(`${BASE}/dashboard/content-studio/video`, {
     waitUntil: 'networkidle2',
-    timeout: 30000,
+    timeout: 60000,
   });
   await wait(3000);
   await dismissOverlays(page);
@@ -377,7 +377,7 @@ async function injectAuthCookies(page, session) {
   // ── 9. ANALYTICS (full page) ────────────────────────────────────────────
   console.log('\n--- 9. Analytics ---');
   if (session) await injectAuthCookies(page, session);
-  await page.goto(`${BASE}/dashboard/analytics`, { waitUntil: 'networkidle2', timeout: 30000 });
+  await page.goto(`${BASE}/dashboard/analytics`, { waitUntil: 'networkidle2', timeout: 60000 });
   await wait(3000);
   await dismissOverlays(page);
   console.log(`  URL: ${page.url()}`);
@@ -388,7 +388,7 @@ async function injectAuthCookies(page, session) {
   if (session) await injectAuthCookies(page, session);
   await page.goto(`${BASE}/dashboard/settings/social`, {
     waitUntil: 'networkidle2',
-    timeout: 30000,
+    timeout: 60000,
   });
   await wait(3000);
   await dismissOverlays(page);
@@ -400,7 +400,7 @@ async function injectAuthCookies(page, session) {
   if (session) await injectAuthCookies(page, session);
   await page.goto(`${BASE}/dashboard/content-studio/calendar`, {
     waitUntil: 'networkidle2',
-    timeout: 30000,
+    timeout: 60000,
   });
   await wait(3000);
   await dismissOverlays(page);
@@ -412,7 +412,7 @@ async function injectAuthCookies(page, session) {
   if (session) await injectAuthCookies(page, session);
   await page.goto(`${BASE}/dashboard/leads`, {
     waitUntil: 'networkidle2',
-    timeout: 30000,
+    timeout: 60000,
   });
   await wait(4000);
   await dismissOverlays(page);
@@ -424,7 +424,7 @@ async function injectAuthCookies(page, session) {
   if (session) await injectAuthCookies(page, session);
   await page.goto(`${BASE}/dashboard/open-houses`, {
     waitUntil: 'networkidle2',
-    timeout: 30000,
+    timeout: 60000,
   });
   await wait(4000);
   await dismissOverlays(page);
@@ -436,7 +436,7 @@ async function injectAuthCookies(page, session) {
   if (session) await injectAuthCookies(page, session);
   await page.goto(`${BASE}/dashboard/broker`, {
     waitUntil: 'networkidle2',
-    timeout: 30000,
+    timeout: 60000,
   });
   await wait(4000);
   await dismissOverlays(page);
@@ -448,7 +448,7 @@ async function injectAuthCookies(page, session) {
   if (session) await injectAuthCookies(page, session);
   await page.goto(`${BASE}/dashboard/photographer/bookings`, {
     waitUntil: 'networkidle2',
-    timeout: 30000,
+    timeout: 60000,
   });
   await wait(4000);
   await dismissOverlays(page);
@@ -462,7 +462,7 @@ async function injectAuthCookies(page, session) {
   try {
     await page.goto(`${BASE}/book/demo`, {
       waitUntil: 'networkidle2',
-      timeout: 15000,
+      timeout: 60000,
     });
     await wait(3000);
     await dismissOverlays(page);
