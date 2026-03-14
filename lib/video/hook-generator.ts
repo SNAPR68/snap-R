@@ -57,9 +57,10 @@ export async function generateHookText(
       ],
       max_tokens: 30,
       temperature: 0.8,
-    });
+    }, { signal: AbortSignal.timeout(15000) });
 
-    const hook = response.choices[0]?.message?.content?.trim() || getFallbackHook(template);
+    const raw = response.choices[0]?.message?.content?.trim() || '';
+    const hook = sanitizeHook(raw, template);
     logger.info('[HookGenerator] Generated:', hook);
     return hook;
   } catch (error: unknown) {
@@ -78,6 +79,21 @@ export async function generateHookText(
       processingTimeMs: Date.now() - startTime,
     });
   }
+}
+
+function sanitizeHook(raw: string, template: ShortFormTemplate): string {
+  let cleaned = raw
+    .replace(/^["']+|["']+$/g, '')       // strip surrounding quotes
+    .replace(/#\w+/g, '')                 // remove hashtags
+    .replace(/[\u{1F600}-\u{1F9FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]/gu, '') // remove emojis
+    .replace(/\s+/g, ' ')                // collapse whitespace
+    .trim();
+
+  const words = cleaned.split(' ').filter(Boolean);
+  if (words.length === 0 || words.length > 8) {
+    return getFallbackHook(template);
+  }
+  return cleaned;
 }
 
 function getFallbackHook(template: ShortFormTemplate): string {

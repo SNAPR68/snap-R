@@ -34,7 +34,8 @@ CREATE POLICY "Users can insert own photo tags"
 
 CREATE POLICY "Users can update own photo tags"
   ON photo_tags FOR UPDATE
-  USING (auth.uid() = user_id);
+  USING (auth.uid() = user_id)
+  WITH CHECK (auth.uid() = user_id);
 
 CREATE POLICY "Service role full access to photo_tags"
   ON photo_tags FOR ALL

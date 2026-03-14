@@ -1,7 +1,7 @@
 # SnapR Execution Changelog
 =================================
 
-## 2026-03-15 — Three Killer Features: Short-Form Video, Photo Tags, AI Chatbot
+## 2026-03-14 — Three Killer Features: Short-Form Video, Photo Tags, AI Chatbot
 
 ### Feature 1: AI Short-Form Video Generator
 - `remotion/compositions/ShortFormTeaser.tsx` — 15s vertical video (450 frames, 9:16)

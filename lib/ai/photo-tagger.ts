@@ -94,12 +94,24 @@ Return ONLY valid JSON, no markdown.`,
       max_tokens: 500,
       temperature: 0.3,
       response_format: { type: 'json_object' },
-    });
+    }, { signal: AbortSignal.timeout(15000) });
 
     const content = response.choices[0]?.message?.content;
     if (!content) throw new Error('No response from vision model');
 
-    const parsed = JSON.parse(content) as PhotoTagResult;
+    const raw = JSON.parse(content) as Record<string, unknown>;
+
+    // Validate and normalize model output
+    const VALID_CONDITIONS = ['excellent', 'good', 'fair', 'poor'];
+    const parsed: PhotoTagResult = {
+      roomType: typeof raw.roomType === 'string' ? raw.roomType : 'other',
+      features: Array.isArray(raw.features) ? raw.features.filter((f): f is string => typeof f === 'string') : [],
+      condition: typeof raw.condition === 'string' && VALID_CONDITIONS.includes(raw.condition) ? raw.condition as 'excellent' | 'good' | 'fair' | 'poor' : 'good',
+      style: typeof raw.style === 'string' ? raw.style : 'unknown',
+      atmosphere: typeof raw.atmosphere === 'string' ? raw.atmosphere : 'unknown',
+      confidence: typeof raw.confidence === 'number' ? Math.min(1, Math.max(0, raw.confidence)) : 0.5,
+      resoFeatures: {},
+    };
     parsed.resoFeatures = mapToResoFeatures(parsed.features);
     return parsed;
   } catch (error: unknown) {

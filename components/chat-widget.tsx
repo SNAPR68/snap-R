@@ -53,6 +53,7 @@ export function ChatWidget({ propertySiteId, listingId }: ChatWidgetProps) {
           message: text.trim(),
           visitorId: getVisitorId(),
         }),
+        // Extended timeout for SSE streaming from AI model
         signal: AbortSignal.timeout(30000),
       });
 

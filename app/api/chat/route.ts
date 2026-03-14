@@ -84,8 +84,23 @@ export async function POST(request: NextRequest) {
       allFeatures.length > 0 ? allFeatures : undefined,
     );
 
-    // Get or create session
+    // Get or create session — validate existing session ownership
     let sessionIdForClosure = sessionId ?? '';
+
+    if (sessionId) {
+      const { data: existingSession } = await admin
+        .from('chat_sessions')
+        .select('listing_id, property_site_id, visitor_id')
+        .eq('id', sessionId)
+        .single();
+
+      if (!existingSession ||
+          existingSession.listing_id !== listingId ||
+          existingSession.property_site_id !== propertySiteId ||
+          existingSession.visitor_id !== visitorId) {
+        return NextResponse.json({ error: 'Invalid session' }, { status: 403 });
+      }
+    }
 
     if (!sessionId) {
       const { data: newSession, error: sessionError } = await admin
@@ -142,7 +157,7 @@ export async function POST(request: NextRequest) {
       max_tokens: 300,
       temperature: 0.7,
       stream: true,
-    });
+    }, { signal: AbortSignal.timeout(15000) });
 
     let fullResponse = '';
 

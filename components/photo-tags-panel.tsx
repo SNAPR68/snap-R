@@ -35,6 +35,11 @@ const ROOM_TYPE_LABELS: Record<string, string> = {
   patio: 'Patio',
   deck: 'Deck',
   garden: 'Garden',
+  laundry_room: 'Laundry Room',
+  entryway: 'Entryway',
+  aerial: 'Aerial',
+  theater: 'Theater',
+  game_room: 'Game Room',
   other: 'Other',
 };
 
@@ -72,15 +77,20 @@ export function PhotoTagsPanel({ listingId, tags, onRefresh }: PhotoTagsPanelPro
 
   const updateTag = async (photoId: string, field: string, value: unknown) => {
     try {
-      await fetch('/api/photos/tags', {
+      const res = await fetch('/api/photos/tags', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ photoId, [field]: value }),
         signal: AbortSignal.timeout(15000),
       });
+      if (!res.ok) {
+        const data = await res.json();
+        setError(data.error ?? 'Update failed');
+        return;
+      }
       onRefresh();
     } catch {
-      // Silently fail — user can retry
+      setError('Failed to update tag');
     }
   };
 
@@ -120,6 +130,7 @@ export function PhotoTagsPanel({ listingId, tags, onRefresh }: PhotoTagsPanelPro
               <select
                 value={tag.room_type}
                 onChange={(e) => updateTag(tag.photo_id, 'roomType', e.target.value)}
+                aria-label="Room type"
                 className="bg-transparent text-white text-sm font-medium border-none focus:outline-none cursor-pointer"
               >
                 {Object.entries(ROOM_TYPE_LABELS).map(([value, label]) => (

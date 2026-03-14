@@ -1,7 +1,7 @@
 -- Chat sessions: AI chatbot conversations on property sites
 CREATE TABLE IF NOT EXISTS chat_sessions (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  property_site_id UUID NOT NULL,
+  property_site_id UUID NOT NULL REFERENCES property_sites(id) ON DELETE CASCADE,
   listing_id UUID NOT NULL REFERENCES listings(id) ON DELETE CASCADE,
   user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
   visitor_id TEXT NOT NULL,
@@ -42,20 +42,23 @@ CREATE POLICY "Users can view own chat sessions"
   ON chat_sessions FOR SELECT
   USING (auth.uid() = user_id);
 
--- Public insert for visitors (no auth required)
+-- Public insert for visitors — restrict writable fields
 CREATE POLICY "Anyone can create chat sessions"
   ON chat_sessions FOR INSERT
-  WITH CHECK (true);
+  WITH CHECK (
+    qualification_score = 0
+    AND is_hot_lead = FALSE
+  );
 
 -- Service role can update sessions (qualification scoring)
 CREATE POLICY "Service role full access to chat_sessions"
   ON chat_sessions FOR ALL
   USING (auth.jwt() ->> 'role' = 'service_role');
 
--- Messages: public insert, owner select
+-- Messages: public insert (user role only), owner select
 CREATE POLICY "Anyone can insert chat messages"
   ON chat_messages FOR INSERT
-  WITH CHECK (true);
+  WITH CHECK (role = 'user');
 
 CREATE POLICY "Users can view messages for own sessions"
   ON chat_messages FOR SELECT

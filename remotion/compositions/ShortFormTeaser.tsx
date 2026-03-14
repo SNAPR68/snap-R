@@ -22,7 +22,7 @@ export const shortFormSchema = z.object({
     beds: z.number().optional(),
     baths: z.number().optional(),
     sqft: z.number().optional(),
-    photos: z.array(z.string()),
+    photos: z.array(z.string()).min(1),
   }),
   hookText: z.string().optional(),
   template: z.enum(['teaser', 'reminder', 'alert', 'celebration', 'highlight']).optional(),
@@ -196,7 +196,7 @@ export const ShortFormTeaser: React.FC<ShortFormProps> = ({
         <ShortFormCTA
           address={listing.address ?? listing.title ?? 'Property'}
           brand={brand ? {
-            businessName: brand.agentName,
+            businessName: brand.agentName ?? brand.brokerageName,
             phone: brand.phone,
             website: brand.website,
             primaryColor: brand.primaryColor,

@@ -38,10 +38,10 @@ export const StatsBar: React.FC<StatsBarProps> = ({
 
   // Build stat pills
   const stats: Array<{ label: string; value: string }> = [];
-  if (price) stats.push({ label: '', value: formatPrice(price) });
-  if (beds) stats.push({ label: 'BD', value: String(beds) });
-  if (baths) stats.push({ label: 'BA', value: String(baths) });
-  if (sqft) stats.push({ label: '', value: formatSqft(sqft) });
+  if (price != null) stats.push({ label: '', value: formatPrice(price) });
+  if (beds != null) stats.push({ label: 'BD', value: String(beds) });
+  if (baths != null) stats.push({ label: 'BA', value: String(baths) });
+  if (sqft != null) stats.push({ label: '', value: formatSqft(sqft) });
 
   if (stats.length === 0) return null;
 

@@ -97,6 +97,7 @@ export async function POST(request: NextRequest) {
 
     if (insertError) {
       logger.error('[photo-tags] Insert error:', insertError.message);
+      return NextResponse.json({ error: 'Failed to store tags: ' + insertError.message }, { status: 500 });
     }
 
     // Aggregate and update listing
@@ -202,6 +203,37 @@ export async function PATCH(request: NextRequest) {
 
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+
+    // Re-aggregate listing features after tag update
+    const listingId = (data as Record<string, unknown>).listing_id as string;
+    if (listingId) {
+      const admin = adminSupabase();
+      const { data: allTags } = await admin
+        .from('photo_tags')
+        .select('room_type, features, condition, style, atmosphere, confidence')
+        .eq('listing_id', listingId);
+
+      if (allTags && allTags.length > 0) {
+        const aggregated = aggregateListingFeatures(allTags.map(t => ({
+          roomType: t.room_type ?? 'other',
+          features: t.features ?? [],
+          condition: t.condition ?? 'good',
+          style: t.style ?? 'unknown',
+          atmosphere: t.atmosphere ?? 'unknown',
+          confidence: t.confidence ?? 0.5,
+          resoFeatures: {},
+        })));
+
+        await admin
+          .from('listings')
+          .update({
+            detected_features: aggregated.detectedFeatures,
+            detected_style: aggregated.detectedStyle,
+            detected_condition: aggregated.detectedCondition,
+          })
+          .eq('id', listingId);
+      }
     }
 
     return NextResponse.json({ tag: data });
