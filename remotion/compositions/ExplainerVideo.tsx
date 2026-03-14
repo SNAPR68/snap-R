@@ -96,20 +96,20 @@ const SCENES: SceneConfig[] = [
     caption: 'The AI platform that turns property photos into a full marketing engine',
     image: 'homepage.png',
     imageHeight: 9136,
-    durationSec: 12,
+    durationSec: 10,
     scroll: 'smooth',
     url: 'snap-r.com',
     scrollStartPx: 0,
     scrollEndPx: 3200,
   },
-  // ── 2. Dashboard (12s) — Command center ───────────────────────────────────
+  // ── 2. Dashboard (10s) — Command center ───────────────────────────────────
   {
     id: 'dashboard',
     label: 'Dashboard',
     caption: 'Your command center — every listing, status, and activity in one place',
     image: 'dashboard.png',
     imageHeight: 1392,
-    durationSec: 12,
+    durationSec: 10,
     scroll: 'pauseAtTop',
     url: 'snap-r.com/dashboard',
   },
@@ -144,14 +144,14 @@ const SCENES: SceneConfig[] = [
       { x: 700, y: 400, frame: 160, click: true },
     ],
   },
-  // ── 5. Video Creator (9s) — AI videos ─────────────────────────────────────
+  // ── 5. Video Creator (8s) — AI videos ─────────────────────────────────────
   {
     id: 'video-creator',
     label: 'Video Creator',
     caption: 'Cinematic property videos with AI voiceover — four styles, six voices',
     image: 'video-creator.png',
     imageHeight: 1080,
-    durationSec: 9,
+    durationSec: 8,
     scroll: 'none',
     url: 'snap-r.com/dashboard/content-studio/video',
   },
@@ -166,80 +166,91 @@ const SCENES: SceneConfig[] = [
     scroll: 'none',
     url: 'snap-r.com/dashboard/settings/social',
   },
-  // ── 7. Calendar (9s) — Scheduling ─────────────────────────────────────────
+  // ── 7. Calendar (8s) — Scheduling ─────────────────────────────────────────
   {
     id: 'calendar',
     label: 'Calendar',
     caption: 'Drag-and-drop scheduling — every post, every platform, every date',
     image: 'calendar.png',
     imageHeight: 1080,
-    durationSec: 9,
+    durationSec: 8,
     scroll: 'none',
     url: 'snap-r.com/dashboard/content-studio/calendar',
   },
-  // ── 8. Analytics (12s) — Performance tracking ─────────────────────────────
+  // ── 8. Analytics (10s) — Performance tracking ─────────────────────────────
   {
     id: 'analytics',
     label: 'Analytics',
     caption: 'Impressions, engagement, clicks, and cost per lead — by platform and listing',
     image: 'analytics.png',
     imageHeight: 1267,
-    durationSec: 12,
+    durationSec: 10,
     scroll: 'pauseAtTop',
     url: 'snap-r.com/dashboard/analytics',
   },
-  // ── 9. Lead CRM (11s) — Lead management ───────────────────────────────────
+  // ── 9. Lead CRM (10s) — Lead management ───────────────────────────────────
   {
     id: 'leads',
     label: 'Lead CRM',
     caption: 'Kanban pipeline, auto-scoring, drip sequences, and bulk email — built in',
     image: 'leads.png',
-    imageHeight: 1267,
-    durationSec: 11,
+    imageHeight: 1311,
+    durationSec: 10,
     scroll: 'pauseAtTop',
     url: 'snap-r.com/dashboard/leads',
   },
-  // ── 10. Open Houses (9s) — Event management ───────────────────────────────
+  // ── 10. Open Houses (8s) — Event management ───────────────────────────────
   {
     id: 'open-houses',
     label: 'Open Houses',
     caption: 'Guest check-in pages, attendee tracking, and automatic lead capture',
     image: 'open-houses.png',
     imageHeight: 1267,
-    durationSec: 9,
+    durationSec: 8,
     scroll: 'pauseAtTop',
     url: 'snap-r.com/dashboard/open-houses',
   },
-  // ── 11. Broker Dashboard (14s) — Team oversight ───────────────────────────
+  // ── 11. Broker Dashboard (12s) — Team oversight ───────────────────────────
   {
     id: 'broker',
     label: 'Broker Dashboard',
     caption: 'Team command center — agent roster, listings, leads, and performance charts',
     image: 'broker.png',
     imageHeight: 1267,
-    durationSec: 14,
+    durationSec: 12,
     scroll: 'pauseAtTop',
     url: 'snap-r.com/dashboard/broker',
   },
-  // ── 12. Photographer Portal (13s) — Delivery & booking ────────────────────
+  // ── 12. Photographer Portal (10s) — Delivery & booking ────────────────────
   {
     id: 'photographer',
     label: 'Photographer Portal',
-    caption: 'White-label delivery, branded galleries, booking pipeline — your brand, not ours',
+    caption: 'Booking pipeline, delivery tracking, and package management — all in one place',
     image: 'photographer.png',
     imageHeight: 1267,
-    durationSec: 13,
+    durationSec: 10,
     scroll: 'pauseAtTop',
     url: 'snap-r.com/dashboard/photographer/bookings',
   },
-  // ── 13. Pricing (9s) — Plans ──────────────────────────────────────────────
+  // ── 13. Booking Form (8s) — Public booking page ───────────────────────────
+  {
+    id: 'booking-form',
+    label: 'Booking Form',
+    caption: 'Agents book shoots through your branded public page — you manage the pipeline',
+    image: 'booking-form.png',
+    imageHeight: 1080,
+    durationSec: 8,
+    scroll: 'none',
+    url: 'snap-r.com/book/demo',
+  },
+  // ── 14. Pricing (8s) — Plans ──────────────────────────────────────────────
   {
     id: 'pricing',
     label: 'Pricing',
     caption: 'All 15 AI tools on every plan — start free, upgrade when ready',
     image: 'pricing.png',
     imageHeight: 2273,
-    durationSec: 9,
+    durationSec: 8,
     scroll: 'pauseAtTop',
     url: 'snap-r.com/pricing',
   },
