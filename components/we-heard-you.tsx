@@ -105,14 +105,23 @@ const CATEGORY_ICONS: Record<string, string> = {
 export function WeHeardYou() {
   const [current, setCurrent] = useState(0);
   const [isHovered, setIsHovered] = useState(false);
+  const [isFading, setIsFading] = useState(false);
+
+  const goTo = useCallback((index: number) => {
+    setIsFading(true);
+    setTimeout(() => {
+      setCurrent(index);
+      setIsFading(false);
+    }, 250);
+  }, []);
 
   const next = useCallback(() => {
-    setCurrent((prev) => (prev + 1) % VOICES.length);
-  }, []);
+    goTo((current + 1) % VOICES.length);
+  }, [current, goTo]);
 
   const prev = useCallback(() => {
-    setCurrent((prev) => (prev - 1 + VOICES.length) % VOICES.length);
-  }, []);
+    goTo((current - 1 + VOICES.length) % VOICES.length);
+  }, [current, goTo]);
 
   useEffect(() => {
     if (isHovered) return;
@@ -146,7 +155,10 @@ export function WeHeardYou() {
           onMouseLeave={() => setIsHovered(false)}
         >
           {/* Main quote card */}
-          <div className="relative rounded-2xl overflow-hidden border border-white/10 bg-[#111111] shadow-2xl">
+          <div
+            className="relative rounded-2xl overflow-hidden border border-white/10 bg-[#111111] shadow-2xl transition-opacity duration-300 ease-in-out"
+            style={{ opacity: isFading ? 0 : 1 }}
+          >
             {/* Top bar */}
             <div className="flex items-center justify-between px-5 py-3 bg-[#1A1A1A] border-b border-white/10">
               <div className="flex items-center gap-2">
@@ -208,7 +220,7 @@ export function WeHeardYou() {
             {VOICES.map((_, i) => (
               <button
                 key={i}
-                onClick={() => setCurrent(i)}
+                onClick={() => goTo(i)}
                 aria-label={`Go to quote ${i + 1}`}
                 className={`h-1 rounded-full transition-all duration-300 ${
                   i === current
