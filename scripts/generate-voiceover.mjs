@@ -44,7 +44,8 @@ console.log('Found OPENAI_API_KEY (length: %d)', apiKey.length);
 //   14. Pricing:          129-137s   → paragraph 14 (~8s)
 //   Closing CTA:          137-143s   (no voiceover — music only)
 //
-// Target: ~310 words at 130 words/minute = ~143 seconds
+// Target: ~310 words at 130 wpm. Video is 134s; voiceover (139s) extends
+// ~5s into the closing card — intentional overlap before music-only CTA.
 //
 const text = `SnapR is the AI-powered marketing platform built for real estate. Upload your property photos, and we handle everything else.
 
