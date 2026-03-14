@@ -45,6 +45,8 @@ function getCompositionId(template: string, aspectRatio: string): string {
       return `PriceDrop-${ratioKey}`;
     case 'sold':
       return `Sold-${ratioKey}`;
+    case 'short-form':
+      return 'ShortForm-9x16';
     default:
       return 'TestVideo';
   }

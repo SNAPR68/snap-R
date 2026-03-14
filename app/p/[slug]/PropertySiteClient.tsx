@@ -9,6 +9,7 @@ import {
   ChevronDown, ChevronUp, ExternalLink, Heart, Grid
 } from 'lucide-react'
 import { trackPageView } from '@/lib/analytics/tracker'
+import { ChatWidget } from '@/components/chat-widget'
 
 // ============================================
 // TYPE DEFINITIONS
@@ -1201,6 +1202,14 @@ export default function PropertySiteClient({ photos, listing, agent, brand, vide
           border: none;
         }
       `}</style>
+
+      {/* AI Chat Widget */}
+      {propertySiteId && listing.id && (
+        <ChatWidget
+          propertySiteId={propertySiteId}
+          listingId={listing.id}
+        />
+      )}
     </div>
   )
 }
