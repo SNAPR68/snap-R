@@ -1,6 +1,37 @@
 # SnapR Execution Changelog
 =================================
 
+## 2026-03-14 — Three Killer Features: Short-Form Video, Photo Tags, AI Chatbot
+
+### Feature 1: AI Short-Form Video Generator
+- `remotion/compositions/ShortFormTeaser.tsx` — 15s vertical video (450 frames, 9:16)
+- `remotion/compositions/HookText.tsx` — Animated hook text with bounce entrance
+- `remotion/compositions/StatsBar.tsx` — Bottom-third stats pills (price/beds/baths/sqft)
+- `remotion/compositions/ShortFormCTA.tsx` — Closing card with address + brand
+- `lib/video/hook-generator.ts` — GPT-4o-mini hook text generation (5 templates, fallbacks)
+- `remotion/Root.tsx` — Registered ShortForm-9x16 composition
+- `app/api/video/generate/route.ts` — Added 'short-form' case to getCompositionId()
+- `lib/validation/schemas.ts` — Added 'short-form' to generateVideoSchema template enum
+- `app/dashboard/content-studio/video/VideoCreator.tsx` — Added short-form template option with 9:16 lock
+- Migration: `supabase/migrations/20260315_short_form_video.sql`
+
+### Feature 2: Computer Vision Photo Tagging
+- `lib/ai/photo-tagger.ts` — GPT-4o Vision batch tagger (room type, features, condition, style, RESO mapping)
+- `app/api/photos/tags/route.ts` — POST (batch tag), GET (fetch tags), PATCH (user override)
+- `components/photo-tags-panel.tsx` — Studio UI panel for viewing/editing AI tags
+- Migration: `supabase/migrations/20260315_photo_tags.sql`
+
+### Feature 3: AI Property Chatbot
+- `lib/chat/system-prompt.ts` — Context-rich system prompt builder (listing + agent + features)
+- `lib/chat/qualification.ts` — Regex-based lead qualification scoring (0-100, zero AI cost)
+- `app/api/chat/route.ts` — SSE streaming endpoint with GPT-4o, session management, qualification
+- `components/chat-widget.tsx` — Floating chat widget with gold button, streaming, suggested questions
+- `app/p/[slug]/PropertySiteClient.tsx` — Embedded ChatWidget on property sites
+- Migration: `supabase/migrations/20260315_chat_sessions.sql`
+
+### Infrastructure
+- `middleware.ts` — Added rate limits for `/api/photos/tags` (10/min) and `/api/chat` (30/min)
+
 ## 2026-03-14 — Demo data population + video v6 (2:14, 14 scenes)
 
 ### Demo Account Data Seeded

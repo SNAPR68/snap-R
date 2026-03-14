@@ -70,7 +70,7 @@ export const shareSchema = z.object({
 export const generateVideoSchema = z.object({
   listingId: z.string().uuid(),
   aspectRatio: z.enum(['9:16', '1:1', '16:9']),
-  template: z.enum(['test', 'property-showcase', 'just-listed', 'open-house', 'price-drop', 'sold']),
+  template: z.enum(['test', 'property-showcase', 'just-listed', 'open-house', 'price-drop', 'sold', 'short-form']),
   openHouseDate: z.string().max(100).optional(),
   previousPrice: z.number().positive().optional(),
   daysOnMarket: z.number().int().min(0).max(9999).optional(),

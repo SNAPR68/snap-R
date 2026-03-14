@@ -36,6 +36,12 @@ import {
   type SoldProps,
   calculateSoldDuration,
 } from './compositions/Sold';
+import {
+  ShortFormTeaser,
+  shortFormSchema,
+  type ShortFormProps,
+  calculateShortFormDuration,
+} from './compositions/ShortFormTeaser';
 
 // Shared sample photos
 const samplePhotos = [
@@ -116,6 +122,26 @@ const soldDefaultProps: SoldProps = {
   aspectRatio: '9:16',
   audio: defaultAudio,
   brand: defaultBrand,
+};
+
+const shortFormDefaultProps: ShortFormProps = {
+  listing: {
+    address: sampleListing.address,
+    price: sampleListing.price,
+    beds: sampleListing.beds,
+    baths: sampleListing.baths,
+    sqft: sampleListing.sqft,
+    photos: samplePhotos,
+  },
+  hookText: 'Wait till you see this',
+  template: 'teaser',
+  brand: {
+    agentName: defaultBrand.businessName,
+    phone: defaultBrand.phone,
+    website: defaultBrand.website,
+    primaryColor: defaultBrand.primaryColor,
+  },
+  audio: defaultAudio,
 };
 
 // ============================================
@@ -335,6 +361,18 @@ export const RemotionRoot: React.FC = () => {
         schema={soldSchema}
         defaultProps={{ ...soldDefaultProps, aspectRatio: '16:9' as const }}
         calculateMetadata={soldMetadata}
+      />
+
+      {/* ShortForm — 9:16 only (vertical short-form video) */}
+      <Composition
+        id="ShortForm-9x16"
+        component={ShortFormTeaser}
+        durationInFrames={calculateShortFormDuration()}
+        fps={30}
+        width={ASPECT_CONFIGS['9:16'].width}
+        height={ASPECT_CONFIGS['9:16'].height}
+        schema={shortFormSchema}
+        defaultProps={shortFormDefaultProps}
       />
 
       {/* Explainer Video — 16:9 for homepage embed */}

@@ -24,9 +24,10 @@ type VoiceId = 'professional-male' | 'professional-female' | 'luxury-male' | 'lu
 type ScriptStyle = 'professional' | 'luxury' | 'friendly' | 'firstTimeBuyer'
 
 type RenderStatus = 'idle' | 'triggering' | 'rendering' | 'completed' | 'failed'
-type VideoTemplate = 'property-showcase' | 'just-listed' | 'open-house' | 'price-drop' | 'sold'
+type VideoTemplate = 'property-showcase' | 'just-listed' | 'open-house' | 'price-drop' | 'sold' | 'short-form'
 
 const VIDEO_TEMPLATES: Record<VideoTemplate, { name: string; desc: string; duration: string }> = {
+  'short-form': { name: 'Short-Form', desc: 'TikTok/Reels — fast cuts with AI hook text', duration: '15s' },
   'property-showcase': { name: 'Showcase', desc: 'Cinematic slideshow with crossfades', duration: '~3s/photo' },
   'just-listed': { name: 'Just Listed', desc: 'Intro card + slide transitions + features', duration: '~3s/photo' },
   'open-house': { name: 'Open House', desc: 'Urgency pacing with event date badge', duration: '~2.5s/photo' },
@@ -695,7 +696,7 @@ export default function VideoCreatorClient() {
                         <button
                           key={ratio}
                           onClick={() => setAspectRatio(ratio)}
-                          disabled={isGenerating}
+                          disabled={isGenerating || template === 'short-form'}
                           className={`p-3 rounded-lg border transition-all ${
                             aspectRatio === ratio
                               ? 'bg-pink-500/20 border-pink-500 text-white'
@@ -711,6 +712,9 @@ export default function VideoCreatorClient() {
                       )
                     })}
                   </div>
+                  {template === 'short-form' && (
+                    <p className="text-xs text-[#D4A017]/70">Locked to 9:16 vertical for TikTok/Reels/Shorts</p>
+                  )}
                 </div>
 
                 {/* Template Selector */}
@@ -725,7 +729,10 @@ export default function VideoCreatorClient() {
                       return (
                         <button
                           key={tmpl}
-                          onClick={() => setTemplate(tmpl)}
+                          onClick={() => {
+                            setTemplate(tmpl)
+                            if (tmpl === 'short-form') setAspectRatio('9:16')
+                          }}
                           disabled={isGenerating}
                           className={`w-full p-3 rounded-lg border transition-all text-left ${
                             template === tmpl

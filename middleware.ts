@@ -18,6 +18,8 @@ const RATE_LIMITS: Record<string, { limit: number; windowMs: number }> = {
   '/api/renovation': { limit: 5, windowMs: 60_000 },
   '/api/video': { limit: 10, windowMs: 60_000 },
   '/api/partners/apply': { limit: 3, windowMs: 3_600_000 },
+  '/api/photos/tags': { limit: 10, windowMs: 60_000 },
+  '/api/chat': { limit: 30, windowMs: 60_000 },
 }
 const DEFAULT_RATE_LIMIT = { limit: 100, windowMs: 60_000 }
 
