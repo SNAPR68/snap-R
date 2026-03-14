@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 
 const VOICES = [
   {
@@ -106,13 +106,23 @@ export function WeHeardYou() {
   const [current, setCurrent] = useState(0);
   const [isHovered, setIsHovered] = useState(false);
   const [isFading, setIsFading] = useState(false);
+  const fadeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const goTo = useCallback((index: number) => {
+    if (fadeTimerRef.current) clearTimeout(fadeTimerRef.current);
     setIsFading(true);
-    setTimeout(() => {
+    fadeTimerRef.current = setTimeout(() => {
       setCurrent(index);
       setIsFading(false);
+      fadeTimerRef.current = null;
     }, 250);
+  }, []);
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (fadeTimerRef.current) clearTimeout(fadeTimerRef.current);
+    };
   }, []);
 
   const next = useCallback(() => {
