@@ -26,17 +26,22 @@ const nextConfig = {
     '@remotion/serverless',
   ],
 
-  // Security headers for all routes
+  // Security headers — split for embed routes (allow iframe) vs everything else (deny)
   async headers() {
+    const commonHeaders = [
+      { key: 'X-Content-Type-Options', value: 'nosniff' },
+      { key: 'X-XSS-Protection', value: '1; mode=block' },
+      { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
+      { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=()' },
+    ];
+
     return [
+      // All other routes — deny iframe embedding (catch-all listed first)
       {
         source: '/(.*)',
         headers: [
-          { key: 'X-Content-Type-Options', value: 'nosniff' },
+          ...commonHeaders,
           { key: 'X-Frame-Options', value: 'DENY' },
-          { key: 'X-XSS-Protection', value: '1; mode=block' },
-          { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
-          { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=()' },
           {
             key: 'Content-Security-Policy',
             value: [
@@ -49,6 +54,25 @@ const nextConfig = {
               "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://*.cloudinary.com https://*.sentry.io https://api.openai.com https://api.stripe.com https://open.tiktokapis.com https://*.workers.dev https://calendly.com",
               "frame-src 'self' https://js.stripe.com https://hooks.stripe.com https://calendly.com",
               "frame-ancestors 'none'",
+            ].join('; '),
+          },
+        ],
+      },
+      // Embed routes — allow iframe embedding from any origin (later rule overrides catch-all)
+      {
+        source: '/embed/:path*',
+        headers: [
+          ...commonHeaders,
+          {
+            key: 'Content-Security-Policy',
+            value: [
+              "default-src 'self'",
+              "script-src 'self' 'unsafe-inline'",
+              "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+              "img-src 'self' data: blob: https://*.supabase.co https://*.cloudinary.com https://*.workers.dev",
+              "font-src 'self' https://fonts.gstatic.com",
+              "connect-src 'self' https://*.supabase.co",
+              "frame-ancestors *",
             ].join('; '),
           },
         ],

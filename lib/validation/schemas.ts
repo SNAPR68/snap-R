@@ -937,6 +937,16 @@ export function parseQuery<T>(schema: z.ZodType<T>, params: Record<string, strin
 }
 
 // ============================================
+// API KEY SCHEMAS
+// ============================================
+
+export const apiKeyCreateSchema = z.object({
+  name: z.string().min(1).max(100),
+  scopes: z.array(z.string().max(50)).max(20).optional(),
+  expires_in_days: z.number().int().min(1).max(365).optional(),
+})
+
+// ============================================
 // HELPERS
 // ============================================
 

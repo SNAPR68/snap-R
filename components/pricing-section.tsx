@@ -117,12 +117,14 @@ const TIERS = [
     requiresCall: true,
     features: [
       { name: 'Everything in Platinum, plus:', included: true, isHeader: true },
+      { name: 'Public Developer API (v1)', included: true },
+      { name: 'Custom domain mapping', included: true },
+      { name: 'Embeddable widgets', included: true },
       { name: 'Custom listing volume', included: true },
       { name: 'Unlimited team members', included: true },
       { name: 'Custom integrations', included: true },
       { name: 'SLA guarantee', included: true },
       { name: 'Dedicated success manager', included: true },
-      { name: 'Volume discounts', included: true },
     ],
   },
 ];
