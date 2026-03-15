@@ -69,6 +69,40 @@ const getMarketingBadge = (status: string | null | undefined) => {
   }
 };
 
+// ── Pipeline progress indicator ──
+
+function ListingProgressBar({ listing }: { listing: ListingWithMeta }) {
+  const steps = [
+    { label: 'Upload', done: listing.photoCount > 0 },
+    { label: 'Enhance', done: listing.preparation_status === 'prepared' },
+    { label: 'Marketing', done: listing.marketing_status === 'completed' },
+  ]
+  const completedCount = steps.filter(s => s.done).length
+
+  // Don't show if all steps are done
+  if (completedCount === steps.length) return null
+
+  return (
+    <div className="mt-3 pt-3 border-t border-white/5">
+      <div className="flex items-center gap-1 mb-1.5">
+        {steps.map((step, i) => (
+          <div key={step.label} className="flex items-center gap-1 flex-1">
+            <div className={`h-1.5 rounded-full flex-1 transition-colors ${step.done ? 'bg-[#D4A017]' : 'bg-white/10'}`} />
+            {i < steps.length - 1 && <div className="w-0.5" />}
+          </div>
+        ))}
+      </div>
+      <div className="flex justify-between">
+        {steps.map((step) => (
+          <span key={step.label} className={`text-[10px] ${step.done ? 'text-[#D4A017]' : 'text-white/25'}`}>
+            {step.label}
+          </span>
+        ))}
+      </div>
+    </div>
+  )
+}
+
 type SortOption = 'newest' | 'oldest' | 'title'
 
 const STATUS_FILTERS = [
@@ -307,15 +341,48 @@ export default function ListingsPage() {
         )}
 
         {listings.length === 0 ? (
-          <div className="text-center py-20 glass-luxury glossy-top rounded-2xl">
-            <Home className="w-16 h-16 text-white/20 mx-auto mb-4" />
-            <h3 className="text-xl font-medium mb-2">No listings yet</h3>
-            <p className="text-white/40 mb-6 max-w-md mx-auto">
-              Upload your property photos and let AI transform them into luxury showcases
-            </p>
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
-              <Link href="/listings/new" className="inline-flex items-center gap-2 px-6 py-3 bg-amber-500 text-black rounded-xl font-semibold hover:bg-amber-400">
-                <Plus className="w-5 h-5" />Upload Your Photos
+          <div className="py-12 glass-luxury glossy-top rounded-2xl">
+            {/* Welcome header */}
+            <div className="text-center mb-10">
+              <div className="w-16 h-16 rounded-2xl flex items-center justify-center text-black font-bold text-2xl bg-gradient-to-br from-[#D4A017] to-[#B8860B] shadow-lg shadow-[#D4A017]/30 mx-auto mb-4">S</div>
+              <h2 className="text-2xl font-bold mb-2">Welcome to SnapR</h2>
+              <p className="text-white/50 max-w-lg mx-auto">
+                Transform ordinary property photos into luxury showcases, then auto-generate all your marketing in seconds.
+              </p>
+            </div>
+
+            {/* 3-step visual guide */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 max-w-3xl mx-auto px-6 mb-10">
+              <div className="text-center p-5 rounded-xl bg-white/[0.03] border border-white/10">
+                <div className="w-12 h-12 rounded-xl bg-[#D4A017]/20 flex items-center justify-center mx-auto mb-3">
+                  <ImageIcon className="w-6 h-6 text-[#D4A017]" />
+                </div>
+                <div className="text-xs font-semibold text-[#D4A017] mb-1">Step 1</div>
+                <h4 className="font-semibold mb-1">Upload Photos</h4>
+                <p className="text-xs text-white/40">Drop all your listing photos. No sorting needed.</p>
+              </div>
+              <div className="text-center p-5 rounded-xl bg-white/[0.03] border border-white/10">
+                <div className="w-12 h-12 rounded-xl bg-purple-500/20 flex items-center justify-center mx-auto mb-3">
+                  <Sparkles className="w-6 h-6 text-purple-400" />
+                </div>
+                <div className="text-xs font-semibold text-purple-400 mb-1">Step 2</div>
+                <h4 className="font-semibold mb-1">AI Enhances</h4>
+                <p className="text-xs text-white/40">Sky replacement, virtual staging, HDR -- all automatic.</p>
+              </div>
+              <div className="text-center p-5 rounded-xl bg-white/[0.03] border border-white/10">
+                <div className="w-12 h-12 rounded-xl bg-green-500/20 flex items-center justify-center mx-auto mb-3">
+                  <CheckCircle className="w-6 h-6 text-green-400" />
+                </div>
+                <div className="text-xs font-semibold text-green-400 mb-1">Step 3</div>
+                <h4 className="font-semibold mb-1">Marketing Ready</h4>
+                <p className="text-xs text-white/40">Description, captions, property site, and social posts.</p>
+              </div>
+            </div>
+
+            {/* CTAs */}
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-3 px-6">
+              <Link href="/listings/new" className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-[#D4A017] to-[#B8860B] text-black rounded-xl font-semibold hover:opacity-90 transition-opacity shadow-lg shadow-[#D4A017]/20">
+                <Plus className="w-5 h-5" />Upload Your First Listing
               </Link>
               <button
                 onClick={handleCreateSample}
@@ -330,9 +397,11 @@ export default function ListingsPage() {
                 Try with Sample Photos
               </button>
             </div>
-            <p className="text-white/30 text-xs mt-4">
-              Sample listing includes 5 curated property photos to explore AI tools
-            </p>
+            <div className="text-center mt-4">
+              <Link href="/#demo-video" className="text-white/30 hover:text-white/50 text-xs underline underline-offset-2 transition-colors">
+                Watch Demo Video
+              </Link>
+            </div>
           </div>
         ) : filteredListings.length === 0 ? (
           <div className="text-center py-16 glass-luxury rounded-2xl">
@@ -376,6 +445,8 @@ export default function ListingsPage() {
                     </p>
                   )}
                   {listing.price && <p className="text-amber-400 font-semibold mt-2">${listing.price.toLocaleString()}</p>}
+                  {/* Pipeline progress indicator */}
+                  <ListingProgressBar listing={listing} />
                 </div>
               </Link>
             ))}

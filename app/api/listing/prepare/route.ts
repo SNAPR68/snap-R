@@ -18,9 +18,11 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { adminSupabase } from '@/lib/supabase/admin';
 import { listingPrepareSchema, parseBody } from '@/lib/validation/schemas'
+import { startSpan } from '@sentry/nextjs';
 
 import { logger } from '@/lib/logger';
 export async function POST(request: NextRequest) {
+  return startSpan({ name: 'listing.prepare', op: 'task' }, async () => {
   try {
     const body = await request.json().catch(() => ({}));
     const validated = parseBody(listingPrepareSchema, body); if (!validated.success) { return NextResponse.json({ error: validated.error, details: validated.details }, { status: 400 }); }
@@ -198,7 +200,6 @@ export async function POST(request: NextRequest) {
     const effectiveUserId = allowAdmin ? listing.user_id : user?.id;
     let workerResponse: Response;
     try {
-              signal: AbortSignal.timeout(15000),
       workerResponse = await fetch(`${workerUrl}/process`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -264,4 +265,5 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     );
   }
+  });
 }

@@ -20,6 +20,7 @@ const CRON_SCHEDULES: Record<string, { intervalMs: number; label: string }> = {
   'drip-sequences': { intervalMs: 1 * 3600_000, label: 'Every hour' },
   'usage-check': { intervalMs: 24 * 3600_000, label: 'Daily 9am' },
   'health-check': { intervalMs: 1 * 3600_000, label: 'Every hour' },
+  'cleanup': { intervalMs: 7 * 24 * 3600_000, label: 'Weekly Sun 3am UTC' },
 };
 
 /** Staleness buffer: 2× the expected interval before flagging overdue */

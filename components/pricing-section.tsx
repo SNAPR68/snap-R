@@ -162,13 +162,19 @@ export default function PricingSection({
 
   const handleSelectPlan = (planId: string, total: number, isFree?: boolean) => {
     setLoading(planId);
-    
+
     if (isFree) {
       router.push('/auth/signup?plan=free');
       return;
     }
-    
+
     router.push(`/auth/signup?plan=${planId}&listings=${listings}&total=${total}&billing=${billingOption}`);
+  };
+
+  const handleEnterpriseTrial = () => {
+    setLoading('enterprise-trial');
+    const billing = billingOption === 'annual' ? 'annual' : 'monthly';
+    router.push(`/auth/signup?plan=enterprise&billing=${billing}&trial=true`);
   };
 
   return (
@@ -312,13 +318,32 @@ export default function PricingSection({
 
               {/* CTA Button */}
               {isEnterprise ? (
-                <Link
-                  href="/contact?plan=enterprise"
-                  className="w-full py-2.5 rounded-lg font-semibold transition-all mb-4 text-sm flex items-center justify-center gap-2 bg-white/10 text-white hover:bg-white/20 border border-white/20"
-                >
-                  <Phone className="w-4 h-4" />
-                  Talk to Sales
-                </Link>
+                <div className="space-y-2 mb-4">
+                  <Link
+                    href="/contact?plan=enterprise"
+                    className="w-full py-2.5 rounded-lg font-semibold transition-all text-sm flex items-center justify-center gap-2 bg-white/10 text-white hover:bg-white/20 border border-white/20"
+                  >
+                    <Phone className="w-4 h-4" />
+                    Talk to Sales
+                  </Link>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleEnterpriseTrial();
+                    }}
+                    disabled={loading === 'enterprise-trial'}
+                    className="w-full py-2 rounded-lg text-xs font-medium transition-all disabled:opacity-50 bg-[#D4A017]/10 text-[#D4A017] hover:bg-[#D4A017]/20 border border-[#D4A017]/20"
+                  >
+                    {loading === 'enterprise-trial' ? (
+                      <Loader2 className="w-3.5 h-3.5 animate-spin mx-auto" />
+                    ) : (
+                      'Or start 14-day Enterprise Trial'
+                    )}
+                  </button>
+                  <p className="text-[10px] text-white/30 text-center">
+                    {billingOption === 'annual' ? '$249' : '$299'}/mo after trial
+                  </p>
+                </div>
               ) : requiresSales && !isFree ? (
                 <Link
                   href={`/contact?plan=${tier.id}`}

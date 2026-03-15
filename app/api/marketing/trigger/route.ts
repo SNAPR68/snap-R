@@ -15,9 +15,11 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { adminSupabase } from '@/lib/supabase/admin';
 import { marketingTriggerExtendedSchema, parseBody } from '@/lib/validation/schemas';
+import { startSpan } from '@sentry/nextjs';
 
 import { logger } from '@/lib/logger';
 export async function POST(request: NextRequest) {
+  return startSpan({ name: 'marketing.trigger', op: 'task' }, async () => {
   try {
     const body = await request.json();
     const validated = parseBody(marketingTriggerExtendedSchema, body);
@@ -127,4 +129,5 @@ export async function POST(request: NextRequest) {
     logger.error('[Marketing Trigger API] Error:', message);
     return NextResponse.json({ error: message }, { status: 500 });
   }
+  });
 }
