@@ -34,39 +34,56 @@ interface PhotoSlideProps {
   src: string;
   index: number;
   displayFrames?: number;
+  /** When true, uses a slow outward zoom to reveal the aerial perspective */
+  isDrone?: boolean;
 }
 
 export const PhotoSlide: React.FC<PhotoSlideProps> = ({
   src,
   index,
   displayFrames = PHOTO_DISPLAY_FRAMES,
+  isDrone = false,
 }) => {
   const frame = useCurrentFrame();
 
-  // Ken Burns: alternating zoom in/out with subtle pan
+  // Drone photos: slow outward zoom to reveal property scale
+  // Regular photos: alternating Ken Burns zoom in/out with subtle pan
   const isEven = index % 2 === 0;
 
-  const scale = interpolate(
-    frame,
-    [0, displayFrames],
-    isEven ? [1.0, 1.1] : [1.1, 1.0],
-    {
-      easing: Easing.inOut(Easing.ease),
-      extrapolateLeft: 'clamp',
-      extrapolateRight: 'clamp',
-    }
-  );
+  const scale = isDrone
+    ? interpolate(
+        frame,
+        [0, displayFrames],
+        [1.2, 1.0], // zoom out to reveal full aerial view
+        {
+          easing: Easing.inOut(Easing.ease),
+          extrapolateLeft: 'clamp',
+          extrapolateRight: 'clamp',
+        }
+      )
+    : interpolate(
+        frame,
+        [0, displayFrames],
+        isEven ? [1.0, 1.1] : [1.1, 1.0],
+        {
+          easing: Easing.inOut(Easing.ease),
+          extrapolateLeft: 'clamp',
+          extrapolateRight: 'clamp',
+        }
+      );
 
-  const translateX = interpolate(
-    frame,
-    [0, displayFrames],
-    isEven ? [-0.02, 0.02] : [0.02, -0.02],
-    {
-      easing: Easing.inOut(Easing.ease),
-      extrapolateLeft: 'clamp',
-      extrapolateRight: 'clamp',
-    }
-  );
+  const translateX = isDrone
+    ? 0 // no horizontal pan on aerial shots — keep centered
+    : interpolate(
+        frame,
+        [0, displayFrames],
+        isEven ? [-0.02, 0.02] : [0.02, -0.02],
+        {
+          easing: Easing.inOut(Easing.ease),
+          extrapolateLeft: 'clamp',
+          extrapolateRight: 'clamp',
+        }
+      );
 
   return (
     <AbsoluteFill style={{ backgroundColor: '#0A0A0A' }}>

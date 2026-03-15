@@ -7,7 +7,7 @@ import JSZip from 'jszip';
 import {
   Loader2, Home, ChevronRight, Upload, Download,
   Eye, Link2, Trash2, Edit3, Plus, Image, Check,
-  X, ChevronLeft, Calendar
+  X, ChevronLeft, Calendar, Sparkles
 } from 'lucide-react';
 import NextImage from 'next/image';
 
@@ -741,6 +741,33 @@ function VirtualToursContent() {
   const [editTour, setEditTour] = useState<Tour | undefined>();
   const [viewTour, setViewTour] = useState<Tour | undefined>();
   const [selectedListingId, setSelectedListingId] = useState<string | undefined>();
+  const [aiGenId, setAiGenId] = useState<string | null>(null);
+  const [aiGenError, setAiGenError] = useState<string | null>(null);
+
+  const handleAutoGenerate = async (listingId: string) => {
+    setAiGenId(listingId);
+    setAiGenError(null);
+    try {
+      const res = await fetch('/api/virtual-tours/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ listingId }),
+        signal: AbortSignal.timeout(30000),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setAiGenError(data.error || 'Failed to generate tour');
+        return;
+      }
+      // Reload tours to show the new one
+      await loadData();
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      setAiGenError(message);
+    } finally {
+      setAiGenId(null);
+    }
+  };
 
   const loadData = useCallback(async () => {
     try {
@@ -920,7 +947,7 @@ function VirtualToursContent() {
 
         {/* Create New */}
         <h2 className="text-xl font-bold mb-4">Create New Gallery</h2>
-        <div className="grid md:grid-cols-2 gap-6">
+        <div className="grid md:grid-cols-3 gap-6">
           {/* From Listing */}
           <div className="bg-white/5 border border-white/10 rounded-xl p-6">
             <h3 className="font-semibold mb-4 flex items-center gap-2">
@@ -949,6 +976,49 @@ function VirtualToursContent() {
                       <div className="w-12 h-12 rounded-lg bg-white/10 flex items-center justify-center">
                         <Image className="w-6 h-6 text-white/30" aria-label="No image" />
                       </div>
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium truncate">{listing.title || listing.address}</p>
+                      <p className="text-xs text-white/50">{listing.photos?.length || 0} photos</p>
+                    </div>
+                    <ChevronRight className="w-5 h-5 text-white/30" />
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* AI Auto-Generate */}
+          <div className="bg-white/5 border border-purple-500/20 rounded-xl p-6">
+            <h3 className="font-semibold mb-4 flex items-center gap-2">
+              <Sparkles className="w-5 h-5 text-purple-400" />
+              AI Auto-Generate
+            </h3>
+            <p className="text-white/50 text-sm mb-4">
+              Automatically create a walkthrough gallery using AI photo tags to order rooms naturally.
+            </p>
+
+            {aiGenError && (
+              <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-3 mb-4">
+                <p className="text-red-400 text-sm">{aiGenError}</p>
+              </div>
+            )}
+
+            {listings.length === 0 ? (
+              <p className="text-white/50 text-sm">No listings yet. Create a listing first.</p>
+            ) : (
+              <div className="space-y-3 max-h-60 overflow-y-auto">
+                {listings.map(listing => (
+                  <button
+                    key={listing.id}
+                    onClick={() => handleAutoGenerate(listing.id)}
+                    disabled={aiGenId === listing.id}
+                    className="w-full flex items-center gap-3 p-3 bg-purple-500/5 rounded-lg hover:bg-purple-500/10 transition-colors text-left disabled:opacity-50"
+                  >
+                    {aiGenId === listing.id ? (
+                      <Loader2 className="w-5 h-5 animate-spin text-purple-400 shrink-0" />
+                    ) : (
+                      <Sparkles className="w-5 h-5 text-purple-400 shrink-0" />
                     )}
                     <div className="flex-1 min-w-0">
                       <p className="font-medium truncate">{listing.title || listing.address}</p>

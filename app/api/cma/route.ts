@@ -122,17 +122,93 @@ Write a professional narrative explaining the pricing recommendation based on th
   }
 }
 
+// Photo tag aggregation for CMA reports
+interface DetectedFeatures {
+  rooms: { type: string; count: number; avgCondition: string }[];
+  allFeatures: string[];
+  overallCondition: string;
+  styles: string[];
+  droneCount: number;
+}
+
+interface PhotoTagRow {
+  room_type: string;
+  features: string[] | null;
+  condition: string | null;
+  style: string | null;
+  atmosphere: string | null;
+  confidence: number | null;
+}
+
+function aggregatePhotoTagsForCMA(tags: PhotoTagRow[]): DetectedFeatures {
+  const roomCounts = new Map<string, { count: number; conditions: string[] }>();
+  const allFeatures = new Set<string>();
+  const styles = new Set<string>();
+  const conditions: string[] = [];
+  let droneCount = 0;
+
+  for (const tag of tags) {
+    const room = tag.room_type;
+    const existing = roomCounts.get(room) ?? { count: 0, conditions: [] };
+    existing.count++;
+    if (tag.condition) existing.conditions.push(tag.condition);
+    roomCounts.set(room, existing);
+
+    if (tag.features) {
+      for (const f of tag.features) allFeatures.add(f);
+    }
+    if (tag.style && tag.style !== 'unknown') styles.add(tag.style);
+    if (tag.condition) conditions.push(tag.condition);
+    if (room === 'aerial' || room === 'drone') droneCount++;
+  }
+
+  const conditionRank = { excellent: 4, good: 3, fair: 2, poor: 1 };
+  const avgConditionScore = conditions.length > 0
+    ? conditions.reduce((s, c) => s + (conditionRank[c as keyof typeof conditionRank] ?? 2), 0) / conditions.length
+    : 3;
+  const overallCondition = avgConditionScore >= 3.5 ? 'Excellent' : avgConditionScore >= 2.5 ? 'Good' : avgConditionScore >= 1.5 ? 'Fair' : 'Poor';
+
+  const rooms = Array.from(roomCounts.entries()).map(([type, data]) => {
+    const avg = data.conditions.length > 0
+      ? data.conditions.reduce((s, c) => s + (conditionRank[c as keyof typeof conditionRank] ?? 2), 0) / data.conditions.length
+      : 3;
+    return {
+      type,
+      count: data.count,
+      avgCondition: avg >= 3.5 ? 'Excellent' : avg >= 2.5 ? 'Good' : avg >= 1.5 ? 'Fair' : 'Poor',
+    };
+  });
+
+  return {
+    rooms,
+    allFeatures: Array.from(allFeatures),
+    overallCondition,
+    styles: Array.from(styles),
+    droneCount,
+  };
+}
+
+const ROOM_TYPE_DISPLAY: Record<string, string> = {
+  living_room: 'Living Room', kitchen: 'Kitchen', bedroom: 'Bedroom',
+  bathroom: 'Bathroom', dining_room: 'Dining Room', home_office: 'Home Office',
+  basement: 'Basement', garage: 'Garage', front_exterior: 'Front Exterior',
+  rear_exterior: 'Rear Exterior', pool: 'Pool', patio: 'Patio',
+  deck: 'Deck', garden: 'Garden', aerial: 'Aerial/Drone', drone: 'Aerial/Drone',
+  entryway: 'Entryway', theater: 'Theater', game_room: 'Game Room',
+};
+
 // Generate HTML report
 function generateHTMLReport(
   listing: CMARequest['listing'],
   comparables: Comparable[],
   pricing: CMARequest['pricing'],
   agentInfo: CMARequest['agentInfo'],
-  narrative: string
+  narrative: string,
+  detectedFeatures?: DetectedFeatures | null
 ): string {
   const avgPricePerSqft = comparables.reduce((sum, c) => sum + (c.soldPrice / c.sqft), 0) / comparables.length;
   const subjectPricePerSqft = listing.sqft && pricing.recommended ? pricing.recommended / listing.sqft : 0;
-  
+
   const fullAddress = [listing.address, listing.city, listing.state, listing.zip].filter(Boolean).join(', ');
 
   return `
@@ -386,6 +462,50 @@ function generateHTMLReport(
     </div>
     ` : ''}
 
+    ${detectedFeatures ? `
+    <div class="analysis-box" style="margin-bottom: 20px;">
+      <div class="analysis-title">AI-Detected Property Features</div>
+      <div style="display: flex; gap: 20px; margin-bottom: 15px;">
+        <div style="flex: 1;">
+          <div style="font-size: 11px; color: #666; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px;">Overall Condition</div>
+          <div style="font-size: 24px; font-weight: bold; color: #d4af37;">${detectedFeatures.overallCondition}</div>
+        </div>
+        <div style="flex: 1;">
+          <div style="font-size: 11px; color: #666; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px;">Rooms Analyzed</div>
+          <div style="font-size: 24px; font-weight: bold; color: #1a1a1a;">${detectedFeatures.rooms.length}</div>
+        </div>
+        ${detectedFeatures.styles.length > 0 ? `
+        <div style="flex: 1;">
+          <div style="font-size: 11px; color: #666; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px;">Design Style</div>
+          <div style="font-size: 16px; font-weight: bold; color: #1a1a1a; text-transform: capitalize;">${detectedFeatures.styles.slice(0, 2).join(', ')}</div>
+        </div>` : ''}
+        ${detectedFeatures.droneCount > 0 ? `
+        <div style="flex: 1;">
+          <div style="font-size: 11px; color: #666; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px;">Aerial Photos</div>
+          <div style="font-size: 24px; font-weight: bold; color: #1a1a1a;">${detectedFeatures.droneCount}</div>
+        </div>` : ''}
+      </div>
+      ${detectedFeatures.rooms.length > 0 ? `
+      <div style="font-size: 11px; color: #666; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px;">Room Breakdown</div>
+      <div style="display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px;">
+        ${detectedFeatures.rooms.map(r => `
+          <span style="background: #f0f0f0; padding: 4px 10px; border-radius: 12px; font-size: 12px;">
+            ${ROOM_TYPE_DISPLAY[r.type] ?? r.type.replace(/_/g, ' ')} (${r.avgCondition})
+          </span>
+        `).join('')}
+      </div>` : ''}
+      ${detectedFeatures.allFeatures.length > 0 ? `
+      <div style="font-size: 11px; color: #666; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px;">Detected Features</div>
+      <div style="display: flex; flex-wrap: wrap; gap: 4px;">
+        ${detectedFeatures.allFeatures.slice(0, 15).map(f => `
+          <span style="background: #fffbeb; border: 1px solid #d4af37; padding: 3px 8px; border-radius: 10px; font-size: 11px; color: #8b6914; text-transform: capitalize;">
+            ${f.replace(/_/g, ' ')}
+          </span>
+        `).join('')}
+      </div>` : ''}
+    </div>
+    ` : ''}
+
     <div class="analysis-box">
       <div class="analysis-title">Pricing Summary</div>
       <div class="analysis-grid">
@@ -532,11 +652,26 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Missing required data' }, { status: 400 });
     }
 
+    // Fetch AI-detected photo tags for the listing (if available)
+    let detectedFeatures: DetectedFeatures | null = null;
+    try {
+      const { data: photoTags } = await getServiceSupabase()
+        .from('photo_tags')
+        .select('room_type, features, condition, style, atmosphere, confidence')
+        .eq('listing_id', listing.id);
+
+      if (photoTags && photoTags.length > 0) {
+        detectedFeatures = aggregatePhotoTagsForCMA(photoTags);
+      }
+    } catch {
+      // photo_tags table may not exist yet — continue without features
+    }
+
     // Generate AI narrative
     const narrative = await generateMarketNarrative(listing, comparables, pricing);
 
     // Generate HTML report
-    const htmlReport = generateHTMLReport(listing, comparables, pricing, agentInfo, narrative);
+    const htmlReport = generateHTMLReport(listing, comparables, pricing, agentInfo, narrative, detectedFeatures);
 
     // Save CMA record to database
     let reportId: string | null = null;
