@@ -1,6 +1,21 @@
 # SnapR Execution Changelog
 =================================
 
+## 2026-03-15 — Fix enterprise tier tests + apply pending migrations
+
+### Test Fix
+- `__tests__/limits.test.ts` — Updated stale test: `normalizeTier('enterprise')` now returns `'enterprise'` (own canonical tier since PR #116), not `'agency'`
+- Added enterprise tier coverage to getPlanLimits, canUseContentStudio, canGenerateVideo, getListingLimits tests
+
+### Database Migrations Applied
+- `20260316_api_keys.sql` — api_keys + api_usage tables with RLS (applied to live Supabase)
+- `20260316_custom_domains.sql` — custom_domains table with DNS TXT verification, RLS (applied to live Supabase)
+- All 13 migrations now applied (was 11/13)
+
+### Documentation Updates
+- `CLAUDE.md` — Added enterprise platform docs (API v1, custom domains, widgets, env validation, new crons, migrations marked applied)
+- `HANDOFF.md` — Updated to reflect current state (all migrations applied, tests passing)
+
 ## 2026-03-15 — CodeRabbit Fix: Named Sentry Imports
 - `app/api/listing/prepare/route.ts` — Changed `import * as Sentry` to `import { startSpan }` per repo convention
 - `app/api/video/generate/route.ts` — Same named import fix

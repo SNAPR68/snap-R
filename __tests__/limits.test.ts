@@ -35,12 +35,12 @@ describe('normalizeTier', () => {
     expect(normalizeTier('starter')).toBe('starter')
     expect(normalizeTier('pro')).toBe('pro')
     expect(normalizeTier('agency')).toBe('agency')
+    expect(normalizeTier('enterprise')).toBe('enterprise')
   })
 
   it('normalizes aliases to canonical names', () => {
     expect(normalizeTier('gold')).toBe('pro')
     expect(normalizeTier('platinum')).toBe('agency')
-    expect(normalizeTier('enterprise')).toBe('agency')
     expect(normalizeTier('professional')).toBe('pro')
     expect(normalizeTier('team')).toBe('agency')
     expect(normalizeTier('photographer-ultimate')).toBe('agency')
@@ -84,6 +84,11 @@ describe('getPlanLimits', () => {
 
     expect(getPlanLimits('agency').contentPosts).toBe(Infinity)
     expect(getPlanLimits('agency').aiCaptions).toBe(Infinity)
+
+    expect(getPlanLimits('enterprise').canAccessApi).toBe(true)
+    expect(getPlanLimits('enterprise').canCustomDomain).toBe(true)
+    expect(getPlanLimits('enterprise').canEmbed).toBe(true)
+    expect(getPlanLimits('enterprise').contentPosts).toBe(Infinity)
   })
 
   it('resolves aliases through normalizeTier', () => {
@@ -103,6 +108,7 @@ describe('canUseContentStudio', () => {
     expect(canUseContentStudio('starter')).toBe(true)
     expect(canUseContentStudio('pro')).toBe(true)
     expect(canUseContentStudio('agency')).toBe(true)
+    expect(canUseContentStudio('enterprise')).toBe(true)
   })
 })
 
@@ -195,9 +201,10 @@ describe('canGenerateVideo', () => {
     expect(canGenerateVideo('starter')).toBe(false)
   })
 
-  it('allows pro and agency', () => {
+  it('allows pro and above', () => {
     expect(canGenerateVideo('pro')).toBe(true)
     expect(canGenerateVideo('agency')).toBe(true)
+    expect(canGenerateVideo('enterprise')).toBe(true)
   })
 })
 
@@ -209,6 +216,7 @@ describe('getListingLimits', () => {
     expect(getListingLimits('starter')).toEqual({ listings: 10, photos: 50 })
     expect(getListingLimits('pro')).toEqual({ listings: 30, photos: 75 })
     expect(getListingLimits('agency')).toEqual({ listings: 999, photos: 75 })
+    expect(getListingLimits('enterprise')).toEqual({ listings: 9999, photos: 200 })
   })
 
   it('resolves aliases', () => {
