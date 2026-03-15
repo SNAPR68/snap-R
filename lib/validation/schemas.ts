@@ -947,6 +947,14 @@ export const apiKeyCreateSchema = z.object({
 })
 
 // ============================================
+// VIRTUAL TOURS
+// ============================================
+
+export const virtualTourGenerateSchema = z.object({
+  listingId: z.string().uuid('Invalid listing ID'),
+})
+
+// ============================================
 // HELPERS
 // ============================================
 

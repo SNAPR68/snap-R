@@ -1,6 +1,25 @@
 # SnapR Execution Changelog
 =================================
 
+## 2026-03-15 — E2E tests (Playwright) + final Zod gap closure
+
+### Playwright E2E Test Suite (37 tests)
+- `e2e/public-pages.spec.ts` — 10 tests: homepage, auth pages, developer portal, protected route redirects
+- `e2e/api-health.spec.ts` — 12 tests: health check, OpenAPI spec, auth enforcement, rate limits, input validation
+- `e2e/security.spec.ts` — 8 tests: bot pattern blocking (6 paths), embed accessibility, framing headers, rate limiting enforcement
+- `e2e/billing-gates.spec.ts` — 7 tests: enterprise-only endpoints (API keys, domains, all v1 routes)
+- Config: `playwright.config.ts` with auto dev server, Chromium only, HTML reporter
+
+### Zod Validation Gap Closure
+- `app/api/virtual-tours/generate/route.ts` — replaced unsafe `as string` cast with `parseBody(virtualTourGenerateSchema, body)`
+- `lib/validation/schemas.ts` — added `virtualTourGenerateSchema`
+- Coverage: 100/163 routes (61%) — remaining routes are GETs with no body or FormData-only with existing instanceof checks
+
+### Test Totals
+- Unit tests: 220 (vitest, 12 files)
+- E2E tests: 37 (playwright, 4 files)
+- **Total: 257 tests, all passing**
+
 ## 2026-03-15 — CLAUDE.md documentation catchup (10 crons, 162 routes, 39 dashboard areas)
 - Updated Vercel Crons table: 5→10 (added refresh-tokens, drip-sequences, usage-check, health-check, mls-sync)
 - Added 20 additional API route categories (162 total non-v1 routes documented)

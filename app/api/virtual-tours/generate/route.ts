@@ -11,6 +11,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { adminSupabase } from '@/lib/supabase/admin';
 import { logger } from '@/lib/logger';
+import { parseBody, virtualTourGenerateSchema } from '@/lib/validation/schemas';
 
 /** Room type ordering for natural walkthrough flow */
 const TOUR_WALKTHROUGH_ORDER: Record<string, number> = {
@@ -87,11 +88,11 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const listingId = body.listingId as string;
-
-    if (!listingId || typeof listingId !== 'string') {
-      return NextResponse.json({ error: 'listingId is required' }, { status: 400 });
+    const parsed = parseBody(virtualTourGenerateSchema, body);
+    if (!parsed.success) {
+      return NextResponse.json({ error: parsed.error, details: parsed.details }, { status: 400 });
     }
+    const { listingId } = parsed.data;
 
     const admin = adminSupabase();
 
