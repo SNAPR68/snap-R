@@ -34,7 +34,7 @@ Upload → Prepare → Market → Distribute → Measure → Loop
 
 ```
 /app                    - Next.js App Router pages and API routes
-/app/api/cron/          - Vercel Cron jobs (daily-digest, publish-scheduled, sync-analytics)
+/app/api/cron/          - Vercel Cron jobs (daily-digest, publish-scheduled, sync-analytics, cleanup, verify-domains)
 /app/api/marketing/     - Marketing status API
 /app/api/listing/       - Listing status/preparation API
 /app/dashboard/         - Dashboard pages (listings, studio, content-studio, analytics, leads, open-houses, broker)
@@ -45,6 +45,15 @@ Upload → Prepare → Market → Distribute → Measure → Loop
 /app/dashboard/photographer/bookings/ - Photographer booking pipeline management
 /app/dashboard/broker/  - Broker team dashboard (agent roster, stats)
 /app/api/webhooks/      - Outgoing webhooks CRUD API
+/app/api/v1/            - Public REST API v1 (10 endpoints, API key auth)
+/app/api/api-keys/      - API key CRUD (dashboard session auth)
+/app/api/domains/       - Custom domain management
+/app/api/embed/         - Embed widget data endpoints
+/app/embed/             - Public embeddable widget pages (before-after, gallery, property)
+/app/developers/        - Developer portal + interactive API reference
+/app/dashboard/settings/api-keys/  - API key management UI
+/app/dashboard/settings/domains/   - Custom domain management UI
+/app/dashboard/settings/widgets/   - Widget embed code generator
 /app/p/[slug]/          - Public property site pages (SSR)
 /app/open-house/[slug]/ - Public open house check-in form
 /app/book/[slug]/       - Public photographer booking form
@@ -60,6 +69,12 @@ Upload → Prepare → Market → Distribute → Measure → Loop
 /lib/mls/               - MLS provider adapters (SimplyRETS)
 /lib/notify/            - SMS/WhatsApp via Twilio
 /lib/validation/        - Zod schemas for API input validation (schemas.ts)
+/lib/api-keys.ts        - API key generation, validation (SHA-256 + timing-safe)
+/lib/api-v1/            - V1 API middleware (withApiAuth() HOF)
+/lib/services/          - Service layer (listings-service.ts for v1 + internal reuse)
+/lib/env.ts             - Environment variable startup validation
+/lib/monitoring/        - Sentry cron heartbeat tracking
+/public/widget/         - snapr-embed.js widget loader script
 /remotion/              - Remotion video compositions and config
 /remotion/compositions/ - Video templates (PropertyShowcase, JustListed, OpenHouse, PriceDrop, Sold)
 /remotion/components/   - Shared video components (AudioLayer, ClosingCard, etc.)
@@ -169,6 +184,11 @@ Supabase PostgreSQL with RLS. Key tables:
 - `outgoing_webhooks` - User-configured webhook endpoints (url, events[], secret, is_active)
 - `webhook_deliveries` - Delivery log (event, payload, status_code, success)
 
+### Enterprise Platform
+- `api_keys` - API key storage (key_prefix, key_hash SHA-256, scopes, rate_limit_per_minute, is_active)
+- `api_usage` - Per-call API usage tracking (endpoint, method, status_code, response_time_ms)
+- `custom_domains` - Custom domain mapping (domain, target_type, verification_status, verification_token, brand_config)
+
 ### Other
 - `content_library`, `post_drafts`, `auto_post_rules` - Content studio
 - `client_approvals` - Client approval workflows
@@ -193,12 +213,13 @@ import { adminSupabase } from '@/lib/supabase/admin'
 
 Defined in `lib/content/limits.ts`:
 
-| Tier | Content Posts | AI Captions | Can Publish | Content Studio | Marketing Auto |
-|------|-------------|-------------|-------------|----------------|----------------|
-| free | 0 | 0 | No | No | Skipped |
-| starter | 5 | 10 | No | Yes | Skipped |
-| pro | 30 | 50 | Yes | Yes | Full |
-| agency | Unlimited | Unlimited | Yes | Yes | Full |
+| Tier | Content Posts | AI Captions | Can Publish | Content Studio | Marketing Auto | API | Custom Domain | Embed |
+|------|-------------|-------------|-------------|----------------|----------------|-----|---------------|-------|
+| free | 0 | 0 | No | No | Skipped | No | No | No |
+| starter | 5 | 10 | No | Yes | Skipped | No | No | No |
+| pro | 30 | 50 | Yes | Yes | Full | No | No | No |
+| agency | Unlimited | Unlimited | Yes | Yes | Full | No | No | Yes |
+| enterprise | Unlimited | Unlimited | Yes | Yes | Full | Yes | Yes | Yes |
 
 ```typescript
 import { getPlanLimits } from '@/lib/content/limits'
@@ -208,6 +229,8 @@ const limits = getPlanLimits(tier) // returns { canPublish, canAccessContentStud
 **Billing gates enforced at:**
 1. `marketing-handler.ts` — free-tier users get `status: 'skipped'` immediately, zero AI cost incurred
 2. `publish-scheduled/route.ts` — `getPlanLimits(tier).canPublish` check before each post
+3. `lib/api-v1/middleware.ts` — `canAccessApi` check blocks non-enterprise users from v1 API
+4. `app/api/domains/route.ts` — `canCustomDomain` check blocks non-enterprise users
 
 ## Cloudflare Worker (apps/processor)
 
@@ -380,6 +403,8 @@ Defined in `vercel.json`:
 | Publish Scheduled Posts | Every 15 min | `app/api/cron/publish-scheduled/route.ts` |
 | Sync Analytics | Every 6 hours | `app/api/cron/sync-analytics/route.ts` |
 | Daily Digest | (existing) | `app/api/cron/daily-digest/route.ts` |
+| Verify Domains | Every 6 hours | `app/api/cron/verify-domains/route.ts` |
+| Data Cleanup | Weekly (Sun 3am) | `app/api/cron/cleanup/route.ts` |
 
 All crons use `CRON_SECRET` Bearer auth. Max duration: 300s, memory: 1024MB.
 
@@ -437,6 +462,22 @@ Each tool has presets (e.g., sky-replacement: Clear Blue, Sunset, Dramatic Cloud
 | `/api/webhooks/deliveries` | GET | Webhook delivery log (last 50, filterable by webhookId) |
 | `/api/download-approved` | GET | Download client-approved photos |
 | `/api/marketing/reso-export` | POST | RESO Data Dictionary 2.0 JSON export |
+| `/api/v1/listings` | GET, POST | List/create listings (API key auth) |
+| `/api/v1/listings/[id]` | GET, PATCH, DELETE | Listing CRUD (API key auth) |
+| `/api/v1/listings/[id]/photos` | GET | List listing photos (API key auth) |
+| `/api/v1/listings/[id]/prepare` | POST | Trigger preparation (API key auth) |
+| `/api/v1/listings/[id]/status` | GET | Preparation + marketing status (API key auth) |
+| `/api/v1/photos/[id]/enhance` | POST | Enhance photo (API key auth) |
+| `/api/v1/video/generate` | POST | Generate video (API key auth) |
+| `/api/v1/video/[renderId]` | GET | Video render status (API key auth) |
+| `/api/v1/leads` | GET, POST | Lead management (API key auth) |
+| `/api/v1/webhooks` | GET, POST, PATCH, DELETE | Webhook CRUD (API key auth) |
+| `/api/v1/openapi.json` | GET | OpenAPI 3.0 specification |
+| `/api/api-keys` | GET, POST, DELETE | API key management (session auth) |
+| `/api/domains` | GET, POST, PATCH, DELETE | Custom domain management |
+| `/api/embed/analytics` | POST | Widget impression/click tracking |
+| `/api/cron/cleanup` | POST | Weekly data retention cleanup |
+| `/api/cron/verify-domains` | POST | DNS TXT domain verification |
 
 ## Outgoing Webhooks
 
@@ -448,6 +489,52 @@ Each tool has presets (e.g., sky-replacement: Clear Blue, Sunset, Dramatic Cloud
 Supported events: `listing.created`, `listing.updated`, `listing.prepared`, `lead.created`, `lead.updated`, `post.published`, `post.scheduled`, `photo.enhanced`
 
 **Wired into**: leads API (lead.created/lead.updated), listing status API (listing.prepared), publish cron (post.published/post.scheduled).
+
+## Public API v1
+
+REST API with API key authentication for enterprise integrations.
+
+**Auth:** Bearer token with `sk_live_` prefix → SHA-256 hash lookup in `api_keys` table → timing-safe comparison.
+
+**Middleware:** `lib/api-v1/middleware.ts` exports `withApiAuth(handler)` — validates key, checks enterprise tier, rate limits per key, logs usage.
+
+**Response envelope:** `{ data }` for single items, `{ data, meta: { page, per_page, total } }` for lists, `{ error: { message, code } }` for errors.
+
+**Rate limit:** Configurable per key (default 60 req/min). Uses existing `checkRateLimitAsync()`.
+
+**Gate:** Enterprise tier only (`canAccessApi: true` in plan limits).
+
+**OpenAPI spec:** `/api/v1/openapi.json` — full OpenAPI 3.0 spec (1037 lines). Interactive reference at `/developers/api-reference`.
+
+## Custom Domains
+
+DNS TXT verification flow for custom domain mapping.
+
+**Flow:** Add domain → get verification token → add TXT record `_snapr-verify.{domain}` → cron verifies every 6 hours → domain maps to property site/portfolio.
+
+**Gate:** Enterprise tier only (`canCustomDomain: true`).
+
+**Files:** `app/api/domains/route.ts` (CRUD), `app/api/cron/verify-domains/route.ts` (DNS verification).
+
+## Embeddable Widgets
+
+Cross-site embeddable property widgets via iframe.
+
+**Widget types:** before-after slider, photo gallery, property card.
+
+**Loader:** `public/widget/snapr-embed.js` — auto-creates iframe, handles resize via postMessage.
+
+**Usage:**
+```html
+<script src="https://snap-r.com/widget/snapr-embed.js"></script>
+<div data-snapr-widget="before-after" data-listing-id="xxx"></div>
+```
+
+**Gate:** Agency tier+ (`canEmbed: true`).
+
+## Environment Validation
+
+`lib/env.ts` validates required env vars on startup (called from `instrumentation.ts`). Fast-fails in production if critical vars are missing. Warns for recommended vars.
 
 ## Applied Migrations
 
@@ -464,6 +551,8 @@ These migrations have been applied to the live Supabase database:
 9. `20260305_photographer_bookings.sql` — photographer_packages, booking_requests, photographer_availability
 10. `20260305_open_house.sql` — open_house_events + open_house_attendees
 11. `20260305_outgoing_webhooks.sql` — outgoing_webhooks + webhook_deliveries ✓ (applied Session 4)
+12. `20260316_api_keys.sql` — api_keys + api_usage tables with RLS, SHA-256 key hashing ✓
+13. `20260316_custom_domains.sql` — custom_domains table with DNS TXT verification, RLS ✓
 
 ## Environment Variables
 
@@ -481,6 +570,7 @@ These migrations have been applied to the live Supabase database:
 - `REMOTION_LAMBDA_FUNCTION_NAME`, `REMOTION_LAMBDA_SERVE_URL`, `REMOTION_S3_BUCKET_NAME`
 - `ELEVENLABS_API_KEY` (voiceover TTS)
 - `TIKTOK_CLIENT_KEY`, `TIKTOK_CLIENT_SECRET` (TikTok OAuth)
+- `STRIPE_ENTERPRISE_PRICE_ID`, `STRIPE_ENTERPRISE_ANNUAL_PRICE_ID` (enterprise checkout)
 
 **Worker (Cloudflare):**
 - `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `SUPABASE_JWT_SECRET`
@@ -584,3 +674,11 @@ Key settings:
 26. **Lead auto-scoring**: `POST /api/leads/activity` auto-increments `property_leads.score` on each activity. SCORE_DELTAS: call=+10, showing=+20, form_submitted=+15, property_site_viewed=+8, email/text=+5, drip_email_sent=+2. Score capped at 100.
 27. **Bulk email**: `POST /api/leads/bulk-email` sends via Resend to selected lead IDs. Supports `{{name}}` and `{{first_name}}` template vars. Logs each send as a `lead_activities` row (activity_type='email', metadata.bulk=true).
 28. **Webhook delivery log**: `GET /api/webhooks/deliveries` returns last 50 deliveries from `webhook_deliveries` table. Filterable by `?webhookId=`. UI is in `/dashboard/settings/webhooks` — click any row to expand response body.
+29. **API v1 uses `withApiAuth()` HOF** — all v1 routes wrap handler with `withApiAuth()` from `lib/api-v1/middleware.ts`. Enterprise tier required.
+30. **API key format**: `sk_live_` prefix + 32 random bytes (base62). Only the SHA-256 hash is stored; full key shown once on creation.
+31. **Custom domain verification**: DNS TXT record `_snapr-verify.{domain}` checked every 6 hours by cron. Token stored in `custom_domains.verification_token`.
+32. **Widget embed CSP**: `next.config.mjs` splits headers — `/embed/*` routes allow framing (`X-Frame-Options: ALLOWALL`), all other routes deny.
+33. **Data retention cron**: Weekly cleanup of webhook_deliveries (>30 days), api_usage (>90 days), completed jobs (>60 days).
+34. **Enterprise Stripe pricing**: $299/mo or $249/mo annual, 14-day free trial. Checkout via `/api/stripe/checkout`.
+35. **OpenAPI spec**: Full 3.0 spec at `/api/v1/openapi.json` (1037 lines). Interactive docs at `/developers/api-reference`.
+36. **Env validation**: `lib/env.ts` called from `instrumentation.ts` — fast-fails on missing critical vars in production.

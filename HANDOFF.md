@@ -1,68 +1,70 @@
-# Session Handoff — March 8, 2026
+# SnapR Session Handoff — 2026-03-15
 
-**Branch**: `strategy/lead-gen-positioning` (clean, created from `main`)
-**Previous branch**: `feature/abort-signal-timeouts` (separate, don't mix)
+## Current State
 
----
+- **Branch**: `main` (up to date)
+- **Last merged PRs**: #116 (enterprise platform) and #117 (production hardening)
+- **Deployed**: Vercel production at snap-r.com
+- **Build status**: Clean (`tsc --noEmit` passes, `next build` succeeds)
+- **Tests**: 220/220 passing (12 test files, vitest)
+- **Total PRs merged**: #85–#117 (33 PRs across CTO roadmap + enterprise platform)
 
-## What Happened
+## Completed This Session
 
-### 1. Fixed 3 TypeScript Errors (on `feature/abort-signal-timeouts`)
-Corrupted `import { logger }` spliced into multi-line imports in 3 files. Fixed. Already committed on that branch. NOT on this branch.
+### 1. Applied Database Migrations (was URGENT)
+Both pending migrations applied to live Supabase via Management API:
+- `20260316_api_keys.sql` — api_keys + api_usage tables with RLS
+- `20260316_custom_domains.sql` — custom_domains table with DNS TXT verification, RLS
+- **All 13 migrations now applied** (was 11/13)
 
-### 2. Strategic Consulting — 4 Rounds
+### 2. Fixed Failing Test
+- `__tests__/limits.test.ts` — Updated stale test that expected `normalizeTier('enterprise')` to return `'agency'` (enterprise is now its own canonical tier since PR #116)
+- Added enterprise tier coverage across all billing gate tests
 
-**Round 1 — Lead Gen Strategy**: User asked how SnapR builds a lead gen layer for agents. Proposed 5-phase plan (AVM, IDX, consumer SEO). Parked for later — requires external dependencies.
+## What Was Built (PRs #116–#117)
 
-**Round 2 — Tighten Current Model**: "Max out what we have, zero external dependencies." Produced 12-improvement plan. Some items may already be built (auto-drip enrollment IS in leads API).
+### PR #116: Enterprise Platform Layer
+- **Public API v1** — 10 REST endpoints with API key auth (`sk_live_` prefix, SHA-256 hashing, timing-safe comparison)
+- **Custom Domains** — DNS TXT verification flow, 6-hour verification cron
+- **Embeddable Widgets** — Before/after slider, gallery, property card via iframe + loader script
+- **Enterprise Tier** — New billing tier with `canAccessApi`, `canCustomDomain`, `canEmbed` capability flags
+- **Developer Portal** — Public docs at `/developers` with auth guide, endpoint reference, code examples
+- **Dashboard Settings** — API keys, domains, widgets management UIs
+- **Service Layer** — `lib/services/listings-service.ts` extracted for v1 + internal route reuse
 
-**Round 3 — Comparative Landscape Positioning**: SnapR vs total cost agents pay juggling 5-8 platforms. Researched BoxBrownie ($1.60-$24/image), Follow Up Boss ($69-$499/mo), kvCORE ($500-$1,200/mo), Coffee & Contracts ($74/mo), Hootsuite ($19-$99/mo), Matterport ($69-$329/mo), Animoto ($15-$29/mo), BombBomb ($49-$69/mo). Wrote 7-part positioning doc.
+### PR #117: Production Hardening
+- **Stripe Enterprise** — $299/mo or $249/mo annual, 14-day free trial checkout
+- **OpenAPI 3.0 Spec** — 1037-line spec at `/api/v1/openapi.json` + interactive API reference page
+- **Env Validation** — `lib/env.ts` fast-fails on missing critical vars at startup
+- **Onboarding** — Empty state with 3-step visual guide + progress bars on listing cards
+- **Sentry Tracking** — Transaction tracking for critical API paths
+- **Data Retention Cron** — Weekly cleanup of old webhook deliveries, API usage, completed jobs
 
-**Round 4 — User Called Out Assumptions**: Analysis understated what SnapR already has. Code audit ran and confirmed most features are FULLY BUILT. Documents need correction.
+## Remaining Items (Priority Order)
 
----
+### 1. Additional Improvements
+- Mobile app polish (responsive dashboard)
+- Analytics dashboard enhancements
+- TikTok app audit for public posting (currently private-only)
+- Fix Puppeteer auth in `scripts/capture-explainer-v3.mjs` for dashboard screenshots
 
-## Documents Produced
+## Known Issues
 
-**Plan file**: `/Users/baba/.claude/plans/lexical-tinkering-hippo.md`
-- Parts 1-7: Comparative Landscape Positioning
-- Part 8: 12 Zero-Dependency Improvements
-- **NEEDS CORRECTION**: CRM comparison says "NOT YET" for features that ARE built (auto-drip, notifications). Must be verified against code audit below.
+1. **Explainer video Puppeteer auth broken** — `capture-explainer-v3.mjs` can't authenticate; dashboard screenshots sourced from v1 captures
+2. **TikTok unaudited app** — Posts default to `SELF_ONLY` (private). Need app audit for public posting
 
----
+## Codebase Quality Snapshot
 
-## Code Audit Results
-
-| Feature | Status | Evidence |
-|---------|--------|----------|
-| Lead CRM | FULLY BUILT | Scoring (capped 100), activities, webhooks, Kanban + list, bulk email |
-| Drip Sequences | FULLY BUILT | Hourly cron sends, template vars, auto-enrollment on new lead |
-| Bulk Email | FULLY BUILT | Resend, 200 recipients, logs as activities |
-| Video Generation | FULLY BUILT | 5 templates × 3 ratios, voiceover (GPT-4o + ElevenLabs) |
-| Webhooks | FULLY BUILT | HMAC-SHA256, retry (3 attempts), 8 event types |
-| Open Houses | FULLY BUILT | 4-step check-in + feedback |
-| Photographer Bookings | FULLY BUILT | 5-step form, package selection |
-| Broker Dashboard | FULLY BUILT | Team stats, roster, listings |
-| SMS/WhatsApp | BUILT | Twilio, 4 notification templates |
-| Notification Preferences UI | NOT BUILT | No settings page |
-| MLS Import | PARTIAL | SimplyRETS fetch works, no RESO export |
-| Property Site Analytics | NOT DEPLOYED | Tracker exists but NOT imported on property sites |
-
----
-
-## What Next Session Must Do
-
-1. **Correct the comparative positioning doc** — Update CRM table to reflect what's actually built. Remove "NOT YET" for auto-drip (it exists). Fix the "12 improvements" to only list what's genuinely missing.
-
-2. **Save corrected docs to project root as .md files** — User requested this.
-
-3. **Lead generation question remains open** — How does SnapR bring pre-qualified leads TO agents? Parked.
-
----
-
-## User Communication Style
-- Direct, no-nonsense, curses when frustrated
-- Gets angry at assumptions presented as facts
-- Wants code-verified claims only
-- Treats Claude as CMO-level consultant
-- **Key correction**: "SnapR is NOT a photo enhancement tool — it's an automation OS"
+| Metric | Value |
+|--------|-------|
+| `any` types | 0 |
+| TypeScript errors | 0 |
+| ESLint warnings | 0 |
+| Tests | 220/220 passing (12 files) |
+| Zod-validated routes | 99/163 (60%) |
+| Loading states | 61 loading.tsx files |
+| Error boundaries | 13 error.tsx files |
+| AbortSignal.timeout | All ~200 external fetches |
+| API v1 endpoints | 10 (enterprise-gated) |
+| Database migrations | 13 total (all applied) |
+| Vercel crons | 5 (publish, analytics, digest, verify-domains, cleanup) |
