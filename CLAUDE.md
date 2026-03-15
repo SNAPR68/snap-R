@@ -37,13 +37,28 @@ Upload → Prepare → Market → Distribute → Measure → Loop
 /app/api/cron/          - Vercel Cron jobs (daily-digest, publish-scheduled, sync-analytics, cleanup, verify-domains)
 /app/api/marketing/     - Marketing status API
 /app/api/listing/       - Listing status/preparation API
-/app/dashboard/         - Dashboard pages (listings, studio, content-studio, analytics, leads, open-houses, broker)
+/app/dashboard/         - Dashboard pages (39 feature areas, 69 page.tsx files)
 /app/dashboard/leads/   - Lead CRM with list view + Kanban pipeline (drag-and-drop)
 /app/dashboard/leads/sequences/ - Drip sequence management UI (create/edit/enable/delete + step editor)
 /app/dashboard/leads/email-lists/ - Bulk email contact list + compose/send UI
 /app/dashboard/open-houses/ - Open house event CRUD + attendee tracking
 /app/dashboard/photographer/bookings/ - Photographer booking pipeline management
 /app/dashboard/broker/  - Broker team dashboard (agent roster, stats)
+/app/dashboard/brand/   - Brand kit management
+/app/dashboard/campaigns/ - Campaign management + calendar
+/app/dashboard/cma/     - Comparative market analysis
+/app/dashboard/floor-plans/ - Floor plan management
+/app/dashboard/virtual-tours/ - Virtual tour builder (scenes, hotspots)
+/app/dashboard/renovation/ - Renovation visualization
+/app/dashboard/staging/ - Virtual staging management
+/app/dashboard/portfolio/ - Photographer portfolio
+/app/dashboard/team/    - Team management
+/app/dashboard/organization/ - Organization settings
+/app/dashboard/notify/  - Notification preferences
+/app/dashboard/voiceover/ - Voiceover management
+/app/dashboard/print/   - Print materials
+/app/dashboard/mls/     - MLS integration settings
+/app/dashboard/billing/ - Billing & subscription
 /app/api/webhooks/      - Outgoing webhooks CRUD API
 /app/api/v1/            - Public REST API v1 (10 endpoints, API key auth)
 /app/api/api-keys/      - API key CRUD (dashboard session auth)
@@ -402,7 +417,12 @@ Defined in `vercel.json`:
 |------|----------|------|
 | Publish Scheduled Posts | Every 15 min | `app/api/cron/publish-scheduled/route.ts` |
 | Sync Analytics | Every 6 hours | `app/api/cron/sync-analytics/route.ts` |
-| Daily Digest | (existing) | `app/api/cron/daily-digest/route.ts` |
+| Refresh Tokens | Every 4 hours | `app/api/cron/refresh-tokens/route.ts` |
+| Daily Digest | Daily 8am | `app/api/cron/daily-digest/route.ts` |
+| Drip Sequences | Hourly | `app/api/cron/drip-sequences/route.ts` |
+| Usage Check | Daily 9am | `app/api/cron/usage-check/route.ts` |
+| Health Check | Hourly | `app/api/cron/health-check/route.ts` |
+| MLS Sync | Every 6 hours | `app/api/cron/mls-sync/route.ts` |
 | Verify Domains | Every 6 hours | `app/api/cron/verify-domains/route.ts` |
 | Data Cleanup | Weekly (Sun 3am) | `app/api/cron/cleanup/route.ts` |
 
@@ -478,6 +498,31 @@ Each tool has presets (e.g., sky-replacement: Clear Blue, Sunset, Dramatic Cloud
 | `/api/embed/analytics` | POST | Widget impression/click tracking |
 | `/api/cron/cleanup` | POST | Weekly data retention cleanup |
 | `/api/cron/verify-domains` | POST | DNS TXT domain verification |
+
+### Additional API Routes (162 total non-v1 routes)
+
+| Category | Routes | Purpose |
+|----------|--------|---------|
+| AI Content | `/api/ai/generate-caption`, `/api/ai/generate-description`, `/api/ai/photo-cull` | AI-powered content generation |
+| Admin | `/api/admin/*` (7 routes) | Test accounts, user export, manual preparation triggers |
+| Analytics | `/api/analytics/roi`, `/api/analytics/track`, `/api/analytics/error` | ROI tracking, event tracking, error logging |
+| Brand | `/api/brand` | Brand kit management |
+| Campaigns | `/api/campaigns` | Campaign CRUD |
+| Chat | `/api/chat` | AI chatbot for lead qualification |
+| CMA | `/api/cma` | Comparative market analysis |
+| Compliance | `/api/compliance/apply`, `/api/compliance/export` | Watermarking, GDPR export |
+| Floor Plans | `/api/floor-plans/generate` | AI floor plan generation |
+| Mobile | `/api/mobile/*` (4 routes) | Mobile device registration, analytics |
+| Portfolio | `/api/portfolio`, `/api/property-inquiry` | Photographer portfolios |
+| Renovation | `/api/renovation`, `/api/renovation/revision` | Virtual renovation visualization |
+| Social OAuth | `/api/social/connect/*`, `/api/social/callback/*`, `/api/social/disconnect/*` | OAuth flows for 4 platforms |
+| Staging | `/api/staging` | Virtual staging |
+| Stripe | `/api/stripe/checkout`, `/api/stripe/portal`, `/api/stripe/webhook` | Billing & subscriptions |
+| Teams | `/api/teams`, `/api/teams/[id]/invite`, `/api/teams/[id]/members` | Team management |
+| User | `/api/user/delete-account`, `/api/user/export-data` | Account management, GDPR |
+| Virtual Tours | `/api/virtual-tours`, `/api/virtual-tours/generate`, `/api/virtual-tours/scenes` | Virtual tour builder |
+| Voiceover | `/api/voiceover` | Standalone voiceover generation |
+| Watermark | `/api/watermark`, `/api/qrcode` | Image watermarking, QR codes |
 
 ## Outgoing Webhooks
 

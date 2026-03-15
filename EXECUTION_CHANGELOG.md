@@ -1,6 +1,12 @@
 # SnapR Execution Changelog
 =================================
 
+## 2026-03-15 — CLAUDE.md documentation catchup (10 crons, 162 routes, 39 dashboard areas)
+- Updated Vercel Crons table: 5→10 (added refresh-tokens, drip-sequences, usage-check, health-check, mls-sync)
+- Added 20 additional API route categories (162 total non-v1 routes documented)
+- Updated project structure with 16 additional dashboard feature areas
+- Dashboard now documented as 39 feature areas with 69 page.tsx files
+
 ## 2026-03-15 — Fix enterprise tier tests + apply pending migrations
 
 ### Test Fix
