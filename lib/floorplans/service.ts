@@ -135,6 +135,7 @@ Return as JSON:
         ],
         max_tokens: 1500,
       }),
+      signal: AbortSignal.timeout(15000),
     });
 
     if (!response.ok) {

@@ -19,23 +19,21 @@ import { adminSupabase } from '@/lib/supabase/admin';
 import { getMLSProvider } from '@/lib/mls/provider';
 import type { MLSPropertyData, MLSCredentials } from '@/lib/mls/types';
 import { logger } from '@/lib/logger';
+import { z } from 'zod';
 
 const CRON_SECRET = process.env.CRON_SECRET;
 
-interface MLSSyncConfig {
-  mls_provider: string;
-  mls_username: string;
-  mls_password: string;
-  mls_search_city?: string;
-  mls_search_state?: string;
-  mls_search_postal_code?: string;
-  mls_sync_enabled: boolean;
-}
+const mlsSyncConfigSchema = z.object({
+  mls_provider: z.string(),
+  mls_username: z.string(),
+  mls_password: z.string(),
+  mls_search_city: z.string().optional(),
+  mls_search_state: z.string().optional(),
+  mls_search_postal_code: z.string().optional(),
+  mls_sync_enabled: z.boolean(),
+});
 
-interface ProfileRow {
-  id: string;
-  mls_sync_config: MLSSyncConfig | null;
-}
+type MLSSyncConfig = z.infer<typeof mlsSyncConfigSchema>;
 
 interface ListingRow {
   id: string;
@@ -66,9 +64,15 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Failed to fetch profiles' }, { status: 500 });
     }
 
-    const syncUsers = (profiles as ProfileRow[] | null)?.filter(
-      (p) => p.mls_sync_config?.mls_sync_enabled
-    ) ?? [];
+    const syncUsers: { id: string; mls_sync_config: MLSSyncConfig }[] = [];
+    for (const p of profiles ?? []) {
+      const parsed = mlsSyncConfigSchema.safeParse(p.mls_sync_config);
+      if (parsed.success && parsed.data.mls_sync_enabled) {
+        syncUsers.push({ id: p.id, mls_sync_config: parsed.data });
+      } else if (!parsed.success) {
+        logger.warn(`[MLSSync] Invalid mls_sync_config for user ${p.id}:`, parsed.error.message);
+      }
+    }
 
     if (syncUsers.length === 0) {
       logger.info('[MLSSync] No users with MLS sync enabled');
@@ -172,11 +176,13 @@ async function updateExistingListing(
   const updates: Record<string, unknown> = {};
   let priceChanged = false;
 
-  // Detect price change
-  if (mlsData.price != null && existing.price != null && mlsData.price !== existing.price) {
+  // Detect price change (including null→value transitions)
+  if (mlsData.price != null && mlsData.price !== existing.price) {
     updates.price = mlsData.price;
-    updates.previous_price = existing.price;
-    priceChanged = true;
+    if (existing.price != null) {
+      updates.previous_price = existing.price;
+      priceChanged = true;
+    }
   }
 
   // Detect status change
@@ -198,8 +204,7 @@ async function updateExistingListing(
       .eq('id', existing.id);
 
     if (error) {
-      logger.error(`[MLSSync] Update failed for listing ${existing.id}:`, error);
-      return;
+      throw new Error(`Update failed for listing ${existing.id}: ${error.message}`);
     }
 
     results.listingsUpdated++;
@@ -245,8 +250,7 @@ async function createNewListing(
   });
 
   if (error) {
-    logger.error(`[MLSSync] Insert failed for MLS ${mlsData.mlsNumber}:`, error);
-    return;
+    throw new Error(`Insert failed for MLS ${mlsData.mlsNumber}: ${error.message}`);
   }
 
   results.listingsCreated++;

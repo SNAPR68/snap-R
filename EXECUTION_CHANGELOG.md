@@ -3,6 +3,10 @@
 
 ## 2026-03-15 — Competitive Gap Features: Drone, CMA, MLS Sync, Tours, Floor Plans
 
+### CodeRabbit Review Fixes
+- `app/api/cron/mls-sync/route.ts` — Validate `mls_sync_config` with Zod schema instead of type-casting; handle null→value price transitions; propagate DB write errors (throw instead of return)
+- `lib/floorplans/service.ts` — Added `AbortSignal.timeout(15000)` to OpenAI GPT-4o Vision API call
+
 ### Feature 5: AI Floor Plans
 - `app/api/floor-plans/generate/route.ts` — New POST endpoint: validates input (Zod), fetches listing photos, calls `generateFloorPlan()` service, saves result to `floor_plans` table
 - `app/dashboard/floor-plans/page.tsx` — Full dashboard page: listing selector, plan type/style/color config panel, toggle options, generation with loading state, floor plan gallery with view/download/delete, room breakdown modal
