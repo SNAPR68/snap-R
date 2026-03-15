@@ -28,9 +28,23 @@ export interface MLSPhoto {
   order: number;
 }
 
+export interface MLSSearchCriteria {
+  /** Search by city */
+  city?: string;
+  /** Search by state */
+  state?: string;
+  /** Search by postal code */
+  postalCode?: string;
+  /** Only listings with status Active/Pending */
+  status?: string;
+  /** Max results to return */
+  limit?: number;
+}
+
 export interface MLSProvider {
   name: string;
   fetchListing(mlsNumber: string, credentials?: MLSCredentials): Promise<MLSPropertyData | null>;
+  searchListings?(criteria: MLSSearchCriteria, credentials?: MLSCredentials): Promise<MLSPropertyData[]>;
 }
 
 export interface MLSCredentials {

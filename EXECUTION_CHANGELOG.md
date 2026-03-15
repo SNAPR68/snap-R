@@ -1,6 +1,39 @@
 # SnapR Execution Changelog
 =================================
 
+## 2026-03-15 — Competitive Gap Features: Drone, CMA, MLS Sync, Tours, Floor Plans
+
+### Feature 5: AI Floor Plans
+- `app/api/floor-plans/generate/route.ts` — New POST endpoint: validates input (Zod), fetches listing photos, calls `generateFloorPlan()` service, saves result to `floor_plans` table
+- `app/dashboard/floor-plans/page.tsx` — Full dashboard page: listing selector, plan type/style/color config panel, toggle options, generation with loading state, floor plan gallery with view/download/delete, room breakdown modal
+- `app/dashboard/floor-plans/loading.tsx` — Loading skeleton
+- Reuses existing `lib/floorplans/service.ts` (CubiCasa + GPT-4o Vision fallback + SVG generator) and `lib/floorplans/config.ts` (plan types, styles, pricing)
+
+### Feature 4: Virtual Tour AI Auto-Generate
+- `app/api/virtual-tours/generate/route.ts` — New POST endpoint: auto-generates walkthrough gallery from listing photos using photo tags for room-based sequencing
+- `app/dashboard/virtual-tours/page.tsx` — Added AI Auto-Generate card with purple theme, listing selector, loading state, error display
+
+### Feature 3: MLS Auto-Sync Cron
+- `lib/mls/types.ts` — Added `MLSSearchCriteria` interface and optional `searchListings` method to `MLSProvider`
+- `lib/mls/simplyrets.ts` — Implemented `searchListings()` with city/state/postal/status filters
+- `app/api/cron/mls-sync/route.ts` — New cron route (every 6h): fetches users with `mls_sync_config`, pulls active listings, creates/updates via duplicate detection on `mls_number`
+- Price change detection: stores `previous_price`, logs price drops
+- Status change detection: updates `listing_status` from MLS
+- `vercel.json` — Added `mls-sync` cron (every 6h) + function config (300s, 1GB)
+- Migration: `supabase/migrations/20260315_mls_auto_sync.sql` — `mls_sync_config` JSONB on profiles, `mls_synced_at`/`previous_price`/`listing_status` on listings
+
+### Feature 2: CMA PDF Enhancement with AI Photo Tags
+- `app/api/cma/route.ts` — Fetches photo_tags for listing, aggregates room breakdown, condition, features, styles
+- New `DetectedFeatures` interface + `aggregatePhotoTagsForCMA()` function
+- CMA HTML report now includes "AI-Detected Property Features" section: overall condition, room breakdown with per-room condition, design style, drone photo count, detected features chips (RESO-mapped)
+- `ROOM_TYPE_DISPLAY` map for human-readable room labels in PDF
+
+### Feature 1: Drone Photo Integration
+- `remotion/compositions/shared.tsx` — PhotoSlide accepts `isDrone` prop; aerial photos use slow outward zoom (1.2→1.0) instead of Ken Burns pan
+- `remotion/compositions/PropertyShowcase.tsx` — Schema accepts `droneIndices` array; passes `isDrone` to PhotoSlide
+- `lib/video/photo-ordering.ts` — New `orderPhotosWithDroneInfo()` returns `{ urls, droneIndices }` for video pipeline
+- `components/photo-tags-panel.tsx` — Drone badge on aerial photos, enhancement suggestions per room type, drone photo count summary
+
 ## 2026-03-14 — Three Killer Features: Short-Form Video, Photo Tags, AI Chatbot
 
 ### Feature 1: AI Short-Form Video Generator

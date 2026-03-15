@@ -1,4 +1,4 @@
-import { MLSPropertyData, MLSPhoto, MLSProvider, MLSCredentials } from './types';
+import { MLSPropertyData, MLSPhoto, MLSProvider, MLSCredentials, MLSSearchCriteria } from './types';
 
 import { logger } from '@/lib/logger';
 // SimplyRETS demo credentials for development
@@ -103,6 +103,35 @@ export class SimplyRETSProvider implements MLSProvider {
     }
 
     return this.mapToMLSData(results[0], mlsNumber);
+  }
+
+  async searchListings(criteria: MLSSearchCriteria, credentials?: MLSCredentials): Promise<MLSPropertyData[]> {
+    const username = credentials?.username || DEMO_USERNAME;
+    const password = credentials?.password || DEMO_PASSWORD;
+    const authHeader = `Basic ${Buffer.from(`${username}:${password}`).toString('base64')}`;
+
+    const params = new URLSearchParams();
+    if (criteria.city) params.set('cities', criteria.city);
+    if (criteria.state) params.set('states', criteria.state);
+    if (criteria.postalCode) params.set('postalCodes', criteria.postalCode);
+    if (criteria.status) params.set('status', criteria.status);
+    params.set('limit', String(criteria.limit ?? 25));
+
+    const response = await fetch(
+      `https://api.simplyrets.com/properties?${params.toString()}`,
+      {
+        headers: { Authorization: authHeader, Accept: 'application/json' },
+        signal: AbortSignal.timeout(30000),
+      }
+    );
+
+    if (!response.ok) {
+      logger.error(`[SimplyRETS] Search error: ${response.status} ${response.statusText}`);
+      return [];
+    }
+
+    const results: SimplyRETSProperty[] = await response.json();
+    return (results || []).map((r) => this.mapToMLSData(r, r.mlsId));
   }
 
   private mapToMLSData(listing: SimplyRETSProperty, mlsNumber: string): MLSPropertyData {

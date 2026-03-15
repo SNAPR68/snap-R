@@ -51,6 +51,10 @@
     "app/api/cron/usage-check/route.ts": {
       "maxDuration": 300,
       "memory": 1024
+    },
+    "app/api/cron/mls-sync/route.ts": {
+      "maxDuration": 300,
+      "memory": 1024
     }
   },
   "headers": [
@@ -96,6 +100,10 @@
     {
       "path": "/api/cron/health-check",
       "schedule": "0 * * * *"
+    },
+    {
+      "path": "/api/cron/mls-sync",
+      "schedule": "0 */6 * * *"
     }
   ]
 }

@@ -99,3 +99,58 @@ export function orderPhotosForWalkthrough(
 
   return sorted.map((p) => p.processed_url);
 }
+
+/**
+ * Order photos for walkthrough and identify drone/aerial shot indices.
+ * Returns both ordered URLs and which indices are drone shots (for video effects).
+ */
+export function orderPhotosWithDroneInfo(
+  photos: PhotoWithUrl[],
+  preparationMetadata?: PreparationMetadata | null
+): { urls: string[]; droneIndices: number[] } {
+  const validPhotos = photos.filter(
+    (p): p is PhotoWithUrl & { processed_url: string } =>
+      p.processed_url !== null
+  );
+
+  if (validPhotos.length === 0) return { urls: [], droneIndices: [] };
+
+  const decisionAudit = preparationMetadata?.decisionAudit;
+  if (
+    !decisionAudit ||
+    typeof decisionAudit !== 'object' ||
+    Object.keys(decisionAudit).length === 0
+  ) {
+    return { urls: validPhotos.map((p) => p.processed_url), droneIndices: [] };
+  }
+
+  const typeMap = new Map<string, PhotoType>(
+    Object.entries(decisionAudit)
+      .filter(
+        (entry): entry is [string, { photoType: string }] =>
+          typeof entry[1]?.photoType === 'string'
+      )
+      .map(([id, data]) => [id, data.photoType as PhotoType])
+  );
+
+  if (typeMap.size === 0) {
+    return { urls: validPhotos.map((p) => p.processed_url), droneIndices: [] };
+  }
+
+  const sorted = [...validPhotos].sort((a, b) => {
+    const typeA = typeMap.get(a.id) ?? 'unknown';
+    const typeB = typeMap.get(b.id) ?? 'unknown';
+    const indexA = orderIndex.get(typeA) ?? WALKTHROUGH_ORDER.length;
+    const indexB = orderIndex.get(typeB) ?? WALKTHROUGH_ORDER.length;
+    return indexA - indexB;
+  });
+
+  const droneIndices: number[] = [];
+  sorted.forEach((photo, i) => {
+    if (typeMap.get(photo.id) === 'drone') {
+      droneIndices.push(i);
+    }
+  });
+
+  return { urls: sorted.map((p) => p.processed_url), droneIndices };
+}

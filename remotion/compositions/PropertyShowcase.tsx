@@ -25,6 +25,8 @@ export const propertyShowcaseSchema = z.object({
     baths: z.number().optional(),
     sqft: z.number().optional(),
     photos: z.array(z.string()).min(1),
+    /** Indices of photos that are drone/aerial shots (for outward zoom effect) */
+    droneIndices: z.array(z.number()).optional(),
   }),
   aspectRatio: z.enum(['9:16', '1:1', '16:9']),
   audio: audioSchema.optional(),
@@ -65,7 +67,11 @@ export const PropertyShowcase: React.FC<PropertyShowcaseProps> = ({
             key={`photo-${index}`}
             durationInFrames={PHOTO_DISPLAY_FRAMES}
           >
-            <PhotoSlide src={photoUrl} index={index} />
+            <PhotoSlide
+              src={photoUrl}
+              index={index}
+              isDrone={listing.droneIndices?.includes(index)}
+            />
           </TransitionSeries.Sequence>,
 
           <TransitionSeries.Transition
