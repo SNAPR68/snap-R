@@ -64,6 +64,11 @@ export async function middleware(request: NextRequest) {
       return NextResponse.next()
     }
 
+    // Skip middleware for v1 API routes (they handle own auth + rate limiting via API keys)
+    if (pathname.startsWith('/api/v1')) {
+      return NextResponse.next()
+    }
+
     const ip = getClientIp(request)
     // Group by endpoint prefix: /api/enhance/whatever → /api/enhance
     const endpointKey = '/' + pathname.split('/').slice(1, 3).join('/')

@@ -5,7 +5,6 @@
 const TIER_ALIASES: Record<string, string> = {
   gold: 'pro',
   platinum: 'agency',
-  enterprise: 'agency',
   professional: 'pro',
   team: 'agency',
   'photographer-ultimate': 'agency',
@@ -15,8 +14,8 @@ const TIER_ALIASES: Record<string, string> = {
 }
 
 /**
- * Normalizes any tier name to canonical form: free | starter | pro | agency
- * Handles: gold→pro, platinum→agency, enterprise→agency, professional→pro, team→agency
+ * Normalizes any tier name to canonical form: free | starter | pro | agency | enterprise
+ * Handles: gold→pro, platinum→agency, professional→pro, team→agency
  */
 export function normalizeTier(tier: string | null | undefined): PlanType {
   const lower = (tier || 'free').toLowerCase().trim()
@@ -33,6 +32,9 @@ export const PLAN_LIMITS = {
     canAccessContentStudio: false,
     canGenerateVideo: false,
     canCaptureLeads: false,
+    canAccessApi: false,
+    canCustomDomain: false,
+    canEmbed: false,
   },
   starter: {
     contentPosts: 5,
@@ -41,6 +43,9 @@ export const PLAN_LIMITS = {
     canAccessContentStudio: true,
     canGenerateVideo: false,
     canCaptureLeads: false,
+    canAccessApi: false,
+    canCustomDomain: false,
+    canEmbed: false,
   },
   pro: {
     contentPosts: 30,
@@ -49,6 +54,9 @@ export const PLAN_LIMITS = {
     canAccessContentStudio: true,
     canGenerateVideo: true,
     canCaptureLeads: true,
+    canAccessApi: false,
+    canCustomDomain: false,
+    canEmbed: false,
   },
   agency: {
     contentPosts: Infinity,
@@ -57,7 +65,21 @@ export const PLAN_LIMITS = {
     canAccessContentStudio: true,
     canGenerateVideo: true,
     canCaptureLeads: true,
-  }
+    canAccessApi: false,
+    canCustomDomain: false,
+    canEmbed: true,
+  },
+  enterprise: {
+    contentPosts: Infinity,
+    aiCaptions: Infinity,
+    canPublish: true,
+    canAccessContentStudio: true,
+    canGenerateVideo: true,
+    canCaptureLeads: true,
+    canAccessApi: true,
+    canCustomDomain: true,
+    canEmbed: true,
+  },
 } as const
 
 export type PlanType = keyof typeof PLAN_LIMITS
@@ -100,12 +122,21 @@ export function canGenerateVideo(plan: string): boolean {
   return getPlanLimits(plan).canGenerateVideo
 }
 
+export function canAccessApi(plan: string): boolean {
+  return getPlanLimits(plan).canAccessApi
+}
+
+export function canCustomDomain(plan: string): boolean {
+  return getPlanLimits(plan).canCustomDomain
+}
+
 // Listing/photo limits per plan (used by Stripe webhook)
 export const LISTING_LIMITS: Record<PlanType, { listings: number; photos: number }> = {
   free: { listings: 3, photos: 30 },
   starter: { listings: 10, photos: 50 },
   pro: { listings: 30, photos: 75 },
   agency: { listings: 999, photos: 75 },
+  enterprise: { listings: 9999, photos: 200 },
 }
 
 export function getListingLimits(plan: string) {
@@ -118,6 +149,6 @@ export function shouldResetUsage(resetAt: Date | string | null): boolean {
   const resetDate = new Date(resetAt)
   const now = new Date()
   // Reset if we're in a new month
-  return now.getMonth() !== resetDate.getMonth() || 
+  return now.getMonth() !== resetDate.getMonth() ||
          now.getFullYear() !== resetDate.getFullYear()
 }

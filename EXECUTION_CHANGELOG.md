@@ -1,6 +1,53 @@
 # SnapR Execution Changelog
 =================================
 
+## 2026-03-16 — Enterprise Platform Layer: API, Custom Domains, Widgets, Enterprise Tier
+
+### Phase 1: Public Developer API (v1)
+- `supabase/migrations/20260316_api_keys.sql` — api_keys + api_usage tables with RLS, prefix index
+- `lib/api-keys.ts` — generateApiKey (sk_live_ prefix), validateApiKey (timing-safe hash), logApiUsage (fire-and-forget)
+- `lib/api-v1/middleware.ts` — withApiAuth HOF: Bearer auth, enterprise tier gate, per-key rate limiting, usage logging
+- `lib/services/listings-service.ts` — Extracted listing CRUD from internal routes for v1 reuse
+- `app/api/v1/listings/route.ts` — GET (list with pagination), POST (create)
+- `app/api/v1/listings/[id]/route.ts` — GET, PATCH, DELETE with UUID validation
+- `app/api/v1/listings/[id]/photos/route.ts` — GET photos for listing
+- `app/api/v1/listings/[id]/status/route.ts` — GET prep + marketing status
+- `app/api/v1/listings/[id]/prepare/route.ts` — POST trigger preparation
+- `app/api/v1/photos/[id]/enhance/route.ts` — POST AI enhancement proxy
+- `app/api/v1/video/generate/route.ts` — POST video render trigger
+- `app/api/v1/video/[renderId]/route.ts` — GET video render status
+- `app/api/v1/leads/route.ts` — GET (paginated), POST with Zod validation
+- `app/api/v1/webhooks/route.ts` — Full CRUD for outgoing webhooks
+- `app/api/api-keys/route.ts` — Dashboard key management (session auth)
+- `app/dashboard/settings/api-keys/page.tsx` — API key management UI (create, revoke, copy)
+- `app/developers/page.tsx` — Public developer docs (auth, endpoints, examples, rate limits)
+- `lib/validation/schemas.ts` — Added apiKeyCreateSchema
+- `middleware.ts` — /api/v1 bypass (v1 routes handle own auth)
+- `vercel.json` — v1 function configs (enhance 180s, video 60s, prepare 300s)
+
+### Phase 2: Custom Domain Mapping
+- `supabase/migrations/20260316_custom_domains.sql` — custom_domains table with verification
+- `app/api/domains/route.ts` — Domain CRUD with canCustomDomain plan gate
+- `app/api/cron/verify-domains/route.ts` — DNS TXT record verification cron (every 6h)
+- `app/dashboard/settings/domains/page.tsx` — Domain management UI with DNS instructions
+- `vercel.json` — verify-domains cron entry + function config
+
+### Phase 3: Embeddable Widgets
+- `next.config.mjs` — Split headers: /embed/* gets frame-ancestors *, all others get frame-ancestors 'none'
+- `app/embed/layout.tsx` — Minimal layout (no nav/footer, bg-transparent)
+- `app/embed/before-after/[listingId]/page.tsx` — Interactive before/after slider widget
+- `app/embed/gallery/[listingId]/page.tsx` — Photo carousel with thumbnails
+- `app/embed/property/[listingId]/page.tsx` — Mini property card widget
+- `app/api/embed/photos/route.ts` — Public endpoint for embed photo data
+- `app/api/embed/property/route.ts` — Public endpoint for property card data
+- `app/api/embed/analytics/route.ts` — Widget impression/click tracking
+- `public/widget/snapr-embed.js` — Widget loader script (auto-resize, sendBeacon analytics)
+- `app/dashboard/settings/widgets/page.tsx` — Embed code generator UI with live preview
+
+### Phase 4: Enterprise Tier + Pricing
+- `lib/content/limits.ts` — Enterprise tier with canAccessApi, canCustomDomain, canEmbed flags
+- `components/pricing-section.tsx` — Added API, Custom Domains, Widgets to Enterprise features
+
 ## 2026-03-15 — Competitive Gap Features: Drone, CMA, MLS Sync, Tours, Floor Plans
 
 ### CodeRabbit Review Fixes
