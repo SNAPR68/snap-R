@@ -15,11 +15,11 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { adminSupabase } from '@/lib/supabase/admin';
 import { marketingTriggerExtendedSchema, parseBody } from '@/lib/validation/schemas';
-import * as Sentry from '@sentry/nextjs';
+import { startSpan } from '@sentry/nextjs';
 
 import { logger } from '@/lib/logger';
 export async function POST(request: NextRequest) {
-  return Sentry.startSpan({ name: 'marketing.trigger', op: 'task' }, async () => {
+  return startSpan({ name: 'marketing.trigger', op: 'task' }, async () => {
   try {
     const body = await request.json();
     const validated = parseBody(marketingTriggerExtendedSchema, body);

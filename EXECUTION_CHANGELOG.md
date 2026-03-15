@@ -1,6 +1,11 @@
 # SnapR Execution Changelog
 =================================
 
+## 2026-03-15 — CodeRabbit Fix: Named Sentry Imports
+- `app/api/listing/prepare/route.ts` — Changed `import * as Sentry` to `import { startSpan }` per repo convention
+- `app/api/video/generate/route.ts` — Same named import fix
+- `app/api/marketing/trigger/route.ts` — Same named import fix
+
 ## 2026-03-15 — OpenAPI Spec, API Reference Page, Enterprise Checkout
 
 ### OpenAPI 3.0 Specification
