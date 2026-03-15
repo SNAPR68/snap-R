@@ -77,11 +77,20 @@ export const POST = withApiAuth(async (ctx) => {
     signal: AbortSignal.timeout(150000),
   })
 
-  const result = await enhanceResponse.json()
+  let result: Record<string, unknown>
+  try {
+    result = await enhanceResponse.json()
+  } catch {
+    return NextResponse.json(
+      { error: { message: 'Enhancement service returned non-JSON response', code: 'enhancement_error' } },
+      { status: 502 }
+    )
+  }
 
   if (!enhanceResponse.ok) {
+    const message = typeof result.error === 'string' ? result.error : 'Enhancement failed'
     return NextResponse.json(
-      { error: { message: result.error || 'Enhancement failed', code: 'enhancement_error' } },
+      { error: { message, code: 'enhancement_error' } },
       { status: enhanceResponse.status }
     )
   }

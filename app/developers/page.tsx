@@ -10,7 +10,7 @@ export default function DevelopersPage() {
     <div className="min-h-screen bg-[#0A0A0A] text-white">
       <div className="max-w-4xl mx-auto px-6 py-16">
         {/* Header */}
-        <div className="mb-12">
+        <header className="mb-12">
           <div className="flex items-center gap-3 mb-4">
             <Code2 className="w-8 h-8 text-[#D4A017]" />
             <h1 className="text-4xl font-bold">SnapR API</h1>
@@ -19,7 +19,9 @@ export default function DevelopersPage() {
           <p className="text-gray-400 text-lg">
             Integrate AI photo enhancement, video generation, and marketing automation into your real estate platform.
           </p>
-        </div>
+        </header>
+
+        <main>
 
         {/* Auth Section */}
         <section className="mb-12">
@@ -33,7 +35,7 @@ export default function DevelopersPage() {
               <a href="/dashboard/settings/api-keys" className="text-[#D4A017] underline">Dashboard Settings</a>.
             </p>
             <pre className="bg-black/50 rounded-lg p-4 text-sm overflow-x-auto">
-              <code className="text-green-400">{`curl -H "Authorization: Bearer sk_live_your_key_here" \\
+              <code className="text-green-400">{`curl -H "Authorization: Bearer YOUR_API_KEY" \\
   https://snap-r.com/api/v1/listings`}</code>
             </pre>
             <p className="text-gray-500 text-sm mt-3">
@@ -165,7 +167,7 @@ export default function DevelopersPage() {
               <p className="text-gray-400 mb-2 font-medium">JavaScript / Node.js</p>
               <pre className="bg-black/50 rounded-lg p-4 text-sm overflow-x-auto">
                 <code className="text-green-400">{`const response = await fetch('https://snap-r.com/api/v1/listings', {
-  headers: { 'Authorization': 'Bearer sk_live_your_key' }
+  headers: { 'Authorization': 'Bearer YOUR_API_KEY' }
 });
 const { data, meta } = await response.json();
 console.log(\`Found \${meta.total} listings\`);`}</code>
@@ -176,7 +178,7 @@ console.log(\`Found \${meta.total} listings\`);`}</code>
               <pre className="bg-black/50 rounded-lg p-4 text-sm overflow-x-auto">
                 <code className="text-green-400">{`import requests
 
-headers = {"Authorization": "Bearer sk_live_your_key"}
+headers = {"Authorization": "Bearer YOUR_API_KEY"}
 response = requests.get("https://snap-r.com/api/v1/listings", headers=headers)
 data = response.json()
 print(f"Found {data['meta']['total']} listings")`}</code>
@@ -185,8 +187,10 @@ print(f"Found {data['meta']['total']} listings")`}</code>
           </div>
         </section>
 
+        </main>
+
         {/* CTA */}
-        <div className="text-center glass-gold-luxury rounded-xl p-8">
+        <footer className="text-center glass-gold-luxury rounded-xl p-8">
           <h2 className="text-2xl font-bold mb-2">Ready to integrate?</h2>
           <p className="text-gray-400 mb-4">Create your first API key and start building.</p>
           <a
@@ -195,7 +199,7 @@ print(f"Found {data['meta']['total']} listings")`}</code>
           >
             Get API Key →
           </a>
-        </div>
+        </footer>
       </div>
     </div>
   )

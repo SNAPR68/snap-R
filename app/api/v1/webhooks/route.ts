@@ -86,9 +86,22 @@ export const PATCH = withApiAuth(async (ctx) => {
     .single()
 
   if (error) {
+    if (error.code === 'PGRST116') {
+      return NextResponse.json(
+        { error: { message: 'Webhook not found', code: 'not_found' } },
+        { status: 404 }
+      )
+    }
     return NextResponse.json(
       { error: { message: 'Failed to update webhook', code: 'internal_error' } },
       { status: 500 }
+    )
+  }
+
+  if (!webhook) {
+    return NextResponse.json(
+      { error: { message: 'Webhook not found', code: 'not_found' } },
+      { status: 404 }
     )
   }
 

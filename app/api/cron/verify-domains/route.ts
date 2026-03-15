@@ -44,7 +44,7 @@ export async function GET(request: NextRequest) {
       const expectedValue = `snapr-verify=${domain.verification_token}`
 
       if (flatRecords.includes(expectedValue)) {
-        await supabase
+        const { error: updateError } = await supabase
           .from('custom_domains')
           .update({
             verification_status: 'verified',
@@ -53,12 +53,19 @@ export async function GET(request: NextRequest) {
           })
           .eq('id', domain.id)
 
-        results.verified++
-        logger.info(`[DomainVerify] Verified: ${domain.domain}`)
+        if (updateError) {
+          results.failed++
+          logger.error(`[DomainVerify] Failed to update ${domain.domain}:`, updateError.message)
+        } else {
+          results.verified++
+          logger.info(`[DomainVerify] Verified: ${domain.domain}`)
+        }
       } else {
+        results.failed++
         logger.info(`[DomainVerify] TXT record not found for ${domain.domain}`)
       }
     } catch (error: unknown) {
+      results.failed++
       const msg = error instanceof Error ? error.message : 'Unknown error'
       // ENOTFOUND/ENODATA are expected when DNS isn't set up yet
       if (!msg.includes('ENOTFOUND') && !msg.includes('ENODATA')) {

@@ -67,23 +67,37 @@ export default function DomainsPage() {
   }
 
   const handleVerify = async (id: string) => {
-    await fetch('/api/domains', {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id }),
-      signal: AbortSignal.timeout(15000),
-    })
+    try {
+      const res = await fetch('/api/domains', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id }),
+        signal: AbortSignal.timeout(15000),
+      })
+      if (!res.ok) {
+        setError('Verification request failed')
+      }
+    } catch {
+      setError('Verification request failed')
+    }
     fetchDomains()
   }
 
   const handleDelete = async (id: string) => {
     if (!confirm('Remove this custom domain?')) return
-    await fetch('/api/domains', {
-      method: 'DELETE',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id }),
-      signal: AbortSignal.timeout(15000),
-    })
+    try {
+      const res = await fetch('/api/domains', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id }),
+        signal: AbortSignal.timeout(15000),
+      })
+      if (!res.ok) {
+        setError('Failed to remove domain')
+      }
+    } catch {
+      setError('Failed to remove domain')
+    }
     fetchDomains()
   }
 
@@ -174,7 +188,7 @@ export default function DomainsPage() {
                     <p className="text-white font-medium">{d.domain}</p>
                     <p className="text-gray-500 text-xs mt-0.5">
                       {d.verification_status === 'verified'
-                        ? `Verified ${new Date(d.verified_at!).toLocaleDateString()}`
+                        ? `Verified ${d.verified_at ? new Date(d.verified_at).toLocaleDateString() : ''}`
                         : `Pending verification • TXT: snapr-verify=${d.verification_token}`}
                     </p>
                   </div>

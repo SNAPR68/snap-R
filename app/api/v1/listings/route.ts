@@ -13,8 +13,8 @@ import { listingCreateSchema, parseBody } from '@/lib/validation/schemas'
 
 export const GET = withApiAuth(async (ctx) => {
   const { searchParams } = ctx.request.nextUrl
-  const page = parseInt(searchParams.get('page') ?? '1', 10)
-  const perPage = Math.min(parseInt(searchParams.get('per_page') ?? '50', 10), 100)
+  const page = parseInt(searchParams.get('page') ?? '1', 10) || 1
+  const perPage = Math.min(parseInt(searchParams.get('per_page') ?? '50', 10) || 50, 100)
 
   const result = await getListings(ctx.supabase, ctx.userId, { page, perPage })
 

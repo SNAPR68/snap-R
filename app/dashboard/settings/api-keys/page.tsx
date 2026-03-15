@@ -104,9 +104,13 @@ export default function ApiKeysPage() {
 
   const copyKey = async () => {
     if (!newKeySecret) return
-    await navigator.clipboard.writeText(newKeySecret)
-    setCopied(true)
-    setTimeout(() => setCopied(false), 2000)
+    try {
+      await navigator.clipboard.writeText(newKeySecret)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    } catch {
+      setError('Failed to copy to clipboard')
+    }
   }
 
   const isEnterprise = tier === 'enterprise'

@@ -78,10 +78,23 @@ export const POST = withApiAuth(async (ctx) => {
   }
 
   // Update listing status
-  await ctx.supabase
+  const { error: updateError } = await ctx.supabase
     .from('listings')
     .update({ preparation_status: 'processing' })
     .eq('id', listingId)
+
+  if (updateError) {
+    // Rollback: mark the job as failed since listing status couldn't be updated
+    await ctx.supabase
+      .from('jobs')
+      .update({ status: 'failed' })
+      .eq('id', job.id)
+
+    return NextResponse.json(
+      { error: { message: 'Failed to update listing status', code: 'internal_error' } },
+      { status: 500 }
+    )
+  }
 
   return NextResponse.json({
     data: { job_id: job.id, status: job.status, message: 'Preparation queued' },

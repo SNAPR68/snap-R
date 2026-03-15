@@ -36,6 +36,13 @@ export default function GalleryEmbed({ params }: { params: Promise<{ listingId: 
     fetchPhotos()
   }, [resolvedId])
 
+  // Clamp current index when photos array changes
+  useEffect(() => {
+    if (photos.length > 0 && current >= photos.length) {
+      setCurrent(0)
+    }
+  }, [photos.length, current])
+
   useEffect(() => {
     const sendHeight = () => {
       window.parent.postMessage({ type: 'snapr-resize', height: document.body.scrollHeight, listingId: resolvedId }, '*')
@@ -54,7 +61,7 @@ export default function GalleryEmbed({ params }: { params: Promise<{ listingId: 
     return <div className="flex items-center justify-center h-64 bg-[#0A0A0A] text-gray-500">No photos available</div>
   }
 
-  const photo = photos[current]
+  const photo = photos[current] ?? photos[0]
 
   return (
     <div className="bg-[#0A0A0A] p-2">

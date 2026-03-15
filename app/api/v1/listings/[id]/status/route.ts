@@ -56,7 +56,7 @@ export const GET = withApiAuth(async (ctx) => {
     .eq('listing_id', listingId)
     .order('created_at', { ascending: false })
     .limit(1)
-    .single()
+    .maybeSingle()
 
   return NextResponse.json({
     data: {

@@ -83,7 +83,7 @@ export default function PropertyEmbed({ params }: { params: Promise<{ listingId:
 
         {/* Details */}
         <div className="p-4">
-          {property.price && (
+          {property.price != null && (
             <p className="text-[#D4A017] text-xl font-bold mb-1">{formatPrice(property.price)}</p>
           )}
           <h3 className="text-white font-semibold text-sm mb-1 line-clamp-1">{property.title}</h3>

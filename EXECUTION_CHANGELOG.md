@@ -33,7 +33,7 @@
 - `vercel.json` — verify-domains cron entry + function config
 
 ### Phase 3: Embeddable Widgets
-- `next.config.mjs` — Split headers: /embed/* gets frame-ancestors *, all others get frame-ancestors 'none'
+- `next.config.mjs` — Split headers: /embed/* gets `frame-ancestors *`, all others get `frame-ancestors 'none'`
 - `app/embed/layout.tsx` — Minimal layout (no nav/footer, bg-transparent)
 - `app/embed/before-after/[listingId]/page.tsx` — Interactive before/after slider widget
 - `app/embed/gallery/[listingId]/page.tsx` — Photo carousel with thumbnails
