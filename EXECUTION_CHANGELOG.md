@@ -1,6 +1,48 @@
 # SnapR Execution Changelog
 =================================
 
+## 2026-03-15 — OpenAPI Spec, API Reference Page, Enterprise Checkout
+
+### OpenAPI 3.0 Specification
+- `app/api/v1/openapi.json/route.ts` — Public GET endpoint serving full OpenAPI 3.0.3 spec as JSON
+  - Covers all v1 endpoints: Listings CRUD, Photos, Video, Leads, Webhooks
+  - Component schemas: Listing, Photo, Lead, Webhook, EnhanceRequest, VideoGenerateRequest, etc.
+  - Security: BearerAuth scheme, rate limit headers, error response schemas
+  - Pagination meta schema, reusable parameters, response refs
+
+### Interactive API Reference Page
+- `app/developers/api-reference/page.tsx` — Client-side rendered API reference (no swagger-ui dependency)
+  - Fetches OpenAPI spec from `/api/v1/openapi.json` and renders grouped endpoint cards
+  - Expandable endpoint details: parameters, request/response schemas, curl examples
+  - Copy-to-clipboard for curl commands and base URL
+  - Error codes table, rate limit documentation
+  - SnapR dark theme (bg-[#0A0A0A], gold accents, glass-luxury cards)
+
+### Enterprise Stripe Checkout
+- `components/pricing-section.tsx` — Added secondary "Enterprise Trial" CTA below "Talk to Sales"
+  - 14-day free trial at $299/mo (monthly) or $249/mo (annual)
+  - Shows trial pricing based on selected billing cycle
+- `app/api/stripe/checkout/route.ts` — Enterprise tier checkout handling
+  - Routes `plan=enterprise` to Stripe subscription with 14-day trial
+  - Separate flow from Gold/Platinum per-listing pricing
+  - Does not break existing checkout flows for other tiers
+
+### Bug Fixes (pre-existing)
+- `app/api/listing/prepare/route.ts` — Removed stray `signal:` statement outside fetch call
+- `app/api/marketing/trigger/route.ts` — Fixed missing Sentry.startSpan closing bracket
+
+## 2026-03-16 — Onboarding Flow Polish + Data Retention Cron
+
+### Onboarding Flow Polish
+- `app/dashboard/listings/page.tsx` — Enhanced empty state: 3-step visual guide (Upload -> AI Enhances -> Marketing Ready), gradient CTA, Watch Demo link
+- `app/dashboard/listings/page.tsx` — Added `ListingProgressBar` component showing pipeline progress (Upload/Enhance/Marketing) on each listing card; auto-hides when all steps complete
+- `components/command-center/containers/listings-container.tsx` — Kept existing empty state (already had CTA)
+
+### Data Retention Cron
+- `app/api/cron/cleanup/route.ts` — NEW: Weekly cron that cleans up old data (webhook_deliveries 90d, api_usage 90d, jobs 30d completed/failed); CRON_SECRET auth, heartbeat tracking, always-complete semantics
+- `vercel.json` — Added cleanup cron schedule (Sunday 3am UTC) + function config (300s, 1024MB)
+- `lib/monitoring/cron-heartbeat.ts` — Registered 'cleanup' cron in CRON_SCHEDULES
+
 ## 2026-03-16 — Enterprise Platform Layer: API, Custom Domains, Widgets, Enterprise Tier
 
 ### Phase 1: Public Developer API (v1)

@@ -79,7 +79,59 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    // Enterprise / agency requires sales call
+    // Enterprise self-serve trial checkout
+    if (normalizedPlan === 'enterprise' || (rawPlan === 'enterprise')) {
+      const billingStr = billing || 'monthly';
+      const isAnnual = billingStr === 'annual';
+      const enterpriseMonthlyPrice = isAnnual ? 249 : 299;
+      const enterpriseCents = enterpriseMonthlyPrice * 100;
+
+      const session = await stripe.checkout.sessions.create({
+        mode: 'subscription',
+        payment_method_types: ['card'],
+        line_items: [
+          {
+            price_data: {
+              currency: 'usd',
+              product_data: {
+                name: 'SnapR Enterprise',
+                description: `Enterprise plan — API access, custom domains, widgets | ${isAnnual ? 'Annual' : 'Monthly'} billing`,
+              },
+              unit_amount: enterpriseCents,
+              recurring: {
+                interval: isAnnual ? 'year' : 'month',
+              },
+            },
+            quantity: 1,
+          },
+        ],
+        success_url: `${process.env.NEXT_PUBLIC_BASE_URL || 'https://snap-r.com'}/onboarding?checkout=success&plan=enterprise&billing=${billingStr}`,
+        cancel_url: `${process.env.NEXT_PUBLIC_BASE_URL || 'https://snap-r.com'}/pricing`,
+        customer_email: user.email,
+        subscription_data: {
+          trial_period_days: 14,
+          metadata: {
+            userId: user.id,
+            plan: 'enterprise',
+            planKey: 'enterprise',
+            billing: billingStr,
+            perMonth: String(enterpriseMonthlyPrice),
+          },
+        },
+        allow_promotion_codes: true,
+        metadata: {
+          userId: user.id,
+          plan: 'enterprise',
+          planKey: 'enterprise',
+          billing: billingStr,
+          totalMonthly: String(enterpriseMonthlyPrice),
+        },
+      });
+
+      return NextResponse.json({ url: session.url });
+    }
+
+    // Enterprise / agency via sales (non-platinum agency plans)
     if (normalizedPlan === 'agency' && rawPlan !== 'platinum') {
       return NextResponse.json({
         error: 'Enterprise plans require a sales call. Visit /contact to schedule.',

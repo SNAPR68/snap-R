@@ -9,6 +9,7 @@ import { adminSupabase } from '@/lib/supabase/admin';
 import { generateVideoSchema } from '@/lib/validation/schemas';
 import { orderPhotosForWalkthrough } from '@/lib/video/photo-ordering';
 import { ZodError } from 'zod';
+import * as Sentry from '@sentry/nextjs';
 
 import { logger } from '@/lib/logger';
 interface ListingWithPhotos {
@@ -53,6 +54,7 @@ function getCompositionId(template: string, aspectRatio: string): string {
 }
 
 export async function POST(request: NextRequest) {
+  return Sentry.startSpan({ name: 'video.generate', op: 'task' }, async () => {
   try {
     // Parse request body
     const body = await request.json();
@@ -330,4 +332,5 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     );
   }
+  });
 }
