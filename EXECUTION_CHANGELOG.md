@@ -1,6 +1,29 @@
 # SnapR Execution Changelog
 =================================
 
+## 2026-03-16 — First-use "aha moment" quick wins (7 features)
+
+### Homepage Hero
+- `components/hero-before-after.tsx` — New draggable before/after slider in hero section (sky replacement demo)
+- `app/page.tsx` — Added HeroBeforeAfter component + Developers link in footer nav
+
+### Dashboard Empty State
+- `components/command-center/sample-listing-cta.tsx` — "Try with Sample Photos" CTA for zero-listing users
+- `app/api/listings/sample/route.ts` — Creates sample listing with 6 demo photos from /public/gallery/
+- `components/command-center/command-center.tsx` — Renders SampleListingCTA when !setupStatus.hasListings
+
+### Studio Celebration + Toasts
+- `components/celebration-modal.tsx` — Self-contained confetti modal via CustomEvent ('snapr:preparation-complete')
+- `components/processing-toasts.tsx` — Bottom-right toast notifications via CustomEvent ('snapr:processing-toast')
+- `components/preparation-overlay.tsx` — Dispatches processing toasts from addActivity() feed
+- `components/studio-client.tsx` — Renders CelebrationModal + ProcessingToasts, dispatches celebration event on prepare complete
+
+### Role-Specific Onboarding
+- `app/onboarding/page.tsx` — Step 3 now shows role-specific features (broker toolkit, photographer toolkit, plan features)
+- Broker gets "Invite Your First Agent" CTA → /dashboard/broker?invite=true
+- Photographer gets "Upload Your First Shoot" CTA
+- Agent/owner/manager get standard "Create Your First Listing"
+
 ## 2026-03-15 — E2E tests (Playwright) + final Zod gap closure
 
 ### Playwright E2E Test Suite (37 tests)

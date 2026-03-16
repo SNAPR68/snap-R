@@ -14,6 +14,7 @@ import { CalendarCollapsed, CalendarExpanded, type ScheduledPostItem } from './c
 import { AnalyticsCollapsed, AnalyticsExpanded, type AnalyticsTotals, type AnalyticsPost } from './containers/analytics-container'
 import { ActivityCollapsed, ActivityExpanded, type ActivityItem } from './containers/activity-container'
 import { ProcessingCollapsed, ProcessingExpanded, type ProcessingItem } from './containers/processing-container'
+import { SampleListingCTA } from './sample-listing-cta'
 
 interface SetupStatus {
   hasListings: boolean
@@ -201,6 +202,9 @@ export default function CommandCenter({
                   />
                 </div>
               )}
+
+              {/* Sample listing CTA — only when user has zero listings */}
+              {!setupStatus.hasListings && <SampleListingCTA />}
 
               {/* Getting Started Checklist */}
               <GettingStartedChecklist
