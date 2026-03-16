@@ -1,6 +1,29 @@
 # SnapR Execution Changelog
 =================================
 
+## 2026-03-16 — Testing depth + monitoring (+3 readiness points)
+
+### Component Tests (NEW — 48 tests across 5 files)
+- `__tests__/components/setup.ts` — Testing-library + jest-dom setup
+- `__tests__/components/marketing-banner.test.tsx` — 10 tests: all 4 states (skipped/processing/completed/failed), step counting, callbacks
+- `__tests__/components/celebration-modal.test.tsx` — 7 tests: custom event handling, accessibility, close behavior
+- `__tests__/components/before-after-slider.test.tsx` — 8 tests: all 13 tool name mappings, labels, className forwarding
+- `__tests__/components/notification-bell.test.tsx` — 8 tests: timeAgo utility, notification icon mapping
+- `__tests__/components/pricing-logic.test.tsx` — 15 tests: pricing tiers, volume discounts, billing hierarchy invariants
+
+### Test Infrastructure
+- `vitest.config.ts` — Added .tsx include, esbuild JSX automatic transform, setup file
+- `package.json` — Added @testing-library/react, @testing-library/jest-dom, @testing-library/user-event, jsdom, @axe-core/playwright
+
+### E2E Accessibility Audit
+- `e2e/accessibility.spec.ts` — 5 axe-core WCAG 2.1 AA audits (homepage, login, signup, developers, API reference)
+
+### Sentry Monitoring
+- `sentry.client.config.ts` — NEW client-side Sentry config (Session Replay, Browser Tracing, 5% sampling)
+- `lib/monitoring/sentry-cron.ts` — NEW withSentryCron() HOF wrapper for automatic Sentry cron check-ins
+- `app/api/cron/health-check/route.ts` — Added Sentry cron check-in/check-out integration
+- `app/api/cron/publish-scheduled/route.ts` — Wrapped with withSentryCron() for missed-job alerting
+
 ## 2026-03-16 — Cron hardening (3 fixes from health-check alerts)
 
 ### Security
