@@ -1,6 +1,17 @@
 # SnapR Execution Changelog
 =================================
 
+## 2026-03-16 — Cron hardening (3 fixes from health-check alerts)
+
+### Security
+- `app/api/cron/drip-sequences/route.ts` — Added CRON_SECRET null check to prevent auth bypass
+
+### Monitoring
+- `app/api/cron/verify-domains/route.ts` — Added heartbeat integration for health-check detection
+
+### Config
+- `vercel.json` — Added health-check route to functions config (maxDuration: 30, memory: 512)
+
 ## 2026-03-16 — First-use "aha moment" quick wins (7 features)
 
 ### Homepage Hero
