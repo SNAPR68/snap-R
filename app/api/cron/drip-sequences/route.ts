@@ -85,10 +85,12 @@ function renderTemplate(template: string, vars: TemplateVars): string {
   return result
 }
 
+const CRON_SECRET = process.env.CRON_SECRET
+
 export async function GET(request: NextRequest) {
   // Auth check
   const authHeader = request.headers.get('authorization')
-  if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+  if (!CRON_SECRET || authHeader !== `Bearer ${CRON_SECRET}`) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
