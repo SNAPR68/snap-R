@@ -9,6 +9,7 @@ export const dynamic = 'force-dynamic';
 export const maxDuration = 30;
 
 import { NextRequest, NextResponse } from 'next/server';
+import * as Sentry from '@sentry/nextjs';
 import { adminSupabase } from '@/lib/supabase/admin';
 import { checkCronHealth } from '@/lib/monitoring/cron-heartbeat';
 import { startCronHeartbeat } from '@/lib/monitoring/cron-heartbeat';
@@ -25,6 +26,12 @@ export async function GET(request: NextRequest) {
 
   const heartbeat = startCronHeartbeat('health-check');
   const issues: string[] = [];
+
+  // Sentry cron monitoring check-in
+  const checkInId = Sentry.captureCheckIn(
+    { monitorSlug: 'health-check', status: 'in_progress' },
+    { schedule: { type: 'crontab', value: '0 * * * *' }, checkinMargin: 5, maxRuntime: 5 },
+  );
 
   try {
     // 1. Database check
@@ -95,6 +102,7 @@ export async function GET(request: NextRequest) {
     }
 
     await heartbeat.succeed({ issues_count: issues.length, issues });
+    Sentry.captureCheckIn({ checkInId, monitorSlug: 'health-check', status: 'ok' });
     return NextResponse.json({
       success: true,
       healthy: issues.length === 0,
@@ -105,6 +113,8 @@ export async function GET(request: NextRequest) {
     const message = error instanceof Error ? error.message : 'Unknown error';
     logger.error('[HealthCheck] Fatal error:', message);
     await heartbeat.fail(error);
+    Sentry.captureCheckIn({ checkInId, monitorSlug: 'health-check', status: 'error' });
+    Sentry.captureException(error);
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }

@@ -28,6 +28,7 @@ import {
 } from '@/lib/social/publish-service';
 import { refreshAccessToken, type SocialPlatform } from '@/lib/social/oauth-config';
 import { dispatchWebhookEvent } from '@/lib/webhooks/dispatch';
+import { withSentryCron } from '@/lib/monitoring/sentry-cron';
 
 import { logger } from '@/lib/logger';
 import { startCronHeartbeat } from '@/lib/monitoring/cron-heartbeat';
@@ -40,7 +41,7 @@ interface PublishResult {
   error?: string;
 }
 
-export async function GET(request: NextRequest) {
+async function handlePublishCron(request: NextRequest): Promise<NextResponse> {
   // Auth check — same pattern as daily-digest
   const authHeader = request.headers.get('authorization');
   if (!CRON_SECRET || authHeader !== `Bearer ${CRON_SECRET}`) {
@@ -548,6 +549,8 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }
+
+export const GET = withSentryCron('publish-scheduled', '*/15 * * * *', handlePublishCron);
 
 // ============================================
 // VIDEO PUBLISHING HELPERS
