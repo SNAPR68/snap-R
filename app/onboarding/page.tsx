@@ -295,7 +295,7 @@ function OnboardingContent() {
             </div>
           )}
 
-          {/* STEP 3: Get Started (was step 7) */}
+          {/* STEP 3: Role-Specific Get Started */}
           {step === 3 && (
             <div className="animate-fadeIn text-center">
               <div className="w-20 h-20 bg-gradient-to-br from-[#D4A017] to-[#B8860B] rounded-full flex items-center justify-center mx-auto mb-6">
@@ -303,16 +303,40 @@ function OnboardingContent() {
               </div>
 
               <h1 className="text-3xl font-bold mb-2">You&apos;re All Set, {name.split(' ')[0]}!</h1>
-              <p className="text-white/60 mb-8">Let&apos;s prepare your first listing</p>
+              <p className="text-white/60 mb-8">
+                {selectedRole === 'broker' && 'Your brokerage command center is ready'}
+                {selectedRole === 'photographer' && 'Your AI editing studio is ready'}
+                {selectedRole === 'agent' && 'Let\u2019s prepare your first listing'}
+                {selectedRole === 'property-manager' && 'Manage your portfolio like never before'}
+                {selectedRole === 'property-owner' && 'Let\u2019s make your property shine'}
+                {!selectedRole && 'Let\u2019s prepare your first listing'}
+              </p>
 
+              {/* Role-specific features */}
               <div className="p-6 bg-white/5 rounded-2xl border border-white/10 mb-6">
                 <h3 className="font-semibold text-lg mb-4">
-                  {planFromUrl && planFromUrl !== 'free'
-                    ? `Your ${planFromUrl.charAt(0).toUpperCase() + planFromUrl.slice(1)} Plan Includes:`
-                    : 'Your Free Plan Includes:'}
+                  {selectedRole === 'broker' ? 'Your Brokerage Toolkit:'
+                    : selectedRole === 'photographer' ? 'Your Photography Toolkit:'
+                    : planFromUrl && planFromUrl !== 'free'
+                      ? `Your ${planFromUrl.charAt(0).toUpperCase() + planFromUrl.slice(1)} Plan Includes:`
+                      : 'Your Free Plan Includes:'}
                 </h3>
                 <ul className="space-y-3 text-left">
-                  {planFromUrl && planFromUrl !== 'free' ? (
+                  {selectedRole === 'broker' ? (
+                    <>
+                      <li className="flex items-center gap-3"><CheckCircle className="w-5 h-5 text-green-400 flex-shrink-0" /> <span>Team dashboard for all your agents</span></li>
+                      <li className="flex items-center gap-3"><CheckCircle className="w-5 h-5 text-green-400 flex-shrink-0" /> <span>Centralized listing management</span></li>
+                      <li className="flex items-center gap-3"><CheckCircle className="w-5 h-5 text-green-400 flex-shrink-0" /> <span>Brand consistency across all listings</span></li>
+                      <li className="flex items-center gap-3"><CheckCircle className="w-5 h-5 text-green-400 flex-shrink-0" /> <span>Lead pipeline &amp; analytics</span></li>
+                    </>
+                  ) : selectedRole === 'photographer' ? (
+                    <>
+                      <li className="flex items-center gap-3"><CheckCircle className="w-5 h-5 text-green-400 flex-shrink-0" /> <span>15+ AI enhancement tools</span></li>
+                      <li className="flex items-center gap-3"><CheckCircle className="w-5 h-5 text-green-400 flex-shrink-0" /> <span>Batch processing for entire shoots</span></li>
+                      <li className="flex items-center gap-3"><CheckCircle className="w-5 h-5 text-green-400 flex-shrink-0" /> <span>Client approval workflow</span></li>
+                      <li className="flex items-center gap-3"><CheckCircle className="w-5 h-5 text-green-400 flex-shrink-0" /> <span>Booking page for clients</span></li>
+                    </>
+                  ) : planFromUrl && planFromUrl !== 'free' ? (
                     <>
                       <li className="flex items-center gap-3"><CheckCircle className="w-5 h-5 text-green-400 flex-shrink-0" /> <span>{listingsFromUrl} listings per month</span></li>
                       <li className="flex items-center gap-3"><CheckCircle className="w-5 h-5 text-green-400 flex-shrink-0" /> <span>Full AI preparation (all 15+ tools)</span></li>
@@ -330,13 +354,40 @@ function OnboardingContent() {
                 </ul>
               </div>
 
+              {/* Primary CTA — role-specific */}
               <button
-                onClick={() => handleComplete()}
+                onClick={() => {
+                  if (selectedRole === 'broker') {
+                    handleComplete('/dashboard/broker');
+                  } else if (selectedRole === 'photographer') {
+                    handleComplete('/listings/new?guided=true');
+                  } else {
+                    handleComplete();
+                  }
+                }}
                 disabled={loading}
                 className="w-full py-4 bg-gradient-to-r from-[#D4A017] to-[#B8860B] rounded-xl text-black font-bold text-lg disabled:opacity-50 flex items-center justify-center gap-2"
               >
-                {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <>Create Your First Listing <ChevronRight className="w-5 h-5" /></>}
+                {loading ? (
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                ) : selectedRole === 'broker' ? (
+                  <>Go to Brokerage Dashboard <ChevronRight className="w-5 h-5" /></>
+                ) : selectedRole === 'photographer' ? (
+                  <>Upload Your First Shoot <ChevronRight className="w-5 h-5" /></>
+                ) : (
+                  <>Create Your First Listing <ChevronRight className="w-5 h-5" /></>
+                )}
               </button>
+
+              {/* Broker: Invite agent CTA */}
+              {selectedRole === 'broker' && (
+                <button
+                  onClick={() => handleComplete('/dashboard/broker?invite=true')}
+                  className="w-full mt-3 py-3 border border-[#D4A017]/30 rounded-xl text-[#D4A017] hover:bg-[#D4A017]/10 transition-colors text-sm font-medium flex items-center justify-center gap-2"
+                >
+                  <Users className="w-4 h-4" /> Invite Your First Agent
+                </button>
+              )}
 
               <button
                 onClick={() => { handleComplete('/dashboard'); }}

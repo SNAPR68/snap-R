@@ -15,6 +15,8 @@ import Image from 'next/image';
 import { PreparationOverlay } from './preparation-overlay';
 import { MarketingBanner, type MarketingJobData } from './marketing-banner';
 import { MarketingResultsPanel } from './marketing-results-panel';
+import { CelebrationModal } from './celebration-modal';
+import { ProcessingToasts } from './processing-toasts';
 import { Upload, Sun, Moon, Leaf, Trash2, Sofa, Sparkles, Wand2, Loader2, ChevronDown, ChevronUp, Check, X, Download, Share2, Copy, LogOut, FileArchive, UserCheck, Flame, Tv, Lightbulb, PanelTop, Waves, Move, Circle, Palette, Brain, Rocket, CheckCircle, AlertCircle, Star, Eye, RefreshCw, History, Monitor } from 'lucide-react';
 
 const AI_TOOLS = [
@@ -926,6 +928,15 @@ export function StudioClient({ listingId, userRole, showMlsFeatures = false, cre
             stats: { overallConfidence: result.confidenceScore, totalPhotos: result.totalPhotos },
             heroPhotoId: result.heroPhotoId,
           });
+          // Trigger celebration modal
+          window.dispatchEvent(new CustomEvent('snapr:preparation-complete', {
+            detail: {
+              listingTitle: listing?.title || 'Your Listing',
+              totalPhotos: result.totalPhotos || photos.length,
+              confidence: result.confidenceScore || 0,
+              listingId,
+            },
+          }));
         }}
         onError={(error) => {
           setShowPrepareOverlay(false);
@@ -933,6 +944,8 @@ export function StudioClient({ listingId, userRole, showMlsFeatures = false, cre
           alert('Preparation failed: ' + error);
         }}
       />
+      <CelebrationModal />
+      <ProcessingToasts />
     </div>
     </>
   );

@@ -6,6 +6,7 @@ import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { Sparkles, Zap, Check, Camera, Mail, Bell, Menu, X, Shield, Lock, CheckCircle, BarChart3, Share2 } from 'lucide-react';
 import { LandingGallery } from '@/components/landing-gallery';
+import { HeroBeforeAfter } from '@/components/hero-before-after';
 import { WeHeardYou } from '@/components/we-heard-you';
 import { Testimonials } from '@/components/testimonials';
 import { ExplainerVideoPlayer } from '@/components/explainer-video-player';
@@ -293,8 +294,11 @@ export default function HomePage() {
                 Video
               </span>
             </div>
+
+            {/* Hero Before/After Slider */}
+            <HeroBeforeAfter />
           </div>
-          
+
         </div>
       </section>
 
@@ -723,6 +727,7 @@ export default function HomePage() {
               <Link href="/faq" className="hover:text-[#D4A017] transition-colors">FAQ</Link>
               <Link href="/academy" className="hover:text-[#D4A017] transition-colors">Academy</Link>
               <Link href="/guide" className="hover:text-[#D4A017] transition-colors">Free Guide</Link>
+              <Link href="/developers" className="hover:text-[#D4A017] transition-colors">Developers</Link>
               <Link href="/partners" className="hover:text-[#D4A017] transition-colors">Partner with us</Link>
               <Link href="/contact" className="hover:text-[#D4A017] transition-colors">Contact</Link>
               <Link href="/privacy" className="hover:text-[#D4A017] transition-colors">Privacy</Link>

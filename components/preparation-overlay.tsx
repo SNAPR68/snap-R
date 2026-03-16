@@ -106,6 +106,17 @@ export function PreparationOverlay({
 
   const addActivity = (msg: string) => {
     setActivityFeed(prev => [...prev.slice(-4), msg]);
+    // Dispatch processing toast for real-time feedback
+    const icon = msg.toLowerCase().includes('photo') || msg.toLowerCase().includes('enhance') || msg.toLowerCase().includes('sky') || msg.toLowerCase().includes('staging')
+      ? 'photo'
+      : msg.toLowerCase().includes('description') ? 'description'
+      : msg.toLowerCase().includes('caption') ? 'caption'
+      : msg.toLowerCase().includes('site') ? 'site'
+      : msg.toLowerCase().includes('post') || msg.toLowerCase().includes('schedule') ? 'post'
+      : 'complete'
+    window.dispatchEvent(new CustomEvent('snapr:processing-toast', {
+      detail: { icon, message: msg },
+    }));
   };
 
   useEffect(() => {
