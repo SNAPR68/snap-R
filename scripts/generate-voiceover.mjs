@@ -47,33 +47,33 @@ console.log('Found OPENAI_API_KEY (length: %d)', apiKey.length);
 // Target: ~310 words at 130 wpm. Video is 134s; voiceover (139s) extends
 // ~5s into the closing card — intentional overlap before music-only CTA.
 //
-const text = `SnapR is the AI-powered marketing platform built for real estate. Upload your property photos, and we handle everything else.
+const text = `SnapR is the AI-powered marketing platform built for real estate. Upload your property photos, and we handle everything — from enhancement to publishing to lead conversion.
 
-Your dashboard is mission control. Every listing, its preparation status, marketing progress, upcoming posts, and recent activity — all in one place.
+Your dashboard is mission control. Every listing, its preparation status, marketing progress, upcoming posts, leads, and recent activity — all in one place.
 
 The AI Studio gives you fifteen professional enhancement tools. Replace skies. Stage empty rooms. Add twilight lighting. Remove clutter. Correct perspectives. Each with instant before-and-after previews.
 
-Once photos are enhanced, marketing kicks in automatically. SnapR generates property descriptions, platform-specific captions, hashtags, and a branded property website — all in seconds.
+Once photos are enhanced, marketing kicks in automatically. SnapR generates property descriptions, platform-specific captions, hashtags, a cinematic video, and a branded property website — all in seconds.
 
-Create cinematic property videos with AI voiceover. Choose a script style, pick a voice, select your aspect ratio, and render in minutes.
+Create cinematic property videos with AI voiceover. Choose from five templates, pick a script style, select a voice, and render in three aspect ratios — vertical for Reels, landscape for YouTube, square for feeds.
 
 Connect your accounts — Facebook, Instagram, LinkedIn, TikTok, and Twitter. SnapR publishes directly to all five platforms with UTM tracking built in.
 
-The content calendar shows every scheduled and published post. Drag and drop to reschedule. Never miss a posting window.
+The content calendar shows every scheduled and published post. Drag and drop to reschedule. Campaign triggers auto-generate fresh content when listing status changes — price drops, open houses, and sold.
 
-Track everything. Impressions, engagement, clicks, and cost per lead — broken down by platform, by listing, and by content type. Know exactly what's working.
+Track everything. Impressions, engagement, clicks, and cost per lead — broken down by platform, by listing, and by content type. Know exactly what is working and double down.
 
-Every lead flows into a built-in CRM. View them as a list, or drag them through a Kanban pipeline — from New, to Contacted, to Closed. Auto-scoring tracks engagement. Drip sequences nurture leads on autopilot.
+Every lead flows into a built-in CRM. View them as a list, or drag them through a Kanban pipeline — from New, to Contacted, to Closed. Auto-scoring tracks engagement. Drip sequences and bulk email nurture leads on autopilot.
 
-Manage open house events with guest check-in pages. Attendees register on their phones, and their data flows straight into your lead pipeline.
+Manage open house events with digital check-in pages. Attendees register on their phones, and their data flows straight into your lead pipeline with automatic scoring.
 
 Brokers get a team command center. See every agent's listings, lead counts, and performance charts. Invite agents with role-based access — admins manage the team, editors create content, viewers observe. One dashboard for the entire brokerage.
 
-Photographers get their own portal. Manage packages, track bookings from pending to delivered, and monitor revenue — all from a single pipeline view.
+Photographers get their own portal. Manage packages, set availability, track bookings from pending to delivered, and monitor revenue — all from a single pipeline view.
 
 Agents book shoots through your branded public page. They pick a package, enter property details, choose a date, and submit. You get notified instantly.
 
-Start free with all fifteen AI tools. Upgrade when you're ready — Starter, Pro, or Agency. Social publishing and full automation unlock on Pro.`;
+Start free with all fifteen AI tools. Upgrade to Gold or Platinum for social publishing, video creation, and full marketing automation. Enterprise unlocks API access, custom domains, and embeddable widgets.`;
 
 console.log('Voiceover text length: %d characters', text.length);
 console.log('Calling OpenAI TTS API (model: tts-1-hd, voice: shimmer)...');
