@@ -1,6 +1,14 @@
 # SnapR Execution Changelog
 =================================
 
+## 2026-03-16 — Explainer video re-render + Cloudinary upload
+
+### Video
+- `public/explainer-voiceover.mp3` — Regenerated voiceover MP3 with updated script (OpenAI TTS HD shimmer)
+- Re-rendered ExplainerVideo (4020 frames, 134s, 90.9 MB) with updated captions + voiceover
+- Uploaded to Cloudinary: `v1773684241`
+- `components/explainer-video-player.tsx` — Updated video + poster URLs to new Cloudinary version
+
 ## 2026-03-16 — Guide, video & feature journey upgrade
 
 ### Email Marketing Guide (PDF)
