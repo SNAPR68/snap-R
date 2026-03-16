@@ -1,4 +1,4 @@
-// SnapR Real Estate Marketing Guide — 8-page PDF template
+// SnapR Real Estate Marketing Guide — Complete Platform Guide PDF
 // Uses @react-pdf/renderer for server-side vector PDF generation
 /* eslint-disable jsx-a11y/alt-text */
 // @react-pdf/renderer Image components do not support alt props
@@ -355,7 +355,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: 12,
+    paddingVertical: 10,
     borderBottomWidth: 1,
     borderBottomColor: '#2A2A2A',
   },
@@ -471,6 +471,33 @@ const styles = StyleSheet.create({
   col: {
     flex: 1,
   },
+
+  // Feature grid (for new pages)
+  featureGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 10,
+    marginVertical: 12,
+  },
+  featureCard: {
+    width: '48%',
+    backgroundColor: MEDIUM,
+    borderRadius: 8,
+    padding: 14,
+    borderWidth: 1,
+    borderColor: '#333333',
+  },
+  featureTitle: {
+    fontSize: 11,
+    fontFamily: 'Helvetica-Bold',
+    color: '#FFFFFF',
+    marginBottom: 4,
+  },
+  featureDesc: {
+    fontSize: 9,
+    color: BODY_TEXT,
+    lineHeight: 1.5,
+  },
 });
 
 // ============================================
@@ -518,7 +545,7 @@ function Callout({ label, children }: { label: string; children: string }) {
 }
 
 // ============================================
-// DOCUMENT
+// DOCUMENT — 12-page complete platform guide
 // ============================================
 
 interface GuideDocumentProps {
@@ -528,9 +555,9 @@ interface GuideDocumentProps {
 export function MarketingGuideDocument({ qrCodeDataUri }: GuideDocumentProps = {}) {
   return (
     <Document
-      title="The Real Estate Photo Marketing Guide"
+      title="The Complete SnapR Platform Guide"
       author="SnapR"
-      subject="AI-powered strategies to market real estate listings faster"
+      subject="AI-powered real estate photo marketing — the complete platform guide"
     >
       {/* ===== PAGE 1: COVER ===== */}
       <Page size="LETTER" style={styles.coverPage}>
@@ -540,10 +567,10 @@ export function MarketingGuideDocument({ qrCodeDataUri }: GuideDocumentProps = {
         </Text>
         <View style={styles.coverRule} />
         <Text style={styles.coverTitle}>
-          The Real Estate{'\n'}Photo Marketing Guide
+          The Complete Platform{'\n'}Guide
         </Text>
         <Text style={styles.coverSubtitle}>
-          AI-Powered Strategies to Market{'\n'}Your Listings Faster
+          Photos to Published Listing{'\n'}in Under Ten Minutes
         </Text>
         <View style={styles.coverBadge}>
           <Text style={styles.coverBadgeText}>2026 Edition</Text>
@@ -559,16 +586,20 @@ export function MarketingGuideDocument({ qrCodeDataUri }: GuideDocumentProps = {
         <View style={styles.content}>
           <Text style={styles.chapterTitle}>Inside This Guide</Text>
           <Text style={styles.bodyText}>
-            Everything you need to transform your listing marketing with professional photography and AI-powered automation.
+            Everything you need to master the complete SnapR platform — from AI photo enhancement to lead conversion.
           </Text>
 
           {[
             { num: '01', title: 'Why Professional Photos Matter', desc: 'The data behind visual-first marketing', page: '3' },
-            { num: '02', title: 'The 5-Step Listing Workflow', desc: 'From upload to measurable results', page: '4' },
-            { num: '03', title: 'AI Photo Enhancement', desc: 'Transform ordinary photos into luxury showcases', page: '5' },
-            { num: '04', title: 'Marketing Automation', desc: 'Descriptions, captions, MLS, sites, and posts', page: '6' },
-            { num: '05', title: 'Social Media & Analytics', desc: 'Platform strategies and ROI tracking', page: '7' },
-            { num: '06', title: 'Getting Started', desc: 'Your first listing in under 5 minutes', page: '8' },
+            { num: '02', title: 'The Automation OS', desc: 'Upload → Prepare → Market → Distribute → Measure', page: '4' },
+            { num: '03', title: 'AI Photo Enhancement', desc: '15 tools to transform any photo into luxury', page: '5' },
+            { num: '04', title: 'Marketing Automation', desc: 'Descriptions, captions, MLS, sites, video & posts', page: '6' },
+            { num: '05', title: 'Social Media & Analytics', desc: '5-platform publishing with engagement tracking', page: '7' },
+            { num: '06', title: 'Lead CRM & Nurturing', desc: 'Kanban pipeline, auto-scoring, and drip sequences', page: '8' },
+            { num: '07', title: 'Open Houses & Events', desc: 'Digital check-in, attendee tracking, lead capture', page: '9' },
+            { num: '08', title: 'Team & Broker Tools', desc: 'Multi-agent dashboard with role-based access', page: '10' },
+            { num: '09', title: 'Photographer Marketplace', desc: 'Packages, bookings, availability, and revenue', page: '11' },
+            { num: '10', title: 'Getting Started', desc: 'Your first listing in under 5 minutes', page: '12' },
           ].map((item) => (
             <View key={item.num} style={styles.tocItem}>
               <View style={styles.tocLeft}>
@@ -631,66 +662,59 @@ export function MarketingGuideDocument({ qrCodeDataUri }: GuideDocumentProps = {
         <PageFooter page={3} />
       </Page>
 
-      {/* ===== PAGE 4: THE 5-STEP WORKFLOW ===== */}
+      {/* ===== PAGE 4: THE AUTOMATION OS ===== */}
       <Page size="LETTER" style={styles.page}>
         <PageHeader chapter="Chapter 2" />
         <View style={styles.content}>
           <Text style={styles.chapterNumber}>Chapter 02</Text>
-          <Text style={styles.chapterTitle}>The 5-Step Listing Workflow</Text>
+          <Text style={styles.chapterTitle}>The Automation OS</Text>
           <Text style={styles.chapterIntro}>
-            The most successful agents follow a structured workflow from photo capture to measuring results. Here is the complete pipeline that top-performing agents use.
+            SnapR is not just a photo editor. It is a complete automation operating system for real estate marketing. One upload triggers an end-to-end pipeline that handles everything from enhancement to measuring results.
           </Text>
 
           <View style={styles.workflowRow}>
             <View style={styles.workflowStep}>
               <Text style={styles.workflowNumber}>1</Text>
               <Text style={styles.workflowName}>Upload</Text>
-              <Text style={styles.workflowDesc}>Photos to cloud storage</Text>
+              <Text style={styles.workflowDesc}>Photos to cloud</Text>
             </View>
             <View style={styles.workflowStep}>
               <Text style={styles.workflowNumber}>2</Text>
               <Text style={styles.workflowName}>Prepare</Text>
-              <Text style={styles.workflowDesc}>AI enhancement pipeline</Text>
+              <Text style={styles.workflowDesc}>AI enhancement</Text>
             </View>
             <View style={styles.workflowStep}>
               <Text style={styles.workflowNumber}>3</Text>
               <Text style={styles.workflowName}>Market</Text>
-              <Text style={styles.workflowDesc}>Auto-generate assets</Text>
+              <Text style={styles.workflowDesc}>Auto-generate</Text>
             </View>
             <View style={styles.workflowStep}>
               <Text style={styles.workflowNumber}>4</Text>
               <Text style={styles.workflowName}>Distribute</Text>
-              <Text style={styles.workflowDesc}>Publish across platforms</Text>
+              <Text style={styles.workflowDesc}>5-platform publish</Text>
             </View>
             <View style={styles.workflowStep}>
               <Text style={styles.workflowNumber}>5</Text>
               <Text style={styles.workflowName}>Measure</Text>
-              <Text style={styles.workflowDesc}>Track engagement + ROI</Text>
+              <Text style={styles.workflowDesc}>Track ROI</Text>
             </View>
           </View>
 
-          <Text style={styles.sectionHeading}>Step 1: Upload</Text>
+          <Text style={styles.sectionHeading}>The Loop: Status-Driven Re-Marketing</Text>
           <Text style={styles.bodyText}>
-            Start by capturing photos of the property. Smartphone cameras are perfectly fine since AI enhancement will handle lighting, color, and composition. Upload directly from your phone or computer.
+            The automation does not stop after the first publish. When a listing status changes — price drop, open house announced, under contract, or sold — SnapR can automatically re-trigger the marketing pipeline with fresh content tailored to the new status.
           </Text>
 
-          <Text style={styles.sectionHeading}>Step 2: Prepare</Text>
-          <Text style={styles.bodyText}>
-            AI analyzes each photo and applies targeted enhancements. Exteriors get sky replacement and lawn repair. Interiors get decluttering, virtual staging, and HDR. The system intelligently decides which tools to apply based on each photo.
-          </Text>
+          <Text style={styles.sectionHeading}>The 6-Step Marketing Pipeline</Text>
+          <Bullet>Property Description: AI writes MLS-quality descriptions from property details and enhanced photos</Bullet>
+          <Bullet>Social Captions: Platform-specific captions with trending hashtags for each network</Bullet>
+          <Bullet>MLS Package: Complete photo manifest with property metadata, ready for upload</Bullet>
+          <Bullet>Property Website: Branded, shareable property page with gallery, map, and contact form</Bullet>
+          <Bullet>Cinematic Video: AI-scripted property showcase video with professional voiceover</Bullet>
+          <Bullet>Scheduled Posts: Auto-queued across 5 platforms with UTM tracking for attribution</Bullet>
 
-          <Text style={styles.sectionHeading}>Step 3: Market</Text>
-          <Text style={styles.bodyText}>
-            Once photos are ready, the marketing engine generates: MLS-quality property descriptions, platform-specific social captions with hashtags, a public property website, and scheduled social media posts.
-          </Text>
-
-          <Text style={styles.sectionHeading}>Steps 4 & 5: Distribute and Measure</Text>
-          <Text style={styles.bodyText}>
-            Posts are auto-published to Facebook, Instagram, LinkedIn, and TikTok at optimal times. Engagement metrics (likes, comments, shares, impressions) sync automatically so you can track what is working.
-          </Text>
-
-          <Callout label="SnapR Advantage">
-            SnapR automates the entire pipeline. Upload your photos and the system handles enhancement, marketing asset generation, social publishing, and analytics sync without any manual steps.
+          <Callout label="Always-Complete Semantics">
+            Each pipeline step runs independently. If one step fails, the others still complete. You never lose work because of a single API hiccup.
           </Callout>
         </View>
         <PageFooter page={4} />
@@ -703,45 +727,48 @@ export function MarketingGuideDocument({ qrCodeDataUri }: GuideDocumentProps = {
           <Text style={styles.chapterNumber}>Chapter 03</Text>
           <Text style={styles.chapterTitle}>AI Photo Enhancement</Text>
           <Text style={styles.chapterIntro}>
-            Professional photo editing used to require expensive software and hours of manual work. AI enhancement delivers the same results in seconds, automatically selecting the right tools for each image.
+            The AI Studio gives you 15 professional enhancement tools with instant before-and-after previews. Each tool is designed for a specific real estate photography challenge.
           </Text>
 
           <View style={styles.toolGrid}>
             <View style={styles.toolCategory}>
-              <Text style={styles.toolCategoryTitle}>Exterior</Text>
+              <Text style={styles.toolCategoryTitle}>Exterior (4)</Text>
               <Text style={styles.toolItem}>Sky Replacement</Text>
               <Text style={styles.toolItem}>Virtual Twilight</Text>
               <Text style={styles.toolItem}>Lawn Repair</Text>
               <Text style={styles.toolItem}>Pool Enhancement</Text>
             </View>
             <View style={styles.toolCategory}>
-              <Text style={styles.toolCategoryTitle}>Interior</Text>
+              <Text style={styles.toolCategoryTitle}>Interior (6)</Text>
               <Text style={styles.toolItem}>Declutter Rooms</Text>
               <Text style={styles.toolItem}>Virtual Staging</Text>
               <Text style={styles.toolItem}>Fire in Fireplace</Text>
+              <Text style={styles.toolItem}>TV Screen Art</Text>
               <Text style={styles.toolItem}>Lights On</Text>
+              <Text style={styles.toolItem}>Window Masking</Text>
             </View>
             <View style={styles.toolCategory}>
-              <Text style={styles.toolCategoryTitle}>Enhance</Text>
+              <Text style={styles.toolCategoryTitle}>Enhance (5)</Text>
               <Text style={styles.toolItem}>HDR Processing</Text>
+              <Text style={styles.toolItem}>Auto Enhance</Text>
               <Text style={styles.toolItem}>Color Balance</Text>
               <Text style={styles.toolItem}>Perspective Fix</Text>
               <Text style={styles.toolItem}>Lens Correction</Text>
             </View>
           </View>
 
-          <Text style={styles.sectionHeading}>How AI Decides What to Apply</Text>
+          <Text style={styles.sectionHeading}>Automatic AI Preparation</Text>
           <Text style={styles.bodyText}>
-            The AI analyzes each photo to determine its type (exterior, interior, bathroom, kitchen, etc.) and condition. Based on this analysis, it selects the optimal combination of enhancement tools. An overcast exterior gets sky replacement. A cluttered living room gets decluttering. A dark interior gets HDR and lights-on treatment.
+            Upload all your photos at once and hit Prepare. The AI classifies each photo by type (exterior, kitchen, bathroom, living room, etc.) and applies the optimal combination of tools automatically. An overcast exterior gets sky replacement. A dark interior gets HDR and lights-on. A vacant room gets virtual staging.
           </Text>
 
-          <Text style={styles.sectionHeading}>Before and After Impact</Text>
+          <Text style={styles.sectionHeading}>Manual Studio Mode</Text>
           <Text style={styles.bodyText}>
-            Enhanced photos consistently outperform originals. Blue sky replacements increase click-through rates. Virtual twilight shots create emotional appeal. Decluttered rooms help buyers envision themselves in the space. Staged vacant rooms sell 73% faster than empty ones.
+            Prefer hands-on control? Open any photo in the AI Studio for manual editing. Pick a tool, choose a preset (e.g., Clear Blue Sky, Dramatic Clouds, Sunset), and preview the result in real-time with an interactive before/after slider.
           </Text>
 
           <Callout label="Pro Tip">
-            Upload all your photos at once. The AI preparation pipeline processes them in parallel, applying different enhancements to each photo based on its content. The entire batch is typically ready in under 60 seconds.
+            Smartphone photos work great. The AI handles lighting, color, and composition. Shoot wide, capture all rooms, and let SnapR do the post-production. A complete listing batch is typically ready in under 60 seconds.
           </Callout>
         </View>
         <PageFooter page={5} />
@@ -754,35 +781,31 @@ export function MarketingGuideDocument({ qrCodeDataUri }: GuideDocumentProps = {
           <Text style={styles.chapterNumber}>Chapter 04</Text>
           <Text style={styles.chapterTitle}>Marketing Automation</Text>
           <Text style={styles.chapterIntro}>
-            Creating marketing materials for every listing is time-consuming. Automation handles the repetitive work so you can focus on client relationships and closing deals.
+            Once photos are enhanced, marketing happens automatically. SnapR generates a complete marketing package in seconds — no manual copywriting, scheduling, or site building required.
           </Text>
 
-          <Text style={styles.sectionHeading}>The 5-Step Marketing Pipeline</Text>
-
-          <View style={styles.twoCol}>
-            <View style={styles.col}>
-              <Bullet>Property Description: AI writes MLS-quality descriptions using property details and enhanced photos. Each description is unique, professional, and highlights key selling points.</Bullet>
-              <Bullet>Social Captions: Platform-specific captions with relevant hashtags. Instagram gets visual language, LinkedIn gets professional tone, TikTok gets trending hooks.</Bullet>
-              <Bullet>MLS Package: Complete photo manifest with property metadata, ready for MLS upload. All enhanced photos organized with correct categorization.</Bullet>
-            </View>
-            <View style={styles.col}>
-              <Bullet>Property Website: A branded, public-facing property page with photo gallery, description, features, map, and contact form. Shareable link with UTM tracking built in.</Bullet>
-              <Bullet>Scheduled Posts: Auto-queued social media posts timed for optimal engagement. Each post includes the property site link with UTM parameters for attribution tracking.</Bullet>
-            </View>
-          </View>
-
-          <Text style={styles.sectionHeading}>Writing Better Descriptions</Text>
+          <Text style={styles.sectionHeading}>Content Studio</Text>
           <Text style={styles.bodyText}>
-            The best property descriptions paint a picture. They lead with the most compelling feature, use sensory language, mention the neighborhood, and end with a call to action. AI generates these consistently, eliminating the blank-page problem.
+            The Content Studio is your command center for all generated marketing assets. View and edit property descriptions, copy platform-specific captions, download MLS packages, preview property websites, and manage scheduled posts — all from one panel.
           </Text>
 
-          <Text style={styles.sectionHeading}>Hashtag Strategy</Text>
+          <Text style={styles.sectionHeading}>Cinematic Property Videos</Text>
           <Text style={styles.bodyText}>
-            Effective real estate hashtags combine location tags (#AustinRealEstate), property type tags (#LuxuryHome), and trending tags (#DreamHome). Each platform has different optimal counts: Instagram allows 30, LinkedIn prefers 3-5, and TikTok works best with 4-6.
+            Create professional property showcase videos with AI voiceover. Choose from 5 templates (PropertyShowcase, JustListed, OpenHouse, PriceDrop, Sold) in 3 aspect ratios (vertical 9:16, landscape 16:9, square 1:1). Pick a script style (Professional, Luxury, Friendly, First-Time Buyer), select from 6 voices, and render in minutes.
+          </Text>
+
+          <Text style={styles.sectionHeading}>Campaign Engine</Text>
+          <Text style={styles.bodyText}>
+            Create marketing campaigns triggered by listing status changes. When a price drops, an open house is announced, or a property goes under contract, the campaign engine automatically generates fresh content and queues new posts. View everything on the content calendar — drag and drop to reschedule.
+          </Text>
+
+          <Text style={styles.sectionHeading}>Email Marketing</Text>
+          <Text style={styles.bodyText}>
+            Send bulk emails to your lead lists directly from SnapR. Compose messages with template variables (name, first name), select recipients, and track delivery. Every send is logged as a lead activity for CRM visibility.
           </Text>
 
           <Callout label="SnapR Advantage">
-            The marketing pipeline runs automatically after photo preparation. All five steps complete without any manual input, and each step is independent so one failure does not block the others.
+            The marketing pipeline runs automatically after preparation. Each step is independent — descriptions, captions, MLS, video, property site, and scheduled posts all generate in parallel.
           </Callout>
         </View>
         <PageFooter page={6} />
@@ -795,64 +818,224 @@ export function MarketingGuideDocument({ qrCodeDataUri }: GuideDocumentProps = {
           <Text style={styles.chapterNumber}>Chapter 05</Text>
           <Text style={styles.chapterTitle}>Social Media & Analytics</Text>
           <Text style={styles.chapterIntro}>
-            Publishing is only half the equation. Tracking engagement and understanding what resonates with your audience turns marketing from a guessing game into a data-driven strategy.
+            Publish to five platforms simultaneously and track every metric. SnapR handles token management, optimal timing, and UTM attribution so you know exactly which posts drive leads.
           </Text>
 
-          <Text style={styles.sectionHeading}>Platform Playbook</Text>
+          <Text style={styles.sectionHeading}>5-Platform Publishing</Text>
 
           <View style={styles.platformRow}>
             <View style={styles.platformCard}>
               <Text style={styles.platformName}>Instagram</Text>
               <Text style={styles.platformTip}>
-                Lead with stunning visuals. Use carousel posts for room-by-room tours. Reels outperform static posts by 2x. Post between 11am-1pm and 7-9pm.
+                Photo carousels and Reels. Business account required. Supports image posts and video publishing. Reels outperform static posts 2x.
               </Text>
             </View>
             <View style={styles.platformCard}>
               <Text style={styles.platformName}>Facebook</Text>
               <Text style={styles.platformTip}>
-                Post to your business page and local groups. Video tours get 5x more engagement. Best times: Tuesday-Thursday, 1-4pm. Boost top performers.
+                Page posts with photos and video. Auto-refreshes long-lived tokens. Best for community engagement and local groups.
               </Text>
             </View>
             <View style={styles.platformCard}>
               <Text style={styles.platformName}>LinkedIn</Text>
               <Text style={styles.platformTip}>
-                Professional tone with market insights. Share just-listed posts with area stats. Best for luxury and commercial listings. Post Tuesday-Thursday mornings.
+                Professional posts with images and video. Community Management API v2. Ideal for luxury and commercial listings.
               </Text>
             </View>
             <View style={styles.platformCard}>
               <Text style={styles.platformName}>TikTok</Text>
               <Text style={styles.platformTip}>
-                Short video tours with trending audio. Property walkthroughs and before/after transformations perform best. Post consistently for algorithm favor.
+                Video and photo carousels. PULL_FROM_URL method for videos. Growing audience for property walkthroughs.
               </Text>
             </View>
           </View>
 
-          <Text style={styles.sectionHeading}>Key Metrics to Track</Text>
-          <View style={styles.twoCol}>
-            <View style={styles.col}>
-              <Bullet>Impressions: How many people saw your post</Bullet>
-              <Bullet>Engagement Rate: Interactions divided by impressions</Bullet>
-              <Bullet>Click-Through Rate: Property site visits from posts</Bullet>
-            </View>
-            <View style={styles.col}>
-              <Bullet>Lead Conversion: Inquiries from social traffic</Bullet>
-              <Bullet>Cost Per Lead: Marketing spend vs leads generated</Bullet>
-              <Bullet>Days on Market: Correlation with marketing activity</Bullet>
-            </View>
-          </View>
+          <Text style={styles.platformName}>Twitter / X</Text>
+          <Text style={styles.bodyText}>
+            Text posts with image and video attachments. Great for quick just-listed announcements and market updates.
+          </Text>
 
-          <Callout label="SnapR Advantage">
-            SnapR syncs engagement metrics from all connected platforms every 6 hours. The analytics dashboard shows per-listing and per-platform performance with engagement rate calculations, so you always know what is working.
+          <Text style={styles.sectionHeading}>Analytics Dashboard</Text>
+          <Text style={styles.bodyText}>
+            Engagement metrics sync automatically every 6 hours. Track impressions, likes, comments, shares, reach, engagement rate, and click-throughs — broken down by platform, by listing, and by content type. UTM parameters on every property site link give you end-to-end attribution from social post to lead.
+          </Text>
+
+          <Callout label="Token Management">
+            SnapR automatically refreshes expiring access tokens. Facebook tokens are exchanged for long-lived versions. TikTok tokens refresh every 24 hours. You never need to reconnect unless you revoke access.
           </Callout>
         </View>
         <PageFooter page={7} />
       </Page>
 
-      {/* ===== PAGE 8: GETTING STARTED ===== */}
+      {/* ===== PAGE 8: LEAD CRM & NURTURING ===== */}
+      <Page size="LETTER" style={styles.page}>
+        <PageHeader chapter="Chapter 6" />
+        <View style={styles.content}>
+          <Text style={styles.chapterNumber}>Chapter 06</Text>
+          <Text style={styles.chapterTitle}>Lead CRM & Nurturing</Text>
+          <Text style={styles.chapterIntro}>
+            Every inquiry, showing request, and site visitor flows into a built-in CRM. No external tools needed. Track, score, and nurture leads from first contact to close.
+          </Text>
+
+          <Text style={styles.sectionHeading}>Kanban Pipeline</Text>
+          <Text style={styles.bodyText}>
+            View your leads as a list or switch to the visual pipeline. Drag leads through stages: New, Contacted, Qualified, Touring, Offer, Closed, or Lost. Every stage change is tracked in the activity timeline.
+          </Text>
+
+          <Text style={styles.sectionHeading}>Auto-Scoring</Text>
+          <Text style={styles.bodyText}>
+            Every lead action automatically updates their score (capped at 100). A property site view adds 8 points. An email or text adds 5. A phone call adds 10. A showing adds 20. High-score leads are prioritized in your pipeline.
+          </Text>
+
+          <Text style={styles.sectionHeading}>Activity Timeline</Text>
+          <Text style={styles.bodyText}>
+            Every interaction is logged: calls, emails, texts, showings, notes, form submissions, site views, and drip email sends. The timeline gives you complete context before every client touchpoint.
+          </Text>
+
+          <Text style={styles.sectionHeading}>Drip Sequences</Text>
+          <Text style={styles.bodyText}>
+            Create multi-step email sequences that run on autopilot. Set delays between steps (1 day, 3 days, 1 week). Enroll leads manually or automatically. Each drip email send adds 2 points to the lead score and logs an activity. Enable, pause, or delete sequences anytime.
+          </Text>
+
+          <Text style={styles.sectionHeading}>Bulk Email</Text>
+          <Text style={styles.bodyText}>
+            Select multiple leads and send personalized emails with template variables. Every send is tracked in the activity timeline with metadata flagging it as a bulk send.
+          </Text>
+
+          <Callout label="SnapR Advantage">
+            Leads from property sites, open house check-ins, photographer bookings, and social traffic all converge into one CRM. No manual data entry. No lost leads.
+          </Callout>
+        </View>
+        <PageFooter page={8} />
+      </Page>
+
+      {/* ===== PAGE 9: OPEN HOUSES & EVENTS ===== */}
+      <Page size="LETTER" style={styles.page}>
+        <PageHeader chapter="Chapter 7" />
+        <View style={styles.content}>
+          <Text style={styles.chapterNumber}>Chapter 07</Text>
+          <Text style={styles.chapterTitle}>Open Houses & Events</Text>
+          <Text style={styles.chapterIntro}>
+            Manage open house events from creation to follow-up. Digital check-in replaces paper sign-in sheets and automatically captures attendee data into your lead pipeline.
+          </Text>
+
+          <Text style={styles.sectionHeading}>Event Management</Text>
+          <Text style={styles.bodyText}>
+            Create open house events with date, time, capacity, and description. Each event gets a unique public check-in URL that you can share or display as a QR code at the door. Events flow through statuses: Upcoming, Active, Completed, or Cancelled.
+          </Text>
+
+          <Text style={styles.sectionHeading}>Digital Guest Check-In</Text>
+          <Text style={styles.bodyText}>
+            Attendees scan the QR code or visit the check-in URL on their phone. They enter their name, email, phone, and how they heard about the property. No app download required — it is a responsive web form in your branded styling.
+          </Text>
+
+          <Text style={styles.sectionHeading}>Attendee Tracking</Text>
+          <Text style={styles.bodyText}>
+            View all attendees in real-time. Rate interest levels, add private notes, and see exactly who visited. After the event, all attendees flow into your lead CRM with their check-in data pre-populated.
+          </Text>
+
+          <Text style={styles.sectionHeading}>Showing Feedback</Text>
+          <Text style={styles.bodyText}>
+            After showings and open houses, collect structured feedback from attendees. Rating scales, interest levels, and open-ended comments give you actionable insights about buyer reactions.
+          </Text>
+
+          <Callout label="Pro Tip">
+            Print the check-in QR code and display it at the front door. It captures 3-5x more attendee data than paper sign-in sheets, and every check-in becomes a scored lead in your CRM.
+          </Callout>
+        </View>
+        <PageFooter page={9} />
+      </Page>
+
+      {/* ===== PAGE 10: TEAM & BROKER TOOLS ===== */}
+      <Page size="LETTER" style={styles.page}>
+        <PageHeader chapter="Chapter 8" />
+        <View style={styles.content}>
+          <Text style={styles.chapterNumber}>Chapter 08</Text>
+          <Text style={styles.chapterTitle}>Team & Broker Tools</Text>
+          <Text style={styles.chapterIntro}>
+            Built for brokerages of any size. The broker dashboard gives team leaders visibility into every agent, listing, and lead across the entire organization.
+          </Text>
+
+          <Text style={styles.sectionHeading}>Broker Command Center</Text>
+          <Text style={styles.bodyText}>
+            See every agent on your team with their listing counts, lead counts, and performance metrics. Charts visualize team activity over time. The agent roster shows who is active, their role, and their recent activity.
+          </Text>
+
+          <Text style={styles.sectionHeading}>Role-Based Access</Text>
+          <Text style={styles.bodyText}>
+            Invite team members with granular roles. Admins manage the entire team and billing. Editors create and edit listings and content. Viewers can observe dashboards and analytics but cannot modify data. Each role maps to specific permissions across the platform.
+          </Text>
+
+          <Text style={styles.sectionHeading}>Organization Settings</Text>
+          <Text style={styles.bodyText}>
+            Configure organization-wide branding, default social accounts, and team notification preferences. Brand kits ensure every piece of generated content carries consistent branding — logos, colors, fonts, and contact info.
+          </Text>
+
+          <Text style={styles.sectionHeading}>White-Label & Embed</Text>
+          <Text style={styles.bodyText}>
+            Agency and Enterprise tiers unlock embeddable widgets — before/after sliders, photo galleries, and property cards that you can embed on your own website. Enterprise users can also map custom domains to their property sites and portfolios.
+          </Text>
+
+          <Callout label="Enterprise Features">
+            Enterprise tier unlocks the REST API (API key auth), custom domains, embeddable widgets, and OpenAPI documentation. Build integrations with your existing CRM, MLS, or website.
+          </Callout>
+        </View>
+        <PageFooter page={10} />
+      </Page>
+
+      {/* ===== PAGE 11: PHOTOGRAPHER MARKETPLACE ===== */}
+      <Page size="LETTER" style={styles.page}>
+        <PageHeader chapter="Chapter 9" />
+        <View style={styles.content}>
+          <Text style={styles.chapterNumber}>Chapter 09</Text>
+          <Text style={styles.chapterTitle}>Photographer Marketplace</Text>
+          <Text style={styles.chapterIntro}>
+            Whether you are a photographer managing bookings or an agent hiring one, SnapR streamlines the entire workflow from package selection to photo delivery.
+          </Text>
+
+          <Text style={styles.sectionHeading}>For Photographers</Text>
+
+          <View style={styles.featureGrid}>
+            <View style={styles.featureCard}>
+              <Text style={styles.featureTitle}>Packages</Text>
+              <Text style={styles.featureDesc}>Create service packages with pricing, descriptions, and deliverable counts. Basic, Premium, Luxury — set your own tiers.</Text>
+            </View>
+            <View style={styles.featureCard}>
+              <Text style={styles.featureTitle}>Booking Pipeline</Text>
+              <Text style={styles.featureDesc}>Track every booking: Pending, Confirmed, Shot, Editing, Delivered. Pipeline view shows your entire workflow at a glance.</Text>
+            </View>
+            <View style={styles.featureCard}>
+              <Text style={styles.featureTitle}>Availability</Text>
+              <Text style={styles.featureDesc}>Set your available days and times. Agents only see open slots when booking. Block out vacations or busy periods.</Text>
+            </View>
+            <View style={styles.featureCard}>
+              <Text style={styles.featureTitle}>Portfolio</Text>
+              <Text style={styles.featureDesc}>Build a public portfolio showcasing your best work. Shareable link for marketing. Potential clients see your style before booking.</Text>
+            </View>
+          </View>
+
+          <Text style={styles.sectionHeading}>For Agents</Text>
+          <Text style={styles.bodyText}>
+            Book photographers through a branded public page. Pick a package, enter property details (address, size, special requirements), select a date from available slots, and submit. The photographer gets notified instantly, and the booking enters their pipeline.
+          </Text>
+
+          <Text style={styles.sectionHeading}>Client Approval Workflow</Text>
+          <Text style={styles.bodyText}>
+            After photos are enhanced, share a gallery link with your client. They can view, approve, reject, download, and comment on individual photos. All client interactions trigger notifications and are tracked in the activity timeline.
+          </Text>
+
+          <Callout label="SnapR Advantage">
+            The booking form, photo delivery, AI enhancement, and marketing pipeline are all connected. A photographer delivers photos, the agent approves them, and SnapR auto-generates marketing — one seamless workflow.
+          </Callout>
+        </View>
+        <PageFooter page={11} />
+      </Page>
+
+      {/* ===== PAGE 12: GETTING STARTED ===== */}
       <Page size="LETTER" style={styles.page}>
         <PageHeader chapter="Getting Started" />
         <View style={styles.content}>
-          <Text style={styles.chapterNumber}>Chapter 06</Text>
+          <Text style={styles.chapterNumber}>Chapter 10</Text>
           <Text style={styles.chapterTitle}>Getting Started</Text>
           <Text style={styles.chapterIntro}>
             Ready to transform your listing marketing? Here is how to get your first listing live in under 5 minutes.
@@ -864,7 +1047,7 @@ export function MarketingGuideDocument({ qrCodeDataUri }: GuideDocumentProps = {
             </View>
             <View style={styles.stepContent}>
               <Text style={styles.stepTitle}>Create Your Free Account</Text>
-              <Text style={styles.stepDesc}>Sign up at snap-r.com. No credit card required. You get immediate access to AI photo enhancement tools.</Text>
+              <Text style={styles.stepDesc}>Sign up at snap-r.com. No credit card required. Choose your role (Photographer, Agent, Broker) to get a personalized setup experience.</Text>
             </View>
           </View>
 
@@ -874,7 +1057,7 @@ export function MarketingGuideDocument({ qrCodeDataUri }: GuideDocumentProps = {
             </View>
             <View style={styles.stepContent}>
               <Text style={styles.stepTitle}>Upload Your First Listing</Text>
-              <Text style={styles.stepDesc}>Add property details and upload your photos. The AI will analyze each photo and apply targeted enhancements automatically.</Text>
+              <Text style={styles.stepDesc}>Add property details and upload photos. Or try the sample listing to see the platform in action before committing your own content.</Text>
             </View>
           </View>
 
@@ -883,8 +1066,8 @@ export function MarketingGuideDocument({ qrCodeDataUri }: GuideDocumentProps = {
               <Text style={styles.stepNumberText}>3</Text>
             </View>
             <View style={styles.stepContent}>
-              <Text style={styles.stepTitle}>Connect Your Social Accounts</Text>
-              <Text style={styles.stepDesc}>Link your Facebook, Instagram, LinkedIn, and TikTok accounts for automatic publishing and analytics tracking.</Text>
+              <Text style={styles.stepTitle}>Hit Prepare</Text>
+              <Text style={styles.stepDesc}>One click triggers AI enhancement for all photos, followed by automatic marketing generation — descriptions, captions, video, property site, and scheduled posts.</Text>
             </View>
           </View>
 
@@ -893,8 +1076,8 @@ export function MarketingGuideDocument({ qrCodeDataUri }: GuideDocumentProps = {
               <Text style={styles.stepNumberText}>4</Text>
             </View>
             <View style={styles.stepContent}>
-              <Text style={styles.stepTitle}>Hit Prepare and Watch the Magic</Text>
-              <Text style={styles.stepDesc}>One click triggers the full pipeline: photo enhancement, marketing asset generation, property site creation, and social post scheduling.</Text>
+              <Text style={styles.stepTitle}>Connect Social Accounts</Text>
+              <Text style={styles.stepDesc}>Link Facebook, Instagram, LinkedIn, TikTok, and Twitter for automatic publishing. Posts go out every 15 minutes at optimal times.</Text>
             </View>
           </View>
 
@@ -903,8 +1086,8 @@ export function MarketingGuideDocument({ qrCodeDataUri }: GuideDocumentProps = {
               <Text style={styles.stepNumberText}>5</Text>
             </View>
             <View style={styles.stepContent}>
-              <Text style={styles.stepTitle}>Track Your Results</Text>
-              <Text style={styles.stepDesc}>Monitor engagement, leads, and ROI from your analytics dashboard. See which listings and platforms perform best.</Text>
+              <Text style={styles.stepTitle}>Track, Nurture, Close</Text>
+              <Text style={styles.stepDesc}>Monitor analytics. Manage leads in the CRM. Set up drip sequences. Run open houses with digital check-in. Let the automation loop handle the rest.</Text>
             </View>
           </View>
 
@@ -912,7 +1095,7 @@ export function MarketingGuideDocument({ qrCodeDataUri }: GuideDocumentProps = {
           <View style={styles.ctaBox}>
             <Text style={styles.ctaTitle}>Start Marketing Smarter Today</Text>
             <Text style={styles.ctaText}>
-              Join thousands of real estate professionals who use SnapR to market listings faster with AI-powered photo enhancement and marketing automation.
+              Join real estate professionals who use SnapR to market listings faster with AI-powered photo enhancement, automated marketing, lead nurturing, and team management.
             </Text>
             <View style={styles.ctaButton}>
               <Text style={styles.ctaButtonText}>GET STARTED FREE</Text>
@@ -925,7 +1108,7 @@ export function MarketingGuideDocument({ qrCodeDataUri }: GuideDocumentProps = {
             )}
           </View>
         </View>
-        <PageFooter page={8} />
+        <PageFooter page={12} />
       </Page>
     </Document>
   );

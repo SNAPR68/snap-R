@@ -1,6 +1,20 @@
 # SnapR Execution Changelog
 =================================
 
+## 2026-03-16 — Guide, video & feature journey upgrade
+
+### Email Marketing Guide (PDF)
+- `lib/print/guide-template.tsx` — Complete rewrite: 8→12 pages, 6→10 chapters
+  - New chapters: Lead CRM & Nurturing, Open Houses & Events, Team & Broker Tools, Photographer Marketplace
+  - Updated: "5-Step Workflow" → "The Automation OS" (6-step pipeline), Marketing Automation now covers video/campaigns/email
+
+### Explainer Video
+- `remotion/compositions/ExplainerVideo.tsx` — Updated 5 scene captions for accuracy (tier names, feature descriptions)
+- `scripts/generate-voiceover.mjs` — Updated voiceover script: fixed tier names (Free/Gold/Platinum/Enterprise), added video/campaigns/bulk-email/digital-check-in/API mentions
+
+### Internal Documentation
+- `docs/FEATURE-JOURNEY.md` — NEW comprehensive feature journey (~500 lines) covering 3 personas (Photographer, Agent, Broker), enterprise features, billing tiers, notification system, monitoring, and technical architecture
+
 ## 2026-03-16 — Testing depth + monitoring (+3 readiness points)
 
 ### Component Tests (NEW — 48 tests across 5 files)

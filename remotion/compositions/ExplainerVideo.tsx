@@ -93,7 +93,7 @@ const SCENES: SceneConfig[] = [
   {
     id: 'homepage',
     label: 'Meet SnapR',
-    caption: 'The AI platform that turns property photos into a full marketing engine',
+    caption: 'AI-powered photos to published listing in under ten minutes',
     image: 'homepage.png',
     imageHeight: 9136,
     durationSec: 10,
@@ -133,7 +133,7 @@ const SCENES: SceneConfig[] = [
   {
     id: 'content-studio',
     label: 'Content Studio',
-    caption: 'Descriptions, captions, hashtags, and a property website — all automated',
+    caption: 'Descriptions, captions, MLS, video, property site, and posts — all automated',
     image: 'content-studio.png',
     imageHeight: 1267,
     durationSec: 10,
@@ -148,7 +148,7 @@ const SCENES: SceneConfig[] = [
   {
     id: 'video-creator',
     label: 'Video Creator',
-    caption: 'Cinematic property videos with AI voiceover — four styles, six voices',
+    caption: 'Five templates, three aspect ratios, AI voiceover — render in minutes',
     image: 'video-creator.png',
     imageHeight: 1080,
     durationSec: 8,
@@ -170,7 +170,7 @@ const SCENES: SceneConfig[] = [
   {
     id: 'calendar',
     label: 'Calendar',
-    caption: 'Drag-and-drop scheduling — every post, every platform, every date',
+    caption: 'Drag-and-drop scheduling — campaigns auto-trigger on status changes',
     image: 'calendar.png',
     imageHeight: 1080,
     durationSec: 8,
@@ -247,7 +247,7 @@ const SCENES: SceneConfig[] = [
   {
     id: 'pricing',
     label: 'Pricing',
-    caption: 'All 15 AI tools on every plan — start free, upgrade when ready',
+    caption: 'Free, Gold, Platinum, Enterprise — all 15 AI tools on every plan',
     image: 'pricing.png',
     imageHeight: 2273,
     durationSec: 8,
