@@ -1,6 +1,21 @@
 # SnapR Execution Changelog
 =================================
 
+## 2026-03-17 — Autonomous Agent System (docs + schema)
+
+### Autonomous Agent System Blueprint
+- `docs/agents/` — 10 comprehensive documents covering:
+  - System architecture (7 agents, orchestration flow)
+  - API specification (internal + external endpoints)
+  - Accounts & setup checklist (Ayrshare, Hunter.io, GA4, Slack, Crisp)
+  - Detailed specifications for all 7 agents (Content, Social, Outreach, Sales, Data, Support, Orchestrator)
+  - User flows (6 end-to-end scenarios showing how agents interact with users)
+  - Database schema (6 new tables: agent_runs, content_queue, outreach_leads, outreach_emails, agent_config, agent_daily_metrics)
+  - Implementation roadmap (8 phases, ~85-95 hours)
+  - Security & compliance (CAN-SPAM, data privacy, access control)
+  - Testing & validation plan (~63 new tests)
+- `supabase/migrations/20260317_autonomous_agents.sql` — Full migration with tables, indexes, RLS, seed data
+
 ## 2026-03-17 — API integration tests (26) + dashboard empty states (5)
 
 ### API Integration Tests
