@@ -202,7 +202,15 @@ export default function FloorPlansPage() {
       {/* Content */}
       <div className="max-w-7xl mx-auto px-6 py-8">
         {/* Existing Floor Plans */}
-        {floorPlans.length > 0 && (
+        {floorPlans.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-20 text-center mb-12">
+            <div className="text-5xl mb-4">📐</div>
+            <h3 className="text-xl font-semibold text-white mb-2">No floor plans yet</h3>
+            <p className="text-gray-400 mb-6 max-w-md">
+              Generate AI-powered floor plans from your listing photos. Select a listing below to get started.
+            </p>
+          </div>
+        ) : (
           <div className="mb-12">
             <h2 className="text-xl font-bold mb-4">Your Floor Plans</h2>
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
