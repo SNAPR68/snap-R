@@ -458,7 +458,15 @@ function VoiceoverGenerator() {
 
           <h2 className="text-lg font-bold mb-4">Select a Listing</h2>
           <div className="space-y-2">
-            {listings.map(listing => (
+            {listings.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-16 text-center">
+                <div className="text-5xl mb-4">🎙️</div>
+                <h3 className="text-xl font-semibold text-white mb-2">No listings yet</h3>
+                <p className="text-gray-400 mb-6 max-w-md">
+                  Create a listing first, then come back to generate AI voiceovers for your property videos.
+                </p>
+              </div>
+            ) : listings.map(listing => (
               <button
                 key={listing.id}
                 onClick={() => handleSelectListing(listing)}

@@ -187,7 +187,11 @@ export default function PrintDashboard() {
                 {loading ? (
                   <div className="p-4 flex justify-center"><Loader2 className="w-5 h-5 animate-spin text-[#D4A017]" /></div>
                 ) : listings.length === 0 ? (
-                  <div className="p-4 text-center text-white/40 text-sm">No listings found</div>
+                  <div className="flex flex-col items-center py-8 text-center px-4">
+                    <div className="text-3xl mb-2">🏠</div>
+                    <p className="text-white/60 text-sm font-medium mb-1">No listings found</p>
+                    <p className="text-white/30 text-xs">Create a listing first to generate print materials.</p>
+                  </div>
                 ) : listings.map(l => (
                   <button
                     key={l.id}

@@ -1,6 +1,23 @@
 # SnapR Execution Changelog
 =================================
 
+## 2026-03-17 — API integration tests (26) + dashboard empty states (5)
+
+### API Integration Tests
+- `__tests__/api-integration.test.ts` — NEW 26 handler invocation tests covering:
+  - `/api/listing/status` GET (4 tests): missing param, auth, 404, success with marketing job
+  - `/api/marketing/status` GET (5 tests): missing param, auth, 404, null job, full job data
+  - `/api/cron/health-check` GET (3 tests): no auth, wrong token, healthy response
+  - `/api/leads/activity` GET/POST/PATCH (10 tests): auth, validation, 404, auto-scoring, status updates
+  - `/api/share` POST (4 tests): auth, invalid UUID, 404, successful share link
+
+### Dashboard Empty States
+- `app/dashboard/floor-plans/page.tsx` — Empty state with icon + description when no floor plans
+- `app/dashboard/voiceover/page.tsx` — Empty state when no listings available for voiceover
+- `app/dashboard/open-houses/OpenHousesDashboard.tsx` — Enhanced empty state with CTA button
+- `app/dashboard/photographer/bookings/BookingsDashboard.tsx` — Enhanced empty state with contextual text per tab
+- `app/dashboard/print/PrintDashboard.tsx` — Enhanced empty state in listing dropdown
+
 ## 2026-03-16 — Explainer video re-render + Cloudinary upload
 
 ### Video

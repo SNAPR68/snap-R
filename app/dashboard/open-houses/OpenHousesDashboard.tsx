@@ -295,9 +295,18 @@ export default function OpenHousesDashboard() {
       {/* Events List */}
       <div className="space-y-3">
         {events.length === 0 ? (
-          <div className="text-center py-16">
-            <DoorOpen className="w-12 h-12 text-white/20 mx-auto mb-4" />
-            <p className="text-white/40 text-sm">No open house events yet. Create your first one above.</p>
+          <div className="flex flex-col items-center justify-center py-20 text-center">
+            <DoorOpen className="w-16 h-16 text-white/20 mx-auto mb-4" />
+            <h3 className="text-xl font-semibold text-white mb-2">No open house events yet</h3>
+            <p className="text-gray-400 mb-6 max-w-md">
+              Schedule open houses, manage digital check-ins, and track attendee interest — all from one place.
+            </p>
+            <button
+              onClick={() => setShowCreate(true)}
+              className="px-6 py-2.5 bg-[#D4A017] hover:bg-[#B8860B] text-black font-medium rounded-lg transition-colors"
+            >
+              Create First Open House
+            </button>
           </div>
         ) : events.map(event => {
           const isExpanded = expandedEvent === event.id

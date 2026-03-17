@@ -266,10 +266,15 @@ export default function BookingsDashboard() {
       {/* Bookings List */}
       <div className="space-y-3">
         {filtered.length === 0 ? (
-          <div className="text-center py-16">
-            <Camera className="w-12 h-12 text-white/20 mx-auto mb-4" />
-            <p className="text-white/40 text-sm">
-              {activeTab === 'all' ? 'No booking requests yet.' : `No ${activeTab} bookings.`}
+          <div className="flex flex-col items-center justify-center py-20 text-center">
+            <Camera className="w-16 h-16 text-white/20 mx-auto mb-4" />
+            <h3 className="text-xl font-semibold text-white mb-2">
+              {activeTab === 'all' ? 'No booking requests yet' : `No ${activeTab} bookings`}
+            </h3>
+            <p className="text-gray-400 mb-6 max-w-md">
+              {activeTab === 'all'
+                ? 'When clients book a photography session through your public booking page, their requests will appear here.'
+                : `Bookings will appear here once they move to the "${activeTab}" stage.`}
             </p>
           </div>
         ) : filtered.map(booking => {
