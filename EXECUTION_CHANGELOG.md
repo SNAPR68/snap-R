@@ -1,6 +1,19 @@
 # SnapR Execution Changelog
 =================================
 
+## 2026-03-18 — Fix social publish 500s + notifications table
+
+### Social Publish Column Mismatch (Root cause of "No Facebook Page connected" 500)
+- `app/api/social/callback/facebook/route.ts` — Rewrote to use correct schema columns: `pages` JSONB array, `default_page_id`, `profile_data`, `instagram_account` (was writing to nonexistent `page_id`, `page_access_token`, `page_name`, `platform_name`)
+- `app/api/social/publish/route.ts` — Fixed `publishToFacebook()` to resolve page from `pages[]` JSONB + `default_page_id` instead of reading nonexistent `page_access_token`/`page_id` columns
+- `app/api/social/oauth/[platform]/route.ts` — Fixed `handleFacebookOAuth()`: replaced `page_id`/`page_access_token` writes with `default_page_id`
+- `app/api/social/callback/linkedin/route.ts` — Added `linkedin_urn` and `profile_data` columns, removed nonexistent `platform_name`
+- `app/api/social/test-linkedin/route.ts` — Fixed reference to `platform_name` → `platform_username`
+
+### Notifications Table Missing from Production
+- Applied `supabase/migrations/20260224_notifications.sql` to live Supabase (table was defined but never migrated)
+- Fixes `/api/notifications?limit=20` returning 500
+
 ## 2026-03-18 — Fix login crash + webhook bug + tier cleanup
 
 ### Sentry Duplicate Init Fix

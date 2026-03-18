@@ -96,7 +96,7 @@ export async function POST() {
     return NextResponse.json({
       connection: {
         platform_user_id: personId,
-        platform_name: connection.platform_name,
+        platform_name: connection.platform_username,
         has_token: !!accessToken,
         token_expires: connection.token_expires_at,
       },

@@ -6,11 +6,19 @@ import { logger } from '@/lib/logger';
 import { checkRateLimitAsync } from '@/lib/rate-limit';
 import { socialPublishExtendedSchema, parseBody } from '@/lib/validation/schemas';
 
+interface FacebookPage {
+  id: string;
+  name: string;
+  access_token: string;
+}
+
 interface SocialConnection {
   access_token: string;
-  page_access_token?: string;
-  page_id?: string;
   platform_user_id?: string;
+  pages?: FacebookPage[];
+  default_page_id?: string;
+  instagram_account?: { id: string; username: string; name: string; page_id: string };
+  linkedin_urn?: string;
 }
 
 export async function POST(req: NextRequest) {
@@ -145,10 +153,17 @@ export async function POST(req: NextRequest) {
 }
 
 async function publishToFacebook(connection: SocialConnection, content: string, imageUrls: string[]) {
-  const accessToken = connection.page_access_token || connection.access_token;
-  const pageId = connection.page_id;
+  // Resolve Facebook page from pages JSONB array + default_page_id
+  const pages = connection.pages || [];
+  const defaultPageId = connection.default_page_id;
+  const page = defaultPageId
+    ? pages.find(p => p.id === defaultPageId) || pages[0]
+    : pages[0];
 
-  if (!pageId) throw new Error('No Facebook Page connected');
+  if (!page) throw new Error('No Facebook Page connected. Please reconnect your Facebook account.');
+
+  const accessToken = page.access_token || connection.access_token;
+  const pageId = page.id;
 
   let postId: string;
 
