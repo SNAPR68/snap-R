@@ -79,11 +79,11 @@ export async function POST(request: NextRequest) {
       }
       
       // Log successful publish
-      await supabase.from('published_content').insert({
+      await supabase.from('published_posts').insert({
         user_id: user.id,
         listing_id: listingId,
         platform,
-        content_type: 'video',
+        post_type: 'video',
         platform_post_id: result.id,
         caption,
         published_at: new Date().toISOString()
@@ -168,11 +168,11 @@ export async function POST(request: NextRequest) {
       }
       
       // Log successful publish
-      await supabase.from('published_content').insert({
+      await supabase.from('published_posts').insert({
         user_id: user.id,
         listing_id: listingId,
         platform,
-        content_type: 'video',
+        post_type: 'video',
         platform_post_id: publishResult.id,
         caption,
         published_at: new Date().toISOString()
@@ -197,11 +197,11 @@ export async function POST(request: NextRequest) {
       }
 
       // Log successful LinkedIn publish
-      await supabase.from('published_content').insert({
+      await supabase.from('published_posts').insert({
         user_id: user.id,
         listing_id: listingId,
         platform,
-        content_type: 'video',
+        post_type: 'video',
         platform_post_id: linkedInResult.postId,
         caption,
         published_at: new Date().toISOString()

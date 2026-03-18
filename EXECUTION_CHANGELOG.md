@@ -1,6 +1,14 @@
 # SnapR Execution Changelog
 =================================
 
+## 2026-03-18 — Pre-launch audit follow-up: RLS policy fixes + publish-video table fix
+
+### CRITICAL: RLS policies missing TO service_role scope
+- `supabase/migrations/20260318_fix_rls_policies.sql` — New migration to fix `published_posts` and `notifications` RLS policies that were missing `TO service_role`, allowing any authenticated user full access
+
+### HIGH: publish-video writing to non-existent table
+- `app/api/publish-video/route.ts` — Changed `published_content` → `published_posts` (3 occurrences), `content_type` → `post_type`
+
 ## 2026-03-18 — Pre-launch production audit: 19 fixes across security, reliability & correctness
 
 ### CRITICAL: Publish cron token refresh broken
