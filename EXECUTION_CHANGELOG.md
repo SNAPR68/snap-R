@@ -1,6 +1,14 @@
 # SnapR Execution Changelog
 =================================
 
+## 2026-03-18 — Fix publish-video + post-publish notifications
+
+### Publish Video Column Mismatches
+- `app/api/publish-video/route.ts` — Fixed `connection.page_id` (nonexistent) → resolve from `pages` JSONB + `default_page_id`; fixed `connection.instagram_user_id` (nonexistent) → read from `instagram_account` JSONB
+
+### Post-Publish In-App Notifications
+- `app/api/cron/publish-scheduled/route.ts` — Added in-app notification insert after successful post publish (fire-and-forget, non-blocking)
+
 ## 2026-03-18 — Fix social publish 500s + notifications table
 
 ### Social Publish Column Mismatch (Root cause of "No Facebook Page connected" 500)
