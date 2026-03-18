@@ -23,7 +23,8 @@ export async function GET(request: NextRequest) {
     .range(offset, offset + limit - 1);
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    console.error('[Notifications] Fetch error:', error.message);
+    return NextResponse.json({ error: 'Failed to fetch notifications' }, { status: 500 });
   }
 
   // Get unread count

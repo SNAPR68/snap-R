@@ -2,6 +2,7 @@
 
 import React, { Suspense, useEffect, useState, useRef } from 'react';
 import Image from 'next/image';
+import { sanitizeHtml } from '@/lib/utils/sanitize-html';
 import { createClient } from '@/lib/supabase/client';
 import Script from 'next/script';
 import {
@@ -104,8 +105,9 @@ function CMAGenerator() {
     brokerage: '',
   });
 
-  // Result
-  const [reportHtml, setReportHtml] = useState<string>('');
+  // Result — sanitize HTML to prevent XSS from AI-generated content
+  const [rawReportHtml, setRawReportHtml] = useState<string>('');
+  const reportHtml = rawReportHtml ? sanitizeHtml(rawReportHtml) : '';
   const [showPreview, setShowPreview] = useState(false);
   const reportContainerRef = useRef<HTMLDivElement>(null);
 
@@ -265,7 +267,7 @@ function CMAGenerator() {
         throw new Error(data.error || 'Failed to generate report');
       }
 
-      setReportHtml(data.html);
+      setRawReportHtml(data.html);
       setStep('result');
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Download failed';
@@ -771,7 +773,7 @@ function CMAGenerator() {
                 { id: '2', address: '', soldPrice: 0, soldDate: '', bedrooms: 0, bathrooms: 0, sqft: 0 },
                 { id: '3', address: '', soldPrice: 0, soldDate: '', bedrooms: 0, bathrooms: 0, sqft: 0 },
               ]);
-              setReportHtml('');
+              setRawReportHtml('');
             }}
             className="flex-1 py-3 bg-white/10 rounded-xl font-medium hover:bg-white/20 transition-colors"
           >

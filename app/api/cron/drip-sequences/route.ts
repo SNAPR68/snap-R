@@ -189,6 +189,20 @@ export async function GET(request: NextRequest) {
 
       const htmlBody = renderTemplate(step.body_template, templateVars)
 
+      // Atomically claim: mark as 'sending' to prevent duplicate sends on crash/retry
+      const { data: claimed } = await admin
+        .from('lead_drip_emails')
+        .update({ status: 'sending' })
+        .eq('id', email.id)
+        .eq('status', 'scheduled')
+        .select('id')
+
+      if (!claimed || claimed.length === 0) {
+        // Another cron instance already claimed this email
+        skipped++
+        continue
+      }
+
       try {
         const { data: resendData, error: sendError } = await resend.emails.send({
           from: `${agentName} via SnapR <notifications@snap-r.com>`,

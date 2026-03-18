@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { Resend } from 'resend'
 import { adminSupabase } from '@/lib/supabase/admin'
 import { propertyInquirySchema, parseBody } from '@/lib/validation/schemas'
+import { escapeHtml } from '@/lib/utils/html-escape'
 
 import { logger } from '@/lib/logger';
 export async function POST(request: NextRequest) {
@@ -10,7 +11,19 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
     const validated = parseBody(propertyInquirySchema, body); if (!validated.success) { return NextResponse.json({ error: validated.error, details: validated.details }, { status: 400 }); }
-    const { name, email, phone, message, listingId, listingAddress, agentEmail } = body
+    // Use validated.data for ALL fields — never read from raw body
+    const { name: rawName, email: rawEmail, phone: rawPhone, listingId, agentEmail } = validated.data
+    // Support both 'message' and 'inquiry' field names (schema accepts both)
+    const rawMessage = validated.data.message || validated.data.inquiry || ''
+    const rawListingAddress = validated.data.listingAddress || ''
+
+    // Sanitize user-supplied values for email HTML templates
+    const name = escapeHtml(rawName || '')
+    const email = rawEmail // keep raw email for transport (replyTo, mailto, regex check)
+    const emailHtml = escapeHtml(rawEmail) // escaped for use in HTML templates
+    const phone = rawPhone ? escapeHtml(rawPhone) : ''
+    const message = escapeHtml(rawMessage)
+    const listingAddress = escapeHtml(rawListingAddress)
 
     if (!name || !email || !message) {
       return NextResponse.json(
@@ -88,7 +101,7 @@ export async function POST(request: NextRequest) {
               <div style="margin-bottom: 12px;">
                 <p style="color: #888; font-size: 12px; margin: 0 0 4px 0;">Email</p>
                 <p style="color: #fff; font-size: 16px; margin: 0;">
-                  <a href="mailto:${email}" style="color: #D4A017; text-decoration: none;">${email}</a>
+                  <a href="mailto:${emailHtml}" style="color: #D4A017; text-decoration: none;">${emailHtml}</a>
                 </p>
               </div>
               ${phone ? `
@@ -105,7 +118,7 @@ export async function POST(request: NextRequest) {
               <p style="color: #fff; font-size: 16px; margin: 0; line-height: 1.6; white-space: pre-wrap;">${message}</p>
             </div>
             <div style="text-align: center; margin-bottom: 32px;">
-              <a href="mailto:${email}" style="display: inline-block; background: linear-gradient(135deg, #D4A017 0%, #B8860B 100%); color: #000; padding: 14px 32px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 16px;">
+              <a href="mailto:${emailHtml}" style="display: inline-block; background: linear-gradient(135deg, #D4A017 0%, #B8860B 100%); color: #000; padding: 14px 32px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 16px;">
                 Reply to ${name}
               </a>
             </div>

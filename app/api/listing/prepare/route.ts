@@ -196,7 +196,11 @@ export async function POST(request: NextRequest) {
     // ============================================
     // 4. TRIGGER WORKER
     // ============================================
-  const workerUrl = process.env.WORKER_URL || 'http://127.0.0.1:8787';
+  const workerUrl = process.env.WORKER_URL;
+    if (!workerUrl) {
+      logger.error('[Prepare] WORKER_URL not configured');
+      return NextResponse.json({ error: 'Worker URL not configured' }, { status: 500 });
+    }
     const effectiveUserId = allowAdmin ? listing.user_id : user?.id;
     let workerResponse: Response;
     try {

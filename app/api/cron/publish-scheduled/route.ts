@@ -8,8 +8,10 @@
  * 2. Bridge approved campaign_queue items → scheduled_posts
  * 3. Publish all due scheduled_posts via platform APIs
  *
- * Supports both image posts and video posts (from marketing pipeline Step 6
+ * Supports both image posts and video posts (from marketing pipeline Step 5
  * and campaign auto-triggers).
+ *
+ * Billing gate: checks getPlanLimits(tier).canPublish before each publish.
  */
 
 export const dynamic = 'force-dynamic';
@@ -271,6 +273,19 @@ async function handlePublishCron(request: NextRequest): Promise<NextResponse> {
   }
 
   try {
+    // Recovery: reset posts stuck in 'publishing' for more than 10 minutes back to 'pending'
+    // This handles cases where a previous cron invocation crashed mid-run
+    const stuckThreshold = new Date(Date.now() - 10 * 60 * 1000).toISOString();
+    const { data: stuckPosts } = await supabase
+      .from('scheduled_posts')
+      .update({ status: 'pending' })
+      .eq('status', 'publishing')
+      .lt('updated_at', stuckThreshold)
+      .select('id');
+    if (stuckPosts && stuckPosts.length > 0) {
+      logger.warn(`[PublishCron] Recovered ${stuckPosts.length} post(s) stuck in 'publishing' state`);
+    }
+
     // Fetch due posts: scheduled_for <= now AND status = 'pending'
     const { data: duePosts, error: fetchError } = await supabase
       .from('scheduled_posts')
@@ -292,12 +307,30 @@ async function handlePublishCron(request: NextRequest): Promise<NextResponse> {
 
     logger.info(`[PublishCron] Found ${duePosts.length} due post(s)`);
 
-    for (const post of duePosts) {
+    // Atomic claim: mark posts as 'publishing' to prevent duplicate processing
+    // by concurrent cron invocations. Only posts still 'pending' will be claimed.
+    const postIds = duePosts.map(p => p.id);
+    const { data: claimedPosts, error: claimError } = await supabase
+      .from('scheduled_posts')
+      .update({ status: 'publishing' })
+      .in('id', postIds)
+      .eq('status', 'pending')
+      .select('*');
+
+    if (claimError) {
+      logger.error('[PublishCron] Failed to claim posts:', claimError.message);
+      return NextResponse.json({ error: claimError.message }, { status: 500 });
+    }
+
+    const claimed = claimedPosts || [];
+    logger.info(`[PublishCron] Claimed ${claimed.length} of ${duePosts.length} post(s)`);
+
+    for (const post of claimed) {
       try {
         // Load the social connection for this user + platform
         const { data: connection, error: connError } = await supabase
           .from('social_connections')
-          .select('id, platform, access_token, refresh_token, expires_at, default_page_id, instagram_account, linkedin_urn, pages')
+          .select('id, platform, access_token, refresh_token, token_expires_at, default_page_id, instagram_account, linkedin_urn, pages')
           .eq('user_id', post.user_id)
           .eq('platform', post.platform)
           .eq('is_active', true)
@@ -311,8 +344,8 @@ async function handlePublishCron(request: NextRequest): Promise<NextResponse> {
         }
 
         // Token refresh: check if token expires within 24 hours
-        if (connection.expires_at) {
-          const expiresAt = new Date(connection.expires_at).getTime();
+        if (connection.token_expires_at) {
+          const expiresAt = new Date(connection.token_expires_at).getTime();
           const buffer24h = Date.now() + 24 * 60 * 60 * 1000;
           // Facebook/Instagram: pass access_token (fb_exchange_token grant)
           // Others: pass refresh_token (standard refresh_token grant)
@@ -333,7 +366,7 @@ async function handlePublishCron(request: NextRequest): Promise<NextResponse> {
                 .from('social_connections')
                 .update({
                   access_token: refreshed.accessToken,
-                  ...(newExpiresAt ? { expires_at: newExpiresAt } : {}),
+                  ...(newExpiresAt ? { token_expires_at: newExpiresAt } : {}),
                 })
                 .eq('id', connection.id);
               // Update in-memory connection for this publish cycle
@@ -578,7 +611,8 @@ interface ConnectionData {
  * Publish a video post to a social platform.
  * Facebook: Upload via Page Videos API
  * Instagram: Create Reels container → poll → publish
- * LinkedIn: Not yet supported (returns 501-equivalent failure)
+ * LinkedIn: Upload via Community Management API v2
+ * TikTok: PULL_FROM_URL method
  */
 async function publishVideoPost(
   platform: string,
