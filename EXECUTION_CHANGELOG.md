@@ -1,6 +1,35 @@
 # SnapR Execution Changelog
 =================================
 
+## 2026-03-18 — Fix login crash + webhook bug + tier cleanup
+
+### Sentry Duplicate Init Fix
+- `sentry.client.config.ts` — Removed duplicate `Sentry.init()` call (kept file as no-op stub required by `@sentry/nextjs`)
+- `instrumentation-client.ts` — Now sole client-side Sentry config with `replayIntegration()` + `browserTracingIntegration()`
+- **Root cause**: Both files called `Sentry.init()` with `replayIntegration()`, causing "Multiple Session Replay instances are not supported" JS error that crashed React event handlers, preventing login form submission
+
+### Stripe Webhook Role Reset Bug
+- `app/api/stripe/webhook/route.ts` — Removed hardcoded `role: 'photographer'` on subscription cancellation; now preserves user's actual role
+
+### Dead Tier Alias Cleanup
+- `lib/content/limits.ts` + `packages/shared/src/limits.ts` — Removed unused role-specific tier aliases (`photographer-ultimate`, `photographer-complete`, `agent-starter`, `agent-complete`)
+- `__tests__/limits.test.ts` — Updated tests: removed aliases now fall back to `free`
+
+## 2026-03-17 — Autonomous Agent System (docs + schema)
+
+### Autonomous Agent System Blueprint
+- `docs/agents/` — 10 comprehensive documents covering:
+  - System architecture (7 agents, orchestration flow)
+  - API specification (internal + external endpoints)
+  - Accounts & setup checklist (Ayrshare, Hunter.io, GA4, Slack, Crisp)
+  - Detailed specifications for all 7 agents (Content, Social, Outreach, Sales, Data, Support, Orchestrator)
+  - User flows (6 end-to-end scenarios showing how agents interact with users)
+  - Database schema (6 new tables: agent_runs, content_queue, outreach_leads, outreach_emails, agent_config, agent_daily_metrics)
+  - Implementation roadmap (8 phases, ~85-95 hours)
+  - Security & compliance (CAN-SPAM, data privacy, access control)
+  - Testing & validation plan (~63 new tests)
+- `supabase/migrations/20260317_autonomous_agents.sql` — Full migration with tables, indexes, RLS, seed data
+
 ## 2026-03-17 — API integration tests (26) + dashboard empty states (5)
 
 ### API Integration Tests

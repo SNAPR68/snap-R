@@ -203,10 +203,10 @@ export async function POST(request: NextRequest) {
       case 'customer.subscription.deleted': {
         const subscription = event.data.object as Stripe.Subscription;
 
+        // Downgrade plan but preserve the user's role (photographer, agent, broker, etc.)
         const { error: updateError } = await supabase.from('profiles').update({
           plan: 'free',
           subscription_tier: 'free',
-          role: 'photographer',
           listings_limit: 3,
           photos_per_listing: 30,
           subscription_status: 'canceled',

@@ -7,10 +7,6 @@ const TIER_ALIASES: Record<string, string> = {
   platinum: 'agency',
   professional: 'pro',
   team: 'agency',
-  'photographer-ultimate': 'agency',
-  'photographer-complete': 'pro',
-  'agent-starter': 'starter',
-  'agent-complete': 'pro',
 }
 
 /**

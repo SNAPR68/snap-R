@@ -7,26 +7,23 @@ import * as Sentry from "@sentry/nextjs";
 Sentry.init({
   dsn: process.env.NEXT_PUBLIC_SENTRY_DSN || "",
 
-  // Add optional integrations for additional features
-  integrations: [Sentry.replayIntegration()],
+  integrations: [
+    Sentry.replayIntegration(),
+    Sentry.browserTracingIntegration(),
+  ],
 
-  // 10% sampling in production, 100% in development
-  tracesSampleRate: process.env.NODE_ENV === "production" ? 0.1 : 1.0,
+  // 5% sampling in production (client-side has higher volume)
+  tracesSampleRate: process.env.NODE_ENV === "production" ? 0.05 : 1.0,
 
-  // Enable logs to be sent to Sentry
-  enableLogs: true,
-
-  // Define how likely Replay events are sampled.
+  // Replay 10% of sessions, 100% of sessions with errors
   replaysSessionSampleRate: 0.1,
-
-  // Define how likely Replay events are sampled when an error occurs.
   replaysOnErrorSampleRate: 1.0,
 
   // Do NOT send Personally Identifiable Information
   sendDefaultPii: false,
 
   // Tag with deployment environment
-  environment: process.env.VERCEL_ENV || process.env.NODE_ENV,
+  environment: process.env.NEXT_PUBLIC_VERCEL_ENV || process.env.NODE_ENV,
 });
 
 export const onRouterTransitionStart = Sentry.captureRouterTransitionStart;
