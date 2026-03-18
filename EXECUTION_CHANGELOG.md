@@ -1,6 +1,17 @@
 # SnapR Execution Changelog
 =================================
 
+## 2026-03-18 — Code review findings: 6 bug fixes
+
+### CRITICAL: Drip emails CHECK constraint
+- `supabase/migrations/20260318_drip_emails_sending_status.sql` — Add 'sending' to allowed statuses (atomic claim was violating constraint, breaking all drip emails)
+
+### HIGH: Publishing recovery + property inquiry + publish-video
+- `app/api/cron/publish-scheduled/route.ts` — Add 10-min TTL recovery for posts stuck in 'publishing'; update stale JSDoc (LinkedIn video, Step 5)
+- `app/api/property-inquiry/route.ts` — Use validated.data for all fields (closes open email relay via agentEmail, fixes message/inquiry mismatch); escape email in HTML context
+- `lib/validation/schemas.ts` — Add message, listingAddress, agentEmail to propertyInquirySchema
+- `app/api/publish-video/route.ts` — Check published_posts insert errors (3 silent failures now logged)
+
 ## 2026-03-18 — CodeRabbit review fixes
 - `app/api/leads/route.ts` — Replace error.message leak with generic message
 - `app/api/cron/drip-sequences/route.ts` — Verify atomic claim result before sending

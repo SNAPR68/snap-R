@@ -79,7 +79,7 @@ export async function POST(request: NextRequest) {
       }
       
       // Log successful publish
-      await supabase.from('published_posts').insert({
+      const { error: insertError } = await supabase.from('published_posts').insert({
         user_id: user.id,
         listing_id: listingId,
         platform,
@@ -88,10 +88,13 @@ export async function POST(request: NextRequest) {
         caption,
         published_at: new Date().toISOString()
       })
-      
+      if (insertError) {
+        logger.error('[PublishVideo] Failed to record Facebook publish:', insertError.message)
+      }
+
       return NextResponse.json({ success: true, postId: result.id })
     }
-    
+
     if (platform === 'instagram') {
       // Instagram Reels require a Container -> Publish flow
       const igAccount = connection.instagram_account as { id?: string } | null
@@ -168,7 +171,7 @@ export async function POST(request: NextRequest) {
       }
       
       // Log successful publish
-      await supabase.from('published_posts').insert({
+      const { error: igInsertError } = await supabase.from('published_posts').insert({
         user_id: user.id,
         listing_id: listingId,
         platform,
@@ -177,10 +180,13 @@ export async function POST(request: NextRequest) {
         caption,
         published_at: new Date().toISOString()
       })
-      
+      if (igInsertError) {
+        logger.error('[PublishVideo] Failed to record Instagram publish:', igInsertError.message)
+      }
+
       return NextResponse.json({ success: true, postId: publishResult.id })
     }
-    
+
     if (platform === 'linkedin') {
       // LinkedIn video publishing
       const linkedinUrn = connection.linkedin_urn ?? connection.linkedin_id
@@ -197,7 +203,7 @@ export async function POST(request: NextRequest) {
       }
 
       // Log successful LinkedIn publish
-      await supabase.from('published_posts').insert({
+      const { error: liInsertError } = await supabase.from('published_posts').insert({
         user_id: user.id,
         listing_id: listingId,
         platform,
@@ -206,6 +212,9 @@ export async function POST(request: NextRequest) {
         caption,
         published_at: new Date().toISOString()
       })
+      if (liInsertError) {
+        logger.error('[PublishVideo] Failed to record LinkedIn publish:', liInsertError.message)
+      }
 
       return NextResponse.json({ success: true, postId: linkedInResult.postId })
     }

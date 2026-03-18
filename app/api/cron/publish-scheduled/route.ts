@@ -8,8 +8,10 @@
  * 2. Bridge approved campaign_queue items → scheduled_posts
  * 3. Publish all due scheduled_posts via platform APIs
  *
- * Supports both image posts and video posts (from marketing pipeline Step 6
+ * Supports both image posts and video posts (from marketing pipeline Step 5
  * and campaign auto-triggers).
+ *
+ * Billing gate: checks getPlanLimits(tier).canPublish before each publish.
  */
 
 export const dynamic = 'force-dynamic';
@@ -271,6 +273,19 @@ async function handlePublishCron(request: NextRequest): Promise<NextResponse> {
   }
 
   try {
+    // Recovery: reset posts stuck in 'publishing' for more than 10 minutes back to 'pending'
+    // This handles cases where a previous cron invocation crashed mid-run
+    const stuckThreshold = new Date(Date.now() - 10 * 60 * 1000).toISOString();
+    const { data: stuckPosts } = await supabase
+      .from('scheduled_posts')
+      .update({ status: 'pending' })
+      .eq('status', 'publishing')
+      .lt('updated_at', stuckThreshold)
+      .select('id');
+    if (stuckPosts && stuckPosts.length > 0) {
+      logger.warn(`[PublishCron] Recovered ${stuckPosts.length} post(s) stuck in 'publishing' state`);
+    }
+
     // Fetch due posts: scheduled_for <= now AND status = 'pending'
     const { data: duePosts, error: fetchError } = await supabase
       .from('scheduled_posts')
@@ -596,7 +611,8 @@ interface ConnectionData {
  * Publish a video post to a social platform.
  * Facebook: Upload via Page Videos API
  * Instagram: Create Reels container → poll → publish
- * LinkedIn: Not yet supported (returns 501-equivalent failure)
+ * LinkedIn: Upload via Community Management API v2
+ * TikTok: PULL_FROM_URL method
  */
 async function publishVideoPost(
   platform: string,

@@ -616,6 +616,9 @@ export const propertyInquirySchema = z.object({
   email: z.string().email(),
   phone: z.string().max(30).optional(),
   inquiry: z.string().max(5000).optional(),
+  message: z.string().max(5000).optional(),
+  listingAddress: z.string().max(500).optional(),
+  agentEmail: z.string().email().optional(),
 })
 
 // Property site (POST - create)
