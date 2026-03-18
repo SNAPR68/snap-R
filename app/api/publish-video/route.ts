@@ -37,14 +37,19 @@ export async function POST(request: NextRequest) {
     
     if (platform === 'facebook') {
       // Facebook Video Publishing via Graph API
-      // First, we need to upload the video to a public URL or use resumable upload
-      
-      const pageId = connection.page_id
-      const accessToken = connection.access_token
-      
-      if (!pageId) {
-        return NextResponse.json({ error: 'No Facebook Page connected' }, { status: 400 })
+      // Resolve page from pages JSONB array + default_page_id
+      const pages = (connection.pages || []) as { id: string; name: string; access_token: string }[]
+      const defaultPageId = connection.default_page_id as string | undefined
+      const page = defaultPageId
+        ? pages.find(p => p.id === defaultPageId) || pages[0]
+        : pages[0]
+
+      if (!page) {
+        return NextResponse.json({ error: 'No Facebook Page connected. Please reconnect your Facebook account.' }, { status: 400 })
       }
+
+      const pageId = page.id
+      const accessToken = page.access_token || connection.access_token
       
       // For Facebook Reels, we use the video upload endpoint
       // Note: Video must be accessible via URL, so we need to upload to storage first
@@ -89,9 +94,10 @@ export async function POST(request: NextRequest) {
     
     if (platform === 'instagram') {
       // Instagram Reels require a Container -> Publish flow
-      const igUserId = connection.instagram_user_id
+      const igAccount = connection.instagram_account as { id?: string } | null
+      const igUserId = igAccount?.id || connection.platform_user_id
       const accessToken = connection.access_token
-      
+
       if (!igUserId) {
         return NextResponse.json({ error: 'No Instagram Business account connected' }, { status: 400 })
       }

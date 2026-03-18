@@ -524,6 +524,15 @@ async function handlePublishCron(request: NextRequest): Promise<NextResponse> {
             publishedAt,
           }).catch(() => { /* non-critical */ });
 
+          // Write in-app notification (fire-and-forget)
+          Promise.resolve(supabase.from('notifications').insert({
+            user_id: post.user_id,
+            type: 'post_published',
+            title: `${post.platform.charAt(0).toUpperCase() + post.platform.slice(1)} post published`,
+            body: `Your ${post.platform} post was published successfully.`,
+            link: `/dashboard/content-studio`,
+          })).catch(() => { /* non-critical */ });
+
           logger.info(`[PublishCron] Published ${post.platform} ${isVideoPost ? 'video' : 'post'} ${post.id} → ${publishResult.postId}`);
           results.published++;
         } else {
