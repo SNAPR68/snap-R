@@ -43,10 +43,13 @@ describe('normalizeTier', () => {
     expect(normalizeTier('platinum')).toBe('agency')
     expect(normalizeTier('professional')).toBe('pro')
     expect(normalizeTier('team')).toBe('agency')
-    expect(normalizeTier('photographer-ultimate')).toBe('agency')
-    expect(normalizeTier('photographer-complete')).toBe('pro')
-    expect(normalizeTier('agent-starter')).toBe('starter')
-    expect(normalizeTier('agent-complete')).toBe('pro')
+  })
+
+  it('falls back to free for removed role-specific aliases', () => {
+    expect(normalizeTier('photographer-ultimate')).toBe('free')
+    expect(normalizeTier('photographer-complete')).toBe('free')
+    expect(normalizeTier('agent-starter')).toBe('free')
+    expect(normalizeTier('agent-complete')).toBe('free')
   })
 
   it('is case-insensitive', () => {

@@ -1,6 +1,20 @@
 # SnapR Execution Changelog
 =================================
 
+## 2026-03-18 — Fix login crash + webhook bug + tier cleanup
+
+### Sentry Duplicate Init Fix
+- `sentry.client.config.ts` — Removed duplicate `Sentry.init()` call (kept file as no-op stub required by `@sentry/nextjs`)
+- `instrumentation-client.ts` — Now sole client-side Sentry config with `replayIntegration()` + `browserTracingIntegration()`
+- **Root cause**: Both files called `Sentry.init()` with `replayIntegration()`, causing "Multiple Session Replay instances are not supported" JS error that crashed React event handlers, preventing login form submission
+
+### Stripe Webhook Role Reset Bug
+- `app/api/stripe/webhook/route.ts` — Removed hardcoded `role: 'photographer'` on subscription cancellation; now preserves user's actual role
+
+### Dead Tier Alias Cleanup
+- `lib/content/limits.ts` + `packages/shared/src/limits.ts` — Removed unused role-specific tier aliases (`photographer-ultimate`, `photographer-complete`, `agent-starter`, `agent-complete`)
+- `__tests__/limits.test.ts` — Updated tests: removed aliases now fall back to `free`
+
 ## 2026-03-17 — Autonomous Agent System (docs + schema)
 
 ### Autonomous Agent System Blueprint

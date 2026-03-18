@@ -11,10 +11,6 @@ const TIER_ALIASES: Record<string, string> = {
   enterprise: 'agency',
   professional: 'pro',
   team: 'agency',
-  'photographer-ultimate': 'agency',
-  'photographer-complete': 'pro',
-  'agent-starter': 'starter',
-  'agent-complete': 'pro',
 };
 
 export const PLAN_LIMITS = {
