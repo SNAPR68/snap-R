@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { Resend } from 'resend'
 import { adminSupabase } from '@/lib/supabase/admin'
 import { propertyInquirySchema, parseBody } from '@/lib/validation/schemas'
+import { escapeHtml } from '@/lib/utils/html-escape'
 
 import { logger } from '@/lib/logger';
 export async function POST(request: NextRequest) {
@@ -10,7 +11,14 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
     const validated = parseBody(propertyInquirySchema, body); if (!validated.success) { return NextResponse.json({ error: validated.error, details: validated.details }, { status: 400 }); }
-    const { name, email, phone, message, listingId, listingAddress, agentEmail } = body
+    const { name: rawName, email: rawEmail, phone: rawPhone, message: rawMessage, listingId, listingAddress: rawListingAddress, agentEmail } = body
+
+    // Sanitize user-supplied values for email HTML templates
+    const name = escapeHtml(rawName || '')
+    const email = escapeHtml(rawEmail || '')
+    const phone = rawPhone ? escapeHtml(rawPhone) : ''
+    const message = escapeHtml(rawMessage || '')
+    const listingAddress = rawListingAddress ? escapeHtml(rawListingAddress) : ''
 
     if (!name || !email || !message) {
       return NextResponse.json(

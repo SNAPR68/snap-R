@@ -47,34 +47,23 @@ export async function GET(request: NextRequest) {
   try {
     const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
 
-    // Paginated fetch — batch through all posts
-    const batchSize = 200;
-    let offset = 0;
-    let postsToSync: Array<{ id: string; user_id: string; platform: string; platform_post_id: string | null }> = [];
+    // Paginated fetch — cap at 200 posts per invocation to avoid timeout
+    const maxPostsPerRun = 200;
+    const { data: postsToSync, error: fetchError } = await supabase
+      .from('published_posts')
+      .select('id, user_id, platform, platform_post_id')
+      .not('platform_post_id', 'is', null)
+      .or(`last_synced_at.is.null,last_synced_at.lt.${oneHourAgo}`)
+      .order('published_at', { ascending: false })
+      .limit(maxPostsPerRun);
 
-    // eslint-disable-next-line no-constant-condition
-    while (true) {
-      const { data: batch, error: fetchError } = await supabase
-        .from('published_posts')
-        .select('id, user_id, platform, platform_post_id')
-        .not('platform_post_id', 'is', null)
-        .or(`last_synced_at.is.null,last_synced_at.lt.${oneHourAgo}`)
-        .order('published_at', { ascending: false })
-        .range(offset, offset + batchSize - 1);
-
-      if (fetchError) {
-        logger.error('[AnalyticsSync] Failed to fetch posts:', fetchError.message);
-        await heartbeat.fail(new Error(fetchError.message));
-        return NextResponse.json({ error: fetchError.message }, { status: 500 });
-      }
-
-      if (!batch || batch.length === 0) break;
-      postsToSync = postsToSync.concat(batch);
-      if (batch.length < batchSize) break;
-      offset += batchSize;
+    if (fetchError) {
+      logger.error('[AnalyticsSync] Failed to fetch posts:', fetchError.message);
+      await heartbeat.fail(new Error(fetchError.message));
+      return NextResponse.json({ error: fetchError.message }, { status: 500 });
     }
 
-    if (postsToSync.length === 0) {
+    if (!postsToSync || postsToSync.length === 0) {
       await heartbeat.succeed(results as unknown as Record<string, unknown>);
       return NextResponse.json({ success: true, results, message: 'Nothing to sync' });
     }

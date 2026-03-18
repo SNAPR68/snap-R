@@ -29,8 +29,8 @@ function getSupabase(): SupabaseClient {
 function verifyTwilioSignature(req: NextRequest, body: URLSearchParams): boolean {
   const authToken = process.env.TWILIO_AUTH_TOKEN;
   if (!authToken) {
-    logger.warn('[WhatsApp Webhook] TWILIO_AUTH_TOKEN not configured — skipping signature verification');
-    return true; // Allow in dev if not configured
+    logger.error('[WhatsApp Webhook] TWILIO_AUTH_TOKEN not configured — rejecting request');
+    return false; // Fail-closed: reject if auth token is not configured
   }
 
   const signature = req.headers.get('x-twilio-signature');

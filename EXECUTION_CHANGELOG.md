@@ -1,6 +1,35 @@
 # SnapR Execution Changelog
 =================================
 
+## 2026-03-18 — Pre-launch production audit: 19 fixes across security, reliability & correctness
+
+### CRITICAL: Publish cron token refresh broken
+- `app/api/cron/publish-scheduled/route.ts` — Fixed `expires_at` → `token_expires_at` in select, read, and update (was reading stale column, token refresh never fired)
+
+### HIGH: Race condition, XSS, security hardening
+- `app/api/cron/publish-scheduled/route.ts` — Added atomic claim pattern (`pending` → `publishing`) to prevent duplicate posts from concurrent cron runs
+- `app/dashboard/cma/page.tsx` — Added DOMPurify sanitization for AI-generated HTML reports
+- `app/dashboard/floor-plans/page.tsx` — Added `sanitizeSvg()` for base64 SVG rendering
+- `lib/utils/sanitize-html.ts` — New utility for HTML/SVG sanitization via DOMPurify
+- `app/api/social/test-linkedin/route.ts` — Gated behind `NODE_ENV !== 'production'`
+- `app/api/webhooks/whatsapp/route.ts` — Changed fail-open to fail-closed when TWILIO_AUTH_TOKEN missing
+- `app/api/social/oauth/[platform]/route.ts` — Added `AbortSignal.timeout(15000)` to all 5 Facebook OAuth fetches
+- `app/api/social/publish/route.ts` — Added billing gate (`canPublish`) before manual publish
+
+### MEDIUM: Input sanitization, env validation, config fixes
+- `app/api/property-inquiry/route.ts` — Added `escapeHtml()` to all user-supplied email template values
+- `app/api/listing/prepare/route.ts`, `app/api/marketing/trigger/route.ts` — Removed localhost fallback for WORKER_URL
+- `next.config.mjs` — Added `X-Frame-Options: ALLOWALL` to embed route headers
+- `lib/env.ts` — Promoted `SUPABASE_SERVICE_ROLE_KEY`, `CRON_SECRET`, `WORKER_URL` to required vars
+- `app/api/cron/mls-sync/route.ts` — Added heartbeat for health monitoring
+- `app/api/leads/route.ts` — Added rate limiting (5 req/min) to public lead submission
+- `app/api/notifications/route.ts`, `app/api/notifications/read-all/route.ts` — Replaced Supabase error.message with generic messages
+
+### LOW: Reliability improvements
+- `app/api/cron/drip-sequences/route.ts` — Added `sending` intermediate state to prevent duplicate sends
+- `lib/social/publish-service.ts` — Added LinkedIn URN validation before publish
+- `app/api/cron/sync-analytics/route.ts` — Capped to 200 posts per run (was unbounded pagination)
+
 ## 2026-03-18 — Fix publish-video + post-publish notifications
 
 ### Publish Video Column Mismatches

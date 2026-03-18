@@ -14,6 +14,7 @@ import { createClient } from '@/lib/supabase/server'
 import { dispatchWebhookEvent } from '@/lib/webhooks/dispatch'
 
 import { logger } from '@/lib/logger';
+import { checkRateLimitAsync } from '@/lib/rate-limit';
 // ============================================
 // Zod Schemas
 // ============================================
@@ -45,6 +46,13 @@ const leadStatusSchema = z.object({
 // ============================================
 
 export async function POST(request: NextRequest) {
+  // Rate limit: 5 req/min per IP (public endpoint, prevent spam)
+  const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown';
+  const { success: withinLimit } = await checkRateLimitAsync(`leads:${ip}`, 5, 60_000);
+  if (!withinLimit) {
+    return NextResponse.json({ error: 'Too many requests. Please slow down.' }, { status: 429 });
+  }
+
   try {
     const body = await request.json()
     const parsed = leadSubmitSchema.safeParse(body)

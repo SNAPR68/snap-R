@@ -1014,7 +1014,10 @@ export async function publishToSocial(request: PublishRequest): Promise<PublishR
       return publishToInstagram(request.accessToken, request.instagramAccountId, request.content);
 
     case 'linkedin':
-      return publishToLinkedIn(request.accessToken, request.pageId || '', request.content);
+      if (!request.pageId) {
+        return { success: false, error: 'LinkedIn person URN required' };
+      }
+      return publishToLinkedIn(request.accessToken, request.pageId, request.content);
 
     case 'tiktok':
       if (request.content.videoUrl) {

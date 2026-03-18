@@ -19,6 +19,7 @@ import { adminSupabase } from '@/lib/supabase/admin';
 import { getMLSProvider } from '@/lib/mls/provider';
 import type { MLSPropertyData, MLSCredentials } from '@/lib/mls/types';
 import { logger } from '@/lib/logger';
+import { startCronHeartbeat } from '@/lib/monitoring/cron-heartbeat';
 import { z } from 'zod';
 
 const CRON_SECRET = process.env.CRON_SECRET;
@@ -49,6 +50,7 @@ export async function GET(request: NextRequest) {
   }
 
   logger.info('[MLSSync] Starting MLS auto-sync...');
+  const heartbeat = startCronHeartbeat('mls-sync');
   const supabase = adminSupabase();
   const results = { usersProcessed: 0, listingsCreated: 0, listingsUpdated: 0, errors: 0 };
 
@@ -94,10 +96,12 @@ export async function GET(request: NextRequest) {
     }
 
     logger.info('[MLSSync] Sync complete:', results);
+    await heartbeat.succeed(results as unknown as Record<string, unknown>);
     return NextResponse.json({ success: true, ...results });
   } catch (error: unknown) {
     const msg = error instanceof Error ? error.message : 'Unknown error';
     logger.error('[MLSSync] Fatal error:', msg);
+    await heartbeat.fail(error instanceof Error ? error : new Error(msg));
     return NextResponse.json({ error: msg }, { status: 500 });
   }
 }

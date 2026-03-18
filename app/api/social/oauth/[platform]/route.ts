@@ -115,7 +115,8 @@ async function handleFacebookOAuth(
     `client_id=${appId}&` +
     `client_secret=${appSecret}&` +
     `redirect_uri=${encodeURIComponent(callbackUrl)}&` +
-    `code=${code}`
+    `code=${code}`,
+    { signal: AbortSignal.timeout(15000) }
   );
 
   const tokenData = await tokenResponse.json();
@@ -132,7 +133,8 @@ async function handleFacebookOAuth(
     `grant_type=fb_exchange_token&` +
     `client_id=${appId}&` +
     `client_secret=${appSecret}&` +
-    `fb_exchange_token=${accessToken}`
+    `fb_exchange_token=${accessToken}`,
+    { signal: AbortSignal.timeout(15000) }
   );
 
   const longLivedData = await longLivedResponse.json();
@@ -140,13 +142,15 @@ async function handleFacebookOAuth(
 
   // Get user info
   const userResponse = await fetch(
-    `https://graph.facebook.com/v18.0/me?fields=id,name&access_token=${longLivedToken}`
+    `https://graph.facebook.com/v18.0/me?fields=id,name&access_token=${longLivedToken}`,
+    { signal: AbortSignal.timeout(15000) }
   );
   const userData = await userResponse.json();
 
   // Get user's pages
   const pagesResponse = await fetch(
-    `https://graph.facebook.com/v18.0/me/accounts?fields=id,name,access_token,instagram_business_account&access_token=${longLivedToken}`
+    `https://graph.facebook.com/v18.0/me/accounts?fields=id,name,access_token,instagram_business_account&access_token=${longLivedToken}`,
+    { signal: AbortSignal.timeout(15000) }
   );
   const pagesData = await pagesResponse.json();
   const pages = pagesData.data || [];
@@ -157,7 +161,8 @@ async function handleFacebookOAuth(
     for (const page of pages) {
       if (page.instagram_business_account) {
         const igResponse = await fetch(
-          `https://graph.facebook.com/v18.0/${page.instagram_business_account.id}?fields=id,username&access_token=${page.access_token}`
+          `https://graph.facebook.com/v18.0/${page.instagram_business_account.id}?fields=id,username&access_token=${page.access_token}`,
+          { signal: AbortSignal.timeout(15000) }
         );
         const igData = await igResponse.json();
         instagramAccount = {

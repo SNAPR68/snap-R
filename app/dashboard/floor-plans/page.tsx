@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState, useCallback } from 'react';
 import { createClient } from '@/lib/supabase/client';
+import { sanitizeSvg } from '@/lib/utils/sanitize-html';
 import {
   Loader2, Home, ChevronRight, Download, Trash2,
   Eye, Grid3X3, Sparkles, Settings2, Check,
@@ -224,7 +225,7 @@ export default function FloorPlansPage() {
                         <div
                           className="w-full h-full p-4"
                           dangerouslySetInnerHTML={{
-                            __html: atob(plan.image_url.replace('data:image/svg+xml;base64,', ''))
+                            __html: sanitizeSvg(atob(plan.image_url.replace('data:image/svg+xml;base64,', '')))
                           }}
                         />
                       ) : (
@@ -523,7 +524,7 @@ export default function FloorPlansPage() {
                   {viewPlan.image_url.startsWith('data:') ? (
                     <div
                       dangerouslySetInnerHTML={{
-                        __html: atob(viewPlan.image_url.replace('data:image/svg+xml;base64,', ''))
+                        __html: sanitizeSvg(atob(viewPlan.image_url.replace('data:image/svg+xml;base64,', '')))
                       }}
                     />
                   ) : (

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { adminSupabase } from '@/lib/supabase/admin';
+import { getPlanLimits } from '@/lib/content/limits';
 
 import { logger } from '@/lib/logger';
 import { checkRateLimitAsync } from '@/lib/rate-limit';
@@ -38,6 +39,20 @@ export async function POST(req: NextRequest) {
     }
 
     const serviceSupabase = adminSupabase();
+
+    // Billing gate: check if user's plan allows publishing
+    const { data: profile } = await serviceSupabase
+      .from('profiles')
+      .select('subscription_tier')
+      .eq('id', user.id)
+      .single();
+    const planLimits = getPlanLimits(profile?.subscription_tier || 'free');
+    if (!planLimits.canPublish) {
+      return NextResponse.json(
+        { error: 'Your plan does not include social publishing. Please upgrade to Pro or higher.' },
+        { status: 403 }
+      );
+    }
     const body = await req.json();
     const validated = parseBody(socialPublishExtendedSchema, body);
     if (!validated.success) { return NextResponse.json({ error: validated.error, details: validated.details }, { status: 400 }); }

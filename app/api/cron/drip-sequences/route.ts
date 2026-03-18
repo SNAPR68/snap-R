@@ -189,6 +189,13 @@ export async function GET(request: NextRequest) {
 
       const htmlBody = renderTemplate(step.body_template, templateVars)
 
+      // Mark as 'sending' to prevent duplicate sends on crash/retry
+      await admin
+        .from('lead_drip_emails')
+        .update({ status: 'sending' })
+        .eq('id', email.id)
+        .eq('status', 'scheduled')
+
       try {
         const { data: resendData, error: sendError } = await resend.emails.send({
           from: `${agentName} via SnapR <notifications@snap-r.com>`,

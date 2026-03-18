@@ -86,7 +86,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Trigger worker via HTTP → Queue bridge
-    const workerUrl = process.env.WORKER_URL || 'http://127.0.0.1:8787';
+    const workerUrl = process.env.WORKER_URL;
     if (!workerUrl) {
       return NextResponse.json({ error: 'Worker URL not configured' }, { status: 500 });
     }
