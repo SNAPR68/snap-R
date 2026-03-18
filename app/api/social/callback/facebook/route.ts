@@ -35,7 +35,7 @@ export async function GET(req: NextRequest) {
       return NextResponse.redirect(`${process.env.NEXT_PUBLIC_APP_URL}/dashboard/settings/social?error=session_mismatch`);
     }
     const userId = sessionUser.id;
-    
+
     const clientId = process.env.NEXT_PUBLIC_FACEBOOK_APP_ID;
     const clientSecret = process.env.FACEBOOK_APP_SECRET;
     const redirectUri = `${process.env.NEXT_PUBLIC_APP_URL}/api/social/callback/facebook`;
@@ -54,41 +54,63 @@ export async function GET(req: NextRequest) {
 
     const accessToken = tokenData.access_token;
 
+    // Exchange for long-lived token
+    let longLivedToken = accessToken;
+    try {
+      const llResponse = await fetch(
+        `https://graph.facebook.com/v18.0/oauth/access_token?grant_type=fb_exchange_token&client_id=${clientId}&client_secret=${clientSecret}&fb_exchange_token=${accessToken}`,
+        { signal: AbortSignal.timeout(15000) }
+      );
+      const llData = await llResponse.json();
+      if (llData.access_token) {
+        longLivedToken = llData.access_token;
+      }
+    } catch {
+      logger.warn('[Facebook OAuth] Long-lived token exchange failed, using short-lived token');
+    }
+
     // Get user info
-    const userResponse = await fetch(`https://graph.facebook.com/me?fields=id,name&access_token=${accessToken}`, { signal: AbortSignal.timeout(15000) });
+    const userResponse = await fetch(`https://graph.facebook.com/me?fields=id,name&access_token=${longLivedToken}`, { signal: AbortSignal.timeout(15000) });
     const userData = await userResponse.json();
 
     // Get user's pages
-    const pagesResponse = await fetch(`https://graph.facebook.com/me/accounts?access_token=${accessToken}`, { signal: AbortSignal.timeout(15000) });
+    const pagesResponse = await fetch(`https://graph.facebook.com/me/accounts?access_token=${longLivedToken}`, { signal: AbortSignal.timeout(15000) });
     const pagesData = await pagesResponse.json();
 
-    const page = pagesData.data?.[0]; // Use first page
+    // Build pages array for the JSONB column
+    const pagesArray = (pagesData.data || []).map((page: Record<string, string>) => ({
+      id: page.id,
+      name: page.name,
+      access_token: page.access_token,
+    }));
 
-    // Save Facebook connection
+    const firstPage = pagesArray[0] as { id: string; name: string; access_token: string } | undefined;
+
+    // Save Facebook connection using correct schema columns
     await getSupabase().from('social_connections').upsert({
       user_id: userId,
       platform: 'facebook',
       platform_user_id: userData.id,
-      platform_name: userData.name,
-      access_token: accessToken,
-      page_id: page?.id,
-      page_name: page?.name,
-      page_access_token: page?.access_token,
+      platform_username: userData.name,
+      access_token: longLivedToken,
+      pages: pagesArray,
+      default_page_id: firstPage?.id ?? null,
+      profile_data: { name: userData.name, id: userData.id },
       connected_at: new Date().toISOString(),
       is_active: true,
     }, { onConflict: 'user_id,platform' });
 
     // If Instagram was requested, also get Instagram account
-    if (platform === 'instagram' && page?.id) {
+    if (platform === 'instagram' && firstPage?.id) {
       const igResponse = await fetch(
-        `https://graph.facebook.com/v18.0/${page.id}?fields=instagram_business_account&access_token=${page.access_token}`,
+        `https://graph.facebook.com/v18.0/${firstPage.id}?fields=instagram_business_account&access_token=${firstPage.access_token}`,
         { signal: AbortSignal.timeout(15000) }
       );
       const igData = await igResponse.json();
 
       if (igData.instagram_business_account) {
         const igAccountResponse = await fetch(
-          `https://graph.facebook.com/v18.0/${igData.instagram_business_account.id}?fields=id,username,name&access_token=${page.access_token}`,
+          `https://graph.facebook.com/v18.0/${igData.instagram_business_account.id}?fields=id,username,name&access_token=${firstPage.access_token}`,
           { signal: AbortSignal.timeout(15000) }
         );
         const igAccount = await igAccountResponse.json();
@@ -97,10 +119,15 @@ export async function GET(req: NextRequest) {
           user_id: userId,
           platform: 'instagram',
           platform_user_id: igAccount.id,
-          platform_username: igAccount.username,
-          platform_name: igAccount.name || igAccount.username,
-          access_token: page.access_token, // Use page token for IG
-          page_id: page.id, // Store associated page ID
+          platform_username: igAccount.username || igAccount.name,
+          access_token: firstPage.access_token, // Use page token for IG
+          instagram_account: {
+            id: igAccount.id,
+            username: igAccount.username,
+            name: igAccount.name,
+            page_id: firstPage.id,
+          },
+          profile_data: { name: igAccount.name || igAccount.username, username: igAccount.username },
           connected_at: new Date().toISOString(),
           is_active: true,
         }, { onConflict: 'user_id,platform' });

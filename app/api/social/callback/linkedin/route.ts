@@ -71,14 +71,15 @@ export async function GET(req: NextRequest) {
     const profileData = await profileResponse.json();
     logger.info('LinkedIn profile:', profileData);
 
-    // Save LinkedIn connection
+    // Save LinkedIn connection using correct schema columns
     const { error: dbError } = await supabase.from('social_connections').upsert({
       user_id: userId,
       platform: 'linkedin',
       platform_user_id: profileData.sub,
-      platform_name: profileData.name,
-      platform_username: profileData.email,
+      platform_username: profileData.email || profileData.name,
       access_token: accessToken,
+      linkedin_urn: `urn:li:person:${profileData.sub}`,
+      profile_data: { name: profileData.name, email: profileData.email, picture: profileData.picture },
       token_expires_at: new Date(Date.now() + tokenData.expires_in * 1000).toISOString(),
       connected_at: new Date().toISOString(),
       is_active: true,

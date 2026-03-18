@@ -201,13 +201,11 @@ async function handleFacebookOAuth(
   };
 
   if (platform === 'facebook' && pages.length > 0) {
-    connectionData.page_id = pages[0].id;
-    connectionData.page_access_token = pages[0].access_token;
+    connectionData.default_page_id = pages[0].id;
   }
 
   if (platform === 'instagram' && instagramAccount) {
-    connectionData.page_id = instagramAccount.page_id;
-    connectionData.page_access_token = instagramAccount.page_access_token;
+    connectionData.default_page_id = instagramAccount.page_id;
   }
 
   // Check for existing connection
