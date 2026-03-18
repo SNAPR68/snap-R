@@ -1,6 +1,13 @@
 # SnapR Execution Changelog
 =================================
 
+## 2026-03-18 — CodeRabbit review fixes
+- `app/api/leads/route.ts` — Replace error.message leak with generic message
+- `app/api/cron/drip-sequences/route.ts` — Verify atomic claim result before sending
+- `app/api/property-inquiry/route.ts` — Use validated.data for schema fields
+- `lib/utils/sanitize-html.ts` — Comprehensive server-side fallback (strips iframes, javascript: URIs, CSS expressions)
+- `app/api/social/test-linkedin/route.ts` — Use adminSupabase() helper
+
 ## 2026-03-18 — Pre-launch audit follow-up: RLS policy fixes + publish-video table fix
 
 ### CRITICAL: RLS policies missing TO service_role scope

@@ -11,11 +11,13 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
     const validated = parseBody(propertyInquirySchema, body); if (!validated.success) { return NextResponse.json({ error: validated.error, details: validated.details }, { status: 400 }); }
-    const { name: rawName, email: rawEmail, phone: rawPhone, message: rawMessage, listingId, listingAddress: rawListingAddress, agentEmail } = body
+    // Use validated.data for schema-validated fields, raw body for supplementary fields
+    const { name: rawName, email: rawEmail, phone: rawPhone } = validated.data
+    const { message: rawMessage, listingId, listingAddress: rawListingAddress, agentEmail } = body
 
     // Sanitize user-supplied values for email HTML templates
     const name = escapeHtml(rawName || '')
-    const email = escapeHtml(rawEmail || '')
+    const email = rawEmail // keep raw email for transport (replyTo, mailto, regex check)
     const phone = rawPhone ? escapeHtml(rawPhone) : ''
     const message = escapeHtml(rawMessage || '')
     const listingAddress = rawListingAddress ? escapeHtml(rawListingAddress) : ''
