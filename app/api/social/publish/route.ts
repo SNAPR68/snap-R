@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { adminSupabase } from '@/lib/supabase/admin';
 import { getPlanLimits } from '@/lib/content/limits';
+import { getClientIp } from '@/lib/utils/client-ip';
 
 import { logger } from '@/lib/logger';
 import { checkRateLimitAsync } from '@/lib/rate-limit';
@@ -25,7 +26,7 @@ interface SocialConnection {
 export async function POST(req: NextRequest) {
   try {
     // Rate limit: 15 req/min per IP (uses Upstash Redis in production)
-    const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown';
+    const ip = getClientIp(req.headers);
     const { success: withinLimit } = await checkRateLimitAsync(`social-publish:${ip}`, 15, 60_000);
     if (!withinLimit) {
       return NextResponse.json({ error: 'Too many requests. Please slow down.' }, { status: 429 });

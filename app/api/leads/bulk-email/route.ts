@@ -13,6 +13,7 @@ import { createClient } from '@/lib/supabase/server'
 import { adminSupabase } from '@/lib/supabase/admin'
 
 import { logger } from '@/lib/logger';
+import { getClientIp } from '@/lib/utils/client-ip';
 import { checkRateLimitAsync } from '@/lib/rate-limit';
 
 const resend = new Resend(process.env.RESEND_API_KEY)
@@ -27,7 +28,7 @@ const sendSchema = z.object({
 export async function POST(request: NextRequest) {
   try {
     // Rate limit: 5 req/min per IP (uses Upstash Redis in production)
-    const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown'
+    const ip = getClientIp(request.headers)
     const { success: withinLimit } = await checkRateLimitAsync(`bulk-email:${ip}`, 5, 60_000)
     if (!withinLimit) {
       return NextResponse.json({ error: 'Too many requests. Please slow down.' }, { status: 429 })
@@ -74,6 +75,13 @@ export async function POST(request: NextRequest) {
 
     // Send emails (Resend free tier: 1 per call; use batch for paid)
     const results: Array<{ leadId: string; success: boolean; error?: string }> = []
+    const activityRows: Array<{
+      lead_id: string
+      user_id: string
+      activity_type: string
+      body: string
+      metadata: Record<string, unknown>
+    }> = []
     let sent = 0
     let failed = 0
 
@@ -97,14 +105,22 @@ export async function POST(request: NextRequest) {
         results.push({ leadId: lead.id, success: true })
         sent++
 
-        // Log as activity
-        await admin.from('lead_activities').insert({
+        // Collect activity row for batch insert
+        activityRows.push({
           lead_id: lead.id,
           user_id: user.id,
           activity_type: 'email',
           body: `Bulk email sent: "${subject}"`,
           metadata: { bulk: true, subject },
         })
+      }
+    }
+
+    // Batch insert all activity records in a single query instead of N individual inserts
+    if (activityRows.length > 0) {
+      const { error: activityErr } = await admin.from('lead_activities').insert(activityRows)
+      if (activityErr) {
+        logger.error('[BulkEmail] Failed to batch-insert activities:', activityErr.message)
       }
     }
 

@@ -1,6 +1,21 @@
 # SnapR Execution Changelog
 =================================
 
+## 2026-03-20 — Codebase quality improvements (4 areas)
+
+### Rate limits for expensive endpoints
+- `middleware.ts` — Added 8 new entries: listing/prepare (5/min), batch-enhance (10/min), floor-plans/generate (3/min), ai/generate-description (10/min), ai/generate-caption (20/min), virtual-tours/generate (5/min), mls/import (5/min), domains (10/min)
+
+### Shared IP parsing helper
+- `lib/utils/client-ip.ts` — New shared `getClientIp()` helper
+- 12 API routes + middleware — Replaced inline `x-forwarded-for` parsing with shared import
+
+### N+1 query fix: bulk email
+- `app/api/leads/bulk-email/route.ts` — Batch activity inserts (was N individual inserts per email send)
+
+### Error boundaries
+- 4 new `error.tsx` files: floor-plans, leads/email-lists, photographer/bookings, settings/widgets
+
 ## 2026-03-20 — Security + reliability fixes from stale PR review
 
 ### Security: Share approval enforcement

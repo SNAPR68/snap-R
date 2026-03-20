@@ -14,6 +14,7 @@ import { createClient } from '@/lib/supabase/server'
 import { dispatchWebhookEvent } from '@/lib/webhooks/dispatch'
 
 import { logger } from '@/lib/logger';
+import { getClientIp } from '@/lib/utils/client-ip';
 import { checkRateLimitAsync } from '@/lib/rate-limit';
 // ============================================
 // Zod Schemas
@@ -47,7 +48,7 @@ const leadStatusSchema = z.object({
 
 export async function POST(request: NextRequest) {
   // Rate limit: 5 req/min per IP (public endpoint, prevent spam)
-  const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown';
+  const ip = getClientIp(request.headers);
   const { success: withinLimit } = await checkRateLimitAsync(`leads:${ip}`, 5, 60_000);
   if (!withinLimit) {
     return NextResponse.json({ error: 'Too many requests. Please slow down.' }, { status: 429 });
@@ -96,6 +97,10 @@ export async function POST(request: NextRequest) {
     }
 
     // Increment leads counter on property_sites
+    // NOTE: This is a read-then-write pattern with a potential race condition
+    // under high concurrency. An RPC function (e.g. increment_property_site_leads)
+    // would be ideal but requires a DB migration. The race window is small
+    // (single-user property sites) so the risk is acceptable for now.
     if (propertySiteId) {
       const { data: site } = await supabase
         .from('property_sites')

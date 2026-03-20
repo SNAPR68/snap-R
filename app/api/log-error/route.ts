@@ -2,12 +2,13 @@ export const dynamic = 'force-dynamic';
 import { NextRequest, NextResponse } from 'next/server';
 import { adminSupabase } from '@/lib/supabase/admin';
 import { logErrorSchema, parseBody } from '@/lib/validation/schemas'
+import { getClientIp } from '@/lib/utils/client-ip';
 import { checkRateLimitAsync } from '@/lib/rate-limit';
 
 export async function POST(request: NextRequest) {
   try {
     // Rate limit: 30 req/min per IP (uses Upstash Redis in production)
-    const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown';
+    const ip = getClientIp(request.headers);
     const { success: withinLimit } = await checkRateLimitAsync(`log-error:${ip}`, 30, 60_000);
     if (!withinLimit) {
       return NextResponse.json({ error: 'Rate limited' }, { status: 429 });
