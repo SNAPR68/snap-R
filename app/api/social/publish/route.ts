@@ -67,8 +67,32 @@ export async function POST(req: NextRequest) {
       .single();
 
     if (connError || !connection) {
-      return NextResponse.json({ 
-        error: `${platform} not connected. Please connect your account first.` 
+      return NextResponse.json({
+        error: `${platform} not connected. Please connect your account first.`
+      }, { status: 400 });
+    }
+
+    // Pre-publish validation: check platform-specific requirements before attempting publish
+    const conn = connection as SocialConnection;
+    if (platform === 'facebook') {
+      const pages = conn.pages || [];
+      const page = conn.default_page_id
+        ? pages.find(p => p.id === conn.default_page_id) || pages[0]
+        : pages[0];
+      if (!page) {
+        return NextResponse.json({
+          error: 'No Facebook Page connected. Please reconnect your Facebook account and select a Page.'
+        }, { status: 400 });
+      }
+    }
+    if (platform === 'instagram' && !conn.platform_user_id) {
+      return NextResponse.json({
+        error: 'No Instagram account linked. Please reconnect your Instagram account.'
+      }, { status: 400 });
+    }
+    if (platform === 'linkedin' && !conn.platform_user_id && !conn.linkedin_urn) {
+      return NextResponse.json({
+        error: 'No LinkedIn profile linked. Please reconnect your LinkedIn account.'
       }, { status: 400 });
     }
 
@@ -175,7 +199,7 @@ async function publishToFacebook(connection: SocialConnection, content: string, 
     ? pages.find(p => p.id === defaultPageId) || pages[0]
     : pages[0];
 
-  if (!page) throw new Error('No Facebook Page connected. Please reconnect your Facebook account.');
+  if (!page) throw new Error('No Facebook Page connected. Please reconnect your Facebook account and select a Page.');
 
   const accessToken = page.access_token || connection.access_token;
   const pageId = page.id;

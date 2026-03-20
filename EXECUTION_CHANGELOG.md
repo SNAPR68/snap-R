@@ -1,6 +1,11 @@
 # SnapR Execution Changelog
 =================================
 
+## 2026-03-20 — Fix social publish 500 → 400 for missing platform config
+
+### Pre-publish validation
+- `app/api/social/publish/route.ts` — Added early validation returning 400 (not 500) when Facebook has no Page connected, Instagram has no `platform_user_id`, or LinkedIn has no `platform_user_id`/`linkedin_urn`. Previously these threw inside platform-specific functions and were caught as generic 500s.
+
 ## 2026-03-18 — Code review findings: 6 bug fixes
 
 ### CRITICAL: Drip emails CHECK constraint
