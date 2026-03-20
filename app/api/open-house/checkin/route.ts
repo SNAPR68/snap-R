@@ -49,24 +49,24 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'This open house has reached maximum capacity' }, { status: 409 })
     }
 
-    // Atomic capacity claim: increment checkin_count only if still under capacity.
-    // This prevents race conditions where concurrent requests could exceed max_attendees.
+    // Atomic capacity claim using optimistic locking (compare-and-swap).
+    // .eq('checkin_count', currentCount) ensures only one concurrent request succeeds —
+    // if another request incremented first, this update matches 0 rows and returns null.
     const currentCount = event.checkin_count ?? 0
-    const capacityFilter = event.max_attendees !== null
-      ? supabase
-          .from('open_house_events')
-          .update({ checkin_count: currentCount + 1, updated_at: new Date().toISOString() })
-          .eq('id', eventId)
-          .lt('checkin_count', event.max_attendees)
-      : supabase
-          .from('open_house_events')
-          .update({ checkin_count: currentCount + 1, updated_at: new Date().toISOString() })
-          .eq('id', eventId)
+    let claimBuilder = supabase
+      .from('open_house_events')
+      .update({ checkin_count: currentCount + 1, updated_at: new Date().toISOString() })
+      .eq('id', eventId)
+      .eq('checkin_count', currentCount)
 
-    const { data: claimed, error: claimError } = await capacityFilter.select('id').maybeSingle()
+    if (event.max_attendees !== null) {
+      claimBuilder = claimBuilder.lt('checkin_count', event.max_attendees)
+    }
+
+    const { data: claimed, error: claimError } = await claimBuilder.select('id').maybeSingle()
 
     if (claimError) {
-      logger.error('[OpenHouse] Atomic capacity claim error:', claimError.message)
+      logger.error('[OpenHouse] Capacity claim error:', claimError.message)
       return NextResponse.json({ error: 'Failed to check in. Please try again.' }, { status: 500 })
     }
 
@@ -91,11 +91,12 @@ export async function POST(request: NextRequest) {
 
     if (insertError) {
       logger.error('[OpenHouse] Check-in insert error:', insertError.message)
-      // Roll back the capacity claim
+      // Roll back: decrement with CAS guard to avoid corrupting another request's claim
       await supabase
         .from('open_house_events')
         .update({ checkin_count: currentCount, updated_at: new Date().toISOString() })
         .eq('id', eventId)
+        .eq('checkin_count', currentCount + 1)
       return NextResponse.json({ error: 'Failed to check in. Please try again.' }, { status: 500 })
     }
 

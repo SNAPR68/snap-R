@@ -14,7 +14,10 @@
 - `middleware.ts` — Added explicit `/api/video/status` entry (60 req/min) so video render polling isn't throttled by parent `/api/video` (10 req/min); rate limit key now uses matched config key instead of truncated 2-segment path
 
 ### Reliability: Open-house checkin race condition
-- `app/api/open-house/checkin/route.ts` — Atomic capacity claim: increments `checkin_count` with `.lt('checkin_count', max_attendees)` guard before inserting attendee; rolls back on insert failure
+- `app/api/open-house/checkin/route.ts` — Atomic capacity claim using optimistic locking (CAS): `.eq('checkin_count', currentValue)` ensures only one concurrent request wins; rollback also uses CAS
+
+### Code review follow-up
+- `app/api/social/publish/route.ts` — Separate `connError` (500) from missing connection (400) using PGRST116 error code; drop `linkedin_urn` from pre-publish check since `publishToLinkedIn()` only uses `platform_user_id`
 
 ## 2026-03-20 — Fix social publish 500 → 400 for missing platform config
 
