@@ -1,6 +1,7 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 import { checkRateLimit } from '@/lib/rate-limit'
+import { getClientIp } from '@/lib/utils/client-ip'
 
 // ── Rate limit configuration per endpoint ──────────────────────────
 const RATE_LIMITS: Record<string, { limit: number; windowMs: number }> = {
@@ -21,6 +22,14 @@ const RATE_LIMITS: Record<string, { limit: number; windowMs: number }> = {
   '/api/partners/apply': { limit: 3, windowMs: 3_600_000 },
   '/api/photos/tags': { limit: 10, windowMs: 60_000 },
   '/api/chat': { limit: 30, windowMs: 60_000 },
+  '/api/listing/prepare': { limit: 5, windowMs: 60_000 },
+  '/api/batch-enhance': { limit: 10, windowMs: 60_000 },
+  '/api/floor-plans/generate': { limit: 3, windowMs: 60_000 },
+  '/api/ai/generate-description': { limit: 10, windowMs: 60_000 },
+  '/api/ai/generate-caption': { limit: 20, windowMs: 60_000 },
+  '/api/virtual-tours/generate': { limit: 5, windowMs: 60_000 },
+  '/api/mls/import': { limit: 5, windowMs: 60_000 },
+  '/api/domains': { limit: 10, windowMs: 60_000 },
 }
 const DEFAULT_RATE_LIMIT = { limit: 100, windowMs: 60_000 }
 
@@ -46,11 +55,6 @@ function getRateLimitConfig(pathname: string): { key: string; config: { limit: n
   return { key: fallbackKey, config: DEFAULT_RATE_LIMIT }
 }
 
-function getClientIp(request: NextRequest): string {
-  const forwarded = request.headers.get('x-forwarded-for')
-  if (forwarded) return forwarded.split(',')[0].trim()
-  return request.headers.get('x-real-ip') || 'unknown'
-}
 
 export async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname
@@ -72,7 +76,7 @@ export async function middleware(request: NextRequest) {
       return NextResponse.next()
     }
 
-    const ip = getClientIp(request)
+    const ip = getClientIp(request.headers)
     const { key: matchedKey, config } = getRateLimitConfig(pathname)
     const identifier = `${ip}:${matchedKey}`
     const { success, remaining } = checkRateLimit(identifier, config.limit, config.windowMs)

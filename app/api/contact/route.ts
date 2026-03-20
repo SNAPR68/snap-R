@@ -6,12 +6,13 @@ import { escapeHtml } from '@/lib/utils/html-escape';
 import { contactSchema, parseBody } from '@/lib/validation/schemas';
 
 import { logger } from '@/lib/logger';
+import { getClientIp } from '@/lib/utils/client-ip';
 import { checkRateLimitAsync } from '@/lib/rate-limit';
 
 export async function POST(request: NextRequest) {
   try {
     // Rate limit: 3 req/min per IP (uses Upstash Redis in production)
-    const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown';
+    const ip = getClientIp(request.headers);
     const { success: withinLimit } = await checkRateLimitAsync(`contact:${ip}`, 3, 60_000);
     if (!withinLimit) {
       return NextResponse.json({ error: 'Too many requests. Please try again later.' }, { status: 429 });

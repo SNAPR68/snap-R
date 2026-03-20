@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { adminSupabase } from '@/lib/supabase/admin';
 import { partnerApplySchema } from '@/lib/validation/schemas';
+import { getClientIp } from '@/lib/utils/client-ip';
 import { checkRateLimitAsync } from '@/lib/rate-limit';
 
 import { logger } from '@/lib/logger';
@@ -14,7 +15,7 @@ function generateReferralCode(name: string): string {
 export async function POST(request: NextRequest) {
   try {
     // Rate limit: 3 req/hour per IP (uses Upstash Redis in production)
-    const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown';
+    const ip = getClientIp(request.headers);
     const { success: withinLimit } = await checkRateLimitAsync(`partners-apply:${ip}`, 3, 3_600_000);
     if (!withinLimit) {
       return NextResponse.json(

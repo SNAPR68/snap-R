@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { Resend } from 'resend';
 import { adminSupabase } from '@/lib/supabase/admin';
 import { escapeHtml } from '@/lib/utils/html-escape';
+import { getClientIp } from '@/lib/utils/client-ip';
 import { notifyApprovalSchema, parseBody } from '@/lib/validation/schemas'
 
 import { logger } from '@/lib/logger';
@@ -10,7 +11,7 @@ import { checkRateLimitAsync } from '@/lib/rate-limit';
 export async function POST(req: NextRequest) {
   try {
     // Rate limit: 5 notifications per minute per IP to prevent spam
-    const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown'
+    const ip = getClientIp(req.headers)
     const { success: withinLimit } = await checkRateLimitAsync(`notify-approval:${ip}`, 5, 60_000)
     if (!withinLimit) {
       return NextResponse.json({ error: 'Too many requests' }, { status: 429 })
