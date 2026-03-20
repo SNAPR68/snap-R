@@ -29,7 +29,7 @@ export async function POST(req: NextRequest) {
     // Verify share token and get listing
     const { data: share } = await supabase
       .from('shares')
-      .select('listing_id, expires_at')
+      .select('listing_id, expires_at, allow_approval')
       .eq('token', shareToken)
       .single();
 
@@ -40,6 +40,11 @@ export async function POST(req: NextRequest) {
     // Check expiry
     if (share.expires_at && new Date(share.expires_at) < new Date()) {
       return NextResponse.json({ error: 'Share link has expired' }, { status: 403 });
+    }
+
+    // Check if approvals are enabled for this share
+    if (share.allow_approval === false) {
+      return NextResponse.json({ error: 'Photo approval is not enabled for this share link' }, { status: 403 });
     }
 
     const listingId = share.listing_id;

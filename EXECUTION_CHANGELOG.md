@@ -1,6 +1,21 @@
 # SnapR Execution Changelog
 =================================
 
+## 2026-03-20 — Security + reliability fixes from stale PR review
+
+### Security: Share approval enforcement
+- `app/api/approve-photo/route.ts` — Now checks `share.allow_approval` before permitting photo approval; returns 403 if disabled
+- `app/share/[token]/page.tsx` — Reads stored `allow_approval` from share record instead of hardcoding `true`
+
+### Security: UUID validation
+- `app/api/listings/[id]/photos/route.ts` — Validates `params.id` as UUID via Zod before querying Supabase
+
+### Reliability: Rate limit polling fix
+- `middleware.ts` — Added explicit `/api/video/status` entry (60 req/min) so video render polling isn't throttled by parent `/api/video` (10 req/min); rate limit key now uses matched config key instead of truncated 2-segment path
+
+### Reliability: Open-house checkin race condition
+- `app/api/open-house/checkin/route.ts` — Atomic capacity claim: increments `checkin_count` with `.lt('checkin_count', max_attendees)` guard before inserting attendee; rolls back on insert failure
+
 ## 2026-03-20 — Fix social publish 500 → 400 for missing platform config
 
 ### Pre-publish validation
