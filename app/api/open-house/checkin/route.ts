@@ -49,7 +49,32 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'This open house has reached maximum capacity' }, { status: 409 })
     }
 
-    // Insert attendee
+    // Atomic capacity claim using optimistic locking (compare-and-swap).
+    // .eq('checkin_count', currentCount) ensures only one concurrent request succeeds —
+    // if another request incremented first, this update matches 0 rows and returns null.
+    const currentCount = event.checkin_count ?? 0
+    let claimBuilder = supabase
+      .from('open_house_events')
+      .update({ checkin_count: currentCount + 1, updated_at: new Date().toISOString() })
+      .eq('id', eventId)
+      .eq('checkin_count', currentCount)
+
+    if (event.max_attendees !== null) {
+      claimBuilder = claimBuilder.lt('checkin_count', event.max_attendees)
+    }
+
+    const { data: claimed, error: claimError } = await claimBuilder.select('id').maybeSingle()
+
+    if (claimError) {
+      logger.error('[OpenHouse] Capacity claim error:', claimError.message)
+      return NextResponse.json({ error: 'Failed to check in. Please try again.' }, { status: 500 })
+    }
+
+    if (!claimed) {
+      return NextResponse.json({ error: 'This open house has reached maximum capacity' }, { status: 409 })
+    }
+
+    // Insert attendee (capacity already claimed above)
     const { data: attendee, error: insertError } = await supabase
       .from('open_house_attendees')
       .insert({
@@ -66,17 +91,13 @@ export async function POST(request: NextRequest) {
 
     if (insertError) {
       logger.error('[OpenHouse] Check-in insert error:', insertError.message)
+      // Roll back: decrement with CAS guard to avoid corrupting another request's claim
+      await supabase
+        .from('open_house_events')
+        .update({ checkin_count: currentCount, updated_at: new Date().toISOString() })
+        .eq('id', eventId)
+        .eq('checkin_count', currentCount + 1)
       return NextResponse.json({ error: 'Failed to check in. Please try again.' }, { status: 500 })
-    }
-
-    // Increment checkin_count
-    const { error: updateError } = await supabase
-      .from('open_house_events')
-      .update({ checkin_count: (event.checkin_count ?? 0) + 1, updated_at: new Date().toISOString() })
-      .eq('id', eventId)
-
-    if (updateError) {
-      logger.error('[OpenHouse] checkin_count update error:', updateError.message)
     }
 
     return NextResponse.json({ success: true, attendeeId: attendee.id }, { status: 201 })

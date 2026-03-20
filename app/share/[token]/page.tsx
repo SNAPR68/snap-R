@@ -95,7 +95,7 @@ export default async function SharePage({ params }: { params: Promise<{ token: s
   const shareSettings: ShareSettings = {
     allow_download: share.allow_download ?? true,
     show_comparison: showComparison,
-    allow_approval: true,
+    allow_approval: share.allow_approval ?? true,
     requirePassword: isPasswordProtected,
   };
 

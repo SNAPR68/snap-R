@@ -66,7 +66,18 @@ export async function POST(req: NextRequest) {
       .eq('is_active', true)
       .single();
 
-    if (connError || !connection) {
+    if (connError) {
+      // PGRST116 = "no rows returned" from .single() — means not connected
+      if (connError.code === 'PGRST116') {
+        return NextResponse.json({
+          error: `${platform} not connected. Please connect your account first.`
+        }, { status: 400 });
+      }
+      logger.error('Social connection lookup error:', connError);
+      return NextResponse.json({ error: 'Failed to check social connection' }, { status: 500 });
+    }
+
+    if (!connection) {
       return NextResponse.json({
         error: `${platform} not connected. Please connect your account first.`
       }, { status: 400 });
@@ -90,7 +101,7 @@ export async function POST(req: NextRequest) {
         error: 'No Instagram account linked. Please reconnect your Instagram account.'
       }, { status: 400 });
     }
-    if (platform === 'linkedin' && !conn.platform_user_id && !conn.linkedin_urn) {
+    if (platform === 'linkedin' && !conn.platform_user_id) {
       return NextResponse.json({
         error: 'No LinkedIn profile linked. Please reconnect your LinkedIn account.'
       }, { status: 400 });

@@ -16,6 +16,7 @@ const RATE_LIMITS: Record<string, { limit: number; windowMs: number }> = {
   '/api/user/delete-account': { limit: 2, windowMs: 3_600_000 },
   '/api/campaigns': { limit: 20, windowMs: 60_000 },
   '/api/renovation': { limit: 5, windowMs: 60_000 },
+  '/api/video/status': { limit: 60, windowMs: 60_000 },
   '/api/video': { limit: 10, windowMs: 60_000 },
   '/api/partners/apply': { limit: 3, windowMs: 3_600_000 },
   '/api/photos/tags': { limit: 10, windowMs: 60_000 },
@@ -34,13 +35,15 @@ const SUSPICIOUS_PATTERNS = [
   /\/admin.*login/i,
 ]
 
-function getRateLimitConfig(pathname: string): { limit: number; windowMs: number } {
+function getRateLimitConfig(pathname: string): { key: string; config: { limit: number; windowMs: number } } {
   for (const [path, config] of Object.entries(RATE_LIMITS)) {
     if (pathname.startsWith(path)) {
-      return config
+      return { key: path, config }
     }
   }
-  return DEFAULT_RATE_LIMIT
+  // Fall back to 2-segment grouping for unlisted routes
+  const fallbackKey = '/' + pathname.split('/').slice(1, 3).join('/')
+  return { key: fallbackKey, config: DEFAULT_RATE_LIMIT }
 }
 
 function getClientIp(request: NextRequest): string {
@@ -70,10 +73,8 @@ export async function middleware(request: NextRequest) {
     }
 
     const ip = getClientIp(request)
-    // Group by endpoint prefix: /api/enhance/whatever → /api/enhance
-    const endpointKey = '/' + pathname.split('/').slice(1, 3).join('/')
-    const identifier = `${ip}:${endpointKey}`
-    const config = getRateLimitConfig(pathname)
+    const { key: matchedKey, config } = getRateLimitConfig(pathname)
+    const identifier = `${ip}:${matchedKey}`
     const { success, remaining } = checkRateLimit(identifier, config.limit, config.windowMs)
 
     if (!success) {
