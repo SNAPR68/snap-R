@@ -6,15 +6,9 @@
 export const dynamic = 'force-dynamic'
 
 import { NextRequest, NextResponse } from 'next/server'
-import { z } from 'zod'
 import { createClient } from '@/lib/supabase/server'
 import { sendSms } from '@/lib/notify/twilio'
-
-const schema = z.object({
-  to: z.string().min(10),               // phone number
-  message: z.string().min(1).max(1600),
-  listingId: z.string().uuid().optional(),
-})
+import { notifyMessageSchema } from '@/lib/validation/schemas'
 
 export async function POST(request: NextRequest) {
   try {
@@ -23,7 +17,7 @@ export async function POST(request: NextRequest) {
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
     const body = await request.json()
-    const parsed = schema.safeParse(body)
+    const parsed = notifyMessageSchema.safeParse(body)
     if (!parsed.success) return NextResponse.json({ error: parsed.error.issues[0]?.message ?? 'Invalid input' }, { status: 400 })
 
     const { to, message } = parsed.data

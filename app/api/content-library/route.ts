@@ -17,7 +17,7 @@ export async function GET(request: Request) {
     let query = supabase.from('content_library').select('*').eq('user_id', user.id)
     if (category && category !== 'all') query = query.eq('category', category)
     if (favorites) query = query.eq('is_favorite', true)
-    query = query.order('created_at', { ascending: false })
+    query = query.order('created_at', { ascending: false }).limit(500)
 
     const { data: content } = await query
     return NextResponse.json({ content: content || [] })

@@ -4,6 +4,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { logger } from '@/lib/logger';
 
 export async function GET(request: NextRequest) {
   const supabase = await createClient();
@@ -23,7 +24,7 @@ export async function GET(request: NextRequest) {
     .range(offset, offset + limit - 1);
 
   if (error) {
-    console.error('[Notifications] Fetch error:', error.message);
+    logger.error('[Notifications] Fetch error:', error.message);
     return NextResponse.json({ error: 'Failed to fetch notifications' }, { status: 500 });
   }
 
