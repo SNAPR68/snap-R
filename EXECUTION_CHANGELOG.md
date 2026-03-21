@@ -13,6 +13,9 @@
 ### Console cleanup
 - 2 notification routes: replaced console.error with logger.error
 
+### Fix build-time Resend crash
+- 3 files: auth/welcome, cron/usage-check, leads/bulk-email — moved `new Resend()` from module-level to inside handler functions
+
 ## 2026-03-20 — Codebase quality improvements (4 areas)
 
 ### Rate limits for expensive endpoints
