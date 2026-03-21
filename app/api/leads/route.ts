@@ -7,40 +7,15 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server'
-import { z } from 'zod'
 import { Resend } from 'resend'
 import { adminSupabase } from '@/lib/supabase/admin'
 import { createClient } from '@/lib/supabase/server'
 import { dispatchWebhookEvent } from '@/lib/webhooks/dispatch'
+import { leadSubmitSchema, leadStatusUpdateSchema } from '@/lib/validation/schemas'
 
 import { logger } from '@/lib/logger';
 import { getClientIp } from '@/lib/utils/client-ip';
 import { checkRateLimitAsync } from '@/lib/rate-limit';
-// ============================================
-// Zod Schemas
-// ============================================
-
-const leadSubmitSchema = z.object({
-  name: z.string().min(1, 'Name is required').max(200),
-  email: z.string().email('Invalid email').max(200),
-  phone: z.string().max(30).optional().nullable(),
-  message: z.string().max(2000).optional().nullable(),
-  listingId: z.string().uuid().optional().nullable(),
-  propertySiteId: z.string().uuid().optional().nullable(),
-  userId: z.string().uuid(), // The agent who owns the listing
-  listingAddress: z.string().max(500).optional().nullable(),
-  agentEmail: z.string().email().optional().nullable(),
-  // UTM attribution
-  utmSource: z.string().max(100).optional().nullable(),
-  utmMedium: z.string().max(100).optional().nullable(),
-  utmCampaign: z.string().max(100).optional().nullable(),
-  utmContent: z.string().max(200).optional().nullable(),
-})
-
-const leadStatusSchema = z.object({
-  id: z.string().uuid(),
-  status: z.enum(['new', 'contacted', 'qualified', 'converted', 'archived']),
-})
 
 // ============================================
 // POST — Submit a lead (public, no auth)
@@ -387,7 +362,7 @@ export async function PATCH(request: NextRequest) {
     }
 
     const body = await request.json()
-    const parsed = leadStatusSchema.safeParse(body)
+    const parsed = leadStatusUpdateSchema.safeParse(body)
 
     if (!parsed.success) {
       return NextResponse.json(

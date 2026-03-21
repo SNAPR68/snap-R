@@ -4,6 +4,7 @@
 
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { logger } from '@/lib/logger';
 
 export async function PATCH() {
   const supabase = await createClient();
@@ -17,7 +18,7 @@ export async function PATCH() {
     .eq('read', false);
 
   if (error) {
-    console.error('[Notifications] Mark read error:', error.message);
+    logger.error('[Notifications] Mark read error:', error.message);
     return NextResponse.json({ error: 'Failed to update notifications' }, { status: 500 });
   }
 

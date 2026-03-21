@@ -1,6 +1,18 @@
 # SnapR Execution Changelog
 =================================
 
+## 2026-03-21 — Codebase quality improvements round 2 (3 areas)
+
+### Centralize inline Zod schemas
+- `lib/validation/schemas.ts` — Added 8 schemas: bulkEmailSendSchema, leadSubmitSchema, leadStatusUpdateSchema, domainCreateSchema, domainDeleteSchema, notifyMessageSchema, widgetAnalyticsSchema, chatMessageSchema
+- 7 routes updated to import from centralized schemas instead of defining inline: leads, leads/bulk-email, domains, notify/sms, notify/whatsapp, embed/analytics, chat
+
+### Add query bounds to unbounded list queries
+- 6 files: api-keys (.limit(100)), showings (.limit(200)), content-library (.limit(500)), drafts (.limit(200)), domains (.limit(100)), user/export-data (.limit(10000) × 3 queries)
+
+### Console cleanup
+- 2 notification routes: replaced console.error with logger.error
+
 ## 2026-03-20 — Codebase quality improvements (4 areas)
 
 ### Rate limits for expensive endpoints

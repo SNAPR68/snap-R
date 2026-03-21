@@ -35,6 +35,7 @@ export async function GET() {
     .select('id, name, key_prefix, scopes, rate_limit_per_minute, last_used_at, expires_at, is_active, created_at')
     .eq('user_id', user.id)
     .order('created_at', { ascending: false })
+    .limit(100)
 
   if (error) {
     return NextResponse.json({ error: 'Failed to fetch API keys' }, { status: 500 })

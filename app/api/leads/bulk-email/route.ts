@@ -7,23 +7,16 @@
 export const dynamic = 'force-dynamic'
 
 import { NextRequest, NextResponse } from 'next/server'
-import { z } from 'zod'
 import { Resend } from 'resend'
 import { createClient } from '@/lib/supabase/server'
 import { adminSupabase } from '@/lib/supabase/admin'
+import { bulkEmailSendSchema } from '@/lib/validation/schemas'
 
 import { logger } from '@/lib/logger';
 import { getClientIp } from '@/lib/utils/client-ip';
 import { checkRateLimitAsync } from '@/lib/rate-limit';
 
 const resend = new Resend(process.env.RESEND_API_KEY)
-
-const sendSchema = z.object({
-  leadIds: z.array(z.string().uuid()).min(1).max(200),
-  subject: z.string().min(1).max(300),
-  body: z.string().min(1).max(20000),
-  fromName: z.string().max(100).optional(),
-})
 
 export async function POST(request: NextRequest) {
   try {
@@ -39,7 +32,7 @@ export async function POST(request: NextRequest) {
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
     const body = await request.json() as unknown
-    const parsed = sendSchema.safeParse(body)
+    const parsed = bulkEmailSendSchema.safeParse(body)
     if (!parsed.success) {
       return NextResponse.json({ error: parsed.error.errors[0]?.message || 'Invalid input' }, { status: 400 })
     }

@@ -13,16 +13,7 @@ import { createClient } from '@/lib/supabase/server'
 import { randomBytes } from 'crypto'
 import { z } from 'zod'
 import { getPlanLimits } from '@/lib/content/limits'
-
-const domainCreateSchema = z.object({
-  domain: z.string().min(3).max(253).regex(/^[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)*\.[a-z]{2,}$/i, 'Invalid domain format'),
-  target_type: z.enum(['property_site', 'portfolio', 'organization']).default('property_site'),
-  target_id: z.string().uuid().optional(),
-})
-
-const domainDeleteSchema = z.object({
-  id: z.string().uuid(),
-})
+import { domainCreateSchema, domainDeleteSchema } from '@/lib/validation/schemas'
 
 export async function GET() {
   const supabase = await createClient()
@@ -34,6 +25,7 @@ export async function GET() {
     .select('id, domain, target_type, target_id, verification_status, verification_token, verified_at, brand_config, created_at')
     .eq('user_id', user.id)
     .order('created_at', { ascending: false })
+    .limit(100)
 
   if (error) return NextResponse.json({ error: 'Failed to fetch domains' }, { status: 500 })
 

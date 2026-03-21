@@ -1,13 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { adminSupabase } from '@/lib/supabase/admin'
-import { z } from 'zod'
-
-const eventSchema = z.object({
-  widget_type: z.enum(['before-after', 'gallery', 'property']),
-  listing_id: z.string().uuid(),
-  event: z.enum(['impression', 'click', 'interaction']),
-  referrer: z.string().max(500).optional(),
-})
+import { widgetAnalyticsSchema } from '@/lib/validation/schemas'
 
 /**
  * POST /api/embed/analytics
@@ -17,7 +10,7 @@ const eventSchema = z.object({
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const parsed = eventSchema.safeParse(body)
+    const parsed = widgetAnalyticsSchema.safeParse(body)
     if (!parsed.success) {
       return NextResponse.json({ ok: false }, { status: 400 })
     }

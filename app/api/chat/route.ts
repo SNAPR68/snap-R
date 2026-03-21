@@ -4,18 +4,7 @@ import { adminSupabase } from '@/lib/supabase/admin';
 import { buildPropertyChatPrompt } from '@/lib/chat/system-prompt';
 import { assessQualification } from '@/lib/chat/qualification';
 import { logger } from '@/lib/logger';
-import { z } from 'zod';
-
-const chatMessageSchema = z.object({
-  sessionId: z.string().uuid().optional(),
-  propertySiteId: z.string().uuid(),
-  listingId: z.string().uuid(),
-  message: z.string().min(1).max(2000),
-  visitorId: z.string().min(1).max(100),
-  visitorName: z.string().max(200).optional(),
-  visitorEmail: z.string().email().max(200).optional(),
-  visitorPhone: z.string().max(30).optional(),
-});
+import { chatMessageSchema } from '@/lib/validation/schemas';
 
 // ── POST: Send message and stream AI response ──────────────────────
 

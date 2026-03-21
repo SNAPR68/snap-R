@@ -15,6 +15,7 @@ export async function GET() {
       .select('*')
       .eq('user_id', user.id)
       .order('updated_at', { ascending: false })
+      .limit(200)
 
     return NextResponse.json({ drafts: drafts || [] })
   } catch (error: unknown) {
