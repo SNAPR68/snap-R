@@ -16,8 +16,6 @@ import { logger } from '@/lib/logger';
 import { getClientIp } from '@/lib/utils/client-ip';
 import { checkRateLimitAsync } from '@/lib/rate-limit';
 
-const resend = new Resend(process.env.RESEND_API_KEY)
-
 export async function POST(request: NextRequest) {
   try {
     // Rate limit: 5 req/min per IP (uses Upstash Redis in production)
@@ -38,6 +36,7 @@ export async function POST(request: NextRequest) {
     }
 
     const { leadIds, subject, body: emailBody, fromName } = parsed.data
+    const resend = new Resend(process.env.RESEND_API_KEY)
 
     // Fetch agent profile for from address
     const admin = adminSupabase()
