@@ -21,6 +21,7 @@ export async function GET() {
       .select('id, title, preparation_status, marketing_status')
       .eq('user_id', user.id)
       .or('preparation_status.eq.preparing,marketing_status.eq.processing')
+      .limit(200)
 
     // Fetch recently completed marketing (last 5 minutes) for toast trigger
     const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString()

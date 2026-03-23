@@ -35,7 +35,8 @@ export async function GET(request: NextRequest) {
       .from('social_connections')
       .select('id, user_id, platform, access_token, refresh_token, token_expires_at')
       .eq('is_active', true)
-      .not('token_expires_at', 'is', null);
+      .not('token_expires_at', 'is', null)
+      .limit(1000);
 
     if (fetchError) {
       logger.error('[TokenRefresh] Failed to fetch connections:', fetchError.message);

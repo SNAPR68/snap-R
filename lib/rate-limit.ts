@@ -116,3 +116,18 @@ export async function checkRateLimitAsync(
   }
   return checkInMemory(identifier, limit, windowMs);
 }
+
+/**
+ * Per-user rate limit for AI-heavy routes.
+ * Uses user ID + route as identifier (vs IP-based for general limits).
+ * Prevents a single user from burning excessive AI credits.
+ */
+export async function checkRateLimitPerUser(
+  userId: string,
+  route: string,
+  limit: number = 10,
+  windowMs: number = 60000
+): Promise<{ success: boolean; remaining: number }> {
+  const identifier = `user:${userId}:${route}`;
+  return checkRateLimitAsync(identifier, limit, windowMs);
+}

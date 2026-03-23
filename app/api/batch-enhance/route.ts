@@ -23,7 +23,8 @@ export async function POST(req: NextRequest) {
       .from('photos')
       .select('id')
       .eq('listing_id', listingId)
-      .eq('status', 'pending');
+      .eq('status', 'pending')
+      .limit(200);
 
     if (error || !photos || photos.length === 0) {
       return NextResponse.json({ error: 'No pending photos found' }, { status: 404 });

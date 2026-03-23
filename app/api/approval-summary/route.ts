@@ -28,7 +28,8 @@ export async function GET() {
     const { data: listings } = await supabase
       .from('listings')
       .select('id, title, address')
-      .in('id', listingIds);
+      .in('id', listingIds)
+      .limit(500);
 
     const { data: photos } = await supabase
       .from('photos')

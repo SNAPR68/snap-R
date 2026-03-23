@@ -61,6 +61,7 @@ export function ScheduleModal({ isOpen, onClose, onSchedule, platform }: Schedul
               value={date}
               onChange={(e) => setDate(e.target.value)}
               min={minDate}
+              aria-label="Schedule date"
               className="w-full bg-black/40 border border-white/20 rounded-lg px-4 py-3 text-white"
             />
           </div>
@@ -70,6 +71,7 @@ export function ScheduleModal({ isOpen, onClose, onSchedule, platform }: Schedul
               type="time"
               value={time}
               onChange={(e) => setTime(e.target.value)}
+              aria-label="Schedule time"
               className="w-full bg-black/40 border border-white/20 rounded-lg px-4 py-3 text-white"
             />
           </div>

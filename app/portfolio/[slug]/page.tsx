@@ -216,7 +216,7 @@ export default function PublicPortfolioPage({ params }: { params: { slug: string
 
   const loadPortfolio = async () => {
     try {
-      const response = await fetch(`/api/portfolio?slug=${params.slug}`);
+      const response = await fetch(`/api/portfolio?slug=${params.slug}`, { signal: AbortSignal.timeout(15000) });
       if (!response.ok) {
         throw new Error('Portfolio not found');
       }

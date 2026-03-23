@@ -96,9 +96,9 @@ function TeamPageContent() {
   const fetchTeamDetails = useCallback(async (id: string) => {
     try {
       const [teamRes, membersRes, invitesRes] = await Promise.all([
-        fetch(`/api/teams/${id}`),
-        fetch(`/api/teams/${id}/members`),
-        fetch(`/api/teams/${id}/invite`)
+        fetch(`/api/teams/${id}`, { signal: AbortSignal.timeout(15000) }),
+        fetch(`/api/teams/${id}/members`, { signal: AbortSignal.timeout(15000) }),
+        fetch(`/api/teams/${id}/invite`, { signal: AbortSignal.timeout(15000) })
       ]);
       
       const teamData = await teamRes.json();

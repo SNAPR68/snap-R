@@ -10,40 +10,48 @@ import { adminSupabase } from '@/lib/supabase/admin'
 
 import { logger } from '@/lib/logger';
 export async function GET(request: NextRequest) {
-  const url = new URL(request.url)
-  const enrollmentId = url.searchParams.get('e')
+  try {
+    const url = new URL(request.url)
+    const enrollmentId = url.searchParams.get('e')
 
-  if (!enrollmentId || !/^[0-9a-f-]{36}$/.test(enrollmentId)) {
-    return new NextResponse(unsubscribePage('Invalid unsubscribe link.', false), {
+    if (!enrollmentId || !/^[0-9a-f-]{36}$/.test(enrollmentId)) {
+      return new NextResponse(unsubscribePage('Invalid unsubscribe link.', false), {
+        headers: { 'Content-Type': 'text/html' },
+      })
+    }
+
+    const admin = adminSupabase()
+
+    const { error } = await admin
+      .from('lead_drip_enrollments')
+      .update({ status: 'unsubscribed', completed_at: new Date().toISOString() })
+      .eq('id', enrollmentId)
+      .in('status', ['active', 'paused'])
+
+    if (error) {
+      logger.error('[Drip Unsubscribe] Error:', error.message)
+      return new NextResponse(unsubscribePage('Something went wrong. Please try again.', false), {
+        headers: { 'Content-Type': 'text/html' },
+      })
+    }
+
+    // Cancel remaining scheduled emails
+    await admin
+      .from('lead_drip_emails')
+      .update({ status: 'skipped' })
+      .eq('enrollment_id', enrollmentId)
+      .eq('status', 'scheduled')
+
+    return new NextResponse(unsubscribePage('You have been unsubscribed successfully.', true), {
       headers: { 'Content-Type': 'text/html' },
     })
-  }
-
-  const admin = adminSupabase()
-
-  const { error } = await admin
-    .from('lead_drip_enrollments')
-    .update({ status: 'unsubscribed', completed_at: new Date().toISOString() })
-    .eq('id', enrollmentId)
-    .in('status', ['active', 'paused'])
-
-  if (error) {
-    logger.error('[Drip Unsubscribe] Error:', error.message)
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Unknown error'
+    logger.error('[Drip Unsubscribe] GET error:', message)
     return new NextResponse(unsubscribePage('Something went wrong. Please try again.', false), {
       headers: { 'Content-Type': 'text/html' },
     })
   }
-
-  // Cancel remaining scheduled emails
-  await admin
-    .from('lead_drip_emails')
-    .update({ status: 'skipped' })
-    .eq('enrollment_id', enrollmentId)
-    .eq('status', 'scheduled')
-
-  return new NextResponse(unsubscribePage('You have been unsubscribed successfully.', true), {
-    headers: { 'Content-Type': 'text/html' },
-  })
 }
 
 function unsubscribePage(message: string, success: boolean): string {

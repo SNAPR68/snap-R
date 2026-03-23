@@ -1,6 +1,6 @@
 export const dynamic = 'force-dynamic';
 
-import { NextResponse } from 'next/server';
+import { NextResponse, NextRequest } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 
 import { logger } from '@/lib/logger';
@@ -48,8 +48,21 @@ const SAMPLE_PHOTOS = [
   },
 ];
 
-export async function POST() {
+export async function POST(request: NextRequest) {
   try {
+    // Guard: no body expected for this endpoint
+    const contentLength = request.headers.get('content-length');
+    if (contentLength && parseInt(contentLength) > 0) {
+      // Try to parse and reject if body is present
+      const contentType = request.headers.get('content-type');
+      if (contentType?.includes('application/json')) {
+        return NextResponse.json(
+          { error: 'No request body expected' },
+          { status: 400 }
+        );
+      }
+    }
+
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
 

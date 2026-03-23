@@ -227,6 +227,7 @@ export default function PricingSection({
             max={LISTING_OPTIONS.length - 1}
             value={sliderIndex}
             onChange={(e) => setSliderIndex(Number(e.target.value))}
+            aria-label="Number of listings"
             className="flex-1 h-2 bg-white/10 rounded-full appearance-none cursor-pointer accent-[#D4A017]"
           />
           <span className="text-lg font-bold text-[#D4A017] min-w-[3rem] text-right">

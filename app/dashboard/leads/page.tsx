@@ -125,7 +125,7 @@ function DripPanel({ lead }: { lead: Lead }) {
   const loadDrip = useCallback(async () => {
     setLoading(true)
     try {
-      const res = await fetch(`/api/leads/drip?lead_id=${lead.id}`)
+      const res = await fetch(`/api/leads/drip?lead_id=${lead.id}`, { signal: AbortSignal.timeout(15000) })
       if (!res.ok) return
       const data = await res.json()
       setSequences(data.sequences || [])

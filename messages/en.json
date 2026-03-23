@@ -1,0 +1,145 @@
+{
+  "common": {
+    "appName": "SnapR",
+    "loading": "Loading...",
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "create": "Create",
+    "search": "Search",
+    "filter": "Filter",
+    "export": "Export",
+    "import": "Import",
+    "back": "Back",
+    "next": "Next",
+    "submit": "Submit",
+    "close": "Close",
+    "confirm": "Confirm",
+    "retry": "Retry",
+    "viewAll": "View All",
+    "noResults": "No results found",
+    "error": "Something went wrong",
+    "success": "Success"
+  },
+  "auth": {
+    "login": "Log In",
+    "signup": "Sign Up",
+    "logout": "Log Out",
+    "forgotPassword": "Forgot Password?",
+    "resetPassword": "Reset Password",
+    "email": "Email",
+    "password": "Password",
+    "confirmPassword": "Confirm Password"
+  },
+  "nav": {
+    "home": "Home",
+    "dashboard": "Dashboard",
+    "listings": "Listings",
+    "contentStudio": "Content Studio",
+    "leads": "Leads",
+    "analytics": "Analytics",
+    "settings": "Settings",
+    "billing": "Billing",
+    "team": "Team",
+    "help": "Help"
+  },
+  "listings": {
+    "title": "My Listings",
+    "addListing": "Add Listing",
+    "noListings": "No listings yet",
+    "status": {
+      "draft": "Draft",
+      "preparing": "Preparing",
+      "prepared": "Prepared",
+      "active": "Active",
+      "sold": "Sold",
+      "archived": "Archived"
+    },
+    "fields": {
+      "address": "Address",
+      "price": "Price",
+      "bedrooms": "Bedrooms",
+      "bathrooms": "Bathrooms",
+      "sqft": "Square Feet",
+      "description": "Description",
+      "photos": "Photos"
+    }
+  },
+  "marketing": {
+    "title": "Marketing",
+    "status": {
+      "processing": "Processing marketing assets...",
+      "completed": "Marketing complete",
+      "failed": "Marketing failed",
+      "skipped": "Marketing skipped (upgrade plan)"
+    },
+    "steps": {
+      "description": "Property Description",
+      "captions": "Social Captions",
+      "mls": "MLS Package",
+      "propertySite": "Property Site",
+      "scheduledPosts": "Scheduled Posts"
+    }
+  },
+  "pricing": {
+    "title": "Pricing",
+    "subtitle": "Choose the plan that fits your business",
+    "monthly": "Monthly",
+    "annual": "Annual",
+    "perMonth": "/month",
+    "startFreeTrial": "Start Free Trial",
+    "currentPlan": "Current Plan",
+    "upgrade": "Upgrade",
+    "tiers": {
+      "free": "Free",
+      "starter": "Starter",
+      "pro": "Pro",
+      "agency": "Agency",
+      "enterprise": "Enterprise"
+    }
+  },
+  "studio": {
+    "title": "AI Studio",
+    "enhance": "Enhance",
+    "beforeAfter": "Before / After",
+    "download": "Download",
+    "downloadAll": "Download All",
+    "tools": {
+      "skyReplacement": "Sky Replacement",
+      "virtualTwilight": "Virtual Twilight",
+      "virtualStaging": "Virtual Staging",
+      "declutter": "Declutter",
+      "hdr": "HDR Enhancement",
+      "autoEnhance": "Auto Enhance"
+    }
+  },
+  "leads": {
+    "title": "Leads",
+    "addLead": "Add Lead",
+    "pipeline": "Pipeline",
+    "listView": "List View",
+    "stages": {
+      "new": "New",
+      "contacted": "Contacted",
+      "qualified": "Qualified",
+      "touring": "Touring",
+      "offer": "Offer",
+      "closed": "Closed",
+      "lost": "Lost"
+    }
+  },
+  "notifications": {
+    "title": "Notifications",
+    "markAllRead": "Mark All Read",
+    "noNotifications": "No notifications"
+  },
+  "errors": {
+    "notFound": "Page not found",
+    "unauthorized": "Please log in to continue",
+    "forbidden": "You don't have permission to access this",
+    "serverError": "Server error. Please try again.",
+    "rateLimited": "Too many requests. Please slow down.",
+    "networkError": "Network error. Check your connection."
+  }
+}

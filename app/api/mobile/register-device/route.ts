@@ -6,78 +6,85 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClientFromRequest } from '@/lib/supabase/server';
 import { mobileRegisterDeviceSchema, parseBody } from '@/lib/validation/schemas'
+import { logger } from '@/lib/logger';
 
 export async function POST(request: NextRequest) {
-  const supabase = createClientFromRequest(request);
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  try {
+    const supabase = createClientFromRequest(request);
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
 
-  if (!user) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const body = await request.json();
+    const validated = parseBody(mobileRegisterDeviceSchema, body);
+    if (!validated.success) {
+      return NextResponse.json({ error: validated.error, details: validated.details }, { status: 400 });
+    }
+
+    if (!body.pushToken || typeof body.pushToken !== 'string') {
+      return NextResponse.json(
+        { error: 'pushToken is required' },
+        { status: 400 }
+      );
+    }
+
+    // Upsert device token into profiles.notification_preferences JSONB
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('notification_preferences')
+      .eq('id', user.id)
+      .single();
+
+    const currentPrefs =
+      (profile?.notification_preferences as Record<string, unknown>) ?? {};
+
+    const devices = (currentPrefs.devices ?? []) as Array<{
+      pushToken: string;
+      platform: string;
+      deviceName?: string;
+      registeredAt: string;
+    }>;
+
+    // Remove existing entry for this token (dedup)
+    const filtered = devices.filter(d => d.pushToken !== body.pushToken);
+
+    // Add new entry
+    filtered.push({
+      pushToken: body.pushToken,
+      platform: body.platform ?? 'unknown',
+      deviceName: body.deviceName,
+      registeredAt: new Date().toISOString(),
+    });
+
+    // Keep only last 5 devices
+    const trimmed = filtered.slice(-5);
+
+    const { error } = await supabase
+      .from('profiles')
+      .update({
+        notification_preferences: {
+          ...currentPrefs,
+          devices: trimmed,
+          pushEnabled: true,
+        },
+      })
+      .eq('id', user.id);
+
+    if (error) {
+      return NextResponse.json(
+        { error: 'Failed to register device' },
+        { status: 500 }
+      );
+    }
+
+    return NextResponse.json({ success: true });
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Unknown error'
+    logger.error('[Mobile/RegisterDevice] POST error:', message)
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
-
-  const body = await request.json();
-  const validated = parseBody(mobileRegisterDeviceSchema, body);
-  if (!validated.success) {
-    return NextResponse.json({ error: validated.error, details: validated.details }, { status: 400 });
-  }
-
-  if (!body.pushToken || typeof body.pushToken !== 'string') {
-    return NextResponse.json(
-      { error: 'pushToken is required' },
-      { status: 400 }
-    );
-  }
-
-  // Upsert device token into profiles.notification_preferences JSONB
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('notification_preferences')
-    .eq('id', user.id)
-    .single();
-
-  const currentPrefs =
-    (profile?.notification_preferences as Record<string, unknown>) ?? {};
-
-  const devices = (currentPrefs.devices ?? []) as Array<{
-    pushToken: string;
-    platform: string;
-    deviceName?: string;
-    registeredAt: string;
-  }>;
-
-  // Remove existing entry for this token (dedup)
-  const filtered = devices.filter(d => d.pushToken !== body.pushToken);
-
-  // Add new entry
-  filtered.push({
-    pushToken: body.pushToken,
-    platform: body.platform ?? 'unknown',
-    deviceName: body.deviceName,
-    registeredAt: new Date().toISOString(),
-  });
-
-  // Keep only last 5 devices
-  const trimmed = filtered.slice(-5);
-
-  const { error } = await supabase
-    .from('profiles')
-    .update({
-      notification_preferences: {
-        ...currentPrefs,
-        devices: trimmed,
-        pushEnabled: true,
-      },
-    })
-    .eq('id', user.id);
-
-  if (error) {
-    return NextResponse.json(
-      { error: 'Failed to register device' },
-      { status: 500 }
-    );
-  }
-
-  return NextResponse.json({ success: true });
 }

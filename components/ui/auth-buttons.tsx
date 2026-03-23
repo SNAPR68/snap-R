@@ -55,7 +55,7 @@ export default function AuthButtons() {
     <div className="flex items-center gap-3 flex-wrap">
       <form onSubmit={sendMagicLink} className="flex gap-2 items-center">
         <input
-          aria-label="email"
+          aria-label="Email address"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           placeholder="Email for magic link"

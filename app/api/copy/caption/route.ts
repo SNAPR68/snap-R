@@ -73,7 +73,7 @@ export async function POST(request: NextRequest) {
       output_text: result.text,
       tokens_used: result.tokensUsed,
       model: result.model
-    })
+    }).limit(50)
 
     // Increment usage counter
     await supabase

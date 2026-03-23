@@ -83,7 +83,7 @@ export function ComplianceSettings({ initialSettings }: ComplianceSettingsProps)
         </p>
         <select
           id="default-mls"
-          aria-label="Default MLS"
+          aria-label="Compliance level"
           value={defaultMls}
           onChange={(e) => setDefaultMls(e.target.value)}
           className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white focus:border-[#D4A017] focus:outline-none"
