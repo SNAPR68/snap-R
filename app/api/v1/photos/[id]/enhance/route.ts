@@ -70,8 +70,7 @@ export const POST = withApiAuth(async (ctx) => {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'Authorization': `Bearer ${process.env.SUPABASE_SERVICE_ROLE_KEY}`,
-      'x-admin-key': process.env.WORKER_ADMIN_KEY || '',
+      'Authorization': `Bearer ${process.env.ADMIN_SECRET || ''}`,
     },
     body: JSON.stringify(parsed.data),
     signal: AbortSignal.timeout(150000),

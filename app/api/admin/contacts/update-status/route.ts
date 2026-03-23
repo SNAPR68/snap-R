@@ -11,9 +11,8 @@ function getSupabase() {
 
 export async function POST(req: NextRequest) {
   try {
-    // Admin routes require WORKER_ADMIN_KEY
-    const adminKey = req.headers.get('x-admin-key') || req.headers.get('authorization')?.replace('Bearer ', '');
-    if (!adminKey || adminKey !== process.env.WORKER_ADMIN_KEY) {
+    const authHeader = req.headers.get('authorization');
+    if (!process.env.ADMIN_SECRET || authHeader !== `Bearer ${process.env.ADMIN_SECRET}`) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 

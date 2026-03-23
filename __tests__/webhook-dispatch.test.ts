@@ -1,23 +1,27 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
-import { dispatchWebhookEvent } from '@/lib/webhooks/dispatch'
 
-// Mock fetch and supabase
-global.fetch = vi.fn()
+interface WebhookData {
+  id: string
+  url: string
+  secret: string | null
+  events: string[]
+}
+
+// Shared mock state — every call to adminSupabase() returns the SAME object
+const mockInsert = vi.fn(async () => ({ error: null }))
+const mockContains = vi.fn(async (): Promise<{ data: WebhookData[]; error: null }> => ({ data: [], error: null }))
+
+const mockChain = {
+  select: vi.fn().mockReturnThis(),
+  eq: vi.fn().mockReturnThis(),
+  contains: mockContains,
+  insert: mockInsert,
+}
+
+const mockFrom = vi.fn(() => mockChain)
+
 vi.mock('@/lib/supabase/admin', () => ({
-  adminSupabase: vi.fn(() => {
-    const mockChain = {
-      select: vi.fn(),
-      eq: vi.fn(),
-      contains: vi.fn(),
-      insert: vi.fn(async () => ({ error: null })),
-    }
-    mockChain.select.mockReturnValue(mockChain)
-    mockChain.eq.mockReturnValue(mockChain)
-    mockChain.contains.mockReturnValue(mockChain)
-    return {
-      from: vi.fn((table) => mockChain),
-    }
-  }),
+  adminSupabase: vi.fn(() => ({ from: mockFrom })),
 }))
 
 vi.mock('@/lib/logger', () => ({
@@ -28,9 +32,21 @@ vi.mock('@/lib/logger', () => ({
   },
 }))
 
+// Mock fetch globally
+global.fetch = vi.fn()
+
+// Must import AFTER mocks are set up
+import { dispatchWebhookEvent } from '@/lib/webhooks/dispatch'
+
 describe('webhook-dispatch', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    // Reset default behaviors
+    mockInsert.mockImplementation(async () => ({ error: null }))
+    mockContains.mockImplementation(async () => ({ data: [], error: null }))
+    mockChain.select.mockReturnThis()
+    mockChain.eq.mockReturnThis()
+    mockFrom.mockReturnValue(mockChain)
   })
 
   describe('dispatchWebhookEvent', () => {
@@ -42,25 +58,18 @@ describe('webhook-dispatch', () => {
         text: async () => 'Success',
       } as Response)
 
-      const { adminSupabase } = await import('@/lib/supabase/admin')
-      const mockSupabase = adminSupabase()
-
-      // Mock webhook query
-      vi.mocked(mockSupabase.from).mockReturnValueOnce({
-        select: vi.fn().mockReturnThis(),
-        eq: vi.fn().mockReturnThis(),
-        contains: vi.fn(async () => ({
-          data: [
-            {
-              id: 'webhook_1',
-              url: 'https://example.com/webhooks',
-              secret: 'secret_key_123',
-              events: ['lead.created'],
-            },
-          ],
-          error: null,
-        })),
-      } as any)
+      // Configure the mock to return webhooks when querying outgoing_webhooks
+      mockContains.mockResolvedValueOnce({
+        data: [
+          {
+            id: 'webhook_1',
+            url: 'https://example.com/webhooks',
+            secret: 'secret_key_123',
+            events: ['lead.created'],
+          },
+        ],
+        error: null,
+      })
 
       await dispatchWebhookEvent(
         'user_123',
@@ -89,24 +98,17 @@ describe('webhook-dispatch', () => {
         text: async () => 'Success',
       } as Response)
 
-      const { adminSupabase } = await import('@/lib/supabase/admin')
-      const mockSupabase = adminSupabase()
-
-      vi.mocked(mockSupabase.from).mockReturnValueOnce({
-        select: vi.fn().mockReturnThis(),
-        eq: vi.fn().mockReturnThis(),
-        contains: vi.fn(async () => ({
-          data: [
-            {
-              id: 'webhook_1',
-              url: 'https://example.com/webhooks',
-              secret: null,
-              events: ['post.published'],
-            },
-          ],
-          error: null,
-        })),
-      } as any)
+      mockContains.mockResolvedValueOnce({
+        data: [
+          {
+            id: 'webhook_1',
+            url: 'https://example.com/webhooks',
+            secret: null,
+            events: ['post.published'],
+          },
+        ],
+        error: null,
+      })
 
       await dispatchWebhookEvent(
         'user_123',
@@ -128,17 +130,10 @@ describe('webhook-dispatch', () => {
     it('should handle no active webhooks gracefully', async () => {
       const mockFetch = vi.mocked(fetch)
 
-      const { adminSupabase } = await import('@/lib/supabase/admin')
-      const mockSupabase = adminSupabase()
-
-      vi.mocked(mockSupabase.from).mockReturnValueOnce({
-        select: vi.fn().mockReturnThis(),
-        eq: vi.fn().mockReturnThis(),
-        contains: vi.fn(async () => ({
-          data: [],
-          error: null,
-        })),
-      } as any)
+      mockContains.mockResolvedValueOnce({
+        data: [],
+        error: null,
+      })
 
       await dispatchWebhookEvent(
         'user_123',
@@ -151,7 +146,9 @@ describe('webhook-dispatch', () => {
     })
 
     it('should retry on 5xx status code', async () => {
+      vi.useFakeTimers()
       const mockFetch = vi.mocked(fetch)
+
       // First attempt: 500 error
       mockFetch.mockResolvedValueOnce({
         ok: false,
@@ -171,38 +168,34 @@ describe('webhook-dispatch', () => {
         text: async () => 'Success',
       } as Response)
 
-      const { adminSupabase } = await import('@/lib/supabase/admin')
-      const mockSupabase = adminSupabase()
+      mockContains.mockResolvedValueOnce({
+        data: [
+          {
+            id: 'webhook_1',
+            url: 'https://example.com/webhooks',
+            secret: null,
+            events: ['lead.created'],
+          },
+        ],
+        error: null,
+      })
 
-      vi.mocked(mockSupabase.from).mockReturnValueOnce({
-        select: vi.fn().mockReturnThis(),
-        eq: vi.fn().mockReturnThis(),
-        contains: vi.fn(async () => ({
-          data: [
-            {
-              id: 'webhook_1',
-              url: 'https://example.com/webhooks',
-              secret: null,
-              events: ['lead.created'],
-            },
-          ],
-          error: null,
-        })),
-      } as any)
-
-      // Mock the insert for webhook_deliveries
-      vi.mocked(mockSupabase.from).mockReturnValueOnce({
-        insert: vi.fn(async () => ({ error: null })),
-      } as any)
-
-      await dispatchWebhookEvent(
+      const promise = dispatchWebhookEvent(
         'user_123',
         'lead.created',
         { leadId: 'lead_456' }
       )
 
+      // Advance timers through the retry delays
+      await vi.advanceTimersByTimeAsync(1000)  // 1s delay after 1st attempt
+      await vi.advanceTimersByTimeAsync(4000)  // 4s delay after 2nd attempt
+
+      await promise
+
       // Should have retried 3 times (1 initial + 2 retries)
       expect(mockFetch).toHaveBeenCalledTimes(3)
+
+      vi.useRealTimers()
     })
 
     it('should not retry on 4xx status code', async () => {
@@ -213,29 +206,17 @@ describe('webhook-dispatch', () => {
         text: async () => 'Bad Request',
       } as Response)
 
-      const { adminSupabase } = await import('@/lib/supabase/admin')
-      const mockSupabase = adminSupabase()
-
-      vi.mocked(mockSupabase.from).mockReturnValueOnce({
-        select: vi.fn().mockReturnThis(),
-        eq: vi.fn().mockReturnThis(),
-        contains: vi.fn(async () => ({
-          data: [
-            {
-              id: 'webhook_1',
-              url: 'https://example.com/webhooks',
-              secret: null,
-              events: ['lead.created'],
-            },
-          ],
-          error: null,
-        })),
-      } as any)
-
-      // Mock the insert for webhook_deliveries
-      vi.mocked(mockSupabase.from).mockReturnValueOnce({
-        insert: vi.fn(async () => ({ error: null })),
-      } as any)
+      mockContains.mockResolvedValueOnce({
+        data: [
+          {
+            id: 'webhook_1',
+            url: 'https://example.com/webhooks',
+            secret: null,
+            events: ['lead.created'],
+          },
+        ],
+        error: null,
+      })
 
       await dispatchWebhookEvent(
         'user_123',
@@ -248,7 +229,9 @@ describe('webhook-dispatch', () => {
     })
 
     it('should handle webhook URL returning 500 error', async () => {
+      vi.useFakeTimers()
       const mockFetch = vi.mocked(fetch)
+
       // All retries fail with 500
       mockFetch.mockResolvedValue({
         ok: false,
@@ -256,79 +239,68 @@ describe('webhook-dispatch', () => {
         text: async () => 'Server Error',
       } as Response)
 
-      const { adminSupabase } = await import('@/lib/supabase/admin')
-      const mockSupabase = adminSupabase()
+      mockContains.mockResolvedValueOnce({
+        data: [
+          {
+            id: 'webhook_1',
+            url: 'https://example.com/webhooks',
+            secret: null,
+            events: ['lead.created'],
+          },
+        ],
+        error: null,
+      })
 
-      vi.mocked(mockSupabase.from).mockReturnValueOnce({
-        select: vi.fn().mockReturnThis(),
-        eq: vi.fn().mockReturnThis(),
-        contains: vi.fn(async () => ({
-          data: [
-            {
-              id: 'webhook_1',
-              url: 'https://example.com/webhooks',
-              secret: null,
-              events: ['lead.created'],
-            },
-          ],
-          error: null,
-        })),
-      } as any)
+      const promise = dispatchWebhookEvent(
+        'user_123',
+        'lead.created',
+        { leadId: 'lead_456' }
+      )
 
-      // Mock the insert for webhook_deliveries
-      vi.mocked(mockSupabase.from).mockReturnValueOnce({
-        insert: vi.fn(async () => ({ error: null })),
-      } as any)
+      // Advance through retry delays
+      await vi.advanceTimersByTimeAsync(1000)   // 1s after attempt 1
+      await vi.advanceTimersByTimeAsync(4000)   // 4s after attempt 2
 
       // Should not throw
-      await expect(
-        dispatchWebhookEvent(
-          'user_123',
-          'lead.created',
-          { leadId: 'lead_456' }
-        )
-      ).resolves.toBeUndefined()
+      await expect(promise).resolves.toBeUndefined()
 
       // Should have attempted 3 times
       expect(mockFetch).toHaveBeenCalledTimes(3)
+
+      vi.useRealTimers()
     })
 
     it('should never throw - always complete semantics', async () => {
+      vi.useFakeTimers()
       const mockFetch = vi.mocked(fetch)
-      mockFetch.mockRejectedValueOnce(new Error('Network error'))
+      mockFetch.mockRejectedValue(new Error('Network error'))
 
-      const { adminSupabase } = await import('@/lib/supabase/admin')
-      const mockSupabase = adminSupabase()
+      mockContains.mockResolvedValueOnce({
+        data: [
+          {
+            id: 'webhook_1',
+            url: 'https://example.com/webhooks',
+            secret: null,
+            events: ['lead.created'],
+          },
+        ],
+        error: null,
+      })
 
-      vi.mocked(mockSupabase.from).mockReturnValueOnce({
-        select: vi.fn().mockReturnThis(),
-        eq: vi.fn().mockReturnThis(),
-        contains: vi.fn(async () => ({
-          data: [
-            {
-              id: 'webhook_1',
-              url: 'https://example.com/webhooks',
-              secret: null,
-              events: ['lead.created'],
-            },
-          ],
-          error: null,
-        })),
-      } as any)
+      const promise = dispatchWebhookEvent(
+        'user_123',
+        'lead.created',
+        { leadId: 'lead_456' }
+      )
 
-      // Mock the insert for webhook_deliveries
-      vi.mocked(mockSupabase.from).mockReturnValueOnce({
-        insert: vi.fn(async () => ({ error: null })),
-      } as any)
+      // Advance through retry delays
+      await vi.advanceTimersByTimeAsync(1000)
+      await vi.advanceTimersByTimeAsync(4000)
 
       // Should not throw even with network error
-      await expect(
-        dispatchWebhookEvent(
-          'user_123',
-          'lead.created',
-          { leadId: 'lead_456' }
-        )
-      ).resolves.toBeUndefined()
+      await expect(promise).resolves.toBeUndefined()
+
+      vi.useRealTimers()
     })
 
     it('should log delivery results to webhook_deliveries table', async () => {
@@ -339,30 +311,17 @@ describe('webhook-dispatch', () => {
         text: async () => 'Success',
       } as Response)
 
-      const { adminSupabase } = await import('@/lib/supabase/admin')
-      const mockSupabase = adminSupabase()
-
-      const mockInsert = vi.fn().mockResolvedValueOnce({ error: null })
-
-      vi.mocked(mockSupabase.from).mockReturnValueOnce({
-        select: vi.fn().mockReturnThis(),
-        eq: vi.fn().mockReturnThis(),
-        contains: vi.fn(async () => ({
-          data: [
-            {
-              id: 'webhook_1',
-              url: 'https://example.com/webhooks',
-              secret: null,
-              events: ['lead.created'],
-            },
-          ],
-          error: null,
-        })),
-      } as any)
-
-      vi.mocked(mockSupabase.from).mockReturnValueOnce({
-        insert: mockInsert,
-      } as any)
+      mockContains.mockResolvedValueOnce({
+        data: [
+          {
+            id: 'webhook_1',
+            url: 'https://example.com/webhooks',
+            secret: null,
+            events: ['lead.created'],
+          },
+        ],
+        error: null,
+      })
 
       await dispatchWebhookEvent(
         'user_123',
@@ -370,7 +329,7 @@ describe('webhook-dispatch', () => {
         { leadId: 'lead_456' }
       )
 
-      // Verify delivery was logged
+      // Verify delivery was logged via insert call on webhook_deliveries
       expect(mockInsert).toHaveBeenCalledWith(
         expect.objectContaining({
           webhook_id: 'webhook_1',
@@ -389,29 +348,17 @@ describe('webhook-dispatch', () => {
         text: async () => 'Success',
       } as Response)
 
-      const { adminSupabase } = await import('@/lib/supabase/admin')
-      const mockSupabase = adminSupabase()
-
-      vi.mocked(mockSupabase.from).mockReturnValueOnce({
-        select: vi.fn().mockReturnThis(),
-        eq: vi.fn().mockReturnThis(),
-        contains: vi.fn(async () => ({
-          data: [
-            {
-              id: 'webhook_1',
-              url: 'https://example.com/webhooks',
-              secret: null,
-              events: ['post.published'],
-            },
-          ],
-          error: null,
-        })),
-      } as any)
-
-      // Mock the insert for webhook_deliveries
-      vi.mocked(mockSupabase.from).mockReturnValueOnce({
-        insert: vi.fn(async () => ({ error: null })),
-      } as any)
+      mockContains.mockResolvedValueOnce({
+        data: [
+          {
+            id: 'webhook_1',
+            url: 'https://example.com/webhooks',
+            secret: null,
+            events: ['post.published'],
+          },
+        ],
+        error: null,
+      })
 
       const payload = { postId: 'post_123', platform: 'twitter' }
       await dispatchWebhookEvent(

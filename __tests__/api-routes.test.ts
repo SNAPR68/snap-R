@@ -1,5 +1,4 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
-import { NextRequest } from 'next/server'
 
 // Mock fetch globally
 global.fetch = vi.fn()
@@ -8,16 +7,26 @@ global.fetch = vi.fn()
 vi.mock('next/server', () => ({
   NextRequest: vi.fn(),
   NextResponse: {
-    json: vi.fn((data, opts) => ({
+    json: vi.fn((data: unknown, opts?: { status?: number }) => ({
       status: opts?.status || 200,
       json: () => Promise.resolve(data),
     })),
   },
 }))
 
+interface MockQueryChain {
+  select: ReturnType<typeof vi.fn>
+  insert: ReturnType<typeof vi.fn>
+  update: ReturnType<typeof vi.fn>
+  eq: ReturnType<typeof vi.fn>
+  order: ReturnType<typeof vi.fn>
+  limit: ReturnType<typeof vi.fn>
+  single: ReturnType<typeof vi.fn>
+}
+
 vi.mock('@/lib/supabase/server', () => ({
   createClient: vi.fn(() => {
-    const mockChain = {
+    const mockChain: MockQueryChain = {
       select: vi.fn(),
       insert: vi.fn(async () => ({ error: null, data: [{ id: 'lead_123' }] })),
       update: vi.fn(),
@@ -36,14 +45,14 @@ vi.mock('@/lib/supabase/server', () => ({
           data: { user: { id: 'user_123', email: 'test@example.com' } },
         })),
       },
-      from: vi.fn((table) => mockChain),
+      from: vi.fn((_table: string) => mockChain),
     }
   }),
 }))
 
 vi.mock('@/lib/supabase/admin', () => ({
   adminSupabase: vi.fn(() => {
-    const mockChain = {
+    const mockChain: MockQueryChain = {
       select: vi.fn(),
       insert: vi.fn(async () => ({ error: null, data: [{ id: 'item_123' }] })),
       update: vi.fn(),
@@ -57,7 +66,7 @@ vi.mock('@/lib/supabase/admin', () => ({
     mockChain.eq.mockReturnValue(mockChain)
     mockChain.order.mockReturnValue(mockChain)
     return {
-      from: vi.fn((table) => mockChain),
+      from: vi.fn((_table: string) => mockChain),
     }
   }),
 }))
@@ -75,7 +84,7 @@ vi.mock('@/lib/logger', () => ({
 }))
 
 vi.mock('@/lib/content/limits', () => ({
-  getPlanLimits: vi.fn((tier) => ({
+  getPlanLimits: vi.fn((tier: string) => ({
     canPublish: tier !== 'free',
     maxPosts: tier === 'pro' ? 100 : 10,
   })),
@@ -96,7 +105,7 @@ describe('API Routes', () => {
 
   describe('POST /api/leads', () => {
     it('should accept valid lead submission', async () => {
-      const mockRequest = {
+      const _mockRequest = {
         json: async () => ({
           name: 'John Doe',
           email: 'john@example.com',
@@ -109,7 +118,7 @@ describe('API Routes', () => {
         headers: new Map([
           ['x-forwarded-for', '192.168.1.1'],
         ]),
-      } as any
+      }
 
       // Can't directly test POST without importing, so testing the validation logic
       const testPayload = {
@@ -167,7 +176,7 @@ describe('API Routes', () => {
       // Mock unauthenticated user
       vi.mocked(mockSupabase.auth.getUser).mockResolvedValueOnce({
         data: { user: null },
-      } as any)
+      } as Awaited<ReturnType<typeof mockSupabase.auth.getUser>>)
 
       const user = (await mockSupabase.auth.getUser()).data.user
       expect(user).toBeNull()
@@ -183,12 +192,13 @@ describe('API Routes', () => {
     })
 
     it('should handle missing auth token', async () => {
-      const mockRequest = {
-        headers: new Map([]),
+      const _mockRequest = {
+        headers: new Map<string, string>([]),
         json: async () => ({ content: 'test' }),
-      } as any
+      }
 
-      expect(mockRequest.headers.get('authorization')).toBeNull()
+      // Map.get() returns undefined for missing keys
+      expect(_mockRequest.headers.get('authorization')).toBeUndefined()
     })
   })
 
@@ -232,7 +242,7 @@ describe('API Routes', () => {
 
     it('should handle valid platform connection', async () => {
       const { adminSupabase } = await import('@/lib/supabase/admin')
-      const mockSupabase = adminSupabase()
+      const _mockSupabase = adminSupabase()
 
       const mockConnection = {
         id: 'conn_123',
@@ -256,7 +266,7 @@ describe('API Routes', () => {
           data: null,
           error: { message: 'Not found' },
         })),
-      } as any)
+      } as unknown as ReturnType<typeof mockSupabase.from>)
 
       const connection = null
       expect(connection).toBeNull()
@@ -344,7 +354,7 @@ describe('API Routes', () => {
       const { checkRateLimitAsync } = await import('@/lib/rate-limit')
       const mockCheckRateLimit = vi.mocked(checkRateLimitAsync)
 
-      mockCheckRateLimit.mockResolvedValueOnce({ success: false } as any)
+      mockCheckRateLimit.mockResolvedValueOnce({ success: false } as Awaited<ReturnType<typeof checkRateLimitAsync>>)
 
       const result = await mockCheckRateLimit('chat:user_123', 1, 60000)
 

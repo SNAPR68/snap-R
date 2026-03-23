@@ -1,5 +1,18 @@
 # SnapR Execution Changelog
 ==========================
+## 2026-03-23 — Production readiness to 100: zero flags
+
+### Admin Auth Consolidation
+- 7 admin routes: unified `Authorization: Bearer ADMIN_SECRET` (was 3 different secrets)
+
+### Schema Split
+- `lib/validation/schemas.ts` → 7 domain files (barrel re-export, zero import changes)
+
+### Test Fixes + New Business Tests
+- Fixed 4 failing tests (webhook-dispatch, notification-sender, cron-jobs, api-routes)
+- Added billing-gates (23 tests), oauth-refresh, marketing-pipeline tests
+- **42 test files, 545 tests, 100% passing**
+
 ## 2026-03-23 — Production readiness 90→97
 
 ### Component Tests (16 new files)

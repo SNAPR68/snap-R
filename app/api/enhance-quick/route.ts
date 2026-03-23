@@ -17,8 +17,8 @@ export async function POST(request: NextRequest) {
   const startTime = Date.now();
 
   // --- Auth ---
-  const adminKey = request.headers.get('x-admin-key');
-  if (!adminKey || adminKey !== process.env.WORKER_ADMIN_KEY) {
+  const authHeader = request.headers.get('authorization');
+  if (!process.env.ADMIN_SECRET || authHeader !== `Bearer ${process.env.ADMIN_SECRET}`) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 

@@ -35,10 +35,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const adminKey = request.headers.get('x-admin-key');
+    const authHeader = request.headers.get('authorization');
     const allowAdmin = Boolean(
-      adminKey &&
-        (adminKey === process.env.WORKER_ADMIN_KEY || adminKey === process.env.PREPARE_ADMIN_KEY)
+      process.env.ADMIN_SECRET &&
+        authHeader === `Bearer ${process.env.ADMIN_SECRET}`
     );
 
     const supabase = await createClient();
