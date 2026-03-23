@@ -47,6 +47,59 @@
 - `scripts/seed-staging.mjs` — Staging data seeder
 - `vercel.json` — Added db-monitor cron
 
+## 2026-03-21 — Codebase quality improvements round 2 (3 areas)
+
+### Centralize inline Zod schemas
+- `lib/validation/schemas.ts` — Added 8 schemas: bulkEmailSendSchema, leadSubmitSchema, leadStatusUpdateSchema, domainCreateSchema, domainDeleteSchema, notifyMessageSchema, widgetAnalyticsSchema, chatMessageSchema
+- 7 routes updated to import from centralized schemas instead of defining inline: leads, leads/bulk-email, domains, notify/sms, notify/whatsapp, embed/analytics, chat
+
+### Add query bounds to unbounded list queries
+- 6 files: api-keys (.limit(100)), showings (.limit(200)), content-library (.limit(500)), drafts (.limit(200)), domains (.limit(100)), user/export-data (.limit(10000) × 3 queries)
+
+### Console cleanup
+- 2 notification routes: replaced console.error with logger.error
+
+### Fix build-time Resend crash
+- 3 files: auth/welcome, cron/usage-check, leads/bulk-email — moved `new Resend()` from module-level to inside handler functions
+
+## 2026-03-20 — Codebase quality improvements (4 areas)
+
+### Rate limits for expensive endpoints
+- `middleware.ts` — Added 8 new entries: listing/prepare (5/min), batch-enhance (10/min), floor-plans/generate (3/min), ai/generate-description (10/min), ai/generate-caption (20/min), virtual-tours/generate (5/min), mls/import (5/min), domains (10/min)
+
+### Shared IP parsing helper
+- `lib/utils/client-ip.ts` — New shared `getClientIp()` helper
+- 12 API routes + middleware — Replaced inline `x-forwarded-for` parsing with shared import
+
+### N+1 query fix: bulk email
+- `app/api/leads/bulk-email/route.ts` — Batch activity inserts (was N individual inserts per email send)
+
+### Error boundaries
+- 4 new `error.tsx` files: floor-plans, leads/email-lists, photographer/bookings, settings/widgets
+
+## 2026-03-20 — Security + reliability fixes from stale PR review
+
+### Security: Share approval enforcement
+- `app/api/approve-photo/route.ts` — Now checks `share.allow_approval` before permitting photo approval; returns 403 if disabled
+- `app/share/[token]/page.tsx` — Reads stored `allow_approval` from share record instead of hardcoding `true`
+
+### Security: UUID validation
+- `app/api/listings/[id]/photos/route.ts` — Validates `params.id` as UUID via Zod before querying Supabase
+
+### Reliability: Rate limit polling fix
+- `middleware.ts` — Added explicit `/api/video/status` entry (60 req/min) so video render polling isn't throttled by parent `/api/video` (10 req/min); rate limit key now uses matched config key instead of truncated 2-segment path
+
+### Reliability: Open-house checkin race condition
+- `app/api/open-house/checkin/route.ts` — Atomic capacity claim using optimistic locking (CAS): `.eq('checkin_count', currentValue)` ensures only one concurrent request wins; rollback also uses CAS
+
+### Code review follow-up
+- `app/api/social/publish/route.ts` — Separate `connError` (500) from missing connection (400) using PGRST116 error code; drop `linkedin_urn` from pre-publish check since `publishToLinkedIn()` only uses `platform_user_id`
+
+## 2026-03-20 — Fix social publish 500 → 400 for missing platform config
+
+### Pre-publish validation
+- `app/api/social/publish/route.ts` — Added early validation returning 400 (not 500) when Facebook has no Page connected, Instagram has no `platform_user_id`, or LinkedIn has no `platform_user_id`/`linkedin_urn`. Previously these threw inside platform-specific functions and were caught as generic 500s.
+
 ## 2026-03-18 — Code review findings: 6 bug fixes
 
 ### CRITICAL: Drip emails CHECK constraint

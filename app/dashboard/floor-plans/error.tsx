@@ -1,29 +1,33 @@
-'use client'
+'use client';
 
-import * as Sentry from '@sentry/nextjs'
-import { useEffect } from 'react'
+import { useEffect } from 'react';
+import * as Sentry from '@sentry/nextjs';
 
-export default function Error({
+export default function DashboardError({
   error,
   reset,
 }: {
-  error: Error & { digest?: string }
-  reset: () => void
+  error: Error & { digest?: string };
+  reset: () => void;
 }) {
   useEffect(() => {
-    Sentry.captureException(error)
-  }, [error])
+    Sentry.captureException(error);
+  }, [error]);
 
   return (
-    <div className="flex min-h-[60vh] flex-col items-center justify-center gap-4">
-      <h2 className="text-xl font-semibold text-white">Something went wrong</h2>
-      <p className="text-sm text-gray-400">{error.message || 'An unexpected error occurred'}</p>
-      <button
-        onClick={reset}
-        className="rounded-lg bg-[#D4A017] px-4 py-2 text-sm font-medium text-black hover:bg-[#B8860B] transition-colors"
-      >
-        Try Again
-      </button>
-    </div>
-  )
+    <main className="min-h-screen bg-[#0A0A0A] flex items-center justify-center p-6">
+      <div className="text-center max-w-md">
+        <h2 className="text-2xl font-bold text-white mb-4">Something went wrong</h2>
+        <p className="text-white/60 mb-6">
+          An error occurred while loading this page. Please try again.
+        </p>
+        <button
+          onClick={reset}
+          className="px-6 py-3 bg-gradient-to-r from-[#D4A017] to-[#B8860B] rounded-xl text-black font-semibold hover:opacity-90"
+        >
+          Try Again
+        </button>
+      </div>
+    </main>
+  );
 }

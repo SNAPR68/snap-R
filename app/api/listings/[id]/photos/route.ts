@@ -8,6 +8,7 @@ export const dynamic = 'force-dynamic';
 
 import { NextRequest, NextResponse } from 'next/server';
 import { createClientFromRequest } from '@/lib/supabase/server';
+import { uuidSchema } from '@/lib/validation/schemas';
 
 import { logger } from '@/lib/logger';
 
@@ -23,7 +24,11 @@ export async function GET(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const listingId = params.id;
+    const parsed = uuidSchema.safeParse(params.id);
+    if (!parsed.success) {
+      return NextResponse.json({ error: 'Invalid listing ID' }, { status: 400 });
+    }
+    const listingId = parsed.data;
 
     // Verify ownership
     const { data: listing } = await supabase

@@ -5,6 +5,7 @@ export const maxDuration = 60;
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { z } from 'zod';
+import { getClientIp } from '@/lib/utils/client-ip';
 import { checkRateLimitAsync } from '@/lib/rate-limit';
 
 const MAX_FILES_PER_JOB = 50;
@@ -14,7 +15,7 @@ const ALLOWED_MIME = new Set(["image/jpeg", "image/png", "image/webp", "image/he
 export async function POST(request: NextRequest) {
   try {
     // Rate limit: 30 req/min per IP (uses Upstash Redis in production)
-    const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown';
+    const ip = getClientIp(request.headers);
     const { success: withinLimit } = await checkRateLimitAsync(`upload:${ip}`, 30, 60_000);
     if (!withinLimit) {
       return NextResponse.json({ error: 'Too many uploads. Please slow down.' }, { status: 429 });

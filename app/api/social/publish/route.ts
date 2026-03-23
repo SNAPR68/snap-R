@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { adminSupabase } from '@/lib/supabase/admin';
 import { getPlanLimits } from '@/lib/content/limits';
+import { getClientIp } from '@/lib/utils/client-ip';
 
 import { logger } from '@/lib/logger';
 import { checkRateLimitAsync } from '@/lib/rate-limit';
@@ -25,7 +26,7 @@ interface SocialConnection {
 export async function POST(req: NextRequest) {
   try {
     // Rate limit: 15 req/min per IP (uses Upstash Redis in production)
-    const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown';
+    const ip = getClientIp(req.headers);
     const { success: withinLimit } = await checkRateLimitAsync(`social-publish:${ip}`, 15, 60_000);
     if (!withinLimit) {
       return NextResponse.json({ error: 'Too many requests. Please slow down.' }, { status: 429 });
@@ -66,9 +67,44 @@ export async function POST(req: NextRequest) {
       .eq('is_active', true)
       .single();
 
-    if (connError || !connection) {
-      return NextResponse.json({ 
-        error: `${platform} not connected. Please connect your account first.` 
+    if (connError) {
+      // PGRST116 = "no rows returned" from .single() — means not connected
+      if (connError.code === 'PGRST116') {
+        return NextResponse.json({
+          error: `${platform} not connected. Please connect your account first.`
+        }, { status: 400 });
+      }
+      logger.error('Social connection lookup error:', connError);
+      return NextResponse.json({ error: 'Failed to check social connection' }, { status: 500 });
+    }
+
+    if (!connection) {
+      return NextResponse.json({
+        error: `${platform} not connected. Please connect your account first.`
+      }, { status: 400 });
+    }
+
+    // Pre-publish validation: check platform-specific requirements before attempting publish
+    const conn = connection as SocialConnection;
+    if (platform === 'facebook') {
+      const pages = conn.pages || [];
+      const page = conn.default_page_id
+        ? pages.find(p => p.id === conn.default_page_id) || pages[0]
+        : pages[0];
+      if (!page) {
+        return NextResponse.json({
+          error: 'No Facebook Page connected. Please reconnect your Facebook account and select a Page.'
+        }, { status: 400 });
+      }
+    }
+    if (platform === 'instagram' && !conn.platform_user_id) {
+      return NextResponse.json({
+        error: 'No Instagram account linked. Please reconnect your Instagram account.'
+      }, { status: 400 });
+    }
+    if (platform === 'linkedin' && !conn.platform_user_id) {
+      return NextResponse.json({
+        error: 'No LinkedIn profile linked. Please reconnect your LinkedIn account.'
       }, { status: 400 });
     }
 
@@ -175,7 +211,7 @@ async function publishToFacebook(connection: SocialConnection, content: string, 
     ? pages.find(p => p.id === defaultPageId) || pages[0]
     : pages[0];
 
-  if (!page) throw new Error('No Facebook Page connected. Please reconnect your Facebook account.');
+  if (!page) throw new Error('No Facebook Page connected. Please reconnect your Facebook account and select a Page.');
 
   const accessToken = page.access_token || connection.access_token;
   const pageId = page.id;

@@ -20,6 +20,7 @@ import { processQueueItem, processCampaignContent } from '@/lib/campaigns/conten
 import { campaignsSchema, parseBody } from '@/lib/validation/schemas'
 
 import { logger } from '@/lib/logger';
+import { getClientIp } from '@/lib/utils/client-ip';
 import { checkRateLimitAsync } from '@/lib/rate-limit';
 
 // GET - Fetch campaigns, queue, or triggers
@@ -160,7 +161,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     // Rate limit: 20 req/min per IP (uses Upstash Redis in production)
-    const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown';
+    const ip = getClientIp(request.headers);
     const { success: withinLimit } = await checkRateLimitAsync(`campaigns:${ip}`, 20, 60_000);
     if (!withinLimit) {
       return NextResponse.json({ error: 'Too many requests. Please slow down.' }, { status: 429 });

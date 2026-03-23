@@ -59,6 +59,7 @@ export async function GET(request: NextRequest) {
 
     if (listingId) query = query.eq('listing_id', listingId)
     if (status) query = query.eq('status', status)
+    query = query.limit(200)
 
     const { data, error } = await query
     if (error) return NextResponse.json({ error: error.message }, { status: 400 })

@@ -15,9 +15,9 @@ export async function POST() {
     // Gather all user data
     const [profileResult, listingsResult, photosResult, ordersResult] = await Promise.all([
       supabase.from('profiles').select('*').eq('id', user.id).single(),
-      supabase.from('listings').select('*').eq('user_id', user.id),
-      supabase.from('photos').select('*, listings!inner(user_id)').eq('listings.user_id', user.id),
-      supabase.from('human_edit_orders').select('*').eq('user_id', user.id),
+      supabase.from('listings').select('*').eq('user_id', user.id).limit(10000),
+      supabase.from('photos').select('*, listings!inner(user_id)').eq('listings.user_id', user.id).limit(10000),
+      supabase.from('human_edit_orders').select('*').eq('user_id', user.id).limit(10000),
     ]);
 
     const exportData = {

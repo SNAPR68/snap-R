@@ -15,7 +15,6 @@ import { normalizeTier, LISTING_LIMITS, type PlanType } from '@/lib/content/limi
 
 import { logger } from '@/lib/logger';
 import { startCronHeartbeat } from '@/lib/monitoring/cron-heartbeat';
-const resend = new Resend(process.env.RESEND_API_KEY);
 const CRON_SECRET = process.env.CRON_SECRET;
 
 interface UsageProfile {
@@ -128,6 +127,7 @@ export async function GET(request: NextRequest) {
   }
 
   const heartbeat = startCronHeartbeat('usage-check');
+  const resend = new Resend(process.env.RESEND_API_KEY);
   const supabase = adminSupabase();
   const results = { warned: 0, limitReached: 0, skipped: 0, failed: 0 };
 
