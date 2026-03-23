@@ -107,6 +107,7 @@ export async function POST(request: NextRequest) {
       .select('id, title, address, city, state, description, price, bedrooms, bathrooms, square_feet, preparation_metadata, photos!photos_listing_id_fkey(id, processed_url)')
       .eq('id', listingId)
       .eq('user_id', userId)
+      .limit(200)
       .single<ListingWithPhotos>();
 
     if (listingError || !listing) {

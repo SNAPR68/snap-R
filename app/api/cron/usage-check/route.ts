@@ -139,7 +139,8 @@ export async function GET(request: NextRequest) {
     // Get all non-agency users with email
     const { data: users } = await supabase
       .from('profiles')
-      .select('id, email, full_name, subscription_tier, plan');
+      .select('id, email, full_name, subscription_tier, plan')
+      .limit(10000);
 
     if (!users?.length) {
       await heartbeat.succeed(results as unknown as Record<string, unknown>);

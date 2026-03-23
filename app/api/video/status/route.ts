@@ -72,6 +72,7 @@ export async function GET(request: NextRequest) {
       .select('*')
       .eq('render_id', validatedInput.renderId)
       .eq('user_id', user.id)
+      .limit(50)
       .single<VideoRenderJob>();
 
     if (jobError || !job) {

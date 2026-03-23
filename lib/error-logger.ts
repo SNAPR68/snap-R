@@ -3,6 +3,7 @@ import { createClient } from '@supabase/supabase-js';
 import { logger } from '@/lib/logger';
 import { shouldSendAlert } from '@/lib/monitoring/alert-throttle';
 import { sendSlackAlert } from '@/lib/monitoring/slack-alert';
+import { triggerPagerDuty } from '@/lib/monitoring/pagerduty';
 
 const getSupabase = () => {
   if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
@@ -33,9 +34,13 @@ export async function logEvent({
   metadata,
   stack,
 }: LogEntry) {
-  // Always console log
-  const logFn = level === 'error' || level === 'critical' ? console.error : console.log;
-  logFn(`[${level.toUpperCase()}] [${source}] ${message}`, metadata || '');
+  // Always log using structured logger
+  const logMessage = `[${source}] ${message}`;
+  if (level === 'error' || level === 'critical') {
+    logger.error(logMessage, metadata || '');
+  } else {
+    logger[level](logMessage, metadata || '');
+  }
 
   // Save to database
   try {
@@ -60,6 +65,7 @@ export async function logEvent({
       await Promise.all([
         sendAlertEmail(source, message, metadata),
         sendSlackAlert(source, message, metadata),
+        triggerPagerDuty({ severity: 'critical', summary: `[${source}] ${message}`, source, details: metadata }),
       ]);
     }
   } catch {

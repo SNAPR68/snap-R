@@ -48,6 +48,7 @@ const BeforeAfterSlider = memo(function BeforeAfterSlider({ before, after }: { b
         max={100}
         value={value}
         onChange={(e) => setValue(parseInt(e.target.value))}
+        aria-label="Comparison slider"
         className="absolute bottom-4 left-1/2 -translate-x-1/2 w-[85%] md:w-2/3 accent-[var(--accent-gold)]"
         style={{ transform: "translateZ(0)" }}
       />

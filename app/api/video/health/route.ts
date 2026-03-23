@@ -1,6 +1,7 @@
 export const dynamic = 'force-dynamic';
 
 import { NextResponse } from 'next/server';
+import { logger } from '@/lib/logger';
 
 const REQUIRED_VARS = [
   'REMOTION_AWS_REGION',
@@ -12,18 +13,26 @@ const REQUIRED_VARS = [
 ];
 
 export async function GET() {
-  const missing = REQUIRED_VARS.filter((v) => !process.env[v]);
+  try {
+    const missing = REQUIRED_VARS.filter((v) => !process.env[v]);
 
-  if (missing.length > 0) {
-    return NextResponse.json(
-      { configured: false, missing },
-      { status: 503 }
-    );
+    if (missing.length > 0) {
+      return NextResponse.json(
+        { configured: false, missing },
+        { status: 503 }
+      );
+    }
+
+    return NextResponse.json({
+      configured: true,
+      functionName: process.env.REMOTION_LAMBDA_FUNCTION_NAME,
+      region: process.env.REMOTION_AWS_REGION,
+    }, {
+      headers: { 'Cache-Control': 'public, max-age=10' }
+    });
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Unknown error'
+    logger.error('[Video/Health] GET error:', message)
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
-
-  return NextResponse.json({
-    configured: true,
-    functionName: process.env.REMOTION_LAMBDA_FUNCTION_NAME,
-    region: process.env.REMOTION_AWS_REGION,
-  });
 }

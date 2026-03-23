@@ -1,0 +1,93 @@
+# OWASP ZAP Baseline Scan Configuration for SnapR
+# Run: docker run -v $(pwd):/zap/wrk/:rw -t ghcr.io/zaproxy/zaproxy:stable zap-baseline.py -t http://localhost:3000 -c zap-config.yaml
+
+env:
+  contexts:
+    - name: SnapR
+      urls:
+        - http://localhost:3000
+      includePaths:
+        - "http://localhost:3000.*"
+      excludePaths:
+        - "http://localhost:3000/_next/.*"
+        - "http://localhost:3000/api/cron/.*"
+        - "http://localhost:3000/api/stripe/webhook"
+
+  parameters:
+    failOnError: true
+    failOnWarning: false
+    progressToStdout: true
+
+jobs:
+  - type: spider
+    parameters:
+      maxDuration: 5 # minutes
+      maxDepth: 5
+      maxChildren: 10
+      url: http://localhost:3000
+
+  - type: spiderAjax
+    parameters:
+      maxDuration: 5
+      maxCrawlDepth: 3
+      url: http://localhost:3000
+
+  - type: passiveScan-config
+    parameters:
+      maxAlertsPerRule: 10
+      scanOnlyInScope: true
+
+  - type: passiveScan-wait
+    parameters:
+      maxDuration: 10
+
+  - type: activeScan
+    parameters:
+      maxRuleDurationInMins: 5
+      maxScanDurationInMins: 30
+      policy: Default Policy
+      scanHeadersAllRequests: true
+    policyDefinition:
+      rules:
+        # SQL Injection
+        - id: 40018
+          strength: medium
+          threshold: low
+        # Cross-Site Scripting (Reflected)
+        - id: 40012
+          strength: medium
+          threshold: low
+        # Cross-Site Scripting (Persistent)
+        - id: 40014
+          strength: medium
+          threshold: low
+        # Server Side Request Forgery
+        - id: 40046
+          strength: medium
+          threshold: low
+        # CSRF
+        - id: 40014
+          strength: low
+          threshold: medium
+        # Path Traversal
+        - id: 6
+          strength: medium
+          threshold: low
+        # Remote Code Execution
+        - id: 90019
+          strength: medium
+          threshold: low
+        # Command Injection
+        - id: 90020
+          strength: medium
+          threshold: low
+
+  - type: report
+    parameters:
+      template: sarif-json
+      reportDir: /zap/wrk/security/reports
+      reportFile: zap-report
+    risks:
+      - high
+      - medium
+      - low

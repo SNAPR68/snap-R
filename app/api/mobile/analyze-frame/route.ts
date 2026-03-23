@@ -10,6 +10,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClientFromRequest } from '@/lib/supabase/server';
 import OpenAI from 'openai';
+import { mobileAnalyzeFrameSchema } from '@/lib/validation/schemas';
 
 import { logger } from '@/lib/logger';
 const FRAME_ANALYSIS_PROMPT = `You are a real estate photography AI assistant analyzing a live camera frame.
@@ -50,19 +51,19 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const formData = await request.formData();
-  const imageFile = formData.get('image');
-
-  if (!imageFile || !(imageFile instanceof Blob)) {
-    return NextResponse.json({ error: 'Image file required' }, { status: 400 });
-  }
-
-  // Convert to base64
-  const arrayBuffer = await imageFile.arrayBuffer();
-  const base64 = Buffer.from(arrayBuffer).toString('base64');
-  const mimeType = imageFile.type || 'image/jpeg';
-
   try {
+    const body = await request.json();
+    const parsed = mobileAnalyzeFrameSchema.safeParse(body);
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: 'Invalid request', details: parsed.error.flatten() },
+        { status: 400 }
+      );
+    }
+
+    const { imageBase64 } = parsed.data;
+    const mimeType = 'image/jpeg'; // Default MIME type for base64 images
+
     const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
     const response = await openai.chat.completions.create({
@@ -76,7 +77,7 @@ export async function POST(request: NextRequest) {
             {
               type: 'image_url',
               image_url: {
-                url: `data:${mimeType};base64,${base64}`,
+                url: `data:${mimeType};base64,${imageBase64}`,
                 detail: 'low', // Low detail for speed — this is real-time guidance
               },
             },

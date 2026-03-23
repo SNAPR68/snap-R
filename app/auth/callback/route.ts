@@ -45,6 +45,7 @@ export async function GET(request: Request) {
               email: data.user.email,
               name: data.user.user_metadata?.full_name || data.user.user_metadata?.name || '',
             }),
+            signal: AbortSignal.timeout(10000),
           }).catch(() => { /* non-blocking */ });
         }
 

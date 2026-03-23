@@ -1,14 +1,24 @@
-import { NextResponse } from 'next/server';
+import { NextResponse, NextRequest } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { adminSupabase } from '@/lib/supabase/admin';
+import { testLinkedinSchema } from '@/lib/validation/schemas';
 
-export async function POST() {
+export async function POST(request: NextRequest) {
   // Block in production — this test route actually posts to LinkedIn
   if (process.env.NODE_ENV === 'production') {
     return NextResponse.json({ error: 'Not available in production' }, { status: 403 });
   }
 
   try {
+    const body = await request.json();
+    const parsed = testLinkedinSchema.safeParse(body);
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: 'Invalid request', details: parsed.error.flatten() },
+        { status: 400 }
+      );
+    }
+
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
 

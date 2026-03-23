@@ -1,6 +1,52 @@
 # SnapR Execution Changelog
 =================================
 
+## 2026-03-23 — Production readiness 90→97
+
+### Component Tests (16 new files)
+- `__tests__/components/ui/` — button, input, badge, card, textarea, tabs
+- `__tests__/components/` — empty-state, skip-nav, credits-display, error-boundary, cookie-consent, listing-card, guide-request-form, batch-progress-modal
+- `__tests__/components/content-studio/` — schedule-modal, unified-creator
+
+### Load Testing
+- `load-tests/` — 7 k6 scripts (upload, enhance, publish, auth-flow, api-v1, marketing-pipeline, config)
+
+### CI/CD
+- `.github/workflows/lighthouse.yml` — Lighthouse CI on PRs
+- `.github/workflows/security.yml` — OWASP ZAP security scan
+- `lighthouserc.js` — CWV thresholds
+- `vitest.config.ts` — Coverage thresholds raised to 80%
+
+### Monitoring & Alerting
+- `lib/monitoring/pagerduty.ts` — PagerDuty Events API v2 integration
+- `lib/monitoring/alert-config.ts` — Per-route rate limit config
+- `lib/monitoring/db-monitor.ts` — Slow queries, connection pool, table bloat
+- `app/api/cron/db-monitor/route.ts` — Daily DB health cron
+- `lib/error-logger.ts` — Added PagerDuty to critical alert chain
+- `lib/rate-limit.ts` — Added checkRateLimitPerUser() for AI routes
+
+### Accessibility
+- `e2e/wcag-audit.spec.ts` — WCAG 2.1 AA axe-core audit + keyboard nav
+
+### i18n
+- `i18n/request.ts`, `i18n/routing.ts` — next-intl framework setup
+- `messages/en.json`, `messages/es.json` — English + Spanish catalogs
+
+### Syndication
+- `lib/syndication/field-mapping.ts` — SnapR → RESO field mapping
+- `lib/syndication/reso-feed.ts` — RESO 2.0 XML generator
+- `app/api/syndication/zillow/route.ts` — Zillow ZDF feed endpoint
+- `app/api/syndication/realtor/route.ts` — Realtor.com feed endpoint
+
+### Security & Mutation Testing
+- `stryker.config.mjs` — Stryker mutation testing config
+- `security/zap-config.yaml` — OWASP ZAP scan config
+- `security/README.md` — Security tooling docs
+
+### Infrastructure
+- `scripts/seed-staging.mjs` — Staging data seeder
+- `vercel.json` — Added db-monitor cron
+
 ## 2026-03-18 — Code review findings: 6 bug fixes
 
 ### CRITICAL: Drip emails CHECK constraint

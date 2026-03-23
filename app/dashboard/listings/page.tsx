@@ -216,7 +216,7 @@ export default function ListingsPage() {
   const handleCreateSample = async () => {
     setCreatingSample(true);
     try {
-      const res = await fetch('/api/listing/sample', { method: 'POST' });
+      const res = await fetch('/api/listing/sample', { method: 'POST', signal: AbortSignal.timeout(15000) });
       const data = await res.json();
       if (data.id) {
         router.push(`/dashboard/studio?id=${data.id}`);

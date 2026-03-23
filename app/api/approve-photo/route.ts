@@ -1,6 +1,7 @@
 export const dynamic = 'force-dynamic';
 
 import { NextRequest, NextResponse } from 'next/server';
+import { createClient as createAuthClient } from '@/lib/supabase/server';
 import { createClient } from '@supabase/supabase-js';
 import { approvePhotoSchema, parseBody } from '@/lib/validation/schemas'
 
@@ -14,6 +15,13 @@ function getSupabase() {
 
 export async function POST(req: NextRequest) {
   try {
+    // Authenticate user
+    const authClient = await createAuthClient();
+    const { data: { user } } = await authClient.auth.getUser();
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     const body = await req.json(); const validated = parseBody(approvePhotoSchema, body); if (!validated.success) { return NextResponse.json({ error: validated.error, details: validated.details }, { status: 400 }); } const { photoId, shareToken, approved, feedback } = body;
 
     if (!photoId) {

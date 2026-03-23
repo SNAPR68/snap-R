@@ -79,8 +79,8 @@ export default function PortfolioItemsPage() {
   const fetchItems = useCallback(async () => {
     try {
       const [portfolioRes, itemsRes] = await Promise.all([
-        fetch(`/api/portfolio?id=${portfolioId}`),
-        fetch(`/api/portfolio/items?portfolioId=${portfolioId}`),
+        fetch(`/api/portfolio?id=${portfolioId}`, { signal: AbortSignal.timeout(15000) }),
+        fetch(`/api/portfolio/items?portfolioId=${portfolioId}`, { signal: AbortSignal.timeout(15000) }),
       ]);
 
       if (!portfolioRes.ok) {
@@ -211,11 +211,13 @@ export default function PortfolioItemsPage() {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ id: item.id, portfolioId, displayOrder: swapItem.display_order }),
+          signal: AbortSignal.timeout(15000),
         }),
         fetch('/api/portfolio/items', {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ id: swapItem.id, portfolioId, displayOrder: item.display_order }),
+          signal: AbortSignal.timeout(15000),
         }),
       ]);
 

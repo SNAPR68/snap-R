@@ -233,8 +233,8 @@ export default function AnalyticsDashboard() {
       if (from) params.set('from', from)
       const qs = params.toString()
       const [roiRes, listingsRes] = await Promise.all([
-        fetch(`/api/analytics/roi${qs ? `?${qs}` : ''}`),
-        fetch(`/api/analytics/listings${qs ? `?${qs}` : ''}`),
+        fetch(`/api/analytics/roi${qs ? `?${qs}` : ''}`, { signal: AbortSignal.timeout(15000) }),
+        fetch(`/api/analytics/listings${qs ? `?${qs}` : ''}`, { signal: AbortSignal.timeout(15000) }),
       ])
       if (!roiRes.ok) throw new Error('Failed to fetch')
       const json = await roiRes.json()

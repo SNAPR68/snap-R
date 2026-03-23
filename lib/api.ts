@@ -7,7 +7,7 @@ export async function api(path: string, options: RequestInit = {}) {
     'Content-Type': 'application/json',
   };
 
-  return fetch(url, { ...options, headers });
+  return fetch(url, { ...options, headers, signal: options.signal || AbortSignal.timeout(15000) });
 }
 
 // Upload (multipart)
@@ -18,6 +18,7 @@ export async function apiUpload(path: string, formData: FormData) {
   return fetch(url, {
     method: 'POST',
     body: formData,
+    signal: AbortSignal.timeout(30000),
   });
 }
 

@@ -251,6 +251,7 @@ export function AIChatbot() {
                       value={feedbackMessage}
                       onChange={(e) => setFeedbackMessage(e.target.value)}
                       placeholder={feedbackType === 'issue' ? "What went wrong?" : "Tell us more..."}
+                      aria-label="Chat message"
                       className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white text-sm placeholder-white/30 focus:outline-none focus:border-[#D4A017]/50 resize-none h-20 mb-3"
                     />
                     <div className="flex gap-2">
@@ -281,6 +282,7 @@ export function AIChatbot() {
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 placeholder="Ask me anything..."
+                aria-label="Your name"
                 className="flex-1 bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-white placeholder-white/30 focus:outline-none focus:border-[#D4A017]/50 text-sm"
                 disabled={isLoading}
               />

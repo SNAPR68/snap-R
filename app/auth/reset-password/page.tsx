@@ -61,7 +61,7 @@ function ResetPasswordForm() {
     }
 
     // Send security notification email (fire-and-forget)
-    fetch('/api/auth/password-changed', { method: 'POST' }).catch(() => {});
+    fetch('/api/auth/password-changed', { method: 'POST', signal: AbortSignal.timeout(10000) }).catch(() => {});
 
     setDone(true);
     setTimeout(() => router.push('/dashboard'), 2500);

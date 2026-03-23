@@ -15,7 +15,8 @@ export async function GET() {
       .from('social_connections')
       .select('id, platform, platform_username, is_active, connected_at')
       .eq('user_id', user.id)
-      .eq('is_active', true);
+      .eq('is_active', true)
+      .limit(20);
 
     return NextResponse.json({ connections: connections || [] });
   } catch (error: unknown) {

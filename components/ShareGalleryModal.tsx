@@ -60,15 +60,15 @@ export default function ShareGalleryModal({ listingId, listingTitle, onClose }: 
             <>
               <div>
                 <label className="text-sm text-white/50 block mb-1">Client Name (optional)</label>
-                <input type="text" value={clientName} onChange={e => setClientName(e.target.value)} placeholder="John Smith" className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:border-[#D4A017]" />
+                <input type="text" value={clientName} onChange={e => setClientName(e.target.value)} placeholder="John Smith" aria-label="Gallery password" className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:border-[#D4A017]" />
               </div>
               <div>
                 <label className="text-sm text-white/50 block mb-1">Client Email (optional)</label>
-                <input type="email" value={clientEmail} onChange={e => setClientEmail(e.target.value)} placeholder="client@email.com" className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:border-[#D4A017]" />
+                <input type="email" value={clientEmail} onChange={e => setClientEmail(e.target.value)} placeholder="client@email.com" aria-label="Expiry days" className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:border-[#D4A017]" />
               </div>
               <div>
                 <label className="text-sm text-white/50 block mb-1">Link Expires In</label>
-                <select value={expiresInDays} onChange={e => setExpiresInDays(Number(e.target.value))} className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:border-[#D4A017]">
+                <select value={expiresInDays} onChange={e => setExpiresInDays(Number(e.target.value))} aria-label="Access level" className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:border-[#D4A017]">
                   <option value={3}>3 days</option>
                   <option value={7}>7 days</option>
                   <option value={14}>14 days</option>

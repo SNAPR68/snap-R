@@ -32,7 +32,8 @@ export async function POST(request: NextRequest) {
     const { data: listings } = await adminSupabase
       .from('listings')
       .select('id')
-      .eq('user_id', user.id);
+      .eq('user_id', user.id)
+      .limit(10000);
 
     const listingIds = listings?.map(l => l.id) || [];
 
@@ -40,7 +41,8 @@ export async function POST(request: NextRequest) {
     const { data: photos } = await adminSupabase
       .from('photos')
       .select('raw_url, processed_url')
-      .in('listing_id', listingIds);
+      .in('listing_id', listingIds)
+      .limit(10000);
 
     // Delete photos from storage
     if (photos && photos.length > 0) {

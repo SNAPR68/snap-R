@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { Resend } from 'resend';
+import { createClient } from '@/lib/supabase/server';
 import { adminSupabase } from '@/lib/supabase/admin';
 import { escapeHtml } from '@/lib/utils/html-escape';
 import { notifyApprovalSchema, parseBody } from '@/lib/validation/schemas'
@@ -9,6 +10,13 @@ import { checkRateLimitAsync } from '@/lib/rate-limit';
 
 export async function POST(req: NextRequest) {
   try {
+    // Authenticate user
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     // Rate limit: 5 notifications per minute per IP to prevent spam
     const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown'
     const { success: withinLimit } = await checkRateLimitAsync(`notify-approval:${ip}`, 5, 60_000)

@@ -19,6 +19,7 @@ export async function GET() {
       .from('partner_applications')
       .select('*')
       .eq('email', user.email)
+      .limit(10)
       .maybeSingle();
 
     if (!application) {

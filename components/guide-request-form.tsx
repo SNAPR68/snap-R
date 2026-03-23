@@ -80,7 +80,7 @@ export function GuideRequestForm({ source, variant = 'card' }: GuideRequestFormP
             onChange={(e) => setEmail(e.target.value)}
             placeholder="Enter your email"
             required
-            aria-label="Email for marketing guide"
+            aria-label="Email address"
             className="flex-1 px-4 py-2.5 bg-white/5 border border-white/20 rounded-lg text-white text-sm placeholder-white/40 focus:border-[#D4A017] focus:outline-none transition-colors"
           />
           <button
@@ -124,7 +124,7 @@ export function GuideRequestForm({ source, variant = 'card' }: GuideRequestFormP
           onChange={(e) => setEmail(e.target.value)}
           placeholder="Your email address"
           required
-          aria-label="Email address for marketing guide"
+          aria-label="Email address"
           className="w-full px-4 py-3 bg-white/5 border border-white/20 rounded-xl text-white text-sm placeholder-white/40 focus:border-[#D4A017] focus:outline-none transition-colors"
         />
         <button

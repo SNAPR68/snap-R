@@ -413,6 +413,16 @@ export const authWelcomeSchema = z.object({
   email: z.string().email().optional(),
 })
 
+// Auth: password changed
+export const passwordChangedSchema = z.object({
+  email: z.string().email(),
+})
+
+// Social: test LinkedIn post
+export const testLinkedinSchema = z.object({
+  content: z.string().max(5000).optional(),
+})
+
 // Auto-post
 export const autoPostSchema = z.object({
   listingId: z.string().uuid(),

@@ -11,7 +11,8 @@ export async function GET(request: Request) {
     const { data: users } = await adminSupabase()
       .from('profiles')
       .select('id, email, full_name, plan, credits, created_at')
-      .order('created_at', { ascending: false });
+      .order('created_at', { ascending: false })
+      .limit(10000);
 
     const csv = [
       'ID,Email,Name,Plan,Credits,Created At',

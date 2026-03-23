@@ -1,13 +1,14 @@
 /**
  * POST /api/deliver/event
  * Records a delivery event (viewed, downloaded, downloaded_single)
- * Called from the public /deliver/[token] client page — no auth required.
+ * Requires authentication to prevent abuse.
  */
 
 export const dynamic = 'force-dynamic'
 
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
+import { createClient } from '@/lib/supabase/server'
 import { adminSupabase } from '@/lib/supabase/admin'
 
 const schema = z.object({
@@ -18,6 +19,13 @@ const schema = z.object({
 
 export async function POST(request: NextRequest) {
   try {
+    // Authenticate user
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     const body = await request.json()
     const parsed = schema.safeParse(body)
     if (!parsed.success) {

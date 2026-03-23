@@ -14,6 +14,7 @@ export async function GET() {
       .from('social_connections')
       .select('*')
       .eq('user_id', user.id)
+      .limit(20)
 
     return NextResponse.json({ connections: connections || [] })
   } catch (error: unknown) {

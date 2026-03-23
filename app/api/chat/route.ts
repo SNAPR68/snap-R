@@ -4,6 +4,7 @@ import { adminSupabase } from '@/lib/supabase/admin';
 import { buildPropertyChatPrompt } from '@/lib/chat/system-prompt';
 import { assessQualification } from '@/lib/chat/qualification';
 import { logger } from '@/lib/logger';
+import { checkRateLimitAsync } from '@/lib/rate-limit';
 import { z } from 'zod';
 
 const chatMessageSchema = z.object({
@@ -21,6 +22,13 @@ const chatMessageSchema = z.object({
 
 export async function POST(request: NextRequest) {
   try {
+    // Rate limit: 3 req/min per IP to prevent OpenAI credit abuse
+    const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown';
+    const { success: withinLimit } = await checkRateLimitAsync(`chat:${ip}`, 3, 60_000);
+    if (!withinLimit) {
+      return NextResponse.json({ error: 'Too many requests. Please slow down.' }, { status: 429 });
+    }
+
     const body = await request.json();
     const parsed = chatMessageSchema.safeParse(body);
     if (!parsed.success) {
@@ -39,6 +47,17 @@ export async function POST(request: NextRequest) {
     } = parsed.data;
 
     const admin = adminSupabase();
+
+    // Validate that propertySiteId exists before processing
+    const { data: propertySite } = await admin
+      .from('property_sites')
+      .select('id')
+      .eq('id', propertySiteId)
+      .single();
+
+    if (!propertySite) {
+      return NextResponse.json({ error: 'Invalid property site' }, { status: 404 });
+    }
 
     // Fetch listing details for context
     const { data: listing } = await admin

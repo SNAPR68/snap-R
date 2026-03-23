@@ -102,7 +102,7 @@ export default function TourViewerPage() {
   const loadTour = async () => {
     try {
       setLoading(true);
-      const response = await fetch(`/api/tour/${slug}`);
+      const response = await fetch(`/api/tour/${slug}`, { signal: AbortSignal.timeout(15000) });
       
       if (!response.ok) {
         const data = await response.json().catch(() => ({}));

@@ -1,0 +1,145 @@
+{
+  "common": {
+    "appName": "SnapR",
+    "loading": "Cargando...",
+    "save": "Guardar",
+    "cancel": "Cancelar",
+    "delete": "Eliminar",
+    "edit": "Editar",
+    "create": "Crear",
+    "search": "Buscar",
+    "filter": "Filtrar",
+    "export": "Exportar",
+    "import": "Importar",
+    "back": "Atrás",
+    "next": "Siguiente",
+    "submit": "Enviar",
+    "close": "Cerrar",
+    "confirm": "Confirmar",
+    "retry": "Reintentar",
+    "viewAll": "Ver Todo",
+    "noResults": "No se encontraron resultados",
+    "error": "Algo salió mal",
+    "success": "Éxito"
+  },
+  "auth": {
+    "login": "Iniciar Sesión",
+    "signup": "Registrarse",
+    "logout": "Cerrar Sesión",
+    "forgotPassword": "¿Olvidaste tu contraseña?",
+    "resetPassword": "Restablecer Contraseña",
+    "email": "Correo electrónico",
+    "password": "Contraseña",
+    "confirmPassword": "Confirmar Contraseña"
+  },
+  "nav": {
+    "home": "Inicio",
+    "dashboard": "Panel",
+    "listings": "Propiedades",
+    "contentStudio": "Estudio de Contenido",
+    "leads": "Clientes Potenciales",
+    "analytics": "Analíticas",
+    "settings": "Configuración",
+    "billing": "Facturación",
+    "team": "Equipo",
+    "help": "Ayuda"
+  },
+  "listings": {
+    "title": "Mis Propiedades",
+    "addListing": "Agregar Propiedad",
+    "noListings": "Aún no hay propiedades",
+    "status": {
+      "draft": "Borrador",
+      "preparing": "Preparando",
+      "prepared": "Preparado",
+      "active": "Activo",
+      "sold": "Vendido",
+      "archived": "Archivado"
+    },
+    "fields": {
+      "address": "Dirección",
+      "price": "Precio",
+      "bedrooms": "Habitaciones",
+      "bathrooms": "Baños",
+      "sqft": "Pies Cuadrados",
+      "description": "Descripción",
+      "photos": "Fotos"
+    }
+  },
+  "marketing": {
+    "title": "Marketing",
+    "status": {
+      "processing": "Procesando activos de marketing...",
+      "completed": "Marketing completado",
+      "failed": "Marketing falló",
+      "skipped": "Marketing omitido (actualiza tu plan)"
+    },
+    "steps": {
+      "description": "Descripción de Propiedad",
+      "captions": "Subtítulos Sociales",
+      "mls": "Paquete MLS",
+      "propertySite": "Sitio de Propiedad",
+      "scheduledPosts": "Publicaciones Programadas"
+    }
+  },
+  "pricing": {
+    "title": "Precios",
+    "subtitle": "Elige el plan que se adapte a tu negocio",
+    "monthly": "Mensual",
+    "annual": "Anual",
+    "perMonth": "/mes",
+    "startFreeTrial": "Comienza tu Prueba Gratis",
+    "currentPlan": "Plan Actual",
+    "upgrade": "Mejorar Plan",
+    "tiers": {
+      "free": "Gratis",
+      "starter": "Inicial",
+      "pro": "Pro",
+      "agency": "Agencia",
+      "enterprise": "Empresarial"
+    }
+  },
+  "studio": {
+    "title": "Estudio IA",
+    "enhance": "Mejorar",
+    "beforeAfter": "Antes / Después",
+    "download": "Descargar",
+    "downloadAll": "Descargar Todo",
+    "tools": {
+      "skyReplacement": "Reemplazo de Cielo",
+      "virtualTwilight": "Crepúsculo Virtual",
+      "virtualStaging": "Escenificación Virtual",
+      "declutter": "Organizar",
+      "hdr": "Mejora HDR",
+      "autoEnhance": "Mejora Automática"
+    }
+  },
+  "leads": {
+    "title": "Clientes Potenciales",
+    "addLead": "Agregar Cliente",
+    "pipeline": "Pipeline",
+    "listView": "Vista de Lista",
+    "stages": {
+      "new": "Nuevo",
+      "contacted": "Contactado",
+      "qualified": "Calificado",
+      "touring": "En Visita",
+      "offer": "Oferta",
+      "closed": "Cerrado",
+      "lost": "Perdido"
+    }
+  },
+  "notifications": {
+    "title": "Notificaciones",
+    "markAllRead": "Marcar Todo Leído",
+    "noNotifications": "Sin notificaciones"
+  },
+  "errors": {
+    "notFound": "Página no encontrada",
+    "unauthorized": "Por favor inicia sesión para continuar",
+    "forbidden": "No tienes permiso para acceder a esto",
+    "serverError": "Error del servidor. Inténtalo de nuevo.",
+    "rateLimited": "Demasiadas solicitudes. Por favor espera.",
+    "networkError": "Error de red. Verifica tu conexión."
+  }
+}

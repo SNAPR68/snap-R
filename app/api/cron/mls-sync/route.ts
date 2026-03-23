@@ -59,7 +59,8 @@ export async function GET(request: NextRequest) {
     const { data: profiles, error: profileError } = await supabase
       .from('profiles')
       .select('id, mls_sync_config')
-      .not('mls_sync_config', 'is', null);
+      .not('mls_sync_config', 'is', null)
+      .limit(1000);
 
     if (profileError) {
       logger.error('[MLSSync] Failed to fetch profiles:', profileError);

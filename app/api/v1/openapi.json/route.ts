@@ -4,6 +4,7 @@
  */
 
 import { NextResponse } from 'next/server'
+import { logger } from '@/lib/logger'
 
 const OPENAPI_SPEC = {
   openapi: '3.0.3',
@@ -1028,10 +1029,16 @@ const OPENAPI_SPEC = {
 } as const
 
 export async function GET() {
-  return NextResponse.json(OPENAPI_SPEC, {
-    headers: {
-      'Cache-Control': 'public, max-age=3600, s-maxage=86400',
-      'Access-Control-Allow-Origin': '*',
-    },
-  })
+  try {
+    return NextResponse.json(OPENAPI_SPEC, {
+      headers: {
+        'Cache-Control': 'public, max-age=3600, s-maxage=86400',
+        'Access-Control-Allow-Origin': '*',
+      },
+    })
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Unknown error'
+    logger.error('[OpenAPI] GET error:', message)
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+  }
 }
