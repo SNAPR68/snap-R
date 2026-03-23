@@ -1,5 +1,4 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
-import { NextRequest } from 'next/server'
 
 // Mock fetch globally
 global.fetch = vi.fn()
@@ -8,16 +7,34 @@ global.fetch = vi.fn()
 vi.mock('next/server', () => ({
   NextRequest: vi.fn(),
   NextResponse: {
-    json: vi.fn((data, opts) => ({
+    json: vi.fn((data: unknown, opts?: { status?: number }) => ({
       status: opts?.status || 200,
       json: () => Promise.resolve(data),
     })),
   },
 }))
 
+interface MockQueryChain {
+  select: ReturnType<typeof vi.fn>
+  insert: ReturnType<typeof vi.fn>
+  update: ReturnType<typeof vi.fn>
+  eq: ReturnType<typeof vi.fn>
+  in: ReturnType<typeof vi.fn>
+  lte: ReturnType<typeof vi.fn>
+  lt: ReturnType<typeof vi.fn>
+  gte: ReturnType<typeof vi.fn>
+  order: ReturnType<typeof vi.fn>
+  limit: ReturnType<typeof vi.fn>
+  single: ReturnType<typeof vi.fn>
+  maybeSingle: ReturnType<typeof vi.fn>
+  is: ReturnType<typeof vi.fn>
+  not: ReturnType<typeof vi.fn>
+  contains: ReturnType<typeof vi.fn>
+}
+
 vi.mock('@/lib/supabase/admin', () => ({
   adminSupabase: vi.fn(() => {
-    const mockChain = {
+    const mockChain: MockQueryChain = {
       select: vi.fn(),
       insert: vi.fn(async () => ({ error: null })),
       update: vi.fn(),
@@ -46,7 +63,7 @@ vi.mock('@/lib/supabase/admin', () => ({
     mockChain.not.mockReturnValue(mockChain)
     mockChain.contains.mockReturnValue(mockChain)
     return {
-      from: vi.fn((table) => mockChain),
+      from: vi.fn((_table: string) => mockChain),
     }
   }),
 }))
@@ -68,7 +85,7 @@ vi.mock('@/lib/social/oauth-config', () => ({
 }))
 
 vi.mock('@/lib/content/limits', () => ({
-  getPlanLimits: vi.fn((tier) => ({
+  getPlanLimits: vi.fn((tier: string) => ({
     canPublish: tier !== 'free',
     maxPosts: tier === 'pro' ? 100 : 10,
   })),
@@ -87,7 +104,7 @@ vi.mock('@/lib/logger', () => ({
 }))
 
 vi.mock('@/lib/monitoring/sentry-cron', () => ({
-  withSentryCron: vi.fn((name, schedule, handler) => handler),
+  withSentryCron: vi.fn((_name: string, _schedule: string, handler: unknown) => handler),
 }))
 
 vi.mock('@/lib/monitoring/cron-heartbeat', () => ({
@@ -132,7 +149,7 @@ describe('Cron Jobs', () => {
           ],
           error: null,
         })),
-      } as any)
+      } as unknown as ReturnType<typeof mockSupabase.from>)
 
       const posts = [
         {
@@ -182,7 +199,7 @@ describe('Cron Jobs', () => {
       mockChain.update.mockReturnValue(mockChain)
       mockChain.eq.mockReturnValue(mockChain)
 
-      vi.mocked(mockSupabase.from).mockReturnValueOnce(mockChain as any)
+      vi.mocked(mockSupabase.from).mockReturnValueOnce(mockChain as unknown as ReturnType<typeof mockSupabase.from>)
 
       expect(mockChain.update).toBeDefined()
     })
@@ -191,7 +208,7 @@ describe('Cron Jobs', () => {
       const { refreshAccessToken } = await import('@/lib/social/oauth-config')
       const mockRefresh = vi.mocked(refreshAccessToken)
 
-      const connection = {
+      const _connection = {
         access_token: 'old_token',
         token_expires_at: new Date(Date.now() + 1000 * 60 * 60).toISOString(), // 1 hour
         platform: 'twitter',
@@ -203,7 +220,7 @@ describe('Cron Jobs', () => {
     })
 
     it('should skip posts if platform not connected', async () => {
-      const posts = [
+      const _posts = [
         {
           id: 'post_123',
           platform: 'twitter',
@@ -211,9 +228,9 @@ describe('Cron Jobs', () => {
         },
       ]
 
-      const connection = null // No connection found
+      const _connection = null // No connection found
 
-      expect(connection).toBeNull()
+      expect(_connection).toBeNull()
       // Post should be marked failed if connection is null
     })
 
@@ -293,7 +310,7 @@ describe('Cron Jobs', () => {
           ],
           error: null,
         })),
-      } as any)
+      } as unknown as ReturnType<typeof mockSupabase.from>)
 
       const posts = [
         {
@@ -334,8 +351,7 @@ describe('Cron Jobs', () => {
 
     it('should refresh tokens expiring within 1 hour', async () => {
       const now = new Date()
-      const { refreshAccessToken } = await import('@/lib/social/oauth-config')
-      const mockRefresh = vi.mocked(refreshAccessToken)
+      const { refreshAccessToken: _refreshAccessToken } = await import('@/lib/social/oauth-config')
 
       const connections = [
         {
@@ -382,7 +398,7 @@ describe('Cron Jobs', () => {
       mockChain.update.mockReturnValue(mockChain)
       mockChain.eq.mockReturnValue(mockChain)
 
-      vi.mocked(mockSupabase.from).mockReturnValueOnce(mockChain as any)
+      vi.mocked(mockSupabase.from).mockReturnValueOnce(mockChain as unknown as ReturnType<typeof mockSupabase.from>)
 
       const metrics = {
         likes: 42,
@@ -408,7 +424,7 @@ describe('Cron Jobs', () => {
       const totalEngagement = metrics.likes + metrics.comments + metrics.shares
       const engagementRate = (totalEngagement / metrics.impressions) * 100
 
-      expect(engagementRate).toBe(3.5)
+      expect(engagementRate).toBeCloseTo(3.5)
     })
 
     it('should skip posts without platform_post_id', async () => {
@@ -455,8 +471,7 @@ describe('Cron Jobs', () => {
 
   describe('refresh-tokens cron', () => {
     it('should refresh expiring tokens', async () => {
-      const { refreshAccessToken } = await import('@/lib/social/oauth-config')
-      const mockRefresh = vi.mocked(refreshAccessToken)
+      const { refreshAccessToken: _refreshAccessToken } = await import('@/lib/social/oauth-config')
 
       const now = new Date()
       const expiringConnections = [
@@ -547,10 +562,10 @@ describe('Cron Jobs', () => {
       mockChain.update.mockReturnValue(mockChain)
       mockChain.eq.mockReturnValue(mockChain)
 
-      vi.mocked(mockSupabase.from).mockReturnValueOnce(mockChain as any)
+      vi.mocked(mockSupabase.from).mockReturnValueOnce(mockChain as unknown as ReturnType<typeof mockSupabase.from>)
 
-      const newToken = 'new_access_token_xyz'
-      const newExpiry = new Date(Date.now() + 3600000).toISOString()
+      const _newToken = 'new_access_token_xyz'
+      const _newExpiry = new Date(Date.now() + 3600000).toISOString()
 
       expect(mockChain.update).toBeDefined()
     })

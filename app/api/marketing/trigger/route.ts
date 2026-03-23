@@ -95,8 +95,8 @@ export async function POST(request: NextRequest) {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        ...(process.env.WORKER_ADMIN_KEY && {
-          'x-admin-key': process.env.WORKER_ADMIN_KEY,
+        ...(process.env.ADMIN_SECRET && {
+          'Authorization': `Bearer ${process.env.ADMIN_SECRET}`,
         }),
       },
       body: JSON.stringify({

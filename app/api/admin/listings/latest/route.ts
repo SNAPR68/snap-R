@@ -5,13 +5,8 @@ export const dynamic = 'force-dynamic';
 
 export async function GET(request: NextRequest) {
   try {
-    const adminKey = request.headers.get('x-admin-key');
-    const allowAdmin = Boolean(
-      adminKey &&
-        (adminKey === process.env.WORKER_ADMIN_KEY || adminKey === process.env.PREPARE_ADMIN_KEY)
-    );
-
-    if (!allowAdmin) {
+    const authHeader = request.headers.get('authorization');
+    if (!process.env.ADMIN_SECRET || authHeader !== `Bearer ${process.env.ADMIN_SECRET}`) {
       return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
     }
 
