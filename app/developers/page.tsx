@@ -1,8 +1,11 @@
 import { Code2, Key, Zap, Shield, Webhook } from 'lucide-react'
 
 export const metadata = {
-  title: 'SnapR Developer API Documentation',
-  description: 'Integrate SnapR AI photo enhancement, video generation, and marketing automation into your real estate platform.',
+  title: 'SnapR API | Developer Docs and Webhooks',
+  description: 'Explore the SnapR API, webhook events, and developer tools for integrating AI-powered real estate photo enhancement into your workflow.',
+  alternates: {
+    canonical: '/developers',
+  },
 }
 
 export default function DevelopersPage() {
@@ -17,7 +20,7 @@ export default function DevelopersPage() {
             <span className="px-2 py-0.5 bg-[#D4A017]/20 text-[#D4A017] text-xs font-mono rounded">v1</span>
           </div>
           <p className="text-gray-400 text-lg">
-            Integrate AI photo enhancement, video generation, and marketing automation into your real estate platform.
+            Use the SnapR API and webhooks to connect AI real estate photo enhancement to your existing tools and workflows.
           </p>
         </header>
 

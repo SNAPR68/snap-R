@@ -75,7 +75,7 @@ const TIERS = [
     id: 'gold',
     name: 'SnapR Gold',
     icon: Crown,
-    description: 'For agents & photographers',
+    description: 'Best for individual agents managing active listings',
     popular: true,
     photosPerListing: 50,
     features: [
@@ -96,7 +96,7 @@ const TIERS = [
     id: 'platinum',
     name: 'SnapR Platinum',
     icon: Diamond,
-    description: 'For teams & white-label',
+    description: 'Best for teams and brokerages that need faster workflows and deeper support',
     photosPerListing: 75,
     features: [
       { name: 'Everything in Gold, plus:', included: true, isHeader: true },
@@ -113,7 +113,7 @@ const TIERS = [
     id: 'enterprise',
     name: 'Enterprise',
     icon: Building2,
-    description: 'For brokerages & high-volume',
+    description: 'For high-volume organizations that need custom onboarding, controls, and service',
     requiresCall: true,
     features: [
       { name: 'Everything in Platinum, plus:', included: true, isHeader: true },
@@ -187,10 +187,10 @@ export default function PricingSection({
             Simple, transparent pricing
           </div>
           <h2 className="text-3xl md:text-4xl font-bold mb-3">
-            Pick Your Plan
+            Choose the Plan That Fits Your Listing Volume
           </h2>
           <p className="text-base text-white/60 max-w-2xl mx-auto">
-            Every plan includes all 15 AI tools, social templates, property sites, and video. No per-photo fees.
+            Every plan includes AI photo enhancement tools, with higher tiers unlocking more output, faster processing, and deeper marketing support.
           </p>
         </div>
       )}
@@ -237,7 +237,7 @@ export default function PricingSection({
 
         {requiresSales && (
           <p className="text-sm text-[#D4A017]">
-            300+ listings? <Link href="/contact" className="underline">Talk to Sales</Link> for custom pricing.
+            300+ listings? <Link href="/contact" className="underline">Talk to Sales About Enterprise</Link> for custom pricing.
           </p>
         )}
       </div>
@@ -295,7 +295,7 @@ export default function PricingSection({
                 ) : isEnterprise ? (
                   <div>
                     <span className="text-2xl font-bold">Custom</span>
-                    <p className="text-xs text-white/50">Talk to Sales</p>
+                    <p className="text-xs text-white/50">Talk to Sales About Enterprise</p>
                   </div>
                 ) : (
                   <div>
@@ -325,7 +325,7 @@ export default function PricingSection({
                     className="w-full py-2.5 rounded-lg font-semibold transition-all text-sm flex items-center justify-center gap-2 bg-white/10 text-white hover:bg-white/20 border border-white/20"
                   >
                     <Phone className="w-4 h-4" />
-                    Talk to Sales
+                    Talk to Sales About Enterprise
                   </Link>
                   <button
                     onClick={(e) => {
@@ -351,7 +351,7 @@ export default function PricingSection({
                   className="w-full py-2.5 rounded-lg font-semibold transition-all mb-4 text-sm flex items-center justify-center gap-2 bg-white/10 text-white hover:bg-white/20 border border-white/20"
                 >
                   <Phone className="w-4 h-4" />
-                  Talk to Sales
+                  Talk to Sales About Enterprise
                 </Link>
               ) : (
                 <button

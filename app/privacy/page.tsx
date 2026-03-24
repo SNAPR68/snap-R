@@ -3,8 +3,11 @@ import { ArrowLeft, Shield } from 'lucide-react';
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Privacy Policy | SnapR',
-  description: 'SnapR privacy policy — how we collect, use, and protect your data.',
+  title: 'Privacy Policy',
+  description: 'Read SnapR\'s privacy policy to learn how we collect, use, store, and protect data across our AI real estate photo enhancement platform.',
+  alternates: {
+    canonical: '/privacy',
+  },
 };
 
 export default function PrivacyPolicy() {
@@ -33,7 +36,7 @@ export default function PrivacyPolicy() {
         <div className="prose prose-invert max-w-none space-y-8 text-white/80">
           <section>
             <h2 className="text-2xl font-semibold text-[#D4A017] mb-4">1. Introduction</h2>
-            <p>SnapR is committed to protecting your privacy. This Privacy Policy explains how we collect, use, and safeguard your information when you use our AI-powered real estate photo enhancement platform.</p>
+            <p>This policy explains what data SnapR collects, how it is used, and the choices available to customers using our platform. SnapR is committed to protecting your privacy and safeguarding your information.</p>
             <p className="mt-4">We comply with GDPR for users in the EEA and CCPA for California residents.</p>
           </section>
 

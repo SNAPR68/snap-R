@@ -4,8 +4,11 @@ import { createClient } from '@/lib/supabase/server';
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Academy | SnapR',
-  description: 'Learn to transform real estate photos like a pro with SnapR Academy. Tutorials, tips, and best practices for AI-powered photo enhancement.',
+  title: 'SnapR Academy | Real Estate Photo Marketing Guides',
+  description: 'Learn real estate photo editing and listing marketing best practices with tutorials, guides, and AI workflow tips from SnapR Academy.',
+  alternates: {
+    canonical: '/academy',
+  },
 };
 
 export default async function AcademyPage() {
@@ -37,7 +40,7 @@ export default async function AcademyPage() {
             <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#D4A017] to-[#B8860B] flex items-center justify-center font-bold text-black text-xl">S</div>
             <div>
               <h1 className="text-4xl font-bold">SnapR Academy</h1>
-              <p className="text-white/60 text-lg">Learn to transform real estate photos like a pro</p>
+              <p className="text-white/60 text-lg">Learn how to improve listing photos, market properties faster, and use AI tools more effectively with practical guides</p>
             </div>
           </div>
         </div>

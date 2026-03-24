@@ -4,8 +4,11 @@ import { Camera, Sparkles, Zap, BarChart3, Share2, Globe, Users, Briefcase, Imag
 import { GuideRequestForm } from '@/components/guide-request-form';
 
 export const metadata: Metadata = {
-  title: 'Free Real Estate Marketing Guide | SnapR',
-  description: 'Download our free guide: AI-powered strategies to market real estate listings faster. 6 chapters of actionable tips for agents and brokers.',
+  title: 'Free Real Estate Marketing Guide',
+  description: 'Download SnapR\'s free real estate marketing guide with practical strategies to improve listing photos, attract more buyers, and market properties faster.',
+  alternates: {
+    canonical: '/guide',
+  },
 };
 
 const chapters = [
@@ -107,7 +110,7 @@ export default function GuidePage() {
               </h1>
 
               <p className="text-white/60 text-lg mb-8 leading-relaxed">
-                AI-powered strategies to market your listings faster. 8 pages of actionable tips from upload to analytics, delivered straight to your inbox.
+                Download the free real estate photo marketing guide to learn how better visuals and faster marketing workflows can help your listings stand out.
               </p>
 
               <div className="flex items-center gap-6 text-sm text-white/50 mb-2">

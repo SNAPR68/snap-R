@@ -125,7 +125,7 @@ export default function PartnersPage() {
               <span className="text-[#D4A017]">Recurring Revenue</span>
             </h1>
             <p className="text-xl text-white/60 mb-8 max-w-2xl mx-auto">
-              Earn 20% recurring commission for every agent, team, or brokerage you refer to SnapR. No caps. No limits. Passive income that grows.
+              Refer SnapR to agents, teams, and brokerages and earn recurring revenue from a platform built for modern real estate marketing. No caps, no limits.
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
               <Link
