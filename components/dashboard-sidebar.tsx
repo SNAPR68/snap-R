@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { usePathname } from 'next/navigation'
 import Link from 'next/link'
 import {
@@ -219,6 +219,15 @@ function SidebarContent({ tier, listingsUsed, listingsLimit, onNavClick }: Dashb
 
 export default function DashboardSidebar({ tier, listingsUsed, listingsLimit }: DashboardSidebarProps) {
   const { isOpen, close } = useSidebar()
+
+  useEffect(() => {
+    if (!isOpen) return
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') close()
+    }
+    document.addEventListener('keydown', handleKeyDown)
+    return () => document.removeEventListener('keydown', handleKeyDown)
+  }, [isOpen, close])
 
   return (
     <>

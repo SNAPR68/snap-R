@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { Sparkles, X, Zap, ChevronRight } from 'lucide-react';
 import { trackEvent, SnapREvents } from '@/lib/analytics';
@@ -27,12 +27,21 @@ export function UpgradeNudge({
 }: UpgradeNudgeProps) {
   const [dismissed, setDismissed] = useState(false);
 
-  if (dismissed) return null;
-
-  const handleDismiss = () => {
+  const handleDismiss = useCallback(() => {
     setDismissed(true);
     onDismiss?.();
-  };
+  }, [onDismiss]);
+
+  useEffect(() => {
+    if (variant !== 'modal' || dismissed) return
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') handleDismiss()
+    }
+    document.addEventListener('keydown', handleKeyDown)
+    return () => document.removeEventListener('keydown', handleKeyDown)
+  }, [variant, dismissed, handleDismiss])
+
+  if (dismissed) return null;
 
   const handleUpgradeClick = () => {
     trackEvent(SnapREvents.UPGRADE_CLICKED, { feature, requiredTier });

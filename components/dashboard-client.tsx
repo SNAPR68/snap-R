@@ -43,6 +43,18 @@ export function DashboardClient({ user }: { user: { id: string; email: string } 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  useEffect(() => {
+    if (!showNewProject && !showNewListing) return
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setShowNewProject(false)
+        setShowNewListing(null)
+      }
+    }
+    document.addEventListener('keydown', handleKeyDown)
+    return () => document.removeEventListener('keydown', handleKeyDown)
+  }, [showNewProject, showNewListing]);
+
   const fetchProjects = async () => {
     setLoading(true);
     const { data: projectsData } = await supabase

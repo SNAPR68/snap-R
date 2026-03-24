@@ -32,6 +32,14 @@ export function MlsExportModal({ photos, listingTitle, listingAddress, onClose }
   const [loadingOptions, setLoadingOptions] = useState(true);
   const [result, setResult] = useState<{ success: boolean; downloadUrl?: string; error?: string } | null>(null);
 
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose()
+    }
+    document.addEventListener('keydown', handleKeyDown)
+    return () => document.removeEventListener('keydown', handleKeyDown)
+  }, [onClose])
+
   // Fetch MLS options on mount
   useEffect(() => {
     async function fetchMlsOptions() {

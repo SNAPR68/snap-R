@@ -1,7 +1,7 @@
 'use client';
 
 import Image from 'next/image';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Search, Loader2, X, CheckCircle, AlertCircle, Download } from 'lucide-react';
 
 interface MLSPhoto {
@@ -45,6 +45,14 @@ export function MLSImportModal({ onImport, onClose }: MLSImportModalProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<MLSImportData | null>(null);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose()
+    }
+    document.addEventListener('keydown', handleKeyDown)
+    return () => document.removeEventListener('keydown', handleKeyDown)
+  }, [onClose])
 
   const handleSearch = async () => {
     if (!mlsNumber.trim()) return;

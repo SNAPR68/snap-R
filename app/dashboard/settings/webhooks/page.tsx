@@ -4,7 +4,7 @@ export const dynamic = 'force-dynamic';
 
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
-import { ArrowLeft, Webhook, Plus, Trash2, ToggleLeft, ToggleRight, Copy, Check, ChevronDown, ChevronUp, Activity, CheckCircle2, XCircle, Clock } from 'lucide-react';
+import { ArrowLeft, Webhook, Plus, Trash2, ToggleLeft, ToggleRight, Copy, Check, ChevronDown, ChevronUp, Activity, CheckCircle2, XCircle, Clock, X } from 'lucide-react';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -82,8 +82,9 @@ export default function WebhooksSettingsPage() {
         const data = await res.json() as { deliveries: WebhookDelivery[] };
         setDeliveries(data.deliveries || []);
       }
-    } catch {
-      // silently ignore
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Failed to load delivery log'
+      setError(message)
     } finally {
       setLoadingDeliveries(false);
     }
@@ -198,7 +199,12 @@ export default function WebhooksSettingsPage() {
         </div>
 
         {error && (
-          <div className="mb-4 px-4 py-3 bg-red-500/10 border border-red-500/30 rounded-lg text-red-400 text-sm">{error}</div>
+          <div className="mb-4 px-4 py-3 bg-red-500/10 border border-red-500/30 rounded-xl flex items-center justify-between">
+            <p className="text-red-400 text-sm">{error}</p>
+            <button onClick={() => setError('')} className="text-red-400 hover:text-red-300">
+              <X className="w-4 h-4" />
+            </button>
+          </div>
         )}
 
         {/* ── Create Form ──────────────────────────────────────────────── */}
