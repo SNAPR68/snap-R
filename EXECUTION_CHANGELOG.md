@@ -1,5 +1,25 @@
 # SnapR Execution Changelog
 ==========================
+## 2026-03-24 — Site audit implementation: SEO, content, technical fixes
+
+### SEO Meta Tags (10 pages)
+- Root layout: Updated default title/description with primary keywords
+- Created layout.tsx with metadata for /pricing, /contact, /partners (client component pages)
+- Updated metadata exports for /faq, /academy, /guide, /privacy, /terms, /developers
+- Added canonical URLs to all public pages
+
+### Technical SEO Fixes
+- Added 301 redirects: /privacy-policy → /privacy, /features → /#features (next.config.mjs)
+- Removed /auth/login and /auth/signup from sitemap.xml
+- Added missing pages to sitemap: /pricing, /guide, /developers
+
+### Content Rewrites (per audit recommendations)
+- Homepage: hero headline, subheadline, tagline, proof bar, how-it-works, features section, claim footnotes
+- Pricing: heading, plan descriptions (Gold/Platinum/Enterprise differentiation), enterprise CTA
+- FAQ: intro copy, pricing question, turnaround question (removed stale pricing references)
+- Contact: headline, support copy, enterprise block, call scheduling bullets
+- Academy, Guide, Partners, Developers, Privacy: hero/intro copy updates
+
 ## 2026-03-24 — UI polish: accessibility, keyboard nav, error feedback
 
 ### Aria-Label Fixes

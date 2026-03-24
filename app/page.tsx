@@ -235,18 +235,18 @@ export default function HomePage() {
             
             {/* Main Headline */}
             <h1 className="text-4xl md:text-5xl lg:text-7xl font-bold text-white leading-[1.1] mb-6">
-              Upload Your Photos.<br className="hidden sm:block" />
-              <span className="text-[#D4A017]">We Handle the Rest.</span>
+              Enhance Real Estate Listing Photos<br className="hidden sm:block" />
+              <span className="text-[#D4A017]">in Seconds.</span>
             </h1>
 
             {/* One clean sub — what SnapR does */}
             <p className="text-base md:text-lg text-white/50 mb-6 max-w-2xl mx-auto leading-relaxed">
-              Enhanced photos. Descriptions. Social posts. Property site. Video — all from one upload, in under 10 minutes.
+              SnapR helps agents and brokerages turn ordinary property photos into polished, market-ready listings with AI sky replacement, virtual staging, twilight edits, and fast marketing assets.
             </p>
 
             {/* Tagline */}
             <p className="text-2xl md:text-3xl lg:text-4xl text-[#D4A017] font-bold mb-8">
-              Stop marketing listings. Start closing them.
+              Upload. Enhance. Publish.
             </p>
             
             {/* CTA Buttons - Start Free | Book a Demo */}
@@ -262,13 +262,13 @@ export default function HomePage() {
                 href="/contact" 
                 className="px-8 py-4 bg-white/5 border border-white/20 text-white font-semibold text-lg rounded-full hover:bg-white/10 hover:border-white/30 transition-all"
               >
-                Book a Demo
+                See Before and After Demo
               </Link>
             </div>
             
             {/* Footer Line */}
             <p className="text-white/40 text-sm mb-8">
-              No credit card · Join 500+ professionals · ⭐ 4.9/5 rating
+              No credit card required · Trusted by real estate professionals to enhance listing photos faster and launch marketing campaigns with less manual work.
             </p>
             
             {/* Feature Pills */}
@@ -307,7 +307,7 @@ export default function HomePage() {
         <div className="max-w-5xl mx-auto">
           <div className="glass-luxury glossy-top p-8 rounded-3xl">
             <p className="text-center text-white/40 text-sm mb-6">
-              Trusted by 500+ real estate professionals across 8 countries
+              Trusted by real estate professionals to enhance listings faster and market properties with less effort
             </p>
             <div className="flex justify-center items-center gap-8 md:gap-12 flex-wrap mb-8 opacity-40">
               {['Keller Williams', 'RE/MAX', 'Century 21', 'Coldwell Banker', 'Sotheby\'s', 'Compass'].map((name) => (
@@ -372,10 +372,10 @@ export default function HomePage() {
           <div className="text-center mb-10">
             <p className="text-[#D4A017] text-xs font-semibold tracking-wider mb-2">HOW IT WORKS</p>
             <h2 className="text-2xl md:text-3xl font-bold text-white mb-2">
-              Three Steps to Marketing Gold
+              Upload. Enhance. Publish — in Minutes.
             </h2>
             <p className="text-sm text-white/60 max-w-2xl mx-auto">
-              From raw photos to fully marketed listing in 60 seconds.
+              Upload your property photos, choose enhancements like sky replacement, virtual staging, or twilight, and download polished listing assets and marketing content in minutes.
             </p>
           </div>
 
@@ -470,10 +470,10 @@ export default function HomePage() {
           <div className="text-center mb-6">
             <p className="text-[#D4A017] text-xs font-semibold tracking-wider mb-2">15 AI ENHANCEMENT TOOLS</p>
             <h2 className="text-2xl md:text-3xl font-bold text-white mb-2">
-              See the Transformation
+              From Empty Rooms to Standout Listings
             </h2>
             <p className="text-sm text-white/60 max-w-2xl mx-auto">
-              From dull to dazzling in 30 seconds. Drag the slider to see the magic.
+              Edit photos, stage rooms, improve skies, create social posts, and launch polished marketing materials from one workflow.
             </p>
           </div>
         </div>
@@ -660,6 +660,9 @@ export default function HomePage() {
                 <p className="text-xs text-white/50">Faster</p>
               </div>
             </div>
+            <p className="text-white/30 text-xs mt-4 max-w-md mx-auto">
+              Based on internal benchmarks comparing SnapR AI processing against industry-average editing service rates and turnaround times.
+            </p>
           </div>
         </div>
       </section>

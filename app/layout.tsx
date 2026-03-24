@@ -20,11 +20,11 @@ export const viewport: Viewport = {
 export const metadata: Metadata = {
   metadataBase: new URL('https://snap-r.com'),
   title: {
-    default: 'SnapR - AI Real Estate Photo Enhancement',
+    default: 'SnapR | AI Real Estate Photo Enhancement for Listings',
     template: '%s | SnapR',
   },
-  description: 'Transform ordinary property listings into luxury showcases in seconds. AI-powered sky replacement, virtual staging, twilight conversion & more.',
-  keywords: ['real estate photography', 'photo enhancement', 'AI photo editing', 'virtual staging', 'sky replacement', 'property photos', 'real estate marketing'],
+  description: 'Enhance real estate listing photos in seconds with AI sky replacement, virtual staging, twilight edits, and marketing-ready assets built for agents and brokerages.',
+  keywords: ['AI real estate photo enhancement', 'real estate photo editing', 'virtual staging', 'sky replacement', 'listing photos', 'real estate marketing', 'property photos'],
   authors: [{ name: 'SnapR' }],
   creator: 'SnapR',
   publisher: 'SnapR',
@@ -40,14 +40,14 @@ export const metadata: Metadata = {
     locale: 'en_US',
     url: 'https://snap-r.com',
     siteName: 'SnapR',
-    title: 'SnapR - AI Real Estate Photo Enhancement',
-    description: 'Transform ordinary property listings into luxury showcases in seconds. AI-powered photo enhancement for real estate professionals.',
+    title: 'SnapR | AI Real Estate Photo Enhancement for Listings',
+    description: 'Enhance real estate listing photos in seconds with AI sky replacement, virtual staging, twilight edits, and marketing-ready assets built for agents and brokerages.',
     images: [{ url: '/og-image.jpg', width: 1200, height: 630, alt: 'SnapR - AI Real Estate Photo Enhancement' }],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'SnapR - AI Real Estate Photo Enhancement',
-    description: 'Transform ordinary property listings into luxury showcases in seconds.',
+    title: 'SnapR | AI Real Estate Photo Enhancement for Listings',
+    description: 'Enhance real estate listing photos in seconds with AI sky replacement, virtual staging, twilight edits, and marketing-ready assets.',
     images: ['/og-image.jpg'],
   },
   icons: {

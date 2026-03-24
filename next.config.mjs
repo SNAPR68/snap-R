@@ -26,6 +26,22 @@ const nextConfig = {
     '@remotion/serverless',
   ],
 
+  // 301 redirects for legacy/retired URLs
+  async redirects() {
+    return [
+      {
+        source: '/privacy-policy',
+        destination: '/privacy',
+        permanent: true,
+      },
+      {
+        source: '/features',
+        destination: '/#features',
+        permanent: true,
+      },
+    ];
+  },
+
   // Security headers — split for embed routes (allow iframe) vs everything else (deny)
   async headers() {
     const commonHeaders = [

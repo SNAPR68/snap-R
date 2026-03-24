@@ -3,8 +3,11 @@ import { ArrowLeft, FileText } from 'lucide-react';
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Terms of Service | SnapR',
-  description: 'SnapR terms of service — rules and guidelines for using our platform.',
+  title: 'Terms of Service',
+  description: 'Review SnapR\'s terms of service, including account use, billing, subscriptions, acceptable use, and platform policies.',
+  alternates: {
+    canonical: '/terms',
+  },
 };
 
 export default function TermsOfService() {

@@ -15,12 +15,12 @@ function ContactContent() {
   return (
     <>
       <main className="flex-1 max-w-4xl mx-auto px-6 py-12">
-        <h1 className="text-4xl font-bold text-white mb-4 text-center">Let&apos;s talk</h1>
-        <p className="text-white/60 mb-8 text-center">Book a call to discuss custom pricing for your team.</p>
+        <h1 className="text-4xl font-bold text-white mb-4 text-center">Talk to the SnapR Team</h1>
+        <p className="text-white/60 mb-8 text-center">Questions about pricing, partnerships, support, or enterprise use? Send us a message and our team will get back to you as quickly as possible.</p>
         
         {isTeamPlan && (
           <div className="mb-6 p-4 bg-[#D4A017]/10 border border-[#D4A017]/30 rounded-xl text-center">
-            <p className="text-white font-medium">You selected the Team plan. Let&apos;s discuss custom pricing for your brokerage.</p>
+            <p className="text-white font-medium">Need rollout help for a team or brokerage? We can walk you through onboarding, workflow fit, and account setup.</p>
           </div>
         )}
 
@@ -29,15 +29,15 @@ function ContactContent() {
           <ul className="space-y-3 mb-6 text-white/80">
             <li className="flex items-start gap-3">
               <Check className="w-5 h-5 text-[#D4A017] flex-shrink-0 mt-0.5" />
-              <span>Discuss your team&apos;s volume and needs</span>
+              <span>Discuss your team&apos;s volume, workflow, and goals</span>
             </li>
             <li className="flex items-start gap-3">
               <Check className="w-5 h-5 text-[#D4A017] flex-shrink-0 mt-0.5" />
-              <span>Get custom pricing for 30+ listings</span>
+              <span>Get pricing tailored to your listing volume</span>
             </li>
             <li className="flex items-start gap-3">
               <Check className="w-5 h-5 text-[#D4A017] flex-shrink-0 mt-0.5" />
-              <span>Learn about white-label options</span>
+              <span>Ask about onboarding, SLAs, and enterprise support</span>
             </li>
             <li className="flex items-start gap-3">
               <Check className="w-5 h-5 text-[#D4A017] flex-shrink-0 mt-0.5" />

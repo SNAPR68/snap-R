@@ -3,8 +3,11 @@ import { Instagram, Linkedin, Youtube } from 'lucide-react';
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'FAQ | SnapR',
-  description: 'Frequently asked questions about SnapR — AI-powered real estate photo enhancement and marketing automation platform.',
+  title: 'SnapR FAQ | Real Estate Photo Editing Questions',
+  description: 'Get answers about SnapR pricing, turnaround time, virtual staging, sky replacement, listing limits, and AI real estate photo enhancement workflows.',
+  alternates: {
+    canonical: '/faq',
+  },
 };
 
 const faqs = [
@@ -13,8 +16,8 @@ const faqs = [
     a: 'SnapR is the complete AI Listing OS for real estate. We help you transform property photos, create marketing content, generate videos, build property galleries, manage client approvals, and share to social media — all from one platform.' 
   },
   { 
-    q: 'How does the pricing work?', 
-    a: 'SnapR uses simple listing-based pricing. You pay per listing, not per photo or enhancement. All 15 AI tools are included FREE with every plan. Free users get 3 listings/month, Pro starts at $7-9/listing, and Agency at $9-11/listing with team features.' 
+    q: 'How much does SnapR cost?',
+    a: 'SnapR offers multiple plans based on listing volume and workflow needs. All plans include access to all 15 AI enhancement tools. Visit our pricing page for the latest plan details and included features.'
   },
   { 
     q: 'How does the free plan work?', 
@@ -25,8 +28,8 @@ const faqs = [
     a: 'All plans include: Sky replacement, virtual twilight, lawn repair, declutter, virtual staging, HDR enhancement, perspective correction, color correction, window pull, lens correction, sharpening, noise reduction, pool enhancement, fireplace fire, and auto enhance.' 
   },
   { 
-    q: 'How fast are the enhancements?', 
-    a: 'Free tier: ~60 seconds. Pro tier: ~30 seconds (priority processing). Agency tier: Instant processing. This compares to 24-48 hours with traditional editing services.' 
+    q: 'How fast are edits completed?',
+    a: 'Most enhancements are generated in seconds, so you can prepare listings and marketing assets much faster than with traditional editing workflows. Higher-tier plans include priority processing for even faster results.'
   },
   { 
     q: 'What counts as a "listing"?', 
@@ -90,7 +93,7 @@ export default function FAQPage() {
       
       <main className="flex-1 max-w-4xl mx-auto px-6 py-12">
         <h1 className="text-4xl font-bold text-white mb-4">Frequently Asked Questions</h1>
-        <p className="text-white/60 mb-12">Everything you need to know about SnapR, the AI Listing OS for real estate.</p>
+        <p className="text-white/60 mb-12">Find answers about SnapR pricing, listing limits, virtual staging, turnaround time, billing, and platform features.</p>
         
         <div className="space-y-6">
           {faqs.map((faq, i) => (

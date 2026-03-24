@@ -7,7 +7,7 @@ export const revalidate = 3600; // Regenerate sitemap every hour
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = 'https://snap-r.com';
 
-  // Static routes
+  // Static routes — only indexable public pages (no auth/login/signup)
   const staticRoutes: MetadataRoute.Sitemap = [
     {
       url: baseUrl,
@@ -16,16 +16,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 1,
     },
     {
-      url: `${baseUrl}/auth/login`,
+      url: `${baseUrl}/pricing`,
       lastModified: new Date(),
       changeFrequency: 'monthly',
-      priority: 0.8,
-    },
-    {
-      url: `${baseUrl}/auth/signup`,
-      lastModified: new Date(),
-      changeFrequency: 'monthly',
-      priority: 0.8,
+      priority: 0.9,
     },
     {
       url: `${baseUrl}/partners`,
@@ -38,6 +32,18 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       lastModified: new Date(),
       changeFrequency: 'weekly',
       priority: 0.7,
+    },
+    {
+      url: `${baseUrl}/guide`,
+      lastModified: new Date(),
+      changeFrequency: 'monthly',
+      priority: 0.7,
+    },
+    {
+      url: `${baseUrl}/developers`,
+      lastModified: new Date(),
+      changeFrequency: 'monthly',
+      priority: 0.6,
     },
     {
       url: `${baseUrl}/faq`,
