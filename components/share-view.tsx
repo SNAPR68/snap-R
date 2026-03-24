@@ -67,6 +67,15 @@ export function ShareView({ listing: initialListing, photos: initialPhotos, sett
     setFeedbackText(initialFeedback);
   }, [photos]);
 
+  useEffect(() => {
+    if (!showSubmitModal) return
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setShowSubmitModal(false)
+    }
+    document.addEventListener('keydown', handleKeyDown)
+    return () => document.removeEventListener('keydown', handleKeyDown)
+  }, [showSubmitModal])
+
   const handlePasswordSubmit = useCallback(async () => {
     if (!shareToken || !passwordInput.trim()) return;
     setVerifying(true);

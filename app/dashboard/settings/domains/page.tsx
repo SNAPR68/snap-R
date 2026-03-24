@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { Globe, Plus, Trash2, RefreshCw, CheckCircle, Clock, XCircle, Copy, Check } from 'lucide-react'
+import { Globe, Plus, Trash2, RefreshCw, CheckCircle, Clock, XCircle, Copy, Check, X } from 'lucide-react'
 
 interface CustomDomain {
   id: string
@@ -30,8 +30,9 @@ export default function DomainsPage() {
         const data = await res.json()
         setDomains(data.domains)
       }
-    } catch {
-      // Silently handle
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Failed to load domains'
+      setError(message)
     } finally {
       setLoading(false)
     }
@@ -122,6 +123,15 @@ export default function DomainsPage() {
         <h1 className="text-2xl font-bold text-white">Custom Domains</h1>
       </div>
 
+      {error && (
+        <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-4 mb-4 flex items-center justify-between">
+          <p className="text-red-400 text-sm">{error}</p>
+          <button onClick={() => setError(null)} className="text-red-400 hover:text-red-300">
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+      )}
+
       {/* DNS Instructions */}
       {instructions && (
         <div className="glass-luxury rounded-xl p-4 mb-6 border border-blue-600/30">
@@ -165,7 +175,6 @@ export default function DomainsPage() {
             {creating ? 'Adding...' : 'Add Domain'}
           </button>
         </div>
-        {error && <p className="text-red-400 text-sm mt-2">{error}</p>}
       </div>
 
       {/* Domains list */}

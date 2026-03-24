@@ -1,5 +1,17 @@
 # SnapR Execution Changelog
 ==========================
+## 2026-03-24 — UI polish: accessibility, keyboard nav, error feedback
+
+### Aria-Label Fixes
+- ShareGalleryModal: 3 mismatched labels corrected (was "Gallery password"/"Expiry days"/"Access level")
+
+### ESC Key Handlers (13 modals)
+- Added keyboard dismiss to all custom modal overlays
+- Components: ShareGallery, ScheduleModal, MLS Export/Import, Feedback, HumanEdit, UpgradeNudge, StylePrompt, BatchProgress, ShortcutsHelp, DashboardSidebar, DashboardClient, StudioClient
+
+### Settings Error Feedback
+- api-keys, domains, webhooks pages: silent catch blocks replaced with dismissible error banners
+
 ## 2026-03-23 — Production readiness to 100: zero flags
 
 ### Admin Auth Consolidation

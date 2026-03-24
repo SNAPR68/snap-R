@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { Key, Plus, Trash2, Copy, Check, AlertTriangle, Eye, EyeOff } from 'lucide-react'
+import { Key, Plus, Trash2, Copy, Check, AlertTriangle, Eye, EyeOff, X } from 'lucide-react'
 
 interface ApiKey {
   id: string
@@ -34,8 +34,9 @@ export default function ApiKeysPage() {
         const data = await res.json()
         setKeys(data.keys)
       }
-    } catch {
-      // Silently handle
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Failed to load API keys'
+      setError(message)
     } finally {
       setLoading(false)
     }
@@ -96,9 +97,12 @@ export default function ApiKeysPage() {
       })
       if (res.ok) {
         fetchKeys()
+      } else {
+        setError('Failed to revoke key')
       }
-    } catch {
-      // Silently handle
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Failed to revoke key'
+      setError(message)
     }
   }
 
@@ -121,6 +125,15 @@ export default function ApiKeysPage() {
         <Key className="w-6 h-6 text-[#D4A017]" />
         <h1 className="text-2xl font-bold text-white">API Keys</h1>
       </div>
+
+      {error && (
+        <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-4 mb-4 flex items-center justify-between">
+          <p className="text-red-400 text-sm">{error}</p>
+          <button onClick={() => setError(null)} className="text-red-400 hover:text-red-300">
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+      )}
 
       {!isEnterprise && (
         <div className="glass-luxury rounded-xl p-4 mb-6 border border-yellow-600/30 flex items-start gap-3">
@@ -178,7 +191,6 @@ export default function ApiKeysPage() {
             {creating ? 'Creating...' : 'Create Key'}
           </button>
         </div>
-        {error && <p className="text-red-400 text-sm mt-2">{error}</p>}
       </div>
 
       {/* Keys list */}

@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect } from 'react';
 import { Check } from 'lucide-react';
 
 const QUICK_STYLES = [
@@ -23,6 +24,14 @@ interface StylePromptModalProps {
 }
 
 export function StylePromptModal({ onJustThisPhoto, onApplyToAll }: StylePromptModalProps) {
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onJustThisPhoto()
+    }
+    document.addEventListener('keydown', handleKeyDown)
+    return () => document.removeEventListener('keydown', handleKeyDown)
+  }, [onJustThisPhoto])
+
   return (
     <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50" role="dialog" aria-modal="true" aria-label="Choose photo style">
       <div className="bg-[#1A1A1A] rounded-2xl p-6 w-full max-w-lg border border-white/10 shadow-2xl">

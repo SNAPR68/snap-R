@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect } from 'react';
 import { Loader2, Check, AlertCircle } from 'lucide-react';
 
 interface BatchProgressModalProps {
@@ -23,10 +24,25 @@ export function BatchProgressModal({
   onCancel,
   onComplete,
 }: BatchProgressModalProps) {
-  if (!isOpen) return null;
-
   const progress = total > 0 ? (current / total) * 100 : 0;
   const isComplete = current >= total;
+
+  useEffect(() => {
+    if (!isOpen) return
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        if (isComplete) {
+          onComplete?.()
+        } else {
+          onCancel?.()
+        }
+      }
+    }
+    document.addEventListener('keydown', handleKeyDown)
+    return () => document.removeEventListener('keydown', handleKeyDown)
+  }, [isOpen, isComplete, onCancel, onComplete])
+
+  if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50" role="dialog" aria-modal="true" aria-label={title}>

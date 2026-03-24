@@ -1,7 +1,7 @@
 'use client';
 
 import Image from 'next/image';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { X, UserCheck, Clock, Send, Loader2 } from 'lucide-react';
 
 interface HumanEditRequestProps {
@@ -15,6 +15,14 @@ export function HumanEditRequestModal({ listingId, photoUrl, onClose, initialIns
   const [instructions, setInstructions] = useState(initialInstructions);
   const [isUrgent, setIsUrgent] = useState(false);
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose()
+    }
+    document.addEventListener('keydown', handleKeyDown)
+    return () => document.removeEventListener('keydown', handleKeyDown)
+  }, [onClose])
 
   const handleSubmit = async () => {
     if (!instructions.trim()) return;

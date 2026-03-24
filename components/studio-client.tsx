@@ -224,6 +224,15 @@ export function StudioClient({ listingId, userRole, showMlsFeatures = false, cre
   }, [showShareModal]);
 
   useEffect(() => {
+    if (!showShareModal) return
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setShowShareModal(false)
+    }
+    document.addEventListener('keydown', handleKeyDown)
+    return () => document.removeEventListener('keydown', handleKeyDown)
+  }, [showShareModal]);
+
+  useEffect(() => {
     if (!showShareModal) return;
     let cancelled = false;
     const generateLink = async () => {
