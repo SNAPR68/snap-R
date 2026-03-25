@@ -1,13 +1,14 @@
 import Script from 'next/script';
 import type { Metadata, Viewport } from 'next';
-import { Inter } from 'next/font/google';
+import { Inter, Newsreader } from 'next/font/google';
 import './globals.css';
 import { CookieConsent } from '@/components/cookie-consent';
 import { AIChatbot } from '@/components/ai-chatbot';
 import { ToastProvider } from '@/components/toast';
 import { SkipNav } from '@/components/skip-nav';
 
-const inter = Inter({ subsets: ['latin'] });
+const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
+const newsreader = Newsreader({ subsets: ['latin'], weight: ['400', '500', '600', '700'], variable: '--font-newsreader' });
 
 export const viewport: Viewport = {
   width: 'device-width',
@@ -95,7 +96,7 @@ export default function RootLayout({
           }}
         />
       </head>
-      <body className={inter.className}>
+      <body className={`${inter.variable} ${newsreader.variable} font-sans`}>
         <SkipNav />
         <ToastProvider>
         <div id="main-content">

@@ -1,5 +1,22 @@
 # SnapR Execution Changelog
 ==========================
+## 2026-03-25 — "Digital Curator" editorial redesign (public pages)
+
+### Design Foundation
+- Added Newsreader serif font (next/font/google) for editorial headlines
+- New CSS tokens: Midnight Gold surface hierarchy (#131313 → #1C1B1B → #2A2A2A → #353534)
+- Warm off-white text (#D3C5AE) replaces pure #FFFFFF
+- Editorial utility classes: .editorial-headline, .editorial-label, .editorial-cta, .editorial-input, .editorial-nav
+- Tailwind config: surface/primary/on-surface color tokens, font-serif, ambient/glow-gold shadows
+
+### Public Page Transformation (50 files)
+- All public pages: bg-surface tokens, text-on-surface, font-serif headlines, no 1px borders
+- Pricing section: semantic color tokens, editorial radius, gradient CTAs
+- Academy (31 subpages): bulk token migration
+- Nav: glassmorphism with backdrop-blur-[12px], no border
+- Footer: bg-surface-container-low color shift, no border-t
+- Dashboard pages untouched — legacy glass classes preserved
+
 ## 2026-03-24 — Site audit implementation: SEO, content, technical fixes
 
 ### SEO Meta Tags (10 pages)

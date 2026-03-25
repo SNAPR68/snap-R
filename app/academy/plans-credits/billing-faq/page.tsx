@@ -46,30 +46,30 @@ const billingFaqs = [
 
 export default function BillingFAQPage() {
   return (
-    <div className="min-h-screen bg-[#0F0F0F] text-white">
-      <header className="h-14 bg-[#1A1A1A] border-b border-white/10 flex items-center px-6">
-        <Link href="/academy/plans-credits" className="flex items-center gap-2 text-white/60 hover:text-white">
+    <div className="min-h-screen bg-surface text-on-surface">
+      <header className="h-14 bg-surface-container-low border-b border-white/10 flex items-center px-6">
+        <Link href="/academy/plans-credits" className="flex items-center gap-2 text-on-surface-muted hover:text-on-surface">
           <ArrowLeft className="w-4 h-4" /> Back to Plans
         </Link>
       </header>
       
       <main className="max-w-3xl mx-auto px-6 py-12">
         <h1 className="text-3xl font-bold mb-4">Billing FAQ</h1>
-        <p className="text-white/60 mb-8">Common questions about billing and subscriptions.</p>
+        <p className="text-on-surface-muted mb-8">Common questions about billing and subscriptions.</p>
         
         <div className="space-y-4">
           {billingFaqs.map((faq, i) => (
-            <div key={i} className="bg-[#1A1A1A] border border-white/10 rounded-xl p-6">
+            <div key={i} className="bg-surface-container-low border border-white/10 rounded-xl p-6">
               <h3 className="font-semibold mb-2">{faq.q}</h3>
-              <p className="text-white/60 text-sm">{faq.a}</p>
+              <p className="text-on-surface-muted text-sm">{faq.a}</p>
             </div>
           ))}
         </div>
         
-        <div className="mt-8 p-6 bg-[#1A1A1A] border border-white/10 rounded-xl text-center">
+        <div className="mt-8 p-6 bg-surface-container-low border border-white/10 rounded-xl text-center">
           <h3 className="font-semibold mb-2">Still have questions?</h3>
-          <p className="text-white/60 text-sm mb-4">Our team is here to help with any billing questions.</p>
-          <Link href="/contact" className="text-[#D4A017] hover:underline">Contact Support →</Link>
+          <p className="text-on-surface-muted text-sm mb-4">Our team is here to help with any billing questions.</p>
+          <Link href="/contact" className="text-primary hover:underline">Contact Support →</Link>
         </div>
       </main>
     </div>

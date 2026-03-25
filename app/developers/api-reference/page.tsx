@@ -81,7 +81,7 @@ function CopyButton({ text }: { text: string }) {
   return (
     <button
       onClick={handleCopy}
-      className="p-1.5 rounded-md hover:bg-white/10 transition-colors text-white/40 hover:text-white/80"
+      className="p-1.5 rounded-md hover:bg-white/10 transition-colors text-on-surface-muted hover:text-on-surface/80"
       aria-label="Copy to clipboard"
     >
       {copied ? <Check className="w-3.5 h-3.5 text-green-400" /> : <Copy className="w-3.5 h-3.5" />}
@@ -151,20 +151,20 @@ function SchemaTable({ schema, spec, depth = 0 }: { schema: SchemaProperty; spec
         return (
           <div key={name} className="py-2 border-b border-white/5 last:border-0">
             <div className="flex items-start gap-2">
-              <code className="text-sm text-[#D4A017] font-mono">{name}</code>
+              <code className="text-sm text-primary font-mono">{name}</code>
               <span className="text-xs text-white/30 font-mono">{typeStr}</span>
               {isRequired && (
                 <span className="text-[10px] bg-red-500/20 text-red-400 px-1.5 py-0.5 rounded">required</span>
               )}
               {resolvedProp.nullable && (
-                <span className="text-[10px] bg-white/10 text-white/40 px-1.5 py-0.5 rounded">nullable</span>
+                <span className="text-[10px] bg-white/10 text-on-surface-muted px-1.5 py-0.5 rounded">nullable</span>
               )}
             </div>
             {resolvedProp.description && (
-              <p className="text-xs text-white/50 mt-0.5">{resolvedProp.description}</p>
+              <p className="text-xs text-on-surface-muted mt-0.5">{resolvedProp.description}</p>
             )}
             {resolvedProp.example !== undefined && (
-              <p className="text-xs text-white/30 mt-0.5">Example: <code className="text-white/50">{JSON.stringify(resolvedProp.example)}</code></p>
+              <p className="text-xs text-white/30 mt-0.5">Example: <code className="text-on-surface-muted">{JSON.stringify(resolvedProp.example)}</code></p>
             )}
           </div>
         )
@@ -212,8 +212,8 @@ function EndpointCard({
         <span className={`px-2.5 py-1 rounded-md text-xs font-mono font-bold border ${METHOD_COLORS[method] ?? 'text-gray-400'}`}>
           {method.toUpperCase()}
         </span>
-        <code className="text-sm text-white font-mono flex-1">{path}</code>
-        <span className="text-xs text-white/50 hidden md:inline">{operation.summary}</span>
+        <code className="text-sm text-on-surface font-mono flex-1">{path}</code>
+        <span className="text-xs text-on-surface-muted hidden md:inline">{operation.summary}</span>
         {expanded ? (
           <ChevronDown className="w-4 h-4 text-white/30" />
         ) : (
@@ -231,7 +231,7 @@ function EndpointCard({
           {/* Parameters */}
           {operation.parameters && operation.parameters.length > 0 && (
             <div>
-              <h4 className="text-xs font-semibold text-white/50 uppercase tracking-wider mb-2">Parameters</h4>
+              <h4 className="text-xs font-semibold text-on-surface-muted uppercase tracking-wider mb-2">Parameters</h4>
               <div className="bg-black/30 rounded-lg p-3">
                 {operation.parameters.map((param, i) => {
                   // Resolve $ref parameters
@@ -247,13 +247,13 @@ function EndpointCard({
 
                   return (
                     <div key={i} className="flex items-start gap-2 py-1.5 border-b border-white/5 last:border-0">
-                      <code className="text-xs text-[#D4A017] font-mono">{resolvedParam.name}</code>
-                      <span className="text-[10px] bg-white/10 text-white/50 px-1 rounded">{resolvedParam.in}</span>
+                      <code className="text-xs text-primary font-mono">{resolvedParam.name}</code>
+                      <span className="text-[10px] bg-white/10 text-on-surface-muted px-1 rounded">{resolvedParam.in}</span>
                       {resolvedParam.required && (
                         <span className="text-[10px] bg-red-500/20 text-red-400 px-1 rounded">required</span>
                       )}
                       {resolvedParam.description && (
-                        <span className="text-xs text-white/40">{resolvedParam.description}</span>
+                        <span className="text-xs text-on-surface-muted">{resolvedParam.description}</span>
                       )}
                     </div>
                   )
@@ -265,7 +265,7 @@ function EndpointCard({
           {/* Request Body */}
           {requestSchema && (
             <div>
-              <h4 className="text-xs font-semibold text-white/50 uppercase tracking-wider mb-2">Request Body</h4>
+              <h4 className="text-xs font-semibold text-on-surface-muted uppercase tracking-wider mb-2">Request Body</h4>
               <div className="bg-black/30 rounded-lg p-3">
                 <SchemaTable schema={requestSchema} spec={spec} />
               </div>
@@ -275,7 +275,7 @@ function EndpointCard({
           {/* Response */}
           {responseSchema && (
             <div>
-              <h4 className="text-xs font-semibold text-white/50 uppercase tracking-wider mb-2">
+              <h4 className="text-xs font-semibold text-on-surface-muted uppercase tracking-wider mb-2">
                 Response <span className="text-green-400">{successCode}</span>
               </h4>
               <div className="bg-black/30 rounded-lg p-3">
@@ -287,7 +287,7 @@ function EndpointCard({
           {/* Curl Example */}
           <div>
             <div className="flex items-center justify-between mb-2">
-              <h4 className="text-xs font-semibold text-white/50 uppercase tracking-wider">Try it</h4>
+              <h4 className="text-xs font-semibold text-on-surface-muted uppercase tracking-wider">Try it</h4>
               <CopyButton text={curlExample} />
             </div>
             <pre className="bg-black/50 rounded-lg p-3 text-xs overflow-x-auto">
@@ -324,10 +324,10 @@ export default function ApiReferencePage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#0A0A0A] text-white flex items-center justify-center">
+      <div className="min-h-screen bg-surface text-on-surface flex items-center justify-center">
         <div className="text-center">
           <div className="w-8 h-8 border-2 border-[#D4A017] border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-          <p className="text-white/50">Loading API Reference...</p>
+          <p className="text-on-surface-muted">Loading API Reference...</p>
         </div>
       </div>
     )
@@ -335,10 +335,10 @@ export default function ApiReferencePage() {
 
   if (error || !spec) {
     return (
-      <div className="min-h-screen bg-[#0A0A0A] text-white flex items-center justify-center">
+      <div className="min-h-screen bg-surface text-on-surface flex items-center justify-center">
         <div className="text-center">
           <p className="text-red-400 mb-4">{error ?? 'Failed to load specification'}</p>
-          <Link href="/developers" className="text-[#D4A017] underline">Back to Developer Docs</Link>
+          <Link href="/developers" className="text-primary underline">Back to Developer Docs</Link>
         </div>
       </div>
     )
@@ -358,60 +358,60 @@ export default function ApiReferencePage() {
   const sortedTags = TAG_ORDER.filter(t => endpointsByTag[t])
 
   return (
-    <div className="min-h-screen bg-[#0A0A0A] text-white">
+    <div className="min-h-screen bg-surface text-on-surface">
       <div className="max-w-5xl mx-auto px-6 py-12">
         {/* Header */}
         <div className="mb-10">
           <Link
             href="/developers"
-            className="inline-flex items-center gap-1.5 text-sm text-white/50 hover:text-white mb-4 transition-colors"
+            className="inline-flex items-center gap-1.5 text-sm text-on-surface-muted hover:text-on-surface mb-4 transition-colors"
           >
             <ArrowLeft className="w-4 h-4" />
             Developer Docs
           </Link>
           <div className="flex items-center gap-3 mb-3">
             <h1 className="text-3xl font-bold">API Reference</h1>
-            <span className="px-2 py-0.5 bg-[#D4A017]/20 text-[#D4A017] text-xs font-mono rounded">
+            <span className="px-2 py-0.5 bg-[#D4A017]/20 text-primary text-xs font-mono rounded">
               v{spec.info.version}
             </span>
             <a
               href="/api/v1/openapi.json"
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-1 text-xs text-white/40 hover:text-white/70 transition-colors ml-auto"
+              className="inline-flex items-center gap-1 text-xs text-on-surface-muted hover:text-white/70 transition-colors ml-auto"
             >
               OpenAPI JSON <ExternalLink className="w-3 h-3" />
             </a>
           </div>
-          <p className="text-white/60 max-w-2xl">{spec.info.description}</p>
+          <p className="text-on-surface-muted max-w-2xl">{spec.info.description}</p>
         </div>
 
         {/* Base URL */}
         <div className="glass-luxury rounded-xl p-4 mb-8 flex items-center gap-3">
-          <span className="text-xs text-white/50 uppercase tracking-wider font-semibold">Base URL</span>
-          <code className="text-sm text-[#D4A017] font-mono">https://snap-r.com</code>
+          <span className="text-xs text-on-surface-muted uppercase tracking-wider font-semibold">Base URL</span>
+          <code className="text-sm text-primary font-mono">https://snap-r.com</code>
           <CopyButton text="https://snap-r.com" />
         </div>
 
         {/* Auth reminder */}
         <div className="bg-white/5 border border-white/10 rounded-xl p-4 mb-8">
           <p className="text-sm text-white/70">
-            All endpoints require a <code className="text-[#D4A017] bg-black/30 px-1.5 py-0.5 rounded">Bearer</code> token.
+            All endpoints require a <code className="text-primary bg-black/30 px-1.5 py-0.5 rounded">Bearer</code> token.
             Create API keys in{' '}
-            <Link href="/dashboard/settings/api-keys" className="text-[#D4A017] underline">Dashboard Settings</Link>.
-            Keys start with <code className="text-white bg-black/30 px-1.5 py-0.5 rounded">sk_live_</code>.
+            <Link href="/dashboard/settings/api-keys" className="text-primary underline">Dashboard Settings</Link>.
+            Keys start with <code className="text-on-surface bg-black/30 px-1.5 py-0.5 rounded">sk_live_</code>.
           </p>
         </div>
 
         {/* Table of Contents */}
         <nav className="mb-10">
-          <h2 className="text-sm font-semibold text-white/50 uppercase tracking-wider mb-3">Resources</h2>
+          <h2 className="text-sm font-semibold text-on-surface-muted uppercase tracking-wider mb-3">Resources</h2>
           <div className="flex flex-wrap gap-2">
             {sortedTags.map(tag => (
               <a
                 key={tag}
                 href={`#${tag.toLowerCase()}`}
-                className="px-3 py-1.5 bg-white/5 border border-white/10 rounded-lg text-sm text-white/70 hover:text-white hover:border-[#D4A017]/30 transition-colors"
+                className="px-3 py-1.5 bg-white/5 border border-white/10 rounded-lg text-sm text-white/70 hover:text-on-surface hover:border-[#D4A017]/30 transition-colors"
               >
                 {tag}
                 <span className="ml-1.5 text-white/30 text-xs">{endpointsByTag[tag].length}</span>
@@ -449,9 +449,9 @@ export default function ApiReferencePage() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-white/10">
-                  <th className="text-left p-3 text-white/50 font-medium">Code</th>
-                  <th className="text-left p-3 text-white/50 font-medium">HTTP Status</th>
-                  <th className="text-left p-3 text-white/50 font-medium">Description</th>
+                  <th className="text-left p-3 text-on-surface-muted font-medium">Code</th>
+                  <th className="text-left p-3 text-on-surface-muted font-medium">HTTP Status</th>
+                  <th className="text-left p-3 text-on-surface-muted font-medium">Description</th>
                 </tr>
               </thead>
               <tbody>
@@ -463,9 +463,9 @@ export default function ApiReferencePage() {
                   { code: 'internal_error', status: '500', desc: 'Server error. Contact support if persistent' },
                 ].map(row => (
                   <tr key={row.code} className="border-b border-white/5 last:border-0">
-                    <td className="p-3"><code className="text-[#D4A017] text-xs">{row.code}</code></td>
+                    <td className="p-3"><code className="text-primary text-xs">{row.code}</code></td>
                     <td className="p-3 text-white/70">{row.status}</td>
-                    <td className="p-3 text-white/50">{row.desc}</td>
+                    <td className="p-3 text-on-surface-muted">{row.desc}</td>
                   </tr>
                 ))}
               </tbody>
@@ -481,20 +481,20 @@ export default function ApiReferencePage() {
           </h2>
           <div className="glass-luxury rounded-xl p-5">
             <p className="text-sm text-white/70 mb-3">
-              Default: <strong className="text-white">60 requests per minute</strong> per API key.
+              Default: <strong className="text-on-surface">60 requests per minute</strong> per API key.
             </p>
             <div className="space-y-1.5 text-sm">
               <div className="flex gap-3">
-                <code className="text-white/80 font-mono text-xs min-w-[180px]">X-RateLimit-Limit</code>
-                <span className="text-white/50">Max requests per window</span>
+                <code className="text-on-surface/80 font-mono text-xs min-w-[180px]">X-RateLimit-Limit</code>
+                <span className="text-on-surface-muted">Max requests per window</span>
               </div>
               <div className="flex gap-3">
-                <code className="text-white/80 font-mono text-xs min-w-[180px]">X-RateLimit-Remaining</code>
-                <span className="text-white/50">Remaining requests</span>
+                <code className="text-on-surface/80 font-mono text-xs min-w-[180px]">X-RateLimit-Remaining</code>
+                <span className="text-on-surface-muted">Remaining requests</span>
               </div>
               <div className="flex gap-3">
-                <code className="text-white/80 font-mono text-xs min-w-[180px]">X-RateLimit-Reset</code>
-                <span className="text-white/50">Unix timestamp when window resets</span>
+                <code className="text-on-surface/80 font-mono text-xs min-w-[180px]">X-RateLimit-Reset</code>
+                <span className="text-on-surface-muted">Unix timestamp when window resets</span>
               </div>
             </div>
           </div>
@@ -503,7 +503,7 @@ export default function ApiReferencePage() {
         {/* Footer */}
         <footer className="text-center glass-gold-luxury rounded-xl p-8">
           <h2 className="text-2xl font-bold mb-2">Ready to integrate?</h2>
-          <p className="text-white/50 mb-4">Create your API key and start building.</p>
+          <p className="text-on-surface-muted mb-4">Create your API key and start building.</p>
           <div className="flex items-center justify-center gap-3">
             <Link
               href="/dashboard/settings/api-keys"
@@ -513,7 +513,7 @@ export default function ApiReferencePage() {
             </Link>
             <Link
               href="/developers"
-              className="px-6 py-3 bg-white/10 text-white font-medium rounded-lg hover:bg-white/20 transition-colors border border-white/20"
+              className="px-6 py-3 bg-white/10 text-on-surface font-medium rounded-lg hover:bg-white/20 transition-colors border border-white/20"
             >
               Developer Docs
             </Link>

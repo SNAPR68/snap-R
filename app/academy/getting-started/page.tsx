@@ -51,7 +51,7 @@ export default function GettingStartedPage() {
 
   return (
 
-    <div className="min-h-screen bg-[#0F0F0F] text-white">
+    <div className="min-h-screen bg-surface text-on-surface">
 
       {/* Header */}
 
@@ -59,7 +59,7 @@ export default function GettingStartedPage() {
 
         <div className="max-w-4xl mx-auto">
 
-          <Link href="/academy" className="inline-flex items-center gap-2 text-white/60 hover:text-white mb-6">
+          <Link href="/academy" className="inline-flex items-center gap-2 text-on-surface-muted hover:text-on-surface mb-6">
 
             <ArrowLeft className="w-4 h-4" /> Back to Academy
 
@@ -69,7 +69,7 @@ export default function GettingStartedPage() {
 
             <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-emerald-500 to-emerald-600 flex items-center justify-center">
 
-              <Rocket className="w-7 h-7 text-white" />
+              <Rocket className="w-7 h-7 text-on-surface" />
 
             </div>
 
@@ -77,7 +77,7 @@ export default function GettingStartedPage() {
 
               <h1 className="text-3xl font-bold">Getting Started with SnapR</h1>
 
-              <p className="text-white/60">Everything to set you up for success</p>
+              <p className="text-on-surface-muted">Everything to set you up for success</p>
 
             </div>
 
@@ -103,7 +103,7 @@ export default function GettingStartedPage() {
 
               href={`/academy/getting-started/${article.slug}`}
 
-              className="block bg-[#1A1A1A] rounded-xl p-6 border border-white/10 hover:border-emerald-500/50 transition-all group"
+              className="block bg-surface-container-low rounded-xl p-6 border border-white/10 hover:border-emerald-500/50 transition-all group"
 
             >
 
@@ -113,11 +113,11 @@ export default function GettingStartedPage() {
 
                   <h3 className="text-lg font-semibold mb-2 group-hover:text-emerald-400 transition-colors">{article.title}</h3>
 
-                  <p className="text-white/60 text-sm">{article.description}</p>
+                  <p className="text-on-surface-muted text-sm">{article.description}</p>
 
                 </div>
 
-                <div className="flex items-center gap-1 text-white/40 text-sm whitespace-nowrap">
+                <div className="flex items-center gap-1 text-on-surface-muted text-sm whitespace-nowrap">
 
                   <Clock className="w-4 h-4" />
 
@@ -137,7 +137,7 @@ export default function GettingStartedPage() {
 
         {/* Quick Tips */}
 
-        <div className="mt-12 bg-[#1A1A1A] rounded-xl p-6 border border-white/10">
+        <div className="mt-12 bg-surface-container-low rounded-xl p-6 border border-white/10">
 
           <h2 className="text-xl font-bold mb-4">Quick Start Checklist</h2>
 
