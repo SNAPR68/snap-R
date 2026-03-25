@@ -73,9 +73,19 @@ export async function GET(req: NextRequest) {
     const userResponse = await fetch(`https://graph.facebook.com/me?fields=id,name&access_token=${longLivedToken}`, { signal: AbortSignal.timeout(15000) });
     const userData = await userResponse.json();
 
-    // Get user's pages
-    const pagesResponse = await fetch(`https://graph.facebook.com/me/accounts?access_token=${longLivedToken}`, { signal: AbortSignal.timeout(15000) });
+    // Get user's pages (requires pages_show_list + pages_manage_posts permissions)
+    const pagesResponse = await fetch(
+      `https://graph.facebook.com/v18.0/me/accounts?fields=id,name,access_token,instagram_business_account&access_token=${longLivedToken}`,
+      { signal: AbortSignal.timeout(15000) }
+    );
     const pagesData = await pagesResponse.json();
+
+    if (pagesData.error) {
+      logger.error('[Facebook OAuth] Pages fetch error:', pagesData.error);
+    }
+    if (!pagesData.data || pagesData.data.length === 0) {
+      logger.warn('[Facebook OAuth] No pages returned — user may not have a Facebook Page or pages_show_list permission was not granted');
+    }
 
     // Build pages array for the JSONB column
     const pagesArray = (pagesData.data || []).map((page: Record<string, string>) => ({
@@ -87,6 +97,8 @@ export async function GET(req: NextRequest) {
     const firstPage = pagesArray[0] as { id: string; name: string; access_token: string } | undefined;
 
     // Save Facebook connection using correct schema columns
+    // Long-lived tokens last ~60 days
+    const tokenExpiresAt = new Date(Date.now() + 60 * 24 * 60 * 60 * 1000).toISOString();
     await getSupabase().from('social_connections').upsert({
       user_id: userId,
       platform: 'facebook',
@@ -97,6 +109,7 @@ export async function GET(req: NextRequest) {
       default_page_id: firstPage?.id ?? null,
       profile_data: { name: userData.name, id: userData.id },
       connected_at: new Date().toISOString(),
+      token_expires_at: tokenExpiresAt,
       is_active: true,
     }, { onConflict: 'user_id,platform' });
 

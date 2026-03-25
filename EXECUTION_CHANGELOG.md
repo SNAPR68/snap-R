@@ -1,5 +1,11 @@
 # SnapR Execution Changelog
 ==========================
+## 2026-03-25 — Facebook OAuth pages fix
+- Added `pages_manage_metadata` scope to Facebook + Instagram connect routes
+- Added explicit `fields` param to `/me/accounts` API call in callback
+- Added empty-pages warning logging in callback
+- Added `token_expires_at` to Facebook connection upsert (was missing)
+
 ## 2026-03-25 — Deprecated meta tag fix
 - `apple-mobile-web-app-capable` → `mobile-web-app-capable` in layout.tsx
 
