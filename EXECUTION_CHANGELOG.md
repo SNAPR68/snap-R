@@ -1,5 +1,8 @@
 # SnapR Execution Changelog
 ==========================
+## 2026-03-25 — Deprecated meta tag fix
+- `apple-mobile-web-app-capable` → `mobile-web-app-capable` in layout.tsx
+
 ## 2026-03-25 — "Digital Curator" editorial redesign (public pages)
 
 ### Design Foundation
