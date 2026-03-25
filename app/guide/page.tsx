@@ -9,6 +9,15 @@ export const metadata: Metadata = {
   alternates: {
     canonical: '/guide',
   },
+  openGraph: {
+    title: 'Free Real Estate Marketing Guide | SnapR',
+    description: 'Download SnapR\'s free real estate marketing guide with practical strategies to improve listing photos, attract more buyers, and market properties faster.',
+    url: 'https://snap-r.com/guide',
+  },
+  twitter: {
+    title: 'Free Real Estate Marketing Guide | SnapR',
+    description: 'Download SnapR\'s free guide with strategies to improve listing photos, attract more buyers, and market properties faster.',
+  },
 };
 
 const chapters = [
@@ -70,21 +79,21 @@ const personas = [
 
 export default function GuidePage() {
   return (
-    <div className="min-h-screen bg-[#0F0F0F] font-['Outfit']">
+    <div className="min-h-screen bg-surface">
       {/* Nav */}
-      <nav className="border-b border-[#D4A017]/30 bg-[#0F0F0F]/95 backdrop-blur-md">
+      <nav className="bg-surface-container-low/90 backdrop-blur-[12px]">
         <div className="max-w-6xl mx-auto px-6 py-3 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2">
             <span className="text-xl font-bold">
-              <span className="text-white">Snap</span>
-              <span className="text-[#D4A017]">R</span>
+              <span className="text-on-surface">Snap</span>
+              <span className="text-primary">R</span>
             </span>
           </Link>
           <div className="flex items-center gap-3">
-            <Link href="/auth/login" className="text-white/70 hover:text-white text-sm transition-colors hidden sm:block">Log in</Link>
+            <Link href="/auth/login" className="text-on-surface/60 hover:text-on-surface text-sm transition-colors hidden sm:block">Log in</Link>
             <Link
               href="/auth/signup"
-              className="px-4 py-2 bg-gradient-to-r from-[#D4A017] to-[#B8860B] text-black font-semibold rounded-lg text-sm hover:opacity-90 transition-opacity"
+              className="px-4 py-2 bg-gradient-to-r from-primary to-primary-container text-black font-semibold rounded-lg text-sm hover:shadow-glow-gold transition-all"
             >
               Start Free
             </Link>
@@ -94,30 +103,30 @@ export default function GuidePage() {
 
       {/* Hero */}
       <section className="pt-20 pb-16 px-6 relative overflow-hidden">
-        <div className="absolute top-20 left-1/4 w-[500px] h-[500px] bg-[#D4A017]/10 rounded-full blur-[100px]" />
-        <div className="absolute bottom-0 right-1/4 w-[400px] h-[400px] bg-[#D4A017]/10 rounded-full blur-[80px]" />
+        <div className="absolute top-20 left-1/4 w-[500px] h-[500px] bg-primary/10 rounded-full blur-[100px]" />
+        <div className="absolute bottom-0 right-1/4 w-[400px] h-[400px] bg-primary/10 rounded-full blur-[80px]" />
 
         <div className="max-w-4xl mx-auto relative z-10">
           <div className="grid md:grid-cols-2 gap-12 items-center">
             <div>
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#D4A017]/10 border border-[#D4A017]/30 mb-6">
-                <span className="text-[#D4A017] text-xs font-semibold tracking-wider uppercase">Free Guide</span>
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-sm bg-primary/10 mb-6">
+                <span className="text-primary uppercase tracking-wide text-[0.6875rem] font-semibold">Free Guide</span>
               </div>
 
-              <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-4 leading-tight">
+              <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold font-serif tracking-tighter text-on-surface mb-4 leading-tight">
                 The Real Estate Photo{' '}
-                <span className="text-[#D4A017]">Marketing Guide</span>
+                <span className="text-primary">Marketing Guide</span>
               </h1>
 
-              <p className="text-white/60 text-lg mb-8 leading-relaxed">
+              <p className="text-on-surface-muted text-lg mb-8 leading-relaxed">
                 Download the free real estate photo marketing guide to learn how better visuals and faster marketing workflows can help your listings stand out.
               </p>
 
-              <div className="flex items-center gap-6 text-sm text-white/50 mb-2">
+              <div className="flex items-center gap-6 text-sm text-on-surface-muted mb-2">
                 <span>8 Pages</span>
-                <span className="w-1 h-1 rounded-full bg-white/30" />
+                <span className="w-1 h-1 rounded-full bg-on-surface-muted/60" />
                 <span>6 Chapters</span>
-                <span className="w-1 h-1 rounded-full bg-white/30" />
+                <span className="w-1 h-1 rounded-full bg-on-surface-muted/60" />
                 <span>PDF Format</span>
               </div>
             </div>
@@ -128,26 +137,26 @@ export default function GuidePage() {
       </section>
 
       {/* What's Inside */}
-      <section className="py-16 px-6 bg-[#0A0A0A]">
+      <section className="py-16 px-6 bg-surface">
         <div className="max-w-5xl mx-auto">
           <div className="text-center mb-12">
-            <p className="text-[#D4A017] text-xs font-semibold tracking-wider mb-2 uppercase">What&apos;s Inside</p>
-            <h2 className="text-2xl md:text-3xl font-bold text-white">6 Chapters of Actionable Strategy</h2>
+            <p className="text-primary uppercase tracking-wide text-[0.6875rem] font-semibold mb-2">What&apos;s Inside</p>
+            <h2 className="text-2xl md:text-3xl font-bold font-serif tracking-tighter text-on-surface">6 Chapters of Actionable Strategy</h2>
           </div>
 
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {chapters.map((ch) => {
               const Icon = ch.icon;
               return (
-                <div key={ch.num} className="glass-luxury glossy-top p-6 group hover:border-[#D4A017]/30 transition-colors">
+                <div key={ch.num} className="bg-surface-container-low p-6 group transition-colors">
                   <div className="flex items-center gap-3 mb-4">
-                    <div className="w-10 h-10 rounded-xl bg-[#D4A017]/20 flex items-center justify-center">
-                      <Icon className="w-5 h-5 text-[#D4A017]" />
+                    <div className="w-10 h-10 rounded-lg bg-primary/20 flex items-center justify-center">
+                      <Icon className="w-5 h-5 text-primary" />
                     </div>
-                    <span className="text-[#D4A017] text-xs font-semibold tracking-wider">Chapter {ch.num}</span>
+                    <span className="text-primary uppercase tracking-wide text-[0.6875rem] font-semibold">Chapter {ch.num}</span>
                   </div>
-                  <h3 className="text-white font-semibold mb-2">{ch.title}</h3>
-                  <p className="text-white/50 text-sm leading-relaxed">{ch.desc}</p>
+                  <h3 className="text-on-surface font-semibold mb-2">{ch.title}</h3>
+                  <p className="text-on-surface-muted text-sm leading-relaxed">{ch.desc}</p>
                 </div>
               );
             })}
@@ -159,20 +168,20 @@ export default function GuidePage() {
       <section className="py-16 px-6">
         <div className="max-w-4xl mx-auto">
           <div className="text-center mb-12">
-            <p className="text-[#D4A017] text-xs font-semibold tracking-wider mb-2 uppercase">Who This Is For</p>
-            <h2 className="text-2xl md:text-3xl font-bold text-white">Built for Real Estate Professionals</h2>
+            <p className="text-primary uppercase tracking-wide text-[0.6875rem] font-semibold mb-2">Who This Is For</p>
+            <h2 className="text-2xl md:text-3xl font-bold font-serif tracking-tighter text-on-surface">Built for Real Estate Professionals</h2>
           </div>
 
           <div className="grid md:grid-cols-3 gap-6">
             {personas.map((p) => {
               const Icon = p.icon;
               return (
-                <div key={p.title} className="glass-luxury glossy-top p-6 text-center">
-                  <div className="w-14 h-14 rounded-2xl bg-[#D4A017]/10 flex items-center justify-center mx-auto mb-4">
-                    <Icon className="w-7 h-7 text-[#D4A017]" />
+                <div key={p.title} className="bg-surface-container-low p-6 text-center">
+                  <div className="w-14 h-14 rounded-lg bg-primary/10 flex items-center justify-center mx-auto mb-4">
+                    <Icon className="w-7 h-7 text-primary" />
                   </div>
-                  <h3 className="text-white font-semibold mb-2">{p.title}</h3>
-                  <p className="text-white/50 text-sm leading-relaxed">{p.desc}</p>
+                  <h3 className="text-on-surface font-semibold mb-2">{p.title}</h3>
+                  <p className="text-on-surface-muted text-sm leading-relaxed">{p.desc}</p>
                 </div>
               );
             })}
@@ -181,10 +190,10 @@ export default function GuidePage() {
       </section>
 
       {/* Bottom CTA */}
-      <section className="py-16 px-6 bg-[#0A0A0A]">
+      <section className="py-16 px-6 bg-surface">
         <div className="max-w-md mx-auto text-center">
-          <h2 className="text-2xl font-bold text-white mb-2">Ready to Level Up Your Marketing?</h2>
-          <p className="text-white/50 text-sm mb-8">
+          <h2 className="text-2xl font-bold font-serif tracking-tighter text-on-surface mb-2">Ready to Level Up Your Marketing?</h2>
+          <p className="text-on-surface-muted text-sm mb-8">
             Join thousands of agents who have downloaded this guide.
           </p>
           <GuideRequestForm source="guide-page" variant="card" />
@@ -192,21 +201,21 @@ export default function GuidePage() {
       </section>
 
       {/* Footer */}
-      <footer className="border-t border-white/10 py-8 px-6">
+      <footer className="py-8 px-6 bg-surface-container-low">
         <div className="max-w-5xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
           <Link href="/" className="flex items-center gap-2">
             <span className="text-lg font-bold">
-              <span className="text-white">Snap</span>
-              <span className="text-[#D4A017]">R</span>
+              <span className="text-on-surface">Snap</span>
+              <span className="text-primary">R</span>
             </span>
           </Link>
-          <div className="flex items-center gap-6 text-sm text-white/40">
-            <Link href="/faq" className="hover:text-[#D4A017] transition-colors">FAQ</Link>
-            <Link href="/academy" className="hover:text-[#D4A017] transition-colors">Academy</Link>
-            <Link href="/pricing" className="hover:text-[#D4A017] transition-colors">Pricing</Link>
-            <Link href="/contact" className="hover:text-[#D4A017] transition-colors">Contact</Link>
+          <div className="flex items-center gap-6 text-sm text-on-surface-muted">
+            <Link href="/faq" className="hover:text-primary transition-colors">FAQ</Link>
+            <Link href="/academy" className="hover:text-primary transition-colors">Academy</Link>
+            <Link href="/pricing" className="hover:text-primary transition-colors">Pricing</Link>
+            <Link href="/contact" className="hover:text-primary transition-colors">Contact</Link>
           </div>
-          <p className="text-white/30 text-xs">&copy; 2026 SnapR. All rights reserved.</p>
+          <p className="text-on-surface-muted/60 text-xs">&copy; 2026 SnapR. All rights reserved.</p>
         </div>
       </footer>
     </div>

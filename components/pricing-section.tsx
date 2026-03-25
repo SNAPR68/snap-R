@@ -135,14 +135,16 @@ interface PricingSectionProps {
   showCTA?: boolean;
   showComparison?: boolean;
   showAddons?: boolean;
+  headingLevel?: 'h1' | 'h2';
 }
 
-export default function PricingSection({ 
-  showHeadline = true, 
-  showFAQ = false, 
+export default function PricingSection({
+  showHeadline = true,
+  showFAQ = false,
   showCTA = false,
   showComparison = true,
   showAddons = true,
+  headingLevel = 'h2',
 }: PricingSectionProps) {
   const router = useRouter();
   const [sliderIndex, setSliderIndex] = useState(2); // Default to 15 listings
@@ -182,14 +184,20 @@ export default function PricingSection({
       {/* Headline */}
       {showHeadline && (
         <div className="text-center mb-8 pt-8">
-          <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-green-500/10 border border-green-500/30 rounded-full text-green-400 text-xs mb-4">
+          <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-green-500/10 border border-green-500/30 rounded-sm text-green-400 uppercase tracking-wide text-[0.6875rem] mb-4">
             <Sparkles className="w-3 h-3" />
             Simple, transparent pricing
           </div>
-          <h2 className="text-3xl md:text-4xl font-bold mb-3">
-            Choose the Plan That Fits Your Listing Volume
-          </h2>
-          <p className="text-base text-white/60 max-w-2xl mx-auto">
+          {headingLevel === 'h1' ? (
+            <h1 className="text-3xl md:text-4xl font-bold font-serif tracking-tighter mb-3">
+              Choose the Plan That Fits Your Listing Volume
+            </h1>
+          ) : (
+            <h2 className="text-3xl md:text-4xl font-bold font-serif tracking-tighter mb-3">
+              Choose the Plan That Fits Your Listing Volume
+            </h2>
+          )}
+          <p className="text-base text-on-surface-muted max-w-2xl mx-auto">
             Every plan includes AI photo enhancement tools, with higher tiers unlocking more output, faster processing, and deeper marketing support.
           </p>
         </div>
@@ -197,20 +205,20 @@ export default function PricingSection({
 
       {/* Billing Toggle */}
       <div className="flex flex-col items-center gap-4 mb-6">
-        <div className="flex items-center gap-1 p-1 bg-white/5 border border-white/10 rounded-full">
+        <div className="flex items-center gap-1 p-1 bg-surface-container-low rounded-sm">
           {BILLING_OPTIONS.map((option) => (
             <button
               key={option.id}
               onClick={() => setBillingOption(option.id)}
-              className={`px-4 py-2 rounded-full text-sm font-medium transition-all flex items-center gap-1.5 ${
+              className={`px-4 py-2 rounded-sm text-sm font-medium transition-all flex items-center gap-1.5 ${
                 billingOption === option.id 
-                  ? 'bg-[#D4A017] text-black' 
-                  : 'text-white/50 hover:text-white'
+                  ? 'bg-primary text-black' 
+                  : 'text-on-surface-muted hover:text-on-surface'
               }`}
             >
               {option.label}
               {option.badge && billingOption !== option.id && (
-                <span className="text-[10px] bg-green-500/20 text-green-400 px-1.5 py-0.5 rounded-full">
+                <span className="text-[10px] bg-green-500/20 text-green-400 px-1.5 py-0.5 rounded-sm">
                   {option.badge}
                 </span>
               )}
@@ -220,7 +228,7 @@ export default function PricingSection({
 
         {/* Listings Slider */}
         <div className="flex items-center gap-4 w-full max-w-md">
-          <span className="text-sm text-white/50 whitespace-nowrap">Listings/mo:</span>
+          <span className="text-sm text-on-surface-muted whitespace-nowrap">Listings/mo:</span>
           <input
             type="range"
             min={0}
@@ -228,15 +236,15 @@ export default function PricingSection({
             value={sliderIndex}
             onChange={(e) => setSliderIndex(Number(e.target.value))}
             aria-label="Number of listings"
-            className="flex-1 h-2 bg-white/10 rounded-full appearance-none cursor-pointer accent-[#D4A017]"
+            className="flex-1 h-2 bg-surface-container-high rounded-full appearance-none cursor-pointer accent-primary"
           />
-          <span className="text-lg font-bold text-[#D4A017] min-w-[3rem] text-right">
+          <span className="text-lg font-bold text-primary min-w-[3rem] text-right">
             {listings}
           </span>
         </div>
 
         {requiresSales && (
-          <p className="text-sm text-[#D4A017]">
+          <p className="text-sm text-primary">
             300+ listings? <Link href="/contact" className="underline">Talk to Sales About Enterprise</Link> for custom pricing.
           </p>
         )}
@@ -260,51 +268,51 @@ export default function PricingSection({
             <div
               key={tier.id}
               onClick={() => !isEnterprise && setSelectedPlan(tier.id)}
-              className={`relative rounded-2xl p-5 transition-all cursor-pointer ${
+              className={`relative rounded-lg p-5 transition-all cursor-pointer ${
                 isSelected
-                  ? 'bg-gradient-to-b from-[#D4A017]/20 to-transparent border-2 border-[#D4A017] shadow-lg shadow-[#D4A017]/20'
-                  : 'bg-white/5 border border-white/10 hover:border-white/30'
+                  ? 'bg-gradient-to-b from-primary/20 to-transparent border-2 border-primary shadow-lg shadow-primary/20'
+                  : 'bg-surface-container-low hover:bg-surface-container-high'
               }`}
             >
               {/* Popular Badge */}
               {tier.popular && (
-                <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 bg-[#D4A017] text-black text-xs font-bold rounded-full">
+                <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 bg-primary text-black text-xs font-bold rounded-sm">
                   MOST POPULAR
                 </div>
               )}
 
               {/* Header */}
               <div className="flex items-center gap-2 mb-2">
-                <div className={`p-2 rounded-lg ${isSelected ? 'bg-[#D4A017]/20' : 'bg-white/10'}`}>
-                  <Icon className={`w-5 h-5 ${isSelected ? 'text-[#D4A017]' : 'text-white/60'}`} />
+                <div className={`p-2 rounded-lg ${isSelected ? 'bg-primary/20' : 'bg-surface-container-high'}`}>
+                  <Icon className={`w-5 h-5 ${isSelected ? 'text-primary' : 'text-on-surface-muted'}`} />
                 </div>
                 <div>
-                  <h3 className={`font-bold text-lg ${isSelected ? 'text-[#D4A017]' : ''}`}>{tier.name}</h3>
+                  <h3 className={`font-bold text-lg ${isSelected ? 'text-primary' : ''}`}>{tier.name}</h3>
                 </div>
               </div>
 
-              <p className="text-xs text-white/50 mb-4">{tier.description}</p>
+              <p className="text-xs text-on-surface-muted mb-4">{tier.description}</p>
 
               {/* Pricing */}
               <div className="mb-4">
                 {isFree ? (
                   <div>
                     <span className="text-3xl font-bold">$0</span>
-                    <span className="text-white/50 text-sm">/forever</span>
+                    <span className="text-on-surface-muted text-sm">/forever</span>
                   </div>
                 ) : isEnterprise ? (
                   <div>
                     <span className="text-2xl font-bold">Custom</span>
-                    <p className="text-xs text-white/50">Talk to Sales About Enterprise</p>
+                    <p className="text-xs text-on-surface-muted">Talk to Sales About Enterprise</p>
                   </div>
                 ) : (
                   <div>
                     <div className="flex items-baseline gap-1">
-                      <span className="text-3xl font-bold text-[#D4A017]">${pricePerListing}</span>
-                      <span className="text-white/50 text-sm">/listing</span>
+                      <span className="text-3xl font-bold text-primary">${pricePerListing}</span>
+                      <span className="text-on-surface-muted text-sm">/listing</span>
                     </div>
                     {!requiresSales && listings > 0 && (
-                      <p className="text-xs text-white/40 mt-1">
+                      <p className="text-xs text-on-surface-muted mt-1">
                         {listings} listings = ${totalPrice.toLocaleString()}/mo
                       </p>
                     )}
@@ -322,7 +330,7 @@ export default function PricingSection({
                 <div className="space-y-2 mb-4">
                   <Link
                     href="/contact?plan=enterprise"
-                    className="w-full py-2.5 rounded-lg font-semibold transition-all text-sm flex items-center justify-center gap-2 bg-white/10 text-white hover:bg-white/20 border border-white/20"
+                    className="w-full py-2.5 rounded-lg font-semibold transition-all text-sm flex items-center justify-center gap-2 bg-surface-container-high text-on-surface hover:bg-surface-container-high border-outline-variant"
                   >
                     <Phone className="w-4 h-4" />
                     Talk to Sales About Enterprise
@@ -333,7 +341,7 @@ export default function PricingSection({
                       handleEnterpriseTrial();
                     }}
                     disabled={loading === 'enterprise-trial'}
-                    className="w-full py-2 rounded-lg text-xs font-medium transition-all disabled:opacity-50 bg-[#D4A017]/10 text-[#D4A017] hover:bg-[#D4A017]/20 border border-[#D4A017]/20"
+                    className="w-full py-2 rounded-lg text-xs font-medium transition-all disabled:opacity-50 bg-primary/10 text-primary hover:bg-primary/20"
                   >
                     {loading === 'enterprise-trial' ? (
                       <Loader2 className="w-3.5 h-3.5 animate-spin mx-auto" />
@@ -341,14 +349,14 @@ export default function PricingSection({
                       'Or start 14-day Enterprise Trial'
                     )}
                   </button>
-                  <p className="text-[10px] text-white/30 text-center">
+                  <p className="text-[10px] text-on-surface-muted/60 text-center">
                     {billingOption === 'annual' ? '$249' : '$299'}/mo after trial
                   </p>
                 </div>
               ) : requiresSales && !isFree ? (
                 <Link
                   href={`/contact?plan=${tier.id}`}
-                  className="w-full py-2.5 rounded-lg font-semibold transition-all mb-4 text-sm flex items-center justify-center gap-2 bg-white/10 text-white hover:bg-white/20 border border-white/20"
+                  className="w-full py-2.5 rounded-lg font-semibold transition-all mb-4 text-sm flex items-center justify-center gap-2 bg-surface-container-high text-on-surface hover:bg-surface-container-high border-outline-variant"
                 >
                   <Phone className="w-4 h-4" />
                   Talk to Sales About Enterprise
@@ -362,8 +370,8 @@ export default function PricingSection({
                   disabled={loading === tier.id}
                   className={`w-full py-2.5 rounded-lg font-semibold transition-all mb-4 disabled:opacity-50 text-sm ${
                     isSelected
-                      ? 'bg-[#D4A017] text-black hover:bg-[#B8860B]'
-                      : 'bg-white/10 text-white hover:bg-white/20 border border-white/20'
+                      ? 'bg-primary text-black hover:bg-primary-container'
+                      : 'bg-surface-container-high text-on-surface hover:bg-surface-container-high border-outline-variant'
                   }`}
                 >
                   {loading === tier.id ? (
@@ -382,15 +390,15 @@ export default function PricingSection({
                   <li 
                     key={i} 
                     className={`flex items-center gap-2 text-xs ${
-                      'isHeader' in feature && feature.isHeader ? 'text-white font-medium mt-2' :
-                      feature.included ? 'text-white/80' : 'text-white/30'
+                      'isHeader' in feature && feature.isHeader ? 'text-on-surface font-medium mt-2' :
+                      feature.included ? 'text-on-surface/80' : 'text-on-surface-muted/60'
                     }`}
                   >
                     {!('isHeader' in feature && feature.isHeader) && (
                       feature.included ? (
                         <Check className="w-3.5 h-3.5 flex-shrink-0 text-green-400" />
                       ) : (
-                        <X className="w-3.5 h-3.5 flex-shrink-0 text-white/20" />
+                        <X className="w-3.5 h-3.5 flex-shrink-0 text-on-surface-muted/60" />
                       )
                     )}
                     <span>{feature.name}</span>
@@ -404,22 +412,22 @@ export default function PricingSection({
 
       {/* Value Highlight */}
       {showComparison && !requiresSales && (
-        <div className="max-w-3xl mx-auto mb-8 p-6 bg-gradient-to-r from-[#D4A017]/10 to-green-500/10 rounded-2xl border border-[#D4A017]/20">
+        <div className="max-w-3xl mx-auto mb-8 p-6 bg-gradient-to-r from-primary/10 to-green-500/10 rounded-lg">
           <h3 className="text-lg font-bold text-center mb-4">Everything You Need, One Platform</h3>
           <div className="grid md:grid-cols-2 gap-4 text-center">
-            <div className="p-4 bg-[#D4A017]/10 rounded-xl border border-[#D4A017]/30">
-              <p className="text-xs text-white/50 mb-1">SnapR Gold</p>
-              <p className="text-2xl font-bold text-[#D4A017]">${goldTotal}/mo</p>
-              <p className="text-[10px] text-white/40">
+            <div className="p-4 bg-primary/10 rounded-lg">
+              <p className="text-xs text-on-surface-muted mb-1">SnapR Gold</p>
+              <p className="text-2xl font-bold text-primary">${goldTotal}/mo</p>
+              <p className="text-[10px] text-on-surface-muted">
                 {listings} listings × ${goldPrice}/listing
               </p>
             </div>
-            <div className="p-4 bg-white/5 rounded-xl">
-              <p className="text-xs text-white/50 mb-1">Includes</p>
-              <p className="text-sm text-white/80">Photo editing + Social templates + Email marketing + Video creator + MLS descriptions</p>
+            <div className="p-4 bg-surface-container-low rounded-lg">
+              <p className="text-xs text-on-surface-muted mb-1">Includes</p>
+              <p className="text-sm text-on-surface/80">Photo editing + Social templates + Email marketing + Video creator + MLS descriptions</p>
             </div>
           </div>
-          <p className="text-xs text-white/40 text-center mt-4">
+          <p className="text-xs text-on-surface-muted text-center mt-4">
             No separate subscriptions. No hidden fees. Everything in one place.
           </p>
         </div>
@@ -429,7 +437,7 @@ export default function PricingSection({
       {showAddons && (
         <div className="max-w-4xl mx-auto mb-8">
           <h3 className="text-lg font-bold text-center mb-2">Premium Add-ons</h3>
-          <p className="text-sm text-white/50 text-center mb-4">Pay as you go</p>
+          <p className="text-sm text-on-surface-muted text-center mb-4">Pay as you go</p>
           <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
             {[
               { name: 'Property Gallery', desc: 'Shareable galleries', price: 'FREE', highlight: true },
@@ -438,14 +446,14 @@ export default function PricingSection({
               { name: 'CMA Reports', desc: 'Market analysis', price: 'FREE', highlight: true },
               { name: 'Human Editing', desc: 'Pro retouching', price: 'From $5/img' },
             ].map((addon, i) => (
-              <div key={i} className={`p-3 rounded-xl border text-center ${
+              <div key={i} className={`p-3 rounded-lg border text-center ${
                 addon.highlight 
                   ? 'bg-green-500/10 border-green-500/30' 
-                  : 'bg-white/5 border-white/10'
+                  : 'bg-surface-container-low border-surface-container-high'
               }`}>
                 <p className="text-sm font-medium">{addon.name}</p>
-                <p className="text-[10px] text-white/40">{addon.desc}</p>
-                <p className={`text-xs mt-1 ${addon.highlight ? 'text-green-400' : 'text-[#D4A017]'}`}>
+                <p className="text-[10px] text-on-surface-muted">{addon.desc}</p>
+                <p className={`text-xs mt-1 ${addon.highlight ? 'text-green-400' : 'text-primary'}`}>
                   {addon.price}
                 </p>
               </div>
@@ -457,7 +465,7 @@ export default function PricingSection({
       {/* FAQ */}
       {showFAQ && (
         <div className="mt-10 max-w-3xl mx-auto">
-          <h2 className="text-xl font-bold text-center mb-6">Frequently Asked Questions</h2>
+          <h2 className="text-xl font-bold font-serif tracking-tighter text-center mb-6">Frequently Asked Questions</h2>
           <div className="space-y-2">
             {[
               ['How does pricing work?', 'Choose your billing cycle (Pay as you go, Monthly, or Annual) and select how many listings you need per month. The more you commit, the more you save. Monthly billing saves 40%, Annual saves 60%. Higher volume (75+ listings) unlocks additional discounts.'],
@@ -468,12 +476,12 @@ export default function PricingSection({
               ['Can I switch plans anytime?', 'Yes! Upgrade anytime and we\'ll credit your unused listings. Downgrades take effect at your next billing cycle.'],
               ['Is there a free trial?', 'Yes! Start with our Free plan - 3 listings per month with all 15 AI tools. Upgrade when you\'re ready.'],
             ].map(([q, a], i) => (
-              <details key={i} className="group bg-white/5 rounded-xl border border-white/10 overflow-hidden">
+              <details key={i} className="group bg-surface-container-low rounded-lg border-surface-container-high overflow-hidden">
                 <summary className="p-4 cursor-pointer text-sm font-medium flex items-center justify-between">
                   {q}
-                  <span className="text-[#D4A017] group-open:rotate-45 transition-transform text-lg">+</span>
+                  <span className="text-primary group-open:rotate-45 transition-transform text-lg">+</span>
                 </summary>
-                <p className="px-4 pb-4 text-sm text-white/60">{a}</p>
+                <p className="px-4 pb-4 text-sm text-on-surface-muted">{a}</p>
               </details>
             ))}
           </div>
@@ -483,18 +491,18 @@ export default function PricingSection({
       {/* CTA */}
       {showCTA && (
         <div className="text-center py-12">
-          <h2 className="text-2xl font-bold mb-3">Ready to Get Started?</h2>
-          <p className="text-white/60 text-sm mb-6">Start free with 3 listings/month. No credit card required.</p>
+          <h2 className="text-2xl font-bold font-serif tracking-tighter mb-3">Ready to Get Started?</h2>
+          <p className="text-on-surface-muted text-sm mb-6">Start free with 3 listings/month. No credit card required.</p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
             <Link
               href="/auth/signup?plan=free"
-              className="px-6 py-3 bg-white/10 hover:bg-white/20 text-white font-bold rounded-lg inline-flex items-center gap-2 transition border border-white/20"
+              className="px-6 py-3 bg-surface-container-high hover:bg-surface-container-high text-on-surface font-bold rounded-lg inline-flex items-center gap-2 transition border-outline-variant"
             >
               Start Free
             </Link>
             <Link
               href={`/auth/signup?plan=gold&listings=${listings}&billing=${billingOption}`}
-              className="px-6 py-3 bg-gradient-to-r from-[#D4A017] to-[#B8860B] text-black font-bold rounded-lg inline-flex items-center gap-2 hover:opacity-90 transition"
+              className="px-6 py-3 bg-gradient-to-r from-primary to-primary-container text-black font-bold rounded-lg inline-flex items-center gap-2 hover:shadow-glow-gold transition"
             >
               Get SnapR Gold <ArrowRight className="w-4 h-4" />
             </Link>

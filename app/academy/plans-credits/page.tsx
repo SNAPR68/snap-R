@@ -3,28 +3,28 @@ import { ArrowLeft, Building2, Zap, Check, Crown, Users } from 'lucide-react';
 
 export default function PlansPage() {
   return (
-    <div className="min-h-screen bg-[#0F0F0F] text-white">
-      <header className="h-14 bg-[#1A1A1A] border-b border-white/10 flex items-center px-6">
-        <Link href="/academy" className="flex items-center gap-2 text-white/60 hover:text-white">
+    <div className="min-h-screen bg-surface text-on-surface">
+      <header className="h-14 bg-surface-container-low border-b border-white/10 flex items-center px-6">
+        <Link href="/academy" className="flex items-center gap-2 text-on-surface-muted hover:text-on-surface">
           <ArrowLeft className="w-4 h-4" /> Back to Academy
         </Link>
       </header>
       
       <main className="max-w-4xl mx-auto px-6 py-12">
         <h1 className="text-3xl font-bold mb-4">Plans & Pricing</h1>
-        <p className="text-white/60 mb-8">Understanding SnapR&apos;s simple listing-based pricing model.</p>
+        <p className="text-on-surface-muted mb-8">Understanding SnapR&apos;s simple listing-based pricing model.</p>
         
         {/* Key Concept */}
-        <div className="bg-gradient-to-r from-[#D4A017]/20 to-transparent border border-[#D4A017]/30 rounded-xl p-6 mb-8">
+        <div className="bg-gradient-to-r from-primary/20 to-transparent border border-[#D4A017]/30 rounded-xl p-6 mb-8">
           <h2 className="text-xl font-bold mb-2 flex items-center gap-2">
-            <Zap className="w-5 h-5 text-[#D4A017]" />
+            <Zap className="w-5 h-5 text-primary" />
             How SnapR Pricing Works
           </h2>
           <p className="text-white/70 mb-4">
             Unlike traditional services that charge per photo or per enhancement, SnapR uses <strong>listing-based pricing</strong>. 
             You pay for the number of listings you can create per month, and all AI enhancements are <span className="text-green-400 font-semibold">completely FREE</span>.
           </p>
-          <ul className="space-y-2 text-white/60">
+          <ul className="space-y-2 text-on-surface-muted">
             <li className="flex items-center gap-2"><Check className="w-4 h-4 text-green-400" /> All 15 AI tools included at no extra cost</li>
             <li className="flex items-center gap-2"><Check className="w-4 h-4 text-green-400" /> Unlimited photos per listing (up to 200)</li>
             <li className="flex items-center gap-2"><Check className="w-4 h-4 text-green-400" /> Re-enhance as many times as you want</li>
@@ -37,14 +37,14 @@ export default function PlansPage() {
         
         <div className="grid md:grid-cols-3 gap-6 mb-12">
           {/* Free */}
-          <div className="bg-[#1A1A1A] border border-white/10 rounded-xl p-6">
+          <div className="bg-surface-container-low border border-white/10 rounded-xl p-6">
             <div className="flex items-center gap-2 mb-4">
-              <Building2 className="w-5 h-5 text-white/60" />
+              <Building2 className="w-5 h-5 text-on-surface-muted" />
               <h3 className="text-lg font-bold">Free</h3>
             </div>
             <p className="text-3xl font-bold mb-1">$0</p>
-            <p className="text-white/50 text-sm mb-4">forever</p>
-            <ul className="space-y-2 text-sm text-white/60">
+            <p className="text-on-surface-muted text-sm mb-4">forever</p>
+            <ul className="space-y-2 text-sm text-on-surface-muted">
               <li>• 3 listings/month</li>
               <li>• All 15 AI tools</li>
               <li>• Content Studio (limited)</li>
@@ -54,17 +54,17 @@ export default function PlansPage() {
           </div>
           
           {/* Pro */}
-          <div className="bg-[#1A1A1A] border-2 border-[#D4A017] rounded-xl p-6 relative">
+          <div className="bg-surface-container-low border-2 border-[#D4A017] rounded-xl p-6 relative">
             <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 bg-[#D4A017] text-black text-xs font-bold rounded-full">
               Most Popular
             </div>
             <div className="flex items-center gap-2 mb-4">
-              <Crown className="w-5 h-5 text-[#D4A017]" />
+              <Crown className="w-5 h-5 text-primary" />
               <h3 className="text-lg font-bold">Pro</h3>
             </div>
-            <p className="text-3xl font-bold text-[#D4A017] mb-1">$7-9</p>
-            <p className="text-white/50 text-sm mb-4">per listing</p>
-            <ul className="space-y-2 text-sm text-white/60">
+            <p className="text-3xl font-bold text-primary mb-1">$7-9</p>
+            <p className="text-on-surface-muted text-sm mb-4">per listing</p>
+            <ul className="space-y-2 text-sm text-on-surface-muted">
               <li>• 10-75+ listings/month</li>
               <li>• All 15 AI tools</li>
               <li>• Full Content Studio</li>
@@ -75,14 +75,14 @@ export default function PlansPage() {
           </div>
           
           {/* Agency */}
-          <div className="bg-[#1A1A1A] border border-white/10 rounded-xl p-6">
+          <div className="bg-surface-container-low border border-white/10 rounded-xl p-6">
             <div className="flex items-center gap-2 mb-4">
               <Users className="w-5 h-5 text-purple-400" />
               <h3 className="text-lg font-bold">Agency</h3>
             </div>
             <p className="text-3xl font-bold mb-1">$9-11</p>
-            <p className="text-white/50 text-sm mb-4">per listing</p>
-            <ul className="space-y-2 text-sm text-white/60">
+            <p className="text-on-surface-muted text-sm mb-4">per listing</p>
+            <ul className="space-y-2 text-sm text-on-surface-muted">
               <li>• Unlimited listings</li>
               <li>• All 15 AI tools</li>
               <li>• 5 team members</li>
@@ -95,12 +95,12 @@ export default function PlansPage() {
         </div>
 
         {/* What Counts as a Listing */}
-        <div className="bg-[#1A1A1A] border border-white/10 rounded-xl p-6 mb-8">
+        <div className="bg-surface-container-low border border-white/10 rounded-xl p-6 mb-8">
           <h2 className="text-xl font-bold mb-4">What Counts as a Listing?</h2>
-          <p className="text-white/60 mb-4">
+          <p className="text-on-surface-muted mb-4">
             A listing is a single property address. Each listing can contain up to 200 photos, and you can:
           </p>
-          <ul className="space-y-2 text-white/60">
+          <ul className="space-y-2 text-on-surface-muted">
             <li className="flex items-center gap-2"><Check className="w-4 h-4 text-green-400" /> Upload unlimited photos (up to 200 per listing)</li>
             <li className="flex items-center gap-2"><Check className="w-4 h-4 text-green-400" /> Enhance each photo with multiple AI tools</li>
             <li className="flex items-center gap-2"><Check className="w-4 h-4 text-green-400" /> Re-enhance and experiment as many times as you want</li>
@@ -112,13 +112,13 @@ export default function PlansPage() {
         {/* Related Articles */}
         <h2 className="text-xl font-bold mb-4">Related Articles</h2>
         <div className="grid md:grid-cols-2 gap-4">
-          <Link href="/academy/plans-credits/choosing-plan" className="p-4 bg-[#1A1A1A] border border-white/10 rounded-xl hover:border-[#D4A017]/50 transition-all">
+          <Link href="/academy/plans-credits/choosing-plan" className="p-4 bg-surface-container-low border border-white/10 rounded-xl hover:border-[#D4A017]/50 transition-all">
             <h3 className="font-semibold mb-1">Choosing the Right Plan</h3>
-            <p className="text-sm text-white/50">Find the perfect plan for your needs</p>
+            <p className="text-sm text-on-surface-muted">Find the perfect plan for your needs</p>
           </Link>
-          <Link href="/academy/plans-credits/billing-faq" className="p-4 bg-[#1A1A1A] border border-white/10 rounded-xl hover:border-[#D4A017]/50 transition-all">
+          <Link href="/academy/plans-credits/billing-faq" className="p-4 bg-surface-container-low border border-white/10 rounded-xl hover:border-[#D4A017]/50 transition-all">
             <h3 className="font-semibold mb-1">Billing FAQ</h3>
-            <p className="text-sm text-white/50">Common questions about billing</p>
+            <p className="text-sm text-on-surface-muted">Common questions about billing</p>
           </Link>
         </div>
       </main>

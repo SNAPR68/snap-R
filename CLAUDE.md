@@ -28,7 +28,10 @@ Upload → Prepare → Market → Distribute → Measure → Loop
 - **Video**: Remotion 4.0.424 (React-based video), AWS Lambda (rendering), ElevenLabs + OpenAI TTS (voiceover)
 - **Payments**: Stripe (subscription tiers)
 - **Email**: Resend
-- **Monitoring**: Sentry, OpenTelemetry
+- **Monitoring**: Sentry, OpenTelemetry, PagerDuty (alerting)
+- **Testing**: Vitest, React Testing Library, Playwright (E2E), k6 (load), Stryker (mutation), axe-core (WCAG)
+- **CI/CD**: GitHub Actions (tsc + eslint + vitest), Lighthouse CI, OWASP ZAP security scan
+- **i18n**: next-intl (English + Spanish skeleton)
 
 ## Project Structure
 
@@ -88,12 +91,21 @@ Upload → Prepare → Market → Distribute → Measure → Loop
 /lib/api-v1/            - V1 API middleware (withApiAuth() HOF)
 /lib/services/          - Service layer (listings-service.ts for v1 + internal reuse)
 /lib/env.ts             - Environment variable startup validation
-/lib/monitoring/        - Sentry cron heartbeat tracking
+/lib/monitoring/        - Sentry cron heartbeat, PagerDuty alerting, DB monitoring
 /public/widget/         - snapr-embed.js widget loader script
 /remotion/              - Remotion video compositions and config
 /remotion/compositions/ - Video templates (PropertyShowcase, JustListed, OpenHouse, PriceDrop, Sold)
 /remotion/components/   - Shared video components (AudioLayer, ClosingCard, etc.)
 /components             - React components
+/__tests__/             - Test suites (42 files, 545 tests)
+/__tests__/components/  - Component tests (21 files, React Testing Library)
+/__tests__/components/ui/ - UI primitive tests (button, input, badge, card, tabs, textarea)
+/load-tests/            - k6 load test scripts (7 scenarios)
+/e2e/                   - Playwright E2E tests + WCAG audit
+/security/              - OWASP ZAP config + security scan workflows
+/i18n/                  - next-intl config (routing, request)
+/messages/              - i18n translation files (en.json, es.json)
+/scripts/               - Seed scripts, capture scripts, voiceover generation
 /supabase/migrations/   - Database migrations (38+ files)
 /database               - Supabase schema reference
 ```
@@ -105,8 +117,13 @@ npm run dev             # Start Next.js dev server
 npm run build           # Build Next.js app
 npm run lint            # Run ESLint
 npx tsc --noEmit        # TypeScript compile check (use before every commit)
+npx vitest run          # Run all tests (42 files, 545 tests)
+npx vitest run --coverage # Tests with coverage report
+npx playwright test     # E2E tests + WCAG audit
+npm run test:mutate     # Stryker mutation testing
 npm run deploy          # Deploy Cloudflare Worker (wrangler deploy)
 npm run preview         # Local Worker testing (wrangler dev)
+vercel --prod --yes     # Deploy to production (after merge to main)
 ```
 
 ## Current Branch
@@ -165,7 +182,8 @@ npx next build && grep -o "\.glass-luxury[^}]*}" .next/static/css/*.css
 - **Null coercion**: Supabase returns `null` for missing fields; coerce to `undefined` at data boundaries with `?? undefined` when passing to React component props
 - **Input validation**: All API routes validate inputs with Zod schemas (`lib/validation/schemas.ts`) before processing
 - **Network calls**: All external API fetches use `AbortSignal.timeout(15000)` to prevent hanging requests
-- **Accessibility**: Modals use `role="dialog"` + `aria-modal="true"` + `aria-label`; forms use `aria-label` on inputs; pages use semantic HTML (`<nav>`, `<section>`, `<footer>`)
+- **Accessibility**: Modals use `role="dialog"` + `aria-modal="true"` + `aria-label` + ESC key dismiss; forms use `aria-label` on inputs; pages use semantic HTML (`<nav>`, `<section>`, `<footer>`); WCAG 2.1 AA audited via axe-core
+- **Modal pattern**: All custom modals (`fixed inset-0 z-50`) must include `useEffect` with `keydown` listener for `Escape` key. The shadcn Dialog handles this via Radix natively.
 
 ## Database
 
@@ -425,6 +443,7 @@ Defined in `vercel.json`:
 | MLS Sync | Every 6 hours | `app/api/cron/mls-sync/route.ts` |
 | Verify Domains | Every 6 hours | `app/api/cron/verify-domains/route.ts` |
 | Data Cleanup | Weekly (Sun 3am) | `app/api/cron/cleanup/route.ts` |
+| DB Monitor | Daily 6am | `app/api/cron/db-monitor/route.ts` |
 
 All crons use `CRON_SECRET` Bearer auth. Max duration: 300s, memory: 1024MB.
 
@@ -624,6 +643,7 @@ These migrations have been applied to the live Supabase database:
 
 ## API Rate Limits
 
+**Per-IP (all routes):**
 ```
 /api/enhance:  10 req/min
 /api/analyze:  20 req/min
@@ -631,6 +651,19 @@ These migrations have been applied to the live Supabase database:
 /api/contact:  3 req/min
 /api/auth:     5 req/min
 Default:       100 req/min
+```
+
+**Per-User (AI-heavy routes, via `checkRateLimitPerUser()`):**
+```
+/api/enhance:               10 req/min
+/api/batch-enhance:          3 req/min
+/api/chat:                  20 req/min
+/api/ai/generate-caption:   15 req/min
+/api/ai/generate-description: 10 req/min
+/api/video/generate:         5 req/min
+/api/staging:                5 req/min
+/api/renovation:             5 req/min
+/api/floor-plans/generate:   5 req/min
 ```
 
 ## Security
@@ -641,6 +674,10 @@ Default:       100 req/min
 - **TikTok token refresh**: 24-hour access tokens auto-refreshed via cron publisher; refresh tokens last ~365 days
 - **Centralized auth middleware**: `middleware.ts` protects `/dashboard/*`, `/admin/*`, `/checkout/*`, `/onboarding/*` — redirects unauthenticated users with `?redirect=` param
 - **Zod validation**: All API inputs parsed through Zod schemas before processing (`lib/validation/schemas.ts`)
+- **Security headers**: CSP, Permissions-Policy, X-Content-Type-Options, X-Frame-Options configured in `next.config.mjs`
+- **Per-user rate limiting**: AI-heavy routes enforce per-user limits via `checkRateLimitPerUser()` (prevents single user burning credits)
+- **Admin auth**: All 7 admin routes use unified `Authorization: Bearer ADMIN_SECRET`
+- **OWASP ZAP**: Automated security scan in CI (`security/zap-config.yaml`, `.github/workflows/security.yml`)
 
 ## Hardening Patterns
 
@@ -692,7 +729,7 @@ Key settings:
 ## Important Notes
 
 1. **Node Version**: 20 (see .nvmrc)
-2. **No test framework** currently configured
+2. **Test suite**: Vitest + React Testing Library + Playwright — 42 test files, 545 tests, coverage thresholds at 80%/80%/70%/80%
 3. **Image Pipeline**: Raw → Supabase Storage → Worker → R2 → CDN (Cloudinary)
 4. **Deploy**: Next.js to Vercel, Worker to Cloudflare via wrangler
 5. **Supabase project**: `asoiwonhqoesbvcilqwd.supabase.co` (South Asia / Mumbai region)
@@ -727,3 +764,16 @@ Key settings:
 34. **Enterprise Stripe pricing**: $299/mo or $249/mo annual, 14-day free trial. Checkout via `/api/stripe/checkout`.
 35. **OpenAPI spec**: Full 3.0 spec at `/api/v1/openapi.json` (1037 lines). Interactive docs at `/developers/api-reference`.
 36. **Env validation**: `lib/env.ts` called from `instrumentation.ts` — fast-fails on missing critical vars in production.
+37. **PagerDuty alerting**: `lib/monitoring/pagerduty.ts` sends alerts via Events API v2. Integrated into `error-logger.ts` (logCritical) and `cron-heartbeat.ts` (overdue crons). Requires `PAGERDUTY_ROUTING_KEY` env var; gracefully no-ops when not set.
+38. **DB monitoring cron**: `app/api/cron/db-monitor/route.ts` runs daily at 6am. Checks `pg_stat_statements` for slow queries, connection pool health, table bloat. Alerts via PagerDuty on thresholds.
+39. **Per-user rate limiting**: `checkRateLimitPerUser(userId, route, limit, windowMs)` in `lib/rate-limit.ts`. Uses `user:{userId}:{route}` key pattern. Applied to all AI-heavy routes to prevent single-user credit burn.
+40. **Syndication feeds**: `lib/syndication/reso-feed.ts` generates RESO Data Dictionary 2.0 XML. Endpoints at `/api/syndication/zillow/route.ts` and `/api/syndication/realtor/route.ts`. Field mapping in `lib/syndication/field-mapping.ts`.
+41. **Modals must have ESC key handlers**: All 14 custom modal overlays (`fixed inset-0 z-50`) have `useEffect` keydown listeners for Escape key. The shadcn Dialog (Radix) handles ESC natively.
+42. **Settings pages must show errors**: All settings pages (api-keys, domains, webhooks) display dismissible error banners on API failure. No silent `catch {}` blocks — always surface errors to the user.
+43. **SEO metadata**: Every public page has unique `<title>` and `<meta name="description">` via page-level `export const metadata` or route-specific `layout.tsx` files. Never reuse homepage metadata.
+44. **Lighthouse CI**: `.github/workflows/lighthouse.yml` runs on PRs. Thresholds: LCP < 2.5s, FID < 100ms, CLS < 0.1, accessibility > 90. Config in `lighthouserc.js`.
+45. **Load testing**: k6 scripts in `load-tests/` cover upload, enhance, publish, auth-flow, api-v1, marketing-pipeline. Thresholds: p95 < 2s, p99 < 5s, error rate < 1%.
+46. **WCAG audit**: `e2e/wcag-audit.spec.ts` runs axe-core on homepage, dashboard, listing, and settings pages. Tests keyboard navigation and focus traps.
+47. **i18n framework**: next-intl configured with `i18n/request.ts` and `i18n/routing.ts`. English strings in `messages/en.json`, Spanish skeleton in `messages/es.json`. Middleware handles locale detection.
+48. **Mutation testing**: Stryker configured in `stryker.config.mjs`. Targets `lib/**/*.ts`. Threshold: 70% mutation score. Run via `npm run test:mutate`.
+49. **Staging seed**: `scripts/seed-staging.mjs` creates realistic staging data (users, listings, leads, photos, posts). Idempotent — safe to re-run.

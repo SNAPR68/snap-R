@@ -9,6 +9,7 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
+        // Legacy (dashboard)
         quartz: {
           light: "#FAFAFA",
           white: "#FFFFFF",
@@ -33,17 +34,31 @@ const config: Config = {
         },
         carbon: "#111111",
         cloud: "#6B7280",
-        // CSS Variables for Light/Dark Theme
         "accent-gold": "var(--accent-gold)",
         "accent-gold-soft": "var(--accent-gold-soft)",
         "accent-gold-dark": "var(--accent-gold-dark)",
         "mint-soft": "var(--mint-soft)",
         "mint-dark": "var(--mint-dark)",
         background: "var(--background)",
-        surface: "var(--surface)",
-        "surface-soft": "var(--surface-soft)",
         "text-main": "var(--text-main)",
         "text-soft": "var(--text-soft)",
+
+        // Editorial "Digital Curator" tokens
+        surface: {
+          DEFAULT: "#131313",
+          "container-low": "#1C1B1B",
+          "container-high": "#2A2A2A",
+          "container-highest": "#353534",
+        },
+        primary: {
+          DEFAULT: "#F6BE39",
+          container: "#D4A017",
+        },
+        "on-surface": {
+          DEFAULT: "#D3C5AE",
+          muted: "rgba(211, 197, 174, 0.5)",
+        },
+        "outline-variant": "rgba(211, 197, 174, 0.15)",
       },
 
       boxShadow: {
@@ -51,11 +66,14 @@ const config: Config = {
         gold: "0 4px 12px rgba(243, 201, 105, 0.3)",
         mint: "0 4px 12px rgba(134, 227, 195, 0.25)",
         card: "0 2px 14px rgba(0,0,0,0.06)",
+        ambient: "0px 24px 48px -12px rgba(0, 0, 0, 0.5)",
+        "glow-gold": "0px 8px 32px rgba(246, 190, 57, 0.25)",
       },
 
       borderRadius: {
         xl: "12px",
         "2xl": "16px",
+        editorial: "0.5rem",
       },
 
       transitionDuration: {
@@ -65,7 +83,13 @@ const config: Config = {
       },
 
       fontFamily: {
-        sans: ["Geist Sans", "Inter", "sans-serif"],
+        sans: ["var(--font-inter)", "Inter", "sans-serif"],
+        serif: ["var(--font-newsreader)", "Newsreader", "Georgia", "serif"],
+      },
+
+      letterSpacing: {
+        tighter: "-0.02em",
+        wide: "0.05em",
       },
 
       // Animation improvements

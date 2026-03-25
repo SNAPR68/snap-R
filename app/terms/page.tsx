@@ -12,15 +12,15 @@ export const metadata: Metadata = {
 
 export default function TermsOfService() {
   return (
-    <div className="min-h-screen bg-[#0F0F0F] text-white">
+    <div className="min-h-screen bg-surface text-on-surface">
       {/* Header */}
-      <header className="border-b border-white/10 bg-[#1A1A1A]">
+      <header className="bg-surface-container-low">
         <div className="max-w-4xl mx-auto px-6 py-4 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#D4A017] to-[#B8860B] flex items-center justify-center font-bold text-black text-xl">S</div>
-            <span className="font-bold text-xl">Snap<span className="text-[#D4A017]">R</span></span>
+            <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-primary to-primary-container flex items-center justify-center font-bold text-black text-xl">S</div>
+            <span className="font-bold text-xl">Snap<span className="text-primary">R</span></span>
           </Link>
-          <Link href="/" className="flex items-center gap-2 text-white/60 hover:text-white">
+          <Link href="/" className="flex items-center gap-2 text-on-surface-muted hover:text-on-surface">
             <ArrowLeft className="w-4 h-4" /> Back to Home
           </Link>
         </div>
@@ -29,36 +29,36 @@ export default function TermsOfService() {
       {/* Content */}
       <main className="max-w-4xl mx-auto px-6 py-12">
         <div className="flex items-center gap-3 mb-8">
-          <FileText className="w-8 h-8 text-[#D4A017]" />
-          <h1 className="text-4xl font-bold">Terms of Service</h1>
+          <FileText className="w-8 h-8 text-primary" />
+          <h1 className="text-4xl font-bold font-serif tracking-tighter">Terms of Service</h1>
         </div>
-        
-        <p className="text-white/60 mb-8">Last updated: December 3, 2025</p>
+
+        <p className="text-on-surface-muted mb-8">Last updated: December 3, 2025</p>
 
         <div className="prose prose-invert max-w-none space-y-8">
           {/* Agreement */}
           <section>
-            <h2 className="text-2xl font-semibold text-[#D4A017] mb-4">1. Agreement to Terms</h2>
-            <p className="text-white/80 leading-relaxed">
+            <h2 className="text-2xl font-semibold text-primary mb-4">1. Agreement to Terms</h2>
+            <p className="text-on-surface/80 leading-relaxed">
               By accessing or using SnapR&apos;s AI-powered real estate photo enhancement platform (&quot;Service&quot;) at snap-r.com, you agree to be bound by these Terms of Service (&quot;Terms&quot;). If you do not agree to these Terms, do not use the Service.
             </p>
-            <p className="text-white/80 leading-relaxed mt-4">
+            <p className="text-on-surface/80 leading-relaxed mt-4">
               We may modify these Terms at any time. Continued use of the Service after changes constitutes acceptance of the modified Terms.
             </p>
           </section>
 
           {/* Description */}
           <section>
-            <h2 className="text-2xl font-semibold text-[#D4A017] mb-4">2. Description of Service</h2>
-            <p className="text-white/80 leading-relaxed">
+            <h2 className="text-2xl font-semibold text-primary mb-4">2. Description of Service</h2>
+            <p className="text-on-surface/80 leading-relaxed">
               SnapR provides AI-powered photo enhancement tools for real estate photography, including but not limited to: sky replacement, virtual twilight, lawn repair, decluttering, virtual staging, HDR enhancement, and image upscaling.
             </p>
           </section>
 
           {/* Account */}
           <section>
-            <h2 className="text-2xl font-semibold text-[#D4A017] mb-4">3. Account Registration</h2>
-            <ul className="list-disc pl-6 space-y-2 text-white/80">
+            <h2 className="text-2xl font-semibold text-primary mb-4">3. Account Registration</h2>
+            <ul className="list-disc pl-6 space-y-2 text-on-surface/80">
               <li>You must provide accurate and complete information when creating an account</li>
               <li>You are responsible for maintaining the security of your account credentials</li>
               <li>You must be at least 18 years old to use the Service</li>
@@ -69,9 +69,9 @@ export default function TermsOfService() {
 
           {/* Acceptable Use */}
           <section>
-            <h2 className="text-2xl font-semibold text-[#D4A017] mb-4">4. Acceptable Use</h2>
-            <p className="text-white/80 mb-4">You agree NOT to use the Service to:</p>
-            <ul className="list-disc pl-6 space-y-2 text-white/80">
+            <h2 className="text-2xl font-semibold text-primary mb-4">4. Acceptable Use</h2>
+            <p className="text-on-surface/80 mb-4">You agree NOT to use the Service to:</p>
+            <ul className="list-disc pl-6 space-y-2 text-on-surface/80">
               <li>Upload content that is illegal, harmful, threatening, abusive, or objectionable</li>
               <li>Upload content that infringes on intellectual property rights of others</li>
               <li>Upload photos containing personally identifiable information of individuals without consent</li>
@@ -85,35 +85,35 @@ export default function TermsOfService() {
 
           {/* Content Rights */}
           <section>
-            <h2 className="text-2xl font-semibold text-[#D4A017] mb-4">5. Content and Intellectual Property</h2>
-            
+            <h2 className="text-2xl font-semibold text-primary mb-4">5. Content and Intellectual Property</h2>
+
             <h3 className="text-xl font-medium mt-6 mb-3">5.1 Your Content</h3>
-            <p className="text-white/80">
+            <p className="text-on-surface/80">
               You retain all ownership rights to the photos you upload (&quot;Your Content&quot;). By uploading content, you grant SnapR a limited license to process, enhance, store, and display Your Content solely for the purpose of providing the Service to you.
             </p>
 
             <h3 className="text-xl font-medium mt-6 mb-3">5.2 Enhanced Content</h3>
-            <p className="text-white/80">
+            <p className="text-on-surface/80">
               You own the enhanced images created using our Service. You may use, distribute, and commercially exploit enhanced images without restriction, subject to any third-party rights in the original content.
             </p>
 
             <h3 className="text-xl font-medium mt-6 mb-3">5.3 Our Intellectual Property</h3>
-            <p className="text-white/80">
+            <p className="text-on-surface/80">
               The Service, including its AI models, algorithms, software, design, and documentation, is owned by SnapR and protected by intellectual property laws. You may not copy, modify, or create derivative works of our Service.
             </p>
 
             <h3 className="text-xl font-medium mt-6 mb-3">5.4 AI Training</h3>
-            <p className="text-white/80 p-4 bg-white/5 rounded-lg">
+            <p className="text-on-surface/80 p-4 bg-surface-container-low rounded-lg">
               <strong>We do NOT use your photos to train our AI models.</strong> Your images are processed and stored temporarily to provide the Service, then deleted according to our retention policy.
             </p>
           </section>
 
           {/* Payment */}
           <section>
-            <h2 className="text-2xl font-semibold text-[#D4A017] mb-4">6. Payment Terms</h2>
-            
+            <h2 className="text-2xl font-semibold text-primary mb-4">6. Payment Terms</h2>
+
             <h3 className="text-xl font-medium mt-6 mb-3">6.1 Subscription Plans</h3>
-            <ul className="list-disc pl-6 space-y-2 text-white/80">
+            <ul className="list-disc pl-6 space-y-2 text-on-surface/80">
               <li>Paid subscriptions are billed monthly or annually in advance</li>
               <li>Subscriptions automatically renew unless cancelled before the renewal date</li>
               <li>You may cancel your subscription at any time through your account settings</li>
@@ -121,14 +121,14 @@ export default function TermsOfService() {
             </ul>
 
             <h3 className="text-xl font-medium mt-6 mb-3">6.2 Credits</h3>
-            <ul className="list-disc pl-6 space-y-2 text-white/80">
+            <ul className="list-disc pl-6 space-y-2 text-on-surface/80">
               <li>Credits are consumed when using enhancement tools</li>
               <li>Unused credits do not roll over to the next billing period (for subscription plans)</li>
               <li>Credits have no cash value and are non-transferable</li>
             </ul>
 
             <h3 className="text-xl font-medium mt-6 mb-3">6.3 Human Editing Service</h3>
-            <ul className="list-disc pl-6 space-y-2 text-white/80">
+            <ul className="list-disc pl-6 space-y-2 text-on-surface/80">
               <li>Human editing is a one-time service charged per request</li>
               <li>Standard delivery: 24 hours; Urgent delivery: 4 hours</li>
               <li>Refunds available if we fail to deliver within the specified timeframe</li>
@@ -137,8 +137,8 @@ export default function TermsOfService() {
 
           {/* Disclaimer */}
           <section>
-            <h2 className="text-2xl font-semibold text-[#D4A017] mb-4">7. Disclaimers</h2>
-            <div className="p-4 bg-white/5 rounded-lg text-white/80">
+            <h2 className="text-2xl font-semibold text-primary mb-4">7. Disclaimers</h2>
+            <div className="p-4 bg-surface-container-low rounded-lg text-on-surface/80">
               <p className="mb-4">
                 THE SERVICE IS PROVIDED &quot;AS IS&quot; AND &quot;AS AVAILABLE&quot; WITHOUT WARRANTIES OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND NON-INFRINGEMENT.
               </p>
@@ -156,8 +156,8 @@ export default function TermsOfService() {
 
           {/* Limitation of Liability */}
           <section>
-            <h2 className="text-2xl font-semibold text-[#D4A017] mb-4">8. Limitation of Liability</h2>
-            <div className="p-4 bg-white/5 rounded-lg text-white/80">
+            <h2 className="text-2xl font-semibold text-primary mb-4">8. Limitation of Liability</h2>
+            <div className="p-4 bg-surface-container-low rounded-lg text-on-surface/80">
               <p className="mb-4">
                 TO THE MAXIMUM EXTENT PERMITTED BY LAW, SNAPR SHALL NOT BE LIABLE FOR ANY INDIRECT, INCIDENTAL, SPECIAL, CONSEQUENTIAL, OR PUNITIVE DAMAGES, OR ANY LOSS OF PROFITS OR REVENUES, WHETHER INCURRED DIRECTLY OR INDIRECTLY.
               </p>
@@ -169,16 +169,16 @@ export default function TermsOfService() {
 
           {/* Indemnification */}
           <section>
-            <h2 className="text-2xl font-semibold text-[#D4A017] mb-4">9. Indemnification</h2>
-            <p className="text-white/80">
+            <h2 className="text-2xl font-semibold text-primary mb-4">9. Indemnification</h2>
+            <p className="text-on-surface/80">
               You agree to indemnify and hold harmless SnapR and its officers, directors, employees, and agents from any claims, damages, losses, liabilities, costs, or expenses arising from: (a) your use of the Service, (b) your violation of these Terms, (c) your violation of any rights of another party, or (d) Your Content.
             </p>
           </section>
 
           {/* Termination */}
           <section>
-            <h2 className="text-2xl font-semibold text-[#D4A017] mb-4">10. Termination</h2>
-            <ul className="list-disc pl-6 space-y-2 text-white/80">
+            <h2 className="text-2xl font-semibold text-primary mb-4">10. Termination</h2>
+            <ul className="list-disc pl-6 space-y-2 text-on-surface/80">
               <li>You may terminate your account at any time through account settings or by contacting support</li>
               <li>We may suspend or terminate your account for violation of these Terms</li>
               <li>Upon termination, your right to use the Service ceases immediately</li>
@@ -189,27 +189,27 @@ export default function TermsOfService() {
 
           {/* Governing Law */}
           <section>
-            <h2 className="text-2xl font-semibold text-[#D4A017] mb-4">11. Governing Law</h2>
-            <p className="text-white/80">
+            <h2 className="text-2xl font-semibold text-primary mb-4">11. Governing Law</h2>
+            <p className="text-on-surface/80">
               These Terms shall be governed by and construed in accordance with the laws of the State of Delaware, United States, without regard to its conflict of law provisions. Any disputes shall be resolved in the courts of Delaware.
             </p>
           </section>
 
           {/* Dispute Resolution */}
           <section>
-            <h2 className="text-2xl font-semibold text-[#D4A017] mb-4">12. Dispute Resolution</h2>
-            <p className="text-white/80 mb-4">
+            <h2 className="text-2xl font-semibold text-primary mb-4">12. Dispute Resolution</h2>
+            <p className="text-on-surface/80 mb-4">
               Before filing a claim, you agree to try to resolve the dispute informally by contacting us at legal@snap-r.com. If the dispute is not resolved within 30 days, either party may proceed with formal dispute resolution.
             </p>
-            <p className="text-white/80">
+            <p className="text-on-surface/80">
               <strong>Arbitration:</strong> Any disputes will be resolved through binding arbitration in accordance with the rules of the American Arbitration Association, except that you may assert claims in small claims court if eligible.
             </p>
           </section>
 
           {/* Miscellaneous */}
           <section>
-            <h2 className="text-2xl font-semibold text-[#D4A017] mb-4">13. Miscellaneous</h2>
-            <ul className="list-disc pl-6 space-y-2 text-white/80">
+            <h2 className="text-2xl font-semibold text-primary mb-4">13. Miscellaneous</h2>
+            <ul className="list-disc pl-6 space-y-2 text-on-surface/80">
               <li><strong>Entire Agreement:</strong> These Terms constitute the entire agreement between you and SnapR</li>
               <li><strong>Severability:</strong> If any provision is found unenforceable, the remaining provisions remain in effect</li>
               <li><strong>Waiver:</strong> Failure to enforce any right does not waive that right</li>
@@ -219,22 +219,22 @@ export default function TermsOfService() {
 
           {/* Contact */}
           <section>
-            <h2 className="text-2xl font-semibold text-[#D4A017] mb-4">14. Contact Us</h2>
-            <p className="text-white/80 mb-4">
+            <h2 className="text-2xl font-semibold text-primary mb-4">14. Contact Us</h2>
+            <p className="text-on-surface/80 mb-4">
               For questions about these Terms, please contact us:
             </p>
-            <div className="bg-white/5 p-6 rounded-lg">
-              <p className="text-white/80"><strong>SnapR</strong></p>
-              <p className="text-white/80">Email: <a href="mailto:legal@snap-r.com" className="text-[#D4A017]">legal@snap-r.com</a></p>
-              <p className="text-white/80">Support: <a href="mailto:support@snap-r.com" className="text-[#D4A017]">support@snap-r.com</a></p>
+            <div className="bg-surface-container-low p-6 rounded-lg">
+              <p className="text-on-surface/80"><strong>SnapR</strong></p>
+              <p className="text-on-surface/80">Email: <a href="mailto:legal@snap-r.com" className="text-primary">legal@snap-r.com</a></p>
+              <p className="text-on-surface/80">Support: <a href="mailto:support@snap-r.com" className="text-primary">support@snap-r.com</a></p>
             </div>
           </section>
         </div>
       </main>
 
       {/* Footer */}
-      <footer className="border-t border-white/10 py-8 mt-12">
-        <div className="max-w-4xl mx-auto px-6 text-center text-white/50 text-sm">
+      <footer className="bg-surface-container-low py-8 mt-12">
+        <div className="max-w-4xl mx-auto px-6 text-center text-on-surface-muted text-sm">
           © 2026 SnapR. All rights reserved.
         </div>
       </footer>

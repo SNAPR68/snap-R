@@ -11,23 +11,23 @@ export default function EnhancingPhotosPage() {
     { title: 'Auto-Enhance', description: 'One-click color and contrast fix.', readTime: '1 min', slug: 'auto-enhance' },
   ];
   return (
-    <div className="min-h-screen bg-[#0F0F0F] text-white">
-      <div className="bg-gradient-to-b from-[#D4A017]/20 to-transparent py-12 px-6">
+    <div className="min-h-screen bg-surface text-on-surface">
+      <div className="bg-gradient-to-b from-primary/20 to-transparent py-12 px-6">
         <div className="max-w-4xl mx-auto">
-          <Link href="/academy" className="inline-flex items-center gap-2 text-white/60 hover:text-white mb-6"><ArrowLeft className="w-4 h-4" /> Back to Academy</Link>
+          <Link href="/academy" className="inline-flex items-center gap-2 text-on-surface-muted hover:text-on-surface mb-6"><ArrowLeft className="w-4 h-4" /> Back to Academy</Link>
           <div className="flex items-center gap-4">
-            <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-[#D4A017] to-[#B8860B] flex items-center justify-center"><Wand2 className="w-7 h-7 text-white" /></div>
-            <div><h1 className="text-3xl font-bold">Enhancing Your Photos</h1><p className="text-white/60">Master all AI enhancement tools</p></div>
+            <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-primary to-primary-container flex items-center justify-center"><Wand2 className="w-7 h-7 text-on-surface" /></div>
+            <div><h1 className="text-3xl font-bold">Enhancing Your Photos</h1><p className="text-on-surface-muted">Master all AI enhancement tools</p></div>
           </div>
         </div>
       </div>
       <div className="max-w-4xl mx-auto px-6 py-12">
         <div className="space-y-4">
           {articles.map((article, i) => (
-            <Link key={i} href={`/academy/enhancing-photos/${article.slug}`} className="block bg-[#1A1A1A] rounded-xl p-6 border border-white/10 hover:border-[#D4A017]/50 transition-all group">
+            <Link key={i} href={`/academy/enhancing-photos/${article.slug}`} className="block bg-surface-container-low rounded-xl p-6 border border-white/10 hover:border-[#D4A017]/50 transition-all group">
               <div className="flex items-start justify-between gap-4">
-                <div><h3 className="text-lg font-semibold mb-1 group-hover:text-[#D4A017]">{article.title}</h3><p className="text-white/60 text-sm">{article.description}</p></div>
-                <div className="flex items-center gap-1 text-white/40 text-sm"><Clock className="w-4 h-4" />{article.readTime}</div>
+                <div><h3 className="text-lg font-semibold mb-1 group-hover:text-primary">{article.title}</h3><p className="text-on-surface-muted text-sm">{article.description}</p></div>
+                <div className="flex items-center gap-1 text-on-surface-muted text-sm"><Clock className="w-4 h-4" />{article.readTime}</div>
               </div>
             </Link>
           ))}
