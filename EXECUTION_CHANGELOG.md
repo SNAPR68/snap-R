@@ -1,5 +1,18 @@
 # SnapR Execution Changelog
 ==========================
+## 2026-03-26 — RevenueCat billing integration
+
+### New: RevenueCat as billing source of truth
+- `lib/revenuecat/types.ts` — TypeScript types for RC API v1 + webhook events
+- `lib/revenuecat/client.ts` — Server-side RC API client (getSubscriberInfo, resolveSubscriberTier, ensureSubscriber)
+- `lib/revenuecat/webhook-handler.ts` — Processes 10 RC event types, syncs profiles.subscription_tier
+- `lib/revenuecat/sync.ts` — On-demand tier resolution with RC API fallback
+- `app/api/webhooks/revenuecat/route.ts` — Webhook endpoint with auth + idempotency
+- Auth callback creates RC subscriber on signup
+- Env vars: REVENUECAT_API_KEY, REVENUECAT_WEBHOOK_AUTH_KEY (recommended, graceful no-op)
+- Migration: `revenuecat_app_user_id` column on profiles
+- 25 new tests (client + webhook handler), 44 total files, 570 tests passing
+
 ## 2026-03-25 — Facebook OAuth pages fix
 - Added `pages_manage_metadata` scope to Facebook + Instagram connect routes
 - Added explicit `fields` param to `/me/accounts` API call in callback

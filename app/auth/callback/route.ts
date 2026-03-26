@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server';
 import { NextResponse } from 'next/server';
+import { ensureSubscriber } from '@/lib/revenuecat/client';
 
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url);
@@ -32,6 +33,9 @@ export async function GET(request: Request) {
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
         });
+
+        // Create RevenueCat subscriber (fire-and-forget — failure doesn't block signup)
+        ensureSubscriber(data.user.id).catch(() => { /* non-blocking */ })
 
         // Send welcome email (fire-and-forget — failure doesn't block signup)
         if (data.user.email) {
