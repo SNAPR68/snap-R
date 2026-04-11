@@ -1,5 +1,36 @@
 # SnapR Execution Changelog
 ==========================
+## 2026-04-11 — AI engine hardening + listing health score
+
+### Improved: AI router (`lib/ai/router.ts`)
+- Added `retryWithBackoff` for transient errors (rate limits, timeouts, 502/503) with exponential backoff (1s, 2s, 4s)
+- Replaced aggressive auto-enhance fallback with category-specific fallback: creative tools retry with lower guidance, technical tools retry once, auto-enhance fallback is last resort for enhance-category only
+- Extracted `executeTool` helper accepting guidance overrides for retry-with-different-params
+- Added `retryCount`, `model`, and per-step `timing` to `EnhancementResult`
+
+### Improved: Provider router (`lib/ai/listing-engine/provider-router.ts`)
+- Added circuit breaker pattern: 3 consecutive failures trips breaker, 60s cooldown, auto-recovery
+- Added `recordProviderResult()` for rolling success rate and latency tracking (window of 50)
+- Added `getHealthyProviderForTool()` — health-aware routing with automatic fallback to secondary provider
+- Added `getProviderHealthSnapshot()` for diagnostics
+- Fail-open: if both primary and fallback are unhealthy, routes to primary anyway
+
+### Improved: Batch processor (`lib/ai/listing-engine/batch-processor.ts`)
+- Switched from static `getProviderForTool` to health-aware `getHealthyProviderForTool`
+- Added `recordProviderResult()` calls on every tool success/failure for circuit breaker feedback
+- Bumped default concurrency from 4 to 6
+
+### Improved: Enhance API route (`app/api/enhance/route.ts`)
+- `tools_applied` tracking: appends tool ID to `photos.tools_applied text[]` on every successful enhancement
+- Dynamic provider/model in cost logger (was hardcoded to 'replicate')
+- Team access check: team members can now enhance photos on shared listings
+
+### New: Listing health score (`lib/listing-health.ts`)
+- `calculateListingHealth()` returns 0-100 score with A-F grade
+- 4 dimensions: Preparation (0-25), Marketing (0-25), Distribution (0-25), Engagement (0-25)
+- Generates 1-3 intervention suggestions based on missing items
+- Foundation for the Listing Performance OS dashboard
+
 ## 2026-03-26 — RevenueCat billing integration
 
 ### New: RevenueCat as billing source of truth
