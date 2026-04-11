@@ -16,6 +16,8 @@ import { ToolId } from '../router';
 import { scoreEnhancementQuality, checkStructuralIntegrity } from '../providers/openai-vision';
 import {
   getProviderForTool,
+  getHealthyProviderForTool,
+  recordProviderResult,
   isAutoEnhanceConfigured,
   Provider,
 } from './provider-router';
@@ -35,7 +37,7 @@ import { logger } from '@/lib/logger';
 // CONFIGURATION
 // ============================================
 const CONFIG = {
-  maxConcurrency: Number(process.env.BATCH_MAX_CONCURRENCY || 4),
+  maxConcurrency: Number(process.env.BATCH_MAX_CONCURRENCY || 6),
   maxRetries: 2,
   retryDelayMs: 2000,
   toolTimeoutMs: 120000,
@@ -94,6 +96,12 @@ const TOOL_QUALITY_THRESHOLDS: Partial<Record<ToolId, number>> = {
   'reflection-removal': 8,
   'power-line-removal': 8,
 };
+
+const HIGH_VALUE_QUALITY_TOOLS = new Set<ToolId>([
+  'sky-replacement',
+  'virtual-twilight',
+  'virtual-staging',
+]);
 
 const QUALITY_SENSITIVE_TOOLS = new Set<ToolId>([
   'sky-replacement',
@@ -287,7 +295,7 @@ async function processPhoto(
   // Process each tool
   for (const tool of photo.toolOrder) {
     const toolStart = Date.now();
-    const config = getProviderForTool(tool);
+    const config = getHealthyProviderForTool(tool);
 
     try {
       const result = await processToolWithRouting(
@@ -302,6 +310,7 @@ async function processPhoto(
 
       const providerUsed = result.providerUsed || config.provider;
       const modelUsed = result.modelUsed;
+      recordProviderResult(config.provider, result.success, Date.now() - toolStart);
 
       if (result.success && result.enhancedUrl) {
         let nextUrl = normalizeUrl(result.enhancedUrl);
@@ -470,6 +479,7 @@ async function processPhoto(
       }
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : 'Internal server error';
+      recordProviderResult(config.provider, false, Date.now() - toolStart);
       toolsSkipped.push(tool);
       toolResults[tool] = {
         success: false,

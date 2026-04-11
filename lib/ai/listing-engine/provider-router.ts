@@ -18,10 +18,181 @@
 import { ToolId } from '../router';
 
 // ============================================
+// PROVIDER HEALTH TRACKING (Circuit Breaker)
+// ============================================
+
+/** How long an unhealthy provider stays in "cooldown" before retrying (ms) */
+const CIRCUIT_BREAKER_COOLDOWN_MS = 60_000; // 60 seconds
+
+/** Consecutive failures before tripping the circuit breaker */
+const CIRCUIT_BREAKER_THRESHOLD = 3;
+
+/** Rolling window size for success rate and latency calculations */
+const ROLLING_WINDOW_SIZE = 50;
+
+export interface ProviderHealth {
+  lastSuccess: number;          // timestamp (ms)
+  lastFailure: number;          // timestamp (ms)
+  consecutiveFailures: number;
+  successRate: number;           // rolling average 0-1
+  avgLatencyMs: number;          // rolling average
+  isHealthy: boolean;
+  /** Internal rolling window of recent results (true = success) */
+  _recentResults: boolean[];
+  /** Internal rolling window of recent latencies (ms) */
+  _recentLatencies: number[];
+}
+
+function createDefaultHealth(): ProviderHealth {
+  return {
+    lastSuccess: 0,
+    lastFailure: 0,
+    consecutiveFailures: 0,
+    successRate: 1,
+    avgLatencyMs: 0,
+    isHealthy: true,
+    _recentResults: [],
+    _recentLatencies: [],
+  };
+}
+
+const providerHealth: Map<Provider, ProviderHealth> = new Map();
+
+/**
+ * Get current health state for a provider (creates default if not tracked yet)
+ */
+function getHealth(provider: Provider): ProviderHealth {
+  let health = providerHealth.get(provider);
+  if (!health) {
+    health = createDefaultHealth();
+    providerHealth.set(provider, health);
+  }
+  return health;
+}
+
+/**
+ * Record the outcome of a provider call. Updates rolling success rate,
+ * latency, and triggers circuit breaker after consecutive failures.
+ */
+export function recordProviderResult(
+  provider: Provider,
+  success: boolean,
+  latencyMs: number,
+): void {
+  const health = getHealth(provider);
+  const now = Date.now();
+
+  // Update rolling windows (fixed-size ring buffer behavior)
+  health._recentResults.push(success);
+  if (health._recentResults.length > ROLLING_WINDOW_SIZE) {
+    health._recentResults.shift();
+  }
+
+  health._recentLatencies.push(latencyMs);
+  if (health._recentLatencies.length > ROLLING_WINDOW_SIZE) {
+    health._recentLatencies.shift();
+  }
+
+  // Recompute rolling averages
+  const totalResults = health._recentResults.length;
+  const successes = health._recentResults.filter(Boolean).length;
+  health.successRate = totalResults > 0 ? successes / totalResults : 1;
+
+  const totalLatencies = health._recentLatencies.length;
+  health.avgLatencyMs =
+    totalLatencies > 0
+      ? health._recentLatencies.reduce((sum, l) => sum + l, 0) / totalLatencies
+      : 0;
+
+  if (success) {
+    health.lastSuccess = now;
+    health.consecutiveFailures = 0;
+    health.isHealthy = true;
+  } else {
+    health.lastFailure = now;
+    health.consecutiveFailures += 1;
+
+    // Trip circuit breaker after threshold consecutive failures
+    if (health.consecutiveFailures >= CIRCUIT_BREAKER_THRESHOLD) {
+      health.isHealthy = false;
+    }
+  }
+}
+
+/**
+ * Check whether a provider is currently considered healthy.
+ * An unhealthy provider recovers automatically after the cooldown period.
+ */
+function isProviderHealthy(provider: Provider): boolean {
+  const health = getHealth(provider);
+  if (health.isHealthy) return true;
+
+  // Auto-recover after cooldown — allow a retry
+  const now = Date.now();
+  if (now - health.lastFailure >= CIRCUIT_BREAKER_COOLDOWN_MS) {
+    health.isHealthy = true;
+    health.consecutiveFailures = 0;
+    return true;
+  }
+
+  return false;
+}
+
+/**
+ * Get the best *healthy* provider for a tool.
+ *
+ * 1. If the primary provider is healthy, return its config unchanged.
+ * 2. If the primary is unhealthy and a fallback exists AND is healthy,
+ *    return a config that swaps to the fallback provider.
+ * 3. If both are unhealthy, return the primary anyway (fail-open).
+ */
+export function getHealthyProviderForTool(toolId: ToolId): ProviderConfig {
+  const config = getProviderForTool(toolId);
+
+  if (isProviderHealthy(config.provider)) {
+    return config;
+  }
+
+  // Primary is unhealthy — try fallback
+  const fallback = config.fallbackProvider;
+  if (fallback && isProviderHealthy(fallback)) {
+    return {
+      ...config,
+      provider: fallback,
+      // Slightly lower priority since this is a fallback route
+      priority: config.priority + 1,
+    };
+  }
+
+  // Both unhealthy — fail-open with primary
+  return config;
+}
+
+/**
+ * Get a snapshot of health data for all tracked providers.
+ * Useful for diagnostics / status endpoints.
+ */
+export function getProviderHealthSnapshot(): Map<Provider, Omit<ProviderHealth, '_recentResults' | '_recentLatencies'>> {
+  const snapshot = new Map<Provider, Omit<ProviderHealth, '_recentResults' | '_recentLatencies'>>();
+  for (const [provider, health] of providerHealth) {
+    const { _recentResults: _r, _recentLatencies: _l, ...rest } = health;
+    snapshot.set(provider, rest);
+  }
+  return snapshot;
+}
+
+/**
+ * Reset health state for a specific provider (useful for testing).
+ */
+export function resetProviderHealth(provider: Provider): void {
+  providerHealth.set(provider, createDefaultHealth());
+}
+
+// ============================================
 // PROVIDER DEFINITIONS
 // ============================================
 
-export type Provider = 
+export type Provider =
   | 'autoenhance'      // Professional real estate API
   | 'flux-kontext'     // Creative transformations
   | 'flux-fill'        // Masked inpainting

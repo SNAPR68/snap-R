@@ -22,6 +22,8 @@ const RECOMMENDED_VARS = [
   'TIKTOK_CLIENT_KEY',
   'TIKTOK_CLIENT_SECRET',
   'ELEVENLABS_API_KEY',
+  'REVENUECAT_API_KEY',
+  'REVENUECAT_WEBHOOK_AUTH_KEY',
 ] as const;
 
 export function validateEnv(): void {

@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { processEnhancement, ToolId, TOOL_CREDITS } from '@/lib/ai/router';
 import { logApiCost } from '@/lib/cost-logger';
+import type { AIProvider } from '@/lib/cost-logger';
 import { enhanceSchema, parseBody } from '@/lib/validation/schemas'
 
 import { logger } from '@/lib/logger';
@@ -63,9 +64,33 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Photo not found' }, { status: 404 });
     }
     
-    // Verify user owns this listing
+    // Verify user owns this listing or belongs to the listing's team
     if (photo.listings?.user_id !== user.id) {
-      return NextResponse.json({ error: 'Access denied' }, { status: 403 });
+      let hasTeamAccess = false;
+      const listingOwnerId = photo.listings?.user_id;
+      if (listingOwnerId) {
+        // Find teams the listing owner belongs to
+        const { data: ownerTeams } = await supabase
+          .from('team_members')
+          .select('team_id')
+          .eq('user_id', listingOwnerId);
+
+        if (ownerTeams && ownerTeams.length > 0) {
+          const teamIds = ownerTeams.map((t) => t.team_id);
+          // Check if the current user is also a member of any of those teams
+          const { data: userMembership } = await supabase
+            .from('team_members')
+            .select('id')
+            .eq('user_id', user.id)
+            .in('team_id', teamIds)
+            .limit(1);
+          hasTeamAccess = !!userMembership && userMembership.length > 0;
+        }
+      }
+
+      if (!hasTeamAccess) {
+        return NextResponse.json({ error: 'Access denied' }, { status: 403 });
+      }
     }
     
     let sourceUrl = photo.raw_url;
@@ -91,9 +116,10 @@ export async function POST(request: NextRequest) {
     const processingTime = Date.now() - startTime;
     
     // Log API cost for analytics (no credits charged in new model)
+    const resolvedProvider = (result.provider ?? 'replicate') as AIProvider;
     await logApiCost({
       userId: user.id,
-      provider: 'replicate',
+      provider: resolvedProvider,
       toolId,
       success: result.success || false,
       errorMessage: result.error,
@@ -102,6 +128,7 @@ export async function POST(request: NextRequest) {
       requestMetadata: {
         imageId,
         options,
+        model: result.model ?? undefined,
         userEmail: user.email,
         subscriptionTier: profile?.subscription_tier || 'free',
       },
@@ -127,17 +154,21 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Failed to save enhanced image' }, { status: 500 });
     }
     
-    // Update photo record
+    // Update photo record and append toolId to tools_applied array
+    const existingTools: string[] = Array.isArray(photo.tools_applied) ? photo.tools_applied : [];
+    const updatedTools = [...existingTools, toolId];
+
     const { error: updateError } = await supabase
       .from('photos')
       .update({
         processed_url: enhancedPath,
         variant: toolId,
         status: 'completed',
+        tools_applied: updatedTools,
         updated_at: new Date().toISOString(),
       })
       .eq('id', imageId);
-      
+
     if (updateError) {
       logger.error('[API] Update error:', updateError);
     }

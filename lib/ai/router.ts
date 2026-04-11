@@ -101,7 +101,217 @@ export interface EnhancementResult {
   provider?: string;
   model?: string;
   duration?: number;
+  retryCount?: number;
+  timing?: {
+    primaryAttemptMs?: number;
+    fallbackAttemptMs?: number;
+    totalMs: number;
+  };
 }
+
+// ---------------------------------------------------------------------------
+// Tool categories — drives fallback strategy
+// ---------------------------------------------------------------------------
+
+type ToolCategory = 'creative' | 'technical' | 'enhance';
+
+const TOOL_CATEGORY: Record<ToolId, ToolCategory> = {
+  // Creative tools: support guidance reduction on retry
+  'sky-replacement': 'creative',
+  'virtual-twilight': 'creative',
+  'lawn-repair': 'creative',
+  'pool-enhance': 'creative',
+  'snow-removal': 'creative',
+  'seasonal-spring': 'creative',
+  'seasonal-summer': 'creative',
+  'seasonal-fall': 'creative',
+  'declutter': 'creative',
+  'virtual-staging': 'creative',
+  'fire-fireplace': 'creative',
+  'tv-screen': 'creative',
+  'lights-on': 'creative',
+  'window-masking': 'creative',
+  'color-balance': 'creative',
+  'reflection-removal': 'creative',
+  'power-line-removal': 'creative',
+  'object-removal': 'creative',
+  'flash-fix': 'creative',
+  // Technical tools: retry once, then fail
+  'hdr': 'technical',
+  'perspective-correction': 'technical',
+  'lens-correction': 'technical',
+  // Enhance tools: retry once, then auto-enhance fallback as last resort
+  'auto-enhance': 'enhance',
+};
+
+// ---------------------------------------------------------------------------
+// Transient error detection
+// ---------------------------------------------------------------------------
+
+function isTransientError(error: unknown): boolean {
+  if (!(error instanceof Error)) return false;
+  const msg = error.message.toLowerCase();
+  return (
+    msg.includes('rate limit') ||
+    msg.includes('too many requests') ||
+    msg.includes('429') ||
+    msg.includes('timeout') ||
+    msg.includes('econnreset') ||
+    msg.includes('econnrefused') ||
+    msg.includes('socket hang up') ||
+    msg.includes('503') ||
+    msg.includes('502') ||
+    msg.includes('gateway')
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Retry with exponential backoff
+// ---------------------------------------------------------------------------
+
+const MAX_RETRY_ATTEMPTS = 3;
+const BASE_DELAY_MS = 1000; // 1s, 2s, 4s
+
+async function retryWithBackoff<T>(
+  fn: () => Promise<T>,
+  label: string,
+): Promise<{ result: T; attempts: number }> {
+  let lastError: unknown;
+
+  for (let attempt = 1; attempt <= MAX_RETRY_ATTEMPTS; attempt++) {
+    try {
+      const result = await fn();
+      return { result, attempts: attempt };
+    } catch (error: unknown) {
+      lastError = error;
+      const message = error instanceof Error ? error.message : 'Unknown error';
+
+      if (!isTransientError(error) || attempt === MAX_RETRY_ATTEMPTS) {
+        logger.error(`[Router] ${label} attempt ${attempt}/${MAX_RETRY_ATTEMPTS} failed (non-retryable): ${message}`);
+        throw error;
+      }
+
+      const delayMs = BASE_DELAY_MS * Math.pow(2, attempt - 1); // 1s, 2s, 4s
+      logger.warn(`[Router] ${label} attempt ${attempt}/${MAX_RETRY_ATTEMPTS} failed (transient), retrying in ${delayMs}ms: ${message}`);
+      await new Promise((resolve) => setTimeout(resolve, delayMs));
+    }
+  }
+
+  // Should never reach here, but satisfy TypeScript
+  throw lastError;
+}
+
+// ---------------------------------------------------------------------------
+// Execute a single tool call (no retry — that wraps around this)
+// ---------------------------------------------------------------------------
+
+function executeTool(
+  toolId: ToolId,
+  imageUrl: string,
+  options: { preset?: string; prompt?: string; guidanceOverride?: number },
+): Promise<string> {
+  const guidanceOpt = options.guidanceOverride !== undefined
+    ? { guidance: options.guidanceOverride }
+    : undefined;
+
+  switch (toolId) {
+    // ========================================
+    // TOOLS WITH PRESETS (10) - pass prompt
+    // ========================================
+
+    case 'sky-replacement':
+      return skyReplacement(imageUrl, options.prompt, options.preset, guidanceOpt);
+
+    case 'virtual-twilight':
+      return virtualTwilight(imageUrl, options.prompt, options.preset, guidanceOpt);
+
+    case 'lawn-repair':
+      return lawnRepair(imageUrl, options.prompt, options.preset, {
+        useMask: true,
+        requireMask: false,
+        ...guidanceOpt,
+      });
+
+    case 'declutter':
+      return declutter(imageUrl, options.prompt, guidanceOpt);
+
+    case 'virtual-staging':
+      return virtualStaging(imageUrl, options.prompt, guidanceOpt);
+
+    case 'fire-fireplace':
+      return fireFireplace(imageUrl, options.prompt, guidanceOpt);
+
+    case 'tv-screen':
+      return tvScreen(imageUrl, options.prompt, guidanceOpt);
+
+    case 'lights-on':
+      return lightsOn(imageUrl, options.prompt, guidanceOpt);
+
+    case 'window-masking':
+      return windowMasking(imageUrl, options.prompt, guidanceOpt);
+
+    case 'color-balance':
+      return colorBalance(imageUrl, options.prompt, guidanceOpt);
+
+    // ========================================
+    // TOOLS WITHOUT PRESETS (5) - one-click
+    // ========================================
+
+    case 'pool-enhance':
+      return poolEnhance(imageUrl, guidanceOpt);
+
+    case 'hdr':
+      return hdr(imageUrl, guidanceOpt);
+
+    case 'auto-enhance':
+      return autoEnhance(imageUrl, guidanceOpt);
+
+    case 'perspective-correction':
+      return perspectiveCorrection(imageUrl, guidanceOpt);
+
+    case 'lens-correction':
+      return lensCorrection(imageUrl, guidanceOpt);
+
+    // ========================================
+    // SEASONAL TOOLS (4) - one-click
+    // ========================================
+
+    case 'snow-removal':
+      return snowRemoval(imageUrl);
+
+    case 'seasonal-spring':
+      return seasonalSpring(imageUrl);
+
+    case 'seasonal-summer':
+      return seasonalSummer(imageUrl);
+
+    case 'seasonal-fall':
+      return seasonalFall(imageUrl);
+
+    // ========================================
+    // FIX TOOLS (4)
+    // ========================================
+
+    case 'reflection-removal':
+      return reflectionRemoval(imageUrl, guidanceOpt);
+
+    case 'power-line-removal':
+      return powerLineRemoval(imageUrl, guidanceOpt);
+
+    case 'object-removal':
+      return objectRemoval(imageUrl, options.prompt, guidanceOpt);
+
+    case 'flash-fix':
+      return flashFix(imageUrl, guidanceOpt);
+
+    default:
+      throw new Error(`Unknown tool: ${toolId}`);
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Main entry point
+// ---------------------------------------------------------------------------
 
 export async function processEnhancement(
   toolId: ToolId,
@@ -112,168 +322,146 @@ export async function processEnhancement(
   } = {},
 ): Promise<EnhancementResult> {
   const startTime = Date.now();
+  const category = TOOL_CATEGORY[toolId];
 
   logger.info('[Router] ===================================');
   logger.info('[Router] Tool:', toolId);
+  logger.info('[Router] Category:', category);
   logger.info('[Router] Preset:', options.preset || 'none');
   logger.info('[Router] Custom Prompt:', options.prompt ? 'YES' : 'NO');
   logger.info('[Router] ===================================');
 
+  // ------------------------------------------------------------------
+  // Step 1: Primary attempt with exponential backoff on transient errors
+  // ------------------------------------------------------------------
+
+  let primaryAttemptMs: number | undefined;
+
   try {
-    let enhancedUrl: string;
-
-    switch (toolId) {
-      // ========================================
-      // TOOLS WITH PRESETS (10) - pass prompt
-      // ========================================
-      
-      case 'sky-replacement':
-        enhancedUrl = await skyReplacement(imageUrl, options.prompt, options.preset);
-        break;
-
-      case 'virtual-twilight':
-        enhancedUrl = await virtualTwilight(imageUrl, options.prompt, options.preset);
-        break;
-
-      case 'lawn-repair':
-        enhancedUrl = await lawnRepair(imageUrl, options.prompt, options.preset, {
-          useMask: true,
-          requireMask: false,
-        });
-        break;
-
-      case 'declutter':
-        enhancedUrl = await declutter(imageUrl, options.prompt);
-        break;
-
-      case 'virtual-staging':
-        enhancedUrl = await virtualStaging(imageUrl, options.prompt);
-        break;
-
-      case 'fire-fireplace':
-        enhancedUrl = await fireFireplace(imageUrl, options.prompt);
-        break;
-
-      case 'tv-screen':
-        enhancedUrl = await tvScreen(imageUrl, options.prompt);
-        break;
-
-      case 'lights-on':
-        enhancedUrl = await lightsOn(imageUrl, options.prompt);
-        break;
-
-      case 'window-masking':
-        enhancedUrl = await windowMasking(imageUrl, options.prompt);
-        break;
-
-      case 'color-balance':
-        enhancedUrl = await colorBalance(imageUrl, options.prompt);
-        break;
-
-      // ========================================
-      // TOOLS WITHOUT PRESETS (5) - one-click
-      // ========================================
-
-      case 'pool-enhance':
-        enhancedUrl = await poolEnhance(imageUrl);
-        break;
-
-      case 'hdr':
-        enhancedUrl = await hdr(imageUrl);
-        break;
-
-      case 'auto-enhance':
-        enhancedUrl = await autoEnhance(imageUrl);
-        break;
-
-      case 'perspective-correction':
-        enhancedUrl = await perspectiveCorrection(imageUrl);
-        break;
-
-      case 'lens-correction':
-        enhancedUrl = await lensCorrection(imageUrl);
-        break;
-
-      // ========================================
-      // SEASONAL TOOLS (4) - NEW - one-click
-      // ========================================
-
-      case 'snow-removal':
-        enhancedUrl = await snowRemoval(imageUrl);
-        break;
-
-      case 'seasonal-spring':
-        enhancedUrl = await seasonalSpring(imageUrl);
-        break;
-
-      case 'seasonal-summer':
-        enhancedUrl = await seasonalSummer(imageUrl);
-        break;
-
-      case 'seasonal-fall':
-        enhancedUrl = await seasonalFall(imageUrl);
-        break;
-
-      // ========================================
-      // FIX TOOLS (4) - NEW - one-click
-      // ========================================
-
-      case 'reflection-removal':
-        enhancedUrl = await reflectionRemoval(imageUrl);
-        break;
-
-      case 'power-line-removal':
-        enhancedUrl = await powerLineRemoval(imageUrl);
-        break;
-
-      case 'object-removal':
-        enhancedUrl = await objectRemoval(imageUrl, options.prompt);
-        break;
-
-      case 'flash-fix':
-        enhancedUrl = await flashFix(imageUrl);
-        break;
-
-      default:
-        throw new Error(`Unknown tool: ${toolId}`);
-    }
+    const { result: enhancedUrl, attempts } = await retryWithBackoff(
+      () => executeTool(toolId, imageUrl, options),
+      `${toolId}/primary`,
+    );
 
     const duration = Date.now() - startTime;
-    logger.info(`[Router] ✅ SUCCESS in ${(duration / 1000).toFixed(1)}s`);
+    logger.info(`[Router] SUCCESS in ${(duration / 1000).toFixed(1)}s (${attempts} attempt(s))`);
 
     return {
       success: true,
       enhancedUrl,
       provider: 'replicate',
+      model: 'flux-kontext-pro',
+      retryCount: attempts - 1,
       duration,
+      timing: { primaryAttemptMs: duration, totalMs: duration },
     };
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Internal server error';
-    const duration = Date.now() - startTime;
-    logger.error(`[Router] Primary provider failed after ${(duration / 1000).toFixed(1)}s:`, message);
+    primaryAttemptMs = Date.now() - startTime;
+    logger.error(`[Router] Primary failed after ${(primaryAttemptMs / 1000).toFixed(1)}s:`, message);
 
-    // Fallback: retry with auto-enhance if the original tool failed
-    if (toolId !== 'auto-enhance') {
+    // ------------------------------------------------------------------
+    // Step 2: Category-specific fallback
+    // ------------------------------------------------------------------
+
+    if (category === 'creative') {
+      // Creative tools: retry the SAME tool with reduced guidance (1.5)
+      // Lower guidance = more conservative edit = less likely to produce artifacts
       try {
-        logger.warn(`[Router] Attempting auto-enhance fallback for ${toolId}`);
-        const fallbackUrl = await autoEnhance(imageUrl);
-        const fallbackDuration = Date.now() - startTime;
+        const REDUCED_GUIDANCE = 1.5;
+        logger.warn(`[Router] Creative fallback: retrying ${toolId} with guidance=${REDUCED_GUIDANCE}`);
+        const fallbackStart = Date.now();
+
+        const { result: fallbackUrl, attempts } = await retryWithBackoff(
+          () => executeTool(toolId, imageUrl, {
+            ...options,
+            guidanceOverride: REDUCED_GUIDANCE,
+          }),
+          `${toolId}/creative-fallback`,
+        );
+
+        const fallbackMs = Date.now() - fallbackStart;
+        const totalMs = Date.now() - startTime;
+        logger.info(`[Router] Creative fallback succeeded in ${(fallbackMs / 1000).toFixed(1)}s`);
+
         return {
           success: true,
           enhancedUrl: fallbackUrl,
-          provider: 'replicate-fallback',
-          duration: fallbackDuration,
+          provider: 'replicate',
+          model: 'flux-kontext-pro',
+          retryCount: (MAX_RETRY_ATTEMPTS) + (attempts - 1), // primary retries + fallback retries
+          duration: totalMs,
+          timing: { primaryAttemptMs, fallbackAttemptMs: fallbackMs, totalMs },
         };
       } catch (fallbackError: unknown) {
-        const message = fallbackError instanceof Error ? fallbackError.message : 'Processing failed';
-        logger.error(`[Router] Fallback also failed:`, message);
+        const fbMsg = fallbackError instanceof Error ? fallbackError.message : 'Fallback failed';
+        logger.error(`[Router] Creative fallback also failed:`, fbMsg);
+      }
+    } else if (category === 'technical') {
+      // Technical tools: retry the same tool once more (no guidance change)
+      try {
+        logger.warn(`[Router] Technical fallback: retrying ${toolId} once`);
+        const fallbackStart = Date.now();
+        const enhancedUrl = await executeTool(toolId, imageUrl, options);
+        const fallbackMs = Date.now() - fallbackStart;
+        const totalMs = Date.now() - startTime;
+
+        logger.info(`[Router] Technical retry succeeded in ${(fallbackMs / 1000).toFixed(1)}s`);
+        return {
+          success: true,
+          enhancedUrl,
+          provider: 'replicate',
+          model: 'flux-kontext-pro',
+          retryCount: MAX_RETRY_ATTEMPTS + 1,
+          duration: totalMs,
+          timing: { primaryAttemptMs, fallbackAttemptMs: fallbackMs, totalMs },
+        };
+      } catch (retryError: unknown) {
+        const retryMsg = retryError instanceof Error ? retryError.message : 'Retry failed';
+        logger.error(`[Router] Technical retry also failed:`, retryMsg);
+      }
+    } else if (category === 'enhance' && toolId !== 'auto-enhance') {
+      // Enhance-category tools (not auto-enhance itself): last resort auto-enhance
+      try {
+        logger.warn(`[Router] Enhance fallback: trying auto-enhance as last resort for ${toolId}`);
+        const fallbackStart = Date.now();
+
+        const { result: fallbackUrl, attempts } = await retryWithBackoff(
+          () => autoEnhance(imageUrl),
+          `${toolId}/auto-enhance-fallback`,
+        );
+
+        const fallbackMs = Date.now() - fallbackStart;
+        const totalMs = Date.now() - startTime;
+        logger.info(`[Router] Auto-enhance fallback succeeded in ${(fallbackMs / 1000).toFixed(1)}s`);
+
+        return {
+          success: true,
+          enhancedUrl: fallbackUrl,
+          provider: 'replicate',
+          model: 'flux-kontext-pro/auto-enhance-fallback',
+          retryCount: MAX_RETRY_ATTEMPTS + (attempts - 1),
+          duration: totalMs,
+          timing: { primaryAttemptMs, fallbackAttemptMs: fallbackMs, totalMs },
+        };
+      } catch (fallbackError: unknown) {
+        const fbMsg = fallbackError instanceof Error ? fallbackError.message : 'Auto-enhance fallback failed';
+        logger.error(`[Router] Auto-enhance fallback also failed:`, fbMsg);
       }
     }
 
+    // ------------------------------------------------------------------
+    // Step 3: All attempts exhausted
+    // ------------------------------------------------------------------
+
+    const totalMs = Date.now() - startTime;
     return {
       success: false,
       error: message,
-      duration,
+      provider: 'replicate',
+      model: 'flux-kontext-pro',
+      duration: totalMs,
+      timing: { primaryAttemptMs, totalMs },
     };
   }
 }
