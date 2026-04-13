@@ -26,7 +26,7 @@ Upload → Prepare → Market → Distribute → Measure → Loop
 - **Storage**: Supabase Storage (raw images), Cloudflare R2 (processed images), Cloudinary (CDN)
 - **AI Services**: OpenAI (GPT-4o for descriptions/voiceover scripts, GPT-4o-mini for captions), Replicate, Runware, AutoEnhance
 - **Video**: Remotion 4.0.424 (React-based video), AWS Lambda (rendering), ElevenLabs + OpenAI TTS (voiceover)
-- **Payments**: Stripe (subscription tiers)
+- **Payments**: Stripe (subscription tiers), RevenueCat (built but dormant — see Important Notes)
 - **Email**: Resend
 - **Monitoring**: Sentry, OpenTelemetry, PagerDuty (alerting)
 - **Testing**: Vitest, React Testing Library, Playwright (E2E), k6 (load), Stryker (mutation), axe-core (WCAG)
@@ -84,6 +84,8 @@ Upload → Prepare → Market → Distribute → Measure → Loop
 /lib/social/            - Social publishing service (publish-service.ts, oauth-config.ts, utm.ts)
 /lib/video/             - Video utilities (photo-ordering.ts, voiceover-service.ts)
 /lib/webhooks/          - Outgoing webhook dispatch (HMAC-SHA256 signed delivery)
+/lib/revenuecat/        - RevenueCat client, webhook handler, sync (built, dormant — Stripe is primary)
+/lib/listing-health.ts  - Listing health score calculator (0-100, A-F grade, 4 dimensions)
 /lib/mls/               - MLS provider adapters (SimplyRETS)
 /lib/notify/            - SMS/WhatsApp via Twilio
 /lib/validation/        - Zod schemas for API input validation (schemas.ts)
@@ -777,3 +779,8 @@ Key settings:
 47. **i18n framework**: next-intl configured with `i18n/request.ts` and `i18n/routing.ts`. English strings in `messages/en.json`, Spanish skeleton in `messages/es.json`. Middleware handles locale detection.
 48. **Mutation testing**: Stryker configured in `stryker.config.mjs`. Targets `lib/**/*.ts`. Threshold: 70% mutation score. Run via `npm run test:mutate`.
 49. **Staging seed**: `scripts/seed-staging.mjs` creates realistic staging data (users, listings, leads, photos, posts). Idempotent — safe to re-run.
+50. **RevenueCat**: Infrastructure built but **dormant**. Stripe remains billing source of truth. RC module at `lib/revenuecat/` has full API client, webhook handler (11 event types), on-demand sync, and 25 passing tests. Webhook route at `/api/webhooks/revenuecat`. Auth callback creates RC subscriber on signup. DB column `profiles.revenuecat_app_user_id` exists. **Do not enable both Stripe and RC webhooks simultaneously** without adding a precedence rule — they both write to `profiles.subscription_tier`. Activate RC when mobile billing (App Store / Play Store) or RC-specific features (churn analytics, paywall A/B testing) are needed. Env vars: `REVENUECAT_API_KEY`, `REVENUECAT_WEBHOOK_AUTH_KEY` (both optional, graceful no-op when missing).
+51. **AI engine circuit breaker**: `lib/ai/listing-engine/provider-router.ts` tracks provider health with a rolling window of 50 results. After 3 consecutive failures, provider is marked unhealthy for 60 seconds (circuit breaker). `getHealthyProviderForTool()` auto-routes to fallback provider. `recordProviderResult()` must be called after every provider invocation. Fail-open: if both primary and fallback are unhealthy, routes to primary anyway.
+52. **AI router retry**: `lib/ai/router.ts` retries transient errors (rate limits, timeouts, 502/503) with exponential backoff (1s, 2s, 4s). Creative tools retry with lower guidance before giving up. Technical tools retry once. Auto-enhance fallback is last resort for enhance-category tools only — never for creative edits like sky replacement.
+53. **tools_applied tracking**: `app/api/enhance/route.ts` appends every applied tool to `photos.tools_applied text[]` on successful enhancement. This is the foundation of the data moat — every photo's enhancement history is tracked.
+54. **Listing health score**: `lib/listing-health.ts` exports `calculateListingHealth(supabase, listingId)` returning a 0-100 score (A-F grade) across 4 dimensions: Preparation (0-25), Marketing (0-25), Distribution (0-25), Engagement (0-25). Generates 1-3 intervention suggestions. Foundation for the Listing Performance OS dashboard.
