@@ -191,7 +191,8 @@ Write the script as continuous narration, no scene directions or brackets. Start
   });
 
   if (!response.ok) {
-    throw new Error('Failed to generate script');
+    const errorBody = await response.text().catch(() => 'Unknown error');
+    throw new Error(`OpenAI script generation failed (${response.status}): ${errorBody}`);
   }
 
   const data = await response.json();
@@ -272,7 +273,8 @@ export async function generateAudioOpenAI(
   });
 
   if (!response.ok) {
-    throw new Error('Failed to generate audio');
+    const errorBody = await response.text().catch(() => 'Unknown error');
+    throw new Error(`OpenAI TTS generation failed (${response.status}): ${errorBody}`);
   }
 
   const arrayBuffer = await response.arrayBuffer();

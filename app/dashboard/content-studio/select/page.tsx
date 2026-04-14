@@ -1,6 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
-import { Instagram, Facebook, Linkedin, Video, Image, Home, Check, Sparkles, FileText, MessageSquare, ChevronRight } from 'lucide-react'
+import { Instagram, Facebook, Linkedin, Image, Home, Check, Sparkles, FileText, MessageSquare, ChevronRight } from 'lucide-react'
 import NextImage from 'next/image'
 import Link from 'next/link'
 
@@ -63,19 +63,20 @@ export default async function SelectPlatformPage({
 
   const enhancedPhotos = photos?.filter((p) => p.processed_url) || []
 
-  const photosWithUrls = await Promise.all(
+  const photosWithMeta = await Promise.all(
     (photos || []).slice(0, 6).map(async (photo) => {
+      const isEnhanced = !!photo.processed_url
       const photoPath = photo.processed_url || photo.raw_url
       if (photoPath && !photoPath.startsWith('http')) {
         const { data } = await supabase.storage
           .from('raw-images')
           .createSignedUrl(photoPath, 3600)
-        return data?.signedUrl || null
+        return { url: data?.signedUrl || null, isEnhanced }
       }
-      return photoPath
+      return { url: photoPath, isEnhanced }
     })
   )
-  const validPhotos = photosWithUrls.filter(Boolean)
+  const validPhotos = photosWithMeta.filter((p): p is { url: string; isEnhanced: boolean } => !!p.url)
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-900 text-white">
@@ -91,9 +92,20 @@ export default async function SelectPlatformPage({
         {/* Selected Listing Card */}
         <div className="bg-gradient-to-r from-[#D4AF37]/10 to-[#D4AF37]/5 rounded-xl border border-[#D4AF37]/30 p-6 mb-6">
           <div className="flex items-start gap-6">
-            <div className="w-24 h-20 rounded-lg overflow-hidden bg-white/10 flex-shrink-0">
+            <div className="w-24 h-20 rounded-lg overflow-hidden bg-white/10 flex-shrink-0 relative">
               {validPhotos[0] ? (
-                <NextImage src={validPhotos[0]} alt="" className="w-full h-full object-cover" width={96} height={80} unoptimized />
+                <>
+                  <NextImage src={validPhotos[0].url} alt="" className="w-full h-full object-cover" width={96} height={80} unoptimized />
+                  {validPhotos[0].isEnhanced ? (
+                    <span className="absolute bottom-1 left-1 flex items-center gap-0.5 px-1.5 py-0.5 bg-emerald-500/80 rounded text-[9px] font-medium text-white backdrop-blur-sm">
+                      <Sparkles className="w-2.5 h-2.5" /> Enhanced
+                    </span>
+                  ) : (
+                    <span className="absolute bottom-1 left-1 px-1.5 py-0.5 bg-white/30 rounded text-[9px] font-medium text-white backdrop-blur-sm">
+                      Original
+                    </span>
+                  )}
+                </>
               ) : (
                 <div className="w-full h-full flex items-center justify-center">
                   <Home className="w-6 h-6 text-white/20" />
@@ -175,7 +187,7 @@ export default async function SelectPlatformPage({
                 </div>
                 <div>
                   <h3 className="text-xl font-bold text-black">Create All Posts</h3>
-                  <p className="text-black/70">Instagram, Facebook, LinkedIn, TikTok, Story — all in one place</p>
+                  <p className="text-black/70">Instagram, Facebook, LinkedIn, and Story assets — all in one place</p>
                 </div>
               </div>
               <div className="text-black font-bold text-2xl group-hover:translate-x-2 transition-transform">
@@ -193,13 +205,12 @@ export default async function SelectPlatformPage({
         </div>
 
         {/* Individual Platforms */}
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           {[
             { id: 'instagram', name: 'Instagram', icon: Instagram, gradient: 'from-purple-500 to-pink-500' },
             { id: 'story', name: 'Story', icon: Image, gradient: 'from-purple-600 to-orange-500' },
             { id: 'facebook', name: 'Facebook', icon: Facebook, gradient: 'from-blue-600 to-blue-400' },
             { id: 'linkedin', name: 'LinkedIn', icon: Linkedin, gradient: 'from-blue-700 to-blue-500' },
-            { id: 'tiktok', name: 'TikTok', icon: Video, gradient: 'from-gray-700 to-black', border: true },
           ].map(platform => {
             const Icon = platform.icon
             return (
@@ -208,7 +219,7 @@ export default async function SelectPlatformPage({
                 href={`/dashboard/content-studio/${platform.id}?listing=${listingId}`}
                 className="bg-white/5 rounded-xl border border-white/10 p-4 hover:border-white/30 transition-all cursor-pointer group text-center"
               >
-                <div className={`w-10 h-10 mx-auto bg-gradient-to-br ${platform.gradient} rounded-lg flex items-center justify-center mb-2 ${platform.border ? 'border border-white/20' : ''}`}>
+                <div className={`w-10 h-10 mx-auto bg-gradient-to-br ${platform.gradient} rounded-lg flex items-center justify-center mb-2`}>
                   <Icon className="w-5 h-5 text-white" />
                 </div>
                 <p className="text-white/70 text-sm group-hover:text-white transition-colors">{platform.name}</p>

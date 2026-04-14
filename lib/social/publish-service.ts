@@ -33,13 +33,13 @@ export async function publishToFacebook(
 ): Promise<PublishResult> {
   try {
     let url = `https://graph.facebook.com/v18.0/${pageId}/feed`;
-    const formData = new FormData();
-    
-    formData.append('access_token', pageAccessToken);
-    formData.append('message', content.text);
-    
+    const params = new URLSearchParams();
+
+    params.append('access_token', pageAccessToken);
+    params.append('message', content.text);
+
     if (content.link) {
-      formData.append('link', content.link);
+      params.append('link', content.link);
     }
 
     // If there are images, post as photo instead
@@ -47,8 +47,8 @@ export async function publishToFacebook(
       if (content.imageUrls.length === 1) {
         // Single photo
         url = `https://graph.facebook.com/v18.0/${pageId}/photos`;
-        formData.append('url', content.imageUrls[0]);
-        formData.append('caption', content.text);
+        params.append('url', content.imageUrls[0]);
+        params.append('caption', content.text);
       } else {
         // Multiple photos - create unpublished photos first, then combine
         const photoIds: string[] = [];
@@ -106,7 +106,7 @@ export async function publishToFacebook(
 
     const response = await fetch(url, {
       method: 'POST',
-      body: formData,
+      body: params,
       signal: AbortSignal.timeout(15000),
     });
 
@@ -306,8 +306,9 @@ async function uploadImageToLinkedIn(
     );
 
     if (!initResponse.ok) {
-      logger.warn('[LinkedIn] Image upload init failed:', initResponse.status);
-      return null;
+      const errorBody = await initResponse.text().catch(() => '');
+      logger.error(`[LinkedIn] Image upload init failed (${initResponse.status}):`, errorBody);
+      throw new Error(`LinkedIn image upload failed (${initResponse.status}): ${errorBody}`);
     }
 
     const initData = await initResponse.json();
@@ -318,6 +319,10 @@ async function uploadImageToLinkedIn(
     const imageResponse = await fetch(imageUrl, {
       signal: AbortSignal.timeout(15000),
     });
+    if (!imageResponse.ok) {
+      logger.error(`[LinkedIn] Source image download failed (${imageResponse.status}):`, imageUrl);
+      throw new Error(`LinkedIn source image download failed (${imageResponse.status})`);
+    }
     const imageBuffer = await imageResponse.arrayBuffer();
 
     // Step 3: Upload binary to LinkedIn
@@ -331,14 +336,16 @@ async function uploadImageToLinkedIn(
     });
 
     if (!uploadResponse.ok) {
-      logger.warn('[LinkedIn] Image binary upload failed:', uploadResponse.status);
-      return null;
+      const errorBody = await uploadResponse.text().catch(() => '');
+      logger.error(`[LinkedIn] Image binary upload failed (${uploadResponse.status}):`, errorBody);
+      throw new Error(`LinkedIn image binary upload failed (${uploadResponse.status}): ${errorBody}`);
     }
 
     return imageUrn;
-  } catch (err) {
-    logger.warn('[LinkedIn] Image upload error:', err);
-    return null;
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Unknown LinkedIn image upload error';
+    logger.error('[LinkedIn] Image upload error:', message);
+    throw error;
   }
 }
 
@@ -373,8 +380,9 @@ async function uploadVideoToLinkedIn(
     );
 
     if (!initResponse.ok) {
-      logger.warn('[LinkedIn] Video upload init failed:', initResponse.status);
-      return null;
+      const errorBody = await initResponse.text().catch(() => '');
+      logger.error(`[LinkedIn] Video upload init failed (${initResponse.status}):`, errorBody);
+      throw new Error(`LinkedIn video upload failed (${initResponse.status}): ${errorBody}`);
     }
 
     const initData = await initResponse.json();
@@ -382,8 +390,8 @@ async function uploadVideoToLinkedIn(
     const videoUrn = initData.value?.video;
 
     if (!uploadUrl || !videoUrn) {
-      logger.warn('[LinkedIn] Video init response missing uploadUrl or video URN');
-      return null;
+      logger.error('[LinkedIn] Video init response missing uploadUrl or video URN');
+      throw new Error('LinkedIn video init response missing uploadUrl or video URN');
     }
 
     // Step 2: Download video from source
@@ -391,8 +399,8 @@ async function uploadVideoToLinkedIn(
       signal: AbortSignal.timeout(60000), // Videos can be large
     });
     if (!videoResponse.ok) {
-      logger.warn('[LinkedIn] Source video download failed:', videoResponse.status);
-      return null;
+      logger.error(`[LinkedIn] Source video download failed (${videoResponse.status}):`, videoUrl);
+      throw new Error(`LinkedIn source video download failed (${videoResponse.status})`);
     }
     const videoBuffer = await videoResponse.arrayBuffer();
 
@@ -408,14 +416,16 @@ async function uploadVideoToLinkedIn(
     });
 
     if (!uploadResponse.ok) {
-      logger.warn('[LinkedIn] Video binary upload failed:', uploadResponse.status);
-      return null;
+      const errorBody = await uploadResponse.text().catch(() => '');
+      logger.error(`[LinkedIn] Video binary upload failed (${uploadResponse.status}):`, errorBody);
+      throw new Error(`LinkedIn video binary upload failed (${uploadResponse.status}): ${errorBody}`);
     }
 
     return videoUrn;
-  } catch (err) {
-    logger.warn('[LinkedIn] Video upload error:', err);
-    return null;
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Unknown LinkedIn video upload error';
+    logger.error('[LinkedIn] Video upload error:', message);
+    throw error;
   }
 }
 
@@ -671,10 +681,20 @@ export async function publishToLinkedIn(
       const uploadedImages: string[] = [];
 
       for (const imageUrl of content.imageUrls) {
-        const imageUrn = await uploadImageToLinkedIn(accessToken, personUrn, imageUrl);
-        if (imageUrn) {
-          uploadedImages.push(imageUrn);
+        try {
+          const imageUrn = await uploadImageToLinkedIn(accessToken, personUrn, imageUrl);
+          if (imageUrn) {
+            uploadedImages.push(imageUrn);
+          }
+        } catch (error: unknown) {
+          const message = error instanceof Error ? error.message : 'Unknown error';
+          logger.error(`[LinkedIn] Image upload failed for ${imageUrl}:`, message);
         }
+      }
+
+      // Fail if all image uploads failed — don't silently fall back to text-only
+      if (uploadedImages.length === 0 && content.imageUrls.length > 0) {
+        return { success: false, error: 'All image uploads to LinkedIn failed' };
       }
 
       if (uploadedImages.length === 1) {

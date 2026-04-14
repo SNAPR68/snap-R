@@ -42,7 +42,7 @@ const CONFIG = {
   retryDelayMs: 2000,
   toolTimeoutMs: 120000,
   batchDelayMs: Number(process.env.BATCH_DELAY_MS || 350),
-  maxBatchTimeoutMs: Number(process.env.BATCH_TIMEOUT_MS || 600000), // 10 min overall
+  maxBatchTimeoutMs: Number(process.env.BATCH_TIMEOUT_MS || 1800000), // 30 min overall
   maxCostCentsPerJob: Number(process.env.BATCH_MAX_COST_CENTS || 500), // $5 cost ceiling
 };
 

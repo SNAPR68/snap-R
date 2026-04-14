@@ -284,6 +284,10 @@ export async function POST(request: NextRequest) {
 
     if (insertError) {
       logger.error('[video/generate] Database insert failed:', insertError);
+      return NextResponse.json(
+        { error: 'Failed to track render job' },
+        { status: 500 }
+      );
     }
 
     // Return success response

@@ -358,6 +358,24 @@ export function StudioClient({ listingId, userRole, showMlsFeatures = false, cre
     setShowStylePrompt(true);
   };
 
+  const handleDownloadPending = async () => {
+    if (!pendingEnhancement?.enhancedUrl) return;
+    try {
+      const response = await fetch(pendingEnhancement.enhancedUrl);
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `snapr-enhanced-${Date.now()}.jpg`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch (error: unknown) {
+      console.error('Download failed:', error instanceof Error ? error.message : error);
+    }
+  };
+
   // FIXED: INSERT new record instead of UPDATE - so multiple enhancements ADD to downloads
   const handleJustThisPhoto = async () => {
     if (!pendingEnhancement) return;
@@ -884,7 +902,7 @@ export function StudioClient({ listingId, userRole, showMlsFeatures = false, cre
                 )}
                 {processing && <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center"><Loader2 className="w-10 h-10 animate-spin text-[#D4A017] mb-2" /><p>Processing...</p></div>}
               </div>
-              {pendingEnhancement && <AdjustmentPanel adjustments={adjustments} setAdjustments={setAdjustments} showFineTune={showFineTune} setShowFineTune={setShowFineTune} onDiscard={() => { setPendingEnhancement(null); setAdjustments({ intensity: 100, brightness: 0, contrast: 0, saturation: 0, warmth: 0 }); }} onAccept={handleAcceptEnhancement} />}
+              {pendingEnhancement && <AdjustmentPanel adjustments={adjustments} setAdjustments={setAdjustments} showFineTune={showFineTune} setShowFineTune={setShowFineTune} onDiscard={() => { setPendingEnhancement(null); setAdjustments({ intensity: 100, brightness: 0, contrast: 0, saturation: 0, warmth: 0 }); }} onAccept={handleAcceptEnhancement} onDownload={handleDownloadPending} />}
               <div className="flex gap-2 mt-3 overflow-x-auto py-1 flex-shrink-0">
                 {photos.map(photo => (
                   <div key={photo.id} className="relative flex-shrink-0 group">
