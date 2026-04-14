@@ -17,7 +17,7 @@ import { MarketingBanner, type MarketingJobData } from './marketing-banner';
 import { MarketingResultsPanel } from './marketing-results-panel';
 import { CelebrationModal } from './celebration-modal';
 import { ProcessingToasts } from './processing-toasts';
-import { Upload, Sun, Moon, Leaf, Trash2, Sofa, Sparkles, Wand2, Loader2, ChevronDown, ChevronUp, Check, X, Download, Share2, Copy, LogOut, FileArchive, UserCheck, Flame, Tv, Lightbulb, PanelTop, Waves, Move, Circle, Palette, Brain, Rocket, CheckCircle, AlertCircle, Star, Eye, RefreshCw, History, Monitor } from 'lucide-react';
+import { Upload, Sun, Moon, Leaf, Trash2, Sofa, Sparkles, Wand2, Loader2, ChevronDown, ChevronUp, Check, X, Download, Share2, Copy, LogOut, FileArchive, UserCheck, Flame, Tv, Lightbulb, PanelTop, Waves, Move, Circle, Palette, Brain, Rocket, CheckCircle, AlertCircle, Star, Eye, RefreshCw, History, Monitor, FastForward } from 'lucide-react';
 
 const AI_TOOLS = [
   { id: 'sky-replacement', name: 'Sky Replacement', icon: Sun, credits: 1, category: 'EXTERIOR', hasPresets: true },
@@ -191,6 +191,8 @@ export function StudioClient({ listingId, userRole, showMlsFeatures = false, cre
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [prepareProgress, setPrepareProgress] = useState<{ phase: string; message: string } | null>(null);
   const [showPrepareOverlay, setShowPrepareOverlay] = useState(false);
+  const [showSkipConfirm, setShowSkipConfirm] = useState(false);
+  const [skipping, setSkipping] = useState(false);
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [showReviewPanel, setShowReviewPanel] = useState(false);
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -431,6 +433,34 @@ export function StudioClient({ listingId, userRole, showMlsFeatures = false, cre
     setShowPrepareOverlay(true);
   };
 
+  const handleSkipToMarketing = async () => {
+    if (skipping) return;
+    setSkipping(true);
+    try {
+      const response = await fetch('/api/listing/skip-preparation', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ listingId }),
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || 'Skip failed');
+
+      setListingStatus({
+        status: 'prepared',
+        confidence: 100,
+        heroPhotoId: null
+      });
+      setShowSkipConfirm(false);
+      loadData();
+      // Marketing auto-triggers via webhook — no manual trigger needed
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Skip failed';
+      console.error('[Studio] Skip to marketing failed:', message);
+    } finally {
+      setSkipping(false);
+    }
+  };
+
   const fetchListingStatus = async () => {
     try {
       const res = await fetch('/api/listing/status?listingId=' + listingId, { signal: AbortSignal.timeout(15000) });
@@ -449,6 +479,16 @@ export function StudioClient({ listingId, userRole, showMlsFeatures = false, cre
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { fetchListingStatus(); }, [listingId]);
+
+  // ESC key handler for skip confirmation modal
+  useEffect(() => {
+    if (!showSkipConfirm) return;
+    const handleEsc = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setShowSkipConfirm(false);
+    };
+    document.addEventListener('keydown', handleEsc);
+    return () => document.removeEventListener('keydown', handleEsc);
+  }, [showSkipConfirm]);
 
   // Marketing status polling — fetch on mount, then poll every 5s while processing
   useEffect(() => {
@@ -722,10 +762,16 @@ export function StudioClient({ listingId, userRole, showMlsFeatures = false, cre
                   </div>
                 </div>
               )}
-              <button onClick={() => { handlePrepareListing(); setShowGuidedTip(false); }} disabled={preparingListing || photos.length === 0} className={`flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 rounded-lg text-sm text-white font-medium disabled:opacity-50 disabled:cursor-not-allowed ${showGuidedTip && photos.length > 0 ? 'ring-2 ring-[#D4A017]/50 ring-offset-1 ring-offset-[#0A0A0A]' : ''}`}>
-                {preparingListing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Rocket className="w-4 h-4" />}
-                {preparingListing ? 'Preparing...' : 'Prepare Listing'}
-              </button>
+              <div className="flex items-center">
+                <button onClick={() => { handlePrepareListing(); setShowGuidedTip(false); }} disabled={preparingListing || photos.length === 0} className={`flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 rounded-l-lg text-sm text-white font-medium disabled:opacity-50 disabled:cursor-not-allowed ${showGuidedTip && photos.length > 0 ? 'ring-2 ring-[#D4A017]/50 ring-offset-1 ring-offset-[#0A0A0A]' : ''}`}>
+                  {preparingListing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Rocket className="w-4 h-4" />}
+                  {preparingListing ? 'Preparing...' : 'AI Prepare'}
+                </button>
+                <button onClick={() => setShowSkipConfirm(true)} disabled={preparingListing || photos.length === 0 || skipping} className="flex items-center gap-2 px-3 py-2 bg-white/10 hover:bg-white/20 border-l border-white/20 rounded-r-lg text-sm text-white/70 hover:text-white disabled:opacity-50 disabled:cursor-not-allowed" title="Already have professional photos? Skip AI enhancement and go straight to marketing content">
+                  <FastForward className="w-4 h-4" />
+                  Skip to Marketing
+                </button>
+              </div>
             </div>
           )}
           <select 
@@ -955,6 +1001,46 @@ export function StudioClient({ listingId, userRole, showMlsFeatures = false, cre
       />
       <CelebrationModal />
       <ProcessingToasts />
+      {showSkipConfirm && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4" role="dialog" aria-modal="true" aria-label="Skip enhancement confirmation">
+          <div className="w-full max-w-md bg-gradient-to-b from-zinc-900 to-black border border-white/10 rounded-2xl shadow-2xl p-6">
+            <h3 className="text-lg font-bold text-white mb-2">Skip AI Enhancement?</h3>
+
+            <div className="space-y-3 mb-5">
+              <div className="p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-xl">
+                <p className="text-sm font-medium text-emerald-400 mb-1">Best for:</p>
+                <p className="text-xs text-white/60">Professional photos from a photographer, Fotello, BoxBrownie, or other editing service. Your photos are already polished — skip straight to generating descriptions, social posts, video, and your property site.</p>
+              </div>
+
+              <div className="p-3 bg-amber-500/10 border border-amber-500/20 rounded-xl">
+                <p className="text-sm font-medium text-amber-400 mb-1">What you&apos;ll skip:</p>
+                <p className="text-xs text-white/60">AI sky replacement, virtual twilight, HDR enhancement, decluttering, virtual staging, and other photo improvements. You can still apply individual tools manually later.</p>
+              </div>
+
+              <div className="p-3 bg-blue-500/10 border border-blue-500/20 rounded-xl">
+                <p className="text-sm font-medium text-blue-400 mb-1">What you&apos;ll get:</p>
+                <p className="text-xs text-white/60">AI-written listing description, social captions for every platform, a branded property site, scheduled social posts, and an AI property video — all generated from your existing photos.</p>
+              </div>
+            </div>
+
+            <div className="flex gap-3">
+              <button
+                onClick={handleSkipToMarketing}
+                disabled={skipping}
+                className="flex-1 px-4 py-2.5 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-black font-semibold rounded-xl transition-all text-sm disabled:opacity-50"
+              >
+                {skipping ? 'Processing...' : 'Skip & Generate Marketing'}
+              </button>
+              <button
+                onClick={() => setShowSkipConfirm(false)}
+                className="flex-1 px-4 py-2.5 bg-white/10 hover:bg-white/20 text-white font-medium rounded-xl transition-all border border-white/10 text-sm"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
     </>
   );
