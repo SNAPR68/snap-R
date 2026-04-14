@@ -1,6 +1,6 @@
 'use client';
 
-import { ChevronDown, ChevronUp, RotateCcw, SlidersHorizontal, X, Check } from 'lucide-react';
+import { ChevronDown, ChevronUp, RotateCcw, SlidersHorizontal, X, Check, Download } from 'lucide-react';
 
 interface AdjustmentPanelProps {
   adjustments: {
@@ -21,6 +21,7 @@ interface AdjustmentPanelProps {
   setShowFineTune: (show: boolean) => void;
   onDiscard: () => void;
   onAccept: () => void;
+  onDownload?: () => void;
 }
 
 export function AdjustmentPanel({
@@ -30,6 +31,7 @@ export function AdjustmentPanel({
   setShowFineTune,
   onDiscard,
   onAccept,
+  onDownload,
 }: AdjustmentPanelProps) {
   const resetAdjustments = () => {
     setAdjustments({ intensity: 100, brightness: 0, contrast: 0, saturation: 0, warmth: 0 });
@@ -67,6 +69,11 @@ export function AdjustmentPanel({
           <button onClick={onDiscard} className="flex items-center gap-1.5 px-4 py-2 bg-red-500/20 border border-red-500/40 rounded-lg text-red-400 text-sm hover:bg-red-500/30 transition-colors">
             <X className="w-4 h-4" /> Discard
           </button>
+          {onDownload && (
+            <button onClick={onDownload} className="flex items-center gap-1.5 px-3 py-2 bg-white/10 hover:bg-white/20 rounded-lg text-xs text-white/70 transition-colors" title="Download enhanced photo">
+              <Download className="w-3.5 h-3.5" /> Download
+            </button>
+          )}
           <button onClick={onAccept} className="flex items-center gap-1.5 px-4 py-2 bg-gradient-to-r from-emerald-500 to-emerald-600 rounded-lg text-white text-sm font-medium hover:from-emerald-400 hover:to-emerald-500 transition-all">
             <Check className="w-4 h-4" /> Accept & Save
           </button>

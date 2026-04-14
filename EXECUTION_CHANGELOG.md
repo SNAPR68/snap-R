@@ -1,5 +1,27 @@
 # SnapR Execution Changelog
 ==========================
+## 2026-04-14 — Bug fixes: publishing, video, batch processing, UX
+
+### Fixed: Facebook publishing (CRITICAL)
+- `lib/social/publish-service.ts` — Replaced `FormData` with `URLSearchParams` for Facebook Graph API calls. `FormData` caused 400 errors on single-image posts.
+
+### Fixed: LinkedIn publishing (CRITICAL)
+- `lib/social/publish-service.ts` — `uploadImageToLinkedIn` and `uploadVideoToLinkedIn` now throw on failure instead of silently returning `null`. If all image uploads fail, post fails instead of falling back to text-only.
+
+### Fixed: Video generation (CRITICAL)
+- `app/api/video/generate/route.ts` — Returns 500 when `video_render_jobs` DB insert fails (was returning 200, leaving video stuck "pending" forever)
+- `lib/video/voiceover-service.ts` — Exposes actual OpenAI API error messages (status + body) instead of generic "Failed to generate script"
+
+### Fixed: Batch photo processing (HIGH)
+- `lib/ai/listing-engine/batch-processor.ts` — Default timeout increased from 10 min to 30 min. Previous limit caused 21-photo listings to stop at ~9 photos.
+
+### Fixed: Virtual staging download (CRITICAL)
+- `components/adjustment-panel.tsx` — Added Download button for pending enhancement previews (blob download)
+- `components/studio-client.tsx` — Added `handleDownloadPending` handler for immediate download before accept/save
+
+### Improved: Content Studio photo badges
+- `app/dashboard/content-studio/select/page.tsx` — Shows "Enhanced" (green) or "Original" badges on listing thumbnails
+
 ## 2026-04-14 — Skip enhancement path (skip to marketing)
 
 ### New: Skip-to-marketing flow for agents with professional photos
