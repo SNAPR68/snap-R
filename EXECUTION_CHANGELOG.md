@@ -1,5 +1,14 @@
 # SnapR Execution Changelog
 ==========================
+## 2026-04-14 — Skip enhancement path (skip to marketing)
+
+### New: Skip-to-marketing flow for agents with professional photos
+- `app/api/listing/skip-preparation/route.ts` — POST endpoint that bypasses AI enhancement, sets `preparation_status='prepared'` with `{ skipped: true }` metadata, marks photos as completed, triggers marketing pipeline via webhook
+- `components/studio-client.tsx` — Split "Prepare Listing" into "AI Prepare" + "Skip to Marketing" button group with confirmation modal explaining when to use each path
+- Confirmation modal has three info cards: "Best for" (professional photos), "What you'll skip" (AI tools), "What you'll get" (descriptions, captions, site, video, posts)
+- Same billing logic as regular preparation (counts toward monthly listing limit)
+- ESC key handler on modal per CLAUDE.md convention
+
 ## 2026-04-11 — AI engine hardening + listing health score
 
 ### Improved: AI router (`lib/ai/router.ts`)
