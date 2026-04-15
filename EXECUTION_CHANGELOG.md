@@ -1,5 +1,24 @@
 # SnapR Execution Changelog
 ==========================
+## 2026-04-15 — HOTFIX: Auth callback 500 (login broken)
+
+### Root cause
+- `/auth/callback` imported `ensureSubscriber` from `@/lib/revenuecat/client`.
+- RevenueCat is dormant (Stripe is primary billing — see CLAUDE.md #50).
+- `REVENUECAT_API_KEY` is not set in production → module-level import path caused runtime crashes.
+- The 500 cached at the Vercel edge (same etag returned for 2.4+ hours) making login appear 100% broken.
+
+### Fix
+- Removed `ensureSubscriber` import and call from `app/auth/callback/route.ts`.
+- Wrapped entire handler in try/catch that redirects to `/auth/login?error=callback_failed` instead of returning 500. Users are never stranded.
+- Added `export const dynamic = 'force-dynamic'` to prevent edge caching of redirects.
+- Added `logger.error` for future production visibility.
+
+### Lesson
+- Never gate auth flows on dormant integrations, even fire-and-forget.
+- Wrap all auth routes in try/catch with guaranteed redirect fallback.
+
+
 ## 2026-04-14 — Bug fixes: publishing, video, batch processing, UX
 
 ### Fixed: Facebook publishing (CRITICAL)
