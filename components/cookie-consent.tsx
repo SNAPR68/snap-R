@@ -3,17 +3,29 @@
 import { useState, useEffect } from 'react';
 import { Cookie, X } from 'lucide-react';
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 
 export function CookieConsent() {
   const [show, setShow] = useState(false);
+  const pathname = usePathname();
+  const safePathname = pathname ?? '';
+  const suppressBanner =
+    safePathname.startsWith('/onboarding') ||
+    safePathname.startsWith('/auth/login') ||
+    safePathname.startsWith('/auth/signup');
 
   useEffect(() => {
+    if (suppressBanner) {
+      setShow(false);
+      return;
+    }
+
     const consent = localStorage.getItem('snapr-cookie-consent');
     if (!consent) {
       const timer = setTimeout(() => setShow(true), 1500);
       return () => clearTimeout(timer);
     }
-  }, []);
+  }, [suppressBanner]);
 
   const acceptAll = () => {
     localStorage.setItem('snapr-cookie-consent', JSON.stringify({ accepted: true, timestamp: Date.now() }));
@@ -25,7 +37,7 @@ export function CookieConsent() {
     setShow(false);
   };
 
-  if (!show) return null;
+  if (!show || suppressBanner) return null;
 
   return (
     <div className="fixed bottom-0 left-0 right-0 z-50 p-4">

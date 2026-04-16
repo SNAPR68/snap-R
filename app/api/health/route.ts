@@ -68,6 +68,7 @@ export async function GET() {
   }
 
   const allOk = Object.values(checks).every(v => v.status === 'ok');
+  const responseStatus = allOk || process.env.NODE_ENV !== 'production' ? 200 : 503;
 
   return NextResponse.json(
     {
@@ -77,6 +78,6 @@ export async function GET() {
       crons: cronStatuses.length > 0 ? cronStatuses : undefined,
       version: process.env.VERCEL_GIT_COMMIT_SHA?.slice(0, 7) ?? 'local',
     },
-    { status: allOk ? 200 : 503 }
+    { status: responseStatus }
   );
 }
