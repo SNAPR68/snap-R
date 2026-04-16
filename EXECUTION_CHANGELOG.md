@@ -1,5 +1,21 @@
 # SnapR Execution Changelog
 ==========================
+## 2026-04-16 — Authenticated functionality sweep (CI gate)
+
+### Added
+- `e2e/authenticated-functionality.spec.ts` — Playwright spec that provisions a confirmed Supabase user via service role, marks `onboarded_at`, persists storage state, and sweeps 35 dashboard routes. Asserts internal links resolve 2xx-3xx, Facebook connect is **not** unauthorized for authenticated user (expects 307), and `/api/video/generate` is **not** 401.
+- `.github/workflows/ci.yml` — new required job `Authenticated Functionality Sweep` that runs after `quality`. Validates `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY` secrets are present, installs Playwright chromium, runs the spec.
+
+### Changed
+- `components/cookie-consent.tsx` — banner now suppressed on `/auth/login`, `/auth/signup`, `/onboarding` to prevent it from blocking auth/onboarding flows during E2E and real signups.
+- `app/api/health/route.ts` — returns HTTP 200 in non-production environments even when degraded; body still reports `status: 'degraded'`. Production behavior (503 on degraded) preserved.
+- `app/api/social/callback/facebook/route.ts` — entire handler wrapped in try/catch; never returns raw 500. Always redirects to `/dashboard/settings/social` with explicit error params: `missing_params`, `session_mismatch`, `facebook_not_configured`, `token_error`, `server_error`.
+
+### Verification
+- `npx tsc --noEmit` — pass
+- `npx vitest run __tests__/components/cookie-consent.test.tsx` — 4/4 pass
+- `npx playwright test e2e/authenticated-functionality.spec.ts` — 1/1 pass (2.4 min)
+
 ## 2026-04-15 — HOTFIX: Auth callback 500 (login broken)
 
 ### Root cause

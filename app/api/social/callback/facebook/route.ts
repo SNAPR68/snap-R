@@ -5,25 +5,44 @@ import { createClient as createServerClient } from '@/lib/supabase/server';
 
 import { logger } from '@/lib/logger';
 function getSupabase() {
+  if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
+    throw new Error('Supabase admin environment is not configured');
+  }
+
   return createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
+    process.env.NEXT_PUBLIC_SUPABASE_URL,
+    process.env.SUPABASE_SERVICE_ROLE_KEY
   );
 }
 
 export async function GET(req: NextRequest) {
+  const resolveBaseUrl = () => {
+    const configured = process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_BASE_URL;
+    if (!configured) return req.nextUrl.origin;
+
+    try {
+      return new URL(configured).origin;
+    } catch {
+      return req.nextUrl.origin;
+    }
+  };
+
+  const redirectToSettings = (params: Record<string, string>) => {
+    const url = new URL('/dashboard/settings/social', resolveBaseUrl());
+    for (const [key, value] of Object.entries(params)) {
+      url.searchParams.set(key, value);
+    }
+    return NextResponse.redirect(url);
+  };
+
   try {
     const code = req.nextUrl.searchParams.get('code');
     const state = req.nextUrl.searchParams.get('state');
     const error = req.nextUrl.searchParams.get('error');
 
-    if (error) {
-      return NextResponse.redirect(`${process.env.NEXT_PUBLIC_APP_URL}/dashboard/settings/social?error=${error}`);
-    }
+    if (error) return redirectToSettings({ error });
 
-    if (!code || !state) {
-      return NextResponse.redirect(`${process.env.NEXT_PUBLIC_APP_URL}/dashboard/settings/social?error=missing_params`);
-    }
+    if (!code || !state) return redirectToSettings({ error: 'missing_params' });
 
     const [stateUserId, platform] = state.includes('_') ? state.split('_') : [state, 'facebook'];
 
@@ -32,13 +51,18 @@ export async function GET(req: NextRequest) {
     const { data: { user: sessionUser } } = await supabaseAuth.auth.getUser();
     if (!sessionUser || sessionUser.id !== stateUserId) {
       logger.warn('[Facebook OAuth] Session mismatch — state userId:', stateUserId, 'session:', sessionUser?.id);
-      return NextResponse.redirect(`${process.env.NEXT_PUBLIC_APP_URL}/dashboard/settings/social?error=session_mismatch`);
+      return redirectToSettings({ error: 'session_mismatch' });
     }
     const userId = sessionUser.id;
 
     const clientId = process.env.NEXT_PUBLIC_FACEBOOK_APP_ID;
     const clientSecret = process.env.FACEBOOK_APP_SECRET;
-    const redirectUri = `${process.env.NEXT_PUBLIC_APP_URL}/api/social/callback/facebook`;
+    const redirectUri = `${resolveBaseUrl()}/api/social/callback/facebook`;
+
+    if (!clientId || !clientSecret) {
+      logger.error('[Facebook OAuth] Missing Facebook env config');
+      return redirectToSettings({ error: 'facebook_not_configured' });
+    }
 
     // Exchange code for access token
     const tokenResponse = await fetch(
@@ -49,7 +73,7 @@ export async function GET(req: NextRequest) {
 
     if (tokenData.error) {
       logger.error('Token error:', tokenData.error);
-      return NextResponse.redirect(`${process.env.NEXT_PUBLIC_APP_URL}/dashboard/settings/social?error=token_error`);
+      return redirectToSettings({ error: 'token_error' });
     }
 
     const accessToken = tokenData.access_token;
@@ -147,9 +171,9 @@ export async function GET(req: NextRequest) {
       }
     }
 
-    return NextResponse.redirect(`${process.env.NEXT_PUBLIC_APP_URL}/dashboard/settings/social?success=facebook`);
+    return redirectToSettings({ connected: platform });
   } catch (error: unknown) {
     logger.error('Facebook callback error:', error);
-    return NextResponse.redirect(`${process.env.NEXT_PUBLIC_APP_URL}/dashboard/settings/social?error=server_error`);
+    return redirectToSettings({ error: 'server_error' });
   }
 }
