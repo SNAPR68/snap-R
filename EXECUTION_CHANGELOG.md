@@ -1,5 +1,22 @@
 # SnapR Execution Changelog
 ==========================
+## 2026-04-17 — HOTFIX: Env validation crashed all requests in production
+
+### Root cause
+- PR #149 (launch hardening) promoted Twilio (`TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, `TWILIO_SMS_FROM`, `TWILIO_WHATSAPP_FROM`) and social OAuth vars (`NEXT_PUBLIC_FACEBOOK_APP_ID`, `FACEBOOK_APP_SECRET`, `NEXT_PUBLIC_LINKEDIN_CLIENT_ID`, `LINKEDIN_CLIENT_SECRET`) to `REQUIRED_VARS` in `lib/env.ts`.
+- `validateEnv()` is called from `instrumentation.ts` and **throws** when any required var is missing.
+- Vercel production had every one of those set **except `TWILIO_SMS_FROM`** (never configured).
+- Result: every single request to snap-r.com started crashing with `Missing required environment variables: TWILIO_SMS_FROM (notifications)` — including `/auth/callback` — returning the Next.js `/500` error page with `x-matched-path: /500`, `x-next-error-status: 500`. The no-store header work from earlier today was correct but never reached because boot failed before the route handler ran.
+
+### Fix (`lib/env.ts`)
+- Demoted Twilio + all social OAuth vars from `REQUIRED_VARS` to `RECOMMENDED_VARS` (warn, don't crash).
+- Kept `REQUIRED_VARS` minimal: Supabase, Stripe, `CRON_SECRET`, `WORKER_URL`. These truly break the app when missing.
+- Rationale: the notification sender already returns `{ success: false, error: 'Not configured' }` when Twilio vars are absent, and the social capability system (`lib/social/capabilities.ts`) already gates OAuth at call-time. Fast-failing on these at boot defeats the graceful-degradation design.
+
+### Lesson
+- Never promote vars to strict-required without confirming every environment has them. The capability-check pattern (runtime gate + graceful skip) is the right model for optional integrations — boot-time fast-fail is only for vars that make the app unusable.
+- Vercel's `/500` error page is served when `instrumentation.ts` throws — the response has `x-matched-path: /500` and bypasses your route handler entirely. If you see a 500 you can't debug in route logs, check boot-time crashes first.
+
 ## 2026-04-17 — HOTFIX: Auth callback edge-cache pinning
 
 ### Root cause
