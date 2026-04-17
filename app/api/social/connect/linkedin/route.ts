@@ -1,33 +1,33 @@
 export const dynamic = 'force-dynamic';
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { getOAuthUrl } from '@/lib/social/oauth-config';
+import { getSocialCapability } from '@/lib/social/capabilities';
 
 import { logger } from '@/lib/logger';
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
-    
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_BASE_URL || request.nextUrl.origin;
+
     if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return NextResponse.redirect(`${baseUrl}/dashboard/settings/social?error=unauthorized`);
     }
 
-    const clientId = process.env.NEXT_PUBLIC_LINKEDIN_CLIENT_ID;
-    const redirectUri = `${process.env.NEXT_PUBLIC_APP_URL || 'https://snap-r.com'}/api/social/callback/linkedin`;
-    
-    if (!clientId) {
-      return NextResponse.json({ 
-        error: 'LinkedIn integration not configured. Please add LINKEDIN_CLIENT_ID to environment variables.' 
-      }, { status: 400 });
+    const capability = getSocialCapability('linkedin');
+    if (!capability.enabled) {
+      return NextResponse.redirect(
+        `${baseUrl}/dashboard/settings/social?error=${encodeURIComponent('LinkedIn is not configured for launch yet.')}`
+      );
     }
 
-    const scope = 'openid profile email w_member_social';
-    
-    const authUrl = `https://www.linkedin.com/oauth/v2/authorization?response_type=code&client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${encodeURIComponent(scope)}&state=${user.id}`;
-
-    return NextResponse.json({ authUrl });
+    const redirectUri = `${baseUrl}/api/social/oauth/linkedin`;
+    const authUrl = getOAuthUrl('linkedin', redirectUri, user.id);
+    return NextResponse.redirect(authUrl);
   } catch (error: unknown) {
     logger.error('LinkedIn connect error:', error);
-    return NextResponse.json({ error: 'Server error' }, { status: 500 });
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_BASE_URL || 'https://snap-r.com';
+    return NextResponse.redirect(`${baseUrl}/dashboard/settings/social?error=server_error`);
   }
 }

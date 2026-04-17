@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server';
 import { adminSupabase } from '@/lib/supabase/admin';
 import { getPlanLimits } from '@/lib/content/limits';
 import { getClientIp } from '@/lib/utils/client-ip';
+import { getSocialCapability } from '@/lib/social/capabilities';
 
 import { logger } from '@/lib/logger';
 import { checkRateLimitAsync } from '@/lib/rate-limit';
@@ -16,6 +17,7 @@ interface FacebookPage {
 
 interface SocialConnection {
   access_token: string;
+  refresh_token?: string | null;
   platform_user_id?: string;
   pages?: FacebookPage[];
   default_page_id?: string;
@@ -58,6 +60,13 @@ export async function POST(req: NextRequest) {
     const validated = parseBody(socialPublishExtendedSchema, body);
     if (!validated.success) { return NextResponse.json({ error: validated.error, details: validated.details }, { status: 400 }); }
     const { platform, content, imageUrls, listingId, scheduleFor } = validated.data;
+    const capability = getSocialCapability(platform);
+
+    if (!capability.enabled) {
+      return NextResponse.json({
+        error: `${capability.name} is not configured for launch yet.`
+      }, { status: 503 });
+    }
 
     const { data: connection, error: connError } = await serviceSupabase
       .from('social_connections')
@@ -105,6 +114,11 @@ export async function POST(req: NextRequest) {
     if (platform === 'linkedin' && !conn.platform_user_id) {
       return NextResponse.json({
         error: 'No LinkedIn profile linked. Please reconnect your LinkedIn account.'
+      }, { status: 400 });
+    }
+    if (platform === 'linkedin' && !conn.refresh_token) {
+      return NextResponse.json({
+        error: 'LinkedIn needs a refreshable connection for launch. Please reconnect your LinkedIn account.'
       }, { status: 400 });
     }
 

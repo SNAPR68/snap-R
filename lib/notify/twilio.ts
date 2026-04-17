@@ -3,6 +3,8 @@
  * Supports SMS and WhatsApp (via Twilio sandbox / approved number)
  */
 
+import { normalizePhoneNumber, normalizeWhatsAppAddress } from '@/lib/phone'
+
 const ACCOUNT_SID = process.env.TWILIO_ACCOUNT_SID
 const AUTH_TOKEN = process.env.TWILIO_AUTH_TOKEN
 const WHATSAPP_FROM = process.env.TWILIO_WHATSAPP_FROM ?? 'whatsapp:+14155238886'
@@ -49,7 +51,9 @@ async function sendMessage(to: string, from: string, body: string): Promise<Twil
 export async function sendSms(to: string, body: string, fromNumber?: string): Promise<TwilioResult> {
   const from = fromNumber ?? process.env.TWILIO_SMS_FROM ?? ''
   if (!from) return { success: false, error: 'TWILIO_SMS_FROM not configured' }
-  return sendMessage(to, from, body)
+  const normalizedTo = normalizePhoneNumber(to)
+  if (!normalizedTo) return { success: false, error: 'Invalid phone number' }
+  return sendMessage(normalizedTo, from, body)
 }
 
 /**
@@ -57,6 +61,7 @@ export async function sendSms(to: string, body: string, fromNumber?: string): Pr
  * `to` must be formatted as "whatsapp:+1XXXXXXXXXX"
  */
 export async function sendWhatsApp(to: string, body: string): Promise<TwilioResult> {
-  const toFormatted = to.startsWith('whatsapp:') ? to : `whatsapp:${to}`
+  const toFormatted = normalizeWhatsAppAddress(to)
+  if (!toFormatted) return { success: false, error: 'Invalid WhatsApp number' }
   return sendMessage(toFormatted, WHATSAPP_FROM, body)
 }

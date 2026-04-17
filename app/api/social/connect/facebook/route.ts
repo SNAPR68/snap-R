@@ -1,33 +1,33 @@
 export const dynamic = 'force-dynamic';
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { getOAuthUrl } from '@/lib/social/oauth-config';
+import { getSocialCapability } from '@/lib/social/capabilities';
 
 import { logger } from '@/lib/logger';
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
-    
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_BASE_URL || request.nextUrl.origin;
+
     if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return NextResponse.redirect(`${baseUrl}/dashboard/settings/social?error=unauthorized`);
     }
 
-    const clientId = process.env.NEXT_PUBLIC_FACEBOOK_APP_ID;
-    const redirectUri = `${process.env.NEXT_PUBLIC_APP_URL || 'https://snap-r.com'}/api/social/callback/facebook`;
-    
-    if (!clientId) {
-      return NextResponse.json({ 
-        error: 'Facebook integration not configured. Please add FACEBOOK_APP_ID to environment variables.' 
-      }, { status: 400 });
+    const capability = getSocialCapability('facebook');
+    if (!capability.enabled) {
+      return NextResponse.redirect(
+        `${baseUrl}/dashboard/settings/social?error=${encodeURIComponent('Facebook is not configured for launch yet.')}`
+      );
     }
 
-    const scope = 'pages_manage_posts,pages_read_engagement,pages_manage_metadata,publish_video,pages_show_list,instagram_basic,instagram_content_publish';
-    
-    const authUrl = `https://www.facebook.com/v18.0/dialog/oauth?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${encodeURIComponent(scope)}&state=${user.id}`;
-
-    return NextResponse.json({ authUrl });
+    const redirectUri = `${baseUrl}/api/social/oauth/facebook`;
+    const authUrl = getOAuthUrl('facebook', redirectUri, user.id);
+    return NextResponse.redirect(authUrl);
   } catch (error: unknown) {
     logger.error('Facebook connect error:', error);
-    return NextResponse.json({ error: 'Server error' }, { status: 500 });
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_BASE_URL || 'https://snap-r.com';
+    return NextResponse.redirect(`${baseUrl}/dashboard/settings/social?error=server_error`);
   }
 }

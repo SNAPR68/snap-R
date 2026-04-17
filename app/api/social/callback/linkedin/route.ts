@@ -78,6 +78,7 @@ export async function GET(req: NextRequest) {
       platform_user_id: profileData.sub,
       platform_username: profileData.email || profileData.name,
       access_token: accessToken,
+      refresh_token: tokenData.refresh_token || null,
       linkedin_urn: `urn:li:person:${profileData.sub}`,
       profile_data: { name: profileData.name, email: profileData.email, picture: profileData.picture },
       token_expires_at: new Date(Date.now() + tokenData.expires_in * 1000).toISOString(),
@@ -90,7 +91,7 @@ export async function GET(req: NextRequest) {
       return NextResponse.redirect(`${baseUrl}/dashboard/settings/social?error=db_error`);
     }
 
-    return NextResponse.redirect(`${baseUrl}/dashboard/settings/social?success=linkedin`);
+    return NextResponse.redirect(`${baseUrl}/dashboard/settings/social?connected=linkedin`);
   } catch (error: unknown) {
     logger.error('LinkedIn callback error:', error);
     return NextResponse.redirect(`${baseUrl}/dashboard/settings/social?error=server_error`);

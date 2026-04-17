@@ -74,7 +74,7 @@ export default async function ContentStudio() {
         const captionPlatforms: string[] = []
         if (job.captions_status === 'completed' && job.captions_result && typeof job.captions_result === 'object') {
           for (const key of Object.keys(job.captions_result)) {
-            if (['instagram', 'facebook', 'linkedin', 'tiktok', 'twitter'].includes(key)) {
+            if (['instagram', 'facebook', 'linkedin'].includes(key)) {
               captionPlatforms.push(key)
             }
           }

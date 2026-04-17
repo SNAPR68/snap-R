@@ -65,7 +65,7 @@ export async function GET(request: NextRequest) {
       { data: allNeedsReview }
     ] = await Promise.all([
       supabase.from('listings').select('user_id').in('user_id', userIds).gte('prepared_at', yesterday),
-      supabase.from('notification_logs').select('user_id').in('user_id', userIds).eq('type', 'client_viewed').gte('created_at', yesterday),
+      supabase.from('notification_logs').select('user_id').in('user_id', userIds).eq('notification_type', 'client_viewed').gte('created_at', yesterday),
       supabase.from('listings').select('user_id, title, address').in('user_id', userIds).eq('preparation_status', 'needs_review').limit(100),
     ]);
 
@@ -86,7 +86,7 @@ export async function GET(request: NextRequest) {
 
     for (const user of users as DigestUser[]) {
       try {
-        const prefs = user.notification_preferences || {};
+        const prefs = (user.notification_preferences || {}) as Record<string, unknown>;
         const wantWhatsapp = Boolean(prefs.dailyWhatsapp);
         const wantEmail = prefs.dailyEmail !== false; // default to true for email
 
@@ -128,6 +128,7 @@ export async function GET(request: NextRequest) {
           user.email || '',
           user.full_name || 'there',
           {
+            ...prefs,
             email: wantEmail && Boolean(user.email),
             whatsapp: wantWhatsapp && Boolean(user.phone),
             whatsappNumber: user.phone ?? undefined,

@@ -36,7 +36,8 @@ async function sendTestNotification(formData: FormData) {
       },
       email,
       'Admin Test',
-      { email: true, whatsapp: false }
+      { email: true, whatsapp: false },
+      { bypassQuietHours: true }
     );
   } catch (err) {
     console.error('[Admin] Test notification error:', err);

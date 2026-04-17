@@ -62,23 +62,23 @@ export type SocialPlatform = keyof typeof SOCIAL_PLATFORMS;
 // Environment variables
 export const SOCIAL_CREDENTIALS = {
   facebook: {
-    clientId: process.env.FACEBOOK_APP_ID || '',
+    clientId: process.env.NEXT_PUBLIC_FACEBOOK_APP_ID || process.env.FACEBOOK_APP_ID || '',
     clientSecret: process.env.FACEBOOK_APP_SECRET || '',
   },
   instagram: {
-    clientId: process.env.FACEBOOK_APP_ID || '', // Same as Facebook
+    clientId: process.env.NEXT_PUBLIC_FACEBOOK_APP_ID || process.env.FACEBOOK_APP_ID || '', // Same as Facebook
     clientSecret: process.env.FACEBOOK_APP_SECRET || '',
   },
   linkedin: {
-    clientId: process.env.LINKEDIN_CLIENT_ID || '',
+    clientId: process.env.NEXT_PUBLIC_LINKEDIN_CLIENT_ID || process.env.LINKEDIN_CLIENT_ID || '',
     clientSecret: process.env.LINKEDIN_CLIENT_SECRET || '',
   },
   tiktok: {
-    clientId: process.env.TIKTOK_CLIENT_KEY || '',
+    clientId: process.env.NEXT_PUBLIC_TIKTOK_CLIENT_KEY || process.env.TIKTOK_CLIENT_KEY || '',
     clientSecret: process.env.TIKTOK_CLIENT_SECRET || '',
   },
   twitter: {
-    clientId: process.env.TWITTER_CLIENT_ID || '',
+    clientId: process.env.NEXT_PUBLIC_TWITTER_CLIENT_ID || process.env.TWITTER_CLIENT_ID || '',
     clientSecret: process.env.TWITTER_CLIENT_SECRET || '',
   },
 } as const;

@@ -1,6 +1,6 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
-import { checkRateLimit } from '@/lib/rate-limit'
+import { checkRateLimit } from '@/lib/rate-limit-edge'
 import { getClientIp } from '@/lib/utils/client-ip'
 
 // ── Rate limit configuration per endpoint ──────────────────────────

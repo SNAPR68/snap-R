@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { adminSupabase } from '@/lib/supabase/admin';
+import { getSocialCapability } from '@/lib/social/capabilities';
 
 import { logger } from '@/lib/logger';
 export async function GET(
@@ -14,8 +15,11 @@ export async function GET(
   const error = searchParams.get('error');
   const errorDescription = searchParams.get('error_description');
 
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || req.nextUrl.origin;
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_BASE_URL || req.nextUrl.origin;
   const defaultRedirect = `${baseUrl}/dashboard/settings/social`;
+  const capability = ['facebook', 'instagram', 'linkedin', 'tiktok', 'twitter'].includes(platform)
+    ? getSocialCapability(platform as 'facebook' | 'instagram' | 'linkedin' | 'tiktok' | 'twitter')
+    : null;
 
   // Extract returnTo from state (JSON) for post-OAuth redirect
   let redirectUrl = defaultRedirect;
@@ -38,6 +42,10 @@ export async function GET(
 
   if (!code) {
     return NextResponse.redirect(`${redirectUrl}?error=No authorization code received`);
+  }
+
+  if (!capability?.enabled) {
+    return NextResponse.redirect(`${redirectUrl}?error=${encodeURIComponent(`${platform} is not configured for launch`)}`);
   }
 
   try {

@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { socialManageSchema, parseBody } from '@/lib/validation/schemas'
+import { getSocialPlatformCapabilities } from '@/lib/social/capabilities'
 
 import { logger } from '@/lib/logger';
 // GET - Fetch connected social accounts
@@ -16,7 +17,7 @@ export async function GET() {
       .eq('user_id', user.id)
       .limit(20)
 
-    return NextResponse.json({ connections: connections || [] })
+    return NextResponse.json({ connections: connections || [], capabilities: getSocialPlatformCapabilities() })
   } catch (error: unknown) {
     logger.error('Error fetching social connections:', error)
     return NextResponse.json({ error: 'Failed to fetch connections' }, { status: 500 })

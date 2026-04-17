@@ -1,5 +1,10 @@
 import { Ratelimit } from '@upstash/ratelimit';
 import { Redis } from '@upstash/redis';
+import { checkInMemoryRateLimit, checkRateLimit as checkRateLimitEdge } from './rate-limit-edge';
+
+// Re-export the edge-safe sync limiter so existing Node-runtime callers
+// (app/api/*, non-middleware) don't need to change imports.
+export const checkRateLimit = checkRateLimitEdge;
 
 // ============================================
 // Hybrid rate limiter: Upstash Redis when configured, in-memory fallback
@@ -46,58 +51,11 @@ function getRedisLimiter(limit: number, windowMs: number): Ratelimit | null {
   return limiter;
 }
 
-// ── In-memory fallback (single-instance, resets on cold start) ────────
-const rateLimit = new Map<string, { count: number; resetTime: number }>();
-let lastCleanup = Date.now();
-
-function checkInMemory(
-  identifier: string,
-  limit: number,
-  windowMs: number
-): { success: boolean; remaining: number } {
-  const now = Date.now();
-
-  // Lazy cleanup: purge expired entries every 60s
-  if (now - lastCleanup > 60000) {
-    lastCleanup = now;
-    for (const [key, value] of rateLimit.entries()) {
-      if (now > value.resetTime) {
-        rateLimit.delete(key);
-      }
-    }
-  }
-
-  const record = rateLimit.get(identifier);
-
-  if (!record || now > record.resetTime) {
-    rateLimit.set(identifier, { count: 1, resetTime: now + windowMs });
-    return { success: true, remaining: limit - 1 };
-  }
-
-  if (record.count >= limit) {
-    return { success: false, remaining: 0 };
-  }
-
-  record.count++;
-  return { success: true, remaining: limit - record.count };
-}
-
-/**
- * Synchronous rate limit — always uses in-memory.
- * Used by Edge middleware (no async allowed in request path).
- */
-export function checkRateLimit(
-  identifier: string,
-  limit: number = 100,
-  windowMs: number = 60000
-): { success: boolean; remaining: number } {
-  return checkInMemory(identifier, limit, windowMs);
-}
-
 /**
  * Async rate limit check — uses Upstash Redis when configured.
  * Call this from API routes (not middleware) for distributed rate limiting.
  * Creates per-config Redis limiters lazily and caches them.
+ * Falls back to the edge-safe in-memory limiter when Redis is unavailable.
  */
 export async function checkRateLimitAsync(
   identifier: string,
@@ -111,10 +69,10 @@ export async function checkRateLimitAsync(
       return { success: result.success, remaining: result.remaining };
     } catch {
       // Redis failure — fall back to in-memory
-      return checkInMemory(identifier, limit, windowMs);
+      return checkInMemoryRateLimit(identifier, limit, windowMs);
     }
   }
-  return checkInMemory(identifier, limit, windowMs);
+  return checkInMemoryRateLimit(identifier, limit, windowMs);
 }
 
 /**

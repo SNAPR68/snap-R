@@ -147,7 +147,7 @@ export default function NotifyDashboard() {
       <div className="max-w-2xl mx-auto p-6">
         <div className="mb-8">
           <h1 className="text-2xl font-bold mb-2">Send SMS / WhatsApp</h1>
-          <p className="text-white/40">Instantly deliver property links, photos, and updates to clients via text.</p>
+          <p className="text-white/40">Use this for manual outbound client messages. Two-way WhatsApp replies remain reserved for internal SnapR user workflows this weekend.</p>
         </div>
 
         {/* Channel toggle */}
@@ -174,7 +174,7 @@ export default function NotifyDashboard() {
           </div>
           <p className="text-xs text-white/30 mt-3">
             {channel === 'whatsapp'
-              ? 'Sent via WhatsApp Business Sandbox — recipient must opt in at wa.me/14155238886 first.'
+              ? 'Sent via Twilio WhatsApp. If your production sender is not approved yet, recipients may still need sandbox opt-in.'
               : 'Standard SMS — delivered to any mobile number.'}
           </p>
         </div>
