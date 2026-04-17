@@ -3,6 +3,19 @@ import { NextResponse } from 'next/server';
 import { logger } from '@/lib/logger';
 
 export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+export const fetchCache = 'force-no-store';
+
+// Every response from this route must carry no-store headers so that
+// Vercel's edge cache cannot pin a stale 500 (or any other response)
+// and keep replaying it on If-None-Match revalidation. See EXECUTION
+// CHANGELOG 2026-04-15 for the original incident.
+function noStore(res: NextResponse): NextResponse {
+  res.headers.set('Cache-Control', 'no-store, max-age=0, must-revalidate');
+  res.headers.set('CDN-Cache-Control', 'no-store');
+  res.headers.set('Vercel-CDN-Cache-Control', 'no-store');
+  return res;
+}
 
 export async function GET(request: Request) {
   // Default origin for worst-case redirects
@@ -17,7 +30,7 @@ export async function GET(request: Request) {
     const ref = searchParams.get('ref');
 
     if (!code) {
-      return NextResponse.redirect(origin + '/auth/login?error=missing_code');
+      return noStore(NextResponse.redirect(origin + '/auth/login?error=missing_code'));
     }
 
     const supabase = await createClient();
@@ -25,7 +38,7 @@ export async function GET(request: Request) {
 
     if (error || !data?.user) {
       logger.warn('[auth/callback] exchangeCodeForSession failed:', error?.message || 'no user');
-      return NextResponse.redirect(origin + '/auth/login?error=auth_failed');
+      return noStore(NextResponse.redirect(origin + '/auth/login?error=auth_failed'));
     }
 
     // Check if profile exists
@@ -70,7 +83,7 @@ export async function GET(request: Request) {
       }
 
       // New user - go to onboarding
-      return NextResponse.redirect(origin + '/onboarding');
+      return noStore(NextResponse.redirect(origin + '/onboarding'));
     }
 
     // Profile exists — check if onboarding was completed
@@ -85,16 +98,16 @@ export async function GET(request: Request) {
         billing && `billing=${billing}`,
       ].filter(Boolean).join('&');
       const onboardUrl = onboardParams ? `/onboarding?${onboardParams}` : '/onboarding';
-      return NextResponse.redirect(origin + onboardUrl);
+      return noStore(NextResponse.redirect(origin + onboardUrl));
     }
 
     // Fully onboarded user — go to dashboard
-    return NextResponse.redirect(origin + (next || '/dashboard'));
+    return noStore(NextResponse.redirect(origin + (next || '/dashboard')));
   } catch (error: unknown) {
     // Never return a 500 from auth callback — always redirect to login
     // with an error param so users are never stranded.
     const message = error instanceof Error ? error.message : 'unknown';
     logger.error('[auth/callback] unhandled error:', message);
-    return NextResponse.redirect(origin + '/auth/login?error=callback_failed');
+    return noStore(NextResponse.redirect(origin + '/auth/login?error=callback_failed'));
   }
 }

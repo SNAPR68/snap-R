@@ -1,5 +1,27 @@
 # SnapR Execution Changelog
 ==========================
+## 2026-04-17 — HOTFIX: Auth callback edge-cache pinning
+
+### Root cause
+- Production `/auth/callback` was returning HTTP 500 with `age: 73103` (~20 hours old) and a stable etag — the Vercel edge had pinned a pre-#147 500 response and kept replaying it on `If-None-Match` revalidation.
+- The #147 fix (remove RevenueCat import + try/catch redirect fallback) was in `main` but the cached 500 predated it. Even after redeploy, the edge would serve the pinned response until the cache entry expired.
+- `cache-control: public, max-age=0, must-revalidate` on the redirect responses meant the edge treated them as revalidateable — perfect storm for pinning a transient 500.
+
+### Fix (`app/auth/callback/route.ts`)
+- Added `export const revalidate = 0` and `export const fetchCache = 'force-no-store'` alongside the existing `dynamic = 'force-dynamic'`.
+- New `noStore(res)` helper wraps every `NextResponse.redirect(...)` call, setting:
+  - `Cache-Control: no-store, max-age=0, must-revalidate`
+  - `CDN-Cache-Control: no-store`
+  - `Vercel-CDN-Cache-Control: no-store`
+- All six redirect responses (missing_code, auth_failed, new-user onboarding, in-progress onboarding, dashboard, callback_failed) now go through `noStore()`.
+
+### Deploy
+- Merge to `main` → `vercel --prod --force` to flush the pinned edge entry.
+- Verify: `curl -sI https://snap-r.com/auth/callback` should return 307 with `Location: /auth/login?error=missing_code` and `Cache-Control: no-store`.
+
+### Lesson
+- Auth redirect routes must set `no-store` explicitly. The Next.js `dynamic = 'force-dynamic'` prevents Next from caching but does not prevent Vercel's edge/CDN from caching the HTTP response itself.
+
 ## 2026-04-17 — Launch hardening: social connect, notifications, phone normalization
 
 ### New: Social capability system (`lib/social/capabilities.ts`)
