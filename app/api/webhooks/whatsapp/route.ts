@@ -13,6 +13,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createHmac, timingSafeEqual } from 'node:crypto';
 import { createClient } from '@supabase/supabase-js';
 import type { SupabaseClient } from '@supabase/supabase-js';
+import { mergeNotificationPreferences } from '@/lib/notifications/preferences';
+import { normalizePhoneNumber } from '@/lib/phone';
 
 import { logger } from '@/lib/logger';
 function getSupabase(): SupabaseClient {
@@ -60,6 +62,13 @@ interface ListingRow {
   address: string | null;
 }
 
+interface ProfileRow {
+  id: string;
+  full_name: string | null;
+  email?: string | null;
+  notification_preferences?: Record<string, unknown> | null;
+}
+
 export async function POST(request: NextRequest) {
   try {
     // Read raw body for signature verification, then parse as form
@@ -86,17 +95,40 @@ export async function POST(request: NextRequest) {
     logger.info('[WhatsApp Webhook] From:', from, 'Body:', body);
 
     const phone = from.replace('whatsapp:', '');
+    const normalizedPhone = normalizePhoneNumber(phone) ?? phone;
 
     const supabase = getSupabase();
-    const { data: profile } = await supabase
+    const { data: profiles } = await supabase
       .from('profiles')
-      .select('id, full_name')
-      .eq('phone', phone)
-      .single();
+      .select('id, full_name, email, notification_preferences, phone')
+      .in('phone', [phone, normalizedPhone])
+      .limit(5);
+
+    const profile = ((profiles as Array<ProfileRow & { phone?: string | null }> | null) ?? [])
+      .find((candidate) => candidate.phone === normalizedPhone)
+      ?? ((profiles as Array<ProfileRow> | null) ?? [])[0];
 
     if (!profile) {
+      await supabase.from('notification_logs').insert({
+        user_id: null,
+        user_email: null,
+        notification_type: 'whatsapp_webhook_reply',
+        channel: 'whatsapp',
+        success: false,
+        error: 'Unknown phone number',
+        metadata: { from: normalizedPhone, command: body },
+      });
       return respondWithMessage('Sorry, I couldn\'t find your account. Please register your phone in SnapR settings.');
     }
+
+    await supabase.from('notification_logs').insert({
+      user_id: profile.id,
+      user_email: profile.email ?? null,
+      notification_type: 'whatsapp_webhook_reply',
+      channel: 'whatsapp',
+      success: true,
+      metadata: { from: normalizedPhone, command: body },
+    });
 
     const response = await handleQuickReply(body, profile.id, supabase);
     return respondWithMessage(response);
@@ -247,8 +279,22 @@ async function handlePauseCommand(userId: string, supabase: SupabaseClient): Pro
 }
 
 async function handleStopCommand(userId: string, supabase: SupabaseClient): Promise<string> {
-  await supabase.from('profiles').update({ notification_preferences: { whatsapp: false } }).eq('id', userId);
-  return `🛑 WhatsApp disabled.\n\nRe-enable: https://snap-r.com/settings`;
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('notification_preferences')
+    .eq('id', userId)
+    .single();
+
+  await supabase
+    .from('profiles')
+    .update({
+      notification_preferences: mergeNotificationPreferences(
+        (profile?.notification_preferences as Record<string, unknown> | null) ?? {},
+        { whatsapp: false }
+      ),
+    })
+    .eq('id', userId);
+  return `🛑 WhatsApp disabled.\n\nRe-enable: https://snap-r.com/dashboard/settings/notifications`;
 }
 
 async function handleResumeCommand(userId: string, supabase: SupabaseClient): Promise<string> {

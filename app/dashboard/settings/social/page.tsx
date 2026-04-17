@@ -1,11 +1,19 @@
 'use client';
 
-import React, { Suspense, useEffect, useState } from 'react';
+import React, { Suspense, useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import {
-  Loader2, Facebook, Instagram, Linkedin, Twitter, Music2,
-  Check, X, Link2, Unlink, AlertCircle, Sparkles
+  Loader2,
+  Facebook,
+  Instagram,
+  Linkedin,
+  Check,
+  X,
+  Link2,
+  Unlink,
+  AlertCircle,
+  Sparkles,
 } from 'lucide-react';
 
 interface SocialPage {
@@ -23,68 +31,54 @@ interface SocialConnection {
   pages?: SocialPage[];
   instagram_account?: { id: string; username: string };
   default_page_id?: string;
+  last_error?: string | null;
 }
 
-const PLATFORMS = [
-  {
-    id: 'facebook',
+interface SocialCapability {
+  platform: 'facebook' | 'instagram' | 'linkedin' | 'tiktok' | 'twitter';
+  name: string;
+  launchVisible: boolean;
+  enabled: boolean;
+  missing: string[];
+}
+
+const PLATFORM_META = {
+  facebook: {
     name: 'Facebook',
     icon: Facebook,
     color: '#1877F2',
-    description: 'Post to your Facebook Page',
-    available: true,
+    description: 'Post directly to your Facebook Page.',
   },
-  {
-    id: 'instagram',
+  instagram: {
     name: 'Instagram',
     icon: Instagram,
     color: '#E4405F',
-    description: 'Share photos and reels to Instagram',
-    available: true,
+    description: 'Publish photos and carousels to Instagram Business.',
   },
-  {
-    id: 'linkedin',
+  linkedin: {
     name: 'LinkedIn',
     icon: Linkedin,
     color: '#0A66C2',
-    description: 'Share professional content',
-    available: true,
+    description: 'Share polished listing content to LinkedIn.',
   },
-  {
-    id: 'tiktok',
-    name: 'TikTok',
-    icon: Music2,
-    color: '#000000',
-    description: 'Share videos to TikTok',
-    available: true,
-  },
-  {
-    id: 'twitter',
-    name: 'X (Twitter)',
-    icon: Twitter,
-    color: '#000000',
-    description: 'Tweet your listings',
-    available: true,
-  },
-];
+} as const;
 
 function SocialSettingsContent() {
   const searchParams = useSearchParams();
   const [connections, setConnections] = useState<SocialConnection[]>([]);
+  const [capabilities, setCapabilities] = useState<SocialCapability[]>([]);
   const [loading, setLoading] = useState(true);
   const [connecting, setConnecting] = useState<string | null>(null);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
   useEffect(() => {
-    loadConnections();
+    void loadConnections();
 
-    // Check for OAuth callback results
     const connected = searchParams.get('connected');
     const error = searchParams.get('error');
 
     if (connected) {
-      setMessage({ type: 'success', text: `Successfully connected to ${connected}!` });
-      // Clear URL params
+      setMessage({ type: 'success', text: `Successfully connected to ${connected}.` });
       window.history.replaceState({}, '', '/dashboard/settings/social');
     } else if (error) {
       setMessage({ type: 'error', text: `Connection failed: ${error}` });
@@ -92,100 +86,65 @@ function SocialSettingsContent() {
     }
   }, [searchParams]);
 
+  const launchPlatforms = useMemo(() => {
+    const order = ['facebook', 'instagram', 'linkedin'];
+    return capabilities
+      .filter((capability) => capability.launchVisible)
+      .sort((left, right) => order.indexOf(left.platform) - order.indexOf(right.platform));
+  }, [capabilities]);
+
   const loadConnections = async () => {
-    const supabase = createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
+    try {
+      setLoading(true);
+      const response = await fetch('/api/social/connections', { signal: AbortSignal.timeout(15000) });
+      const data = await response.json() as {
+        connections?: SocialConnection[];
+        capabilities?: SocialCapability[];
+      };
 
-    const { data } = await supabase
-      .from('social_connections')
-      .select('*')
-      .eq('user_id', user.id)
-      .eq('is_active', true);
-
-    if (data) {
-      setConnections(data);
+      setConnections(data.connections ?? []);
+      setCapabilities(data.capabilities ?? []);
+    } catch {
+      setMessage({ type: 'error', text: 'Unable to load social connection status.' });
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
-  const initiateOAuth = async (platform: string) => {
-    setConnecting(platform);
-
-    // Get current user ID — used as OAuth state for CSRF validation
-    // The callback verifies state === session user ID to prevent account-linking attacks
-    const supabase = createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-      setConnecting(null);
-      setMessage({ type: 'error', text: 'Please sign in to connect accounts' });
+  const initiateOAuth = (platform: string, enabled: boolean) => {
+    if (!enabled) {
+      setMessage({ type: 'error', text: `${platform} is not configured for launch yet.` });
       return;
     }
-    const state = user.id;
 
-    // Redirect to OAuth initiation endpoint
-    const baseUrl = window.location.origin;
-    const redirectUri = `${baseUrl}/api/social/oauth/${platform}`;
-
-    let authUrl = '';
-
-    if (platform === 'facebook' || platform === 'instagram') {
-      const appId = process.env.NEXT_PUBLIC_FACEBOOK_APP_ID;
-      const scopes = platform === 'instagram'
-        ? 'instagram_basic,instagram_content_publish,pages_show_list,pages_read_engagement'
-        : 'pages_manage_posts,pages_read_engagement,publish_video,pages_show_list';
-
-      authUrl = `https://www.facebook.com/v18.0/dialog/oauth?client_id=${appId}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${scopes}&state=${state}&response_type=code`;
-    } else if (platform === 'linkedin') {
-      const clientId = process.env.NEXT_PUBLIC_LINKEDIN_CLIENT_ID;
-      const scopes = 'openid%20profile%20w_member_social';
-
-      authUrl = `https://www.linkedin.com/oauth/v2/authorization?response_type=code&client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${scopes}&state=${state}`;
-    } else if (platform === 'tiktok') {
-      const clientKey = process.env.NEXT_PUBLIC_TIKTOK_CLIENT_KEY;
-      const scopes = 'user.info.basic,video.publish,video.upload';
-
-      authUrl = `https://www.tiktok.com/v2/auth/authorize/?client_key=${clientKey}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${scopes}&state=${state}&response_type=code`;
-    } else if (platform === 'twitter') {
-      // Twitter uses PKCE — generate code verifier and challenge
-      const codeVerifier = generateCodeVerifier();
-      const codeChallenge = await generateCodeChallenge(codeVerifier);
-      const clientId = process.env.NEXT_PUBLIC_TWITTER_CLIENT_ID;
-      const scopes = 'tweet.read%20tweet.write%20users.read%20offline.access';
-
-      // Embed code_verifier in state JSON so the callback can use it
-      // csrf field contains user ID for CSRF validation on callback
-      const statePayload = JSON.stringify({ csrf: state, code_verifier: codeVerifier });
-      const encodedState = btoa(statePayload);
-
-      authUrl = `https://twitter.com/i/oauth2/authorize?response_type=code&client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${scopes}&state=${encodedState}&code_challenge=${codeChallenge}&code_challenge_method=S256`;
-    }
-
-    if (authUrl) {
-      window.location.href = authUrl;
-    } else {
-      setConnecting(null);
-      setMessage({ type: 'error', text: `${platform} connection not yet available` });
-    }
+    setConnecting(platform);
+    window.location.href = `/api/social/connect/${platform}`;
   };
 
-  const disconnectPlatform = async (connectionId: string, platform: string) => {
-    if (!confirm(`Disconnect ${platform}? You'll need to reconnect to post again.`)) return;
+  const disconnectPlatform = async (platform: string, platformName: string) => {
+    if (!confirm(`Disconnect ${platformName}? You'll need to reconnect to publish again.`)) return;
 
-    const supabase = createClient();
-    const { error } = await supabase
-      .from('social_connections')
-      .update({ is_active: false })
-      .eq('id', connectionId);
+    try {
+      const response = await fetch('/api/social', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'disconnect', platform }),
+        signal: AbortSignal.timeout(15000),
+      });
 
-    if (!error) {
-      setConnections(connections.filter(c => c.id !== connectionId));
-      setMessage({ type: 'success', text: `Disconnected from ${platform}` });
+      if (!response.ok) {
+        throw new Error('Disconnect failed');
+      }
+
+      setConnections((current) => current.filter((connection) => connection.platform !== platform));
+      setMessage({ type: 'success', text: `Disconnected from ${platformName}.` });
+    } catch {
+      setMessage({ type: 'error', text: `Failed to disconnect ${platformName}.` });
     }
   };
 
   const getConnectionForPlatform = (platformId: string) => {
-    return connections.find(c => c.platform === platformId);
+    return connections.find((connection) => connection.platform === platformId);
   };
 
   if (loading) {
@@ -199,151 +158,126 @@ function SocialSettingsContent() {
   return (
     <div className="min-h-screen bg-[#0F0F0F] text-white p-6">
       <div className="max-w-3xl mx-auto">
-        {/* Header */}
         <div className="flex items-center gap-3 mb-6">
-          <div className="p-3 bg-gradient-to-br from-blue-500/20 to-purple-500/20 rounded-xl">
+          <div className="p-3 bg-gradient-to-br from-blue-500/20 to-cyan-500/20 rounded-xl">
             <Link2 className="w-8 h-8 text-blue-400" />
           </div>
           <div>
             <h1 className="text-2xl font-bold">Social Connections</h1>
-            <p className="text-white/50">Connect your social accounts to publish directly</p>
+            <p className="text-white/50">Weekend launch supports Facebook, Instagram, and LinkedIn only.</p>
           </div>
         </div>
 
-        {/* Message */}
         {message && (
           <div className={`p-4 rounded-xl mb-6 flex items-center gap-3 ${
             message.type === 'success'
               ? 'bg-green-500/10 border border-green-500/30 text-green-400'
               : 'bg-red-500/10 border border-red-500/30 text-red-400'
           }`}>
-            {message.type === 'success' ? (
-              <Check className="w-5 h-5" />
-            ) : (
-              <AlertCircle className="w-5 h-5" />
-            )}
+            {message.type === 'success' ? <Check className="w-5 h-5" /> : <AlertCircle className="w-5 h-5" />}
             {message.text}
-            <button
-              onClick={() => setMessage(null)}
-              className="ml-auto hover:opacity-70"
-            >
+            <button onClick={() => setMessage(null)} className="ml-auto hover:opacity-70">
               <X className="w-4 h-4" />
             </button>
           </div>
         )}
 
-        {/* Connection Summary */}
         <div className="bg-gradient-to-r from-amber-500/10 to-orange-500/10 border border-amber-500/30 rounded-xl p-4 mb-6">
           <div className="flex items-center gap-3">
             <Sparkles className="w-5 h-5 text-amber-400" />
             <div>
               <span className="font-medium text-amber-400">{connections.length} connected</span>
               <span className="text-white/50 ml-2">
-                Connect your accounts to publish content with one click
+                Only fully configured launch-ready platforms can be connected.
               </span>
             </div>
           </div>
         </div>
 
-        {/* Platforms */}
         <div className="space-y-4">
-          {PLATFORMS.map((platform) => {
-            const connection = getConnectionForPlatform(platform.id);
-            const Icon = platform.icon;
-            const isConnecting = connecting === platform.id;
+          {launchPlatforms.map((capability) => {
+            const meta = PLATFORM_META[capability.platform as keyof typeof PLATFORM_META];
+            const connection = getConnectionForPlatform(capability.platform);
+            const Icon = meta.icon;
+            const isConnecting = connecting === capability.platform;
+            const missingLabel = capability.missing.join(', ');
 
             return (
-              <div
-                key={platform.id}
-                className="bg-white/5 border border-white/10 rounded-xl p-4"
-              >
+              <div key={capability.platform} className="bg-white/5 border border-white/10 rounded-xl p-4">
                 <div className="flex items-center gap-4">
-                  {/* Platform Icon */}
                   <div
                     className="w-12 h-12 rounded-xl flex items-center justify-center"
-                    style={{ backgroundColor: `${platform.color}20` }}
+                    style={{ backgroundColor: `${meta.color}20` }}
                   >
-                    <Icon className="w-6 h-6" style={{ color: platform.color }} />
+                    <Icon className="w-6 h-6" style={{ color: meta.color }} />
                   </div>
 
-                  {/* Platform Info */}
                   <div className="flex-1">
                     <div className="flex items-center gap-2">
-                      <span className="font-medium">{platform.name}</span>
-                      {!platform.available && (
+                      <span className="font-medium">{meta.name}</span>
+                      {!capability.enabled && (
                         <span className="text-xs px-2 py-0.5 bg-white/10 rounded text-white/50">
-                          Coming Soon
+                          Needs Config
                         </span>
                       )}
                     </div>
                     <div className="text-sm text-white/50">
                       {connection
                         ? `Connected as @${connection.platform_username}`
-                        : platform.description
-                      }
+                        : capability.enabled
+                          ? meta.description
+                          : `Missing config: ${missingLabel}`}
                     </div>
+                    {connection?.last_error ? (
+                      <p className="text-xs text-red-300 mt-1">Last error: {connection.last_error}</p>
+                    ) : null}
                   </div>
 
-                  {/* Action Button */}
-                  {platform.available ? (
-                    connection ? (
-                      <div className="flex items-center gap-2">
-                        <span className="flex items-center gap-1 text-green-400 text-sm">
-                          <Check className="w-4 h-4" />
-                          Connected
-                        </span>
-                        <button
-                          onClick={() => disconnectPlatform(connection.id, platform.name)}
-                          className="p-2 hover:bg-white/10 rounded-lg transition-colors"
-                          title="Disconnect"
-                        >
-                          <Unlink className="w-4 h-4 text-white/50" />
-                        </button>
-                      </div>
-                    ) : (
+                  {connection ? (
+                    <div className="flex items-center gap-2">
+                      <span className="flex items-center gap-1 text-green-400 text-sm">
+                        <Check className="w-4 h-4" />
+                        Connected
+                      </span>
                       <button
-                        onClick={() => initiateOAuth(platform.id)}
-                        disabled={isConnecting}
-                        className="px-4 py-2 bg-white/10 rounded-lg hover:bg-white/20 transition-colors flex items-center gap-2 disabled:opacity-50"
+                        onClick={() => disconnectPlatform(capability.platform, meta.name)}
+                        className="p-2 hover:bg-white/10 rounded-lg transition-colors"
+                        title="Disconnect"
                       >
-                        {isConnecting ? (
-                          <Loader2 className="w-4 h-4 animate-spin" />
-                        ) : (
-                          <Link2 className="w-4 h-4" />
-                        )}
-                        Connect
+                        <Unlink className="w-4 h-4 text-white/50" />
                       </button>
-                    )
+                    </div>
                   ) : (
                     <button
-                      disabled
-                      className="px-4 py-2 bg-white/5 rounded-lg text-white/30 cursor-not-allowed"
+                      onClick={() => initiateOAuth(capability.platform, capability.enabled)}
+                      disabled={isConnecting || !capability.enabled}
+                      className="px-4 py-2 bg-white/10 rounded-lg hover:bg-white/20 transition-colors flex items-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed"
                     >
-                      Coming Soon
+                      {isConnecting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Link2 className="w-4 h-4" />}
+                      Connect
                     </button>
                   )}
                 </div>
 
-                {/* Facebook/Instagram Page Selection */}
-                {connection && (platform.id === 'facebook' || platform.id === 'instagram') && connection.pages && connection.pages.length > 0 && (
+                {connection && (capability.platform === 'facebook' || capability.platform === 'instagram') && connection.pages && connection.pages.length > 0 && (
                   <div className="mt-4 pt-4 border-t border-white/10">
                     <label className="block text-sm text-white/60 mb-2">
                       Select Page to Post To
                     </label>
                     <select
                       value={connection.default_page_id || ''}
-                      onChange={async (e) => {
+                      onChange={async (event) => {
                         const supabase = createClient();
                         await supabase
                           .from('social_connections')
-                          .update({ default_page_id: e.target.value })
+                          .update({ default_page_id: event.target.value })
                           .eq('id', connection.id);
-                        loadConnections();
+                        await loadConnections();
                       }}
                       className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:border-blue-500/50"
                     >
                       <option value="">Select a page...</option>
-                      {connection.pages.map((page: SocialPage) => (
+                      {connection.pages.map((page) => (
                         <option key={page.id} value={page.id}>
                           {page.name}
                         </option>
@@ -356,49 +290,30 @@ function SocialSettingsContent() {
           })}
         </div>
 
-        {/* Help Section */}
         <div className="mt-8 bg-white/5 border border-white/10 rounded-xl p-6">
-          <h3 className="font-bold mb-4">How it Works</h3>
+          <h3 className="font-bold mb-4">Launch Notes</h3>
           <ol className="space-y-3 text-sm text-white/70">
             <li className="flex items-start gap-3">
               <span className="w-6 h-6 bg-amber-500/20 rounded-full flex items-center justify-center text-amber-400 font-bold flex-shrink-0">1</span>
-              <span>Connect your social accounts using the buttons above</span>
+              <span>Only Facebook, Instagram, and LinkedIn are enabled in the weekend launch surface.</span>
             </li>
             <li className="flex items-start gap-3">
               <span className="w-6 h-6 bg-amber-500/20 rounded-full flex items-center justify-center text-amber-400 font-bold flex-shrink-0">2</span>
-              <span>Create content in the Content Studio (posts, images, videos)</span>
+              <span>Each connection uses the canonical SnapR OAuth callback flow and launch config gating.</span>
             </li>
             <li className="flex items-start gap-3">
               <span className="w-6 h-6 bg-amber-500/20 rounded-full flex items-center justify-center text-amber-400 font-bold flex-shrink-0">3</span>
-              <span>Click &quot;Publish&quot; to post directly to your connected accounts</span>
+              <span>Instagram requires a Business account linked to a Facebook Page with publishing permissions.</span>
             </li>
             <li className="flex items-start gap-3">
               <span className="w-6 h-6 bg-amber-500/20 rounded-full flex items-center justify-center text-amber-400 font-bold flex-shrink-0">4</span>
-              <span>Or schedule posts to publish automatically at the best times</span>
+              <span>TikTok and X remain in the codebase, but they are intentionally hidden from the launch UI.</span>
             </li>
           </ol>
         </div>
-
       </div>
     </div>
   );
-}
-
-// PKCE helpers for Twitter OAuth 2.0
-function generateCodeVerifier(): string {
-  const array = new Uint8Array(32);
-  crypto.getRandomValues(array);
-  return Array.from(array, (b) => b.toString(16).padStart(2, '0')).join('');
-}
-
-async function generateCodeChallenge(verifier: string): Promise<string> {
-  const encoder = new TextEncoder();
-  const data = encoder.encode(verifier);
-  const digest = await crypto.subtle.digest('SHA-256', data);
-  return btoa(String.fromCharCode(...new Uint8Array(digest)))
-    .replace(/\+/g, '-')
-    .replace(/\//g, '_')
-    .replace(/=/g, '');
 }
 
 export default function SocialSettingsPage() {

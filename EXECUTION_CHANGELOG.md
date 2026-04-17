@@ -1,5 +1,107 @@
 # SnapR Execution Changelog
 ==========================
+## 2026-04-17 — HOTFIX: Auth callback edge-cache pinning
+
+### Root cause
+- Production `/auth/callback` was returning HTTP 500 with `age: 73103` (~20 hours old) and a stable etag — the Vercel edge had pinned a pre-#147 500 response and kept replaying it on `If-None-Match` revalidation.
+- The #147 fix (remove RevenueCat import + try/catch redirect fallback) was in `main` but the cached 500 predated it. Even after redeploy, the edge would serve the pinned response until the cache entry expired.
+- `cache-control: public, max-age=0, must-revalidate` on the redirect responses meant the edge treated them as revalidateable — perfect storm for pinning a transient 500.
+
+### Fix (`app/auth/callback/route.ts`)
+- Added `export const revalidate = 0` and `export const fetchCache = 'force-no-store'` alongside the existing `dynamic = 'force-dynamic'`.
+- New `noStore(res)` helper wraps every `NextResponse.redirect(...)` call, setting:
+  - `Cache-Control: no-store, max-age=0, must-revalidate`
+  - `CDN-Cache-Control: no-store`
+  - `Vercel-CDN-Cache-Control: no-store`
+- All six redirect responses (missing_code, auth_failed, new-user onboarding, in-progress onboarding, dashboard, callback_failed) now go through `noStore()`.
+
+### Deploy
+- Merge to `main` → `vercel --prod --force` to flush the pinned edge entry.
+- Verify: `curl -sI https://snap-r.com/auth/callback` should return 307 with `Location: /auth/login?error=missing_code` and `Cache-Control: no-store`.
+
+### Lesson
+- Auth redirect routes must set `no-store` explicitly. The Next.js `dynamic = 'force-dynamic'` prevents Next from caching but does not prevent Vercel's edge/CDN from caching the HTTP response itself.
+
+## 2026-04-17 — Launch hardening: social connect, notifications, phone normalization
+
+### New: Social capability system (`lib/social/capabilities.ts`)
+- `getSocialPlatformCapabilities()` — returns per-platform capability status (enabled/disabled/missing env vars) evaluated at runtime
+- `getSocialCapability(platform)` — single-platform lookup
+- Launch UI scoped to Facebook, Instagram, LinkedIn only (`launchVisible: true`); TikTok and X hidden until audit passes
+- `enabled` flag blocks OAuth flow at the API layer (connect routes + publish route) before any credential is needed
+
+### Changed: Social connect routes (`/api/social/connect/*`)
+- Facebook, Instagram, LinkedIn connect routes rewritten to redirect instead of returning JSON
+- Each route: validates capability enabled → builds OAuth URL via `getOAuthUrl()` → HTTP 302 to provider
+- OAuth redirect URI now uses `NEXT_PUBLIC_APP_URL` (with `NEXT_PUBLIC_BASE_URL` + `request.nextUrl.origin` fallback chain)
+- `initiateOAuth()` in the social settings page reduced from 60 lines to 4: `window.location.href = /api/social/connect/${platform}`
+
+### Changed: Social settings page (`/dashboard/settings/social`)
+- Fetches capabilities from `/api/social/connections` (new field) alongside connections
+- Renders only `launchVisible` platforms; TikTok/X removed from launch UI
+- `disconnectPlatform()` uses `/api/social` DELETE instead of direct Supabase update
+- `loadConnections()` wrapped in try/catch with error banner on failure
+- Removed Twitter/Music2 icon imports (no longer in launch set)
+
+### Changed: `/api/social/connections` route
+- Returns `capabilities: SocialPlatformCapability[]` alongside connections
+- Connections query extended to include `pages`, `instagram_account`, `default_page_id`, `platform_user_id`, `linkedin_urn`, `token_expires_at`, `last_error`
+
+### Changed: `/api/social/publish` route
+- Capability check added before connection lookup — returns 503 with clear message if platform not configured
+- LinkedIn connection check: requires `refresh_token` present (ensures reconnect if old token has no refresh)
+
+### Changed: OAuth config (`lib/social/oauth-config.ts`)
+- Client IDs for all platforms now prefer `NEXT_PUBLIC_*` variant (browser-accessible) with private-only fallback, matching the capability check env var names
+
+### Changed: Environment validation (`lib/env.ts`)
+- Social OAuth credentials (Facebook App ID/Secret, LinkedIn Client ID/Secret) promoted to `REQUIRED_VARS`
+- Twilio credentials (Account SID, Auth Token, SMS from, WhatsApp from) promoted to `REQUIRED_VARS`
+- `NEXT_PUBLIC_BASE_URL` removed from `app` required group; replaced with dual-key check `NEXT_PUBLIC_APP_URL || NEXT_PUBLIC_BASE_URL`
+- Twitter/TikTok public client IDs added to `RECOMMENDED_VARS`
+
+### Changed: Edge rate limiting split (`lib/rate-limit-edge.ts`, `lib/rate-limit.ts`, `middleware.ts`)
+- Extracted `checkInMemoryRateLimit` and `checkRateLimit` into `lib/rate-limit-edge.ts` (no Upstash imports — edge-safe)
+- `middleware.ts` now imports from `rate-limit-edge` directly (fixes potential Edge Runtime EvalError)
+- `lib/rate-limit.ts` re-exports `checkRateLimit` from `rate-limit-edge` for backward compat; delegates in-memory fallback to the same shared impl
+
+### New: Phone normalization (`lib/phone.ts`)
+- `normalizePhoneNumber(raw)` — strips formatting, adds +1 country code for bare 10-digit US numbers, returns E.164 or null for invalid
+- `normalizeWhatsAppAddress(raw)` — normalizes `whatsapp:+1 555 ...` to `whatsapp:+15551234567`
+- `phoneNumbersMatch(a, b)` — compares two phone strings after normalization
+
+### Changed: WhatsApp API route (`/api/notify/whatsapp`)
+- Phone number normalized via `normalizePhoneNumber()` before sending; returns 400 on invalid number
+- Notification logged to `notification_logs` after each attempt (fire-and-forget)
+- `logger.error` added to catch block
+
+### Changed: Notification settings page (`/dashboard/settings/notifications`)
+- Phone number validated via `normalizePhoneNumber()` before save; inline error if invalid format
+- Preferences saved via `mergeNotificationPreferences()` to avoid wiping unrelated keys (e.g., push tokens)
+- Timezone auto-detected from browser (`Intl.DateTimeFormat().resolvedOptions().timeZone`) and stored in preferences
+- Save error banner added (replaces silent failure)
+
+### Changed: Notification types + preferences (`lib/notifications/types.ts`, `lib/notifications/preferences.ts`)
+- `NotificationPreferences` extended with `dailyEmail` and `notificationTimezone` fields
+- `DEFAULT_PREFERENCES` includes `dailyEmail: true` and `notificationTimezone: 'UTC'`
+- `mergeNotificationPreferences(existing, updates)` helper — shallow merge that preserves nested arrays (e.g., push device tokens)
+
+### Changed: Notification sender (`lib/notifications/sender.ts`)
+- Quiet hours check uses `getNotificationTimezone(prefs)` helper for consistent timezone resolution
+- WhatsApp formatter extracted inline; `sendBatchNotifications` processes in batches of 10
+
+### New: Admin launch dashboard (`/admin/launch`)
+- Server component showing live social connection health, recent publish failures, and WhatsApp notification logs
+- Capability status table showing which env vars are present/missing per platform
+
+### New: Tests
+- `__tests__/notification-sender.test.ts` — 14 tests covering email + WhatsApp channels, quiet hours bypass, preference filtering, error handling, response shape
+- `__tests__/launch-hardening.test.ts` — 4 tests: phone normalization, WhatsApp address normalization, preference merge, TikTok/X hidden from launch UI
+
+### Verification
+- `npx tsc --noEmit` — pass
+- `npx vitest run` — 575/575 pass (45 files)
+
 ## 2026-04-16 — Authenticated functionality sweep (CI gate)
 
 ### Added

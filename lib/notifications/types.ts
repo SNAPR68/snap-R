@@ -41,6 +41,8 @@ export interface NotificationPreferences {
   email: boolean;
   whatsapp: boolean;
   whatsappNumber?: string;
+  dailyEmail?: boolean;
+  notificationTimezone?: string;
   
   // Category settings
   transactional: 'all' | 'important' | 'none';
@@ -63,6 +65,8 @@ export interface NotificationPreferences {
 export const DEFAULT_PREFERENCES: NotificationPreferences = {
   email: true,
   whatsapp: false,
+  dailyEmail: true,
+  notificationTimezone: 'UTC',
   transactional: 'all',
   clientEngagement: 'all',
   socialUpdates: 'summary',

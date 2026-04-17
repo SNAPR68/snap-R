@@ -46,6 +46,11 @@ import { sendNotification } from '@/lib/notifications/sender'
 import type { NotificationPayload } from '@/lib/notifications/types'
 
 describe('notification-sender', () => {
+  const activePrefs = {
+    quietHoursEnabled: false as const,
+    notificationTimezone: 'UTC',
+  }
+
   beforeEach(() => {
     vi.clearAllMocks()
   })
@@ -69,7 +74,7 @@ describe('notification-sender', () => {
         payload,
         'test@example.com',
         'John Doe',
-        { email: true, whatsapp: false }
+        { email: true, whatsapp: false, ...activePrefs }
       )
 
       expect(results).toHaveLength(1)
@@ -105,7 +110,7 @@ describe('notification-sender', () => {
         payload,
         'invalid@example',
         'User',
-        { email: true, whatsapp: false }
+        { email: true, whatsapp: false, ...activePrefs }
       )
 
       expect(results).toHaveLength(1)
@@ -128,7 +133,7 @@ describe('notification-sender', () => {
         payload,
         'test@example.com',
         'User',
-        { email: true, whatsapp: false }
+        { email: true, whatsapp: false, ...activePrefs }
       )
 
       expect(results).toHaveLength(1)
@@ -155,7 +160,7 @@ describe('notification-sender', () => {
         payload,
         'user@example.com',
         'John',
-        { email: false, whatsapp: true, whatsappNumber: '1234567890' }
+        { email: false, whatsapp: true, whatsappNumber: '1234567890', ...activePrefs }
       )
 
       expect(results).toHaveLength(1)
@@ -191,7 +196,7 @@ describe('notification-sender', () => {
         payload,
         'user@example.com',
         'John',
-        { email: false, whatsapp: true, whatsappNumber: 'invalid' }
+        { email: false, whatsapp: true, whatsappNumber: 'invalid', ...activePrefs }
       )
 
       expect(results).toHaveLength(1)
@@ -259,7 +264,7 @@ describe('notification-sender', () => {
         payload,
         'test@example.com',
         'John',
-        { email: true, whatsapp: true, whatsappNumber: '1234567890' }
+        { email: true, whatsapp: true, whatsappNumber: '1234567890', ...activePrefs }
       )
 
       expect(results).toHaveLength(2)
@@ -282,7 +287,7 @@ describe('notification-sender', () => {
         payload,
         '', // Empty email
         'User',
-        { email: true, whatsapp: false }
+        { email: true, whatsapp: false, ...activePrefs }
       )
 
       // Should skip email if no email provided
@@ -304,7 +309,7 @@ describe('notification-sender', () => {
         payload,
         'test@example.com',
         'John',
-        { email: true, whatsapp: false }
+        { email: true, whatsapp: false, ...activePrefs }
       )
 
       expect(results).toHaveLength(1)
@@ -325,7 +330,7 @@ describe('notification-sender', () => {
         payload,
         'user@example.com',
         'John',
-        { email: false, whatsapp: true, whatsappNumber: '1234567890' }
+        { email: false, whatsapp: true, whatsappNumber: '1234567890', ...activePrefs }
       )
 
       expect(results).toHaveLength(1)
@@ -352,7 +357,7 @@ describe('notification-sender', () => {
         payload,
         'test@example.com',
         'John',
-        { email: true, whatsapp: false }
+        { email: true, whatsapp: false, ...activePrefs }
       )
 
       expect(Array.isArray(results)).toBe(true)
@@ -379,7 +384,7 @@ describe('notification-sender', () => {
         payload,
         'test@example.com',
         'User',
-        { email: true, whatsapp: false }
+        { email: true, whatsapp: false, ...activePrefs }
       )
 
       expect(results[0].success).toBe(true)
@@ -403,7 +408,7 @@ describe('notification-sender', () => {
         payload,
         'test@example.com',
         'User',
-        { email: true, whatsapp: false }
+        { email: true, whatsapp: false, ...activePrefs }
       )
 
       expect(results[0].success).toBe(false)
@@ -435,7 +440,7 @@ describe('notification-sender', () => {
         payload,
         'test@example.com',
         'John',
-        { email: true, whatsapp: false }
+        { email: true, whatsapp: false, ...activePrefs }
       )
 
       expect(results).toHaveLength(1)
@@ -481,6 +486,39 @@ describe('notification-sender', () => {
       // Should not send anything
       expect(results).toHaveLength(0)
       expect(mockFetch).not.toHaveBeenCalled()
+    })
+
+    it('should allow manual sends to bypass quiet hours explicitly', async () => {
+      const mockFetch = vi.mocked(fetch)
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ id: 'manual_email_123' }),
+      } as Response)
+
+      const payload: NotificationPayload = {
+        type: 'listing_prepared',
+        userId: 'user_123',
+        listingId: 'listing_456',
+        data: { listingTitle: 'Home', confidence: 0.9, photosCount: 15 },
+      }
+
+      const results = await sendNotification(
+        payload,
+        'test@example.com',
+        'John',
+        {
+          email: true,
+          whatsapp: false,
+          quietHoursEnabled: true,
+          quietHoursStart: '00:00',
+          quietHoursEnd: '23:59',
+          notificationTimezone: 'UTC',
+        },
+        { bypassQuietHours: true }
+      )
+
+      expect(results).toHaveLength(1)
+      expect(results[0].success).toBe(true)
     })
   })
 })

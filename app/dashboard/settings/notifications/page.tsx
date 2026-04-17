@@ -4,6 +4,8 @@ import { useState, useEffect, useCallback } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { Bell, Mail, MessageCircle, Moon, Save, Loader2, CheckCircle } from 'lucide-react';
 import Link from 'next/link';
+import { normalizePhoneNumber } from '@/lib/phone';
+import { mergeNotificationPreferences } from '@/lib/notifications/preferences';
 
 type WeeklyDay = 'monday' | 'friday' | 'sunday';
 
@@ -11,6 +13,7 @@ export default function NotificationSettingsPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
   const [phone, setPhone] = useState('');
   const [prefs, setPrefs] = useState({
     email: true,
@@ -45,10 +48,49 @@ export default function NotificationSettingsPage() {
 
   const savePreferences = async () => {
     setSaving(true);
+    setSaveError(null);
     const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
-    const prefsToSave = { ...prefs };
-    await supabase.from('profiles').update({ phone, notification_preferences: prefsToSave }).eq('id', user.id);
+    if (!user) {
+      setSaving(false);
+      setSaveError('You need to be signed in to save notification settings.');
+      return;
+    }
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('notification_preferences')
+      .eq('id', user.id)
+      .single();
+
+    const normalizedPhone = phone ? normalizePhoneNumber(phone) : null;
+    if (phone && !normalizedPhone) {
+      setSaving(false);
+      setSaveError('Enter a valid phone number with country code, like +1 555 123 4567.');
+      return;
+    }
+
+    const prefsToSave = {
+      ...prefs,
+      notificationTimezone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC',
+    };
+
+    const { error } = await supabase
+      .from('profiles')
+      .update({
+        phone: normalizedPhone,
+        notification_preferences: mergeNotificationPreferences(
+          (profile?.notification_preferences as Record<string, unknown> | null) ?? {},
+          prefsToSave
+        ),
+      })
+      .eq('id', user.id);
+
+    if (error) {
+      setSaving(false);
+      setSaveError('Failed to save notification settings. Please try again.');
+      return;
+    }
+
+    setPhone(normalizedPhone ?? '');
     setSaving(false);
     setSaved(true);
     setTimeout(() => setSaved(false), 3000);
@@ -98,7 +140,8 @@ export default function NotificationSettingsPage() {
                   placeholder="+1 (555) 123-4567"
                   className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg focus:border-green-400 outline-none"
                 />
-                <p className="text-xs text-white/40 mt-2">Include country code for WhatsApp delivery.</p>
+                <p className="text-xs text-white/40 mt-2">Stored in E.164 format for internal alerts and manual outbound WhatsApp sends.</p>
+                <p className="text-xs text-white/30 mt-1">Inbound WhatsApp replies are mapped to your SnapR user profile only for this launch.</p>
               </div>
             )}
           </div>
@@ -154,6 +197,7 @@ export default function NotificationSettingsPage() {
                 />
               </div>
             )}
+            <p className="text-xs text-white/30 ml-1">Quiet hours use your saved timezone from this browser.</p>
             <label className="flex items-center justify-between p-4 bg-white/5 rounded-xl cursor-pointer">
               <div><p className="font-medium">Weekly Email Report</p><p className="text-sm text-white/50">Performance summary and stats</p></div>
               <input type="checkbox" checked={prefs.weeklySummary} onChange={(e) => setPrefs({ ...prefs, weeklySummary: e.target.checked })} className="w-5 h-5 accent-[#D4A017]" />
@@ -183,6 +227,12 @@ export default function NotificationSettingsPage() {
             </div>
           )}
         </section>
+
+        {saveError && (
+          <div className="mb-6 rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-300">
+            {saveError}
+          </div>
+        )}
 
         <button onClick={savePreferences} disabled={saving} className="w-full flex items-center justify-center gap-2 px-6 py-4 bg-gradient-to-r from-[#D4A017] to-[#B8860B] rounded-xl text-black font-semibold disabled:opacity-50">
           {saving ? <Loader2 className="w-5 h-5 animate-spin" /> : saved ? <><CheckCircle className="w-5 h-5" />Saved!</> : <><Save className="w-5 h-5" />Save Preferences</>}

@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useSearchParams } from 'next/navigation'
 import html2canvas from 'html2canvas'
 import JSZip from 'jszip'
-import { Download, Loader2, Check, Sparkles, Instagram, Facebook, Linkedin, Twitter, Video, Image, Hash, ClipboardCopy, MessageCircle, Images, ImageIcon, CheckCircle, AlertCircle, FolderOpen, Calendar, ChevronRight } from "lucide-react"
+import { Download, Loader2, Check, Sparkles, Instagram, Facebook, Linkedin, Image, Hash, ClipboardCopy, MessageCircle, Images, ImageIcon, CheckCircle, AlertCircle, FolderOpen, Calendar, ChevronRight } from "lucide-react"
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -17,7 +17,6 @@ import { fetchFile } from '@ffmpeg/util'
 import { TemplateSelector } from './TemplateSelector'
 import { ContentEditor } from './ContentEditor'
 import { PlatformPreview } from './PlatformPreview'
-import { PublishControls } from './PublishControls'
 import { TemplateRenderer, FacebookTemplateRenderer, VerticalTemplateRenderer } from './template-renderer'
 
 type Platform = 'instagram' | 'facebook' | 'linkedin' | 'tiktok' | 'story'
@@ -55,7 +54,6 @@ const PLATFORMS = [
   { id: 'story' as Platform, name: 'Story', icon: Image, dimensions: '1080×1920', gradient: 'from-purple-600 to-orange-500', supportsCarousel: false },
   { id: 'facebook' as Platform, name: 'Facebook', icon: Facebook, dimensions: '1200×630', gradient: 'from-blue-600 to-blue-400', supportsCarousel: true },
   { id: 'linkedin' as Platform, name: 'LinkedIn', icon: Linkedin, dimensions: '1200×627', gradient: 'from-blue-700 to-blue-500', supportsCarousel: true },
-  { id: 'tiktok' as Platform, name: 'TikTok', icon: Video, dimensions: '1080×1920', gradient: 'from-gray-800 to-black', supportsCarousel: true },
 ]
 
 const TONES = [
@@ -1104,24 +1102,6 @@ export function UnifiedCreator() {
                   className="h-11 bg-gradient-to-r from-blue-700 to-blue-500 hover:from-blue-800 hover:to-blue-600 text-white font-semibold"
                 >
                   {uploading === 'linkedin' ? <Loader2 className="w-4 h-4 animate-spin" /> : <><Linkedin className="w-4 h-4 mr-2" />LinkedIn</>}
-                </Button>
-
-                {/* Twitter/X */}
-                <Button
-                  onClick={() => uploadToPlatform('twitter')}
-                  disabled={uploading !== null}
-                  className="h-11 bg-gradient-to-r from-gray-900 to-gray-700 hover:from-black hover:to-gray-800 text-white font-semibold"
-                >
-                  {uploading === 'twitter' ? <Loader2 className="w-4 h-4 animate-spin" /> : <><Twitter className="w-4 h-4 mr-2" />X / Twitter</>}
-                </Button>
-
-                {/* TikTok */}
-                <Button
-                  onClick={() => uploadToPlatform('tiktok')}
-                  disabled={uploading !== null}
-                  className="h-11 bg-gradient-to-r from-gray-800 to-black hover:from-gray-900 hover:to-gray-800 text-white font-semibold"
-                >
-                  {uploading === 'tiktok' ? <Loader2 className="w-4 h-4 animate-spin" /> : <><Video className="w-4 h-4 mr-2" />TikTok</>}
                 </Button>
 
                 {/* WhatsApp */}

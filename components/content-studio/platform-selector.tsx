@@ -1,6 +1,6 @@
 'use client'
 
-import { Instagram, Facebook, Video, Linkedin } from 'lucide-react'
+import { Instagram, Facebook, Linkedin } from 'lucide-react'
 
 interface PlatformSelectorProps {
   selected: string
@@ -10,13 +10,12 @@ interface PlatformSelectorProps {
 const PLATFORMS = [
   { id: 'instagram', name: 'Instagram', icon: Instagram, color: 'from-purple-500 to-pink-500' },
   { id: 'facebook', name: 'Facebook', icon: Facebook, color: 'from-blue-600 to-blue-400' },
-  { id: 'tiktok', name: 'TikTok', icon: Video, color: 'from-black to-gray-700' },
   { id: 'linkedin', name: 'LinkedIn', icon: Linkedin, color: 'from-blue-700 to-blue-500' }
 ]
 
 export function PlatformSelector({ selected, onChange }: PlatformSelectorProps) {
   return (
-    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+    <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
       {PLATFORMS.map((platform) => {
         const Icon = platform.icon
         const isSelected = selected === platform.id

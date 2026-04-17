@@ -66,7 +66,7 @@ export default function ContentStudioClient({
     {
       id: 'video' as TabType,
       label: 'Video Reels',
-      desc: 'TikTok & Instagram Reels',
+      desc: 'Instagram Reels & short-form video',
       icon: Video,
       color: 'from-pink-500 to-rose-500',
       textColor: 'text-pink-400',
@@ -116,9 +116,9 @@ export default function ContentStudioClient({
   const getTabDescription = () => {
     switch(selectedTab) {
       case 'social':
-        return 'Create Instagram, Facebook, LinkedIn & TikTok posts with 150+ templates'
+        return 'Create Instagram, Facebook, and LinkedIn posts with 150+ templates'
       case 'video':
-        return 'Create slideshow videos for Reels & TikTok from your listing photos'
+        return 'Create slideshow videos for Instagram Reels and short-form placements from your listing photos'
       case 'bulk':
         return 'Generate content for multiple listings at once'
       case 'email':

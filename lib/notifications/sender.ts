@@ -13,6 +13,7 @@ import {
   DEFAULT_PREFERENCES
 } from './types';
 import { getTemplate, getEmailHtml } from './templates';
+import { getNotificationTimezone } from './preferences';
 
 import { logger } from '@/lib/logger';
 // Environment variables
@@ -20,6 +21,10 @@ const TWILIO_ACCOUNT_SID = process.env.TWILIO_ACCOUNT_SID;
 const TWILIO_AUTH_TOKEN = process.env.TWILIO_AUTH_TOKEN;
 const TWILIO_WHATSAPP_FROM = process.env.TWILIO_WHATSAPP_FROM || 'whatsapp:+14155238886';
 const RESEND_API_KEY = process.env.RESEND_API_KEY;
+
+interface NotificationDeliveryOptions {
+  bypassQuietHours?: boolean;
+}
 
 // ================================================
 // NOTIFICATION LOGGER
@@ -105,7 +110,8 @@ export async function sendNotification(
   payload: NotificationPayload,
   userEmail: string,
   userName: string,
-  preferences: Partial<NotificationPreferences> = {}
+  preferences: Partial<NotificationPreferences> = {},
+  options: NotificationDeliveryOptions = {}
 ): Promise<NotificationResult[]> {
   const prefs = { ...DEFAULT_PREFERENCES, ...preferences };
   const results: NotificationResult[] = [];
@@ -125,7 +131,7 @@ export async function sendNotification(
   }
 
   // Check quiet hours
-  if (isQuietHours(prefs)) {
+  if (!options.bypassQuietHours && isQuietHours(prefs)) {
     logger.info(`[Notify] Skipping ${payload.type} - quiet hours active`);
     // Queue for later (could store in DB)
     return results;
@@ -295,7 +301,7 @@ function shouldSendNotification(
     case 'alert':
       return true; // alerts always sent (all or critical)
     case 'digest':
-      if (type === 'daily_summary') return prefs.dailyWhatsapp;
+      if (type === 'daily_summary') return prefs.dailyWhatsapp || prefs.dailyEmail !== false;
       if (type === 'weekly_report') return prefs.weeklySummary;
       return true;
     default:
@@ -307,8 +313,10 @@ function isQuietHours(prefs: NotificationPreferences): boolean {
   if (!prefs.quietHoursEnabled) return false;
 
   const now = new Date();
-  const currentHour = now.getHours();
-  const currentMinute = now.getMinutes();
+  const { hour: currentHour, minute: currentMinute } = getTimeInTimezone(
+    now,
+    getNotificationTimezone(prefs)
+  );
   const currentTime = currentHour * 60 + currentMinute;
 
   const [startHour, startMinute] = prefs.quietHoursStart.split(':').map(Number);
@@ -324,6 +332,25 @@ function isQuietHours(prefs: NotificationPreferences): boolean {
   return currentTime >= startTime && currentTime < endTime;
 }
 
+function getTimeInTimezone(date: Date, timeZone: string): { hour: number; minute: number } {
+  try {
+    const formatter = new Intl.DateTimeFormat('en-US', {
+      timeZone,
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false,
+    });
+
+    const parts = formatter.formatToParts(date);
+    const hour = Number(parts.find((part) => part.type === 'hour')?.value ?? '0');
+    const minute = Number(parts.find((part) => part.type === 'minute')?.value ?? '0');
+
+    return { hour, minute };
+  } catch {
+    return { hour: date.getUTCHours(), minute: date.getUTCMinutes() };
+  }
+}
+
 // ================================================
 // BATCH NOTIFICATIONS
 // ================================================
@@ -334,6 +361,7 @@ export async function sendBatchNotifications(
     userEmail: string;
     userName: string;
     preferences?: Partial<NotificationPreferences>;
+    options?: NotificationDeliveryOptions;
   }>
 ): Promise<Map<string, NotificationResult[]>> {
   const results = new Map<string, NotificationResult[]>();
@@ -344,8 +372,8 @@ export async function sendBatchNotifications(
     const batch = payloads.slice(i, i + batchSize);
 
     await Promise.all(
-      batch.map(async ({ payload, userEmail, userName, preferences }) => {
-        const result = await sendNotification(payload, userEmail, userName, preferences);
+      batch.map(async ({ payload, userEmail, userName, preferences, options }) => {
+        const result = await sendNotification(payload, userEmail, userName, preferences, options);
         results.set(payload.userId, result);
       })
     );
