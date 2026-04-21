@@ -50,7 +50,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
     error: <X className="w-4 h-4 text-red-400" />,
     warning: <AlertTriangle className="w-4 h-4 text-yellow-400" />,
     info: <Info className="w-4 h-4 text-blue-400" />,
-    loading: <Loader2 className="w-4 h-4 text-[#D4A017] animate-spin" />,
+    loading: <Loader2 className="w-4 h-4 text-primary animate-spin" />,
   };
 
   const bgColors = {
@@ -58,7 +58,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
     error: 'bg-red-500/10 border-red-500/30',
     warning: 'bg-yellow-500/10 border-yellow-500/30',
     info: 'bg-blue-500/10 border-blue-500/30',
-    loading: 'bg-[#D4A017]/10 border-[#D4A017]/30',
+    loading: 'bg-accent-gold/10 border-primary/30',
   };
 
   return (

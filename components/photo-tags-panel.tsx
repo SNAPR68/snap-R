@@ -131,7 +131,7 @@ export function PhotoTagsPanel({ listingId, tags, onRefresh }: PhotoTagsPanelPro
         <button
           onClick={analyzePhotos}
           disabled={analyzing}
-          className="px-3 py-1.5 bg-[#D4A017]/20 border border-[#D4A017]/30 rounded-lg text-[#D4A017] text-xs font-medium hover:bg-[#D4A017]/30 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="px-3 py-1.5 bg-accent-gold/20 border border-primary/30 rounded-lg text-primary text-xs font-medium hover:bg-accent-gold/30 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {analyzing ? 'Analyzing...' : tags.length > 0 ? 'Re-analyze' : 'Analyze Photos with AI'}
         </button>
@@ -183,7 +183,7 @@ export function PhotoTagsPanel({ listingId, tags, onRefresh }: PhotoTagsPanelPro
                     className="bg-transparent text-white text-sm font-medium border-none focus:outline-none cursor-pointer"
                   >
                     {Object.entries(ROOM_TYPE_LABELS).map(([value, label]) => (
-                      <option key={value} value={value} className="bg-[#111]">
+                      <option key={value} value={value} className="bg-surface">
                         {label}
                       </option>
                     ))}
@@ -198,7 +198,7 @@ export function PhotoTagsPanel({ listingId, tags, onRefresh }: PhotoTagsPanelPro
                 <div className="flex items-center gap-1">
                   <div className="w-16 h-1.5 bg-white/10 rounded-full overflow-hidden">
                     <div
-                      className="h-full bg-[#D4A017] rounded-full"
+                      className="h-full bg-accent-gold rounded-full"
                       style={{ width: `${tag.confidence * 100}%` }}
                     />
                   </div>
@@ -211,7 +211,7 @@ export function PhotoTagsPanel({ listingId, tags, onRefresh }: PhotoTagsPanelPro
                 {tag.features.map((feature) => (
                   <span
                     key={feature}
-                    className="px-2 py-0.5 bg-[#D4A017]/10 border border-[#D4A017]/20 rounded text-xs text-[#D4A017]"
+                    className="px-2 py-0.5 bg-accent-gold/10 border border-primary/20 rounded text-xs text-primary"
                   >
                     {feature.replace(/_/g, ' ')}
                   </span>
@@ -241,7 +241,7 @@ export function PhotoTagsPanel({ listingId, tags, onRefresh }: PhotoTagsPanelPro
                     onClick={() => updateTag(tag.photo_id, 'condition', c)}
                     className={`px-2 py-0.5 rounded text-xs capitalize transition ${
                       tag.condition === c
-                        ? 'bg-[#D4A017]/20 text-[#D4A017] border border-[#D4A017]/30'
+                        ? 'bg-accent-gold/20 text-primary border border-primary/30'
                         : 'text-white/40 hover:text-white/60'
                     }`}
                   >
@@ -258,7 +258,7 @@ export function PhotoTagsPanel({ listingId, tags, onRefresh }: PhotoTagsPanelPro
                 {tag.is_user_edited && (
                   <>
                     <span>|</span>
-                    <span className="text-[#D4A017]">Edited</span>
+                    <span className="text-primary">Edited</span>
                   </>
                 )}
               </div>

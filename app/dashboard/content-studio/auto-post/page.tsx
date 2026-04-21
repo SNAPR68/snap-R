@@ -121,9 +121,9 @@ export default function AutoPostSettings() {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
             <Link href="/dashboard/content-studio"><Button variant="ghost" size="sm" className="text-white/60 hover:text-white"><ArrowLeft className="w-4 h-4 mr-2" />Back</Button></Link>
-            <h1 className="text-xl font-bold flex items-center gap-2"><Zap className="w-5 h-5 text-[#D4AF37]" />Auto-Post Rules</h1>
+            <h1 className="text-xl font-bold flex items-center gap-2"><Zap className="w-5 h-5 text-accent-gold" />Auto-Post Rules</h1>
           </div>
-          <Button onClick={() => setShowCreate(true)} className="bg-[#D4AF37] hover:bg-[#B8960C] text-black font-bold">
+          <Button onClick={() => setShowCreate(true)} className="bg-accent-gold hover:bg-accent-gold text-black font-bold">
             <Plus className="w-4 h-4 mr-2" />New Rule
           </Button>
         </div>
@@ -131,11 +131,11 @@ export default function AutoPostSettings() {
 
       <div className="p-6 max-w-4xl mx-auto">
         {/* Info Banner */}
-        <div className="bg-[#D4AF37]/10 border border-[#D4AF37]/30 rounded-xl p-4 mb-6">
+        <div className="bg-accent-gold/10 border border-accent-gold/30 rounded-xl p-4 mb-6">
           <div className="flex items-start gap-3">
-            <Zap className="w-5 h-5 text-[#D4AF37] flex-shrink-0 mt-0.5" />
+            <Zap className="w-5 h-5 text-accent-gold flex-shrink-0 mt-0.5" />
             <div>
-              <p className="font-medium text-[#D4AF37]">Automate Your Social Media</p>
+              <p className="font-medium text-accent-gold">Automate Your Social Media</p>
               <p className="text-sm text-white/60 mt-1">Create rules to automatically generate and schedule posts when listing status changes. Never miss a marketing opportunity!</p>
             </div>
           </div>
@@ -151,7 +151,7 @@ export default function AutoPostSettings() {
                 <label className="text-sm text-white/60 mb-2 block">When this happens...</label>
                 <div className="grid grid-cols-2 gap-2">
                   {TRIGGERS.map(t => (
-                    <button key={t.id} onClick={() => setNewRule({ ...newRule, trigger: t.id })} className={`p-3 rounded-lg text-left transition ${newRule.trigger === t.id ? 'bg-[#D4AF37]/20 border border-[#D4AF37]' : 'bg-white/5 border border-transparent hover:bg-white/10'}`}>
+                    <button key={t.id} onClick={() => setNewRule({ ...newRule, trigger: t.id })} className={`p-3 rounded-lg text-left transition ${newRule.trigger === t.id ? 'bg-accent-gold/20 border border-accent-gold' : 'bg-white/5 border border-transparent hover:bg-white/10'}`}>
                       <span className="mr-2">{t.icon}</span>{t.name}
                     </button>
                   ))}
@@ -165,10 +165,10 @@ export default function AutoPostSettings() {
                     const Icon = p.icon
                     const selected = newRule.platforms.includes(p.id)
                     return (
-                      <button key={p.id} onClick={() => togglePlatform(p.id)} className={`flex-1 p-3 rounded-lg flex items-center justify-center gap-2 transition ${selected ? 'bg-[#D4AF37]/20 border border-[#D4AF37]' : 'bg-white/5 border border-transparent hover:bg-white/10'}`}>
+                      <button key={p.id} onClick={() => togglePlatform(p.id)} className={`flex-1 p-3 rounded-lg flex items-center justify-center gap-2 transition ${selected ? 'bg-accent-gold/20 border border-accent-gold' : 'bg-white/5 border border-transparent hover:bg-white/10'}`}>
                         <Icon className="w-4 h-4" />
                         {p.name}
-                        {selected && <Check className="w-4 h-4 text-[#D4AF37]" />}
+                        {selected && <Check className="w-4 h-4 text-accent-gold" />}
                       </button>
                     )
                   })}
@@ -177,7 +177,7 @@ export default function AutoPostSettings() {
 
               <div className="flex gap-3 pt-2">
                 <Button onClick={() => setShowCreate(false)} variant="outline" className="flex-1 border-white/20">Cancel</Button>
-                <Button onClick={createRule} disabled={creating || !newRule.trigger || newRule.platforms.length === 0} className="flex-1 bg-[#D4AF37] hover:bg-[#B8960C] text-black font-bold">
+                <Button onClick={createRule} disabled={creating || !newRule.trigger || newRule.platforms.length === 0} className="flex-1 bg-accent-gold hover:bg-accent-gold text-black font-bold">
                   {creating ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Create Rule'}
                 </Button>
               </div>
@@ -187,22 +187,22 @@ export default function AutoPostSettings() {
 
         {/* Rules List */}
         {loading ? (
-          <div className="flex items-center justify-center py-12"><Loader2 className="w-6 h-6 animate-spin text-[#D4AF37]" /></div>
+          <div className="flex items-center justify-center py-12"><Loader2 className="w-6 h-6 animate-spin text-accent-gold" /></div>
         ) : rules.length === 0 ? (
           <div className="bg-white/5 rounded-xl p-8 text-center border border-white/10">
             <Zap className="w-12 h-12 text-white/20 mx-auto mb-3" />
             <p className="text-white/50 mb-4">No auto-post rules yet</p>
-            <Button onClick={() => setShowCreate(true)} className="bg-[#D4AF37] hover:bg-[#B8960C] text-black">Create Your First Rule</Button>
+            <Button onClick={() => setShowCreate(true)} className="bg-accent-gold hover:bg-accent-gold text-black">Create Your First Rule</Button>
           </div>
         ) : (
           <div className="space-y-3">
             {rules.map(rule => {
               const trigger = TRIGGERS.find(t => t.id === rule.trigger_event || t.id === `status_${rule.trigger_value}`)
               return (
-                <div key={rule.id} className={`bg-white/5 rounded-xl p-4 border transition ${rule.is_active ? 'border-[#D4AF37]/30' : 'border-white/10 opacity-60'}`}>
+                <div key={rule.id} className={`bg-white/5 rounded-xl p-4 border transition ${rule.is_active ? 'border-accent-gold/30' : 'border-white/10 opacity-60'}`}>
                   <div className="flex items-center gap-4">
                     <button onClick={() => toggleRule(rule.id, rule.is_active)} className="flex-shrink-0">
-                      {rule.is_active ? <ToggleRight className="w-8 h-8 text-[#D4AF37]" /> : <ToggleLeft className="w-8 h-8 text-white/30" />}
+                      {rule.is_active ? <ToggleRight className="w-8 h-8 text-accent-gold" /> : <ToggleLeft className="w-8 h-8 text-white/30" />}
                     </button>
                     <div className="flex-1">
                       <div className="flex items-center gap-2">

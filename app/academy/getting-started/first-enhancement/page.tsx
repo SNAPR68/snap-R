@@ -12,7 +12,7 @@ export default function Article() {
           <p><strong className="text-on-surface">3.</strong> Pick a style preset</p>
           <p><strong className="text-on-surface">4.</strong> Wait 30-60 seconds</p>
           <p><strong className="text-on-surface">5.</strong> Review and Accept to save</p>
-          <div className="bg-surface-container-low rounded-xl p-4 border border-[#D4A017]/30 mt-6">
+          <div className="bg-surface-container-low rounded-xl p-4 border border-primary/30 mt-6">
             <p className="text-primary">💡 Credits only deduct when you Accept. Preview freely.</p>
           </div>
         </div>

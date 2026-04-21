@@ -7,7 +7,7 @@ export const dynamic = 'force-dynamic';
 
 const TIER_INFO = {
   free: { name: 'Free', color: 'text-white/60', listings: 3, price: '$0' },
-  pro: { name: 'Pro', color: 'text-[#D4A017]', listings: 'Custom', price: '$7-9/listing' },
+  pro: { name: 'Pro', color: 'text-primary', listings: 'Custom', price: '$7-9/listing' },
   agency: { name: 'Agency', color: 'text-purple-400', listings: 'Unlimited', price: '$9-11/listing' },
 };
 
@@ -44,8 +44,8 @@ export default async function BillingPage() {
   const usagePercent = Math.min((listingsUsed / listingsLimit) * 100, 100);
 
   return (
-    <div className="min-h-screen bg-[#0F0F0F] text-white">
-      <header className="h-14 bg-[#1A1A1A] border-b border-white/10 flex items-center px-6">
+    <div className="min-h-screen bg-charcoal-deep text-white">
+      <header className="h-14 bg-surface-container-high border-b border-white/10 flex items-center px-6">
         <Link href="/dashboard" className="flex items-center gap-2 text-white/60 hover:text-white">
           <ArrowLeft className="w-4 h-4" /> Back to Dashboard
         </Link>
@@ -55,9 +55,9 @@ export default async function BillingPage() {
         <h1 className="text-3xl font-bold mb-8">Billing & Subscription</h1>
         
         {/* Current Plan */}
-        <section className="bg-[#1A1A1A] border border-white/10 rounded-xl p-6 mb-6">
+        <section className="bg-surface-container-high border border-white/10 rounded-xl p-6 mb-6">
           <div className="flex items-center gap-3 mb-6">
-            <CreditCard className="w-6 h-6 text-[#D4A017]" />
+            <CreditCard className="w-6 h-6 text-primary" />
             <h2 className="text-xl font-semibold">Current Plan</h2>
           </div>
           
@@ -74,7 +74,7 @@ export default async function BillingPage() {
           {tier === 'free' && (
             <Link 
               href="/pricing" 
-              className="block w-full text-center py-3 bg-gradient-to-r from-[#D4A017] to-[#B8860B] text-black font-semibold rounded-xl hover:opacity-90 transition-all"
+              className="block w-full text-center py-3 bg-gradient-to-r from-gold to-gold-dark text-black font-semibold rounded-xl hover:opacity-90 transition-all"
             >
               Upgrade to Pro
             </Link>
@@ -82,9 +82,9 @@ export default async function BillingPage() {
         </section>
 
         {/* Usage This Month */}
-        <section className="bg-[#1A1A1A] border border-white/10 rounded-xl p-6 mb-6">
+        <section className="bg-surface-container-high border border-white/10 rounded-xl p-6 mb-6">
           <div className="flex items-center gap-3 mb-6">
-            <Building2 className="w-6 h-6 text-[#D4A017]" />
+            <Building2 className="w-6 h-6 text-primary" />
             <h2 className="text-xl font-semibold">Usage This Month</h2>
           </div>
           
@@ -95,7 +95,7 @@ export default async function BillingPage() {
             </div>
             <div className="h-3 bg-white/10 rounded-full overflow-hidden">
               <div 
-                className={`h-full rounded-full transition-all ${usagePercent >= 90 ? 'bg-red-500' : usagePercent >= 70 ? 'bg-yellow-500' : 'bg-[#D4A017]'}`}
+                className={`h-full rounded-full transition-all ${usagePercent >= 90 ? 'bg-red-500' : usagePercent >= 70 ? 'bg-yellow-500' : 'bg-accent-gold'}`}
                 style={{ width: `${usagePercent}%` }}
               />
             </div>
@@ -111,7 +111,7 @@ export default async function BillingPage() {
         </section>
 
         {/* What&apos;s Included */}
-        <section className="bg-[#1A1A1A] border border-white/10 rounded-xl p-6 mb-6">
+        <section className="bg-surface-container-high border border-white/10 rounded-xl p-6 mb-6">
           <h2 className="text-xl font-semibold mb-4">What&apos;s Included</h2>
           <div className="grid grid-cols-2 gap-3">
             {[
@@ -136,7 +136,7 @@ export default async function BillingPage() {
 
         {/* Manage Subscription */}
         {tier !== 'free' && (
-          <section className="bg-[#1A1A1A] border border-white/10 rounded-xl p-6">
+          <section className="bg-surface-container-high border border-white/10 rounded-xl p-6">
             <h2 className="text-xl font-semibold mb-4">Manage Subscription</h2>
             <div className="flex gap-4">
               <a 

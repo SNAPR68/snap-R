@@ -75,13 +75,13 @@ export function CelebrationModal() {
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0.8, opacity: 0 }}
             transition={{ type: 'spring', damping: 20 }}
-            className="relative glass-luxury glossy-top p-8 max-w-md w-full shadow-2xl border border-[#D4A017]/30 rounded-2xl text-center"
+            className="relative glass-luxury glossy-top p-8 max-w-md w-full shadow-2xl border border-primary/30 rounded-2xl text-center"
           >
             <motion.div
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
               transition={{ type: 'spring', delay: 0.2 }}
-              className="w-20 h-20 mx-auto mb-5 rounded-full bg-gradient-to-br from-[#D4A017] to-[#B8860B] flex items-center justify-center"
+              className="w-20 h-20 mx-auto mb-5 rounded-full bg-gradient-to-br from-gold to-gold-dark flex items-center justify-center"
             >
               <CheckCircle className="w-10 h-10 text-black" />
             </motion.div>
@@ -89,20 +89,20 @@ export function CelebrationModal() {
             <h2 className="text-2xl font-bold mb-2">Listing Prepared!</h2>
             <p className="text-white/50 text-sm mb-6">
               <span className="text-white font-medium">{data.listingTitle}</span> is ready with{' '}
-              <span className="text-[#D4A017] font-semibold">{data.totalPhotos} enhanced photos</span>
+              <span className="text-primary font-semibold">{data.totalPhotos} enhanced photos</span>
               {data.confidence > 0 && (
-                <> at <span className="text-[#D4A017] font-semibold">{Math.round(data.confidence)}%</span> confidence</>
+                <> at <span className="text-primary font-semibold">{Math.round(data.confidence)}%</span> confidence</>
               )}
             </p>
 
             <div className="flex justify-center gap-6 mb-6">
               <div className="text-center">
-                <p className="text-2xl font-bold text-[#D4A017]">{data.totalPhotos}</p>
+                <p className="text-2xl font-bold text-primary">{data.totalPhotos}</p>
                 <p className="text-xs text-white/40">Photos</p>
               </div>
               {data.confidence > 0 && (
                 <div className="text-center">
-                  <p className="text-2xl font-bold text-[#D4A017]">{Math.round(data.confidence)}%</p>
+                  <p className="text-2xl font-bold text-primary">{Math.round(data.confidence)}%</p>
                   <p className="text-xs text-white/40">Confidence</p>
                 </div>
               )}
@@ -111,7 +111,7 @@ export function CelebrationModal() {
             <div className="flex flex-col gap-2">
               <Link
                 href={`/dashboard/content-studio?listing=${data.listingId}`}
-                className="flex items-center justify-center gap-2 px-5 py-3 bg-gradient-to-r from-[#D4A017] to-[#B8860B] text-black font-bold text-sm rounded-xl hover:opacity-90 transition-all"
+                className="flex items-center justify-center gap-2 px-5 py-3 bg-gradient-to-r from-gold to-gold-dark text-black font-bold text-sm rounded-xl hover:opacity-90 transition-all"
                 onClick={onClose}
               >
                 <Sparkles className="w-4 h-4" />

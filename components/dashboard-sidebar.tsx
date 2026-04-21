@@ -120,7 +120,7 @@ function SidebarContent({ tier, listingsUsed, listingsLimit, onNavClick }: Dashb
     <>
       {/* Logo */}
       <Link href="/" className="flex items-center gap-2 mb-6" onClick={onNavClick}>
-        <span className="text-xl font-bold">Snap<span className="text-[#D4A017]">R</span></span>
+        <span className="text-xl font-bold">Snap<span className="text-primary">R</span></span>
       </Link>
 
       {/* Usage Card */}
@@ -129,7 +129,7 @@ function SidebarContent({ tier, listingsUsed, listingsLimit, onNavClick }: Dashb
           <span className="text-xs text-white/50">Listings This Month</span>
           <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
             tier === 'agency' ? 'bg-purple-500/20 text-purple-400' :
-            tier === 'pro' ? 'bg-[#D4A017]/20 text-[#D4A017]' :
+            tier === 'pro' ? 'bg-accent-gold/20 text-primary' :
             tier === 'starter' ? 'bg-blue-500/20 text-blue-400' :
             'bg-white/10 text-white/60'
           }`}>
@@ -145,13 +145,13 @@ function SidebarContent({ tier, listingsUsed, listingsLimit, onNavClick }: Dashb
             className={`h-full rounded-full transition-all ${
               usagePercent >= 90 ? 'bg-red-500' :
               usagePercent >= 70 ? 'bg-yellow-500' :
-              'bg-[#D4A017]'
+              'bg-accent-gold'
             }`}
             style={{ width: `${usagePercent}%` }}
           />
         </div>
         {tier === 'free' && listingsUsed >= listingsLimit && (
-          <Link href="/pricing" className="block mt-2 text-xs text-[#D4A017] hover:underline" onClick={onNavClick}>
+          <Link href="/pricing" className="block mt-2 text-xs text-primary hover:underline" onClick={onNavClick}>
             Upgrade for more &rarr;
           </Link>
         )}
@@ -232,7 +232,7 @@ export default function DashboardSidebar({ tier, listingsUsed, listingsLimit }: 
   return (
     <>
       {/* Desktop sidebar */}
-      <aside className="hidden md:flex w-[220px] bg-[#0F0F0F] border-r border-white/10 p-4 flex-col flex-shrink-0" style={{ backdropFilter: 'blur(24px)', background: 'linear-gradient(180deg, rgba(20,20,20,0.98) 0%, rgba(10,10,10,0.99) 100%)' }}>
+      <aside className="hidden md:flex w-[220px] bg-charcoal-deep border-r border-white/10 p-4 flex-col flex-shrink-0" style={{ backdropFilter: 'blur(24px)', background: 'linear-gradient(180deg, rgba(20,20,20,0.98) 0%, rgba(10,10,10,0.99) 100%)' }}>
         <SidebarContent tier={tier} listingsUsed={listingsUsed} listingsLimit={listingsLimit} />
       </aside>
 
@@ -242,7 +242,7 @@ export default function DashboardSidebar({ tier, listingsUsed, listingsLimit }: 
           {/* Backdrop */}
           <div className="absolute inset-0 bg-black/60" onClick={close} />
           {/* Sidebar panel */}
-          <aside className="relative w-[280px] h-full bg-[#0F0F0F] p-4 flex flex-col overflow-y-auto" style={{ backdropFilter: 'blur(24px)', background: 'linear-gradient(180deg, rgba(20,20,20,0.99) 0%, rgba(10,10,10,1) 100%)' }}>
+          <aside className="relative w-[280px] h-full bg-charcoal-deep p-4 flex flex-col overflow-y-auto" style={{ backdropFilter: 'blur(24px)', background: 'linear-gradient(180deg, rgba(20,20,20,0.99) 0%, rgba(10,10,10,1) 100%)' }}>
             <button
               onClick={close}
               className="absolute top-4 right-4 text-white/60 hover:text-white transition-colors"

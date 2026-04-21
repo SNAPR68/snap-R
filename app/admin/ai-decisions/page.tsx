@@ -69,7 +69,7 @@ export default async function AdminAiDecisions({ searchParams }: { searchParams?
         </p>
       </div>
 
-      <div className="bg-[#1A1A1A] border border-white/10 rounded-xl p-5 mb-8">
+      <div className="bg-surface-container-high border border-white/10 rounded-xl p-5 mb-8">
         <form className="flex flex-col md:flex-row md:items-end gap-4">
           <div className="flex-1">
             <label className="block text-sm text-white/70 mb-2">Listing ID</label>
@@ -82,7 +82,7 @@ export default async function AdminAiDecisions({ searchParams }: { searchParams?
           </div>
           <button
             type="submit"
-            className="px-4 py-2 bg-[#D4A017] text-black font-semibold rounded-lg hover:bg-[#E0B52C]"
+            className="px-4 py-2 bg-accent-gold text-black font-semibold rounded-lg hover:bg-accent-gold"
           >
             View Decisions
           </button>
@@ -90,7 +90,7 @@ export default async function AdminAiDecisions({ searchParams }: { searchParams?
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <div className="bg-[#1A1A1A] border border-white/10 rounded-xl overflow-hidden">
+        <div className="bg-surface-container-high border border-white/10 rounded-xl overflow-hidden">
           <div className="px-5 py-4 border-b border-white/10">
             <h2 className="text-lg font-semibold">Recent Listings</h2>
           </div>
@@ -122,7 +122,7 @@ export default async function AdminAiDecisions({ searchParams }: { searchParams?
           </div>
         </div>
 
-        <div className="bg-[#1A1A1A] border border-white/10 rounded-xl p-5">
+        <div className="bg-surface-container-high border border-white/10 rounded-xl p-5">
           <h2 className="text-lg font-semibold mb-3">Decision Details</h2>
           {selectedListing ? (
             <>
@@ -161,7 +161,7 @@ export default async function AdminAiDecisions({ searchParams }: { searchParams?
                         <div className="mb-1 text-white/50">Tools selected</div>
                         <div className="flex flex-wrap gap-2">
                           {(decision.toolsSelected || []).map((tool: string) => (
-                            <span key={tool} className="px-2 py-0.5 bg-[#D4A017]/20 text-[#D4A017] rounded">
+                            <span key={tool} className="px-2 py-0.5 bg-accent-gold/20 text-primary rounded">
                               {tool}
                             </span>
                           ))}

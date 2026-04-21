@@ -109,18 +109,18 @@ function OnboardingContent() {
 
   if (checkingAuth) {
     return (
-      <div className="min-h-screen bg-[#0A0A0A] flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-[#D4A017]" />
+      <div className="min-h-screen bg-surface flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#0A0A0A] text-white flex flex-col">
+    <div className="min-h-screen bg-surface text-white flex flex-col">
       {/* Progress Bar */}
       <div className="w-full h-1 bg-white/10">
         <div
-          className="h-full bg-gradient-to-r from-[#D4A017] to-[#B8860B] transition-all duration-500"
+          className="h-full bg-gradient-to-r from-gold to-gold-dark transition-all duration-500"
           style={{ width: `${(step / TOTAL_STEPS) * 100}%` }}
         />
       </div>
@@ -132,7 +132,7 @@ function OnboardingContent() {
           {step === 1 && (
             <div className="animate-fadeIn">
               <div className="text-center mb-8">
-                <div className="w-16 h-16 rounded-2xl flex items-center justify-center text-black font-bold text-2xl bg-gradient-to-br from-[#D4A017] to-[#B8860B] shadow-lg shadow-[#D4A017]/30 mx-auto mb-4">S</div>
+                <div className="w-16 h-16 rounded-2xl flex items-center justify-center text-black font-bold text-2xl bg-gradient-to-br from-gold to-gold-dark shadow-lg shadow-gold/30 mx-auto mb-4">S</div>
                 <h1 className="text-3xl font-bold mb-2">Welcome to SnapR</h1>
                 <p className="text-white/60">Just two quick things and you&apos;re in</p>
               </div>
@@ -152,9 +152,9 @@ function OnboardingContent() {
 
               {/* Show selected plan from pricing page (non-checkout) */}
               {!checkoutSuccess && planFromUrl && planFromUrl !== 'free' && (
-                <div className="mb-6 p-4 bg-[#D4A017]/10 border border-[#D4A017]/30 rounded-xl">
+                <div className="mb-6 p-4 bg-accent-gold/10 border border-primary/30 rounded-xl">
                   <p className="text-sm text-white/60">Your Selected Plan</p>
-                  <p className="font-bold text-[#D4A017] capitalize">
+                  <p className="font-bold text-primary capitalize">
                     {planFromUrl} — {listingsFromUrl} listings/mo {priceFromUrl ? `@ $${priceFromUrl}/listing` : ''}
                   </p>
                 </div>
@@ -168,7 +168,7 @@ function OnboardingContent() {
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     placeholder="John Smith"
-                    className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 focus:border-[#D4A017] outline-none"
+                    className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 focus:border-primary outline-none"
                     aria-label="Your name"
                   />
                 </div>
@@ -180,7 +180,7 @@ function OnboardingContent() {
                     value={company}
                     onChange={(e) => setCompany(e.target.value)}
                     placeholder="ABC Realty"
-                    className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 focus:border-[#D4A017] outline-none"
+                    className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 focus:border-primary outline-none"
                     aria-label="Company name"
                   />
                 </div>
@@ -196,12 +196,12 @@ function OnboardingContent() {
                           onClick={() => setSelectedRole(role.id)}
                           className={`w-full p-3 rounded-xl border text-left transition-all flex items-center gap-3 ${
                             selectedRole === role.id
-                              ? 'border-[#D4A017] bg-[#D4A017]/10'
+                              ? 'border-primary bg-accent-gold/10'
                               : 'border-white/10 hover:border-white/30'
                           }`}
                         >
                           <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
-                            selectedRole === role.id ? 'bg-[#D4A017] text-black' : 'bg-white/10'
+                            selectedRole === role.id ? 'bg-accent-gold text-black' : 'bg-white/10'
                           }`}>
                             <Icon className="w-5 h-5" />
                           </div>
@@ -219,7 +219,7 @@ function OnboardingContent() {
               <button
                 onClick={() => setStep(2)}
                 disabled={!name || !selectedRole}
-                className="w-full mt-6 py-4 bg-gradient-to-r from-[#D4A017] to-[#B8860B] rounded-xl text-black font-semibold disabled:opacity-50 flex items-center justify-center gap-2"
+                className="w-full mt-6 py-4 bg-gradient-to-r from-gold to-gold-dark rounded-xl text-black font-semibold disabled:opacity-50 flex items-center justify-center gap-2"
               >
                 Continue <ChevronRight className="w-5 h-5" />
               </button>
@@ -236,8 +236,8 @@ function OnboardingContent() {
 
               <div className="space-y-4">
                 <div className="flex items-start gap-4 p-5 bg-white/5 rounded-xl border border-white/10">
-                  <div className="w-12 h-12 bg-[#D4A017]/20 rounded-xl flex items-center justify-center flex-shrink-0">
-                    <Upload className="w-6 h-6 text-[#D4A017]" />
+                  <div className="w-12 h-12 bg-accent-gold/20 rounded-xl flex items-center justify-center flex-shrink-0">
+                    <Upload className="w-6 h-6 text-primary" />
                   </div>
                   <div>
                     <h3 className="font-semibold text-lg">1. Upload Your Photos</h3>
@@ -276,8 +276,8 @@ function OnboardingContent() {
                 </div>
               </div>
 
-              <div className="mt-6 p-4 bg-[#D4A017]/10 border border-[#D4A017]/30 rounded-xl text-center">
-                <p className="text-[#D4A017] font-medium">AI enhancements are FREE on all plans</p>
+              <div className="mt-6 p-4 bg-accent-gold/10 border border-primary/30 rounded-xl text-center">
+                <p className="text-primary font-medium">AI enhancements are FREE on all plans</p>
                 <p className="text-white/50 text-sm mt-1">No per-photo charges. Ever.</p>
               </div>
 
@@ -287,7 +287,7 @@ function OnboardingContent() {
                 </button>
                 <button
                   onClick={() => setStep(3)}
-                  className="flex-1 py-4 bg-gradient-to-r from-[#D4A017] to-[#B8860B] rounded-xl text-black font-semibold flex items-center justify-center gap-2"
+                  className="flex-1 py-4 bg-gradient-to-r from-gold to-gold-dark rounded-xl text-black font-semibold flex items-center justify-center gap-2"
                 >
                   Continue <ChevronRight className="w-5 h-5" />
                 </button>
@@ -298,7 +298,7 @@ function OnboardingContent() {
           {/* STEP 3: Role-Specific Get Started */}
           {step === 3 && (
             <div className="animate-fadeIn text-center">
-              <div className="w-20 h-20 bg-gradient-to-br from-[#D4A017] to-[#B8860B] rounded-full flex items-center justify-center mx-auto mb-6">
+              <div className="w-20 h-20 bg-gradient-to-br from-gold to-gold-dark rounded-full flex items-center justify-center mx-auto mb-6">
                 <CheckCircle className="w-10 h-10 text-black" />
               </div>
 
@@ -366,7 +366,7 @@ function OnboardingContent() {
                   }
                 }}
                 disabled={loading}
-                className="w-full py-4 bg-gradient-to-r from-[#D4A017] to-[#B8860B] rounded-xl text-black font-bold text-lg disabled:opacity-50 flex items-center justify-center gap-2"
+                className="w-full py-4 bg-gradient-to-r from-gold to-gold-dark rounded-xl text-black font-bold text-lg disabled:opacity-50 flex items-center justify-center gap-2"
               >
                 {loading ? (
                   <Loader2 className="w-5 h-5 animate-spin" />
@@ -383,7 +383,7 @@ function OnboardingContent() {
               {selectedRole === 'broker' && (
                 <button
                   onClick={() => handleComplete('/dashboard/broker?invite=true')}
-                  className="w-full mt-3 py-3 border border-[#D4A017]/30 rounded-xl text-[#D4A017] hover:bg-[#D4A017]/10 transition-colors text-sm font-medium flex items-center justify-center gap-2"
+                  className="w-full mt-3 py-3 border border-primary/30 rounded-xl text-primary hover:bg-accent-gold/10 transition-colors text-sm font-medium flex items-center justify-center gap-2"
                 >
                   <Users className="w-4 h-4" /> Invite Your First Agent
                 </button>
@@ -418,8 +418,8 @@ function OnboardingContent() {
 export default function OnboardingPage() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen bg-[#0A0A0A] flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-[#D4A017]" />
+      <div className="min-h-screen bg-surface flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
       </div>
     }>
       <OnboardingContent />

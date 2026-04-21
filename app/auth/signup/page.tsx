@@ -162,17 +162,17 @@ function SignupForm() {
   // Email verification screen
   if (showVerification) {
     return (
-      <div className="min-h-screen bg-[#0F0F0F] flex items-center justify-center p-8">
+      <div className="min-h-screen bg-charcoal-deep flex items-center justify-center p-8">
         <div className="w-full max-w-md text-center">
-          <div className="w-16 h-16 rounded-full bg-[#D4A017]/10 border border-[#D4A017]/30 flex items-center justify-center mx-auto mb-6">
-            <Mail className="w-8 h-8 text-[#D4A017]" />
+          <div className="w-16 h-16 rounded-full bg-accent-gold/10 border border-primary/30 flex items-center justify-center mx-auto mb-6">
+            <Mail className="w-8 h-8 text-primary" />
           </div>
 
           <h2 className="text-2xl font-bold text-white mb-3">Check your email</h2>
           <p className="text-white/50 mb-2">
             We sent a confirmation link to
           </p>
-          <p className="text-[#D4A017] font-medium mb-6">{email}</p>
+          <p className="text-primary font-medium mb-6">{email}</p>
 
           <p className="text-white/40 text-sm mb-6">
             Click the link in the email to activate your account. Check your spam folder if you don&apos;t see it.
@@ -220,7 +220,7 @@ function SignupForm() {
             Wrong email?{' '}
             <button
               onClick={() => { setShowVerification(false); setError(''); }}
-              className="text-[#D4A017] hover:underline"
+              className="text-primary hover:underline"
             >
               Go back
             </button>
@@ -231,45 +231,45 @@ function SignupForm() {
   }
 
   return (
-    <div className="min-h-screen bg-[#0F0F0F] flex">
-      <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-[#D4A017] to-[#B8860B] p-12 flex-col justify-between">
+    <div className="min-h-screen bg-charcoal-deep flex">
+      <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-gold to-gold-dark p-12 flex-col justify-between">
         <Link href="/" className="flex items-center gap-3">
-          <div className="w-12 h-12 rounded-xl bg-[#0F0F0F]/20 flex items-center justify-center font-bold text-[#0F0F0F] text-xl">S</div>
-          <span className="text-2xl font-bold text-[#0F0F0F]">Snap<span className="text-[#0F0F0F]/80">R</span></span>
+          <div className="w-12 h-12 rounded-xl bg-charcoal-deep/20 flex items-center justify-center font-bold text-surface text-xl">S</div>
+          <span className="text-2xl font-bold text-surface">Snap<span className="text-surface/80">R</span></span>
         </Link>
 
         <div>
-          <h1 className="text-4xl font-bold text-[#0F0F0F] mb-4">{planInfo.title}</h1>
-          <p className="text-[#0F0F0F]/70 text-lg mb-8">{planInfo.subtitle}</p>
+          <h1 className="text-4xl font-bold text-surface mb-4">{planInfo.title}</h1>
+          <p className="text-surface/70 text-lg mb-8">{planInfo.subtitle}</p>
 
           <div className="space-y-3">
             {planInfo.features.map((feature, i) => (
               <div key={i} className="flex items-center gap-3">
-                <div className="w-6 h-6 rounded-full bg-[#0F0F0F]/20 flex items-center justify-center">
-                  <Check className="w-4 h-4 text-[#0F0F0F]" />
+                <div className="w-6 h-6 rounded-full bg-charcoal-deep/20 flex items-center justify-center">
+                  <Check className="w-4 h-4 text-surface" />
                 </div>
-                <span className="text-[#0F0F0F]/80">{feature}</span>
+                <span className="text-surface/80">{feature}</span>
               </div>
             ))}
           </div>
 
           {isPaidPlan && (
-            <div className="mt-8 p-4 bg-[#0F0F0F]/10 rounded-xl">
-              <p className="text-[#0F0F0F]/60 text-sm">Selected plan</p>
-              <p className="text-[#0F0F0F] font-bold text-xl capitalize">{selectedPlan} - {listings} listings/month</p>
-              <p className="text-[#0F0F0F]/60 text-sm mt-1">You&apos;ll complete payment after creating your account</p>
+            <div className="mt-8 p-4 bg-charcoal-deep/10 rounded-xl">
+              <p className="text-surface/60 text-sm">Selected plan</p>
+              <p className="text-surface font-bold text-xl capitalize">{selectedPlan} - {listings} listings/month</p>
+              <p className="text-surface/60 text-sm mt-1">You&apos;ll complete payment after creating your account</p>
             </div>
           )}
         </div>
 
-        <p className="text-[#0F0F0F]/50 text-sm">© 2026 SnapR</p>
+        <p className="text-surface/50 text-sm">© 2026 SnapR</p>
       </div>
 
       <div className="flex-1 flex items-center justify-center p-8">
         <div className="w-full max-w-md">
           <div className="lg:hidden flex items-center justify-center gap-3 mb-8">
-            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#D4A017] to-[#B8860B] flex items-center justify-center font-bold text-black text-xl">S</div>
-            <span className="text-2xl font-bold">Snap<span className="text-[#D4A017]">R</span></span>
+            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-gold to-gold-dark flex items-center justify-center font-bold text-black text-xl">S</div>
+            <span className="text-2xl font-bold">Snap<span className="text-primary">R</span></span>
           </div>
 
           <h2 className="text-3xl font-bold text-white mb-2">Create Account</h2>
@@ -294,10 +294,10 @@ function SignupForm() {
           </div>
 
           <form onSubmit={handleSignup} className="space-y-4">
-            <input type="text" placeholder="Full Name" aria-label="Full name" value={name} onChange={(e) => setName(e.target.value)} className="w-full px-4 py-4 bg-white/5 border border-white/10 rounded-xl text-white placeholder:text-white/30 focus:outline-none focus:border-[#D4A017]" required />
-            <input type="email" placeholder="Email" aria-label="Email address" value={email} onChange={(e) => setEmail(e.target.value)} className="w-full px-4 py-4 bg-white/5 border border-white/10 rounded-xl text-white placeholder:text-white/30 focus:outline-none focus:border-[#D4A017]" required />
+            <input type="text" placeholder="Full Name" aria-label="Full name" value={name} onChange={(e) => setName(e.target.value)} className="w-full px-4 py-4 bg-white/5 border border-white/10 rounded-xl text-white placeholder:text-white/30 focus:outline-none focus:border-primary" required />
+            <input type="email" placeholder="Email" aria-label="Email address" value={email} onChange={(e) => setEmail(e.target.value)} className="w-full px-4 py-4 bg-white/5 border border-white/10 rounded-xl text-white placeholder:text-white/30 focus:outline-none focus:border-primary" required />
             <div className="relative">
-              <input type={showPassword ? 'text' : 'password'} placeholder="Password" aria-label="Password" value={password} onChange={(e) => setPassword(e.target.value)} className="w-full px-4 py-4 bg-white/5 border border-white/10 rounded-xl text-white placeholder:text-white/30 focus:outline-none focus:border-[#D4A017] pr-12" required minLength={6} />
+              <input type={showPassword ? 'text' : 'password'} placeholder="Password" aria-label="Password" value={password} onChange={(e) => setPassword(e.target.value)} className="w-full px-4 py-4 bg-white/5 border border-white/10 rounded-xl text-white placeholder:text-white/30 focus:outline-none focus:border-primary pr-12" required minLength={6} />
               <button type="button" onClick={() => setShowPassword(!showPassword)} aria-label={showPassword ? 'Hide password' : 'Show password'} className="absolute right-4 top-1/2 -translate-y-1/2 text-white/30 hover:text-white/60">
                 {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
               </button>
@@ -305,14 +305,14 @@ function SignupForm() {
 
             {error && <p className="text-red-400 text-sm">{error}</p>}
 
-            <button type="submit" disabled={loading} className="w-full py-4 bg-[#D4A017] hover:bg-[#B8860B] text-black font-semibold rounded-xl transition-colors disabled:opacity-50 flex items-center justify-center gap-2">
+            <button type="submit" disabled={loading} className="w-full py-4 bg-accent-gold hover:bg-accent-gold text-black font-semibold rounded-xl transition-colors disabled:opacity-50 flex items-center justify-center gap-2">
               {loading && <Loader2 className="w-5 h-5 animate-spin" />}
               {isPaidPlan ? 'Continue to Payment' : 'Create Account'}
             </button>
           </form>
 
           <p className="text-center text-white/40 mt-6">
-            Already have an account? <Link href="/auth/login" className="text-[#D4A017] hover:underline">Sign in</Link>
+            Already have an account? <Link href="/auth/login" className="text-primary hover:underline">Sign in</Link>
           </p>
 
           {isPaidPlan && (
@@ -329,8 +329,8 @@ function SignupForm() {
 export default function SignupPage() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen bg-[#0F0F0F] flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-[#D4A017]" />
+      <div className="min-h-screen bg-charcoal-deep flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
       </div>
     }>
       <SignupForm />

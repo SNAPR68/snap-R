@@ -55,10 +55,10 @@ export function MarketingBanner({ marketingStatus, marketingJob, onViewResults }
   // Show upgrade prompt for free-tier users (skipped marketing)
   if (marketingStatus === 'skipped') {
     return (
-      <div className="bg-gradient-to-r from-[#D4A017]/10 via-[#D4A017]/5 to-transparent border-b border-[#D4A017]/20 px-4 py-2.5 flex items-center gap-3 flex-shrink-0">
+      <div className="bg-gradient-to-r from-gold/10 via-accent-gold/5 to-transparent border-b border-primary/20 px-4 py-2.5 flex items-center gap-3 flex-shrink-0">
         <div className="flex items-center gap-2">
-          <Sparkles className="w-4 h-4 text-[#D4A017]" />
-          <span className="text-sm font-medium text-[#D4A017]">Marketing Automation</span>
+          <Sparkles className="w-4 h-4 text-primary" />
+          <span className="text-sm font-medium text-primary">Marketing Automation</span>
         </div>
         <div className="flex items-center gap-1.5 text-xs text-white/50">
           <Lock className="w-3 h-3" />
@@ -67,7 +67,7 @@ export function MarketingBanner({ marketingStatus, marketingJob, onViewResults }
         <div className="flex-1" />
         <Link
           href="/dashboard/billing"
-          className="flex items-center gap-1.5 px-3 py-1.5 bg-[#D4A017]/20 hover:bg-[#D4A017]/30 border border-[#D4A017]/30 rounded-lg text-xs text-[#D4A017] font-medium transition-colors"
+          className="flex items-center gap-1.5 px-3 py-1.5 bg-accent-gold/20 hover:bg-accent-gold/30 border border-primary/30 rounded-lg text-xs text-primary font-medium transition-colors"
         >
           Upgrade to Pro
           <ChevronRight className="w-3 h-3" />

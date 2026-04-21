@@ -9,7 +9,7 @@ export default function LandingPage() {
 
     <div className="min-h-screen flex flex-col items-center justify-center text-center px-6 bg-[var(--background)]">
 
-      <div className="w-24 h-24 rounded-2xl bg-gradient-to-br from-[#D4A017] to-[#B8860B] flex items-center justify-center font-bold text-black text-5xl mx-auto mb-8 drop-shadow-lg">S</div>
+      <div className="w-24 h-24 rounded-2xl bg-gradient-to-br from-gold to-gold-dark flex items-center justify-center font-bold text-black text-5xl mx-auto mb-8 drop-shadow-lg">S</div>
 
       <h1 className="text-5xl font-bold mb-6 text-[var(--text-main)]">
 

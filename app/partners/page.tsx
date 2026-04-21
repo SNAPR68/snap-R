@@ -202,7 +202,7 @@ export default function PartnersPage() {
                   step="1"
                   value={referralCount}
                   onChange={(e) => setReferralCount(parseInt(e.target.value))}
-                  className="w-48 accent-[#D4A017]"
+                  className="w-48 accent-accent-gold"
                 />
                 <span className="text-4xl font-bold text-primary w-16">{referralCount}</span>
               </div>

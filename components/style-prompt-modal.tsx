@@ -34,7 +34,7 @@ export function StylePromptModal({ onJustThisPhoto, onApplyToAll }: StylePromptM
 
   return (
     <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50" role="dialog" aria-modal="true" aria-label="Choose photo style">
-      <div className="bg-[#1A1A1A] rounded-2xl p-6 w-full max-w-lg border border-white/10 shadow-2xl">
+      <div className="bg-surface-container-high rounded-2xl p-6 w-full max-w-lg border border-white/10 shadow-2xl">
         {/* Success Icon */}
         <div className="flex justify-center mb-3">
           <div className="w-10 h-10 bg-emerald-500/20 rounded-full flex items-center justify-center">
@@ -47,7 +47,7 @@ export function StylePromptModal({ onJustThisPhoto, onApplyToAll }: StylePromptM
         <p className="text-white/50 text-sm text-center mb-2">
           Choose a consistent style for your listing
         </p>
-        <p className="text-[#D4A017] text-xs text-center mb-5">
+        <p className="text-primary text-xs text-center mb-5">
           ✨ All photos will have the same professional look
         </p>
         
@@ -57,7 +57,7 @@ export function StylePromptModal({ onJustThisPhoto, onApplyToAll }: StylePromptM
             <button
               key={style.id}
               onClick={() => onApplyToAll({ name: style.name, ...style.filters })}
-              className="group relative p-3 rounded-xl border border-white/10 hover:border-[#D4A017]/50 bg-white/5 hover:bg-white/10 transition-all text-center"
+              className="group relative p-3 rounded-xl border border-white/10 hover:border-primary/50 bg-white/5 hover:bg-white/10 transition-all text-center"
             >
               <div className={`w-full h-10 rounded-lg bg-gradient-to-br ${style.color} mb-2 group-hover:scale-105 transition-transform`} />
               <span className="text-xs text-white/80 group-hover:text-white font-medium">{style.name}</span>

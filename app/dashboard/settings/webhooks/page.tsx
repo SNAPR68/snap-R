@@ -173,8 +173,8 @@ export default function WebhooksSettingsPage() {
   const failCount = deliveries.filter(d => !d.success).length;
 
   return (
-    <div className="min-h-screen bg-[#0F0F0F] text-white">
-      <header className="h-14 bg-[#1A1A1A] border-b border-white/10 flex items-center px-6">
+    <div className="min-h-screen bg-charcoal-deep text-white">
+      <header className="h-14 bg-surface-container-high border-b border-white/10 flex items-center px-6">
         <Link href="/dashboard/settings" className="flex items-center gap-2 text-white/60 hover:text-white">
           <ArrowLeft className="w-4 h-4" /> Back to Settings
         </Link>
@@ -183,15 +183,15 @@ export default function WebhooksSettingsPage() {
       <main className="max-w-3xl mx-auto px-6 py-12">
         <div className="flex items-center justify-between mb-8">
           <div className="flex items-center gap-3">
-            <Webhook className="w-7 h-7 text-[#D4A017]" />
+            <Webhook className="w-7 h-7 text-primary" />
             <div>
-              <h1 className="text-2xl font-bold">Outgoing Webhooks</h1>
+              <h1 className="text-2xl font-bold editorial-headline">Outgoing Webhooks</h1>
               <p className="text-white/50 text-sm mt-0.5">Send real-time events to Zapier, Make, or your own endpoints</p>
             </div>
           </div>
           <button
             onClick={() => setShowCreate(v => !v)}
-            className="flex items-center gap-2 px-4 py-2 bg-[#D4A017] text-black font-semibold rounded-lg hover:bg-[#B8860B] text-sm"
+            className="flex items-center gap-2 px-4 py-2 bg-accent-gold text-black font-semibold rounded-lg hover:bg-accent-gold text-sm"
           >
             <Plus className="w-4 h-4" />
             Add Webhook
@@ -209,7 +209,7 @@ export default function WebhooksSettingsPage() {
 
         {/* ── Create Form ──────────────────────────────────────────────── */}
         {showCreate && (
-          <form onSubmit={handleCreate} className="bg-[#1A1A1A] border border-[#D4A017]/40 rounded-xl p-6 mb-6">
+          <form onSubmit={handleCreate} className="bg-surface-container-high border border-primary/40 rounded-xl p-6 mb-6">
             <h2 className="text-lg font-semibold mb-4">New Webhook</h2>
 
             <div className="mb-4">
@@ -221,7 +221,7 @@ export default function WebhooksSettingsPage() {
                 placeholder="https://hooks.zapier.com/hooks/catch/..."
                 required
                 aria-label="Webhook endpoint URL"
-                className="w-full bg-black/40 border border-white/20 rounded-lg px-3 py-2 text-sm text-white placeholder-white/30 focus:outline-none focus:border-[#D4A017]/60"
+                className="w-full bg-black/40 border border-white/20 rounded-lg px-3 py-2 text-sm text-white placeholder-white/30 focus:outline-none focus:border-primary/60"
               />
             </div>
 
@@ -233,7 +233,7 @@ export default function WebhooksSettingsPage() {
                 onChange={e => setNewDescription(e.target.value)}
                 placeholder="e.g. Zapier — new lead to CRM"
                 aria-label="Webhook description"
-                className="w-full bg-black/40 border border-white/20 rounded-lg px-3 py-2 text-sm text-white placeholder-white/30 focus:outline-none focus:border-[#D4A017]/60"
+                className="w-full bg-black/40 border border-white/20 rounded-lg px-3 py-2 text-sm text-white placeholder-white/30 focus:outline-none focus:border-primary/60"
               />
             </div>
 
@@ -246,7 +246,7 @@ export default function WebhooksSettingsPage() {
                       type="checkbox"
                       checked={newEvents.includes(ev.value)}
                       onChange={() => toggleEvent(ev.value)}
-                      className="w-4 h-4 accent-[#D4A017]"
+                      className="w-4 h-4 accent-accent-gold"
                     />
                     <span className="text-sm text-white/70 group-hover:text-white">{ev.label}</span>
                   </label>
@@ -258,7 +258,7 @@ export default function WebhooksSettingsPage() {
               <button
                 type="submit"
                 disabled={saving || !newUrl || newEvents.length === 0}
-                className="px-5 py-2 bg-[#D4A017] text-black font-semibold rounded-lg hover:bg-[#B8860B] disabled:opacity-50 text-sm"
+                className="px-5 py-2 bg-accent-gold text-black font-semibold rounded-lg hover:bg-accent-gold disabled:opacity-50 text-sm"
               >
                 {saving ? 'Creating...' : 'Create Webhook'}
               </button>
@@ -277,14 +277,14 @@ export default function WebhooksSettingsPage() {
         {loading ? (
           <div className="text-white/40 text-sm py-12 text-center">Loading webhooks...</div>
         ) : webhooks.length === 0 ? (
-          <div className="bg-[#1A1A1A] border border-white/10 rounded-xl p-12 text-center">
+          <div className="bg-surface-container-high border border-white/10 rounded-xl p-12 text-center">
             <Webhook className="w-10 h-10 text-white/20 mx-auto mb-3" />
             <p className="text-white/50 text-sm">No webhooks yet. Add one to start receiving real-time events.</p>
           </div>
         ) : (
           <div className="space-y-3">
             {webhooks.map(wh => (
-              <div key={wh.id} className={`bg-[#1A1A1A] border rounded-xl overflow-hidden transition-colors ${wh.is_active ? 'border-white/10' : 'border-white/5 opacity-60'}`}>
+              <div key={wh.id} className={`bg-surface-container-high border rounded-xl overflow-hidden transition-colors ${wh.is_active ? 'border-white/10' : 'border-white/5 opacity-60'}`}>
                 <div className="flex items-center gap-4 p-4">
                   {/* Active indicator */}
                   <div className={`w-2 h-2 rounded-full flex-shrink-0 ${wh.is_active ? 'bg-green-400' : 'bg-white/20'}`} />
@@ -334,7 +334,7 @@ export default function WebhooksSettingsPage() {
                 {/* Expanded: secret key */}
                 {expandedId === wh.id && (
                   <div className="border-t border-white/10 px-4 py-3 bg-black/20">
-                    <p className="text-xs text-white/40 mb-1">Signing Secret — verify with <code className="text-[#D4A017]">X-Webhook-Signature</code> header (HMAC-SHA256)</p>
+                    <p className="text-xs text-white/40 mb-1">Signing Secret — verify with <code className="text-primary">X-Webhook-Signature</code> header (HMAC-SHA256)</p>
                     <div className="flex items-center gap-2">
                       <code className="flex-1 text-xs font-mono text-white/60 bg-black/40 px-3 py-1.5 rounded border border-white/10 truncate">
                         {wh.secret}
@@ -359,7 +359,7 @@ export default function WebhooksSettingsPage() {
         <div className="mt-10">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-semibold flex items-center gap-2">
-              <Activity className="w-5 h-5 text-[#D4A017]" />
+              <Activity className="w-5 h-5 text-primary" />
               Delivery Log
             </h2>
             <div className="flex items-center gap-3 text-xs text-white/40">
@@ -387,12 +387,12 @@ export default function WebhooksSettingsPage() {
           {loadingDeliveries ? (
             <div className="text-white/40 text-sm py-8 text-center">Loading deliveries...</div>
           ) : deliveries.length === 0 ? (
-            <div className="bg-[#1A1A1A] border border-white/5 rounded-xl p-8 text-center">
+            <div className="bg-surface-container-high border border-white/5 rounded-xl p-8 text-center">
               <Clock className="w-8 h-8 text-white/10 mx-auto mb-2" />
               <p className="text-white/30 text-sm">No deliveries yet. Events will appear here once webhooks start firing.</p>
             </div>
           ) : (
-            <div className="bg-[#1A1A1A] border border-white/5 rounded-xl overflow-hidden">
+            <div className="bg-surface-container-high border border-white/5 rounded-xl overflow-hidden">
               {/* Summary row */}
               <div className="px-4 py-2.5 border-b border-white/5 bg-white/[0.02] grid grid-cols-[auto_1fr_auto_auto] gap-4 text-xs text-white/30 font-medium">
                 <span>Status</span>
@@ -443,9 +443,9 @@ export default function WebhooksSettingsPage() {
         </div>
 
         {/* ── Docs callout ─────────────────────────────────────────────── */}
-        <div className="mt-8 bg-[#1A1A1A] border border-white/10 rounded-xl p-5">
+        <div className="mt-8 bg-surface-container-high border border-white/10 rounded-xl p-5">
           <h3 className="text-sm font-semibold mb-2">How to verify webhook signatures</h3>
-          <p className="text-xs text-white/50 mb-3">Every delivery includes an <code className="text-[#D4A017]">X-Webhook-Signature</code> header. Verify it with HMAC-SHA256:</p>
+          <p className="text-xs text-white/50 mb-3">Every delivery includes an <code className="text-primary">X-Webhook-Signature</code> header. Verify it with HMAC-SHA256:</p>
           <pre className="text-xs bg-black/40 rounded-lg p-3 overflow-x-auto text-white/60 font-mono">{`const crypto = require('crypto')
 const sig = req.headers['x-webhook-signature']
 const expected = crypto

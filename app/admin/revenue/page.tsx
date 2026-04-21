@@ -152,7 +152,7 @@ export default async function AdminRevenue() {
       {/* Main Stats */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         {/* MRR */}
-        <div className="bg-[#1A1A1A] border border-white/10 rounded-xl p-6">
+        <div className="bg-surface-container-high border border-white/10 rounded-xl p-6">
           <div className="flex items-center justify-between mb-4">
             <DollarSign className="w-8 h-8 text-green-400" />
             <span className="text-xs px-2 py-1 bg-green-500/20 text-green-400 rounded">MRR</span>
@@ -162,7 +162,7 @@ export default async function AdminRevenue() {
         </div>
 
         {/* AI Costs */}
-        <div className="bg-[#1A1A1A] border border-white/10 rounded-xl p-6">
+        <div className="bg-surface-container-high border border-white/10 rounded-xl p-6">
           <div className="flex items-center justify-between mb-4">
             <Server className="w-8 h-8 text-red-400" />
             <div className={`flex items-center gap-1 text-xs ${costChange <= 0 ? 'text-green-400' : 'text-red-400'}`}>
@@ -175,9 +175,9 @@ export default async function AdminRevenue() {
         </div>
 
         {/* Profit */}
-        <div className="bg-[#1A1A1A] border border-white/10 rounded-xl p-6">
+        <div className="bg-surface-container-high border border-white/10 rounded-xl p-6">
           <div className="flex items-center justify-between mb-4">
-            <TrendingUp className="w-8 h-8 text-[#D4A017]" />
+            <TrendingUp className="w-8 h-8 text-primary" />
             <div className={`flex items-center gap-1 text-xs ${profitChange >= 0 ? 'text-green-400' : 'text-red-400'}`}>
               {profitChange >= 0 ? <ArrowUpRight className="w-3 h-3" /> : <ArrowDownRight className="w-3 h-3" />}
               {Math.abs(profitChange).toFixed(1)}%
@@ -190,7 +190,7 @@ export default async function AdminRevenue() {
         </div>
 
         {/* Profit Margin */}
-        <div className="bg-[#1A1A1A] border border-white/10 rounded-xl p-6">
+        <div className="bg-surface-container-high border border-white/10 rounded-xl p-6">
           <div className="flex items-center justify-between mb-4">
             <CreditCard className="w-8 h-8 text-purple-400" />
           </div>
@@ -202,7 +202,7 @@ export default async function AdminRevenue() {
       </div>
 
       {/* Revenue vs Costs Chart */}
-      <div className="bg-[#1A1A1A] border border-white/10 rounded-xl p-6 mb-8">
+      <div className="bg-surface-container-high border border-white/10 rounded-xl p-6 mb-8">
         <h2 className="text-xl font-semibold mb-2">Revenue vs Costs (14 days)</h2>
         <p className="text-white/40 text-sm mb-6">Green = Revenue, Red = AI Costs</p>
 
@@ -251,7 +251,7 @@ export default async function AdminRevenue() {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Subscription Breakdown */}
-        <div className="bg-[#1A1A1A] border border-white/10 rounded-xl p-6">
+        <div className="bg-surface-container-high border border-white/10 rounded-xl p-6">
           <h2 className="text-xl font-semibold mb-4">User Plans</h2>
           <div className="space-y-4">
             <div className="flex items-center justify-between p-4 bg-white/5 rounded-lg">
@@ -286,7 +286,7 @@ export default async function AdminRevenue() {
         </div>
 
         {/* Revenue Sources */}
-        <div className="bg-[#1A1A1A] border border-white/10 rounded-xl p-6">
+        <div className="bg-surface-container-high border border-white/10 rounded-xl p-6">
           <h2 className="text-xl font-semibold mb-4">Revenue Sources (30d)</h2>
           <div className="space-y-4">
             {/* MRR */}
@@ -307,11 +307,11 @@ export default async function AdminRevenue() {
             <div>
               <div className="flex justify-between mb-2">
                 <span className="text-white">Human Edit Services</span>
-                <span className="text-[#D4A017] font-medium">${humanEditRevenue.toFixed(2)}</span>
+                <span className="text-primary font-medium">${humanEditRevenue.toFixed(2)}</span>
               </div>
               <div className="h-3 bg-white/10 rounded-full overflow-hidden">
                 <div
-                  className="h-full bg-[#D4A017] rounded-full"
+                  className="h-full bg-accent-gold rounded-full"
                   style={{ width: totalRevenue30d > 0 ? `${(humanEditRevenue / totalRevenue30d) * 100}%` : '0%' }}
                 />
               </div>
@@ -329,7 +329,7 @@ export default async function AdminRevenue() {
       </div>
 
       {/* Unit Economics */}
-      <div className="bg-[#1A1A1A] border border-white/10 rounded-xl p-6 mt-6">
+      <div className="bg-surface-container-high border border-white/10 rounded-xl p-6 mt-6">
         <h2 className="text-xl font-semibold mb-4">Unit Economics</h2>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
           <div className="text-center">
@@ -343,7 +343,7 @@ export default async function AdminRevenue() {
             <p className="text-white/50 text-sm">Cost per Credit</p>
           </div>
           <div className="text-center">
-            <p className="text-3xl font-bold text-[#D4A017]">
+            <p className="text-3xl font-bold text-primary">
               ${totalPaidUsers > 0 ? (mrr / totalPaidUsers).toFixed(2) : '0'}
             </p>
             <p className="text-white/50 text-sm">ARPU (Avg Revenue/User)</p>

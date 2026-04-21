@@ -256,8 +256,8 @@ function TeamPageContent() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#0F0F0F] flex items-center justify-center">
-        <Loader2 className="w-8 h-8 text-[#D4A017] animate-spin" />
+      <div className="min-h-screen bg-charcoal-deep flex items-center justify-center">
+        <Loader2 className="w-8 h-8 text-primary animate-spin" />
       </div>
     );
   }
@@ -265,18 +265,18 @@ function TeamPageContent() {
   const canManage = userRole === 'owner' || userRole === 'admin';
 
   return (
-    <div className="min-h-screen bg-[#0F0F0F] text-white">
-      <header className="h-14 bg-[#1A1A1A] border-b border-white/10 flex items-center justify-between px-6">
+    <div className="min-h-screen bg-charcoal-deep text-white">
+      <header className="h-14 bg-surface-container-high border-b border-white/10 flex items-center justify-between px-6">
         <Link href="/dashboard" className="flex items-center gap-2 text-white/60 hover:text-white">
           <ArrowLeft className="w-4 h-4" /> Back to Dashboard
         </Link>
-        <button onClick={() => setShowCreateTeam(true)} className="flex items-center gap-2 px-4 py-2 bg-[#D4A017] text-black rounded-lg hover:bg-[#B8860B]">
+        <button onClick={() => setShowCreateTeam(true)} className="flex items-center gap-2 px-4 py-2 bg-accent-gold text-black rounded-lg hover:bg-accent-gold">
           <Plus className="w-4 h-4" /> Create Team
         </button>
       </header>
 
       <div className="flex">
-        <aside className="w-64 bg-[#1A1A1A] border-r border-white/10 min-h-[calc(100vh-56px)]">
+        <aside className="w-64 bg-surface-container-high border-r border-white/10 min-h-[calc(100vh-56px)]">
           <div className="p-4">
             <h2 className="text-sm font-medium text-white/50 uppercase tracking-wide mb-3">Your Teams</h2>
             {teams.length === 0 ? (
@@ -287,9 +287,9 @@ function TeamPageContent() {
                   <button
                     key={team.id}
                     onClick={() => router.push(`/dashboard/team?id=${team.id}`)}
-                    className={`w-full flex items-center gap-3 p-3 rounded-lg text-left transition ${teamId === team.id ? 'bg-[#D4A017]/20 border border-[#D4A017]/50' : 'hover:bg-white/5'}`}
+                    className={`w-full flex items-center gap-3 p-3 rounded-lg text-left transition ${teamId === team.id ? 'bg-accent-gold/20 border border-primary/50' : 'hover:bg-white/5'}`}
                   >
-                    <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-[#D4A017] to-[#B8860B] flex items-center justify-center text-black font-bold">
+                    <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-gold to-gold-dark flex items-center justify-center text-black font-bold">
                       {team.name.charAt(0).toUpperCase()}
                     </div>
                     <div className="flex-1 min-w-0">
@@ -309,7 +309,7 @@ function TeamPageContent() {
               <Building2 className="w-16 h-16 text-white/20 mx-auto mb-4" />
               <h2 className="text-xl font-semibold mb-2">Select a Team</h2>
               <p className="text-white/50 mb-6">Choose a team from the sidebar or create a new one</p>
-              <button onClick={() => setShowCreateTeam(true)} className="inline-flex items-center gap-2 px-6 py-3 bg-[#D4A017] text-black rounded-lg hover:bg-[#B8860B]">
+              <button onClick={() => setShowCreateTeam(true)} className="inline-flex items-center gap-2 px-6 py-3 bg-accent-gold text-black rounded-lg hover:bg-accent-gold">
                 <Plus className="w-5 h-5" /> Create Your First Team
               </button>
             </div>
@@ -317,24 +317,24 @@ function TeamPageContent() {
             <>
               <div className="flex items-center justify-between mb-8">
                 <div className="flex items-center gap-4">
-                  <div className="w-16 h-16 rounded-xl bg-gradient-to-br from-[#D4A017] to-[#B8860B] flex items-center justify-center text-black text-2xl font-bold">
+                  <div className="w-16 h-16 rounded-xl bg-gradient-to-br from-gold to-gold-dark flex items-center justify-center text-black text-2xl font-bold">
                     {selectedTeam.name.charAt(0).toUpperCase()}
                   </div>
                   <div>
-                    <h1 className="text-2xl font-bold">{selectedTeam.name}</h1>
+                    <h1 className="text-2xl font-bold editorial-headline">{selectedTeam.name}</h1>
                     <p className="text-white/50">{selectedTeam.member_count || members.length} members • {selectedTeam.credits} credits</p>
                   </div>
                 </div>
                 {canManage && (
-                  <button onClick={() => setShowInvite(true)} className="flex items-center gap-2 px-4 py-2 bg-[#D4A017] text-black rounded-lg hover:bg-[#B8860B]">
+                  <button onClick={() => setShowInvite(true)} className="flex items-center gap-2 px-4 py-2 bg-accent-gold text-black rounded-lg hover:bg-accent-gold">
                     <UserPlus className="w-4 h-4" /> Invite Members
                   </button>
                 )}
               </div>
 
-              <div className="bg-[#1A1A1A] rounded-xl border border-white/10 mb-6">
+              <div className="bg-surface-container-high rounded-xl border border-white/10 mb-6">
                 <div className="p-4 border-b border-white/10">
-                  <h2 className="font-semibold flex items-center gap-2"><Users className="w-5 h-5 text-[#D4A017]" /> Team Members</h2>
+                  <h2 className="font-semibold flex items-center gap-2"><Users className="w-5 h-5 text-primary" /> Team Members</h2>
                 </div>
                 <div className="divide-y divide-white/5">
                   {members.map(member => {
@@ -377,9 +377,9 @@ function TeamPageContent() {
               </div>
 
               {canManage && invites.length > 0 && (
-                <div className="bg-[#1A1A1A] rounded-xl border border-white/10">
+                <div className="bg-surface-container-high rounded-xl border border-white/10">
                   <div className="p-4 border-b border-white/10">
-                    <h2 className="font-semibold flex items-center gap-2"><Mail className="w-5 h-5 text-[#D4A017]" /> Pending Invites</h2>
+                    <h2 className="font-semibold flex items-center gap-2"><Mail className="w-5 h-5 text-primary" /> Pending Invites</h2>
                   </div>
                   <div className="divide-y divide-white/5">
                     {invites.map(invite => (
@@ -406,13 +406,13 @@ function TeamPageContent() {
 
       {showCreateTeam && (
         <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
-          <div className="bg-[#1A1A1A] rounded-xl w-full max-w-md p-6">
+          <div className="bg-surface-container-high rounded-xl w-full max-w-md p-6">
             <h2 className="text-xl font-bold mb-4">Create New Team</h2>
             {error && <p className="text-red-500 text-sm mb-4">{error}</p>}
             <input type="text" value={newTeamName} onChange={(e) => setNewTeamName(e.target.value)} placeholder="Team name" className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 mb-4" autoFocus />
             <div className="flex gap-3">
               <button onClick={() => setShowCreateTeam(false)} className="flex-1 px-4 py-2 border border-white/10 rounded-lg hover:bg-white/5">Cancel</button>
-              <button onClick={createTeam} disabled={creating || !newTeamName.trim()} className="flex-1 px-4 py-2 bg-[#D4A017] text-black rounded-lg hover:bg-[#B8860B] disabled:opacity-50">
+              <button onClick={createTeam} disabled={creating || !newTeamName.trim()} className="flex-1 px-4 py-2 bg-accent-gold text-black rounded-lg hover:bg-accent-gold disabled:opacity-50">
                 {creating ? <Loader2 className="w-5 h-5 animate-spin mx-auto" /> : 'Create Team'}
               </button>
             </div>
@@ -422,7 +422,7 @@ function TeamPageContent() {
 
       {showInvite && (
         <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
-          <div className="bg-[#1A1A1A] rounded-xl w-full max-w-md p-6">
+          <div className="bg-surface-container-high rounded-xl w-full max-w-md p-6">
             <h2 className="text-xl font-bold mb-4">Invite Team Member</h2>
             {error && <p className="text-red-500 text-sm mb-4">{error}</p>}
             <input type="email" value={inviteEmail} onChange={(e) => setInviteEmail(e.target.value)} placeholder="Email address" className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 mb-4" autoFocus />
@@ -433,7 +433,7 @@ function TeamPageContent() {
             </select>
             <div className="flex gap-3">
               <button onClick={() => setShowInvite(false)} className="flex-1 px-4 py-2 border border-white/10 rounded-lg hover:bg-white/5">Cancel</button>
-              <button onClick={sendInvite} disabled={inviting || !inviteEmail.trim()} className="flex-1 px-4 py-2 bg-[#D4A017] text-black rounded-lg hover:bg-[#B8860B] disabled:opacity-50">
+              <button onClick={sendInvite} disabled={inviting || !inviteEmail.trim()} className="flex-1 px-4 py-2 bg-accent-gold text-black rounded-lg hover:bg-accent-gold disabled:opacity-50">
                 {inviting ? <Loader2 className="w-5 h-5 animate-spin mx-auto" /> : 'Send Invite'}
               </button>
             </div>
@@ -446,7 +446,7 @@ function TeamPageContent() {
 
 export default function TeamPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen bg-[#0F0F0F] flex items-center justify-center"><Loader2 className="w-8 h-8 text-[#D4A017] animate-spin" /></div>}>
+    <Suspense fallback={<div className="min-h-screen bg-charcoal-deep flex items-center justify-center"><Loader2 className="w-8 h-8 text-primary animate-spin" /></div>}>
       <TeamPageContent />
     </Suspense>
   );

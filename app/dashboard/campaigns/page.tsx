@@ -178,19 +178,19 @@ export default function CampaignsPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#0D0D0D] flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-[#B8860B]"></div>
+      <div className="min-h-screen bg-surface flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-accent-gold"></div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#0D0D0D] text-white p-6">
+    <div className="min-h-screen bg-surface text-white p-6">
       {/* Header */}
       <div className="flex items-center justify-between mb-8">
         <div>
           <h1 className="text-3xl font-bold flex items-center gap-3">
-            <Zap className="w-8 h-8 text-[#B8860B]" />
+            <Zap className="w-8 h-8 text-accent-gold" />
             Auto Campaigns
           </h1>
           <p className="text-gray-400 mt-1">Automated marketing when listing status changes</p>
@@ -198,14 +198,14 @@ export default function CampaignsPage() {
         <div className="flex items-center gap-3">
           <Link
             href="/dashboard/campaigns/settings"
-            className="flex items-center gap-2 px-4 py-2 bg-[#1A1A1A] border border-[#333] rounded-lg hover:border-[#B8860B] transition-colors"
+            className="flex items-center gap-2 px-4 py-2 bg-surface-container-high border border-surface-border rounded-lg hover:border-accent-gold transition-colors"
           >
             <Settings className="w-4 h-4" />
             Automation Settings
           </Link>
           <button
             onClick={fetchData}
-            className="p-2 bg-[#1A1A1A] border border-[#333] rounded-lg hover:border-[#B8860B] transition-colors"
+            className="p-2 bg-surface-container-high border border-surface-border rounded-lg hover:border-accent-gold transition-colors"
           >
             <RefreshCw className="w-5 h-5" />
           </button>
@@ -214,30 +214,30 @@ export default function CampaignsPage() {
 
       {/* Stats Cards */}
       <div className="grid grid-cols-5 gap-4 mb-8">
-        <div className="bg-gradient-to-br from-[#1A1A1A] to-[#0D0D0D] border border-[#333] rounded-xl p-4">
+        <div className="bg-gradient-to-br from-surface-raised to-surface border border-surface-border rounded-xl p-4">
           <p className="text-gray-400 text-sm">Active Campaigns</p>
-          <p className="text-3xl font-bold text-[#B8860B]">{stats?.activeCampaigns || 0}</p>
+          <p className="text-3xl font-bold text-accent-gold">{stats?.activeCampaigns || 0}</p>
         </div>
-        <div className="bg-gradient-to-br from-[#1A1A1A] to-[#0D0D0D] border border-[#333] rounded-xl p-4">
+        <div className="bg-gradient-to-br from-surface-raised to-surface border border-surface-border rounded-xl p-4">
           <p className="text-gray-400 text-sm">Pending Approval</p>
           <p className="text-3xl font-bold text-yellow-400">{stats?.pendingApprovals || 0}</p>
         </div>
-        <div className="bg-gradient-to-br from-[#1A1A1A] to-[#0D0D0D] border border-[#333] rounded-xl p-4">
+        <div className="bg-gradient-to-br from-surface-raised to-surface border border-surface-border rounded-xl p-4">
           <p className="text-gray-400 text-sm">Scheduled</p>
           <p className="text-3xl font-bold text-blue-400">{stats?.scheduledPosts || 0}</p>
         </div>
-        <div className="bg-gradient-to-br from-[#1A1A1A] to-[#0D0D0D] border border-[#333] rounded-xl p-4">
+        <div className="bg-gradient-to-br from-surface-raised to-surface border border-surface-border rounded-xl p-4">
           <p className="text-gray-400 text-sm">Published</p>
           <p className="text-3xl font-bold text-green-400">{stats?.publishedPosts || 0}</p>
         </div>
-        <div className="bg-gradient-to-br from-[#1A1A1A] to-[#0D0D0D] border border-[#333] rounded-xl p-4">
+        <div className="bg-gradient-to-br from-surface-raised to-surface border border-surface-border rounded-xl p-4">
           <p className="text-gray-400 text-sm">Total Campaigns</p>
           <p className="text-3xl font-bold text-white">{stats?.totalCampaigns || 0}</p>
         </div>
       </div>
 
       {/* Tabs */}
-      <div className="flex items-center gap-4 mb-6 border-b border-[#333]">
+      <div className="flex items-center gap-4 mb-6 border-b border-surface-border">
         {[
           { id: "queue" as TabId, label: "Content Queue", count: queue.length },
           { id: "campaigns" as TabId, label: "Campaigns", count: campaigns.length },
@@ -246,12 +246,12 @@ export default function CampaignsPage() {
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
             className={`pb-3 px-2 border-b-2 transition-colors ${activeTab === tab.id
-                ? "border-[#B8860B] text-[#B8860B]"
+                ? "border-accent-gold text-accent-gold"
                 : "border-transparent text-gray-400 hover:text-white"
               }`}
           >
             {tab.label}
-            <span className="ml-2 px-2 py-0.5 bg-[#1A1A1A] rounded-full text-xs">
+            <span className="ml-2 px-2 py-0.5 bg-surface-container-high rounded-full text-xs">
               {tab.count}
             </span>
           </button>
@@ -262,7 +262,7 @@ export default function CampaignsPage() {
       {activeTab === "queue" && (
         <div className="space-y-4">
           {queue.length === 0 ? (
-            <div className="text-center py-12 bg-[#1A1A1A] rounded-xl border border-[#333]">
+            <div className="text-center py-12 bg-surface-container-high rounded-xl border border-surface-border">
               <Clock className="w-12 h-12 text-gray-600 mx-auto mb-4" />
               <p className="text-gray-400">No scheduled content</p>
               <p className="text-gray-500 text-sm mt-1">
@@ -278,7 +278,7 @@ export default function CampaignsPage() {
               return (
                 <div
                   key={item.id}
-                  className="bg-[#1A1A1A] border border-[#333] rounded-xl p-4 hover:border-[#B8860B]/50 transition-colors"
+                  className="bg-surface-container-high border border-surface-border rounded-xl p-4 hover:border-accent-gold/50 transition-colors"
                 >
                   <div className="flex items-start gap-4">
                     {/* Preview Image */}
@@ -293,7 +293,7 @@ export default function CampaignsPage() {
                     {/* Content Info */}
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1">
-                        <Icon className="w-4 h-4 text-[#B8860B]" />
+                        <Icon className="w-4 h-4 text-accent-gold" />
                         <span className="font-medium capitalize">
                           {item.platform || item.content_type.replace(/_/g, " ")}
                         </span>
@@ -303,7 +303,7 @@ export default function CampaignsPage() {
                         >
                           {item.status}
                         </span>
-                        <span className="text-xs px-2 py-0.5 bg-[#B8860B]/20 text-[#B8860B] rounded-full">
+                        <span className="text-xs px-2 py-0.5 bg-accent-gold/20 text-accent-gold rounded-full">
                           {formatStatus(item.campaigns?.trigger_status || "")}
                         </span>
                       </div>
@@ -379,7 +379,7 @@ export default function CampaignsPage() {
                               };
                               window.open(urls[item.platform as keyof typeof urls] || urls.instagram, "_blank");
                             }}
-                            className="p-2 bg-[#D4A017]/20 text-[#D4A017] rounded-lg hover:bg-[#D4A017]/30 transition-colors"
+                            className="p-2 bg-accent-gold/20 text-primary rounded-lg hover:bg-accent-gold/30 transition-colors"
                             title="Open Platform"
                           >
                             <ExternalLink className="w-4 h-4" />
@@ -388,7 +388,7 @@ export default function CampaignsPage() {
                       )}
                       <button
                         onClick={() => handleAction("regenerate", { queueItemId: item.id })}
-                        className="p-2 bg-[#333] text-gray-400 rounded-lg hover:bg-[#444] transition-colors"
+                        className="p-2 bg-surface-raised text-gray-400 rounded-lg hover:bg-surface-raised transition-colors"
                         title="Regenerate"
                       >
                         <RefreshCw className="w-4 h-4" />
@@ -406,7 +406,7 @@ export default function CampaignsPage() {
       {activeTab === "campaigns" && (
         <div className="space-y-4">
           {campaigns.length === 0 ? (
-            <div className="text-center py-12 bg-[#1A1A1A] rounded-xl border border-[#333]">
+            <div className="text-center py-12 bg-surface-container-high rounded-xl border border-surface-border">
               <Zap className="w-12 h-12 text-gray-600 mx-auto mb-4" />
               <p className="text-gray-400">No campaigns yet</p>
               <p className="text-gray-500 text-sm mt-1">
@@ -417,7 +417,7 @@ export default function CampaignsPage() {
             campaigns.map((campaign) => (
               <div
                 key={campaign.id}
-                className="bg-[#1A1A1A] border border-[#333] rounded-xl p-4 hover:border-[#B8860B]/50 transition-colors"
+                className="bg-surface-container-high border border-surface-border rounded-xl p-4 hover:border-accent-gold/50 transition-colors"
               >
                 <div className="flex items-center gap-4">
                   {/* Listing Photo */}

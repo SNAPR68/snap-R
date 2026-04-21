@@ -49,7 +49,7 @@ export function PhotoGridSkeleton({ count = 6 }: { count?: number }) {
 
 export function EnhancedPhotoSkeleton() {
   return (
-    <div className="bg-[#0F0F0F] rounded-lg overflow-hidden border border-white/10">
+    <div className="bg-charcoal-deep rounded-lg overflow-hidden border border-white/10">
       <Skeleton className="aspect-video" />
       <div className="p-2">
         <Skeleton variant="text" width="60%" height={12} />

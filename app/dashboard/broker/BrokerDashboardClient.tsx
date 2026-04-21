@@ -48,7 +48,7 @@ interface BrokerDashboardProps {
 }
 
 const ROLE_COLORS: Record<string, string> = {
-  owner: 'bg-[#D4A017]/20 text-[#D4A017]',
+  owner: 'bg-accent-gold/20 text-primary',
   admin: 'bg-blue-500/20 text-blue-400',
   editor: 'bg-green-500/20 text-green-400',
   viewer: 'bg-white/10 text-white/50',
@@ -66,7 +66,7 @@ function StatusBadge({ status }: { status: string | null }) {
   if (!status) return <span className="text-xs text-white/30">Draft</span>
   const colors: Record<string, string> = {
     prepared: 'bg-green-500/20 text-green-400',
-    completed: 'bg-[#D4A017]/20 text-[#D4A017]',
+    completed: 'bg-accent-gold/20 text-primary',
     processing: 'bg-blue-500/20 text-blue-400',
     failed: 'bg-red-500/20 text-red-400',
   }
@@ -86,7 +86,7 @@ interface ChartTooltipProps {
 function ChartTooltip({ active, payload, label }: ChartTooltipProps) {
   if (!active || !payload?.length) return null
   return (
-    <div className="bg-[#1A1A1A] border border-white/10 rounded-lg px-3 py-2 shadow-xl">
+    <div className="bg-surface-container-high border border-white/10 rounded-lg px-3 py-2 shadow-xl">
       {label && <p className="text-xs text-white/50 mb-1">{label}</p>}
       {payload.map((entry, i) => (
         <p key={i} className="text-sm" style={{ color: entry.color }}>
@@ -146,7 +146,7 @@ export default function BrokerDashboardClient({ team, members, listings, stats }
         </p>
         <Link
           href="/dashboard/team"
-          className="px-6 py-3 bg-gradient-to-r from-[#D4A017] to-[#B8860B] text-black font-bold rounded-xl hover:opacity-90 transition-opacity flex items-center gap-2"
+          className="px-6 py-3 bg-gradient-to-r from-gold to-gold-dark text-black font-bold rounded-xl hover:opacity-90 transition-opacity flex items-center gap-2"
         >
           <Plus className="w-4 h-4" />Create Team
         </Link>
@@ -156,7 +156,7 @@ export default function BrokerDashboardClient({ team, members, listings, stats }
 
   const STAT_CARDS = [
     { label: 'Total Agents', value: stats.totalAgents, icon: Users, color: 'text-blue-400', bg: 'bg-blue-500/10' },
-    { label: 'Active Listings', value: stats.activeListings, icon: Building, color: 'text-[#D4A017]', bg: 'bg-[#D4A017]/10' },
+    { label: 'Active Listings', value: stats.activeListings, icon: Building, color: 'text-primary', bg: 'bg-accent-gold/10' },
     { label: 'Total Leads', value: stats.totalLeads, icon: TrendingUp, color: 'text-green-400', bg: 'bg-green-500/10' },
     { label: 'Avg Response', value: '< 2h', icon: Clock, color: 'text-purple-400', bg: 'bg-purple-500/10' },
   ]
@@ -189,7 +189,7 @@ export default function BrokerDashboardClient({ team, members, listings, stats }
         </div>
         <button
           onClick={() => setShowInvite(true)}
-          className="px-4 py-2 bg-gradient-to-r from-[#D4A017] to-[#B8860B] text-black font-bold rounded-xl text-sm hover:opacity-90 transition-opacity flex items-center gap-2"
+          className="px-4 py-2 bg-gradient-to-r from-gold to-gold-dark text-black font-bold rounded-xl text-sm hover:opacity-90 transition-opacity flex items-center gap-2"
         >
           <UserPlus className="w-4 h-4" />Invite Agent
         </button>
@@ -198,7 +198,7 @@ export default function BrokerDashboardClient({ team, members, listings, stats }
       {/* Stats Grid */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {STAT_CARDS.map(s => (
-          <div key={s.label} className="bg-[#1A1A1A] border border-white/5 rounded-xl p-4">
+          <div key={s.label} className="bg-surface-container-high border border-white/5 rounded-xl p-4">
             <div className="flex items-center justify-between mb-3">
               <div className={`w-10 h-10 rounded-lg ${s.bg} flex items-center justify-center`}>
                 <s.icon className={`w-5 h-5 ${s.color}`} />
@@ -214,7 +214,7 @@ export default function BrokerDashboardClient({ team, members, listings, stats }
       {(members.length > 0 || listings.length > 0) && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Listings per agent bar chart */}
-          <div className="bg-[#1A1A1A] border border-white/5 rounded-xl p-5">
+          <div className="bg-surface-container-high border border-white/5 rounded-xl p-5">
             <h3 className="text-sm font-semibold text-white/70 mb-4">Listings per Agent</h3>
             {agentBarData.length > 0 ? (
               <ResponsiveContainer width="100%" height={220}>
@@ -249,7 +249,7 @@ export default function BrokerDashboardClient({ team, members, listings, stats }
           </div>
 
           {/* Listing status pie chart */}
-          <div className="bg-[#1A1A1A] border border-white/5 rounded-xl p-5">
+          <div className="bg-surface-container-high border border-white/5 rounded-xl p-5">
             <h3 className="text-sm font-semibold text-white/70 mb-4">Listings by Status</h3>
             {statusPieData.length > 0 ? (
               <ResponsiveContainer width="100%" height={220}>
@@ -287,7 +287,7 @@ export default function BrokerDashboardClient({ team, members, listings, stats }
       {/* Content: Agent Roster + Listings */}
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
         {/* Agent Roster — 3 cols */}
-        <div className="lg:col-span-3 bg-[#1A1A1A] border border-white/5 rounded-xl p-5">
+        <div className="lg:col-span-3 bg-surface-container-high border border-white/5 rounded-xl p-5">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-bold text-white">Agent Roster</h2>
             <span className="text-xs text-white/40">{members.length} members</span>
@@ -331,7 +331,7 @@ export default function BrokerDashboardClient({ team, members, listings, stats }
         </div>
 
         {/* Team Listings — 2 cols */}
-        <div className="lg:col-span-2 bg-[#1A1A1A] border border-white/5 rounded-xl p-5">
+        <div className="lg:col-span-2 bg-surface-container-high border border-white/5 rounded-xl p-5">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-bold text-white">Team Listings</h2>
             <span className="text-xs text-white/40">{listings.length} total</span>
@@ -350,7 +350,7 @@ export default function BrokerDashboardClient({ team, members, listings, stats }
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium text-white truncate">{l.address ?? l.title ?? 'Untitled'}</p>
                   <div className="flex items-center gap-2 mt-0.5">
-                    {l.price && <span className="text-xs text-[#D4A017] font-bold">${l.price.toLocaleString()}</span>}
+                    {l.price && <span className="text-xs text-primary font-bold">${l.price.toLocaleString()}</span>}
                     <span className="text-xs text-white/30">{l.owner_name ?? 'Unknown agent'}</span>
                   </div>
                 </div>
@@ -370,11 +370,11 @@ export default function BrokerDashboardClient({ team, members, listings, stats }
       {/* Invite Modal */}
       {showInvite && (
         <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4" role="dialog" aria-modal="true" aria-label="Invite agent">
-          <div className="bg-[#1A1A1A] rounded-2xl p-6 w-full max-w-md" onClick={e => e.stopPropagation()}>
+          <div className="bg-surface-container-high rounded-2xl p-6 w-full max-w-md" onClick={e => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center gap-3">
-                <div className="p-2 bg-[#D4A017]/20 rounded-lg">
-                  <Mail className="w-5 h-5 text-[#D4A017]" />
+                <div className="p-2 bg-accent-gold/20 rounded-lg">
+                  <Mail className="w-5 h-5 text-primary" />
                 </div>
                 <div>
                   <h2 className="text-xl font-bold text-white">Invite Agent</h2>
@@ -396,7 +396,7 @@ export default function BrokerDashboardClient({ team, members, listings, stats }
                   placeholder="agent@brokerage.com"
                   required
                   aria-label="Invite email address"
-                  className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white focus:border-[#D4A017]/60 outline-none"
+                  className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white focus:border-primary/60 outline-none"
                 />
               </div>
               <div>
@@ -409,7 +409,7 @@ export default function BrokerDashboardClient({ team, members, listings, stats }
                       onClick={() => setInviteRole(r)}
                       className={`py-2 rounded-xl border-2 text-sm font-medium transition-all capitalize ${
                         inviteRole === r
-                          ? 'border-[#D4A017] bg-[#D4A017]/10 text-[#D4A017]'
+                          ? 'border-primary bg-accent-gold/10 text-primary'
                           : 'border-white/10 text-white/50 hover:border-white/20'
                       }`}
                     >
@@ -435,7 +435,7 @@ export default function BrokerDashboardClient({ team, members, listings, stats }
               <button
                 type="submit"
                 disabled={inviting || inviteSuccess}
-                className="w-full py-3 bg-gradient-to-r from-[#D4A017] to-[#B8860B] rounded-xl text-black font-bold hover:opacity-90 disabled:opacity-50 flex items-center justify-center gap-2"
+                className="w-full py-3 bg-gradient-to-r from-gold to-gold-dark rounded-xl text-black font-bold hover:opacity-90 disabled:opacity-50 flex items-center justify-center gap-2"
               >
                 {inviting ? <Loader2 className="w-4 h-4 animate-spin" /> : <ExternalLink className="w-4 h-4" />}
                 {inviting ? 'Sending...' : 'Send Invite'}

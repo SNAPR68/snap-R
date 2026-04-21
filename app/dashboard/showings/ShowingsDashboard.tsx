@@ -64,7 +64,7 @@ const OUTCOME_CONFIG: Record<string, { label: string; color: string }> = {
   interested: { label: 'Interested', color: 'text-emerald-400' },
   unknown: { label: 'Unknown', color: 'text-white/40' },
   not_interested: { label: 'Not Interested', color: 'text-red-400' },
-  offer_submitted: { label: 'Offer Submitted!', color: 'text-[#D4A017]' },
+  offer_submitted: { label: 'Offer Submitted!', color: 'text-primary' },
 }
 
 const SOURCES = ['mls', 'property_site', 'social_media', 'email', 'referral', 'open_house', 'direct', 'other']
@@ -138,7 +138,7 @@ function ScheduleForm({ listings, onSaved, onClose }: ScheduleFormProps) {
     }
   }
 
-  const inputCls = "w-full bg-[#0A0A0A] border border-white/10 rounded-lg px-3 py-2 text-sm text-white placeholder-white/30 focus:outline-none focus:border-[#D4A017]/60"
+  const inputCls = "w-full bg-surface border border-white/10 rounded-lg px-3 py-2 text-sm text-white placeholder-white/30 focus:outline-none focus:border-primary/60"
   const labelCls = "text-xs text-white/50 uppercase tracking-wider block mb-1"
 
   return (
@@ -234,7 +234,7 @@ function ScheduleForm({ listings, onSaved, onClose }: ScheduleFormProps) {
 
       <div className="flex gap-3 pt-2">
         <button type="button" onClick={onClose} className="flex-1 py-2.5 bg-white/5 border border-white/10 rounded-xl text-sm hover:bg-white/10">Cancel</button>
-        <button type="submit" disabled={saving} className="flex-2 flex-1 py-2.5 bg-[#D4A017] text-black font-bold rounded-xl text-sm hover:bg-[#B8860B] disabled:opacity-60 flex items-center justify-center gap-2">
+        <button type="submit" disabled={saving} className="flex-2 flex-1 py-2.5 bg-accent-gold text-black font-bold rounded-xl text-sm hover:bg-accent-gold disabled:opacity-60 flex items-center justify-center gap-2">
           {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
           {saving ? 'Saving...' : 'Schedule Showing'}
         </button>
@@ -284,7 +284,7 @@ function OutcomeForm({ showing, onSaved, onClose }: OutcomeFormProps) {
     }
   }
 
-  const inputCls = "w-full bg-[#0A0A0A] border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-[#D4A017]/60"
+  const inputCls = "w-full bg-surface border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-primary/60"
 
   return (
     <div className="p-6 space-y-4">
@@ -300,7 +300,7 @@ function OutcomeForm({ showing, onSaved, onClose }: OutcomeFormProps) {
             const Icon = v.icon
             return (
               <button key={k} onClick={() => setStatus(k)}
-                className={`flex items-center gap-2 p-2.5 rounded-xl border-2 text-sm font-medium transition-all ${status === k ? 'border-[#D4A017] bg-[#D4A017]/5' : 'border-white/10 hover:border-white/20'}`}>
+                className={`flex items-center gap-2 p-2.5 rounded-xl border-2 text-sm font-medium transition-all ${status === k ? 'border-primary bg-accent-gold/5' : 'border-white/10 hover:border-white/20'}`}>
                 <Icon className="w-4 h-4" /> {v.label}
               </button>
             )
@@ -314,7 +314,7 @@ function OutcomeForm({ showing, onSaved, onClose }: OutcomeFormProps) {
           <div className="flex gap-1">
             {[1, 2, 3, 4, 5].map(n => (
               <button key={n} onClick={() => setInterestLevel(n)}
-                className={`w-10 h-10 rounded-lg border transition-all ${n <= interestLevel ? 'border-[#D4A017] bg-[#D4A017]/20 text-[#D4A017]' : 'border-white/10 text-white/30'}`}>
+                className={`w-10 h-10 rounded-lg border transition-all ${n <= interestLevel ? 'border-primary bg-accent-gold/20 text-primary' : 'border-white/10 text-white/30'}`}>
                 <Star className="w-4 h-4 mx-auto" />
               </button>
             ))}
@@ -342,7 +342,7 @@ function OutcomeForm({ showing, onSaved, onClose }: OutcomeFormProps) {
 
       <div className="flex gap-3">
         <button onClick={onClose} className="flex-1 py-2.5 bg-white/5 border border-white/10 rounded-xl text-sm">Cancel</button>
-        <button onClick={save} disabled={saving} className="flex-1 py-2.5 bg-[#D4A017] text-black font-bold rounded-xl text-sm hover:bg-[#B8860B] disabled:opacity-60 flex items-center justify-center gap-2">
+        <button onClick={save} disabled={saving} className="flex-1 py-2.5 bg-accent-gold text-black font-bold rounded-xl text-sm hover:bg-accent-gold disabled:opacity-60 flex items-center justify-center gap-2">
           {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
           {saving ? 'Saving...' : 'Save'}
         </button>
@@ -380,7 +380,7 @@ function ShowingCard({ showing, onUpdate }: { showing: Showing; onUpdate: () => 
         {showing.interest_level && (
           <div className="flex gap-0.5">
             {[1, 2, 3, 4, 5].map(n => (
-              <Star key={n} className={`w-3.5 h-3.5 ${n <= showing.interest_level! ? 'text-[#D4A017] fill-[#D4A017]' : 'text-white/10'}`} />
+              <Star key={n} className={`w-3.5 h-3.5 ${n <= showing.interest_level! ? 'text-primary fill-accent-gold' : 'text-white/10'}`} />
             ))}
           </div>
         )}
@@ -415,7 +415,7 @@ function ShowingCard({ showing, onUpdate }: { showing: Showing; onUpdate: () => 
           <a
             href={`mailto:${showing.contact_email}?subject=Thanks for visiting — share your feedback&body=Hi ${encodeURIComponent(showing.contact_name)},%0A%0AThanks for the showing! We'd love your feedback:%0A%0A${encodeURIComponent(`${process.env.NEXT_PUBLIC_BASE_URL || 'https://snap-r.com'}/feedback/showing/${showing.id}`)}%0A%0AThanks!`}
             title="Send feedback request email"
-            className="flex items-center gap-1.5 px-3 py-2 bg-white/5 border border-white/10 rounded-xl text-xs font-medium hover:bg-[#D4A017]/10 hover:border-[#D4A017]/30 hover:text-[#D4A017] transition-colors"
+            className="flex items-center gap-1.5 px-3 py-2 bg-white/5 border border-white/10 rounded-xl text-xs font-medium hover:bg-accent-gold/10 hover:border-primary/30 hover:text-primary transition-colors"
           >
             <Send className="w-3 h-3" /> Feedback
           </a>
@@ -425,7 +425,7 @@ function ShowingCard({ showing, onUpdate }: { showing: Showing; onUpdate: () => 
       {showOutcome && (
         <div role="dialog" aria-modal="true" aria-label="Update Showing" className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={() => setShowOutcome(false)} />
-          <div className="relative bg-[#141414] border border-white/10 rounded-2xl w-full max-w-md max-h-[90vh] overflow-y-auto">
+          <div className="relative bg-surface border border-white/10 rounded-2xl w-full max-w-md max-h-[90vh] overflow-y-auto">
             <OutcomeForm showing={showing} onSaved={onUpdate} onClose={() => setShowOutcome(false)} />
           </div>
         </div>
@@ -495,17 +495,17 @@ export default function ShowingsDashboard() {
   const selectedListing = listings.find(l => l.id === listingFilter)
 
   return (
-    <div className="min-h-screen bg-[#0A0A0A] text-white">
+    <div className="min-h-screen bg-surface text-white">
       {/* Header */}
-      <header className="h-14 bg-[#111] border-b border-white/5 flex items-center px-6 gap-3">
-        <div className="w-8 h-8 rounded-lg bg-[#D4A017]/20 flex items-center justify-center">
-          <Calendar className="w-4 h-4 text-[#D4A017]" />
+      <header className="h-14 bg-surface border-b border-white/5 flex items-center px-6 gap-3">
+        <div className="w-8 h-8 rounded-lg bg-accent-gold/20 flex items-center justify-center">
+          <Calendar className="w-4 h-4 text-primary" />
         </div>
         <span className="font-bold">Showings</span>
         <div className="ml-auto">
           <button
             onClick={() => setShowForm(true)}
-            className="flex items-center gap-2 px-4 py-2 bg-[#D4A017] text-black font-bold rounded-xl text-sm hover:bg-[#B8860B] transition-colors"
+            className="flex items-center gap-2 px-4 py-2 bg-accent-gold text-black font-bold rounded-xl text-sm hover:bg-accent-gold transition-colors"
           >
             <Plus className="w-4 h-4" /> Schedule Showing
           </button>
@@ -520,7 +520,7 @@ export default function ShowingsDashboard() {
               { label: 'Total', value: stats.total, color: 'text-white' },
               { label: 'Upcoming', value: stats.scheduled, color: 'text-blue-400' },
               { label: 'Interested', value: stats.interested, color: 'text-green-400' },
-              { label: 'Offers', value: stats.offers, color: 'text-[#D4A017]' },
+              { label: 'Offers', value: stats.offers, color: 'text-primary' },
             ].map(({ label, value, color }) => (
               <div key={label} className="glass-luxury glossy-top rounded-2xl p-4">
                 <p className={`text-3xl font-bold ${color}`}>{value}</p>
@@ -533,12 +533,12 @@ export default function ShowingsDashboard() {
         {/* Filters */}
         <div className="flex flex-wrap gap-3 mb-6">
           {/* Status filter */}
-          <div className="flex gap-1 bg-[#111] rounded-xl p-1">
+          <div className="flex gap-1 bg-surface rounded-xl p-1">
             {['all', 'scheduled', 'completed', 'cancelled', 'no_show'].map(f => (
               <button
                 key={f}
                 onClick={() => setFilter(f)}
-                className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${filter === f ? 'bg-[#D4A017] text-black' : 'text-white/50 hover:text-white'}`}
+                className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${filter === f ? 'bg-accent-gold text-black' : 'text-white/50 hover:text-white'}`}
               >
                 {f === 'all' ? 'All' : f === 'no_show' ? 'No Show' : f.charAt(0).toUpperCase() + f.slice(1)}
               </button>
@@ -549,17 +549,17 @@ export default function ShowingsDashboard() {
           <div className="relative">
             <button
               onClick={() => setShowListingDropdown(d => !d)}
-              className="flex items-center gap-2 px-3 py-2 bg-[#111] border border-white/10 rounded-xl text-sm hover:border-white/20 transition-colors"
+              className="flex items-center gap-2 px-3 py-2 bg-surface border border-white/10 rounded-xl text-sm hover:border-white/20 transition-colors"
             >
               <Home className="w-4 h-4 text-white/40" />
               <span className="text-white/60">{listingFilter === 'all' ? 'All Listings' : (selectedListing?.title ?? 'Listing')}</span>
               <ChevronDown className="w-3.5 h-3.5 text-white/30" />
             </button>
             {showListingDropdown && (
-              <div className="absolute top-full mt-2 left-0 bg-[#1A1A1A] border border-white/10 rounded-xl overflow-hidden z-20 min-w-[220px] max-h-60 overflow-y-auto">
+              <div className="absolute top-full mt-2 left-0 bg-surface-container-high border border-white/10 rounded-xl overflow-hidden z-20 min-w-[220px] max-h-60 overflow-y-auto">
                 <button onClick={() => { setListingFilter('all'); setShowListingDropdown(false) }} className="w-full text-left px-4 py-2.5 text-sm hover:bg-white/5 text-white/60">All Listings</button>
                 {listings.map(l => (
-                  <button key={l.id} onClick={() => { setListingFilter(l.id); setShowListingDropdown(false) }} className={`w-full text-left px-4 py-2.5 text-sm hover:bg-white/5 ${listingFilter === l.id ? 'text-[#D4A017]' : 'text-white/60'}`}>
+                  <button key={l.id} onClick={() => { setListingFilter(l.id); setShowListingDropdown(false) }} className={`w-full text-left px-4 py-2.5 text-sm hover:bg-white/5 ${listingFilter === l.id ? 'text-primary' : 'text-white/60'}`}>
                     {l.title || l.address}
                   </button>
                 ))}
@@ -574,7 +574,7 @@ export default function ShowingsDashboard() {
           <div className="text-center py-16">
             <Calendar className="w-12 h-12 text-white/10 mx-auto mb-3" />
             <p className="text-white/40">No showings yet.</p>
-            <button onClick={() => setShowForm(true)} className="mt-4 px-4 py-2 bg-[#D4A017] text-black font-bold rounded-xl text-sm">Schedule First Showing</button>
+            <button onClick={() => setShowForm(true)} className="mt-4 px-4 py-2 bg-accent-gold text-black font-bold rounded-xl text-sm">Schedule First Showing</button>
           </div>
         ) : (
           <div className="space-y-6">
@@ -608,7 +608,7 @@ export default function ShowingsDashboard() {
       {showForm && (
         <div role="dialog" aria-modal="true" aria-label="Schedule Showing" className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={() => setShowForm(false)} />
-          <div className="relative bg-[#141414] border border-white/10 rounded-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
+          <div className="relative bg-surface border border-white/10 rounded-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
             <ScheduleForm listings={listings} onSaved={load} onClose={() => setShowForm(false)} />
           </div>
         </div>

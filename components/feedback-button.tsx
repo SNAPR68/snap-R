@@ -57,7 +57,7 @@ export function FeedbackButton() {
     <>
       <button
         onClick={() => setIsOpen(true)}
-        className="fixed bottom-24 right-6 z-40 bg-gradient-to-r from-[#D4A017] to-[#B8860B] text-black p-3 rounded-full shadow-lg hover:scale-110 transition-transform"
+        className="fixed bottom-24 right-6 z-40 bg-gradient-to-r from-gold to-gold-dark text-black p-3 rounded-full shadow-lg hover:scale-110 transition-transform"
         title="Send Feedback"
       >
         <MessageSquarePlus className="w-5 h-5" />
@@ -67,7 +67,7 @@ export function FeedbackButton() {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setIsOpen(false)} />
           
-          <div className="relative bg-[#1A1A1A] rounded-2xl border border-white/10 w-full max-w-md p-6 shadow-2xl">
+          <div className="relative bg-surface-container-high rounded-2xl border border-white/10 w-full max-w-md p-6 shadow-2xl">
             <button
               onClick={() => setIsOpen(false)}
               className="absolute top-4 right-4 text-white/40 hover:text-white"
@@ -97,7 +97,7 @@ export function FeedbackButton() {
                         onClick={() => setType(ft.id as FeedbackType)}
                         className={`p-3 rounded-xl border text-center transition-all ${
                           type === ft.id
-                            ? 'border-[#D4A017] bg-[#D4A017]/10'
+                            ? 'border-primary bg-accent-gold/10'
                             : 'border-white/10 hover:border-white/20'
                         }`}
                       >
@@ -112,7 +112,7 @@ export function FeedbackButton() {
                     placeholder="Your email (optional)"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-white/30 focus:outline-none focus:border-[#D4A017]/50"
+                    className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-white/30 focus:outline-none focus:border-primary/50"
                   />
 
                   <textarea
@@ -125,13 +125,13 @@ export function FeedbackButton() {
                     onChange={(e) => setMessage(e.target.value)}
                     required
                     rows={4}
-                    className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-white/30 focus:outline-none focus:border-[#D4A017]/50 resize-none"
+                    className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-white/30 focus:outline-none focus:border-primary/50 resize-none"
                   />
 
                   <button
                     type="submit"
                     disabled={isSubmitting || !message.trim()}
-                    className="w-full py-3 bg-gradient-to-r from-[#D4A017] to-[#B8860B] text-black font-semibold rounded-xl hover:opacity-90 disabled:opacity-50 transition-opacity flex items-center justify-center gap-2"
+                    className="w-full py-3 bg-gradient-to-r from-gold to-gold-dark text-black font-semibold rounded-xl hover:opacity-90 disabled:opacity-50 transition-opacity flex items-center justify-center gap-2"
                   >
                     {isSubmitting ? (
                       <>

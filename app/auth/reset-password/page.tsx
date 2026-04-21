@@ -69,25 +69,25 @@ function ResetPasswordForm() {
 
   if (!sessionReady && !error) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-[#0F0F0F]">
-        <Loader2 className="w-8 h-8 animate-spin text-[#D4A017]" />
+      <div className="flex items-center justify-center min-h-screen bg-charcoal-deep">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#0F0F0F] flex">
+    <div className="min-h-screen bg-charcoal-deep flex">
       {/* Left Panel */}
-      <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-[#D4A017] to-[#B8860B] p-12 flex-col justify-between">
+      <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-gold to-gold-dark p-12 flex-col justify-between">
         <Link href="/" className="flex items-center gap-3">
-          <div className="w-12 h-12 rounded-xl bg-[#0F0F0F]/20 flex items-center justify-center font-bold text-[#0F0F0F] text-xl">S</div>
-          <span className="text-2xl font-bold text-[#0F0F0F]">Snap<span className="text-[#0F0F0F]/80">R</span></span>
+          <div className="w-12 h-12 rounded-xl bg-charcoal-deep/20 flex items-center justify-center font-bold text-surface text-xl">S</div>
+          <span className="text-2xl font-bold text-surface">Snap<span className="text-surface/80">R</span></span>
         </Link>
         <div>
-          <h1 className="text-4xl font-bold text-[#0F0F0F] mb-4">Create New Password</h1>
-          <p className="text-[#0F0F0F]/70 text-lg">Choose a strong password to secure your account.</p>
+          <h1 className="text-4xl font-bold text-surface mb-4">Create New Password</h1>
+          <p className="text-surface/70 text-lg">Choose a strong password to secure your account.</p>
         </div>
-        <p className="text-[#0F0F0F]/50 text-sm">© 2026 SnapR</p>
+        <p className="text-surface/50 text-sm">© 2026 SnapR</p>
       </div>
 
       {/* Right Panel */}
@@ -95,8 +95,8 @@ function ResetPasswordForm() {
         <div className="w-full max-w-md">
           {/* Mobile Logo */}
           <div className="lg:hidden flex items-center justify-center gap-3 mb-8">
-            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#D4A017] to-[#B8860B] flex items-center justify-center font-bold text-black text-xl">S</div>
-            <span className="text-2xl font-bold">Snap<span className="text-[#D4A017]">R</span></span>
+            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-gold to-gold-dark flex items-center justify-center font-bold text-black text-xl">S</div>
+            <span className="text-2xl font-bold">Snap<span className="text-primary">R</span></span>
           </div>
 
           {done ? (
@@ -117,7 +117,7 @@ function ResetPasswordForm() {
                   {error}
                   {error.includes('invalid or has expired') && (
                     <div className="mt-2">
-                      <Link href="/auth/forgot-password" className="text-[#D4A017] underline">Request a new link</Link>
+                      <Link href="/auth/forgot-password" className="text-primary underline">Request a new link</Link>
                     </div>
                   )}
                 </div>
@@ -131,7 +131,7 @@ function ResetPasswordForm() {
                     aria-label="New password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="w-full px-4 py-3 pr-12 rounded-xl bg-white/5 border border-white/10 text-white focus:outline-none focus:border-[#D4A017]"
+                    className="w-full px-4 py-3 pr-12 rounded-xl bg-white/5 border border-white/10 text-white focus:outline-none focus:border-primary"
                     required
                     minLength={8}
                   />
@@ -151,7 +151,7 @@ function ResetPasswordForm() {
                   aria-label="Confirm new password"
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
-                  className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white focus:outline-none focus:border-[#D4A017]"
+                  className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white focus:outline-none focus:border-primary"
                   required
                   minLength={8}
                 />
@@ -159,7 +159,7 @@ function ResetPasswordForm() {
                 <button
                   type="submit"
                   disabled={loading || !sessionReady}
-                  className="w-full py-3 rounded-xl font-semibold bg-gradient-to-r from-[#D4A017] to-[#B8860B] text-black disabled:opacity-50 flex items-center justify-center"
+                  className="w-full py-3 rounded-xl font-semibold bg-gradient-to-r from-gold to-gold-dark text-black disabled:opacity-50 flex items-center justify-center"
                 >
                   {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Update Password'}
                 </button>
@@ -175,8 +175,8 @@ function ResetPasswordForm() {
 export default function ResetPasswordPage() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen bg-[#0F0F0F] flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-[#D4A017]" />
+      <div className="min-h-screen bg-charcoal-deep flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
       </div>
     }>
       <ResetPasswordForm />

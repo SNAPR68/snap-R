@@ -411,7 +411,7 @@ function VoiceoverGenerator() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#0F0F0F] flex items-center justify-center">
+      <div className="min-h-screen bg-charcoal-deep flex items-center justify-center">
         <Loader2 className="w-8 h-8 animate-spin text-pink-400" />
       </div>
     );
@@ -420,14 +420,14 @@ function VoiceoverGenerator() {
   // Step 1: Select Listing
   if (step === 'select') {
     return (
-      <div className="min-h-screen bg-[#0F0F0F] text-white p-6">
+      <div className="min-h-screen bg-charcoal-deep text-white p-6">
         <div className="max-w-4xl mx-auto">
           <div className="flex items-center gap-3 mb-4">
             <div className="p-3 bg-gradient-to-br from-pink-500/20 to-purple-500/20 rounded-xl">
               <Mic className="w-8 h-8 text-pink-400" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold">AI Video Voiceover</h1>
+              <h1 className="text-2xl font-bold editorial-headline">AI Video Voiceover</h1>
               <p className="text-white/50">Generate professional narration for your property videos</p>
             </div>
           </div>
@@ -503,7 +503,7 @@ function VoiceoverGenerator() {
   // Step 2: Configure
   if (step === 'configure') {
     return (
-      <div className="min-h-screen bg-[#0F0F0F] text-white p-6">
+      <div className="min-h-screen bg-charcoal-deep text-white p-6">
         <div className="max-w-4xl mx-auto">
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-3">
@@ -511,7 +511,7 @@ function VoiceoverGenerator() {
                 <Mic className="w-8 h-8 text-pink-400" />
               </div>
               <div>
-                <h1 className="text-2xl font-bold">Configure Voiceover</h1>
+                <h1 className="text-2xl font-bold editorial-headline">Configure Voiceover</h1>
                 <p className="text-white/50">{selectedListing?.title}</p>
               </div>
             </div>
@@ -736,7 +736,7 @@ function VoiceoverGenerator() {
 
   // Step 3: Result
   return (
-    <div className="min-h-screen bg-[#0F0F0F] text-white p-6">
+    <div className="min-h-screen bg-charcoal-deep text-white p-6">
       <div className="max-w-3xl mx-auto">
         <div className="text-center mb-8">
           <div className="p-4 bg-gradient-to-br from-green-500/20 to-emerald-500/20 rounded-full w-20 h-20 mx-auto mb-4 flex items-center justify-center">
@@ -826,7 +826,7 @@ function VoiceoverGenerator() {
 export default function VoiceoverPage() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen bg-[#0F0F0F] flex items-center justify-center">
+      <div className="min-h-screen bg-charcoal-deep flex items-center justify-center">
         <Loader2 className="w-8 h-8 animate-spin text-pink-400" />
       </div>
     }>

@@ -15,7 +15,7 @@ export default function PlansPage() {
         <p className="text-on-surface-muted mb-8">Understanding SnapR&apos;s simple listing-based pricing model.</p>
         
         {/* Key Concept */}
-        <div className="bg-gradient-to-r from-primary/20 to-transparent border border-[#D4A017]/30 rounded-xl p-6 mb-8">
+        <div className="bg-gradient-to-r from-primary/20 to-transparent border border-primary/30 rounded-xl p-6 mb-8">
           <h2 className="text-xl font-bold mb-2 flex items-center gap-2">
             <Zap className="w-5 h-5 text-primary" />
             How SnapR Pricing Works
@@ -54,8 +54,8 @@ export default function PlansPage() {
           </div>
           
           {/* Pro */}
-          <div className="bg-surface-container-low border-2 border-[#D4A017] rounded-xl p-6 relative">
-            <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 bg-[#D4A017] text-black text-xs font-bold rounded-full">
+          <div className="bg-surface-container-low border-2 border-primary rounded-xl p-6 relative">
+            <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 bg-accent-gold text-black text-xs font-bold rounded-full">
               Most Popular
             </div>
             <div className="flex items-center gap-2 mb-4">
@@ -112,11 +112,11 @@ export default function PlansPage() {
         {/* Related Articles */}
         <h2 className="text-xl font-bold mb-4">Related Articles</h2>
         <div className="grid md:grid-cols-2 gap-4">
-          <Link href="/academy/plans-credits/choosing-plan" className="p-4 bg-surface-container-low border border-white/10 rounded-xl hover:border-[#D4A017]/50 transition-all">
+          <Link href="/academy/plans-credits/choosing-plan" className="p-4 bg-surface-container-low border border-white/10 rounded-xl hover:border-primary/50 transition-all">
             <h3 className="font-semibold mb-1">Choosing the Right Plan</h3>
             <p className="text-sm text-on-surface-muted">Find the perfect plan for your needs</p>
           </Link>
-          <Link href="/academy/plans-credits/billing-faq" className="p-4 bg-surface-container-low border border-white/10 rounded-xl hover:border-[#D4A017]/50 transition-all">
+          <Link href="/academy/plans-credits/billing-faq" className="p-4 bg-surface-container-low border border-white/10 rounded-xl hover:border-primary/50 transition-all">
             <h3 className="font-semibold mb-1">Billing FAQ</h3>
             <p className="text-sm text-on-surface-muted">Common questions about billing</p>
           </Link>

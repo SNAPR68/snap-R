@@ -148,7 +148,7 @@ interface ChartTooltipProps {
 function ChartTooltip({ active, payload, label }: ChartTooltipProps) {
   if (!active || !payload?.length) return null
   return (
-    <div className="bg-[#1A1A1A] border border-white/10 rounded-lg px-3 py-2 shadow-xl">
+    <div className="bg-surface-container-high border border-white/10 rounded-lg px-3 py-2 shadow-xl">
       <p className="text-xs text-white/50 mb-1">{label}</p>
       {payload.map((entry, i) => (
         <p key={i} className="text-sm" style={{ color: entry.color }}>
@@ -177,7 +177,7 @@ function StatCard({
   color: string
 }) {
   return (
-    <div className="bg-[#1A1A1A] rounded-xl p-4 border border-white/5 hover:border-white/10 transition-colors">
+    <div className="bg-surface-container-high rounded-xl p-4 border border-white/5 hover:border-white/10 transition-colors">
       <div className="flex items-start justify-between mb-3">
         <div className={`w-9 h-9 rounded-lg bg-gradient-to-r ${color} flex items-center justify-center`}>
           <Icon className="w-4 h-4 text-white" />
@@ -301,7 +301,7 @@ export default function AnalyticsDashboard() {
             <Link href="/dashboard/content-studio" className="text-white/40 hover:text-white transition-colors">Content Studio</Link>
             <ChevronRight className="w-3 h-3 text-white/20" />
             <span className="text-white font-bold flex items-center gap-2">
-              <BarChart3 className="w-4 h-4 text-[#D4AF37]" />Analytics & ROI
+              <BarChart3 className="w-4 h-4 text-accent-gold" />Analytics & ROI
             </span>
           </nav>
 
@@ -314,7 +314,7 @@ export default function AnalyticsDashboard() {
                   onClick={() => setDateRange(range)}
                   className={`px-3 py-1 rounded-md text-xs font-medium transition-all ${
                     dateRange === range
-                      ? 'bg-[#D4AF37] text-black shadow-sm'
+                      ? 'bg-accent-gold text-black shadow-sm'
                       : 'text-white/50 hover:text-white hover:bg-white/10'
                   }`}
                 >
@@ -350,7 +350,7 @@ export default function AnalyticsDashboard() {
                 onClick={() => setActiveTab(tab.id)}
                 className={`flex items-center gap-2 px-4 py-2.5 rounded-t-lg text-sm font-medium transition-all border-b-2 ${
                   activeTab === tab.id
-                    ? 'border-[#D4AF37] text-[#D4AF37] bg-white/[0.03]'
+                    ? 'border-accent-gold text-accent-gold bg-white/[0.03]'
                     : 'border-transparent text-white/40 hover:text-white/60 hover:bg-white/[0.02]'
                 }`}
               >
@@ -366,13 +366,13 @@ export default function AnalyticsDashboard() {
       <div className="p-6 max-w-7xl mx-auto">
         {loading ? (
           <div className="flex items-center justify-center py-20">
-            <Loader2 className="w-8 h-8 animate-spin text-[#D4AF37]" />
+            <Loader2 className="w-8 h-8 animate-spin text-accent-gold" />
           </div>
         ) : !data ? (
           <div className="text-center py-20">
             <BarChart3 className="w-12 h-12 text-white/20 mx-auto mb-3" />
             <p className="text-white/50">Failed to load analytics</p>
-            <button onClick={fetchROI} className="mt-4 px-4 py-2 bg-[#D4AF37] text-black rounded-lg text-sm font-medium hover:bg-[#B8960C]">
+            <button onClick={fetchROI} className="mt-4 px-4 py-2 bg-accent-gold text-black rounded-lg text-sm font-medium hover:bg-accent-gold">
               Retry
             </button>
           </div>
@@ -383,7 +383,7 @@ export default function AnalyticsDashboard() {
               <div className="space-y-6">
                 {/* KPI Cards */}
                 <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-3">
-                  <StatCard icon={TrendingUp} label="Posts" value={formatNumber(data.totals.posts)} color="from-[#D4AF37] to-[#B8960C]" />
+                  <StatCard icon={TrendingUp} label="Posts" value={formatNumber(data.totals.posts)} color="from-accent-gold to-accent-gold" />
                   <StatCard icon={Heart} label="Likes" value={formatNumber(data.totals.likes)} color="from-red-500 to-pink-500" />
                   <StatCard icon={MessageCircle} label="Comments" value={formatNumber(data.totals.comments)} color="from-blue-500 to-cyan-500" />
                   <StatCard icon={Share2} label="Shares" value={formatNumber(data.totals.shares)} color="from-green-500 to-emerald-500" />
@@ -399,7 +399,7 @@ export default function AnalyticsDashboard() {
                 </div>
 
                 {/* Engagement Trend Chart */}
-                <div className="bg-[#1A1A1A] rounded-xl p-5 border border-white/5">
+                <div className="bg-surface-container-high rounded-xl p-5 border border-white/5">
                   <h3 className="text-sm font-semibold text-white/70 mb-4">Engagement Trend</h3>
                   {chartData.length > 0 ? (
                     <ResponsiveContainer width="100%" height={300}>
@@ -453,7 +453,7 @@ export default function AnalyticsDashboard() {
 
                 {/* Top Performing Posts */}
                 {data.topPosts.length > 0 && (
-                  <div className="bg-[#1A1A1A] rounded-xl p-5 border border-white/5">
+                  <div className="bg-surface-container-high rounded-xl p-5 border border-white/5">
                     <h3 className="text-sm font-semibold text-white/70 mb-4">Top Performing Posts</h3>
                     <div className="space-y-3">
                       {data.topPosts.map((post, i) => {
@@ -482,7 +482,7 @@ export default function AnalyticsDashboard() {
                                 <div className="text-white/30">Shares</div>
                               </div>
                               <div className="text-center">
-                                <div className="font-semibold text-[#D4AF37]">{formatNumber(post.engagement)}</div>
+                                <div className="font-semibold text-accent-gold">{formatNumber(post.engagement)}</div>
                                 <div className="text-white/30">Total</div>
                               </div>
                             </div>
@@ -499,7 +499,7 @@ export default function AnalyticsDashboard() {
             {activeTab === 'platforms' && (
               <div className="space-y-6">
                 {/* Platform engagement bar chart */}
-                <div className="bg-[#1A1A1A] rounded-xl p-5 border border-white/5">
+                <div className="bg-surface-container-high rounded-xl p-5 border border-white/5">
                   <h3 className="text-sm font-semibold text-white/70 mb-4">Engagement by Platform</h3>
                   {platformBarData.length > 0 ? (
                     <ResponsiveContainer width="100%" height={300}>
@@ -541,7 +541,7 @@ export default function AnalyticsDashboard() {
                     const Icon = PLATFORM_ICONS[p.platform] || TrendingUp
                     const totalEng = p.likes + p.comments + p.shares
                     return (
-                      <div key={p.platform} className="bg-[#1A1A1A] rounded-xl p-5 border border-white/5">
+                      <div key={p.platform} className="bg-surface-container-high rounded-xl p-5 border border-white/5">
                         <div className="flex items-center gap-3 mb-4">
                           <div className={`w-10 h-10 rounded-lg bg-gradient-to-r ${PLATFORM_COLORS_GRADIENT[p.platform] || 'from-gray-600 to-gray-500'} flex items-center justify-center`}>
                             <Icon className="w-5 h-5 text-white" />
@@ -551,7 +551,7 @@ export default function AnalyticsDashboard() {
                             <p className="text-xs text-white/40">{p.posts} post{p.posts !== 1 ? 's' : ''}</p>
                           </div>
                           <div className="ml-auto text-right">
-                            <div className="text-lg font-bold text-[#D4AF37]">{p.engagementRate}%</div>
+                            <div className="text-lg font-bold text-accent-gold">{p.engagementRate}%</div>
                             <div className="text-xs text-white/40">Eng. Rate</div>
                           </div>
                         </div>
@@ -594,7 +594,7 @@ export default function AnalyticsDashboard() {
                   })}
 
                   {data.platformBreakdown.length === 0 && (
-                    <div className="md:col-span-2 text-center py-16 bg-[#1A1A1A] rounded-xl border border-white/5">
+                    <div className="md:col-span-2 text-center py-16 bg-surface-container-high rounded-xl border border-white/5">
                       <TrendingUp className="w-12 h-12 text-white/10 mx-auto mb-3" />
                       <p className="text-white/40">No platform data yet</p>
                       <p className="text-white/20 text-sm mt-1">Publish posts to see platform analytics</p>
@@ -613,7 +613,7 @@ export default function AnalyticsDashboard() {
                     icon={UserPlus}
                     label="Total Leads"
                     value={formatNumber(data.leadSummary.total)}
-                    color="from-[#D4AF37] to-[#B8960C]"
+                    color="from-accent-gold to-accent-gold"
                   />
                   <StatCard
                     icon={Target}
@@ -639,7 +639,7 @@ export default function AnalyticsDashboard() {
 
                 <div className="grid md:grid-cols-2 gap-6">
                   {/* Lead sources pie chart */}
-                  <div className="bg-[#1A1A1A] rounded-xl p-5 border border-white/5">
+                  <div className="bg-surface-container-high rounded-xl p-5 border border-white/5">
                     <h3 className="text-sm font-semibold text-white/70 mb-4">Leads by Source</h3>
                     {leadSourceData.length > 0 ? (
                       <ResponsiveContainer width="100%" height={250}>
@@ -677,7 +677,7 @@ export default function AnalyticsDashboard() {
                   </div>
 
                   {/* Lead status breakdown */}
-                  <div className="bg-[#1A1A1A] rounded-xl p-5 border border-white/5">
+                  <div className="bg-surface-container-high rounded-xl p-5 border border-white/5">
                     <h3 className="text-sm font-semibold text-white/70 mb-4">Lead Funnel</h3>
                     <div className="space-y-3">
                       {[
@@ -715,7 +715,7 @@ export default function AnalyticsDashboard() {
                             .map(([campaign, count]) => (
                               <div key={campaign} className="flex items-center justify-between text-sm">
                                 <span className="text-white/50 capitalize">{campaign.replace(/_/g, ' ')}</span>
-                                <span className="font-medium text-[#D4AF37]">{count}</span>
+                                <span className="font-medium text-accent-gold">{count}</span>
                               </div>
                             ))
                           }
@@ -728,11 +728,11 @@ export default function AnalyticsDashboard() {
                 {/* Quick link to leads dashboard */}
                 <Link
                   href="/dashboard/leads"
-                  className="flex items-center justify-center gap-2 p-4 bg-[#1A1A1A] rounded-xl border border-white/5 hover:border-[#D4AF37]/30 transition-colors group"
+                  className="flex items-center justify-center gap-2 p-4 bg-surface-container-high rounded-xl border border-white/5 hover:border-accent-gold/30 transition-colors group"
                 >
-                  <UserPlus className="w-4 h-4 text-[#D4AF37]" />
+                  <UserPlus className="w-4 h-4 text-accent-gold" />
                   <span className="text-sm text-white/60 group-hover:text-white">View full leads dashboard</span>
-                  <ArrowUpRight className="w-3 h-3 text-white/30 group-hover:text-[#D4AF37]" />
+                  <ArrowUpRight className="w-3 h-3 text-white/30 group-hover:text-accent-gold" />
                 </Link>
               </div>
             )}
@@ -746,7 +746,7 @@ export default function AnalyticsDashboard() {
                     icon={DollarSign}
                     label="Total AI Spend"
                     value={formatCurrency(data.costSummary.totalCents)}
-                    color="from-[#D4AF37] to-[#B8960C]"
+                    color="from-accent-gold to-accent-gold"
                   />
                   <StatCard
                     icon={BarChart3}
@@ -779,7 +779,7 @@ export default function AnalyticsDashboard() {
                 {/* ROI Insights */}
                 <div className="grid md:grid-cols-2 gap-6">
                   {/* Impressions trend */}
-                  <div className="bg-[#1A1A1A] rounded-xl p-5 border border-white/5">
+                  <div className="bg-surface-container-high rounded-xl p-5 border border-white/5">
                     <h3 className="text-sm font-semibold text-white/70 mb-4">Impressions & Reach Trend</h3>
                     {chartData.length > 0 ? (
                       <ResponsiveContainer width="100%" height={250}>
@@ -826,15 +826,15 @@ export default function AnalyticsDashboard() {
                   </div>
 
                   {/* ROI Summary */}
-                  <div className="bg-[#1A1A1A] rounded-xl p-5 border border-white/5">
+                  <div className="bg-surface-container-high rounded-xl p-5 border border-white/5">
                     <h3 className="text-sm font-semibold text-white/70 mb-4">ROI Summary</h3>
                     <div className="space-y-4">
                       <div className="p-4 rounded-lg bg-white/[0.03] border border-white/5">
                         <div className="flex items-center gap-2 mb-2">
-                          <DollarSign className="w-4 h-4 text-[#D4AF37]" />
+                          <DollarSign className="w-4 h-4 text-accent-gold" />
                           <span className="text-sm font-medium">Marketing Investment</span>
                         </div>
-                        <div className="text-3xl font-bold text-[#D4AF37]">
+                        <div className="text-3xl font-bold text-accent-gold">
                           {formatCurrency(data.costSummary.totalCents)}
                         </div>
                         <p className="text-xs text-white/30 mt-1">
@@ -888,9 +888,9 @@ export default function AnalyticsDashboard() {
             {activeTab === 'listings' && (
               <div className="space-y-6">
                 {/* ROI Calculator */}
-                <div className="bg-[#1A1A1A] rounded-xl p-5 border border-white/5">
+                <div className="bg-surface-container-high rounded-xl p-5 border border-white/5">
                   <h3 className="text-sm font-semibold text-white/70 mb-4 flex items-center gap-2">
-                    <DollarSign className="w-4 h-4 text-[#D4AF37]" />
+                    <DollarSign className="w-4 h-4 text-accent-gold" />
                     ROI Calculator
                   </h3>
                   <div className="grid md:grid-cols-3 gap-4">
@@ -905,7 +905,7 @@ export default function AnalyticsDashboard() {
                           min={50000}
                           step={10000}
                           aria-label="Expected sale price"
-                          className="w-full bg-white/5 border border-white/10 rounded-lg pl-7 pr-3 py-2 text-sm text-white focus:outline-none focus:border-[#D4AF37]/50"
+                          className="w-full bg-white/5 border border-white/10 rounded-lg pl-7 pr-3 py-2 text-sm text-white focus:outline-none focus:border-accent-gold/50"
                         />
                       </div>
                     </div>
@@ -920,12 +920,12 @@ export default function AnalyticsDashboard() {
                           max={10}
                           step={0.25}
                           aria-label="Commission percentage"
-                          className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-[#D4AF37]/50"
+                          className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-accent-gold/50"
                         />
                         <span className="absolute right-3 top-1/2 -translate-y-1/2 text-white/30 text-sm">%</span>
                       </div>
                     </div>
-                    <div className="bg-gradient-to-r from-[#D4AF37]/10 to-[#B8960C]/10 border border-[#D4AF37]/20 rounded-lg p-3 flex flex-col justify-center">
+                    <div className="bg-gradient-to-r from-accent-gold/10 to-accent-gold/10 border border-accent-gold/20 rounded-lg p-3 flex flex-col justify-center">
                       {(() => {
                         const commission = (roiSalePrice * roiCommission) / 100
                         const spend = data?.costSummary.totalCents ? data.costSummary.totalCents / 100 : 0
@@ -933,7 +933,7 @@ export default function AnalyticsDashboard() {
                         return (
                           <>
                             <div className="text-xs text-white/40 mb-1">Estimated Return</div>
-                            <div className="text-2xl font-bold text-[#D4AF37]">
+                            <div className="text-2xl font-bold text-accent-gold">
                               ${commission.toLocaleString('en-US', { maximumFractionDigits: 0 })}
                             </div>
                             {roi !== null && (
@@ -949,7 +949,7 @@ export default function AnalyticsDashboard() {
                 </div>
 
                 {/* Per-Listing Comparison Table */}
-                <div className="bg-[#1A1A1A] rounded-xl border border-white/5 overflow-hidden">
+                <div className="bg-surface-container-high rounded-xl border border-white/5 overflow-hidden">
                   <div className="px-5 py-4 border-b border-white/5 flex items-center justify-between">
                     <h3 className="text-sm font-semibold text-white/70">Per-Listing Performance</h3>
                     <span className="text-xs text-white/30">{listingStats.length} listings</span>
@@ -992,7 +992,7 @@ export default function AnalyticsDashboard() {
                                   : <span className="text-white/30">—</span>
                                 }
                               </td>
-                              <td className="px-3 py-3 text-right text-[#D4AF37]">{ls.costCents > 0 ? formatCurrency(ls.costCents) : '—'}</td>
+                              <td className="px-3 py-3 text-right text-accent-gold">{ls.costCents > 0 ? formatCurrency(ls.costCents) : '—'}</td>
                               <td className="px-3 py-3 text-right">
                                 {ls.engagementRate > 0
                                   ? <span className={`font-medium ${ls.engagementRate >= 3 ? 'text-green-400' : ls.engagementRate >= 1 ? 'text-yellow-400' : 'text-white/50'}`}>
@@ -1013,14 +1013,14 @@ export default function AnalyticsDashboard() {
 
             {/* ══════════════════ EMPTY STATE ══════════════════ */}
             {data.totals.posts === 0 && data.leadSummary.total === 0 && (
-              <div className="mt-8 text-center py-16 bg-[#1A1A1A] rounded-xl border border-white/5">
+              <div className="mt-8 text-center py-16 bg-surface-container-high rounded-xl border border-white/5">
                 <BarChart3 className="w-16 h-16 text-white/10 mx-auto mb-4" />
                 <h3 className="text-lg font-medium mb-2">No analytics data yet</h3>
                 <p className="text-white/40 text-sm max-w-md mx-auto mb-6">
                   Your analytics will populate as you publish posts and receive leads through your property sites.
                 </p>
                 <Link href="/dashboard/content-studio/create-all">
-                  <button className="px-6 py-2.5 bg-[#D4AF37] text-black rounded-lg text-sm font-semibold hover:bg-[#B8960C] transition-colors">
+                  <button className="px-6 py-2.5 bg-accent-gold text-black rounded-lg text-sm font-semibold hover:bg-accent-gold transition-colors">
                     Create Your First Post
                   </button>
                 </Link>

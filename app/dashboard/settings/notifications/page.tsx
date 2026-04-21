@@ -96,14 +96,14 @@ export default function NotificationSettingsPage() {
     setTimeout(() => setSaved(false), 3000);
   };
 
-  if (loading) return <div className="min-h-screen bg-[#0A0A0A] text-white flex items-center justify-center"><Loader2 className="w-8 h-8 animate-spin text-[#D4A017]" /></div>;
+  if (loading) return <div className="min-h-screen bg-surface text-white flex items-center justify-center"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>;
 
   return (
-    <div className="min-h-screen bg-[#0A0A0A] text-white">
+    <div className="min-h-screen bg-surface text-white">
       <div className="max-w-2xl mx-auto px-4 py-8">
         <div className="mb-8">
           <Link href="/dashboard/settings" className="text-white/50 hover:text-white text-sm">&larr; Back to Settings</Link>
-          <h1 className="text-3xl font-bold mt-4 flex items-center gap-3"><Bell className="w-8 h-8 text-[#D4A017]" />Notification Preferences</h1>
+          <h1 className="text-3xl font-bold mt-4 flex items-center gap-3"><Bell className="w-8 h-8 text-primary" />Notification Preferences</h1>
           <p className="text-white/50 mt-2">Control how and when SnapR contacts you</p>
         </div>
 
@@ -113,7 +113,7 @@ export default function NotificationSettingsPage() {
           <div className="space-y-4">
             <label className="flex items-center justify-between p-4 bg-white/5 rounded-xl cursor-pointer">
               <div className="flex items-center gap-3"><Mail className="w-5 h-5 text-blue-400" /><div><p className="font-medium">Email</p><p className="text-sm text-white/50">Receive notifications via email</p></div></div>
-              <input type="checkbox" checked={prefs.email} onChange={(e) => setPrefs({ ...prefs, email: e.target.checked })} className="w-5 h-5 accent-[#D4A017]" />
+              <input type="checkbox" checked={prefs.email} onChange={(e) => setPrefs({ ...prefs, email: e.target.checked })} className="w-5 h-5 accent-accent-gold" />
             </label>
             <label className="flex items-center justify-between p-4 bg-white/5 rounded-xl cursor-pointer">
               <div className="flex items-center gap-3">
@@ -127,7 +127,7 @@ export default function NotificationSettingsPage() {
                 type="checkbox"
                 checked={prefs.whatsapp}
                 onChange={(e) => setPrefs({ ...prefs, whatsapp: e.target.checked })}
-                className="w-5 h-5 accent-[#D4A017]"
+                className="w-5 h-5 accent-accent-gold"
               />
             </label>
             {prefs.whatsapp && (
@@ -183,7 +183,7 @@ export default function NotificationSettingsPage() {
                 type="checkbox"
                 checked={prefs.dailyWhatsapp}
                 onChange={(e) => setPrefs({ ...prefs, dailyWhatsapp: e.target.checked })}
-                className="w-5 h-5 accent-[#D4A017]"
+                className="w-5 h-5 accent-accent-gold"
               />
             </label>
             {prefs.dailyWhatsapp && (
@@ -200,7 +200,7 @@ export default function NotificationSettingsPage() {
             <p className="text-xs text-white/30 ml-1">Quiet hours use your saved timezone from this browser.</p>
             <label className="flex items-center justify-between p-4 bg-white/5 rounded-xl cursor-pointer">
               <div><p className="font-medium">Weekly Email Report</p><p className="text-sm text-white/50">Performance summary and stats</p></div>
-              <input type="checkbox" checked={prefs.weeklySummary} onChange={(e) => setPrefs({ ...prefs, weeklySummary: e.target.checked })} className="w-5 h-5 accent-[#D4A017]" />
+              <input type="checkbox" checked={prefs.weeklySummary} onChange={(e) => setPrefs({ ...prefs, weeklySummary: e.target.checked })} className="w-5 h-5 accent-accent-gold" />
             </label>
             {prefs.weeklySummary && (
               <div className="ml-8 flex items-center gap-4">
@@ -218,7 +218,7 @@ export default function NotificationSettingsPage() {
           <h2 className="text-lg font-semibold mb-4 flex items-center gap-2"><Moon className="w-5 h-5" />Quiet Hours</h2>
           <label className="flex items-center justify-between p-4 bg-white/5 rounded-xl cursor-pointer mb-4">
             <div><p className="font-medium">Enable Quiet Hours</p><p className="text-sm text-white/50">Pause non-critical notifications</p></div>
-            <input type="checkbox" checked={prefs.quietHoursEnabled} onChange={(e) => setPrefs({ ...prefs, quietHoursEnabled: e.target.checked })} className="w-5 h-5 accent-[#D4A017]" />
+            <input type="checkbox" checked={prefs.quietHoursEnabled} onChange={(e) => setPrefs({ ...prefs, quietHoursEnabled: e.target.checked })} className="w-5 h-5 accent-accent-gold" />
           </label>
           {prefs.quietHoursEnabled && (
             <div className="flex items-center gap-4 ml-4">
@@ -234,7 +234,7 @@ export default function NotificationSettingsPage() {
           </div>
         )}
 
-        <button onClick={savePreferences} disabled={saving} className="w-full flex items-center justify-center gap-2 px-6 py-4 bg-gradient-to-r from-[#D4A017] to-[#B8860B] rounded-xl text-black font-semibold disabled:opacity-50">
+        <button onClick={savePreferences} disabled={saving} className="w-full flex items-center justify-center gap-2 px-6 py-4 bg-gradient-to-r from-gold to-gold-dark rounded-xl text-black font-semibold disabled:opacity-50">
           {saving ? <Loader2 className="w-5 h-5 animate-spin" /> : saved ? <><CheckCircle className="w-5 h-5" />Saved!</> : <><Save className="w-5 h-5" />Save Preferences</>}
         </button>
       </div>

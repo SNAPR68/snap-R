@@ -91,7 +91,7 @@ export default function BrandedDashboardCatchAll() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#0F0F0F] flex items-center justify-center">
+      <div className="min-h-screen bg-charcoal-deep flex items-center justify-center">
         <Loader2 className="w-8 h-8 animate-spin text-amber-400" />
       </div>
     );

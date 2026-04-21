@@ -9,7 +9,7 @@ export function MobileDashboardHeader() {
   const { toggle } = useSidebar();
 
   return (
-    <div className="md:hidden flex items-center justify-between h-14 px-4 bg-[#1A1A1A] border-b border-white/10 flex-shrink-0">
+    <div className="md:hidden flex items-center justify-between h-14 px-4 bg-surface-container-high border-b border-white/10 flex-shrink-0">
       <div className="flex items-center">
         <button
           onClick={toggle}
@@ -20,7 +20,7 @@ export function MobileDashboardHeader() {
         </button>
         <Link href="/" className="ml-3 flex items-center gap-2">
           <span className="text-xl font-bold">
-            Snap<span className="text-[#D4A017]">R</span>
+            Snap<span className="text-primary">R</span>
           </span>
         </Link>
       </div>

@@ -122,16 +122,16 @@ export default async function AdminDashboard() {
 
       {/* Stats Grid */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-        <div className="bg-[#1A1A1A] border border-white/10 rounded-xl p-5">
+        <div className="bg-surface-container-high border border-white/10 rounded-xl p-5">
           <div className="flex items-center justify-between mb-3">
-            <Users className="w-6 h-6 text-[#D4A017]" />
+            <Users className="w-6 h-6 text-primary" />
             {newSignupsToday > 0 && <span className="text-xs text-green-400">+{newSignupsToday} today</span>}
           </div>
           <p className="text-3xl font-bold">{totalUsers}</p>
           <p className="text-white/40 text-sm">Total Users</p>
         </div>
 
-        <div className="bg-[#1A1A1A] border border-white/10 rounded-xl p-5">
+        <div className="bg-surface-container-high border border-white/10 rounded-xl p-5">
           <div className="flex items-center justify-between mb-3">
             <Activity className="w-6 h-6 text-blue-400" />
             <span className="text-xs text-white/40">{totalUsers > 0 ? ((activeUsers7d / totalUsers) * 100).toFixed(0) : 0}%</span>
@@ -140,7 +140,7 @@ export default async function AdminDashboard() {
           <p className="text-white/40 text-sm">Active (7d)</p>
         </div>
 
-        <div className="bg-[#1A1A1A] border border-white/10 rounded-xl p-5">
+        <div className="bg-surface-container-high border border-white/10 rounded-xl p-5">
           <div className="flex items-center justify-between mb-3">
             <Camera className="w-6 h-6 text-cyan-400" />
             <span className="text-xs text-white/40">+{listingsThisMonth} this mo</span>
@@ -149,7 +149,7 @@ export default async function AdminDashboard() {
           <p className="text-white/40 text-sm">Listings</p>
         </div>
 
-        <div className="bg-[#1A1A1A] border border-white/10 rounded-xl p-5">
+        <div className="bg-surface-container-high border border-white/10 rounded-xl p-5">
           <div className="flex items-center justify-between mb-3">
             <ImageIcon className="w-6 h-6 text-pink-400" />
             <span className="text-xs text-white/40">{enhancedPhotos} enhanced</span>
@@ -158,7 +158,7 @@ export default async function AdminDashboard() {
           <p className="text-white/40 text-sm">Photos</p>
         </div>
 
-        <div className="bg-[#1A1A1A] border border-white/10 rounded-xl p-5">
+        <div className="bg-surface-container-high border border-white/10 rounded-xl p-5">
           <div className="flex items-center justify-between mb-3">
             <Zap className="w-6 h-6 text-purple-400" />
             <span className="text-xs text-green-400">+{enhancementsToday} today</span>
@@ -167,7 +167,7 @@ export default async function AdminDashboard() {
           <p className="text-white/40 text-sm">Enhancements (30d)</p>
         </div>
 
-        <div className="bg-[#1A1A1A] border border-white/10 rounded-xl p-5">
+        <div className="bg-surface-container-high border border-white/10 rounded-xl p-5">
           <div className="flex items-center justify-between mb-3">
             <Server className="w-6 h-6 text-red-400" />
             <div className={`flex items-center gap-1 text-xs ${costChange <= 0 ? 'text-green-400' : 'text-red-400'}`}>
@@ -179,7 +179,7 @@ export default async function AdminDashboard() {
           <p className="text-white/40 text-sm">AI Costs (30d)</p>
         </div>
 
-        <div className="bg-[#1A1A1A] border border-white/10 rounded-xl p-5">
+        <div className="bg-surface-container-high border border-white/10 rounded-xl p-5">
           <div className="flex items-center justify-between mb-3">
             <DollarSign className="w-6 h-6 text-green-400" />
           </div>
@@ -187,9 +187,9 @@ export default async function AdminDashboard() {
           <p className="text-white/40 text-sm">Revenue (30d)</p>
         </div>
 
-        <div className="bg-[#1A1A1A] border border-white/10 rounded-xl p-5">
+        <div className="bg-surface-container-high border border-white/10 rounded-xl p-5">
           <div className="flex items-center justify-between mb-3">
-            <TrendingUp className="w-6 h-6 text-[#D4A017]" />
+            <TrendingUp className="w-6 h-6 text-primary" />
           </div>
           <p className={`text-3xl font-bold ${profit >= 0 ? 'text-green-400' : 'text-red-400'}`}>${profit.toFixed(2)}</p>
           <p className="text-white/40 text-sm">Net Profit</p>
@@ -198,7 +198,7 @@ export default async function AdminDashboard() {
 
       {/* Two Column */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-        <div className="bg-[#1A1A1A] border border-white/10 rounded-xl p-6">
+        <div className="bg-surface-container-high border border-white/10 rounded-xl p-6">
           <h2 className="text-lg font-semibold mb-4">User Plans</h2>
           <div className="space-y-3">
             <div className="flex items-center justify-between p-3 bg-white/5 rounded-lg">
@@ -231,7 +231,7 @@ export default async function AdminDashboard() {
           </div>
         </div>
 
-        <div className="bg-[#1A1A1A] border border-white/10 rounded-xl p-6">
+        <div className="bg-surface-container-high border border-white/10 rounded-xl p-6">
           <h2 className="text-lg font-semibold mb-4">AI Costs by Provider</h2>
           {Object.keys(costByProvider).length > 0 ? (
             <div className="space-y-3">
@@ -244,7 +244,7 @@ export default async function AdminDashboard() {
                       <span className="text-white/60">${(cents / 100).toFixed(2)} ({pct.toFixed(0)}%)</span>
                     </div>
                     <div className="h-2 bg-white/10 rounded-full">
-                      <div className="h-full bg-[#D4A017] rounded-full" style={{ width: `${pct}%` }} />
+                      <div className="h-full bg-accent-gold rounded-full" style={{ width: `${pct}%` }} />
                     </div>
                   </div>
                 );
@@ -264,9 +264,9 @@ export default async function AdminDashboard() {
           { label: 'Revenue', href: '/admin/revenue', icon: DollarSign },
           { label: 'Errors', href: '/admin/logs', icon: Server, count: unresolvedErrors, alert: unresolvedErrors > 0 },
         ].map((link) => (
-          <Link key={link.href} href={link.href} className={`flex items-center justify-between p-4 bg-[#1A1A1A] border rounded-xl hover:border-[#D4A017]/50 transition ${link.alert ? 'border-red-500/50' : 'border-white/10'}`}>
+          <Link key={link.href} href={link.href} className={`flex items-center justify-between p-4 bg-surface-container-high border rounded-xl hover:border-primary/50 transition ${link.alert ? 'border-red-500/50' : 'border-white/10'}`}>
             <div className="flex items-center gap-2">
-              <link.icon className="w-4 h-4 text-[#D4A017]" />
+              <link.icon className="w-4 h-4 text-primary" />
               {link.label}
             </div>
             {link.count !== undefined && (

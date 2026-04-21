@@ -44,11 +44,11 @@ export default function ChoosingPlanPage() {
         </div>
 
         {/* Pro */}
-        <div className="bg-surface-container-low border-2 border-[#D4A017] rounded-xl p-6 mb-6">
+        <div className="bg-surface-container-low border-2 border-primary rounded-xl p-6 mb-6">
           <div className="flex items-center gap-3 mb-4">
             <Building2 className="w-6 h-6 text-primary" />
             <h2 className="text-xl font-bold">Pro Plan</h2>
-            <span className="px-2 py-0.5 bg-[#D4A017] text-black text-xs font-bold rounded">RECOMMENDED</span>
+            <span className="px-2 py-0.5 bg-accent-gold text-black text-xs font-bold rounded">RECOMMENDED</span>
           </div>
           <p className="text-on-surface-muted mb-4">Best for: Active agents, photographers, growing businesses</p>
           <div className="grid md:grid-cols-2 gap-4">
@@ -106,7 +106,7 @@ export default function ChoosingPlanPage() {
         </div>
 
         <div className="text-center">
-          <Link href="/pricing" className="inline-flex items-center gap-2 px-6 py-3 bg-[#D4A017] text-black font-semibold rounded-xl hover:bg-[#B8860B] transition-all">
+          <Link href="/pricing" className="inline-flex items-center gap-2 px-6 py-3 bg-accent-gold text-black font-semibold rounded-xl hover:bg-accent-gold transition-all">
             View Full Pricing
           </Link>
         </div>

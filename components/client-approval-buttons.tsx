@@ -116,13 +116,13 @@ export function ClientApprovalButtons({
               value={feedback}
               onChange={(e) => setFeedback(e.target.value)}
               placeholder="What changes are needed?"
-              className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-sm text-white placeholder:text-white/30 resize-none focus:outline-none focus:border-[#D4A017]/50"
+              className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-sm text-white placeholder:text-white/30 resize-none focus:outline-none focus:border-primary/50"
               rows={2}
               autoFocus
               aria-label="Feedback for requested changes"
             />
             <div className="flex gap-2">
-              <button onClick={submitFeedback} disabled={!feedback.trim()} className="px-3 py-1.5 bg-[#D4A017] rounded-lg text-xs text-black font-medium disabled:opacity-50">Send Feedback</button>
+              <button onClick={submitFeedback} disabled={!feedback.trim()} className="px-3 py-1.5 bg-accent-gold rounded-lg text-xs text-black font-medium disabled:opacity-50">Send Feedback</button>
               <button onClick={() => setShowFeedback(false)} className="px-3 py-1.5 bg-white/10 rounded-lg text-xs text-white/60">Cancel</button>
             </div>
           </div>
@@ -130,10 +130,10 @@ export function ClientApprovalButtons({
           <div className="px-3 py-2 bg-white/5 rounded-lg">
             <p className="text-xs text-white/40 mb-1">Your feedback:</p>
             <p className="text-sm text-white/70 italic">&quot;{feedback}&quot;</p>
-            <button onClick={() => setShowFeedback(true)} className="text-xs text-[#D4A017] mt-1 hover:underline">Edit</button>
+            <button onClick={() => setShowFeedback(true)} className="text-xs text-primary mt-1 hover:underline">Edit</button>
           </div>
         ) : (
-          <button onClick={() => setShowFeedback(true)} className="flex items-center gap-1 text-xs text-[#D4A017] hover:underline px-1">
+          <button onClick={() => setShowFeedback(true)} className="flex items-center gap-1 text-xs text-primary hover:underline px-1">
             <MessageSquare className="w-3 h-3" /> Add feedback
           </button>
         )}

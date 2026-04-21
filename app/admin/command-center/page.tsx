@@ -101,7 +101,7 @@ export default async function CommandCenter() {
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="bg-[#1A1A1A] border border-white/10 rounded-xl p-5">
+        <div className="bg-surface-container-high border border-white/10 rounded-xl p-5">
           <div className="flex items-center gap-2 mb-3">
             <Eye className="w-5 h-5 text-green-400" />
             <span className="text-xs text-green-400 animate-pulse">LIVE</span>
@@ -109,21 +109,21 @@ export default async function CommandCenter() {
           <p className="text-3xl font-bold">{activeUsersLastHour}</p>
           <p className="text-white/40 text-sm">Active Users (1hr)</p>
         </div>
-        <div className="bg-[#1A1A1A] border border-white/10 rounded-xl p-5">
+        <div className="bg-surface-container-high border border-white/10 rounded-xl p-5">
           <div className="flex items-center gap-2 mb-3">
             <Globe className="w-5 h-5 text-blue-400" />
           </div>
           <p className="text-3xl font-bold">{pageViewsLastHour}</p>
           <p className="text-white/40 text-sm">Page Views (1hr)</p>
         </div>
-        <div className="bg-[#1A1A1A] border border-white/10 rounded-xl p-5">
+        <div className="bg-surface-container-high border border-white/10 rounded-xl p-5">
           <div className="flex items-center gap-2 mb-3">
             <Zap className="w-5 h-5 text-purple-400" />
           </div>
           <p className="text-3xl font-bold">{todayEnhancements}</p>
           <p className="text-white/40 text-sm">Enhancements Today</p>
         </div>
-        <div className="bg-[#1A1A1A] border border-white/10 rounded-xl p-5">
+        <div className="bg-surface-container-high border border-white/10 rounded-xl p-5">
           <div className="flex items-center gap-2 mb-3">
             <Server className="w-5 h-5 text-red-400" />
           </div>
@@ -133,13 +133,13 @@ export default async function CommandCenter() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="bg-[#1A1A1A] border border-white/10 rounded-xl p-6">
+        <div className="bg-surface-container-high border border-white/10 rounded-xl p-6">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-semibold flex items-center gap-2">
               <AlertTriangle className="w-5 h-5 text-yellow-400" />
               Recent Errors
             </h2>
-            <Link href="/admin/logs" className="text-sm text-[#D4A017] hover:underline">View all</Link>
+            <Link href="/admin/logs" className="text-sm text-primary hover:underline">View all</Link>
           </div>
           {recentErrors && recentErrors.length > 0 ? (
             <div className="space-y-3">
@@ -161,7 +161,7 @@ export default async function CommandCenter() {
           )}
         </div>
 
-        <div className="bg-[#1A1A1A] border border-white/10 rounded-xl p-6">
+        <div className="bg-surface-container-high border border-white/10 rounded-xl p-6">
           <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
             <TrendingUp className="w-5 h-5 text-green-400" />
             Business Health (30d)
@@ -192,7 +192,7 @@ export default async function CommandCenter() {
         </div>
       </div>
 
-      <div className="bg-[#1A1A1A] border border-white/10 rounded-xl p-6">
+      <div className="bg-surface-container-high border border-white/10 rounded-xl p-6">
         <h2 className="text-lg font-semibold mb-4">External Services</h2>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {['Supabase', 'Replicate', 'OpenAI', 'Stripe'].map((service) => (
@@ -211,8 +211,8 @@ export default async function CommandCenter() {
           { label: 'Error Logs', href: '/admin/logs', icon: Server },
           { label: 'Revenue Details', href: '/admin/revenue', icon: DollarSign },
         ].map((link) => (
-          <Link key={link.href} href={link.href} className="flex items-center gap-3 p-4 bg-[#1A1A1A] border border-white/10 rounded-xl hover:border-[#D4A017]/50 transition">
-            <link.icon className="w-5 h-5 text-[#D4A017]" />
+          <Link key={link.href} href={link.href} className="flex items-center gap-3 p-4 bg-surface-container-high border border-white/10 rounded-xl hover:border-primary/50 transition">
+            <link.icon className="w-5 h-5 text-primary" />
             <span>{link.label}</span>
           </Link>
         ))}

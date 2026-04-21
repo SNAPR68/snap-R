@@ -73,7 +73,7 @@ export function CreateContentClient() {
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-900 flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-[#D4AF37]" />
+        <Loader2 className="w-8 h-8 animate-spin text-accent-gold" />
       </div>
     )
   }
@@ -86,7 +86,7 @@ export function CreateContentClient() {
             <ArrowLeft className="w-4 h-4" />
             Back to Content Studio
           </Link>
-          <h1 className="text-2xl font-bold">
+          <h1 className="text-2xl font-bold editorial-headline">
             {contentType === 'social' && 'Create Social Media Post'}
             {contentType === 'description' && 'Generate Property Description'}
             {contentType === 'hashtags' && 'Generate Hashtags'}
@@ -166,8 +166,8 @@ export function CreateContentClient() {
               <ContentPreview platform={platform} caption={caption} brandProfile={brandProfile ?? undefined} />
               {!brandProfile?.business_name && (
                 <Link href="/dashboard/brand">
-                  <div className="mt-4 p-4 bg-[#D4AF37]/10 rounded-lg border border-[#D4AF37]/30 text-center">
-                    <p className="text-[#D4AF37] text-sm">Set up your Brand Profile for auto-branded posts →</p>
+                  <div className="mt-4 p-4 bg-accent-gold/10 rounded-lg border border-accent-gold/30 text-center">
+                    <p className="text-accent-gold text-sm">Set up your Brand Profile for auto-branded posts →</p>
                   </div>
                 </Link>
               )}

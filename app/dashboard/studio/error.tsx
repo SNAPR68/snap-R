@@ -17,7 +17,7 @@ export default function Error({
       </div>
       <button
         onClick={reset}
-        className="px-4 py-2 bg-[#D4A017] text-black font-medium rounded-lg hover:bg-[#B8860B] transition-colors"
+        className="px-4 py-2 bg-accent-gold text-black font-medium rounded-lg hover:bg-accent-gold transition-colors"
       >
         Try again
       </button>

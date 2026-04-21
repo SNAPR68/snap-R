@@ -38,10 +38,10 @@ export function ShortcutsHelp() {
 
       {isOpen && (
         <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50" onClick={() => setIsOpen(false)}>
-          <div className="bg-[#1A1A1A] rounded-2xl p-6 w-full max-w-sm border border-white/10" onClick={e => e.stopPropagation()}>
+          <div className="bg-surface-container-high rounded-2xl p-6 w-full max-w-sm border border-white/10" onClick={e => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-lg font-bold text-white flex items-center gap-2">
-                <Keyboard className="w-5 h-5 text-[#D4A017]" />
+                <Keyboard className="w-5 h-5 text-primary" />
                 Keyboard Shortcuts
               </h2>
               <button onClick={() => setIsOpen(false)} className="text-white/40 hover:text-white">

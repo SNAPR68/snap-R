@@ -58,27 +58,27 @@ export default async function AdminContacts() {
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
-        <div className="bg-[#1A1A1A] border border-white/10 rounded-xl p-4">
-          <MessageSquare className="w-5 h-5 text-[#D4A017] mb-2" />
+        <div className="bg-surface-container-high border border-white/10 rounded-xl p-4">
+          <MessageSquare className="w-5 h-5 text-primary mb-2" />
           <p className="text-2xl font-bold">{total}</p>
           <p className="text-white/50 text-xs">Total</p>
         </div>
-        <div className="bg-[#1A1A1A] border border-blue-500/30 rounded-xl p-4">
+        <div className="bg-surface-container-high border border-blue-500/30 rounded-xl p-4">
           <AlertCircle className="w-5 h-5 text-blue-400 mb-2" />
           <p className="text-2xl font-bold text-blue-400">{newCount}</p>
           <p className="text-white/50 text-xs">New</p>
         </div>
-        <div className="bg-[#1A1A1A] border border-white/10 rounded-xl p-4">
+        <div className="bg-surface-container-high border border-white/10 rounded-xl p-4">
           <Clock className="w-5 h-5 text-yellow-400 mb-2" />
           <p className="text-2xl font-bold text-yellow-400">{pendingCount}</p>
           <p className="text-white/50 text-xs">Pending</p>
         </div>
-        <div className="bg-[#1A1A1A] border border-white/10 rounded-xl p-4">
+        <div className="bg-surface-container-high border border-white/10 rounded-xl p-4">
           <CheckCircle className="w-5 h-5 text-green-400 mb-2" />
           <p className="text-2xl font-bold text-green-400">{repliedCount}</p>
           <p className="text-white/50 text-xs">Replied</p>
         </div>
-        <div className="bg-[#1A1A1A] border border-white/10 rounded-xl p-4">
+        <div className="bg-surface-container-high border border-white/10 rounded-xl p-4">
           <Calendar className="w-5 h-5 text-purple-400 mb-2" />
           <p className="text-2xl font-bold">{thisWeekCount}</p>
           <p className="text-white/50 text-xs">This Week</p>
@@ -92,7 +92,7 @@ export default async function AdminContacts() {
         </div>
       )}
 
-      <div className="bg-[#1A1A1A] border border-white/10 rounded-xl overflow-hidden">
+      <div className="bg-surface-container-high border border-white/10 rounded-xl overflow-hidden">
         {submissions && submissions.length > 0 ? (
           <div className="divide-y divide-white/5">
             {submissions.map((sub: ContactSubmission) => {
@@ -102,7 +102,7 @@ export default async function AdminContacts() {
                   <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-4">
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-3 mb-3">
-                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#D4A017] to-[#B8860B] flex items-center justify-center text-black font-semibold">
+                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-gold to-gold-dark flex items-center justify-center text-black font-semibold">
                           {(sub.name || sub.email || '?')[0].toUpperCase()}
                         </div>
                         <div className="flex-1 min-w-0">
@@ -114,7 +114,7 @@ export default async function AdminContacts() {
                               'bg-green-500/20 text-green-400'
                             }`}>{status}</span>
                           </div>
-                          <a href={`mailto:${sub.email}`} className="text-[#D4A017] text-sm hover:underline flex items-center gap-1">
+                          <a href={`mailto:${sub.email}`} className="text-primary text-sm hover:underline flex items-center gap-1">
                             <Mail className="w-3 h-3" />{sub.email}
                           </a>
                         </div>
@@ -132,7 +132,7 @@ export default async function AdminContacts() {
                     <div className="flex lg:flex-col gap-2">
                       <a
                         href={`mailto:${sub.email}?subject=Re: ${sub.subject || 'Your SnapR Inquiry'}&body=%0A%0A---%0AOriginal message:%0A${encodeURIComponent(sub.message || '')}`}
-                        className="flex items-center justify-center gap-2 px-4 py-2 bg-gradient-to-r from-[#D4A017] to-[#B8860B] text-black font-medium rounded-lg hover:opacity-90 transition"
+                        className="flex items-center justify-center gap-2 px-4 py-2 bg-gradient-to-r from-gold to-gold-dark text-black font-medium rounded-lg hover:opacity-90 transition"
                       >
                         <Mail className="w-4 h-4" />Reply
                       </a>
@@ -162,8 +162,8 @@ export default async function AdminContacts() {
           </div>
         ) : (
           <div className="flex flex-col items-center justify-center py-16">
-            <div className="w-16 h-16 rounded-full bg-[#D4A017]/20 flex items-center justify-center mb-4">
-              <MessageSquare className="w-8 h-8 text-[#D4A017]" />
+            <div className="w-16 h-16 rounded-full bg-accent-gold/20 flex items-center justify-center mb-4">
+              <MessageSquare className="w-8 h-8 text-primary" />
             </div>
             <p className="text-white font-medium">No contact submissions yet</p>
             <p className="text-white/40 text-sm mt-1">Submissions will appear here</p>
@@ -172,7 +172,7 @@ export default async function AdminContacts() {
       </div>
 
       {total > 0 && (
-        <div className="mt-6 p-4 bg-[#1A1A1A] border border-white/10 rounded-xl">
+        <div className="mt-6 p-4 bg-surface-container-high border border-white/10 rounded-xl">
           <p className="text-white/50 text-sm">
             Showing {total} submission{total > 1 ? 's' : ''} • Response rate: {total > 0 ? ((repliedCount / total) * 100).toFixed(0) : 0}%
           </p>

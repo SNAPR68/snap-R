@@ -9,20 +9,20 @@ export const metadata: Metadata = {
 
 export default function UnsubscribePage() {
   return (
-    <div className="min-h-screen bg-[#0A0A0A] flex items-center justify-center px-4">
+    <div className="min-h-screen bg-surface flex items-center justify-center px-4">
       <div className="max-w-md w-full text-center space-y-6">
         {/* Logo */}
         <Link href="/" className="inline-block">
           <h1 className="text-2xl font-bold text-white">
-            Snap<span className="text-[#D4A017]">R</span>
+            Snap<span className="text-primary">R</span>
           </h1>
         </Link>
 
         {/* Card */}
-        <div className="bg-[#1A1A1A] border border-white/10 rounded-2xl p-8 space-y-5">
-          <div className="w-14 h-14 mx-auto rounded-full bg-[#D4A017]/10 flex items-center justify-center">
+        <div className="bg-surface-container-high border border-white/10 rounded-2xl p-8 space-y-5">
+          <div className="w-14 h-14 mx-auto rounded-full bg-accent-gold/10 flex items-center justify-center">
             <svg
-              className="w-7 h-7 text-[#D4A017]"
+              className="w-7 h-7 text-primary"
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"
@@ -53,7 +53,7 @@ export default function UnsubscribePage() {
           <div className="pt-2 space-y-3">
             <Link
               href="/dashboard/settings"
-              className="block w-full py-3 px-4 bg-[#D4A017] text-black font-semibold rounded-xl text-sm hover:bg-[#C49516] transition-colors"
+              className="block w-full py-3 px-4 bg-accent-gold text-black font-semibold rounded-xl text-sm hover:bg-accent-gold transition-colors"
             >
               Go to Notification Settings
             </Link>
@@ -69,7 +69,7 @@ export default function UnsubscribePage() {
 
         <p className="text-xs text-gray-600">
           If you&apos;re having trouble, email{' '}
-          <a href="mailto:support@snap-r.com" className="text-[#D4A017] hover:underline">
+          <a href="mailto:support@snap-r.com" className="text-primary hover:underline">
             support@snap-r.com
           </a>{' '}
           and we&apos;ll help.

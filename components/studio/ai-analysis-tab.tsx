@@ -182,17 +182,17 @@ export function AIAnalysisTab({ listingId, photos, onApplyEnhancement, onRequest
 
           <div className="grid grid-cols-3 gap-4 mt-8 text-left">
             <div className="p-4 bg-white/5 rounded-xl border border-white/10">
-              <Crown className="w-6 h-6 text-[#D4A017] mb-2" />
+              <Crown className="w-6 h-6 text-primary mb-2" />
               <p className="text-sm font-medium">Hero Selection</p>
               <p className="text-xs text-white/50">Best MLS lead image</p>
             </div>
             <div className="p-4 bg-white/5 rounded-xl border border-white/10">
-              <Zap className="w-6 h-6 text-[#D4A017] mb-2" />
+              <Zap className="w-6 h-6 text-primary mb-2" />
               <p className="text-sm font-medium">AI Recommendations</p>
               <p className="text-xs text-white/50">Enhancement suggestions</p>
             </div>
             <div className="p-4 bg-white/5 rounded-xl border border-white/10">
-              <UserCheck className="w-6 h-6 text-[#D4A017] mb-2" />
+              <UserCheck className="w-6 h-6 text-primary mb-2" />
               <p className="text-sm font-medium">Human Edit Flags</p>
               <p className="text-xs text-white/50">Issues AI can&apos;t fix</p>
             </div>
@@ -207,7 +207,7 @@ export function AIAnalysisTab({ listingId, photos, onApplyEnhancement, onRequest
       {/* Main Analysis Content */}
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
         {/* Overall Score Card */}
-        <div className="p-5 bg-gradient-to-br from-[#1a1a2e] to-[#0d0d15] rounded-2xl border border-white/10">
+        <div className="p-5 bg-gradient-to-br from-surface-raised to-surface rounded-2xl border border-white/10">
           <div className="flex items-start justify-between mb-4">
             <div>
               <p className="text-sm text-white/60 mb-1">Listing Photo Score</p>
@@ -229,7 +229,7 @@ export function AIAnalysisTab({ listingId, photos, onApplyEnhancement, onRequest
           </div>
           <div className="h-2 bg-white/10 rounded-full overflow-hidden mb-3">
             <div 
-              className="h-full bg-gradient-to-r from-[#D4A017] to-[#F4D03F] rounded-full transition-all duration-1000"
+              className="h-full bg-gradient-to-r from-gold to-accent-gold rounded-full transition-all duration-1000"
               style={{ width: `${analysisResult.overallScore}%` }}
             />
           </div>
@@ -253,7 +253,7 @@ export function AIAnalysisTab({ listingId, photos, onApplyEnhancement, onRequest
         {/* DOM Prediction */}
         <div className="p-4 bg-white/5 rounded-xl border border-white/10">
           <div className="flex items-center gap-2 mb-3">
-            <Clock className="w-4 h-4 text-[#D4A017]" />
+            <Clock className="w-4 h-4 text-primary" />
             <span className="text-sm font-medium">Days on Market Prediction</span>
           </div>
           <div className="flex items-center gap-6">
@@ -261,7 +261,7 @@ export function AIAnalysisTab({ listingId, photos, onApplyEnhancement, onRequest
               <p className="text-xs text-white/50">Current Photos</p>
               <p className="text-2xl font-bold text-orange-400">~{analysisResult.estimatedDomCurrent} days</p>
             </div>
-            <TrendingUp className="w-5 h-5 text-[#D4A017]" />
+            <TrendingUp className="w-5 h-5 text-primary" />
             <div>
               <p className="text-xs text-white/50">With AI Optimization</p>
               <p className="text-2xl font-bold text-green-400">~{analysisResult.estimatedDomOptimized} days</p>
@@ -270,16 +270,16 @@ export function AIAnalysisTab({ listingId, photos, onApplyEnhancement, onRequest
         </div>
 
         {/* Hero Image */}
-        <div className="p-4 bg-gradient-to-br from-[#D4A017]/20 to-[#B8860B]/10 rounded-xl border border-[#D4A017]/30">
+        <div className="p-4 bg-gradient-to-br from-gold/20 to-gold-dark/10 rounded-xl border border-primary/30">
           <div className="flex items-center gap-2 mb-3">
-            <Crown className="w-4 h-4 text-[#D4A017]" />
-            <span className="text-sm font-medium text-[#D4A017]">Recommended Hero Image</span>
-            <span className="px-2 py-0.5 bg-[#D4A017]/30 text-[#D4A017] text-xs rounded-full">
+            <Crown className="w-4 h-4 text-primary" />
+            <span className="text-sm font-medium text-primary">Recommended Hero Image</span>
+            <span className="px-2 py-0.5 bg-accent-gold/30 text-primary text-xs rounded-full">
               Photo #{analysisResult.heroImageIndex + 1}
             </span>
           </div>
           <div className="flex gap-4">
-            <div className="w-32 h-24 rounded-lg overflow-hidden border-2 border-[#D4A017]">
+            <div className="w-32 h-24 rounded-lg overflow-hidden border-2 border-primary">
               <Image src={analysisResult.heroImageUrl} 
                 alt="Hero" 
                 className="w-full h-full object-cover" width={400} height={300} unoptimized />
@@ -325,7 +325,7 @@ export function AIAnalysisTab({ listingId, photos, onApplyEnhancement, onRequest
                   {photo.recommendations[0] && (
                     <button
                       onClick={() => onApplyEnhancement(photo.photoIndex, photo.recommendations[0].toolId)}
-                      className="flex items-center gap-1 px-3 py-2 bg-[#D4A017] text-black rounded-lg text-xs font-medium hover:opacity-90"
+                      className="flex items-center gap-1 px-3 py-2 bg-accent-gold text-black rounded-lg text-xs font-medium hover:opacity-90"
                     >
                       Apply {photo.recommendations[0].toolName}
                       <ChevronRight className="w-3 h-3" />
@@ -388,7 +388,7 @@ export function AIAnalysisTab({ listingId, photos, onApplyEnhancement, onRequest
                   key={photo.photoIndex}
                   onClick={() => setSelectedPhotoIndex(photo.photoIndex)}
                   className={`relative aspect-square rounded-lg overflow-hidden cursor-pointer border-2 transition ${
-                    selectedPhotoIndex === photo.photoIndex ? 'border-[#D4A017]' : 'border-transparent hover:border-white/30'
+                    selectedPhotoIndex === photo.photoIndex ? 'border-primary' : 'border-transparent hover:border-white/30'
                   }`}
                 >
                   <Image src={photo.photoUrl} alt="" className="w-full h-full object-cover" width={400} height={300} unoptimized />
@@ -397,7 +397,7 @@ export function AIAnalysisTab({ listingId, photos, onApplyEnhancement, onRequest
                   </div>
                   {photo.photoIndex === analysisResult.heroImageIndex && (
                     <div className="absolute top-1 left-1">
-                      <Crown className="w-4 h-4 text-[#D4A017] drop-shadow" />
+                      <Crown className="w-4 h-4 text-primary drop-shadow" />
                     </div>
                   )}
                 </div>
@@ -407,7 +407,7 @@ export function AIAnalysisTab({ listingId, photos, onApplyEnhancement, onRequest
         )}
 
         {/* Continue Button */}
-        <div className="p-4 bg-gradient-to-r from-[#D4A017]/20 to-[#B8860B]/10 rounded-xl border border-[#D4A017]/30">
+        <div className="p-4 bg-gradient-to-r from-gold/20 to-gold-dark/10 rounded-xl border border-primary/30">
           <div className="flex items-center justify-between">
             <div>
               <p className="font-medium">Ready to create content?</p>
@@ -417,7 +417,7 @@ export function AIAnalysisTab({ listingId, photos, onApplyEnhancement, onRequest
             </div>
             <a
               href={`/dashboard/content-studio/create-all?listing=${listingId}`}
-              className="flex items-center gap-2 px-5 py-3 bg-gradient-to-r from-[#D4A017] to-[#B8860B] text-black rounded-xl font-semibold hover:opacity-90 transition"
+              className="flex items-center gap-2 px-5 py-3 bg-gradient-to-r from-gold to-gold-dark text-black rounded-xl font-semibold hover:opacity-90 transition"
             >
               <Sparkles className="w-4 h-4" />
               Continue to Content Studio
@@ -429,7 +429,7 @@ export function AIAnalysisTab({ listingId, photos, onApplyEnhancement, onRequest
 
       {/* Right Panel - Selected Photo Details */}
       {selectedPhoto && (
-        <div className="w-[280px] border-l border-white/10 p-4 overflow-y-auto bg-[#1A1A1A]">
+        <div className="w-[280px] border-l border-white/10 p-4 overflow-y-auto bg-surface-container-high">
           <div className="flex items-center justify-between mb-4">
             <h3 className="font-medium">Photo #{selectedPhoto.photoIndex + 1}</h3>
             <button onClick={() => setSelectedPhotoIndex(null)} className="text-white/40 hover:text-white">×</button>
@@ -465,7 +465,7 @@ export function AIAnalysisTab({ listingId, photos, onApplyEnhancement, onRequest
                     <span className="text-xs text-white/60 w-20">{item.label}</span>
                     <div className="flex-1 h-1.5 bg-white/10 rounded-full overflow-hidden">
                       <div 
-                        className="h-full bg-gradient-to-r from-[#D4A017] to-[#F4D03F] rounded-full"
+                        className="h-full bg-gradient-to-r from-gold to-accent-gold rounded-full"
                         style={{ width: `${item.score}%` }}
                       />
                     </div>

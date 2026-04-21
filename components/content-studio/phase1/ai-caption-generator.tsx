@@ -191,7 +191,7 @@ export function CaptionPreview({
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <Sparkles className="w-4 h-4 text-[#D4AF37]" />
+          <Sparkles className="w-4 h-4 text-accent-gold" />
           <span className="text-sm font-medium text-white">Generated Caption</span>
           <span className={`text-[10px] px-1.5 py-0.5 rounded ${isOverLimit ? 'bg-red-500/20 text-red-400' : 'bg-white/10 text-white/40'}`}>
             {caption.length}/{limit}
@@ -209,7 +209,7 @@ export function CaptionPreview({
           )}
           <button
             onClick={copyToClipboard}
-            className="flex items-center gap-1 px-2 py-1 rounded-lg bg-[#D4AF37]/20 text-[#D4AF37] hover:bg-[#D4AF37]/30 transition text-xs"
+            className="flex items-center gap-1 px-2 py-1 rounded-lg bg-accent-gold/20 text-accent-gold hover:bg-accent-gold/30 transition text-xs"
           >
             {copied ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
             {copied ? 'Copied!' : 'Copy'}
@@ -220,7 +220,7 @@ export function CaptionPreview({
       {/* Caption Content */}
       {loading ? (
         <div className="flex items-center justify-center py-8">
-          <Loader2 className="w-6 h-6 text-[#D4AF37] animate-spin" />
+          <Loader2 className="w-6 h-6 text-accent-gold animate-spin" />
           <span className="ml-2 text-white/50 text-sm">Generating caption...</span>
         </div>
       ) : isEditing ? (
@@ -228,7 +228,7 @@ export function CaptionPreview({
           <textarea
             value={editedCaption}
             onChange={(e) => setEditedCaption(e.target.value)}
-            className="w-full h-40 px-3 py-2 rounded-lg bg-white/5 border border-white/20 text-white text-sm resize-none focus:outline-none focus:border-[#D4AF37]/50"
+            className="w-full h-40 px-3 py-2 rounded-lg bg-white/5 border border-white/20 text-white text-sm resize-none focus:outline-none focus:border-accent-gold/50"
           />
           <div className="flex justify-end gap-2">
             <button
@@ -242,7 +242,7 @@ export function CaptionPreview({
             </button>
             <button
               onClick={handleSaveEdit}
-              className="px-3 py-1 rounded-lg bg-[#D4AF37] text-black text-xs font-medium"
+              className="px-3 py-1 rounded-lg bg-accent-gold text-black text-xs font-medium"
             >
               Save
             </button>

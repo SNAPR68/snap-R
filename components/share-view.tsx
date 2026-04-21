@@ -179,11 +179,11 @@ export function ShareView({ listing: initialListing, photos: initialPhotos, sett
   // Password gate
   if (!unlocked) {
     return (
-      <div className="min-h-screen bg-[#0F0F0F] flex items-center justify-center text-white p-4">
+      <div className="min-h-screen bg-charcoal-deep flex items-center justify-center text-white p-4">
         <div className="max-w-sm w-full">
           <div className="flex justify-center mb-6">
-            <div className="w-16 h-16 bg-[#D4A017]/20 rounded-full flex items-center justify-center">
-              <Lock className="w-8 h-8 text-[#D4A017]" />
+            <div className="w-16 h-16 bg-accent-gold/20 rounded-full flex items-center justify-center">
+              <Lock className="w-8 h-8 text-primary" />
             </div>
           </div>
           <h1 className="text-xl font-bold text-center mb-2">Password Required</h1>
@@ -195,14 +195,14 @@ export function ShareView({ listing: initialListing, photos: initialPhotos, sett
               onChange={(e) => setPasswordInput(e.target.value)}
               placeholder="Enter password"
               aria-label="Share password"
-              className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl focus:border-[#D4A017]/50 focus:outline-none text-white"
+              className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl focus:border-primary/50 focus:outline-none text-white"
               autoFocus
             />
             {passwordError && <p className="text-red-400 text-sm">{passwordError}</p>}
             <button
               type="submit"
               disabled={verifying || !passwordInput.trim()}
-              className="w-full py-3 bg-gradient-to-r from-[#D4A017] to-[#B8860B] rounded-xl font-semibold text-black flex items-center justify-center gap-2 disabled:opacity-50"
+              className="w-full py-3 bg-gradient-to-r from-gold to-gold-dark rounded-xl font-semibold text-black flex items-center justify-center gap-2 disabled:opacity-50"
             >
               {verifying ? <Loader2 className="w-5 h-5 animate-spin" /> : null}
               {verifying ? 'Verifying...' : 'Unlock'}
@@ -215,7 +215,7 @@ export function ShareView({ listing: initialListing, photos: initialPhotos, sett
 
   if (photos.length === 0) {
     return (
-      <div className="min-h-screen bg-[#0F0F0F] flex items-center justify-center text-white">
+      <div className="min-h-screen bg-charcoal-deep flex items-center justify-center text-white">
         <p>No enhanced photos available yet.</p>
       </div>
     );
@@ -223,7 +223,7 @@ export function ShareView({ listing: initialListing, photos: initialPhotos, sett
 
   if (submitted) {
     return (
-      <div className="min-h-screen bg-[#0F0F0F] flex items-center justify-center text-white">
+      <div className="min-h-screen bg-charcoal-deep flex items-center justify-center text-white">
         <div className="text-center max-w-md mx-auto p-8">
           <div className="w-20 h-20 bg-emerald-500/20 rounded-full flex items-center justify-center mx-auto mb-6">
             <CheckCircle className="w-10 h-10 text-emerald-400" />
@@ -243,7 +243,7 @@ export function ShareView({ listing: initialListing, photos: initialPhotos, sett
             </div>
           </div>
           {settings.allow_download && approvedCount > 0 && (
-            <button onClick={handleDownloadApproved} className="flex items-center justify-center gap-2 w-full px-6 py-3 bg-gradient-to-r from-[#D4A017] to-[#B8860B] rounded-xl font-medium text-black">
+            <button onClick={handleDownloadApproved} className="flex items-center justify-center gap-2 w-full px-6 py-3 bg-gradient-to-r from-gold to-gold-dark rounded-xl font-medium text-black">
               <Download className="w-5 h-5" /> Download Approved Photos
             </button>
           )}
@@ -253,10 +253,10 @@ export function ShareView({ listing: initialListing, photos: initialPhotos, sett
   }
 
   return (
-    <div className="min-h-screen bg-[#0F0F0F] text-white">
-      <header className="h-16 bg-[#1A1A1A] border-b border-white/10 flex items-center justify-between px-6">
+    <div className="min-h-screen bg-charcoal-deep text-white">
+      <header className="h-16 bg-surface-container-high border-b border-white/10 flex items-center justify-between px-6">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#D4A017] to-[#B8860B] flex items-center justify-center font-bold text-black text-xl">S</div>
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-gold to-gold-dark flex items-center justify-center font-bold text-black text-xl">S</div>
           <span className="font-semibold">{listingTitle}</span>
         </div>
         <div className="flex items-center gap-4">
@@ -266,7 +266,7 @@ export function ShareView({ listing: initialListing, photos: initialPhotos, sett
             <span className="text-white/50">{pendingCount} pending</span>
           </div>
           {shareToken && reviewComplete && (
-            <button onClick={() => setShowSubmitModal(true)} className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-[#D4A017] to-[#B8860B] rounded-lg font-medium text-black text-sm">
+            <button onClick={() => setShowSubmitModal(true)} className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-gold to-gold-dark rounded-lg font-medium text-black text-sm">
               <Send className="w-4 h-4" /> Submit Review
             </button>
           )}
@@ -280,7 +280,7 @@ export function ShareView({ listing: initialListing, photos: initialPhotos, sett
 
       <div className="flex h-[calc(100vh-64px)]">
         <main className="flex-1 p-6 flex flex-col">
-          <div className="flex-1 relative bg-[#0A0A0A] rounded-xl overflow-hidden flex items-center justify-center">
+          <div className="flex-1 relative bg-surface rounded-xl overflow-hidden flex items-center justify-center">
             {selectedPhoto && settings.show_comparison && selectedPhoto.rawUrl ? (
               <div ref={sliderRef} className="relative w-full h-full cursor-col-resize select-none" onMouseMove={handleSliderMove} onTouchMove={handleSliderMove}>
                 <Image src={selectedPhoto.processedUrl} alt="Enhanced" className="absolute inset-0 w-full h-full object-contain pointer-events-none" draggable={false} width={400} height={300} unoptimized />
@@ -342,7 +342,7 @@ export function ShareView({ listing: initialListing, photos: initialPhotos, sett
 
           <div className="flex gap-2 mt-4 overflow-x-auto py-2 justify-center">
             {photos.map((photo, index) => (
-              <button key={photo.id} onClick={() => setSelectedIndex(index)} className={`relative flex-shrink-0 w-16 h-16 rounded-lg overflow-hidden border-2 transition-all ${index === selectedIndex ? 'border-[#D4A017]' : 'border-transparent hover:border-white/30'}`}>
+              <button key={photo.id} onClick={() => setSelectedIndex(index)} className={`relative flex-shrink-0 w-16 h-16 rounded-lg overflow-hidden border-2 transition-all ${index === selectedIndex ? 'border-primary' : 'border-transparent hover:border-white/30'}`}>
                 <Image src={photo.processedUrl} alt="" className="w-full h-full object-cover" width={400} height={300} unoptimized />
                 {approvalStatus[photo.id] === 'approved' && <div className="absolute inset-0 bg-emerald-500/40 flex items-center justify-center"><Check className="w-6 h-6 text-white" /></div>}
                 {approvalStatus[photo.id] === 'rejected' && <div className="absolute inset-0 bg-red-500/40 flex items-center justify-center"><X className="w-6 h-6 text-white" /></div>}
@@ -354,7 +354,7 @@ export function ShareView({ listing: initialListing, photos: initialPhotos, sett
 
       {showSubmitModal && (
         <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4" role="dialog" aria-modal="true" aria-label="Submit review">
-          <div className="bg-[#1A1A1A] rounded-2xl max-w-md w-full p-6">
+          <div className="bg-surface-container-high rounded-2xl max-w-md w-full p-6">
             <h2 className="text-xl font-bold mb-2">Submit Your Review</h2>
             <p className="text-white/60 text-sm mb-6">The photographer will be notified of your selections.</p>
             <div className="bg-white/5 rounded-xl p-4 mb-6">
@@ -365,11 +365,11 @@ export function ShareView({ listing: initialListing, photos: initialPhotos, sett
             </div>
             <div className="mb-6">
               <label className="block text-sm text-white/60 mb-2">Your Name (optional)</label>
-              <input type="text" value={clientName} onChange={(e) => setClientName(e.target.value)} placeholder="Enter your name" className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl focus:border-[#D4A017]/50 focus:outline-none" />
+              <input type="text" value={clientName} onChange={(e) => setClientName(e.target.value)} placeholder="Enter your name" className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl focus:border-primary/50 focus:outline-none" />
             </div>
             <div className="flex gap-3">
               <button onClick={() => setShowSubmitModal(false)} className="flex-1 py-3 border border-white/20 rounded-xl hover:bg-white/5">Cancel</button>
-              <button onClick={handleSubmitReview} disabled={submitting} className="flex-1 py-3 bg-gradient-to-r from-[#D4A017] to-[#B8860B] rounded-xl font-semibold text-black flex items-center justify-center gap-2">
+              <button onClick={handleSubmitReview} disabled={submitting} className="flex-1 py-3 bg-gradient-to-r from-gold to-gold-dark rounded-xl font-semibold text-black flex items-center justify-center gap-2">
                 {submitting ? <Loader2 className="w-5 h-5 animate-spin" /> : <Send className="w-5 h-5" />} {submitting ? 'Sending...' : 'Submit Review'}
               </button>
             </div>

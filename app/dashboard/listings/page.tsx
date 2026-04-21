@@ -87,14 +87,14 @@ function ListingProgressBar({ listing }: { listing: ListingWithMeta }) {
       <div className="flex items-center gap-1 mb-1.5">
         {steps.map((step, i) => (
           <div key={step.label} className="flex items-center gap-1 flex-1">
-            <div className={`h-1.5 rounded-full flex-1 transition-colors ${step.done ? 'bg-[#D4A017]' : 'bg-white/10'}`} />
+            <div className={`h-1.5 rounded-full flex-1 transition-colors ${step.done ? 'bg-accent-gold' : 'bg-white/10'}`} />
             {i < steps.length - 1 && <div className="w-0.5" />}
           </div>
         ))}
       </div>
       <div className="flex justify-between">
         {steps.map((step) => (
-          <span key={step.label} className={`text-[10px] ${step.done ? 'text-[#D4A017]' : 'text-white/25'}`}>
+          <span key={step.label} className={`text-[10px] ${step.done ? 'text-primary' : 'text-white/25'}`}>
             {step.label}
           </span>
         ))}
@@ -268,19 +268,19 @@ export default function ListingsPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#0A0A0A] text-white flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-[#D4A017]" />
+      <div className="min-h-screen bg-surface text-white flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#0A0A0A] text-white">
+    <div className="min-h-screen bg-surface text-white">
       <div className="max-w-7xl mx-auto px-4 py-8">
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h1 className="text-3xl font-bold">My Listings</h1>
+            <h1 className="text-3xl font-bold editorial-headline">My Listings</h1>
             <p className="text-white/50 mt-1">
               {filteredListings.length === listings.length
                 ? `${listings.length} properties`
@@ -303,7 +303,7 @@ export default function ListingsPage() {
                 value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}
                 placeholder="Search by title or address..."
-                className="w-full pl-10 pr-4 py-2 bg-white/[0.06] border border-white/10 rounded-lg text-sm text-white placeholder:text-white/30 focus:outline-none focus:border-[#D4A017]/50 transition-colors"
+                className="w-full pl-10 pr-4 py-2 bg-white/[0.06] border border-white/10 rounded-lg text-sm text-white placeholder:text-white/30 focus:outline-none focus:border-primary/50 transition-colors"
               />
             </div>
 
@@ -315,7 +315,7 @@ export default function ListingsPage() {
                   onClick={() => setStatusFilter(key)}
                   className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
                     statusFilter === key
-                      ? 'bg-[#D4A017] text-black shadow-[0_0_12px_rgba(212,160,23,0.4)]'
+                      ? 'bg-accent-gold text-black shadow-[0_0_12px_rgba(212,160,23,0.4)]'
                       : 'glass-luxury text-white/60 hover:text-white/80'
                   }`}
                 >
@@ -329,7 +329,7 @@ export default function ListingsPage() {
               <select
                 value={sortBy}
                 onChange={e => setSortBy(e.target.value as SortOption)}
-                className="appearance-none pl-8 pr-8 py-1.5 bg-white/5 border border-white/10 rounded-lg text-xs text-white/60 focus:outline-none focus:border-[#D4A017]/50 cursor-pointer"
+                className="appearance-none pl-8 pr-8 py-1.5 bg-white/5 border border-white/10 rounded-lg text-xs text-white/60 focus:outline-none focus:border-primary/50 cursor-pointer"
               >
                 <option value="newest">Newest First</option>
                 <option value="oldest">Oldest First</option>
@@ -344,7 +344,7 @@ export default function ListingsPage() {
           <div className="py-12 glass-luxury glossy-top rounded-2xl">
             {/* Welcome header */}
             <div className="text-center mb-10">
-              <div className="w-16 h-16 rounded-2xl flex items-center justify-center text-black font-bold text-2xl bg-gradient-to-br from-[#D4A017] to-[#B8860B] shadow-lg shadow-[#D4A017]/30 mx-auto mb-4">S</div>
+              <div className="w-16 h-16 rounded-2xl flex items-center justify-center text-black font-bold text-2xl bg-gradient-to-br from-gold to-gold-dark shadow-lg shadow-gold/30 mx-auto mb-4">S</div>
               <h2 className="text-2xl font-bold mb-2">Welcome to SnapR</h2>
               <p className="text-white/50 max-w-lg mx-auto">
                 Transform ordinary property photos into luxury showcases, then auto-generate all your marketing in seconds.
@@ -354,10 +354,10 @@ export default function ListingsPage() {
             {/* 3-step visual guide */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 max-w-3xl mx-auto px-6 mb-10">
               <div className="text-center p-5 rounded-xl bg-white/[0.03] border border-white/10">
-                <div className="w-12 h-12 rounded-xl bg-[#D4A017]/20 flex items-center justify-center mx-auto mb-3">
-                  <ImageIcon className="w-6 h-6 text-[#D4A017]" />
+                <div className="w-12 h-12 rounded-xl bg-accent-gold/20 flex items-center justify-center mx-auto mb-3">
+                  <ImageIcon className="w-6 h-6 text-primary" />
                 </div>
-                <div className="text-xs font-semibold text-[#D4A017] mb-1">Step 1</div>
+                <div className="text-xs font-semibold text-primary mb-1">Step 1</div>
                 <h4 className="font-semibold mb-1">Upload Photos</h4>
                 <p className="text-xs text-white/40">Drop all your listing photos. No sorting needed.</p>
               </div>
@@ -381,13 +381,13 @@ export default function ListingsPage() {
 
             {/* CTAs */}
             <div className="flex flex-col sm:flex-row items-center justify-center gap-3 px-6">
-              <Link href="/listings/new" className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-[#D4A017] to-[#B8860B] text-black rounded-xl font-semibold hover:opacity-90 transition-opacity shadow-lg shadow-[#D4A017]/20">
+              <Link href="/listings/new" className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-gold to-gold-dark text-black rounded-xl font-semibold hover:opacity-90 transition-opacity shadow-lg shadow-gold/20">
                 <Plus className="w-5 h-5" />Upload Your First Listing
               </Link>
               <button
                 onClick={handleCreateSample}
                 disabled={creatingSample}
-                className="inline-flex items-center gap-2 px-6 py-3 border border-[#D4A017]/40 text-[#D4A017] rounded-xl font-semibold hover:bg-[#D4A017]/10 transition-colors disabled:opacity-50"
+                className="inline-flex items-center gap-2 px-6 py-3 border border-primary/40 text-primary rounded-xl font-semibold hover:bg-accent-gold/10 transition-colors disabled:opacity-50"
               >
                 {creatingSample ? (
                   <Loader2 className="w-5 h-5 animate-spin" />
@@ -412,7 +412,7 @@ export default function ListingsPage() {
         ) : (
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredListings.map((listing) => (
-              <Link key={listing.id} href={'/dashboard/studio?id=' + listing.id} className="group glass-luxury glossy-top overflow-hidden hover:border-[#D4A017]/40 transition-all" style={{ borderRadius: '16px' }}>
+              <Link key={listing.id} href={'/dashboard/studio?id=' + listing.id} className="group glass-luxury glossy-top overflow-hidden hover:border-primary/40 transition-all" style={{ borderRadius: '16px' }}>
                 <div className="aspect-video relative">
                   {listing.thumbnail ? (
                     /* eslint-disable-next-line @next/next/no-img-element */

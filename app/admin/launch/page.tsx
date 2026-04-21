@@ -65,7 +65,7 @@ export default async function LaunchAdminPage() {
     <div>
       <div className="mb-8">
         <h1 className="text-3xl font-bold flex items-center gap-3">
-          <Shield className="w-8 h-8 text-[#D4A017]" />
+          <Shield className="w-8 h-8 text-primary" />
           Launch Health
         </h1>
         <p className="text-white/50 mt-1">
@@ -75,7 +75,7 @@ export default async function LaunchAdminPage() {
 
       <div className="grid md:grid-cols-3 gap-4 mb-8">
         {capabilities.map((capability) => (
-          <div key={capability.platform} className="bg-[#1A1A1A] border border-white/10 rounded-xl p-4">
+          <div key={capability.platform} className="bg-surface-container-high border border-white/10 rounded-xl p-4">
             <div className="flex items-center justify-between mb-2">
               <p className="font-semibold">{capability.name}</p>
               <span className={capability.enabled ? 'text-green-400 text-xs' : 'text-red-400 text-xs'}>
@@ -98,9 +98,9 @@ export default async function LaunchAdminPage() {
       </div>
 
       <div className="grid lg:grid-cols-2 gap-6">
-        <section className="bg-[#1A1A1A] border border-white/10 rounded-xl p-6">
+        <section className="bg-surface-container-high border border-white/10 rounded-xl p-6">
           <h2 className="text-lg font-semibold flex items-center gap-2 mb-4">
-            <Share2 className="w-5 h-5 text-[#D4A017]" />
+            <Share2 className="w-5 h-5 text-primary" />
             Recent Publish Failures
           </h2>
           <div className="space-y-3">
@@ -122,9 +122,9 @@ export default async function LaunchAdminPage() {
           </div>
         </section>
 
-        <section className="bg-[#1A1A1A] border border-white/10 rounded-xl p-6">
+        <section className="bg-surface-container-high border border-white/10 rounded-xl p-6">
           <h2 className="text-lg font-semibold flex items-center gap-2 mb-4">
-            <MessageCircle className="w-5 h-5 text-[#D4A017]" />
+            <MessageCircle className="w-5 h-5 text-primary" />
             WhatsApp Activity
           </h2>
           <div className="space-y-3">
@@ -155,9 +155,9 @@ export default async function LaunchAdminPage() {
         </section>
       </div>
 
-      <section className="bg-[#1A1A1A] border border-white/10 rounded-xl p-6 mt-6">
+      <section className="bg-surface-container-high border border-white/10 rounded-xl p-6 mt-6">
         <h2 className="text-lg font-semibold flex items-center gap-2 mb-4">
-          <AlertTriangle className="w-5 h-5 text-[#D4A017]" />
+          <AlertTriangle className="w-5 h-5 text-primary" />
           Connection Errors
         </h2>
         <div className="space-y-3">

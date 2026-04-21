@@ -98,7 +98,7 @@ export default function ContentLibrary() {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
             <Link href="/dashboard/content-studio"><Button variant="ghost" size="sm" className="text-white/60 hover:text-white"><ArrowLeft className="w-4 h-4 mr-2" />Back</Button></Link>
-            <h1 className="text-xl font-bold flex items-center gap-2"><FolderOpen className="w-5 h-5 text-[#D4AF37]" />Content Library</h1>
+            <h1 className="text-xl font-bold flex items-center gap-2"><FolderOpen className="w-5 h-5 text-accent-gold" />Content Library</h1>
           </div>
           <div className="flex items-center gap-2">
             <button onClick={() => setView('grid')} className={`p-2 rounded ${view === 'grid' ? 'bg-white/10' : ''}`}><Grid className="w-4 h-4" /></button>
@@ -125,7 +125,7 @@ export default function ContentLibrary() {
               <button
                 key={cat.id}
                 onClick={() => setCategory(cat.id)}
-                className={`px-3 py-2 rounded-lg text-sm transition ${category === cat.id ? 'bg-[#D4AF37] text-black font-medium' : 'bg-white/5 hover:bg-white/10'}`}
+                className={`px-3 py-2 rounded-lg text-sm transition ${category === cat.id ? 'bg-accent-gold text-black font-medium' : 'bg-white/5 hover:bg-white/10'}`}
               >
                 {cat.name}
               </button>
@@ -141,18 +141,18 @@ export default function ContentLibrary() {
 
         {/* Content Grid/List */}
         {loading ? (
-          <div className="flex items-center justify-center py-20"><Loader2 className="w-8 h-8 animate-spin text-[#D4AF37]" /></div>
+          <div className="flex items-center justify-center py-20"><Loader2 className="w-8 h-8 animate-spin text-accent-gold" /></div>
         ) : filtered.length === 0 ? (
           <div className="text-center py-20">
             <FolderOpen className="w-16 h-16 mx-auto mb-4 text-white/20" />
             <h2 className="text-xl font-bold mb-2">No Saved Content</h2>
             <p className="text-white/50 mb-6">Save posts from the Content Creator to access them here</p>
-            <Link href="/dashboard/content-studio/create-all"><Button className="bg-[#D4AF37] text-black font-bold">Create Content</Button></Link>
+            <Link href="/dashboard/content-studio/create-all"><Button className="bg-accent-gold text-black font-bold">Create Content</Button></Link>
           </div>
         ) : view === 'grid' ? (
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
             {filtered.map(item => (
-              <div key={item.id} className="bg-white/5 rounded-xl overflow-hidden border border-white/10 hover:border-[#D4AF37]/50 transition group">
+              <div key={item.id} className="bg-white/5 rounded-xl overflow-hidden border border-white/10 hover:border-accent-gold/50 transition group">
                 <div className="aspect-square relative">
                   {item.image_url ? (
                     <Image src={item.image_url} alt={item.name} className="w-full h-full object-cover" width={400} height={300} unoptimized />

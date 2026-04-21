@@ -24,7 +24,7 @@ export default function EnhancingPhotosPage() {
       <div className="max-w-4xl mx-auto px-6 py-12">
         <div className="space-y-4">
           {articles.map((article, i) => (
-            <Link key={i} href={`/academy/enhancing-photos/${article.slug}`} className="block bg-surface-container-low rounded-xl p-6 border border-white/10 hover:border-[#D4A017]/50 transition-all group">
+            <Link key={i} href={`/academy/enhancing-photos/${article.slug}`} className="block bg-surface-container-low rounded-xl p-6 border border-white/10 hover:border-primary/50 transition-all group">
               <div className="flex items-start justify-between gap-4">
                 <div><h3 className="text-lg font-semibold mb-1 group-hover:text-primary">{article.title}</h3><p className="text-on-surface-muted text-sm">{article.description}</p></div>
                 <div className="flex items-center gap-1 text-on-surface-muted text-sm"><Clock className="w-4 h-4" />{article.readTime}</div>

@@ -44,7 +44,7 @@ export default function AdminLoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#0A0A0A] flex items-center justify-center px-4">
+    <div className="min-h-screen bg-surface flex items-center justify-center px-4">
       <div className="absolute inset-0 overflow-hidden">
         <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-red-500/10 rounded-full blur-3xl" />
         <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-amber-500/10 rounded-full blur-3xl" />
@@ -56,7 +56,7 @@ export default function AdminLoginPage() {
           Back to home
         </Link>
 
-        <div className="bg-[#141414] border border-white/10 rounded-2xl p-8">
+        <div className="bg-surface border border-white/10 rounded-2xl p-8">
           <div className="text-center mb-8">
             <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-gradient-to-br from-red-500 to-amber-500 flex items-center justify-center">
               <Shield className="w-8 h-8 text-white" />

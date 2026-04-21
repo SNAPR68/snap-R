@@ -33,7 +33,7 @@ function ProcessingDots({ count, total }: { count: number; total: number }) {
         <div
           key={i}
           className={`w-1.5 h-1.5 rounded-full ${
-            i < count ? 'bg-[#D4A017]' : 'bg-white/15'
+            i < count ? 'bg-accent-gold' : 'bg-white/15'
           }`}
         />
       ))}
@@ -174,10 +174,10 @@ export function ProcessingExpanded({ initialItems }: ProcessingContainerProps) {
                 return (
                   <div key={step.key} className="text-center">
                     <div className={`w-6 h-6 rounded-full mx-auto mb-1 flex items-center justify-center ${
-                      isActive ? 'bg-[#D4A017]/20' : 'bg-white/5'
+                      isActive ? 'bg-accent-gold/20' : 'bg-white/5'
                     }`}>
                       {isActive ? (
-                        <CheckCircle className="w-3 h-3 text-[#D4A017]" />
+                        <CheckCircle className="w-3 h-3 text-primary" />
                       ) : (
                         <div className="w-2 h-2 rounded-full bg-white/15" />
                       )}

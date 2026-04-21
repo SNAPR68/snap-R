@@ -159,16 +159,16 @@ export default function FloorPlansPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#0F0F0F] flex items-center justify-center">
+      <div className="min-h-screen bg-charcoal-deep flex items-center justify-center">
         <Loader2 className="w-8 h-8 animate-spin text-amber-500" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#0F0F0F] text-white">
+    <div className="min-h-screen bg-charcoal-deep text-white">
       {/* Header */}
-      <div className="border-b border-white/10 bg-[#0F0F0F]/80 backdrop-blur-sm sticky top-0 z-10">
+      <div className="border-b border-white/10 bg-charcoal-deep/80 backdrop-blur-sm sticky top-0 z-10">
         <div className="max-w-7xl mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
             <div>
@@ -506,7 +506,7 @@ export default function FloorPlansPage() {
           aria-modal="true"
           aria-label="Floor plan viewer"
         >
-          <div className="bg-[#1A1A1A] rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-auto">
+          <div className="bg-surface-container-high rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-auto">
             <div className="flex items-center justify-between p-6 border-b border-white/10">
               <h2 className="text-xl font-bold">{viewPlan.name}</h2>
               <button

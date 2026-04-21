@@ -71,7 +71,7 @@ const LENGTHS = [
 
 function ListingSelector({ listings, onSelect }: { listings: Listing[]; onSelect: (id: string) => void }) {
   return (
-    <div className="min-h-screen bg-[#0F0F0F] text-white p-6">
+    <div className="min-h-screen bg-charcoal-deep text-white p-6">
       <div className="max-w-4xl mx-auto">
         {/* Header with explanation */}
         <div className="flex items-center gap-3 mb-4">
@@ -79,7 +79,7 @@ function ListingSelector({ listings, onSelect }: { listings: Listing[]; onSelect
             <FileText className="w-8 h-8 text-amber-400" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold">AI Description Generator</h1>
+            <h1 className="text-2xl font-bold editorial-headline">AI Description Generator</h1>
             <p className="text-white/50">Write MLS-ready property descriptions from your photos</p>
           </div>
         </div>
@@ -221,7 +221,7 @@ function DescriptionGenerator({
   };
 
   return (
-    <div className="min-h-screen bg-[#0F0F0F] text-white p-6">
+    <div className="min-h-screen bg-charcoal-deep text-white p-6">
       <div className="max-w-5xl mx-auto">
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
@@ -230,7 +230,7 @@ function DescriptionGenerator({
               <FileText className="w-8 h-8 text-amber-400" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold">AI Description Generator</h1>
+              <h1 className="text-2xl font-bold editorial-headline">AI Description Generator</h1>
               <p className="text-white/50">{listingTitle}</p>
             </div>
           </div>
@@ -568,8 +568,8 @@ function AIDescriptionsContent() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#0F0F0F] flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-[#D4A017]" />
+      <div className="min-h-screen bg-charcoal-deep flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
       </div>
     );
   }
@@ -590,8 +590,8 @@ function AIDescriptionsContent() {
 export default function AIDescriptionsPage() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen bg-[#0F0F0F] flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-[#D4A017]" />
+      <div className="min-h-screen bg-charcoal-deep flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
       </div>
     }>
       <AIDescriptionsContent />

@@ -179,7 +179,7 @@ export function MarketingResultsPanel({ marketingJob, listingId, onClose, userTi
     <aside className="w-[280px] border-l border-white/10 flex flex-col flex-shrink-0" style={{ background: 'linear-gradient(180deg, rgba(18,18,18,0.99) 0%, rgba(12,12,12,1) 100%)', backdropFilter: 'blur(24px)' }}>
       {/* Header */}
       <div className="flex items-center justify-between px-3 py-3 border-b border-white/10">
-        <h2 className="text-xs font-semibold text-[#D4A017] tracking-wider">MARKETING RESULTS</h2>
+        <h2 className="text-xs font-semibold text-primary tracking-wider">MARKETING RESULTS</h2>
         <button
           onClick={onClose}
           className="p-1 hover:bg-white/10 rounded transition-colors"
@@ -492,7 +492,7 @@ export function MarketingResultsPanel({ marketingJob, listingId, onClose, userTi
                   </div>
                   <Link
                     href="/dashboard/billing"
-                    className="flex items-center justify-center gap-1 w-full py-1.5 bg-[#D4A017]/10 hover:bg-[#D4A017]/20 border border-[#D4A017]/20 rounded-lg text-[10px] text-[#D4A017] font-medium transition-colors"
+                    className="flex items-center justify-center gap-1 w-full py-1.5 bg-accent-gold/10 hover:bg-accent-gold/20 border border-primary/20 rounded-lg text-[10px] text-primary font-medium transition-colors"
                   >
                     Upgrade Plan
                   </Link>
@@ -552,7 +552,7 @@ export function MarketingResultsPanel({ marketingJob, listingId, onClose, userTi
               </div>
               <Link
                 href="/dashboard/billing"
-                className="flex items-center justify-center gap-1 w-full py-1.5 bg-[#D4A017]/10 hover:bg-[#D4A017]/20 border border-[#D4A017]/20 rounded-lg text-[10px] text-[#D4A017] font-medium transition-colors"
+                className="flex items-center justify-center gap-1 w-full py-1.5 bg-accent-gold/10 hover:bg-accent-gold/20 border border-primary/20 rounded-lg text-[10px] text-primary font-medium transition-colors"
               >
                 Upgrade Plan
               </Link>
@@ -573,7 +573,7 @@ export function MarketingResultsPanel({ marketingJob, listingId, onClose, userTi
         {/* CTA: Create Social Post */}
         <Link
           href={`/dashboard/content-studio/create-all?listing=${listingId}&prefill=marketing`}
-          className="w-full py-2 bg-[#D4A017] hover:bg-[#B8960F] text-black rounded-lg text-xs font-semibold transition-colors flex items-center justify-center gap-1.5"
+          className="w-full py-2 bg-accent-gold hover:bg-accent-gold text-black rounded-lg text-xs font-semibold transition-colors flex items-center justify-center gap-1.5"
         >
           <Sparkles className="w-3.5 h-3.5" /> Create Social Post
         </Link>

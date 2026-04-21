@@ -72,8 +72,8 @@ export default function PartnerDashboardPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#0A0A0A] text-white flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-[#D4A017]" />
+      <div className="min-h-screen bg-surface text-white flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
       </div>
     );
   }
@@ -81,16 +81,16 @@ export default function PartnerDashboardPage() {
   // No application found — show CTA to apply
   if (!partnerData?.found) {
     return (
-      <div className="min-h-screen bg-[#0A0A0A] text-white">
+      <div className="min-h-screen bg-surface text-white">
         <div className="max-w-2xl mx-auto px-4 py-16 text-center">
-          <Handshake className="w-16 h-16 text-[#D4A017] mx-auto mb-6" />
+          <Handshake className="w-16 h-16 text-primary mx-auto mb-6" />
           <h1 className="text-3xl font-bold mb-4">Partner Program</h1>
           <p className="text-white/60 text-lg mb-8 max-w-md mx-auto">
             Earn 20% recurring commission by referring real estate professionals to SnapR.
           </p>
           <Link
             href="/partners"
-            className="inline-flex items-center gap-2 px-8 py-4 bg-gradient-to-r from-[#D4A017] to-[#B8860B] rounded-xl text-black font-semibold hover:opacity-90 transition"
+            className="inline-flex items-center gap-2 px-8 py-4 bg-gradient-to-r from-gold to-gold-dark rounded-xl text-black font-semibold hover:opacity-90 transition"
           >
             Apply Now <ArrowRight className="w-5 h-5" />
           </Link>
@@ -103,7 +103,7 @@ export default function PartnerDashboardPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#0A0A0A] text-white">
+    <div className="min-h-screen bg-surface text-white">
       <div className="max-w-3xl mx-auto px-4 py-8">
         {/* Header */}
         <div className="mb-8">
@@ -111,7 +111,7 @@ export default function PartnerDashboardPage() {
             ← Back to Dashboard
           </Link>
           <h1 className="text-3xl font-bold mt-4 flex items-center gap-3">
-            <Handshake className="w-8 h-8 text-[#D4A017]" />
+            <Handshake className="w-8 h-8 text-primary" />
             Partner Dashboard
           </h1>
           <p className="text-white/50 mt-2">
@@ -180,7 +180,7 @@ export default function PartnerDashboardPage() {
             <p className="text-white/50 text-sm">
               Unfortunately, your application wasn&apos;t approved at this time. If you believe this
               is an error, please contact us at{' '}
-              <a href="mailto:partners@snap-r.com" className="text-[#D4A017] hover:underline">
+              <a href="mailto:partners@snap-r.com" className="text-primary hover:underline">
                 partners@snap-r.com
               </a>
               .
@@ -194,7 +194,7 @@ export default function PartnerDashboardPage() {
             {/* Referral Link */}
             <div className="bg-white/5 rounded-2xl border border-white/10 p-6 mb-6">
               <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
-                <Link2 className="w-5 h-5 text-[#D4A017]" />
+                <Link2 className="w-5 h-5 text-primary" />
                 Your Referral Link
               </h2>
               <div className="flex items-center gap-3">
@@ -203,7 +203,7 @@ export default function PartnerDashboardPage() {
                 </div>
                 <button
                   onClick={copyToClipboard}
-                  className="flex items-center gap-2 px-4 py-3 bg-[#D4A017] text-black rounded-lg font-medium hover:bg-[#B8860B] transition whitespace-nowrap"
+                  className="flex items-center gap-2 px-4 py-3 bg-accent-gold text-black rounded-lg font-medium hover:bg-accent-gold transition whitespace-nowrap"
                 >
                   {copied ? (
                     <>
@@ -225,13 +225,13 @@ export default function PartnerDashboardPage() {
             {/* Stats */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
               <div className="bg-white/5 rounded-2xl border border-white/10 p-6 text-center">
-                <Users className="w-6 h-6 text-[#D4A017] mx-auto mb-2" />
-                <p className="text-3xl font-bold">{partnerData.referralCount || 0}</p>
+                <Users className="w-6 h-6 text-primary mx-auto mb-2" />
+                <p className="text-3xl font-bold editorial-headline">{partnerData.referralCount || 0}</p>
                 <p className="text-white/50 text-sm mt-1">Signups</p>
               </div>
               <div className="bg-white/5 rounded-2xl border border-white/10 p-6 text-center">
                 <p className="text-white/40 text-xs mb-1">REFERRAL CODE</p>
-                <p className="text-xl font-mono font-bold text-[#D4A017]">
+                <p className="text-xl font-mono font-bold text-primary">
                   {partnerData.referralCode}
                 </p>
                 <p className="text-white/50 text-sm mt-1">Your Code</p>
@@ -248,19 +248,19 @@ export default function PartnerDashboardPage() {
               <h3 className="font-semibold mb-3">Tips for Success</h3>
               <ul className="space-y-2 text-white/60 text-sm">
                 <li className="flex items-start gap-2">
-                  <span className="text-[#D4A017]">1.</span>
+                  <span className="text-primary">1.</span>
                   Share your link with real estate photographers and agents in your network
                 </li>
                 <li className="flex items-start gap-2">
-                  <span className="text-[#D4A017]">2.</span>
+                  <span className="text-primary">2.</span>
                   Post about SnapR on social media with your referral link
                 </li>
                 <li className="flex items-start gap-2">
-                  <span className="text-[#D4A017]">3.</span>
+                  <span className="text-primary">3.</span>
                   Include your link in email signatures and newsletters
                 </li>
                 <li className="flex items-start gap-2">
-                  <span className="text-[#D4A017]">4.</span>
+                  <span className="text-primary">4.</span>
                   Commission is paid monthly for all active subscriptions
                 </li>
               </ul>
@@ -272,7 +272,7 @@ export default function PartnerDashboardPage() {
         <div className="mt-8 text-center">
           <Link
             href="/partners"
-            className="inline-flex items-center gap-1 text-[#D4A017] hover:underline text-sm"
+            className="inline-flex items-center gap-1 text-primary hover:underline text-sm"
           >
             View Partner Program details <ExternalLink className="w-3.5 h-3.5" />
           </Link>

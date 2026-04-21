@@ -316,11 +316,11 @@ export function DashboardClient({ user }: { user: { id: string; email: string } 
   };
 
   return (
-    <div className="min-h-screen bg-[#0F0F0F] text-white flex flex-col">
-      <header className="h-16 bg-[#1A1A1A] border-b border-white/10 flex items-center justify-between px-6">
+    <div className="min-h-screen bg-charcoal-deep text-white flex flex-col">
+      <header className="h-16 bg-surface-container-high border-b border-white/10 flex items-center justify-between px-6">
         <Link href="/dashboard" className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#D4A017] to-[#B8860B] flex items-center justify-center font-bold text-black text-xl">S</div>
-          <span className="text-2xl font-bold text-[#D4A017]">SnapR</span>
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-gold to-gold-dark flex items-center justify-center font-bold text-black text-xl">S</div>
+          <span className="text-2xl font-bold text-primary">SnapR</span>
         </Link>
         <div className="flex items-center gap-4">
           <span className="text-white/60 text-sm hidden md:block">{user.email}</span>
@@ -334,12 +334,12 @@ export function DashboardClient({ user }: { user: { id: string; email: string } 
       </header>
 
       <div className="flex flex-1">
-        <aside className="w-[260px] bg-[#1A1A1A] border-r border-white/10 p-4 flex flex-col">
+        <aside className="w-[260px] bg-surface-container-high border-r border-white/10 p-4 flex flex-col">
           <nav className="flex-1 space-y-1">
             {/* Snap & Enhance - Mobile Only */}
             <Link
               href="/dashboard/camera"
-              className="md:hidden flex items-center gap-3 px-3 py-3 rounded-xl mb-3 bg-gradient-to-r from-[#D4A017] to-[#B8860B] text-black font-semibold hover:opacity-90 transition-opacity shadow-lg shadow-[#D4A017]/25"
+              className="md:hidden flex items-center gap-3 px-3 py-3 rounded-xl mb-3 bg-gradient-to-r from-gold to-gold-dark text-black font-semibold hover:opacity-90 transition-opacity shadow-lg shadow-gold/25"
             >
               <Camera className="w-5 h-5" />
               <span>Snap & Enhance</span>
@@ -350,7 +350,7 @@ export function DashboardClient({ user }: { user: { id: string; email: string } 
               onClick={() => setActiveTab('projects')}
               className={`flex items-center gap-3 px-3 py-2.5 rounded-lg w-full text-left ${
                 activeTab === 'projects'
-                  ? 'bg-[#D4A017]/10 text-[#D4A017]'
+                  ? 'bg-accent-gold/10 text-primary'
                   : 'text-white/60 hover:bg-white/5'
               }`}
             >
@@ -360,7 +360,7 @@ export function DashboardClient({ user }: { user: { id: string; email: string } 
               onClick={() => setActiveTab('analytics')}
               className={`flex items-center gap-3 px-3 py-2.5 rounded-lg w-full text-left ${
                 activeTab === 'analytics'
-                  ? 'bg-[#D4A017]/10 text-[#D4A017]'
+                  ? 'bg-accent-gold/10 text-primary'
                   : 'text-white/60 hover:bg-white/5'
               }`}
             >
@@ -390,7 +390,7 @@ export function DashboardClient({ user }: { user: { id: string; email: string } 
                 <h1 className="text-3xl font-bold">Dashboard</h1>
                 <button
                   onClick={() => setShowNewProject(true)}
-                  className="flex items-center gap-2 px-5 py-3 bg-gradient-to-r from-[#D4A017] to-[#B8860B] rounded-xl text-black font-semibold hover:opacity-90 shadow-lg shadow-[#D4A017]/25"
+                  className="flex items-center gap-2 px-5 py-3 bg-gradient-to-r from-gold to-gold-dark rounded-xl text-black font-semibold hover:opacity-90 shadow-lg shadow-gold/25"
                 >
                   <Plus className="w-5 h-5" /> New Project
                 </button>
@@ -398,7 +398,7 @@ export function DashboardClient({ user }: { user: { id: string; email: string } 
 
               {showNewProject && (
                 <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
-                  <div className="bg-[#1A1A1A] rounded-2xl p-6 w-full max-w-md border border-white/10">
+                  <div className="bg-surface-container-high rounded-2xl p-6 w-full max-w-md border border-white/10">
                     <div className="flex items-center justify-between mb-4">
                       <h2 className="text-xl font-bold">Create New Project</h2>
                       <button
@@ -414,7 +414,7 @@ export function DashboardClient({ user }: { user: { id: string; email: string } 
                       value={newProjectTitle}
                       onChange={(e) => setNewProjectTitle(e.target.value)}
                       onKeyDown={(e) => e.key === 'Enter' && createProject()}
-                      className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-white/40 focus:outline-none focus:border-[#D4A017] mb-4"
+                      className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-white/40 focus:outline-none focus:border-primary mb-4"
                       autoFocus
                     />
                     <div className="flex gap-3">
@@ -427,7 +427,7 @@ export function DashboardClient({ user }: { user: { id: string; email: string } 
                       <button
                         onClick={createProject}
                         disabled={!newProjectTitle.trim()}
-                        className="flex-1 px-4 py-3 bg-gradient-to-r from-[#D4A017] to-[#B8860B] rounded-xl text-black font-semibold disabled:opacity-50"
+                        className="flex-1 px-4 py-3 bg-gradient-to-r from-gold to-gold-dark rounded-xl text-black font-semibold disabled:opacity-50"
                       >
                         Create
                       </button>
@@ -438,7 +438,7 @@ export function DashboardClient({ user }: { user: { id: string; email: string } 
 
               {showNewListing && (
                 <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
-                  <div className="bg-[#1A1A1A] rounded-2xl p-6 w-full max-w-md border border-white/10">
+                  <div className="bg-surface-container-high rounded-2xl p-6 w-full max-w-md border border-white/10">
                     <div className="flex items-center justify-between mb-4">
                       <h2 className="text-xl font-bold">Create New Listing</h2>
                       <button
@@ -454,7 +454,7 @@ export function DashboardClient({ user }: { user: { id: string; email: string } 
                       value={newListingTitle}
                       onChange={(e) => setNewListingTitle(e.target.value)}
                       onKeyDown={(e) => e.key === 'Enter' && createListing(showNewListing)}
-                      className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-white/40 focus:outline-none focus:border-[#D4A017] mb-4"
+                      className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-white/40 focus:outline-none focus:border-primary mb-4"
                       autoFocus
                     />
                     <div className="flex gap-3">
@@ -467,7 +467,7 @@ export function DashboardClient({ user }: { user: { id: string; email: string } 
                       <button
                         onClick={() => createListing(showNewListing)}
                         disabled={!newListingTitle.trim()}
-                        className="flex-1 px-4 py-3 bg-gradient-to-r from-[#D4A017] to-[#B8860B] rounded-xl text-black font-semibold disabled:opacity-50"
+                        className="flex-1 px-4 py-3 bg-gradient-to-r from-gold to-gold-dark rounded-xl text-black font-semibold disabled:opacity-50"
                       >
                         Create
                       </button>
@@ -485,7 +485,7 @@ export function DashboardClient({ user }: { user: { id: string; email: string } 
                   <p className="text-white/60 mb-6">Create your first project to get started</p>
                   <button
                     onClick={() => setShowNewProject(true)}
-                    className="px-6 py-3 bg-gradient-to-r from-[#D4A017] to-[#B8860B] rounded-xl text-black font-semibold"
+                    className="px-6 py-3 bg-gradient-to-r from-gold to-gold-dark rounded-xl text-black font-semibold"
                   >
                     Create Project
                   </button>
@@ -493,18 +493,18 @@ export function DashboardClient({ user }: { user: { id: string; email: string } 
               ) : (
                 <div className="space-y-4">
                   {projects.map((project) => (
-                    <div key={project.id} className="bg-[#1A1A1A] rounded-xl border border-white/10 overflow-hidden">
+                    <div key={project.id} className="bg-surface-container-high rounded-xl border border-white/10 overflow-hidden">
                       <div
                         className="flex items-center justify-between p-4 cursor-pointer hover:bg-white/5"
                         onClick={() => toggleProject(project.id)}
                       >
                         <div className="flex items-center gap-3">
                           {expandedProjects.has(project.id) ? (
-                            <ChevronDown className="w-5 h-5 text-[#D4A017]" />
+                            <ChevronDown className="w-5 h-5 text-primary" />
                           ) : (
                             <ChevronRight className="w-5 h-5 text-white/60" />
                           )}
-                          <FolderOpen className="w-5 h-5 text-[#D4A017]" />
+                          <FolderOpen className="w-5 h-5 text-primary" />
                           <span className="font-semibold">{project.title}</span>
                           <span className="text-white/40 text-sm">({project.listings?.length || 0} listings)</span>
                         </div>
@@ -514,7 +514,7 @@ export function DashboardClient({ user }: { user: { id: string; email: string } 
                               e.stopPropagation();
                               setShowNewListing(project.id);
                             }}
-                            className="px-3 py-1.5 bg-[#D4A017]/20 text-[#D4A017] rounded-lg text-sm hover:bg-[#D4A017]/30"
+                            className="px-3 py-1.5 bg-accent-gold/20 text-primary rounded-lg text-sm hover:bg-accent-gold/30"
                           >
                             + Add Listing
                           </button>

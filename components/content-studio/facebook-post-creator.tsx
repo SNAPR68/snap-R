@@ -183,7 +183,7 @@ export function SocialPostCreator({ platform }: SocialPostCreatorProps) {
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-900 flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-[#D4AF37]" />
+        <Loader2 className="w-8 h-8 animate-spin text-accent-gold" />
       </div>
     )
   }
@@ -214,7 +214,7 @@ export function SocialPostCreator({ platform }: SocialPostCreatorProps) {
                     onClick={() => setSelectedCategory(cat.id)}
                     className={`px-3 py-2 rounded-lg text-sm font-medium transition-all ${
                       selectedCategory === cat.id
-                        ? 'bg-[#D4AF37] text-black'
+                        ? 'bg-accent-gold text-black'
                         : 'bg-white/5 text-white/70 hover:bg-white/10'
                     }`}
                   >
@@ -234,7 +234,7 @@ export function SocialPostCreator({ platform }: SocialPostCreatorProps) {
                     onClick={() => setSelectedTemplate(template)}
                     className={`w-full relative rounded-xl overflow-hidden border-2 transition-all ${
                       selectedTemplate.id === template.id
-                        ? 'border-[#D4AF37] ring-2 ring-[#D4AF37]/30'
+                        ? 'border-accent-gold ring-2 ring-accent-gold/30'
                         : 'border-white/10 hover:border-white/30'
                     }`}
                   >
@@ -255,7 +255,7 @@ export function SocialPostCreator({ platform }: SocialPostCreatorProps) {
                       </div>
                     </div>
                     {selectedTemplate.id === template.id && (
-                      <div className="absolute top-2 right-2 w-6 h-6 bg-[#D4AF37] rounded-full flex items-center justify-center">
+                      <div className="absolute top-2 right-2 w-6 h-6 bg-accent-gold rounded-full flex items-center justify-center">
                         <Check className="w-4 h-4 text-black" />
                       </div>
                     )}
@@ -275,7 +275,7 @@ export function SocialPostCreator({ platform }: SocialPostCreatorProps) {
                       onClick={() => setPhotoUrl(url)}
                       className={`aspect-video rounded-lg overflow-hidden border-2 transition-all ${
                         photoUrl === url
-                          ? 'border-[#D4AF37] ring-2 ring-[#D4AF37]/30'
+                          ? 'border-accent-gold ring-2 ring-accent-gold/30'
                           : 'border-white/10 hover:border-white/30'
                       }`}
                     >
@@ -334,7 +334,7 @@ export function SocialPostCreator({ platform }: SocialPostCreatorProps) {
                 <Button
                   onClick={handleDownload}
                   disabled={downloading || !photoUrl}
-                  className="w-full mt-4 bg-gradient-to-r from-[#D4AF37] to-[#B8960C] text-black font-semibold"
+                  className="w-full mt-4 bg-gradient-to-r from-accent-gold to-accent-gold text-black font-semibold"
                 >
                   {downloading ? (
                     <Loader2 className="w-4 h-4 animate-spin mr-2" />
@@ -443,7 +443,7 @@ export function SocialPostCreator({ platform }: SocialPostCreatorProps) {
             <div className="bg-white/5 rounded-xl border border-white/10 p-4 space-y-4">
               <div className="flex items-center justify-between">
                 <Label className="text-sm text-white/60">Brand Settings</Label>
-                <Link href="/dashboard/brand" className="text-xs text-[#D4AF37] hover:underline">
+                <Link href="/dashboard/brand" className="text-xs text-accent-gold hover:underline">
                   Edit Brand Profile →
                 </Link>
               </div>

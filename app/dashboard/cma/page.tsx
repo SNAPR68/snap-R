@@ -350,7 +350,7 @@ function CMAGenerator() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#0F0F0F] flex items-center justify-center">
+      <div className="min-h-screen bg-charcoal-deep flex items-center justify-center">
         <Loader2 className="w-8 h-8 animate-spin text-amber-400" />
       </div>
     );
@@ -359,7 +359,7 @@ function CMAGenerator() {
   // Step 1: Select Listing
   if (step === 'select') {
     return (
-      <div className="min-h-screen bg-[#0F0F0F] text-white p-6">
+      <div className="min-h-screen bg-charcoal-deep text-white p-6">
         {/* Load html2pdf library */}
         <Script
           src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"
@@ -371,7 +371,7 @@ function CMAGenerator() {
               <FileText className="w-8 h-8 text-amber-400" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold">CMA Report Generator</h1>
+              <h1 className="text-2xl font-bold editorial-headline">CMA Report Generator</h1>
               <p className="text-white/50">Create professional Comparative Market Analysis reports</p>
             </div>
           </div>
@@ -432,7 +432,7 @@ function CMAGenerator() {
   // Step 2: Enter Comps
   if (step === 'comps') {
     return (
-      <div className="min-h-screen bg-[#0F0F0F] text-white p-6">
+      <div className="min-h-screen bg-charcoal-deep text-white p-6">
         <Script
           src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"
         />
@@ -447,7 +447,7 @@ function CMAGenerator() {
                 <ArrowLeft className="w-5 h-5" />
               </button>
               <div>
-                <h1 className="text-2xl font-bold">Enter Comparable Sales</h1>
+                <h1 className="text-2xl font-bold editorial-headline">Enter Comparable Sales</h1>
                 <p className="text-white/50">{selectedListing?.address || selectedListing?.title}</p>
               </div>
             </div>
@@ -555,7 +555,7 @@ function CMAGenerator() {
   // Step 3: Review & Pricing
   if (step === 'review') {
     return (
-      <div className="min-h-screen bg-[#0F0F0F] text-white p-6">
+      <div className="min-h-screen bg-charcoal-deep text-white p-6">
         <Script
           src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"
         />
@@ -566,7 +566,7 @@ function CMAGenerator() {
               <ArrowLeft className="w-5 h-5" />
             </button>
             <div>
-              <h1 className="text-2xl font-bold">Review & Generate</h1>
+              <h1 className="text-2xl font-bold editorial-headline">Review & Generate</h1>
               <p className="text-white/50">Set pricing and agent info</p>
             </div>
           </div>
@@ -706,7 +706,7 @@ function CMAGenerator() {
 
   // Step 4: Result
   return (
-    <div className="min-h-screen bg-[#0F0F0F] text-white p-6">
+    <div className="min-h-screen bg-charcoal-deep text-white p-6">
       <Script
         src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"
         strategy="afterInteractive"
@@ -827,7 +827,7 @@ function CMAGenerator() {
 export default function CMAPage() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen bg-[#0F0F0F] flex items-center justify-center">
+      <div className="min-h-screen bg-charcoal-deep flex items-center justify-center">
         <Loader2 className="w-8 h-8 animate-spin text-amber-400" />
       </div>
     }>

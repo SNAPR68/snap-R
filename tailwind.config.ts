@@ -23,14 +23,15 @@ const config: Config = {
           black: "#0B0B0B",
         },
         gold: {
-          DEFAULT: "#F3C969",
-          dark: "#E9B949",
-          deep: "#D9A93C",
+          DEFAULT: "#C9A84C",
+          dark: "#A8893A",
+          deep: "#8B6F2E",
+          light: "#D4B86A",
         },
         mint: {
-          DEFAULT: "#86E3C3",
-          soft: "#A8F0D4",
-          dark: "#4FB892",
+          DEFAULT: "#4A9B7F",
+          soft: "#7BBDA8",
+          dark: "#3A7D65",
         },
         carbon: "#111111",
         cloud: "#6B7280",
@@ -45,20 +46,20 @@ const config: Config = {
 
         // Editorial "Digital Curator" tokens
         surface: {
-          DEFAULT: "#131313",
-          "container-low": "#1C1B1B",
-          "container-high": "#2A2A2A",
-          "container-highest": "#353534",
+          DEFAULT: "#0A0A0A",
+          "container-low": "#111111",
+          "container-high": "#1A1A1A",
+          "container-highest": "#242320",
         },
         primary: {
-          DEFAULT: "#F6BE39",
-          container: "#D4A017",
+          DEFAULT: "#C9A84C",
+          container: "#D4B86A",
         },
         "on-surface": {
-          DEFAULT: "#D3C5AE",
-          muted: "rgba(211, 197, 174, 0.5)",
+          DEFAULT: "#F5F0EB",
+          muted: "rgba(245, 240, 235, 0.55)",
         },
-        "outline-variant": "rgba(211, 197, 174, 0.15)",
+        "outline-variant": "rgba(201, 168, 76, 0.18)",
       },
 
       boxShadow: {

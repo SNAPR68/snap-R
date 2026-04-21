@@ -59,14 +59,14 @@ export function ApprovalSummaryPanel({ listingId, onRefresh }: ApprovalSummaryPa
   const rejectedPhotos = summary.photos.filter(p => p.client_approved === false);
 
   return (
-    <div className="bg-[#1A1A1A] rounded-xl border border-white/10 overflow-hidden">
+    <div className="bg-surface-container-high rounded-xl border border-white/10 overflow-hidden">
       <button
         onClick={() => setExpanded(!expanded)}
         className="w-full flex items-center justify-between px-4 py-3 hover:bg-white/5 transition-colors"
       >
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-1">
-            <div className="w-8 h-8 bg-gradient-to-br from-[#D4A017] to-[#B8860B] rounded-full flex items-center justify-center">
+            <div className="w-8 h-8 bg-gradient-to-br from-gold to-gold-dark rounded-full flex items-center justify-center">
               <span className="text-xs font-bold text-black">{percentApproved}%</span>
             </div>
           </div>

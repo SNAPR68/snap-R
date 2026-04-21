@@ -46,9 +46,9 @@ export default function BillingClient({ profile }: { profile: { subscription_tie
   };
 
   return (
-    <div className="min-h-screen bg-[#0F0F0F] text-white">
+    <div className="min-h-screen bg-charcoal-deep text-white">
       {/* Header */}
-      <div className="border-b border-white/10 bg-[#1A1A1A]">
+      <div className="border-b border-white/10 bg-surface-container-high">
         <div className="max-w-6xl mx-auto px-6 py-5">
           <Link href="/dashboard" className="inline-flex items-center gap-2 text-white/60 hover:text-white mb-4">
             <ArrowLeft className="w-4 h-4" /> Back to Dashboard
@@ -70,15 +70,15 @@ export default function BillingClient({ profile }: { profile: { subscription_tie
 
       <div className="max-w-6xl mx-auto px-6 py-8">
         {/* Current Credits Card */}
-        <div className="bg-gradient-to-r from-[#D4A017]/20 to-transparent rounded-2xl p-6 border border-[#D4A017]/30 mb-8">
+        <div className="bg-gradient-to-r from-gold/20 to-transparent rounded-2xl p-6 border border-primary/30 mb-8">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
-              <div className="w-14 h-14 rounded-xl bg-[#D4A017]/20 flex items-center justify-center">
-                <Sparkles className="w-7 h-7 text-[#D4A017]" />
+              <div className="w-14 h-14 rounded-xl bg-accent-gold/20 flex items-center justify-center">
+                <Sparkles className="w-7 h-7 text-primary" />
               </div>
               <div>
                 <p className="text-white/60 text-sm">Available Credits</p>
-                <p className="text-4xl font-bold text-[#D4A017]">{profile?.credits || 0}</p>
+                <p className="text-4xl font-bold text-primary">{profile?.credits || 0}</p>
               </div>
             </div>
             <div className="text-right">
@@ -95,18 +95,18 @@ export default function BillingClient({ profile }: { profile: { subscription_tie
           {CREDIT_PACKAGES.map((pkg) => (
             <div
               key={pkg.id}
-              className={`relative bg-[#1A1A1A] rounded-2xl p-6 border ${
-                pkg.popular ? 'border-[#D4A017]' : 'border-white/10'
-              } hover:border-[#D4A017]/50 transition-colors`}
+              className={`relative bg-surface-container-high rounded-2xl p-6 border ${
+                pkg.popular ? 'border-primary' : 'border-white/10'
+              } hover:border-primary/50 transition-colors`}
             >
               {pkg.popular && (
-                <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 bg-[#D4A017] text-black text-xs font-bold rounded-full">
+                <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 bg-accent-gold text-black text-xs font-bold rounded-full">
                   MOST POPULAR
                 </div>
               )}
               <h3 className="text-xl font-bold mb-2">{pkg.name}</h3>
               <div className="flex items-baseline gap-1 mb-4">
-                <span className="text-3xl font-bold text-[#D4A017]">{pkg.priceDisplay}</span>
+                <span className="text-3xl font-bold text-primary">{pkg.priceDisplay}</span>
               </div>
               <div className="flex items-center gap-2 mb-6">
                 <CreditCard className="w-5 h-5 text-white/40" />
@@ -114,17 +114,17 @@ export default function BillingClient({ profile }: { profile: { subscription_tie
               </div>
               <ul className="space-y-2 mb-6">
                 <li className="flex items-center gap-2 text-sm text-white/60">
-                  <Check className="w-4 h-4 text-[#D4A017]" /> All AI enhancement tools
+                  <Check className="w-4 h-4 text-primary" /> All AI enhancement tools
                 </li>
                 <li className="flex items-center gap-2 text-sm text-white/60">
-                  <Check className="w-4 h-4 text-[#D4A017]" /> Instant delivery
+                  <Check className="w-4 h-4 text-primary" /> Instant delivery
                 </li>
                 <li className="flex items-center gap-2 text-sm text-white/60">
-                  <Check className="w-4 h-4 text-[#D4A017]" /> {pkg.id === 'starter' ? 'Email support' : pkg.id === 'pro' ? 'Priority support' : 'Dedicated support'}
+                  <Check className="w-4 h-4 text-primary" /> {pkg.id === 'starter' ? 'Email support' : pkg.id === 'pro' ? 'Priority support' : 'Dedicated support'}
                 </li>
                 {pkg.id !== 'starter' && (
                   <li className="flex items-center gap-2 text-sm text-white/60">
-                    <Check className="w-4 h-4 text-[#D4A017]" /> {pkg.id === 'pro' ? 'Team sharing' : 'API access'}
+                    <Check className="w-4 h-4 text-primary" /> {pkg.id === 'pro' ? 'Team sharing' : 'API access'}
                   </li>
                 )}
               </ul>
@@ -133,7 +133,7 @@ export default function BillingClient({ profile }: { profile: { subscription_tie
                 disabled={loading === pkg.id}
                 className={`w-full py-3 rounded-xl font-semibold transition-all ${
                   pkg.popular
-                    ? 'bg-gradient-to-r from-[#D4A017] to-[#B8860B] text-black hover:opacity-90'
+                    ? 'bg-gradient-to-r from-gold to-gold-dark text-black hover:opacity-90'
                     : 'bg-white/10 hover:bg-white/20 text-white'
                 } disabled:opacity-50`}
               >
@@ -148,7 +148,7 @@ export default function BillingClient({ profile }: { profile: { subscription_tie
         </div>
 
         {/* Credit Usage Info */}
-        <div className="mt-12 bg-[#1A1A1A] rounded-2xl p-6 border border-white/10">
+        <div className="mt-12 glass-luxury rounded-2xl p-6">
           <h3 className="text-lg font-bold mb-4">Credit Usage</h3>
           <div className="grid md:grid-cols-3 gap-4">
             <div className="p-4 bg-white/5 rounded-xl">

@@ -296,7 +296,7 @@ export default function OrganizationPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#0F0F0F] flex items-center justify-center">
+      <div className="min-h-screen bg-charcoal-deep flex items-center justify-center">
         <Loader2 className="w-8 h-8 animate-spin text-amber-400" />
       </div>
     );
@@ -305,7 +305,7 @@ export default function OrganizationPage() {
   // Gate: Free users can't access
   if (userPlan.plan === 'free') {
     return (
-      <div className="min-h-screen bg-[#0F0F0F] text-white p-6">
+      <div className="min-h-screen bg-charcoal-deep text-white p-6">
         <div className="max-w-2xl mx-auto">
           <Link href="/dashboard/settings" className="inline-flex items-center gap-2 text-white/50 hover:text-white mb-8">
             <ArrowLeft className="w-4 h-4" /> Back to Settings
@@ -335,7 +335,7 @@ export default function OrganizationPage() {
   const isWhiteLabelActive = org?.white_label_active;
 
   return (
-    <div className="min-h-screen bg-[#0F0F0F] text-white p-6">
+    <div className="min-h-screen bg-charcoal-deep text-white p-6">
       <div className="max-w-4xl mx-auto">
         {/* Header */}
         <div className="flex items-center justify-between mb-8">

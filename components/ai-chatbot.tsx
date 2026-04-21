@@ -104,7 +104,7 @@ export function AIChatbot() {
       {!isOpen && (
         <button
           onClick={() => setIsOpen(true)}
-          className="fixed bottom-6 right-6 z-50 flex items-center gap-3 bg-gradient-to-r from-[#D4A017] to-[#9A7B0A] text-black pl-2 pr-5 py-2 rounded-full shadow-2xl hover:scale-105 transition-all duration-300 hover:shadow-[0_0_30px_rgba(212,160,23,0.4)]"
+          className="fixed bottom-6 right-6 z-50 flex items-center gap-3 bg-gradient-to-r from-gold to-accent-gold text-black pl-2 pr-5 py-2 rounded-full shadow-2xl hover:scale-105 transition-all duration-300 hover:shadow-[0_0_30px_rgba(212,160,23,0.4)]"
         >
           <div className="w-11 h-11 rounded-full bg-black/10 flex items-center justify-center">
             <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-8 h-8">
@@ -122,9 +122,9 @@ export function AIChatbot() {
 
       {/* Chat Window */}
       {isOpen && (
-        <div className="fixed bottom-6 right-6 z-50 w-[380px] h-[500px] bg-[#1A1A1A] rounded-2xl shadow-2xl border border-white/10 flex flex-col overflow-hidden">
+        <div className="fixed bottom-6 right-6 z-50 w-[380px] h-[500px] bg-surface-container-high rounded-2xl shadow-2xl border border-white/10 flex flex-col overflow-hidden">
           {/* Header */}
-          <div className="bg-gradient-to-r from-[#D4A017] to-[#B8860B] px-4 py-3 flex items-center justify-between">
+          <div className="bg-gradient-to-r from-gold to-gold-dark px-4 py-3 flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 bg-black/20 rounded-full flex items-center justify-center">
                 <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-7 h-7">
@@ -156,7 +156,7 @@ export function AIChatbot() {
                 <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
                   message.role === 'user' 
                     ? 'bg-blue-500/20' 
-                    : 'bg-[#D4A017]/20'
+                    : 'bg-accent-gold/20'
                 }`}>
                   {message.role === 'user' 
                     ? <User className="w-4 h-4 text-blue-400" />
@@ -180,7 +180,7 @@ export function AIChatbot() {
             ))}
             {isLoading && (
               <div className="flex gap-3">
-                <div className="w-8 h-8 rounded-full bg-[#D4A017]/20 flex items-center justify-center">
+                <div className="w-8 h-8 rounded-full bg-accent-gold/20 flex items-center justify-center">
                   <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-5 h-5">
                     <circle cx="50" cy="32" r="20" fill="#D4A017" opacity="0.9"/>
                     <path d="M18 92 Q18 65, 50 58 Q82 65, 82 92" fill="#D4A017" opacity="0.9"/>
@@ -188,7 +188,7 @@ export function AIChatbot() {
                   </svg>
                 </div>
                 <div className="bg-white/5 rounded-2xl px-4 py-3">
-                  <Loader2 className="w-4 h-4 text-[#D4A017] animate-spin" />
+                  <Loader2 className="w-4 h-4 text-primary animate-spin" />
                 </div>
               </div>
             )}
@@ -216,7 +216,7 @@ export function AIChatbot() {
             </div>
             <button
               onClick={() => { setFeedbackType('issue'); setShowFeedback(true); }}
-              className="flex items-center gap-1 text-white/40 hover:text-[#D4A017] transition-colors"
+              className="flex items-center gap-1 text-white/40 hover:text-primary transition-colors"
             >
               <Flag className="w-3 h-3" />
               <span>Report issue</span>
@@ -226,7 +226,7 @@ export function AIChatbot() {
           {/* Feedback Modal */}
           {showFeedback && (
             <div className="absolute inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-10 rounded-2xl">
-              <div className="bg-[#1A1A1A] rounded-xl p-5 w-full max-w-[300px] border border-white/10">
+              <div className="bg-surface-container-high rounded-xl p-5 w-full max-w-[300px] border border-white/10">
                 {feedbackSubmitted ? (
                   <div className="text-center py-4">
                     <div className="w-12 h-12 bg-green-500/20 rounded-full flex items-center justify-center mx-auto mb-3">
@@ -252,7 +252,7 @@ export function AIChatbot() {
                       onChange={(e) => setFeedbackMessage(e.target.value)}
                       placeholder={feedbackType === 'issue' ? "What went wrong?" : "Tell us more..."}
                       aria-label="Chat message"
-                      className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white text-sm placeholder-white/30 focus:outline-none focus:border-[#D4A017]/50 resize-none h-20 mb-3"
+                      className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white text-sm placeholder-white/30 focus:outline-none focus:border-primary/50 resize-none h-20 mb-3"
                     />
                     <div className="flex gap-2">
                       <button
@@ -263,7 +263,7 @@ export function AIChatbot() {
                       </button>
                       <button
                         onClick={submitFeedback}
-                        className="flex-1 px-3 py-2 bg-gradient-to-r from-[#D4A017] to-[#9A7B0A] text-black rounded-lg text-sm font-medium hover:opacity-90 transition-opacity"
+                        className="flex-1 px-3 py-2 bg-gradient-to-r from-gold to-accent-gold text-black rounded-lg text-sm font-medium hover:opacity-90 transition-opacity"
                       >
                         Submit
                       </button>
@@ -283,13 +283,13 @@ export function AIChatbot() {
                 onChange={(e) => setInput(e.target.value)}
                 placeholder="Ask me anything..."
                 aria-label="Your name"
-                className="flex-1 bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-white placeholder-white/30 focus:outline-none focus:border-[#D4A017]/50 text-sm"
+                className="flex-1 bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-white placeholder-white/30 focus:outline-none focus:border-primary/50 text-sm"
                 disabled={isLoading}
               />
               <button
                 type="submit"
                 disabled={isLoading || !input.trim()}
-                className="bg-gradient-to-r from-[#D4A017] to-[#B8860B] text-black p-2 rounded-xl hover:opacity-90 disabled:opacity-50 transition-opacity"
+                className="bg-gradient-to-r from-gold to-gold-dark text-black p-2 rounded-xl hover:opacity-90 disabled:opacity-50 transition-opacity"
               >
                 <Send className="w-5 h-5" />
               </button>

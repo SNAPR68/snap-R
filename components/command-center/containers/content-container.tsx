@@ -59,7 +59,7 @@ export function ContentCollapsed({ listings, marketingStatuses }: ContentContain
       )}
       <Link
         href="/dashboard/content-studio"
-        className="flex items-center justify-center gap-1.5 px-3 py-2 bg-[#D4A017] text-black rounded-lg text-xs font-semibold w-full"
+        className="flex items-center justify-center gap-1.5 px-3 py-2 bg-accent-gold text-black rounded-lg text-xs font-semibold w-full"
         onClick={(e) => e.stopPropagation()}
       >
         <Sparkles className="w-3 h-3" /> Create Post
@@ -75,7 +75,7 @@ export function ContentExpanded({ listings, marketingStatuses }: ContentContaine
         <p className="text-sm text-white/50">Select a listing to create marketing content</p>
         <Link
           href="/dashboard/content-studio"
-          className="inline-flex items-center gap-1.5 px-4 py-2 bg-[#D4A017] text-black rounded-lg text-sm font-semibold"
+          className="inline-flex items-center gap-1.5 px-4 py-2 bg-accent-gold text-black rounded-lg text-sm font-semibold"
         >
           <Sparkles className="w-4 h-4" /> Open Studio
         </Link>
@@ -114,7 +114,7 @@ export function ContentExpanded({ listings, marketingStatuses }: ContentContaine
                 {isReady ? (
                   <Link
                     href={`/dashboard/content-studio/create-all?listing=${listing.id}&prefill=marketing`}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#D4A017] text-black rounded-lg text-xs font-semibold"
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-accent-gold text-black rounded-lg text-xs font-semibold"
                   >
                     <Sparkles className="w-3 h-3" /> Create Post
                   </Link>

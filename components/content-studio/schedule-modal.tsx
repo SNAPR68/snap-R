@@ -50,7 +50,7 @@ export function ScheduleModal({ isOpen, onClose, onSchedule, platform }: Schedul
       <div className="bg-gray-900 rounded-2xl p-6 w-full max-w-md border border-white/10">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-lg font-bold text-white flex items-center gap-2">
-            <Calendar className="w-5 h-5 text-[#D4AF37]" />
+            <Calendar className="w-5 h-5 text-accent-gold" />
             Schedule Post
           </h3>
           <button onClick={onClose} className="p-1 rounded hover:bg-white/10">
@@ -87,8 +87,8 @@ export function ScheduleModal({ isOpen, onClose, onSchedule, platform }: Schedul
         </div>
 
         {date && time && (
-          <div className="bg-[#D4AF37]/10 border border-[#D4AF37]/30 rounded-lg p-3 mb-4">
-            <div className="flex items-center gap-2 text-[#D4AF37]">
+          <div className="bg-accent-gold/10 border border-accent-gold/30 rounded-lg p-3 mb-4">
+            <div className="flex items-center gap-2 text-accent-gold">
               <Clock className="w-4 h-4" />
               <span className="text-sm font-medium">
                 {new Date(`${date}T${time}`).toLocaleString('en-US', {
@@ -117,7 +117,7 @@ export function ScheduleModal({ isOpen, onClose, onSchedule, platform }: Schedul
           <Button
             onClick={handleSchedule}
             disabled={scheduling || !date || !time}
-            className="flex-1 bg-[#D4AF37] hover:bg-[#B8960C] text-black font-bold"
+            className="flex-1 bg-accent-gold hover:bg-accent-gold text-black font-bold"
           >
             {scheduling ? (
               <Loader2 className="w-4 h-4 animate-spin" />

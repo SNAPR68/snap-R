@@ -73,11 +73,11 @@ function MiniWeekStrip({ posts }: { posts: ScheduledPostItem[] }) {
 
         return (
           <div key={i} className="flex-1 text-center">
-            <p className={`text-[10px] mb-1 ${isToday ? 'text-[#D4A017]' : 'text-white/30'}`}>
+            <p className={`text-[10px] mb-1 ${isToday ? 'text-primary' : 'text-white/30'}`}>
               {day.toLocaleDateString('en-US', { weekday: 'narrow' })}
             </p>
             <div className={`w-full aspect-square rounded-md flex items-center justify-center text-[10px] ${
-              isToday ? 'bg-[#D4A017]/20 text-[#D4A017] border border-[#D4A017]/30' :
+              isToday ? 'bg-accent-gold/20 text-primary border border-primary/30' :
               count > 0 ? 'bg-white/10 text-white/60' : 'bg-white/[0.03] text-white/15'
             }`}>
               {count > 0 ? count : day.getDate()}
@@ -124,7 +124,7 @@ export function CalendarExpanded({ scheduledPosts }: CalendarContainerProps) {
         </div>
         <Link
           href="/dashboard/calendar"
-          className="inline-flex items-center gap-1.5 px-4 py-2 bg-[#D4A017] text-black rounded-lg text-sm font-semibold"
+          className="inline-flex items-center gap-1.5 px-4 py-2 bg-accent-gold text-black rounded-lg text-sm font-semibold"
         >
           <Plus className="w-4 h-4" /> Schedule Post
         </Link>

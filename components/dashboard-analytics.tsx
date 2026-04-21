@@ -47,7 +47,7 @@ export function DashboardAnalytics({ userId }: { userId?: string }) {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
-        <Loader2 className="w-8 h-8 text-[#D4A017] animate-spin" />
+        <Loader2 className="w-8 h-8 text-primary animate-spin" />
       </div>
     );
   }
@@ -66,11 +66,11 @@ export function DashboardAnalytics({ userId }: { userId?: string }) {
     <div className="space-y-6">
       {/* Stats Grid */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-gradient-to-br from-[#D4A017]/20 to-[#D4A017]/5 rounded-xl p-4 border border-[#D4A017]/20">
+        <div className="bg-gradient-to-br from-gold/20 to-gold/5 rounded-xl p-4 border border-primary/20">
           <div className="flex items-center gap-3 mb-2">
-            <div className="p-2 bg-[#D4A017]/20 rounded-lg">
+            <div className="p-2 bg-accent-gold/20 rounded-lg">
               {/* eslint-disable-next-line jsx-a11y/alt-text */}
-              <Image className="w-5 h-5 text-[#D4A017]" />
+              <Image className="w-5 h-5 text-primary" />
             </div>
             <span className="text-white/60 text-sm">Photos Enhanced</span>
           </div>
@@ -121,7 +121,7 @@ export function DashboardAnalytics({ userId }: { userId?: string }) {
             {analytics.recentActivity.map((day, i) => (
               <div key={i} className="flex-1 flex flex-col items-center gap-2">
                 <div
-                  className="w-full bg-gradient-to-t from-[#D4A017] to-[#D4A017]/50 rounded-t-sm transition-all"
+                  className="w-full bg-gradient-to-t from-gold to-gold/50 rounded-t-sm transition-all"
                   style={{ height: `${(day.count / maxActivity) * 100}%`, minHeight: day.count > 0 ? '8px' : '2px' }}
                 ></div>
                 <span className="text-white/40 text-xs">{day.date}</span>
@@ -152,7 +152,7 @@ export function DashboardAnalytics({ userId }: { userId?: string }) {
                     </div>
                     <div className="h-2 bg-white/10 rounded-full overflow-hidden">
                       <div
-                        className="h-full bg-gradient-to-r from-[#D4A017] to-[#B8860B] rounded-full transition-all"
+                        className="h-full bg-gradient-to-r from-gold to-gold-dark rounded-full transition-all"
                         style={{ width: `${percentage}%` }}
                       ></div>
                     </div>
@@ -168,16 +168,16 @@ export function DashboardAnalytics({ userId }: { userId?: string }) {
 
       {/* Value Proposition */}
       {analytics.totalEnhancements > 0 && (
-        <div className="bg-gradient-to-r from-[#D4A017]/10 to-transparent rounded-xl p-6 border border-[#D4A017]/20">
+        <div className="bg-gradient-to-r from-gold/10 to-transparent rounded-xl p-6 border border-primary/20">
           <div className="flex items-center gap-4">
-            <div className="p-3 bg-[#D4A017]/20 rounded-xl">
-              <TrendingUp className="w-8 h-8 text-[#D4A017]" />
+            <div className="p-3 bg-accent-gold/20 rounded-xl">
+              <TrendingUp className="w-8 h-8 text-primary" />
             </div>
             <div>
               <h3 className="text-white font-semibold text-lg">Your SnapR Impact</h3>
               <p className="text-white/60">
-                You&apos;ve saved <span className="text-[#D4A017] font-semibold">{formatTime(analytics.timeSaved)}</span> of editing time and{' '}
-                <span className="text-[#D4A017] font-semibold">${analytics.moneySaved}</span> in outsourcing costs!
+                You&apos;ve saved <span className="text-primary font-semibold">{formatTime(analytics.timeSaved)}</span> of editing time and{' '}
+                <span className="text-primary font-semibold">${analytics.moneySaved}</span> in outsourcing costs!
               </p>
             </div>
           </div>
@@ -193,7 +193,7 @@ export function DashboardAnalytics({ userId }: { userId?: string }) {
           <p className="text-white/50 mb-4">Start enhancing your photos to see your analytics here</p>
           <a
             href="/dashboard"
-            className="inline-flex items-center gap-2 px-6 py-2 bg-[#D4A017] text-black rounded-lg font-medium hover:bg-[#B8860B]"
+            className="inline-flex items-center gap-2 px-6 py-2 bg-accent-gold text-black rounded-lg font-medium hover:bg-accent-gold"
           >
             <Zap className="w-4 h-4" /> Enhance Photos
           </a>

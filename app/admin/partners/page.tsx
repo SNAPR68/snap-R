@@ -63,7 +63,7 @@ export default async function AdminPartnersPage() {
       {/* Header */}
       <div className="mb-8">
         <h1 className="text-3xl font-bold flex items-center gap-3">
-          <Handshake className="w-8 h-8 text-[#D4A017]" />
+          <Handshake className="w-8 h-8 text-primary" />
           Partner Applications
         </h1>
         <p className="text-white/50 mt-1">
@@ -73,22 +73,22 @@ export default async function AdminPartnersPage() {
 
       {/* Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-        <div className="bg-[#1A1A1A] border border-white/10 rounded-xl p-4">
-          <Users className="w-5 h-5 text-[#D4A017] mb-2" />
+        <div className="bg-surface-container-high border border-white/10 rounded-xl p-4">
+          <Users className="w-5 h-5 text-primary mb-2" />
           <p className="text-2xl font-bold">{partners.length}</p>
           <p className="text-white/50 text-xs">Total Applications</p>
         </div>
-        <div className="bg-[#1A1A1A] border border-yellow-500/30 rounded-xl p-4">
+        <div className="bg-surface-container-high border border-yellow-500/30 rounded-xl p-4">
           <Clock className="w-5 h-5 text-yellow-400 mb-2" />
           <p className="text-2xl font-bold text-yellow-400">{pending}</p>
           <p className="text-white/50 text-xs">Pending Review</p>
         </div>
-        <div className="bg-[#1A1A1A] border border-green-500/30 rounded-xl p-4">
+        <div className="bg-surface-container-high border border-green-500/30 rounded-xl p-4">
           <CheckCircle className="w-5 h-5 text-green-400 mb-2" />
           <p className="text-2xl font-bold text-green-400">{approved}</p>
           <p className="text-white/50 text-xs">Approved</p>
         </div>
-        <div className="bg-[#1A1A1A] border border-red-500/30 rounded-xl p-4">
+        <div className="bg-surface-container-high border border-red-500/30 rounded-xl p-4">
           <XCircle className="w-5 h-5 text-red-400 mb-2" />
           <p className="text-2xl font-bold text-red-400">{rejected}</p>
           <p className="text-white/50 text-xs">Rejected</p>
@@ -98,14 +98,14 @@ export default async function AdminPartnersPage() {
       {/* Table */}
       {partners.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-16">
-          <div className="w-16 h-16 rounded-full bg-[#D4A017]/20 flex items-center justify-center mb-4">
-            <Handshake className="w-8 h-8 text-[#D4A017]" />
+          <div className="w-16 h-16 rounded-full bg-accent-gold/20 flex items-center justify-center mb-4">
+            <Handshake className="w-8 h-8 text-primary" />
           </div>
           <p className="text-white font-medium">No partner applications yet</p>
           <p className="text-white/40 text-sm mt-1">Applications submitted at /partners will appear here</p>
         </div>
       ) : (
-        <div className="bg-[#1A1A1A] border border-white/10 rounded-xl overflow-hidden">
+        <div className="bg-surface-container-high border border-white/10 rounded-xl overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead className="bg-white/5">
@@ -126,7 +126,7 @@ export default async function AdminPartnersPage() {
                     {/* Applicant */}
                     <td className="p-4">
                       <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#D4A017] to-[#B8860B] flex items-center justify-center text-black font-semibold text-sm">
+                        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-gold to-gold-dark flex items-center justify-center text-black font-semibold text-sm">
                           {partner.name?.charAt(0)?.toUpperCase() || '?'}
                         </div>
                         <div>
@@ -151,7 +151,7 @@ export default async function AdminPartnersPage() {
                     {/* Referral Code */}
                     <td className="p-4">
                       {partner.referral_code ? (
-                        <code className="text-xs bg-white/10 px-2 py-1 rounded font-mono text-[#D4A017]">
+                        <code className="text-xs bg-white/10 px-2 py-1 rounded font-mono text-primary">
                           {partner.referral_code}
                         </code>
                       ) : (
@@ -163,7 +163,7 @@ export default async function AdminPartnersPage() {
                     <td className="p-4">
                       {partner.status === 'approved' && partner.referral_code ? (
                         <span className="flex items-center gap-1 text-sm">
-                          <Link2 className="w-3.5 h-3.5 text-[#D4A017]" />
+                          <Link2 className="w-3.5 h-3.5 text-primary" />
                           {referralCounts[partner.referral_code] || 0}
                         </span>
                       ) : (

@@ -16,10 +16,10 @@ export function UsageWidget({ listingsUsed, listingsLimit, tier }: UsageWidgetPr
   const isFree = tier === 'free';
 
   return (
-    <div className="bg-[#1A1A1A] border border-white/10 rounded-xl p-4">
+    <div className="bg-surface-container-high border border-white/10 rounded-xl p-4">
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
-          <BarChart3 className="w-4 h-4 text-[#D4A017]" />
+          <BarChart3 className="w-4 h-4 text-primary" />
           <span className="text-sm font-medium text-white">Usage This Month</span>
         </div>
         <span className="text-xs text-white/40 capitalize">{tier} plan</span>
@@ -36,7 +36,7 @@ export function UsageWidget({ listingsUsed, listingsLimit, tier }: UsageWidgetPr
         <div className="h-2 bg-white/10 rounded-full overflow-hidden">
           <div
             className={`h-full rounded-full transition-all duration-500 ${
-              isAtLimit ? 'bg-red-500' : isNearLimit ? 'bg-amber-400' : 'bg-[#D4A017]'
+              isAtLimit ? 'bg-red-500' : isNearLimit ? 'bg-amber-400' : 'bg-accent-gold'
             }`}
             style={{ width: `${percent}%` }}
           />
@@ -47,7 +47,7 @@ export function UsageWidget({ listingsUsed, listingsLimit, tier }: UsageWidgetPr
       {isAtLimit && (
         <Link
           href="/dashboard/billing"
-          className="flex items-center justify-center gap-1.5 w-full mt-3 py-2 bg-gradient-to-r from-[#D4A017] to-[#B8860B] text-black text-xs font-semibold rounded-lg hover:opacity-90 transition-all"
+          className="flex items-center justify-center gap-1.5 w-full mt-3 py-2 bg-gradient-to-r from-gold to-gold-dark text-black text-xs font-semibold rounded-lg hover:opacity-90 transition-all"
         >
           <Zap className="w-3 h-3" />
           Upgrade for More Listings
@@ -64,7 +64,7 @@ export function UsageWidget({ listingsUsed, listingsLimit, tier }: UsageWidgetPr
       {isFree && !isNearLimit && (
         <Link
           href="/dashboard/billing"
-          className="flex items-center gap-1 text-xs text-[#D4A017]/70 hover:text-[#D4A017] mt-2 transition-colors"
+          className="flex items-center gap-1 text-xs text-primary/70 hover:text-primary mt-2 transition-colors"
         >
           Upgrade to unlock marketing automation
           <ChevronRight className="w-3 h-3" />

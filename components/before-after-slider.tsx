@@ -72,7 +72,7 @@ export function BeforeAfterSlider({
           alt={afterLabel}
           className="absolute inset-0 w-full h-full object-contain"
           draggable={false} width={400} height={300} unoptimized />
-        <span className="absolute top-3 right-3 px-3 py-1.5 bg-[#D4A017] text-black text-xs font-bold rounded-md shadow-lg z-20">
+        <span className="absolute top-3 right-3 px-3 py-1.5 bg-accent-gold text-black text-xs font-bold rounded-md shadow-lg z-20">
           {afterLabel} • Enhanced
         </span>
 
@@ -99,7 +99,7 @@ export function BeforeAfterSlider({
           className="absolute top-0 bottom-0 w-[3px] bg-white z-10 pointer-events-none"
           style={{ left: `${sliderPosition}%`, transform: 'translateX(-50%)', boxShadow: '0 0 10px rgba(0,0,0,0.5)' }}
         >
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-12 h-12 bg-white rounded-full shadow-lg flex items-center justify-center border-[3px] border-[#D4A017]">
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-12 h-12 bg-white rounded-full shadow-lg flex items-center justify-center border-[3px] border-primary">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#D4A017" strokeWidth="2.5" strokeLinecap="round">
               <path d="M8 6l-4 6 4 6"/>
               <path d="M16 6l4 6-4 6"/>
@@ -112,7 +112,7 @@ export function BeforeAfterSlider({
       {toolsApplied.length > 0 && (
         <div className="mt-3 flex flex-wrap gap-2 flex-shrink-0">
           {toolsApplied.map((tool) => (
-            <span key={tool} className="px-2 py-1 bg-[#D4A017]/20 text-[#D4A017] text-xs font-medium rounded-md">
+            <span key={tool} className="px-2 py-1 bg-accent-gold/20 text-primary text-xs font-medium rounded-md">
               {formatToolName(tool)}
             </span>
           ))}

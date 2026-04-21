@@ -72,17 +72,17 @@ export default function WatermarkSettings() {
             <Link href="/dashboard/settings"><Button variant="ghost" size="sm" className="text-white/60 hover:text-white"><ArrowLeft className="w-4 h-4 mr-2" />Back</Button></Link>
             <h1 className="text-xl font-bold flex items-center gap-2">
               {/* eslint-disable-next-line jsx-a11y/alt-text */}
-              <Image className="w-5 h-5 text-[#D4AF37]" />Watermark Settings
+              <Image className="w-5 h-5 text-accent-gold" />Watermark Settings
             </h1>
           </div>
-          <Button onClick={saveSettings} disabled={saving} className="bg-[#D4AF37] hover:bg-[#B8960C] text-black font-bold">
+          <Button onClick={saveSettings} disabled={saving} className="bg-accent-gold hover:bg-accent-gold text-black font-bold">
             {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : saved ? <><Check className="w-4 h-4 mr-2" />Saved!</> : <><Save className="w-4 h-4 mr-2" />Save</>}
           </Button>
         </div>
       </header>
 
       <div className="p-6 max-w-5xl mx-auto">
-        {loading ? <div className="flex items-center justify-center py-20"><Loader2 className="w-8 h-8 animate-spin text-[#D4AF37]" /></div> : (
+        {loading ? <div className="flex items-center justify-center py-20"><Loader2 className="w-8 h-8 animate-spin text-accent-gold" /></div> : (
           <div className="grid grid-cols-2 gap-8">
             <div>
               <h2 className="text-lg font-bold mb-4">Preview</h2>
@@ -99,15 +99,15 @@ export default function WatermarkSettings() {
               <div className="bg-white/5 rounded-xl p-5 border border-white/10">
                 <div className="flex items-center justify-between">
                   <div><h3 className="font-medium">Enable Watermark</h3><p className="text-sm text-white/50">Add watermark to all downloads</p></div>
-                  <button onClick={() => setEnabled(!enabled)} className={`w-12 h-6 rounded-full transition ${enabled ? 'bg-[#D4AF37]' : 'bg-white/20'}`}><div className={`w-5 h-5 rounded-full bg-white shadow transition transform ${enabled ? 'translate-x-6' : 'translate-x-0.5'}`} /></button>
+                  <button onClick={() => setEnabled(!enabled)} className={`w-12 h-6 rounded-full transition ${enabled ? 'bg-accent-gold' : 'bg-white/20'}`}><div className={`w-5 h-5 rounded-full bg-white shadow transition transform ${enabled ? 'translate-x-6' : 'translate-x-0.5'}`} /></button>
                 </div>
               </div>
               {enabled && (<>
                 <div className="bg-white/5 rounded-xl p-5 border border-white/10">
                   <h3 className="text-sm font-medium text-white/60 mb-3 flex items-center gap-2"><Type className="w-4 h-4" />Watermark Type</h3>
                   <div className="grid grid-cols-2 gap-2">
-                    <button onClick={() => setMode('text')} className={`p-3 rounded-lg transition ${mode === 'text' ? 'bg-[#D4AF37]/20 border border-[#D4AF37]' : 'bg-white/5 border border-transparent'}`}><Type className="w-5 h-5 mx-auto mb-1" /><div className="text-sm">Text</div></button>
-                    <button onClick={() => setMode('logo')} className={`p-3 rounded-lg transition ${mode === 'logo' ? 'bg-[#D4AF37]/20 border border-[#D4AF37]' : 'bg-white/5 border border-transparent'}`}>
+                    <button onClick={() => setMode('text')} className={`p-3 rounded-lg transition ${mode === 'text' ? 'bg-accent-gold/20 border border-accent-gold' : 'bg-white/5 border border-transparent'}`}><Type className="w-5 h-5 mx-auto mb-1" /><div className="text-sm">Text</div></button>
+                    <button onClick={() => setMode('logo')} className={`p-3 rounded-lg transition ${mode === 'logo' ? 'bg-accent-gold/20 border border-accent-gold' : 'bg-white/5 border border-transparent'}`}>
                       {/* eslint-disable-next-line jsx-a11y/alt-text */}
                       <Image className="w-5 h-5 mx-auto mb-1" /><div className="text-sm">Logo</div>
                     </button>
@@ -117,11 +117,11 @@ export default function WatermarkSettings() {
                 </div>
                 <div className="bg-white/5 rounded-xl p-5 border border-white/10">
                   <h3 className="text-sm font-medium text-white/60 mb-3 flex items-center gap-2"><Move className="w-4 h-4" />Position</h3>
-                  <div className="grid grid-cols-3 gap-2">{POSITIONS.map(p => <button key={p.id} onClick={() => setPosition(p.id)} className={`p-2 rounded-lg text-sm ${position === p.id ? 'bg-[#D4AF37] text-black font-medium' : 'bg-white/5'}`}>{p.name}</button>)}</div>
+                  <div className="grid grid-cols-3 gap-2">{POSITIONS.map(p => <button key={p.id} onClick={() => setPosition(p.id)} className={`p-2 rounded-lg text-sm ${position === p.id ? 'bg-accent-gold text-black font-medium' : 'bg-white/5'}`}>{p.name}</button>)}</div>
                 </div>
                 <div className="bg-white/5 rounded-xl p-5 border border-white/10">
                   <h3 className="text-sm font-medium text-white/60 mb-3 flex items-center gap-2"><Eye className="w-4 h-4" />Opacity: {opacity}%</h3>
-                  <input type="range" min="10" max="100" value={opacity} onChange={e => setOpacity(parseInt(e.target.value))} className="w-full accent-[#D4AF37]" />
+                  <input type="range" min="10" max="100" value={opacity} onChange={e => setOpacity(parseInt(e.target.value))} className="w-full accent-accent-gold" />
                 </div>
               </>)}
             </div>

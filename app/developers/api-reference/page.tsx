@@ -326,7 +326,7 @@ export default function ApiReferencePage() {
     return (
       <div className="min-h-screen bg-surface text-on-surface flex items-center justify-center">
         <div className="text-center">
-          <div className="w-8 h-8 border-2 border-[#D4A017] border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+          <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4" />
           <p className="text-on-surface-muted">Loading API Reference...</p>
         </div>
       </div>
@@ -371,7 +371,7 @@ export default function ApiReferencePage() {
           </Link>
           <div className="flex items-center gap-3 mb-3">
             <h1 className="text-3xl font-bold">API Reference</h1>
-            <span className="px-2 py-0.5 bg-[#D4A017]/20 text-primary text-xs font-mono rounded">
+            <span className="px-2 py-0.5 bg-accent-gold/20 text-primary text-xs font-mono rounded">
               v{spec.info.version}
             </span>
             <a
@@ -411,7 +411,7 @@ export default function ApiReferencePage() {
               <a
                 key={tag}
                 href={`#${tag.toLowerCase()}`}
-                className="px-3 py-1.5 bg-white/5 border border-white/10 rounded-lg text-sm text-white/70 hover:text-on-surface hover:border-[#D4A017]/30 transition-colors"
+                className="px-3 py-1.5 bg-white/5 border border-white/10 rounded-lg text-sm text-white/70 hover:text-on-surface hover:border-primary/30 transition-colors"
               >
                 {tag}
                 <span className="ml-1.5 text-white/30 text-xs">{endpointsByTag[tag].length}</span>
@@ -424,7 +424,7 @@ export default function ApiReferencePage() {
         {sortedTags.map(tag => (
           <section key={tag} id={tag.toLowerCase()} className="mb-12 scroll-mt-8">
             <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
-              <span className="w-1.5 h-6 bg-[#D4A017] rounded-full" />
+              <span className="w-1.5 h-6 bg-accent-gold rounded-full" />
               {tag}
             </h2>
             {endpointsByTag[tag].map((ep, i) => (
@@ -507,7 +507,7 @@ export default function ApiReferencePage() {
           <div className="flex items-center justify-center gap-3">
             <Link
               href="/dashboard/settings/api-keys"
-              className="px-6 py-3 bg-[#D4A017] text-black font-bold rounded-lg hover:bg-[#B8860B] transition-colors"
+              className="px-6 py-3 bg-accent-gold text-black font-bold rounded-lg hover:bg-accent-gold transition-colors"
             >
               Get API Key
             </Link>

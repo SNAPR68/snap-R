@@ -85,11 +85,11 @@ function NewApprovalModal({ onClose, onCreated }: { onClose: () => void; onCreat
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm" role="dialog" aria-modal="true" aria-label="Create approval link">
-      <div className="bg-[#1A1A1A] border border-white/10 rounded-2xl p-6 w-full max-w-md mx-4 shadow-2xl">
+      <div className="bg-surface-container-high border border-white/10 rounded-2xl p-6 w-full max-w-md mx-4 shadow-2xl">
         <div className="flex items-center justify-between mb-5">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 bg-[#D4A017]/20 rounded-lg flex items-center justify-center">
-              <Link2 className="w-4 h-4 text-[#D4A017]" />
+            <div className="w-9 h-9 bg-accent-gold/20 rounded-lg flex items-center justify-center">
+              <Link2 className="w-4 h-4 text-primary" />
             </div>
             <h2 className="text-lg font-semibold">New Approval Link</h2>
           </div>
@@ -103,7 +103,7 @@ function NewApprovalModal({ onClose, onCreated }: { onClose: () => void; onCreat
               <span className="flex-1 text-sm text-white/80 truncate">{shareUrl}</span>
               <button
                 onClick={copyLink}
-                className="flex-shrink-0 flex items-center gap-1.5 text-xs text-[#D4A017] hover:text-[#D4A017]/80 transition-colors font-medium"
+                className="flex-shrink-0 flex items-center gap-1.5 text-xs text-primary hover:text-primary/80 transition-colors font-medium"
               >
                 {copied ? <><Check className="w-3.5 h-3.5" /> Copied</> : <><Copy className="w-3.5 h-3.5" /> Copy</>}
               </button>
@@ -130,10 +130,10 @@ function NewApprovalModal({ onClose, onCreated }: { onClose: () => void; onCreat
                   value={selectedId}
                   onChange={e => setSelectedId(e.target.value)}
                   aria-label="Select listing"
-                  className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2.5 text-sm text-white focus:outline-none focus:border-[#D4A017]/50 appearance-none"
+                  className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2.5 text-sm text-white focus:outline-none focus:border-primary/50 appearance-none"
                 >
                   {listings.map(l => (
-                    <option key={l.id} value={l.id} className="bg-[#1A1A1A]">
+                    <option key={l.id} value={l.id} className="bg-surface-container-high">
                       {l.title || l.address || l.id}
                     </option>
                   ))}
@@ -151,7 +151,7 @@ function NewApprovalModal({ onClose, onCreated }: { onClose: () => void; onCreat
               <button
                 onClick={handleCreate}
                 disabled={creating || !selectedId || loadingListings}
-                className="flex-1 py-2.5 bg-[#D4A017] hover:bg-[#D4A017]/90 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg text-sm font-medium text-black transition-colors flex items-center justify-center gap-2"
+                className="flex-1 py-2.5 bg-accent-gold hover:bg-accent-gold/90 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg text-sm font-medium text-black transition-colors flex items-center justify-center gap-2"
               >
                 {creating ? <><Loader2 className="w-4 h-4 animate-spin" /> Creating…</> : 'Create Link'}
               </button>
@@ -233,14 +233,14 @@ export default function ApprovalsPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#0F0F0F] flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-[#D4A017]" />
+      <div className="min-h-screen bg-charcoal-deep flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#0F0F0F] text-white p-6">
+    <div className="min-h-screen bg-charcoal-deep text-white p-6">
       {showModal && (
         <NewApprovalModal
           onClose={() => setShowModal(false)}
@@ -258,7 +258,7 @@ export default function ApprovalsPage() {
           </div>
           <button
             onClick={() => setShowModal(true)}
-            className="flex items-center gap-2 px-4 py-2.5 bg-[#D4A017] hover:bg-[#D4A017]/90 text-black text-sm font-semibold rounded-lg transition-colors"
+            className="flex items-center gap-2 px-4 py-2.5 bg-accent-gold hover:bg-accent-gold/90 text-black text-sm font-semibold rounded-lg transition-colors"
           >
             <Plus className="w-4 h-4" />
             New Approval Link
@@ -296,14 +296,14 @@ export default function ApprovalsPage() {
             <div className="text-3xl font-bold text-amber-400">{totalStats.pending}</div>
           </div>
 
-          <div className="bg-gradient-to-br from-[#D4A017]/20 to-[#B8860B]/10 border border-[#D4A017]/30 rounded-xl p-5">
+          <div className="bg-gradient-to-br from-gold/20 to-gold-dark/10 border border-primary/30 rounded-xl p-5">
             <div className="flex items-center gap-3 mb-2">
-              <div className="w-10 h-10 bg-[#D4A017]/20 rounded-lg flex items-center justify-center">
-                <ExternalLink className="w-5 h-5 text-[#D4A017]" />
+              <div className="w-10 h-10 bg-accent-gold/20 rounded-lg flex items-center justify-center">
+                <ExternalLink className="w-5 h-5 text-primary" />
               </div>
               <span className="text-white/60 text-sm">Shared Galleries</span>
             </div>
-            <div className="text-3xl font-bold text-[#D4A017]">{listings.length}</div>
+            <div className="text-3xl font-bold text-primary">{listings.length}</div>
           </div>
         </div>
 
@@ -314,7 +314,7 @@ export default function ApprovalsPage() {
               onClick={() => setFilter(f)}
               className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
                 filter === f
-                  ? 'bg-[#D4A017] text-black'
+                  ? 'bg-accent-gold text-black'
                   : 'bg-white/5 text-white/60 hover:bg-white/10'
               }`}
             >
@@ -335,7 +335,7 @@ export default function ApprovalsPage() {
             {filter === 'all' && (
               <button
                 onClick={() => setShowModal(true)}
-                className="mt-4 inline-flex items-center gap-2 px-4 py-2 bg-[#D4A017]/20 hover:bg-[#D4A017]/30 border border-[#D4A017]/30 rounded-lg text-sm text-[#D4A017] transition-colors"
+                className="mt-4 inline-flex items-center gap-2 px-4 py-2 bg-accent-gold/20 hover:bg-accent-gold/30 border border-primary/30 rounded-lg text-sm text-primary transition-colors"
               >
                 <Plus className="w-4 h-4" /> Create your first approval link
               </button>
@@ -346,7 +346,7 @@ export default function ApprovalsPage() {
             {filteredListings.map(listing => (
               <div
                 key={listing.id}
-                className="bg-[#1A1A1A] border border-white/10 rounded-xl p-4 hover:border-[#D4A017]/30 transition-all"
+                className="bg-surface-container-high border border-white/10 rounded-xl p-4 hover:border-primary/30 transition-all"
               >
                 <div className="flex items-center gap-4">
                   <div className="relative w-20 h-20 bg-white/5 rounded-lg overflow-hidden flex-shrink-0">
@@ -365,7 +365,7 @@ export default function ApprovalsPage() {
                     <div className="flex items-center gap-2 mt-1">
                       <button
                         onClick={() => copyShareLink(listing.shareToken)}
-                        className="text-xs text-[#D4A017] hover:underline flex items-center gap-1"
+                        className="text-xs text-primary hover:underline flex items-center gap-1"
                       >
                         {copiedToken === listing.shareToken ? (
                           <>✓ Copied</>

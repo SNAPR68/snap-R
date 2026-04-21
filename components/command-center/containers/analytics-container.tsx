@@ -49,7 +49,7 @@ export function AnalyticsCollapsed({ totals }: AnalyticsContainerProps) {
   return (
     <div className="space-y-3">
       <div className="grid grid-cols-2 gap-2.5">
-        <MiniStat label="Posts" value={totals.posts} icon={TrendingUp} color="bg-[#D4A017]/30" />
+        <MiniStat label="Posts" value={totals.posts} icon={TrendingUp} color="bg-accent-gold/30" />
         <MiniStat label="Likes" value={totals.likes} icon={Heart} color="bg-red-500/30" />
         <MiniStat label="Impressions" value={totals.impressions} icon={Eye} color="bg-purple-500/30" />
         <MiniStat label="Reach" value={totals.reach} icon={Users} color="bg-orange-500/30" />
@@ -98,7 +98,7 @@ export function AnalyticsExpanded({ totals, posts }: AnalyticsContainerProps) {
       {/* Stats grid */}
       <div className="grid grid-cols-3 md:grid-cols-6 gap-3 mb-6">
         <div className="bg-white/5 rounded-xl p-3 text-center border border-white/5">
-          <TrendingUp className="w-5 h-5 text-[#D4A017] mx-auto mb-1" />
+          <TrendingUp className="w-5 h-5 text-primary mx-auto mb-1" />
           <p className="text-xl font-bold">{totals.posts}</p>
           <p className="text-[10px] text-white/40">Posts</p>
         </div>

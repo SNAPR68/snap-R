@@ -51,7 +51,7 @@ function StarRating({ rating }: { rating: number }) {
       {[...Array(5)].map((_, i) => (
         <svg
           key={i}
-          className={`w-4 h-4 ${i < rating ? 'text-[#D4A017]' : 'text-gray-600'}`}
+          className={`w-4 h-4 ${i < rating ? 'text-primary' : 'text-gray-600'}`}
           fill="currentColor"
           viewBox="0 0 20 20"
         >
@@ -64,11 +64,11 @@ function StarRating({ rating }: { rating: number }) {
 
 export function Testimonials() {
   return (
-    <section className="py-24 px-6 bg-[#0F0F0F]">
+    <section className="py-24 px-6 bg-charcoal-deep">
       <div className="max-w-6xl mx-auto">
         <div className="text-center mb-16">
           <h2 className="text-4xl font-bold text-white mb-4">
-            Built for <span className="text-[#D4A017]">Real Estate Pros</span>
+            Built for <span className="text-primary">Real Estate Pros</span>
           </h2>
           <p className="text-white/60 max-w-2xl mx-auto">
             See how photographers, agents, and brokers are transforming their workflow with AI
@@ -79,7 +79,7 @@ export function Testimonials() {
           {TESTIMONIALS.map((testimonial, index) => (
             <div
               key={index}
-              className="bg-gradient-to-br from-white/5 to-white/[0.02] rounded-2xl p-6 border border-white/10 hover:border-[#D4A017]/30 transition-colors"
+              className="bg-gradient-to-br from-white/5 to-white/[0.02] rounded-2xl p-6 border border-white/10 hover:border-primary/30 transition-colors"
             >
               <div className="flex items-start gap-4 mb-4">
                 <div
@@ -106,17 +106,17 @@ export function Testimonials() {
         <div className="mt-12 text-center">
           <div className="inline-flex items-center gap-8 px-8 py-4 bg-white/5 rounded-2xl border border-white/10">
             <div className="text-center">
-              <div className="text-3xl font-bold text-[#D4A017]">15+</div>
+              <div className="text-3xl font-bold text-primary">15+</div>
               <div className="text-white/50 text-sm">AI Enhancement Tools</div>
             </div>
             <div className="w-px h-12 bg-white/10"></div>
             <div className="text-center">
-              <div className="text-3xl font-bold text-[#D4A017]">30s</div>
+              <div className="text-3xl font-bold text-primary">30s</div>
               <div className="text-white/50 text-sm">Avg Enhancement Time</div>
             </div>
             <div className="w-px h-12 bg-white/10"></div>
             <div className="text-center">
-              <div className="text-3xl font-bold text-[#D4A017]">5-in-1</div>
+              <div className="text-3xl font-bold text-primary">5-in-1</div>
               <div className="text-white/50 text-sm">Auto Marketing Pipeline</div>
             </div>
           </div>

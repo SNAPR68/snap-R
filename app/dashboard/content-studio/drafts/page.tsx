@@ -332,7 +332,7 @@ export default function PostDraftsPage() {
   // -------------------------------------------------------------------------
 
   return (
-    <div className="min-h-screen bg-[#0A0A0A] text-white">
+    <div className="min-h-screen bg-surface text-white">
       {/* Header */}
       <header className="border-b border-white/10 px-6 py-4">
         <div className="flex items-center justify-between">
@@ -348,13 +348,13 @@ export default function PostDraftsPage() {
               </Button>
             </Link>
             <h1 className="text-xl font-bold flex items-center gap-2">
-              <FileText className="w-5 h-5 text-[#D4A017]" />
+              <FileText className="w-5 h-5 text-primary" />
               Post Drafts
             </h1>
           </div>
           <Button
             onClick={handleNewDraft}
-            className="bg-[#D4A017] hover:bg-[#B8960C] text-black font-bold"
+            className="bg-accent-gold hover:bg-accent-gold text-black font-bold"
           >
             <Plus className="w-4 h-4 mr-2" />
             New Draft
@@ -373,7 +373,7 @@ export default function PostDraftsPage() {
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search drafts by name or caption..."
               aria-label="Search drafts"
-              className="w-full bg-white/5 border border-white/10 rounded-lg pl-10 pr-4 py-2 text-white placeholder:text-white/40 focus:outline-none focus:border-[#D4A017]/50"
+              className="w-full bg-white/5 border border-white/10 rounded-lg pl-10 pr-4 py-2 text-white placeholder:text-white/40 focus:outline-none focus:border-primary/50"
             />
           </div>
           <div className="flex gap-2 flex-wrap">
@@ -383,7 +383,7 @@ export default function PostDraftsPage() {
                 onClick={() => setPlatformFilter(p.id)}
                 className={`px-3 py-2 rounded-lg text-sm transition ${
                   platformFilter === p.id
-                    ? 'bg-[#D4A017] text-black font-medium'
+                    ? 'bg-accent-gold text-black font-medium'
                     : 'bg-white/5 text-white/60 hover:bg-white/10'
                 }`}
               >
@@ -396,7 +396,7 @@ export default function PostDraftsPage() {
         {/* Content */}
         {loading ? (
           <div className="flex items-center justify-center py-20">
-            <Loader2 className="w-8 h-8 animate-spin text-[#D4A017]" />
+            <Loader2 className="w-8 h-8 animate-spin text-primary" />
           </div>
         ) : filteredDrafts.length === 0 ? (
           <div className="text-center py-20">
@@ -414,7 +414,7 @@ export default function PostDraftsPage() {
             {drafts.length === 0 && (
               <Button
                 onClick={handleNewDraft}
-                className="bg-[#D4A017] hover:bg-[#B8960C] text-black font-bold"
+                className="bg-accent-gold hover:bg-accent-gold text-black font-bold"
               >
                 <Plus className="w-4 h-4 mr-2" />
                 Create First Draft
@@ -436,9 +436,9 @@ export default function PostDraftsPage() {
               return (
                 <div
                   key={draft.id}
-                  className={`bg-[#1A1A1A] border rounded-xl transition-all ${
+                  className={`bg-surface-container-high border rounded-xl transition-all ${
                     isExpanded
-                      ? 'border-[#D4A017]/50 col-span-1 md:col-span-2 lg:col-span-3'
+                      ? 'border-primary/50 col-span-1 md:col-span-2 lg:col-span-3'
                       : 'border-white/10 hover:border-white/20'
                   }`}
                 >
@@ -474,7 +474,7 @@ export default function PostDraftsPage() {
 
                     {/* Hashtags Preview */}
                     {draft.hashtags && (
-                      <p className="text-xs text-[#D4A017]/70 mb-3 truncate">
+                      <p className="text-xs text-primary/70 mb-3 truncate">
                         {truncate(draft.hashtags, 80)}
                       </p>
                     )}
@@ -511,10 +511,10 @@ export default function PostDraftsPage() {
                         </button>
                         <Link
                           href={`/dashboard/content-studio?draftId=${draft.id}`}
-                          className="p-1.5 rounded bg-white/5 hover:bg-[#D4A017]/20 transition"
+                          className="p-1.5 rounded bg-white/5 hover:bg-accent-gold/20 transition"
                           title="Use in Content Studio"
                         >
-                          <ExternalLink className="w-3.5 h-3.5 text-[#D4A017]" />
+                          <ExternalLink className="w-3.5 h-3.5 text-primary" />
                         </Link>
                         <button
                           onClick={() => handleDelete(draft.id)}
@@ -547,7 +547,7 @@ export default function PostDraftsPage() {
                             setEditForm({ ...editForm, name: e.target.value })
                           }
                           aria-label="Draft name"
-                          className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white placeholder:text-white/40 focus:outline-none focus:border-[#D4A017]/50"
+                          className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white placeholder:text-white/40 focus:outline-none focus:border-primary/50"
                           placeholder="Draft name"
                         />
                       </div>
@@ -567,13 +567,13 @@ export default function PostDraftsPage() {
                               })
                             }
                             aria-label="Platform"
-                            className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-[#D4A017]/50"
+                            className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-primary/50"
                           >
                             {PLATFORM_OPTIONS.map((p) => (
                               <option
                                 key={p.value}
                                 value={p.value}
-                                className="bg-[#1A1A1A]"
+                                className="bg-surface-container-high"
                               >
                                 {p.label}
                               </option>
@@ -593,13 +593,13 @@ export default function PostDraftsPage() {
                               })
                             }
                             aria-label="Post type"
-                            className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-[#D4A017]/50"
+                            className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-primary/50"
                           >
                             {POST_TYPES.map((pt) => (
                               <option
                                 key={pt.value}
                                 value={pt.value}
-                                className="bg-[#1A1A1A]"
+                                className="bg-surface-container-high"
                               >
                                 {pt.label}
                               </option>
@@ -623,7 +623,7 @@ export default function PostDraftsPage() {
                           }
                           aria-label="Caption"
                           rows={4}
-                          className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white placeholder:text-white/40 focus:outline-none focus:border-[#D4A017]/50 resize-none"
+                          className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white placeholder:text-white/40 focus:outline-none focus:border-primary/50 resize-none"
                           placeholder="Write your post caption..."
                         />
                       </div>
@@ -643,7 +643,7 @@ export default function PostDraftsPage() {
                           }
                           aria-label="Hashtags"
                           rows={2}
-                          className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white placeholder:text-white/40 focus:outline-none focus:border-[#D4A017]/50 resize-none"
+                          className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white placeholder:text-white/40 focus:outline-none focus:border-primary/50 resize-none"
                           placeholder="#realestate #luxuryhomes #justlisted"
                         />
                       </div>
@@ -663,7 +663,7 @@ export default function PostDraftsPage() {
                         <Button
                           onClick={() => handleSaveEdit(draft.id)}
                           disabled={saving}
-                          className="flex-1 bg-[#D4A017] hover:bg-[#B8960C] text-black font-bold"
+                          className="flex-1 bg-accent-gold hover:bg-accent-gold text-black font-bold"
                         >
                           {saving ? (
                             <Loader2 className="w-4 h-4 animate-spin" />

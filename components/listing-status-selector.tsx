@@ -93,7 +93,7 @@ export function ListingStatusSelector({
         disabled={loading}
         className={`flex items-center gap-2 ${
           compact ? "px-2 py-1 text-xs" : "px-3 py-1.5 text-sm"
-        } rounded-lg border border-[#333] bg-[#1A1A1A] hover:border-[#B8860B]/50 transition-colors`}
+        } rounded-lg border border-surface-border bg-surface-container-high hover:border-accent-gold/50 transition-colors`}
       >
         {loading ? (
           <Loader2 className="w-3 h-3 animate-spin" />
@@ -106,7 +106,7 @@ export function ListingStatusSelector({
 
       {/* Campaign Notification */}
       {campaignNotification && (
-        <div className="absolute top-full left-0 mt-2 px-3 py-1.5 bg-[#B8860B] text-black text-xs rounded-lg flex items-center gap-1 whitespace-nowrap z-50 animate-pulse">
+        <div className="absolute top-full left-0 mt-2 px-3 py-1.5 bg-accent-gold text-black text-xs rounded-lg flex items-center gap-1 whitespace-nowrap z-50 animate-pulse">
           <Zap className="w-3 h-3" />
           {campaignNotification}
         </div>
@@ -119,27 +119,27 @@ export function ListingStatusSelector({
             className="fixed inset-0 z-40"
             onClick={() => setIsOpen(false)}
           />
-          <div className="absolute top-full left-0 mt-2 w-48 bg-[#1A1A1A] border border-[#333] rounded-xl shadow-xl z-50 overflow-hidden">
+          <div className="absolute top-full left-0 mt-2 w-48 bg-surface-container-high border border-surface-border rounded-xl shadow-xl z-50 overflow-hidden">
             <div className="py-1">
               {LISTING_STATUSES.map((statusOption) => (
                 <button
                   key={statusOption.value}
                   onClick={() => handleStatusChange(statusOption.value)}
-                  className={`w-full flex items-center gap-3 px-4 py-2 text-left hover:bg-[#333] transition-colors ${
-                    status === statusOption.value ? "bg-[#333]" : ""
+                  className={`w-full flex items-center gap-3 px-4 py-2 text-left hover:bg-surface-raised transition-colors ${
+                    status === statusOption.value ? "bg-surface-raised" : ""
                   }`}
                 >
                   <span className={`w-2 h-2 rounded-full ${statusOption.color}`} />
                   <span className="text-sm text-white flex-1">{statusOption.value}</span>
                   {status === statusOption.value && (
-                    <Check className="w-4 h-4 text-[#B8860B]" />
+                    <Check className="w-4 h-4 text-accent-gold" />
                   )}
                 </button>
               ))}
             </div>
-            <div className="px-4 py-2 bg-[#0D0D0D] border-t border-[#333]">
+            <div className="px-4 py-2 bg-surface border-t border-surface-border">
               <p className="text-xs text-gray-500 flex items-center gap-1">
-                <Zap className="w-3 h-3 text-[#B8860B]" />
+                <Zap className="w-3 h-3 text-accent-gold" />
                 Campaigns auto-trigger on change
               </p>
             </div>

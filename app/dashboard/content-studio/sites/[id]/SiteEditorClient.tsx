@@ -78,7 +78,7 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
   )
 }
 
-const inputCls = "w-full bg-[#0A0A0A] border border-white/10 rounded-lg px-3 py-2 text-sm text-white placeholder-white/30 focus:outline-none focus:border-[#D4A017]/60 transition-colors"
+const inputCls = "w-full bg-surface border border-white/10 rounded-lg px-3 py-2 text-sm text-white placeholder-white/30 focus:outline-none focus:border-primary/60 transition-colors"
 const textareaCls = inputCls + " resize-none"
 
 export default function SiteEditorClient({ site, listing }: Props) {
@@ -205,15 +205,15 @@ export default function SiteEditorClient({ site, listing }: Props) {
   }
 
   return (
-    <div className="min-h-screen bg-[#0A0A0A] text-white flex flex-col">
+    <div className="min-h-screen bg-surface text-white flex flex-col">
       {/* Top bar */}
-      <header className="h-14 bg-[#111] border-b border-white/5 flex items-center px-4 gap-4 flex-shrink-0 z-10">
+      <header className="h-14 bg-surface border-b border-white/5 flex items-center px-4 gap-4 flex-shrink-0 z-10">
         <Link href="/dashboard/content-studio/sites" className="flex items-center gap-2 text-white/50 hover:text-white transition-colors text-sm">
           <ArrowLeft className="w-4 h-4" /> Back
         </Link>
         <div className="h-5 w-px bg-white/10" />
         <div className="flex items-center gap-2">
-          <Globe className="w-4 h-4 text-[#D4A017]" />
+          <Globe className="w-4 h-4 text-primary" />
           <span className="font-semibold text-sm truncate max-w-xs">{title || listing?.address || 'Property Site'}</span>
         </div>
         <div className="ml-auto flex items-center gap-3">
@@ -251,7 +251,7 @@ export default function SiteEditorClient({ site, listing }: Props) {
           <button
             onClick={save}
             disabled={saving}
-            className="flex items-center gap-2 px-4 py-1.5 bg-[#D4A017] text-black rounded-lg text-sm font-bold hover:bg-[#B8860B] transition-colors disabled:opacity-60"
+            className="flex items-center gap-2 px-4 py-1.5 bg-accent-gold text-black rounded-lg text-sm font-bold hover:bg-accent-gold transition-colors disabled:opacity-60"
           >
             {saved ? <Check className="w-4 h-4" /> : <Save className="w-4 h-4" />}
             {saving ? 'Saving...' : saved ? 'Saved!' : 'Save'}
@@ -268,7 +268,7 @@ export default function SiteEditorClient({ site, listing }: Props) {
       {/* Body: editor + preview */}
       <div className="flex flex-1 overflow-hidden">
         {/* Left panel — editor */}
-        <aside className="w-[360px] flex-shrink-0 bg-[#0F0F0F] border-r border-white/5 overflow-y-auto p-4">
+        <aside className="w-[360px] flex-shrink-0 bg-charcoal-deep border-r border-white/5 overflow-y-auto p-4">
 
           {/* Theme */}
           <Section title="Theme">
@@ -277,7 +277,7 @@ export default function SiteEditorClient({ site, listing }: Props) {
                 <button
                   key={t.value}
                   onClick={() => setTheme(t.value)}
-                  className={`p-3 rounded-xl border-2 transition-all text-left ${theme === t.value ? 'border-[#D4A017]' : 'border-white/10 hover:border-white/20'}`}
+                  className={`p-3 rounded-xl border-2 transition-all text-left ${theme === t.value ? 'border-primary' : 'border-white/10 hover:border-white/20'}`}
                 >
                   <div className="h-7 rounded-lg mb-2 flex items-center justify-center" style={{ background: t.bg }}>
                     <div className="w-8 h-1.5 rounded" style={{ background: t.accent }} />
@@ -391,8 +391,8 @@ export default function SiteEditorClient({ site, listing }: Props) {
         </aside>
 
         {/* Right panel — live preview */}
-        <div className="flex-1 bg-[#080808] flex flex-col">
-          <div className="flex items-center gap-3 px-4 py-2 border-b border-white/5 bg-[#0F0F0F]">
+        <div className="flex-1 bg-surface flex flex-col">
+          <div className="flex items-center gap-3 px-4 py-2 border-b border-white/5 bg-charcoal-deep">
             <Eye className="w-4 h-4 text-white/30" />
             <span className="text-xs text-white/40">Live Preview</span>
             <div className="flex-1 bg-white/5 rounded-md px-3 py-1 text-xs text-white/30 font-mono truncate">{siteUrl}</div>

@@ -248,7 +248,7 @@ export default function OpenHousesDashboard() {
 
   const STAT_CARDS = [
     { label: 'Total Events', value: stats.total, icon: DoorOpen, color: 'text-blue-400', bg: 'bg-blue-500/10' },
-    { label: 'Upcoming', value: stats.upcoming, icon: Calendar, color: 'text-[#D4A017]', bg: 'bg-[#D4A017]/10' },
+    { label: 'Upcoming', value: stats.upcoming, icon: Calendar, color: 'text-primary', bg: 'bg-accent-gold/10' },
     { label: 'Total Check-ins', value: stats.totalCheckins, icon: Users, color: 'text-green-400', bg: 'bg-green-500/10' },
     { label: 'Avg Interest', value: stats.avgInterest > 0 ? `${stats.avgInterest}/5` : '—', icon: Star, color: 'text-purple-400', bg: 'bg-purple-500/10' },
   ]
@@ -256,7 +256,7 @@ export default function OpenHousesDashboard() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[50vh]">
-        <div className="w-8 h-8 border-2 border-[#D4A017] border-t-transparent rounded-full animate-spin" />
+        <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
       </div>
     )
   }
@@ -271,7 +271,7 @@ export default function OpenHousesDashboard() {
         </div>
         <button
           onClick={() => setShowCreate(true)}
-          className="px-4 py-2 bg-gradient-to-r from-[#D4A017] to-[#B8860B] text-black font-bold rounded-xl text-sm hover:opacity-90 transition-opacity flex items-center gap-2"
+          className="px-4 py-2 bg-gradient-to-r from-gold to-gold-dark text-black font-bold rounded-xl text-sm hover:opacity-90 transition-opacity flex items-center gap-2"
         >
           <Plus className="w-4 h-4" />Create Event
         </button>
@@ -280,7 +280,7 @@ export default function OpenHousesDashboard() {
       {/* Stats Grid */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {STAT_CARDS.map(s => (
-          <div key={s.label} className="bg-[#1A1A1A] border border-white/5 rounded-xl p-4">
+          <div key={s.label} className="bg-surface-container-high border border-white/5 rounded-xl p-4">
             <div className="flex items-center justify-between mb-3">
               <div className={`w-10 h-10 rounded-lg ${s.bg} flex items-center justify-center`}>
                 <s.icon className={`w-5 h-5 ${s.color}`} />
@@ -303,7 +303,7 @@ export default function OpenHousesDashboard() {
             </p>
             <button
               onClick={() => setShowCreate(true)}
-              className="px-6 py-2.5 bg-[#D4A017] hover:bg-[#B8860B] text-black font-medium rounded-lg transition-colors"
+              className="px-6 py-2.5 bg-accent-gold hover:bg-accent-gold text-black font-medium rounded-lg transition-colors"
             >
               Create First Open House
             </button>
@@ -314,7 +314,7 @@ export default function OpenHousesDashboard() {
           const address = listing ? [listing.address, listing.city, listing.state].filter(Boolean).join(', ') : 'Unknown listing'
 
           return (
-            <div key={event.id} className="bg-[#1A1A1A] border border-white/5 rounded-xl overflow-hidden">
+            <div key={event.id} className="bg-surface-container-high border border-white/5 rounded-xl overflow-hidden">
               {/* Event Header */}
               <div className="p-4">
                 <div className="flex items-start justify-between gap-3">
@@ -454,14 +454,14 @@ export default function OpenHousesDashboard() {
                                 {att.interest_level ? (
                                   <div className="flex items-center gap-0.5">
                                     {Array.from({ length: 5 }).map((_, i) => (
-                                      <Star key={i} className={`w-3.5 h-3.5 ${i < att.interest_level! ? 'text-[#D4A017] fill-[#D4A017]' : 'text-white/20'}`} />
+                                      <Star key={i} className={`w-3.5 h-3.5 ${i < att.interest_level! ? 'text-primary fill-accent-gold' : 'text-white/20'}`} />
                                     ))}
                                   </div>
                                 ) : <span className="text-white/20">—</span>}
                               </td>
                               <td className="py-3">
                                 {att.wants_follow_up ? (
-                                  <span className="text-xs px-2 py-0.5 rounded-full bg-[#D4A017]/10 text-[#D4A017]">Yes</span>
+                                  <span className="text-xs px-2 py-0.5 rounded-full bg-accent-gold/10 text-primary">Yes</span>
                                 ) : <span className="text-white/20">—</span>}
                               </td>
                             </tr>
@@ -480,11 +480,11 @@ export default function OpenHousesDashboard() {
       {/* Create Event Modal */}
       {showCreate && (
         <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4" role="dialog" aria-modal="true" aria-label="Create open house event">
-          <div className="bg-[#1A1A1A] rounded-2xl p-6 w-full max-w-lg max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+          <div className="bg-surface-container-high rounded-2xl p-6 w-full max-w-lg max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center gap-3">
-                <div className="p-2 bg-[#D4A017]/20 rounded-lg">
-                  <DoorOpen className="w-5 h-5 text-[#D4A017]" />
+                <div className="p-2 bg-accent-gold/20 rounded-lg">
+                  <DoorOpen className="w-5 h-5 text-primary" />
                 </div>
                 <div>
                   <h2 className="text-xl font-bold text-white">Create Open House</h2>
@@ -505,7 +505,7 @@ export default function OpenHousesDashboard() {
                   onChange={e => setFormListingId(e.target.value)}
                   required
                   aria-label="Select listing"
-                  className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white focus:border-[#D4A017]/60 outline-none"
+                  className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white focus:border-primary/60 outline-none"
                 >
                   <option value="">Select a listing...</option>
                   {listings.map(l => (
@@ -526,7 +526,7 @@ export default function OpenHousesDashboard() {
                   placeholder="Sunday Open House"
                   required
                   aria-label="Event title"
-                  className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white focus:border-[#D4A017]/60 outline-none"
+                  className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white focus:border-primary/60 outline-none"
                 />
               </div>
 
@@ -540,7 +540,7 @@ export default function OpenHousesDashboard() {
                     onChange={e => setFormDate(e.target.value)}
                     required
                     aria-label="Event date"
-                    className="w-full px-3 py-3 bg-white/5 border border-white/10 rounded-xl text-white focus:border-[#D4A017]/60 outline-none"
+                    className="w-full px-3 py-3 bg-white/5 border border-white/10 rounded-xl text-white focus:border-primary/60 outline-none"
                   />
                 </div>
                 <div>
@@ -551,7 +551,7 @@ export default function OpenHousesDashboard() {
                     onChange={e => setFormStartTime(e.target.value)}
                     required
                     aria-label="Start time"
-                    className="w-full px-3 py-3 bg-white/5 border border-white/10 rounded-xl text-white focus:border-[#D4A017]/60 outline-none"
+                    className="w-full px-3 py-3 bg-white/5 border border-white/10 rounded-xl text-white focus:border-primary/60 outline-none"
                   />
                 </div>
                 <div>
@@ -562,7 +562,7 @@ export default function OpenHousesDashboard() {
                     onChange={e => setFormEndTime(e.target.value)}
                     required
                     aria-label="End time"
-                    className="w-full px-3 py-3 bg-white/5 border border-white/10 rounded-xl text-white focus:border-[#D4A017]/60 outline-none"
+                    className="w-full px-3 py-3 bg-white/5 border border-white/10 rounded-xl text-white focus:border-primary/60 outline-none"
                   />
                 </div>
               </div>
@@ -576,7 +576,7 @@ export default function OpenHousesDashboard() {
                   placeholder="Optional event description..."
                   rows={3}
                   aria-label="Event description"
-                  className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white focus:border-[#D4A017]/60 outline-none resize-none"
+                  className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white focus:border-primary/60 outline-none resize-none"
                 />
               </div>
 
@@ -591,7 +591,7 @@ export default function OpenHousesDashboard() {
                     placeholder="Unlimited"
                     min={1}
                     aria-label="Maximum attendees"
-                    className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white focus:border-[#D4A017]/60 outline-none"
+                    className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white focus:border-primary/60 outline-none"
                   />
                 </div>
                 <div>
@@ -602,7 +602,7 @@ export default function OpenHousesDashboard() {
                     onChange={e => setFormSlug(e.target.value)}
                     required
                     aria-label="Event URL slug"
-                    className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white focus:border-[#D4A017]/60 outline-none font-mono text-xs"
+                    className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white focus:border-primary/60 outline-none font-mono text-xs"
                   />
                 </div>
               </div>
@@ -611,7 +611,7 @@ export default function OpenHousesDashboard() {
               <label className="flex items-center gap-3 cursor-pointer">
                 <div
                   onClick={() => setFormPublished(!formPublished)}
-                  className={`w-10 h-6 rounded-full transition-colors relative ${formPublished ? 'bg-[#D4A017]' : 'bg-white/20'}`}
+                  className={`w-10 h-6 rounded-full transition-colors relative ${formPublished ? 'bg-accent-gold' : 'bg-white/20'}`}
                 >
                   <div className={`w-4 h-4 rounded-full bg-white absolute top-1 transition-all ${formPublished ? 'left-5' : 'left-1'}`} />
                 </div>
@@ -628,7 +628,7 @@ export default function OpenHousesDashboard() {
               <button
                 type="submit"
                 disabled={creating}
-                className="w-full py-3 bg-gradient-to-r from-[#D4A017] to-[#B8860B] rounded-xl text-black font-bold hover:opacity-90 disabled:opacity-50 flex items-center justify-center gap-2"
+                className="w-full py-3 bg-gradient-to-r from-gold to-gold-dark rounded-xl text-black font-bold hover:opacity-90 disabled:opacity-50 flex items-center justify-center gap-2"
               >
                 {creating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
                 {creating ? 'Creating...' : 'Create Event'}

@@ -91,7 +91,7 @@ export function HeroBeforeAfter() {
         <div className="absolute top-3 left-3 px-3 py-1.5 bg-black/70 backdrop-blur-sm rounded-lg text-xs text-white/90 font-medium tracking-wide">
           BEFORE
         </div>
-        <div className="absolute top-3 right-3 px-3 py-1.5 bg-[#D4A017] rounded-lg text-xs text-black font-bold tracking-wide">
+        <div className="absolute top-3 right-3 px-3 py-1.5 bg-accent-gold rounded-lg text-xs text-black font-bold tracking-wide">
           AFTER
         </div>
       </div>

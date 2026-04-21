@@ -616,8 +616,8 @@ ${agentEmail}
   }
 
   return (
-    <div className="min-h-screen bg-[#0A0A0A] text-white">
-      <header className="h-14 bg-[#111] border-b border-white/5 flex items-center px-4">
+    <div className="min-h-screen bg-surface text-white">
+      <header className="h-14 bg-surface border-b border-white/5 flex items-center px-4">
         <Link href="/dashboard/content-studio" className="flex items-center gap-2 hover:opacity-80">
           <ArrowLeft className="w-4 h-4 text-white/50" />
           <span className="text-white/50 text-sm">Back</span>
@@ -631,7 +631,7 @@ ${agentEmail}
 
       <div className="flex h-[calc(100vh-56px)]">
         {/* Sidebar */}
-        <aside className="w-[420px] bg-[#111] border-r border-white/5 flex flex-col overflow-auto">
+        <aside className="w-[420px] bg-surface border-r border-white/5 flex flex-col overflow-auto">
           <div className="p-4 space-y-5">
             {/* Property Selector */}
             <div>
@@ -654,7 +654,7 @@ ${agentEmail}
                   <ChevronDown className="w-4 h-4 text-white/50" />
                 </button>
                 {showDropdown && (
-                  <div className="absolute top-full left-0 right-0 mt-2 bg-[#1A1A1A] border border-white/10 rounded-xl overflow-hidden z-10 max-h-60 overflow-auto">
+                  <div className="absolute top-full left-0 right-0 mt-2 bg-surface-container-high border border-white/10 rounded-xl overflow-hidden z-10 max-h-60 overflow-auto">
                     {loading ? <div className="p-4 text-center"><Loader2 className="w-5 h-5 animate-spin mx-auto text-blue-500" /></div>
                     : listings.length === 0 ? <div className="p-4 text-center text-white/40 text-sm">No listings found</div>
                     : listings.map(l => (
@@ -849,7 +849,7 @@ ${agentEmail}
         </aside>
 
         {/* Preview */}
-        <div className="flex-1 bg-[#080808] flex flex-col overflow-hidden">
+        <div className="flex-1 bg-surface flex flex-col overflow-hidden">
           {generatedEmail ? (
             <>
               {/* Toolbar */}
@@ -882,7 +882,7 @@ ${agentEmail}
               {/* Send Email Modal */}
               {showSendModal && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60" role="dialog" aria-modal="true" aria-label="Send email">
-                  <div className="bg-[#1A1A1A] border border-white/10 rounded-2xl w-full max-w-lg p-6 relative">
+                  <div className="bg-surface-container-high border border-white/10 rounded-2xl w-full max-w-lg p-6 relative">
                     <button onClick={() => setShowSendModal(false)} className="absolute top-4 right-4 text-white/40 hover:text-white" aria-label="Close">
                       <X className="w-5 h-5" />
                     </button>
@@ -936,9 +936,9 @@ ${agentEmail}
                     <iframe srcDoc={generatedEmail.html} className="w-full h-[800px] border-0" title="Email Preview" />
                   </div>
                 ) : viewMode === 'html' ? (
-                  <pre className="bg-[#111] p-4 rounded-xl overflow-auto text-xs text-green-400 max-h-full font-mono">{generatedEmail.html}</pre>
+                  <pre className="bg-surface p-4 rounded-xl overflow-auto text-xs text-green-400 max-h-full font-mono">{generatedEmail.html}</pre>
                 ) : (
-                  <pre className="bg-[#111] p-4 rounded-xl overflow-auto text-sm text-white/80 whitespace-pre-wrap max-h-full">{generatedEmail.text}</pre>
+                  <pre className="bg-surface p-4 rounded-xl overflow-auto text-sm text-white/80 whitespace-pre-wrap max-h-full">{generatedEmail.text}</pre>
                 )}
               </div>
             </>

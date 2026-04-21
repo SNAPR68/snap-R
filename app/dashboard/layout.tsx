@@ -41,7 +41,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
 
   return (
     <MobileSidebarProvider>
-      <div className="min-h-screen bg-[#0F0F0F] text-white flex flex-col md:flex-row">
+      <div className="min-h-screen bg-charcoal-deep text-white flex flex-col md:flex-row">
         <MobileDashboardHeader />
         <DashboardSidebar tier={tier} listingsUsed={listingsUsed} listingsLimit={listingsLimit} />
         <main className="flex-1 overflow-auto flex flex-col">

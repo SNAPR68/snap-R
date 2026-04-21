@@ -68,15 +68,15 @@ export default function WhySnapRPage() {
       <header className="border-b border-white/10 sticky top-0 bg-black/95 backdrop-blur z-50">
         <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#D4A017] to-[#B8860B] flex items-center justify-center font-bold text-black text-lg">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-gold to-gold-dark flex items-center justify-center font-bold text-black text-lg">
               S
             </div>
-            <span className="text-xl font-semibold">Snap<span className="text-[#D4A017]">R</span></span>
+            <span className="text-xl font-semibold">Snap<span className="text-primary">R</span></span>
           </Link>
           <div className="flex items-center gap-4">
             <Link href="/pricing" className="text-white/70 hover:text-white transition">Pricing</Link>
             <Link href="/auth/login" className="text-white/70 hover:text-white transition">Log in</Link>
-            <Link href="/auth/signup" className="bg-[#D4A017] text-black px-4 py-2 rounded-lg font-medium hover:bg-[#B8860B] transition">
+            <Link href="/auth/signup" className="bg-accent-gold text-black px-4 py-2 rounded-lg font-medium hover:bg-accent-gold transition">
               Start Free
             </Link>
           </div>
@@ -87,14 +87,14 @@ export default function WhySnapRPage() {
         {/* Hero */}
         <section className="py-20 px-4">
           <div className="max-w-4xl mx-auto text-center">
-            <div className="inline-flex items-center gap-2 bg-[#D4A017]/10 text-[#D4A017] px-4 py-2 rounded-full text-sm mb-6">
+            <div className="inline-flex items-center gap-2 bg-accent-gold/10 text-primary px-4 py-2 rounded-full text-sm mb-6">
               <Sparkles className="w-4 h-4" />
               Why SnapR?
             </div>
             <h1 className="text-4xl md:text-6xl font-bold mb-6">
               Photo Editors Stop at Delivery.
               <br />
-              <span className="text-[#D4A017]">SnapR Takes You to Published.</span>
+              <span className="text-primary">SnapR Takes You to Published.</span>
             </h1>
             <p className="text-xl text-white/60 mb-8 max-w-2xl mx-auto">
               Why pay for photo editing AND separate marketing tools? SnapR is the all-in-one platform that replaces your photo editor + Canva + Hootsuite + Mailchimp.
@@ -102,7 +102,7 @@ export default function WhySnapRPage() {
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
               <Link
                 href="/auth/signup"
-                className="bg-[#D4A017] text-black px-8 py-4 rounded-lg font-medium hover:bg-[#B8860B] transition flex items-center gap-2 text-lg"
+                className="bg-accent-gold text-black px-8 py-4 rounded-lg font-medium hover:bg-accent-gold transition flex items-center gap-2 text-lg"
               >
                 Try Free - 3 Listings <ArrowRight className="w-5 h-5" />
               </Link>
@@ -238,9 +238,9 @@ export default function WhySnapRPage() {
                 step="5"
                 value={listingCount}
                 onChange={(e) => setListingCount(parseInt(e.target.value))}
-                className="w-48 accent-[#D4A017]"
+                className="w-48 accent-accent-gold"
               />
-              <span className="text-4xl font-bold text-[#D4A017] w-16">{listingCount}</span>
+              <span className="text-4xl font-bold text-primary w-16">{listingCount}</span>
             </div>
 
             {/* Comparison Cards */}
@@ -279,8 +279,8 @@ export default function WhySnapRPage() {
               </div>
 
               {/* SnapR */}
-              <div className="bg-gradient-to-b from-[#D4A017]/20 to-transparent rounded-2xl p-6 border-2 border-[#D4A017]">
-                <h3 className="text-xl font-bold mb-4 text-[#D4A017]">SnapR (All-in-One)</h3>
+              <div className="bg-gradient-to-b from-gold/20 to-transparent rounded-2xl p-6 border-2 border-primary">
+                <h3 className="text-xl font-bold mb-4 text-primary">SnapR (All-in-One)</h3>
                 <div className="space-y-3 mb-6">
                   {listingCount <= 30 ? (
                     <>
@@ -331,7 +331,7 @@ export default function WhySnapRPage() {
                     <span>Included</span>
                   </div>
                 </div>
-                <div className="border-t border-[#D4A017]/30 pt-4">
+                <div className="border-t border-primary/30 pt-4">
                   <div className="flex justify-between text-xl font-bold">
                     <span>Total</span>
                     <span className="text-green-400">
@@ -355,13 +355,13 @@ export default function WhySnapRPage() {
             )}
 
             {listingCount > 30 && (
-              <div className="mt-8 bg-[#D4A017]/20 border border-[#D4A017]/30 rounded-2xl p-6 text-center">
-                <p className="text-[#D4A017] text-xl font-bold mb-2">
+              <div className="mt-8 bg-accent-gold/20 border border-primary/30 rounded-2xl p-6 text-center">
+                <p className="text-primary text-xl font-bold mb-2">
                   At {listingCount} listings, you qualify for volume pricing
                 </p>
                 <Link
                   href={process.env.NEXT_PUBLIC_CALENDLY_URL || 'https://calendly.com/rajesh-snap-r/30min'}
-                  className="inline-flex items-center gap-2 text-white hover:text-[#D4A017] transition mt-2"
+                  className="inline-flex items-center gap-2 text-white hover:text-primary transition mt-2"
                 >
                   Talk to sales for custom pricing <ArrowRight className="w-4 h-4" />
                 </Link>
@@ -380,19 +380,19 @@ export default function WhySnapRPage() {
               <div className="grid grid-cols-3 bg-white/5 p-4 font-bold">
                 <div>Feature</div>
                 <div className="text-center text-white/60">Photo-Only Services</div>
-                <div className="text-center text-[#D4A017]">SnapR</div>
+                <div className="text-center text-primary">SnapR</div>
               </div>
               {COMPARISON.map((row, idx) => (
                 <div
                   key={idx}
                   className={`grid grid-cols-3 p-4 border-t border-white/5 ${
-                    row.note === 'SnapR exclusive' || row.note === 'SnapR advantage' ? 'bg-[#D4A017]/5' : ''
+                    row.note === 'SnapR exclusive' || row.note === 'SnapR advantage' ? 'bg-accent-gold/5' : ''
                   }`}
                 >
                   <div className="flex items-center gap-2 text-sm">
                     {row.feature}
                     {row.note === 'SnapR exclusive' && (
-                      <span className="text-xs bg-[#D4A017]/20 text-[#D4A017] px-2 py-0.5 rounded hidden sm:inline">Exclusive</span>
+                      <span className="text-xs bg-accent-gold/20 text-primary px-2 py-0.5 rounded hidden sm:inline">Exclusive</span>
                     )}
                   </div>
                   <div className="text-center">
@@ -410,7 +410,7 @@ export default function WhySnapRPage() {
                     ) : row.snapr === false ? (
                       <X className="w-5 h-5 text-red-400 mx-auto" />
                     ) : (
-                      <span className="text-[#D4A017] font-medium text-sm">{row.snapr}</span>
+                      <span className="text-primary font-medium text-sm">{row.snapr}</span>
                     )}
                   </div>
                 </div>
@@ -437,7 +437,7 @@ export default function WhySnapRPage() {
                 { icon: Layers, title: 'All-in-One', desc: 'No more tool juggling' },
               ].map((item, idx) => (
                 <div key={idx} className="bg-white/5 rounded-xl p-6 text-center hover:bg-white/10 transition border border-white/10">
-                  <item.icon className="w-10 h-10 text-[#D4A017] mx-auto mb-4" />
+                  <item.icon className="w-10 h-10 text-primary mx-auto mb-4" />
                   <h3 className="font-bold mb-2">{item.title}</h3>
                   <p className="text-white/50 text-sm">{item.desc}</p>
                 </div>
@@ -474,7 +474,7 @@ export default function WhySnapRPage() {
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
               <Link
                 href="/auth/signup"
-                className="bg-[#D4A017] text-black px-8 py-4 rounded-lg font-medium hover:bg-[#B8860B] transition flex items-center gap-2 text-lg"
+                className="bg-accent-gold text-black px-8 py-4 rounded-lg font-medium hover:bg-accent-gold transition flex items-center gap-2 text-lg"
               >
                 Start Free Trial <ArrowRight className="w-5 h-5" />
               </Link>

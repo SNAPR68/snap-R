@@ -60,7 +60,7 @@ function CheckoutContent() {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-[#0A0A0A] flex items-center justify-center p-6">
+      <div className="min-h-screen bg-surface flex items-center justify-center p-6">
         <div className="max-w-md w-full text-center">
           <div className="w-16 h-16 bg-red-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
             <CreditCard className="w-8 h-8 text-red-400" />
@@ -70,7 +70,7 @@ function CheckoutContent() {
           <div className="flex gap-3 justify-center">
             <button
               onClick={() => { setError(''); window.location.reload(); }}
-              className="px-6 py-3 bg-[#D4A017] text-black font-semibold rounded-xl hover:bg-[#B8860B]"
+              className="px-6 py-3 bg-accent-gold text-black font-semibold rounded-xl hover:bg-accent-gold"
             >
               Try Again
             </button>
@@ -87,15 +87,15 @@ function CheckoutContent() {
   }
 
   return (
-    <div className="min-h-screen bg-[#0A0A0A] flex items-center justify-center p-6">
+    <div className="min-h-screen bg-surface flex items-center justify-center p-6">
       <div className="max-w-md w-full text-center">
-        <Loader2 className="w-10 h-10 animate-spin text-[#D4A017] mx-auto mb-6" />
+        <Loader2 className="w-10 h-10 animate-spin text-primary mx-auto mb-6" />
         <h1 className="text-2xl font-bold text-white mb-2">Setting Up Your Plan</h1>
         <p className="text-white/60 mb-8">Redirecting to secure checkout...</p>
 
         <div className="bg-white/5 border border-white/10 rounded-xl p-5 mb-6 text-left">
           <p className="text-sm text-white/50 mb-1">Selected Plan</p>
-          <p className="text-lg font-bold text-[#D4A017] capitalize">{plan} Plan</p>
+          <p className="text-lg font-bold text-primary capitalize">{plan} Plan</p>
           <div className="flex items-center gap-4 mt-2 text-sm text-white/60">
             <span>{listings} listings/mo</span>
             <span className="capitalize">{billing} billing</span>
@@ -115,8 +115,8 @@ export default function CheckoutPage() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen bg-[#0A0A0A] flex items-center justify-center">
-          <Loader2 className="w-8 h-8 animate-spin text-[#D4A017]" />
+        <div className="min-h-screen bg-surface flex items-center justify-center">
+          <Loader2 className="w-8 h-8 animate-spin text-primary" />
         </div>
       }
     >

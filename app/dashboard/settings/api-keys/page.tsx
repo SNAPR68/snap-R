@@ -122,7 +122,7 @@ export default function ApiKeysPage() {
   return (
     <div className="max-w-4xl mx-auto p-6">
       <div className="flex items-center gap-3 mb-6">
-        <Key className="w-6 h-6 text-[#D4A017]" />
+        <Key className="w-6 h-6 text-primary" />
         <h1 className="text-2xl font-bold text-white">API Keys</h1>
       </div>
 
@@ -178,14 +178,14 @@ export default function ApiKeysPage() {
             value={newKeyName}
             onChange={(e) => setNewKeyName(e.target.value)}
             placeholder="Key name (e.g., Production, Staging)"
-            className="flex-1 bg-black/30 border border-white/10 rounded-lg px-3 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-[#D4A017]/50"
+            className="flex-1 bg-black/30 border border-white/10 rounded-lg px-3 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-primary/50"
             aria-label="API key name"
             maxLength={100}
           />
           <button
             onClick={handleCreate}
             disabled={creating || !newKeyName.trim()}
-            className="flex items-center gap-2 px-4 py-2 bg-[#D4A017] text-black font-medium rounded-lg hover:bg-[#B8860B] disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex items-center gap-2 px-4 py-2 bg-accent-gold text-black font-medium rounded-lg hover:bg-accent-gold disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <Plus className="w-4 h-4" />
             {creating ? 'Creating...' : 'Create Key'}
@@ -247,7 +247,7 @@ export default function ApiKeysPage() {
   https://snap-r.com/api/v1/listings`}
         </pre>
         <p className="text-gray-500 text-sm mt-2">
-          See the <a href="/developers" className="text-[#D4A017] underline">Developer Docs</a> for full API reference.
+          See the <a href="/developers" className="text-primary underline">Developer Docs</a> for full API reference.
         </p>
       </div>
     </div>

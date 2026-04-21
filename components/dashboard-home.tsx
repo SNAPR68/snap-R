@@ -116,7 +116,7 @@ function formatTimeAgo(timestamp: string): string {
 
 export default function DashboardHome({ metrics, recentActivity, processingItems, setupStatus }: DashboardHomeProps) {
   return (
-    <div className="min-h-screen bg-[#0A0A0A] text-white">
+    <div className="min-h-screen bg-surface text-white">
       <div className="max-w-6xl mx-auto px-6 py-8">
 
         {/* Processing Banner */}
@@ -162,7 +162,7 @@ export default function DashboardHome({ metrics, recentActivity, processingItems
             value={metrics.activeListings}
             icon={Home}
             href="/dashboard/listings"
-            color="bg-[#D4A017]"
+            color="bg-accent-gold"
           />
           <MetricCard
             label="Scheduled Posts"
@@ -196,7 +196,7 @@ export default function DashboardHome({ metrics, recentActivity, processingItems
               desc="Upload & enhance photos"
               icon={Plus}
               href="/listings/new"
-              color="bg-[#D4A017]"
+              color="bg-accent-gold"
             />
             <QuickAction
               label="Create Post"
@@ -230,7 +230,7 @@ export default function DashboardHome({ metrics, recentActivity, processingItems
               <Clock className="w-12 h-12 text-white/10 mx-auto mb-3" />
               <h3 className="font-medium mb-2">No activity yet</h3>
               <p className="text-white/40 text-sm mb-4">Create a listing to get started</p>
-              <Link href="/listings/new" className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#D4A017] text-black rounded-lg font-semibold text-sm">
+              <Link href="/listings/new" className="inline-flex items-center gap-2 px-5 py-2.5 bg-accent-gold text-black rounded-lg font-semibold text-sm">
                 <Plus className="w-4 h-4" /> Create First Listing
               </Link>
             </div>

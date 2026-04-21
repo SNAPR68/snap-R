@@ -192,7 +192,7 @@ export default function TourViewerPage() {
 
   if (error || !tour) {
     return (
-      <div className="min-h-screen bg-[#0F0F0F] flex items-center justify-center">
+      <div className="min-h-screen bg-charcoal-deep flex items-center justify-center">
         <div className="text-center">
           <Home className="w-16 h-16 text-white/20 mx-auto mb-4" />
           <h1 className="text-2xl font-bold text-white mb-2">Tour Not Found</h1>

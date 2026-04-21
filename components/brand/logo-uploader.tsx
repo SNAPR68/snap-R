@@ -101,7 +101,7 @@ export function LogoUploader({ currentLogo, onUpload, label = 'Logo' }: LogoUplo
             </button>
           </div>
         ) : (
-          <label className="w-20 h-20 rounded-lg border-2 border-dashed border-white/30 flex flex-col items-center justify-center cursor-pointer hover:border-[#D4AF37] transition-colors">
+          <label className="w-20 h-20 rounded-lg border-2 border-dashed border-white/30 flex flex-col items-center justify-center cursor-pointer hover:border-accent-gold transition-colors">
             {uploading ? (
               <Loader2 className="w-6 h-6 text-white/50 animate-spin" />
             ) : (

@@ -119,7 +119,7 @@ export default function DomainsPage() {
   return (
     <div className="max-w-4xl mx-auto p-6">
       <div className="flex items-center gap-3 mb-6">
-        <Globe className="w-6 h-6 text-[#D4A017]" />
+        <Globe className="w-6 h-6 text-primary" />
         <h1 className="text-2xl font-bold text-white">Custom Domains</h1>
       </div>
 
@@ -163,13 +163,13 @@ export default function DomainsPage() {
             value={newDomain}
             onChange={(e) => setNewDomain(e.target.value)}
             placeholder="photos.yourdomain.com"
-            className="flex-1 bg-black/30 border border-white/10 rounded-lg px-3 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-[#D4A017]/50"
+            className="flex-1 bg-black/30 border border-white/10 rounded-lg px-3 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-primary/50"
             aria-label="Custom domain"
           />
           <button
             onClick={handleCreate}
             disabled={creating || !newDomain.trim()}
-            className="flex items-center gap-2 px-4 py-2 bg-[#D4A017] text-black font-medium rounded-lg hover:bg-[#B8860B] disabled:opacity-50"
+            className="flex items-center gap-2 px-4 py-2 bg-accent-gold text-black font-medium rounded-lg hover:bg-accent-gold disabled:opacity-50"
           >
             <Plus className="w-4 h-4" />
             {creating ? 'Adding...' : 'Add Domain'}
@@ -206,7 +206,7 @@ export default function DomainsPage() {
                   {d.verification_status !== 'verified' && (
                     <button
                       onClick={() => handleVerify(d.id)}
-                      className="p-2 text-gray-400 hover:text-[#D4A017] transition-colors"
+                      className="p-2 text-gray-400 hover:text-primary transition-colors"
                       title="Re-verify"
                     >
                       <RefreshCw className="w-4 h-4" />

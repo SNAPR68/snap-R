@@ -58,9 +58,9 @@ export default function ShareGalleryModal({ listingId, listingTitle, onClose }: 
 
   return (
     <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4" onClick={onClose} role="dialog" aria-modal="true" aria-label="Share for client approval">
-      <div className="bg-[#1A1A1A] rounded-2xl w-full max-w-md" onClick={e => e.stopPropagation()}>
+      <div className="bg-surface-container-high rounded-2xl w-full max-w-md" onClick={e => e.stopPropagation()}>
         <div className="flex items-center justify-between p-4 border-b border-white/10">
-          <h2 className="text-lg font-bold text-white flex items-center gap-2"><UserCheck className="w-5 h-5 text-[#D4A017]" /> Share for Client Approval</h2>
+          <h2 className="text-lg font-bold text-white flex items-center gap-2"><UserCheck className="w-5 h-5 text-primary" /> Share for Client Approval</h2>
           <button onClick={onClose} className="p-2 hover:bg-white/10 rounded-lg text-white"><X className="w-5 h-5" /></button>
         </div>
         <div className="p-4 space-y-4">
@@ -68,22 +68,22 @@ export default function ShareGalleryModal({ listingId, listingTitle, onClose }: 
             <>
               <div>
                 <label className="text-sm text-white/50 block mb-1">Client Name (optional)</label>
-                <input type="text" value={clientName} onChange={e => setClientName(e.target.value)} placeholder="John Smith" aria-label="Client name" className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:border-[#D4A017]" />
+                <input type="text" value={clientName} onChange={e => setClientName(e.target.value)} placeholder="John Smith" aria-label="Client name" className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:border-primary" />
               </div>
               <div>
                 <label className="text-sm text-white/50 block mb-1">Client Email (optional)</label>
-                <input type="email" value={clientEmail} onChange={e => setClientEmail(e.target.value)} placeholder="client@email.com" aria-label="Client email" className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:border-[#D4A017]" />
+                <input type="email" value={clientEmail} onChange={e => setClientEmail(e.target.value)} placeholder="client@email.com" aria-label="Client email" className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:border-primary" />
               </div>
               <div>
                 <label className="text-sm text-white/50 block mb-1">Link Expires In</label>
-                <select value={expiresInDays} onChange={e => setExpiresInDays(Number(e.target.value))} aria-label="Link expiry duration" className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:border-[#D4A017]">
+                <select value={expiresInDays} onChange={e => setExpiresInDays(Number(e.target.value))} aria-label="Link expiry duration" className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:border-primary">
                   <option value={3}>3 days</option>
                   <option value={7}>7 days</option>
                   <option value={14}>14 days</option>
                   <option value={30}>30 days</option>
                 </select>
               </div>
-              <button onClick={generateLink} disabled={generating} className="w-full py-3 bg-gradient-to-r from-[#D4A017] to-[#B8860B] text-black rounded-xl font-semibold flex items-center justify-center gap-2 hover:opacity-90 disabled:opacity-50">
+              <button onClick={generateLink} disabled={generating} className="w-full py-3 bg-gradient-to-r from-gold to-gold-dark text-black rounded-xl font-semibold flex items-center justify-center gap-2 hover:opacity-90 disabled:opacity-50">
                 {generating ? <Loader2 className="w-5 h-5 animate-spin" /> : <Link2 className="w-5 h-5" />}
                 {generating ? 'Generating...' : 'Generate Approval Link'}
               </button>
@@ -92,7 +92,7 @@ export default function ShareGalleryModal({ listingId, listingTitle, onClose }: 
             <>
               <div className="bg-white/5 rounded-xl p-4">
                 <p className="text-xs text-white/50 mb-2">Share Link:</p>
-                <p className="text-[#D4A017] text-sm break-all font-mono">{shareUrl}</p>
+                <p className="text-primary text-sm break-all font-mono">{shareUrl}</p>
               </div>
               <div className="flex gap-3">
                 <button onClick={copyLink} className="flex-1 py-3 bg-white/10 rounded-xl font-medium flex items-center justify-center gap-2 hover:bg-white/20 text-white">
@@ -100,7 +100,7 @@ export default function ShareGalleryModal({ listingId, listingTitle, onClose }: 
                   {copied ? 'Copied!' : 'Copy Link'}
                 </button>
                 {clientEmail && (
-                  <button onClick={sendEmail} className="flex-1 py-3 bg-gradient-to-r from-[#D4A017] to-[#B8860B] text-black rounded-xl font-semibold flex items-center justify-center gap-2 hover:opacity-90">
+                  <button onClick={sendEmail} className="flex-1 py-3 bg-gradient-to-r from-gold to-gold-dark text-black rounded-xl font-semibold flex items-center justify-center gap-2 hover:opacity-90">
                     <Mail className="w-5 h-5" /> Email Client
                   </button>
                 )}

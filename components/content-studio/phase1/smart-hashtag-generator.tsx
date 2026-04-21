@@ -209,7 +209,7 @@ export function HashtagDisplay({
   }
   
   const categories: { key: keyof GeneratedHashtags; label: string; icon: React.ComponentType<{ className?: string }>; color: string }[] = [
-    { key: 'postType', label: 'Post Type', icon: Sparkles, color: 'text-[#D4AF37]' },
+    { key: 'postType', label: 'Post Type', icon: Sparkles, color: 'text-accent-gold' },
     { key: 'location', label: 'Location', icon: MapPin, color: 'text-blue-400' },
     { key: 'property', label: 'Property', icon: Home, color: 'text-green-400' },
     { key: 'engagement', label: 'Engagement', icon: TrendingUp, color: 'text-pink-400' },
@@ -221,7 +221,7 @@ export function HashtagDisplay({
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <Hash className="w-4 h-4 text-[#D4AF37]" />
+          <Hash className="w-4 h-4 text-accent-gold" />
           <span className="text-sm font-medium text-white">Smart Hashtags</span>
           <span className="text-[10px] text-white/40 bg-white/10 px-1.5 py-0.5 rounded">
             {hashtagCount}/30
@@ -238,7 +238,7 @@ export function HashtagDisplay({
           )}
           <button
             onClick={copyToClipboard}
-            className="flex items-center gap-1 px-2 py-1 rounded-lg bg-[#D4AF37]/20 text-[#D4AF37] hover:bg-[#D4AF37]/30 transition text-xs"
+            className="flex items-center gap-1 px-2 py-1 rounded-lg bg-accent-gold/20 text-accent-gold hover:bg-accent-gold/30 transition text-xs"
           >
             {copied ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
             {copied ? 'Copied!' : 'Copy All'}
@@ -288,7 +288,7 @@ export function HashtagDisplay({
               {hashtags.custom.map(tag => (
                 <span
                   key={tag}
-                  className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] bg-[#D4AF37]/20 text-[#D4AF37] group cursor-pointer"
+                  className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] bg-accent-gold/20 text-accent-gold group cursor-pointer"
                   onClick={() => onRemove?.('custom', tag)}
                 >
                   #{tag}
@@ -309,12 +309,12 @@ export function HashtagDisplay({
             onChange={(e) => setCustomInput(e.target.value)}
             onKeyPress={(e) => e.key === 'Enter' && handleAddCustom()}
             placeholder="Add custom hashtag..."
-            className="flex-1 px-2 py-1.5 rounded-lg bg-white/5 border border-white/10 text-white text-xs placeholder:text-white/30 focus:outline-none focus:border-[#D4AF37]/50"
+            className="flex-1 px-2 py-1.5 rounded-lg bg-white/5 border border-white/10 text-white text-xs placeholder:text-white/30 focus:outline-none focus:border-accent-gold/50"
           />
           <button
             onClick={handleAddCustom}
             disabled={!customInput.trim()}
-            className="px-3 py-1.5 rounded-lg bg-[#D4AF37] text-black text-xs font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+            className="px-3 py-1.5 rounded-lg bg-accent-gold text-black text-xs font-medium disabled:opacity-50 disabled:cursor-not-allowed"
           >
             Add
           </button>

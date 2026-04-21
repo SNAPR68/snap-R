@@ -48,7 +48,7 @@ export function EmptyState({ type, action }: EmptyStateProps) {
       </div>
       <h3 className="text-lg font-medium text-white/80 mb-1">{state.title}</h3>
       <p className="text-sm text-white/40 mb-2 max-w-xs">{state.description}</p>
-      <p className="text-xs text-[#D4A017]/60 mb-4">{state.tip}</p>
+      <p className="text-xs text-primary/60 mb-4">{state.tip}</p>
       {action}
     </div>
   );

@@ -5,38 +5,38 @@
 /* ── Editorial "Digital Curator" Design Tokens ──────────────── */
 :root {
   /* Legacy tokens (dashboard) */
-  --gold-light: #FFD700;
-  --gold: #D4A017;
-  --gold-dark: #B8860B;
+  --gold-light: #D4B86A;
+  --gold: #C9A84C;
+  --gold-dark: #A8893A;
   --charcoal-light: #2A2A2A;
   --charcoal: #1A1A1A;
   --charcoal-dark: #0F0F0F;
-  --emerald: #10B981;
-  --emerald-dark: #059669;
-  --mint-glow: #C8FCEA;
+  --emerald: #4A9B7F;
+  --emerald-dark: #3A7D65;
+  --mint-glow: #B8EDD8;
 
-  /* Midnight Gold surface hierarchy */
-  --surface: #131313;
-  --surface-container-low: #1C1B1B;
-  --surface-container-high: #2A2A2A;
-  --surface-container-highest: #353534;
+  /* Warm Obsidian surface hierarchy */
+  --surface: #0A0A0A;
+  --surface-container-low: #111111;
+  --surface-container-high: #1A1A1A;
+  --surface-container-highest: #242320;
 
-  /* Primary accent */
-  --primary: #F6BE39;
-  --primary-container: #D4A017;
+  /* Primary accent — antique gold */
+  --primary: #C9A84C;
+  --primary-container: #D4B86A;
 
-  /* Typography colors */
-  --on-surface: #D3C5AE;
-  --on-surface-muted: rgba(211, 197, 174, 0.5);
-  --outline-variant: rgba(211, 197, 174, 0.15);
+  /* Typography colors — warm off-white */
+  --on-surface: #F5F0EB;
+  --on-surface-muted: rgba(245, 240, 235, 0.55);
+  --outline-variant: rgba(201, 168, 76, 0.18);
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
 html, body {
   font-family: var(--font-inter), Inter, sans-serif;
-  background: #131313;
-  color: #D3C5AE;
+  background: #0A0A0A;
+  color: #F5F0EB;
 }
 
 /* ── Editorial utility classes ──────────────────────────────── */
@@ -67,7 +67,7 @@ html, body {
   font-weight: 600;
   font-size: 14px;
   border-radius: 4px;
-  background: linear-gradient(135deg, #F6BE39 0%, #D4A017 100%);
+  background: linear-gradient(135deg, #C9A84C 0%, #C9A84C 100%);
   color: #131313;
   border: none;
   cursor: pointer;
@@ -108,7 +108,7 @@ html, body {
   transition: border-color 0.2s;
 }
 .editorial-input:focus {
-  border-bottom-color: #F6BE39;
+  border-bottom-color: #C9A84C;
 }
 .editorial-input::placeholder {
   color: rgba(211, 197, 174, 0.4);
@@ -122,7 +122,7 @@ html, body {
 
 /* Gold Gradient Text */
 .text-gold-gradient {
-  background: linear-gradient(145deg, #FFD700 0%, #D4A017 50%, #B8860B 100%);
+  background: linear-gradient(145deg, #D4B86A 0%, #C9A84C 50%, #A8893A 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -137,7 +137,7 @@ html, body {
   font-weight: 600;
   font-size: 14px;
   border-radius: 12px;
-  background: linear-gradient(145deg, #FFD700 0%, #D4A017 50%, #B8860B 100%);
+  background: linear-gradient(145deg, #D4B86A 0%, #C9A84C 50%, #A8893A 100%);
   color: #0F0F0F;
   border: none;
   cursor: pointer;
@@ -168,7 +168,7 @@ html, body {
 
 .btn-dark-glass:hover {
   background: rgba(255, 255, 255, 0.1);
-  border-color: #D4A017;
+  border-color: #C9A84C;
 }
 
 /* Glass Card */
@@ -261,7 +261,7 @@ html, body {
 /* Gold shimmer text animation */
 @keyframes goldShimmer { 0% { background-position: -200% center; } 100% { background-position: 200% center; } }
 .shimmer-text {
-  background: linear-gradient(90deg, #B8860B 0%, #FFD700 30%, #D4A017 50%, #FFD700 70%, #B8860B 100%);
+  background: linear-gradient(90deg, #A8893A 0%, #D4B86A 30%, #C9A84C 50%, #D4B86A 70%, #A8893A 100%);
   background-size: 200% auto;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -288,16 +288,16 @@ html, body {
 
 /* Legacy CSS Variables (dashboard pages) */
 :root {
-  --background: #0F0F0F;
+  --background: #0A0A0A;
   --surface-legacy: #1A1A1A;
-  --surface-soft: #2A2A2A;
-  --text-main: #FFFFFF;
-  --text-soft: rgba(255, 255, 255, 0.6);
-  --accent-gold: #D4A017;
-  --accent-gold-soft: rgba(212, 160, 23, 0.3);
-  --accent-gold-dark: #B8860B;
-  --mint-soft: rgba(134, 227, 195, 0.25);
-  --mint-dark: #4FB892;
+  --surface-soft: #242320;
+  --text-main: #F5F0EB;
+  --text-soft: rgba(245, 240, 235, 0.6);
+  --accent-gold: #C9A84C;
+  --accent-gold-soft: rgba(201, 168, 76, 0.25);
+  --accent-gold-dark: #A8893A;
+  --mint-soft: rgba(74, 155, 127, 0.2);
+  --mint-dark: #4A9B7F;
 }
 
 /* Card styling */
@@ -335,7 +335,7 @@ html, body {
   font-weight: 600;
   font-size: 14px;
   border-radius: 12px;
-  background: linear-gradient(145deg, #FFD700 0%, #D4A017 50%, #B8860B 100%);
+  background: linear-gradient(145deg, #D4B86A 0%, #C9A84C 50%, #A8893A 100%);
   color: #0F0F0F;
   border: none;
   cursor: pointer;
@@ -375,7 +375,7 @@ html, body {
   background: transparent;
 }
 .overflow-y-auto::-webkit-scrollbar-thumb {
-  background: #D4AF37;
+  background: #C9A84C;
   border-radius: 3px;
 }
 
@@ -394,7 +394,7 @@ html, body {
   width: 24px;
   height: 24px;
   border-radius: 50%;
-  background: linear-gradient(145deg, #FFD700 0%, #D4A017 50%, #B8860B 100%);
+  background: linear-gradient(145deg, #D4B86A 0%, #C9A84C 50%, #A8893A 100%);
   cursor: pointer;
   box-shadow: 0 2px 8px rgba(212, 160, 23, 0.4);
   transition: transform 0.2s ease;
@@ -406,7 +406,7 @@ html, body {
   width: 24px;
   height: 24px;
   border-radius: 50%;
-  background: linear-gradient(145deg, #FFD700 0%, #D4A017 50%, #B8860B 100%);
+  background: linear-gradient(145deg, #D4B86A 0%, #C9A84C 50%, #A8893A 100%);
   cursor: pointer;
   border: none;
   box-shadow: 0 2px 8px rgba(212, 160, 23, 0.4);

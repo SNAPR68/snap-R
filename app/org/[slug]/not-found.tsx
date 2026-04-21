@@ -2,7 +2,7 @@ import Link from 'next/link';
 
 export default function OrgNotFound() {
   return (
-    <div className="min-h-screen bg-[#0F0F0F] text-white flex items-center justify-center p-6">
+    <div className="min-h-screen bg-charcoal-deep text-white flex items-center justify-center p-6">
       <div className="text-center">
         <h1 className="text-6xl font-bold text-amber-400 mb-4">404</h1>
         <h2 className="text-2xl font-semibold mb-2">Organization Not Found</h2>

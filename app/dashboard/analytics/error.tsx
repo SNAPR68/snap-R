@@ -15,7 +15,7 @@ export default function DashboardError({
   }, [error]);
 
   return (
-    <main className="min-h-screen bg-[#0A0A0A] flex items-center justify-center p-6">
+    <main className="min-h-screen bg-surface flex items-center justify-center p-6">
       <div className="text-center max-w-md">
         <h2 className="text-2xl font-bold text-white mb-4">Something went wrong</h2>
         <p className="text-white/60 mb-6">
@@ -23,7 +23,7 @@ export default function DashboardError({
         </p>
         <button
           onClick={reset}
-          className="px-6 py-3 bg-gradient-to-r from-[#D4A017] to-[#B8860B] rounded-xl text-black font-semibold hover:opacity-90"
+          className="px-6 py-3 bg-gradient-to-r from-gold to-gold-dark rounded-xl text-black font-semibold hover:opacity-90"
         >
           Try Again
         </button>

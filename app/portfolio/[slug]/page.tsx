@@ -232,7 +232,7 @@ export default function PublicPortfolioPage({ params }: { params: { slug: string
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#0F0F0F] flex items-center justify-center">
+      <div className="min-h-screen bg-charcoal-deep flex items-center justify-center">
         <Loader2 className="w-8 h-8 animate-spin text-white/50" />
       </div>
     );
@@ -240,7 +240,7 @@ export default function PublicPortfolioPage({ params }: { params: { slug: string
 
   if (error || !portfolio) {
     return (
-      <div className="min-h-screen bg-[#0F0F0F] flex items-center justify-center text-white">
+      <div className="min-h-screen bg-charcoal-deep flex items-center justify-center text-white">
         <div className="text-center">
           <h1 className="text-2xl font-bold mb-2">Portfolio Not Found</h1>
           <p className="text-white/50">This portfolio may have been removed or made private.</p>
@@ -254,7 +254,7 @@ export default function PublicPortfolioPage({ params }: { params: { slug: string
   const otherItems = portfolio.portfolio_items.filter(i => !i.is_featured);
 
   return (
-    <div className="min-h-screen bg-[#0F0F0F] text-white">
+    <div className="min-h-screen bg-charcoal-deep text-white">
       {/* Hero Section */}
       <div className="relative">
         {portfolio.cover_image_url && (
@@ -262,7 +262,7 @@ export default function PublicPortfolioPage({ params }: { params: { slug: string
             <Image src={portfolio.cover_image_url} 
               alt=""
               className="w-full h-full object-cover opacity-30" width={400} height={300} unoptimized />
-            <div className="absolute inset-0 bg-gradient-to-b from-transparent to-[#0F0F0F]" />
+            <div className="absolute inset-0 bg-gradient-to-b from-transparent to-surface" />
           </div>
         )}
         
@@ -446,7 +446,7 @@ export default function PublicPortfolioPage({ params }: { params: { slug: string
           onClick={() => setSelectedItem(null)}
         >
           <div 
-            className="max-w-4xl w-full bg-[#1A1A1A] rounded-2xl overflow-hidden"
+            className="max-w-4xl w-full bg-surface-container-high rounded-2xl overflow-hidden"
             onClick={e => e.stopPropagation()}
           >
             <BeforeAfterSlider 

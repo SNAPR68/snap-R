@@ -171,25 +171,25 @@ export default function CampaignSettingsPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#0D0D0D] flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-[#B8860B]"></div>
+      <div className="min-h-screen bg-surface flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-accent-gold"></div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#0D0D0D] text-white p-6">
+    <div className="min-h-screen bg-surface text-white p-6">
       {/* Header */}
       <div className="flex items-center gap-4 mb-8">
         <Link
           href="/dashboard/campaigns"
-          className="p-2 bg-[#1A1A1A] border border-[#333] rounded-lg hover:border-[#B8860B] transition-colors"
+          className="p-2 bg-surface-container-high border border-surface-border rounded-lg hover:border-accent-gold transition-colors"
         >
           <ChevronLeft className="w-5 h-5" />
         </Link>
         <div>
           <h1 className="text-3xl font-bold flex items-center gap-3">
-            <Settings className="w-8 h-8 text-[#B8860B]" />
+            <Settings className="w-8 h-8 text-accent-gold" />
             Automation Settings
           </h1>
           <p className="text-gray-400 mt-1">
@@ -199,10 +199,10 @@ export default function CampaignSettingsPage() {
       </div>
 
       {/* Info Box */}
-      <div className="bg-[#B8860B]/10 border border-[#B8860B]/30 rounded-xl p-4 mb-8 flex items-start gap-3">
-        <Info className="w-5 h-5 text-[#B8860B] flex-shrink-0 mt-0.5" />
+      <div className="bg-accent-gold/10 border border-accent-gold/30 rounded-xl p-4 mb-8 flex items-start gap-3">
+        <Info className="w-5 h-5 text-accent-gold flex-shrink-0 mt-0.5" />
         <div className="text-sm">
-          <p className="text-[#B8860B] font-medium">How it works</p>
+          <p className="text-accent-gold font-medium">How it works</p>
           <p className="text-gray-300 mt-1">
             When you change a listing&apos;s status, SnapR automatically generates marketing
             content based on your settings below. Content goes to your approval queue unless
@@ -220,15 +220,15 @@ export default function CampaignSettingsPage() {
           return (
             <div
               key={status}
-              className={`bg-[#1A1A1A] border rounded-xl overflow-hidden transition-colors ${trigger.is_active ? "border-[#B8860B]/50" : "border-[#333]"
+              className={`bg-surface-container-high border rounded-xl overflow-hidden transition-colors ${trigger.is_active ? "border-accent-gold/50" : "border-surface-border"
                 }`}
             >
               {/* Header */}
-              <div className="p-4 flex items-center justify-between border-b border-[#333]">
+              <div className="p-4 flex items-center justify-between border-b border-surface-border">
                 <div className="flex items-center gap-3">
                   <button
                     onClick={() => updateTrigger(status, { is_active: !trigger.is_active })}
-                    className="text-[#B8860B]"
+                    className="text-accent-gold"
                   >
                     {trigger.is_active ? (
                       <ToggleRight className="w-8 h-8" />
@@ -244,7 +244,7 @@ export default function CampaignSettingsPage() {
                 <button
                   onClick={() => saveTrigger(status)}
                   disabled={saving === status}
-                  className="flex items-center gap-2 px-4 py-2 bg-[#B8860B] text-black rounded-lg hover:bg-[#D4A84B] transition-colors disabled:opacity-50"
+                  className="flex items-center gap-2 px-4 py-2 bg-accent-gold text-black rounded-lg hover:bg-accent-gold transition-colors disabled:opacity-50"
                 >
                   <Save className="w-4 h-4" />
                   {saving === status ? "Saving..." : "Save"}
@@ -264,7 +264,7 @@ export default function CampaignSettingsPage() {
                         onChange={(e) =>
                           updateTrigger(status, { generate_social: e.target.checked })
                         }
-                        className="w-4 h-4 rounded border-gray-600 text-[#B8860B] focus:ring-[#B8860B]"
+                        className="w-4 h-4 rounded border-gray-600 text-accent-gold focus:ring-accent-gold"
                       />
                       <Instagram className="w-4 h-4 text-pink-500" />
                       <span className="text-sm">Social Posts</span>
@@ -276,7 +276,7 @@ export default function CampaignSettingsPage() {
                         onChange={(e) =>
                           updateTrigger(status, { generate_email: e.target.checked })
                         }
-                        className="w-4 h-4 rounded border-gray-600 text-[#B8860B] focus:ring-[#B8860B]"
+                        className="w-4 h-4 rounded border-gray-600 text-accent-gold focus:ring-accent-gold"
                       />
                       <Mail className="w-4 h-4 text-blue-400" />
                       <span className="text-sm">Email Blast</span>
@@ -288,7 +288,7 @@ export default function CampaignSettingsPage() {
                         onChange={(e) =>
                           updateTrigger(status, { update_property_site: e.target.checked })
                         }
-                        className="w-4 h-4 rounded border-gray-600 text-[#B8860B] focus:ring-[#B8860B]"
+                        className="w-4 h-4 rounded border-gray-600 text-accent-gold focus:ring-accent-gold"
                       />
                       <Globe className="w-4 h-4 text-green-400" />
                       <span className="text-sm">Update Property Site</span>
@@ -300,7 +300,7 @@ export default function CampaignSettingsPage() {
                         onChange={(e) =>
                           updateTrigger(status, { generate_video: e.target.checked })
                         }
-                        className="w-4 h-4 rounded border-gray-600 text-[#B8860B] focus:ring-[#B8860B]"
+                        className="w-4 h-4 rounded border-gray-600 text-accent-gold focus:ring-accent-gold"
                       />
                       <Video className="w-4 h-4 text-purple-400" />
                       <span className="text-sm">Video</span>
@@ -321,8 +321,8 @@ export default function CampaignSettingsPage() {
                             key={platform.id}
                             onClick={() => togglePlatform(status, platform.id)}
                             className={`flex items-center gap-2 px-3 py-2 rounded-lg border transition-colors ${isActive
-                              ? "bg-[#B8860B]/20 border-[#B8860B] text-[#B8860B]"
-                              : "bg-[#0D0D0D] border-[#333] text-gray-400 hover:border-[#B8860B]/50"
+                              ? "bg-accent-gold/20 border-accent-gold text-accent-gold"
+                              : "bg-surface border-surface-border text-gray-400 hover:border-accent-gold/50"
                               }`}
                           >
                             <Icon className="w-4 h-4" />
@@ -335,7 +335,7 @@ export default function CampaignSettingsPage() {
                 )}
 
                 {/* Auto Approve */}
-                <div className="flex items-center justify-between pt-4 border-t border-[#333]">
+                <div className="flex items-center justify-between pt-4 border-t border-surface-border">
                   <div>
                     <p className="text-sm font-medium">Auto-approve content</p>
                     <p className="text-xs text-gray-500">
@@ -344,7 +344,7 @@ export default function CampaignSettingsPage() {
                   </div>
                   <button
                     onClick={() => updateTrigger(status, { auto_approve: !trigger.auto_approve })}
-                    className={`relative w-12 h-6 rounded-full transition-colors ${trigger.auto_approve ? "bg-[#B8860B]" : "bg-[#333]"
+                    className={`relative w-12 h-6 rounded-full transition-colors ${trigger.auto_approve ? "bg-accent-gold" : "bg-surface-raised"
                       }`}
                   >
                     <div

@@ -56,8 +56,8 @@ export class ErrorBoundary extends Component<Props, State> {
   render() {
     if (this.state.hasError) {
       return this.props.fallback || (
-        <div className="min-h-[400px] bg-[#0F0F0F] flex items-center justify-center p-4">
-          <div className="bg-[#1A1A1A] border border-red-500/30 rounded-2xl p-8 max-w-md text-center">
+        <div className="min-h-[400px] bg-charcoal-deep flex items-center justify-center p-4">
+          <div className="bg-surface-container-high border border-red-500/30 rounded-2xl p-8 max-w-md text-center">
             <AlertTriangle className="w-12 h-12 text-red-400 mx-auto mb-4" />
             <h2 className="text-xl font-bold text-white mb-2">Something went wrong</h2>
             <p className="text-white/60 mb-6">
@@ -67,7 +67,7 @@ export class ErrorBoundary extends Component<Props, State> {
               onClick={() => {
                 this.setState({ hasError: false, error: undefined });
               }}
-              className="inline-flex items-center gap-2 px-6 py-3 bg-[#D4A017] text-black font-medium rounded-lg hover:opacity-90"
+              className="inline-flex items-center gap-2 px-6 py-3 bg-accent-gold text-black font-medium rounded-lg hover:opacity-90"
             >
               <RefreshCw className="w-4 h-4" />
               Try Again

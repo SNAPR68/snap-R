@@ -498,7 +498,7 @@ function TourModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
-      <div className="bg-[#1A1A1A] rounded-2xl border border-white/10 w-full max-w-3xl max-h-[90vh] overflow-hidden flex flex-col">
+      <div className="bg-surface-container-high rounded-2xl border border-white/10 w-full max-w-3xl max-h-[90vh] overflow-hidden flex flex-col">
         {/* Header */}
         <div className="p-4 border-b border-white/10 flex items-center justify-between">
           <h2 className="text-xl font-bold">{tour ? 'Edit Gallery' : 'Create Gallery'}</h2>
@@ -884,20 +884,20 @@ function VirtualToursContent() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#0F0F0F] flex items-center justify-center">
+      <div className="min-h-screen bg-charcoal-deep flex items-center justify-center">
         <Loader2 className="w-8 h-8 animate-spin text-amber-500" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#0F0F0F] text-white">
+    <div className="min-h-screen bg-charcoal-deep text-white">
       {/* Header */}
-      <div className="border-b border-white/10 bg-[#0F0F0F]/80 backdrop-blur-sm sticky top-0 z-10">
+      <div className="border-b border-white/10 bg-charcoal-deep/80 backdrop-blur-sm sticky top-0 z-10">
         <div className="max-w-7xl mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-2xl font-bold">Property Gallery</h1>
+              <h1 className="text-2xl font-bold editorial-headline">Property Gallery</h1>
               <p className="text-white/50 text-sm mt-1">
                 Create beautiful, shareable photo galleries for your listings. Get a unique link to share with clients, embed on your website, or post on social media. Track views and engagement.
               </p>
@@ -1078,7 +1078,7 @@ function VirtualToursContent() {
 export default function VirtualToursPage() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen bg-[#0F0F0F] flex items-center justify-center">
+      <div className="min-h-screen bg-charcoal-deep flex items-center justify-center">
         <Loader2 className="w-8 h-8 animate-spin text-amber-500" />
       </div>
     }>

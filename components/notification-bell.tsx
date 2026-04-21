@@ -181,7 +181,7 @@ export function NotificationBell() {
 
       {/* Dropdown panel */}
       {isOpen && (
-        <div className="absolute right-0 top-full mt-2 w-[380px] max-h-[480px] bg-[#1A1A1A] border border-white/10 rounded-xl shadow-2xl shadow-black/50 z-50 flex flex-col overflow-hidden"
+        <div className="absolute right-0 top-full mt-2 w-[380px] max-h-[480px] bg-surface-container-high border border-white/10 rounded-xl shadow-2xl shadow-black/50 z-50 flex flex-col overflow-hidden"
           role="dialog"
           aria-modal="true"
           aria-label="Notifications"
@@ -192,7 +192,7 @@ export function NotificationBell() {
             {unreadCount > 0 && (
               <button
                 onClick={markAllRead}
-                className="flex items-center gap-1 text-xs text-[#D4A017] hover:text-amber-300 transition-colors"
+                className="flex items-center gap-1 text-xs text-primary hover:text-amber-300 transition-colors"
               >
                 <CheckCheck className="w-3.5 h-3.5" />
                 Mark all read
@@ -217,7 +217,7 @@ export function NotificationBell() {
                   key={notif.id}
                   onClick={() => handleNotificationClick(notif)}
                   className={`w-full text-left px-4 py-3 border-b border-white/5 hover:bg-white/5 transition-colors flex gap-3 ${
-                    !notif.read ? 'bg-[#D4A017]/5' : ''
+                    !notif.read ? 'bg-accent-gold/5' : ''
                   }`}
                 >
                   {/* Icon */}
@@ -241,7 +241,7 @@ export function NotificationBell() {
                   {/* Unread dot */}
                   {!notif.read && (
                     <div className="flex-shrink-0 mt-2">
-                      <div className="w-2 h-2 rounded-full bg-[#D4A017]" />
+                      <div className="w-2 h-2 rounded-full bg-accent-gold" />
                     </div>
                   )}
 
@@ -264,7 +264,7 @@ export function NotificationBell() {
                   setIsOpen(false);
                   router.push('/dashboard/notifications');
                 }}
-                className="text-xs text-[#D4A017] hover:text-amber-300 transition-colors"
+                className="text-xs text-primary hover:text-amber-300 transition-colors"
               >
                 View all notifications
               </button>

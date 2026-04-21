@@ -140,7 +140,7 @@ export function CaptionGenerator({ property, platform, contentType, onCaptionGen
               className={`
                 px-3 py-2 rounded-lg border text-sm font-medium transition-all
                 ${tone === t.id
-                  ? 'border-[#D4AF37] bg-[#D4AF37]/10 text-[#D4AF37]'
+                  ? 'border-accent-gold bg-accent-gold/10 text-accent-gold'
                   : 'border-white/10 bg-white/5 text-white/70 hover:border-white/30'
                 }
               `}
@@ -158,7 +158,7 @@ export function CaptionGenerator({ property, platform, contentType, onCaptionGen
             type="checkbox"
             checked={includeEmojis}
             onChange={(e) => setIncludeEmojis(e.target.checked)}
-            className="w-4 h-4 rounded border-white/20 bg-white/5 text-[#D4AF37] focus:ring-[#D4AF37]"
+            className="w-4 h-4 rounded border-white/20 bg-white/5 text-accent-gold focus:ring-accent-gold"
           />
           <span className="text-sm text-white/80">Include emojis</span>
         </label>
@@ -167,7 +167,7 @@ export function CaptionGenerator({ property, platform, contentType, onCaptionGen
             type="checkbox"
             checked={includeCTA}
             onChange={(e) => setIncludeCTA(e.target.checked)}
-            className="w-4 h-4 rounded border-white/20 bg-white/5 text-[#D4AF37] focus:ring-[#D4AF37]"
+            className="w-4 h-4 rounded border-white/20 bg-white/5 text-accent-gold focus:ring-accent-gold"
           />
           <span className="text-sm text-white/80">Include call-to-action</span>
         </label>
@@ -178,7 +178,7 @@ export function CaptionGenerator({ property, platform, contentType, onCaptionGen
         <Button
           onClick={generateCaption}
           disabled={loading}
-          className="bg-gradient-to-r from-[#D4AF37] to-[#B8960C] text-black font-semibold"
+          className="bg-gradient-to-r from-accent-gold to-accent-gold text-black font-semibold"
         >
           {loading ? (
             <Loader2 className="w-4 h-4 animate-spin mr-2" />
@@ -258,7 +258,7 @@ export function CaptionGenerator({ property, platform, contentType, onCaptionGen
           <div className="bg-white/5 rounded-lg border border-white/10 p-4">
             <div className="flex flex-wrap gap-2">
               {hashtags.map((tag, i) => (
-                <span key={i} className="text-[#D4AF37] text-sm">{tag}</span>
+                <span key={i} className="text-accent-gold text-sm">{tag}</span>
               ))}
             </div>
           </div>

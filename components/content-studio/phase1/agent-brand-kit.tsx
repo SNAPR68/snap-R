@@ -143,11 +143,11 @@ export function BrandKitEditor({
   ]
   
   return (
-    <div className="bg-[#111] rounded-2xl border border-white/10 overflow-hidden">
+    <div className="bg-surface rounded-2xl border border-white/10 overflow-hidden">
       {/* Header */}
       <div className="p-4 border-b border-white/10 flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#D4AF37] to-[#B8860B] flex items-center justify-center">
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-accent-gold to-gold-dark flex items-center justify-center">
             <Palette className="w-5 h-5 text-black" />
           </div>
           <div>
@@ -160,7 +160,7 @@ export function BrandKitEditor({
           <button
             onClick={onSave}
             disabled={loading}
-            className="flex items-center gap-2 px-4 py-2 rounded-lg bg-[#D4AF37] text-black font-medium text-sm hover:bg-[#B8860B] transition disabled:opacity-50"
+            className="flex items-center gap-2 px-4 py-2 rounded-lg bg-accent-gold text-black font-medium text-sm hover:bg-accent-gold transition disabled:opacity-50"
           >
             {loading ? (
               <Loader2 className="w-4 h-4 animate-spin" />
@@ -186,7 +186,7 @@ export function BrandKitEditor({
               className={`
                 flex-1 flex items-center justify-center gap-2 py-3 text-sm font-medium transition
                 ${isActive 
-                  ? 'text-[#D4AF37] border-b-2 border-[#D4AF37] bg-[#D4AF37]/5' 
+                  ? 'text-accent-gold border-b-2 border-accent-gold bg-accent-gold/5' 
                   : 'text-white/50 hover:text-white/70'
                 }
               `}
@@ -209,7 +209,7 @@ export function BrandKitEditor({
               <div className="flex items-center gap-4">
                 <div 
                   onClick={() => logoInputRef.current?.click()}
-                  className="w-24 h-24 rounded-xl border-2 border-dashed border-white/20 hover:border-[#D4AF37]/50 flex items-center justify-center cursor-pointer transition overflow-hidden bg-white/5"
+                  className="w-24 h-24 rounded-xl border-2 border-dashed border-white/20 hover:border-accent-gold/50 flex items-center justify-center cursor-pointer transition overflow-hidden bg-white/5"
                 >
                   {brandKit.logo_url ? (
                     <Image src={brandKit.logo_url} alt="Logo" className="w-full h-full object-contain" width={400} height={300} unoptimized />
@@ -255,7 +255,7 @@ export function BrandKitEditor({
                     className={`
                       flex items-center gap-2 px-3 py-1.5 rounded-lg border transition
                       ${brandKit.primary_color === preset.primary 
-                        ? 'border-[#D4AF37] bg-[#D4AF37]/10' 
+                        ? 'border-accent-gold bg-accent-gold/10' 
                         : 'border-white/10 hover:border-white/20'
                       }
                     `}
@@ -316,7 +316,7 @@ export function BrandKitEditor({
                 value={brandKit.tagline}
                 onChange={(e) => updateField('tagline', e.target.value)}
                 placeholder="Your expertise, their dream home"
-                className="w-full px-4 py-3 rounded-lg bg-white/5 border border-white/10 text-white placeholder:text-white/30 focus:outline-none focus:border-[#D4AF37]/50"
+                className="w-full px-4 py-3 rounded-lg bg-white/5 border border-white/10 text-white placeholder:text-white/30 focus:outline-none focus:border-accent-gold/50"
               />
               <p className="text-white/30 text-xs">A short phrase that represents your brand</p>
             </div>
@@ -332,7 +332,7 @@ export function BrandKitEditor({
               <div className="flex items-center gap-4">
                 <div 
                   onClick={() => photoInputRef.current?.click()}
-                  className="w-20 h-20 rounded-full border-2 border-dashed border-white/20 hover:border-[#D4AF37]/50 flex items-center justify-center cursor-pointer transition overflow-hidden bg-white/5"
+                  className="w-20 h-20 rounded-full border-2 border-dashed border-white/20 hover:border-accent-gold/50 flex items-center justify-center cursor-pointer transition overflow-hidden bg-white/5"
                 >
                   {brandKit.agent_photo_url ? (
                     <Image src={brandKit.agent_photo_url} alt="Agent" className="w-full h-full object-cover" width={400} height={300} unoptimized />
@@ -372,7 +372,7 @@ export function BrandKitEditor({
                   value={brandKit.agent_name}
                   onChange={(e) => updateField('agent_name', e.target.value)}
                   placeholder="John Smith"
-                  className="w-full px-4 py-3 rounded-lg bg-white/5 border border-white/10 text-white placeholder:text-white/30 focus:outline-none focus:border-[#D4AF37]/50"
+                  className="w-full px-4 py-3 rounded-lg bg-white/5 border border-white/10 text-white placeholder:text-white/30 focus:outline-none focus:border-accent-gold/50"
                 />
               </div>
               <div className="space-y-2">
@@ -382,10 +382,10 @@ export function BrandKitEditor({
                 <select
                   value={brandKit.agent_title}
                   onChange={(e) => updateField('agent_title', e.target.value)}
-                  className="w-full px-4 py-3 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:border-[#D4AF37]/50"
+                  className="w-full px-4 py-3 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:border-accent-gold/50"
                 >
                   {AGENT_TITLES.map(title => (
-                    <option key={title} value={title} className="bg-[#1A1A1A]">{title}</option>
+                    <option key={title} value={title} className="bg-surface-container-high">{title}</option>
                   ))}
                 </select>
               </div>
@@ -402,7 +402,7 @@ export function BrandKitEditor({
                   value={brandKit.phone}
                   onChange={(e) => updateField('phone', e.target.value)}
                   placeholder="(555) 123-4567"
-                  className="w-full px-4 py-3 rounded-lg bg-white/5 border border-white/10 text-white placeholder:text-white/30 focus:outline-none focus:border-[#D4AF37]/50"
+                  className="w-full px-4 py-3 rounded-lg bg-white/5 border border-white/10 text-white placeholder:text-white/30 focus:outline-none focus:border-accent-gold/50"
                 />
               </div>
               <div className="space-y-2">
@@ -414,7 +414,7 @@ export function BrandKitEditor({
                   value={brandKit.email}
                   onChange={(e) => updateField('email', e.target.value)}
                   placeholder="john@realty.com"
-                  className="w-full px-4 py-3 rounded-lg bg-white/5 border border-white/10 text-white placeholder:text-white/30 focus:outline-none focus:border-[#D4AF37]/50"
+                  className="w-full px-4 py-3 rounded-lg bg-white/5 border border-white/10 text-white placeholder:text-white/30 focus:outline-none focus:border-accent-gold/50"
                 />
               </div>
             </div>
@@ -429,7 +429,7 @@ export function BrandKitEditor({
                 value={brandKit.website}
                 onChange={(e) => updateField('website', e.target.value)}
                 placeholder="https://yourwebsite.com"
-                className="w-full px-4 py-3 rounded-lg bg-white/5 border border-white/10 text-white placeholder:text-white/30 focus:outline-none focus:border-[#D4AF37]/50"
+                className="w-full px-4 py-3 rounded-lg bg-white/5 border border-white/10 text-white placeholder:text-white/30 focus:outline-none focus:border-accent-gold/50"
               />
             </div>
           </div>
@@ -444,7 +444,7 @@ export function BrandKitEditor({
               <div className="flex items-center gap-4">
                 <div 
                   onClick={() => brokerageLogoInputRef.current?.click()}
-                  className="w-32 h-16 rounded-lg border-2 border-dashed border-white/20 hover:border-[#D4AF37]/50 flex items-center justify-center cursor-pointer transition overflow-hidden bg-white/5"
+                  className="w-32 h-16 rounded-lg border-2 border-dashed border-white/20 hover:border-accent-gold/50 flex items-center justify-center cursor-pointer transition overflow-hidden bg-white/5"
                 >
                   {brandKit.brokerage_logo_url ? (
                     <Image src={brandKit.brokerage_logo_url} alt="Brokerage" className="w-full h-full object-contain p-2" width={400} height={300} unoptimized />
@@ -483,7 +483,7 @@ export function BrandKitEditor({
                 value={brandKit.brokerage_name}
                 onChange={(e) => updateField('brokerage_name', e.target.value)}
                 placeholder="Keller Williams Realty"
-                className="w-full px-4 py-3 rounded-lg bg-white/5 border border-white/10 text-white placeholder:text-white/30 focus:outline-none focus:border-[#D4AF37]/50"
+                className="w-full px-4 py-3 rounded-lg bg-white/5 border border-white/10 text-white placeholder:text-white/30 focus:outline-none focus:border-accent-gold/50"
               />
             </div>
             
@@ -497,7 +497,7 @@ export function BrandKitEditor({
                 value={brandKit.license_number}
                 onChange={(e) => updateField('license_number', e.target.value)}
                 placeholder="DRE #01234567"
-                className="w-full px-4 py-3 rounded-lg bg-white/5 border border-white/10 text-white placeholder:text-white/30 focus:outline-none focus:border-[#D4AF37]/50"
+                className="w-full px-4 py-3 rounded-lg bg-white/5 border border-white/10 text-white placeholder:text-white/30 focus:outline-none focus:border-accent-gold/50"
               />
               <p className="text-white/30 text-xs">Required for MLS compliance in most states</p>
             </div>

@@ -87,29 +87,29 @@ export default async function AdminLogs() {
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-        <div className="bg-[#1A1A1A] border border-white/10 rounded-xl p-4">
+        <div className="bg-surface-container-high border border-white/10 rounded-xl p-4">
           <AlertTriangle className="w-5 h-5 text-yellow-400 mb-2" />
           <p className="text-2xl font-bold">{unresolvedCount}</p>
           <p className="text-white/50 text-sm">Unresolved</p>
         </div>
-        <div className={`bg-[#1A1A1A] rounded-xl p-4 ${criticalCount > 0 ? 'border-2 border-red-500/50 animate-pulse' : 'border border-white/10'}`}>
+        <div className={`bg-surface-container-high rounded-xl p-4 ${criticalCount > 0 ? 'border-2 border-red-500/50 animate-pulse' : 'border border-white/10'}`}>
           <XCircle className="w-5 h-5 text-red-400 mb-2" />
           <p className="text-2xl font-bold text-red-400">{criticalCount}</p>
           <p className="text-white/50 text-sm">Critical</p>
         </div>
-        <div className="bg-[#1A1A1A] border border-white/10 rounded-xl p-4">
+        <div className="bg-surface-container-high border border-white/10 rounded-xl p-4">
           <Clock className="w-5 h-5 text-blue-400 mb-2" />
           <p className="text-2xl font-bold">{todayCount}</p>
           <p className="text-white/50 text-sm">Today</p>
         </div>
-        <div className="bg-[#1A1A1A] border border-white/10 rounded-xl p-4">
+        <div className="bg-surface-container-high border border-white/10 rounded-xl p-4">
           <CheckCircle className="w-5 h-5 text-green-400 mb-2" />
           <p className="text-2xl font-bold text-green-400">{(errors?.length || 0) - unresolvedCount}</p>
           <p className="text-white/50 text-sm">Resolved</p>
         </div>
       </div>
 
-      <div className="bg-[#1A1A1A] border border-white/10 rounded-xl overflow-hidden">
+      <div className="bg-surface-container-high border border-white/10 rounded-xl overflow-hidden">
         {errors && errors.length > 0 ? (
           <div className="divide-y divide-white/5">
             {errors.map((error: ErrorLog) => (

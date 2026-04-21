@@ -16,7 +16,7 @@ const SCENES = [
     title: 'AI Does the Heavy Lifting',
     subtitle: '15 AI tools enhance every photo automatically',
     badge: 'Step 2',
-    badgeColor: 'bg-[#D4A017]/20 text-[#D4A017] border border-[#D4A017]/30',
+    badgeColor: 'bg-accent-gold/20 text-primary border border-primary/30',
   },
   {
     id: 'marketing',
@@ -173,12 +173,12 @@ export function ProductExplainer() {
     <div className="w-full max-w-4xl mx-auto">
       {/* Main Container */}
       <div
-        className="relative rounded-2xl md:rounded-3xl overflow-hidden border-2 border-[#D4A017]/40 bg-gradient-to-br from-[#1A1A1A] to-[#0A0A0A] shadow-2xl shadow-[#D4A017]/10"
+        className="relative rounded-2xl md:rounded-3xl overflow-hidden border-2 border-primary/40 bg-gradient-to-br from-surface-raised to-surface shadow-2xl shadow-gold/10"
         style={{ aspectRatio: '16/9', minHeight: '380px' }}
       >
         {/* Glowing border effect */}
         <div className="absolute inset-0 rounded-2xl md:rounded-3xl pointer-events-none">
-          <div className="absolute inset-[-2px] rounded-2xl md:rounded-3xl bg-gradient-to-r from-[#D4A017]/0 via-[#D4A017]/20 to-[#D4A017]/0 animate-pulse" />
+          <div className="absolute inset-[-2px] rounded-2xl md:rounded-3xl bg-gradient-to-r from-gold/0 via-accent-gold/20 to-gold/0 animate-pulse" />
         </div>
 
         {/* Content */}
@@ -187,7 +187,7 @@ export function ProductExplainer() {
           <div className="flex items-center justify-between mb-4 md:mb-6">
             <div className="flex items-center gap-2">
               <div className="w-3 h-3 rounded-full bg-[#FF5F57]" />
-              <div className="w-3 h-3 rounded-full bg-[#FFBD2E]" />
+              <div className="w-3 h-3 rounded-full bg-accent-gold" />
               <div className="w-3 h-3 rounded-full bg-[#28C840]" />
             </div>
             <div className={`px-3 py-1.5 rounded-full text-xs font-semibold flex items-center gap-2 transition-all duration-300 ${scene.badgeColor}`}>
@@ -206,13 +206,13 @@ export function ProductExplainer() {
                   <h3 className="text-xl md:text-3xl font-bold text-white mb-2">{scene.title}</h3>
                   <p className="text-white/50 text-sm md:text-base mb-4">{scene.subtitle}</p>
                   <div className="flex items-center gap-3 justify-center md:justify-start">
-                    <div className="w-12 h-12 rounded-xl border-2 border-dashed border-[#D4A017]/50 flex items-center justify-center bg-[#D4A017]/5 animate-explainer-bounce">
-                      <svg className="w-6 h-6 text-[#D4A017]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                    <div className="w-12 h-12 rounded-xl border-2 border-dashed border-primary/50 flex items-center justify-center bg-accent-gold/5 animate-explainer-bounce">
+                      <svg className="w-6 h-6 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                         <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
                       </svg>
                     </div>
                     <div>
-                      <p className="text-2xl font-bold text-[#D4A017]">{uploadCount}</p>
+                      <p className="text-2xl font-bold text-primary">{uploadCount}</p>
                       <p className="text-white/40 text-xs">of 25 photos</p>
                     </div>
                   </div>
@@ -224,14 +224,14 @@ export function ProductExplainer() {
                       key={i}
                       className={`aspect-square rounded-lg transition-all duration-200 ${
                         i < uploadCount
-                          ? 'bg-gradient-to-br from-[#D4A017]/30 to-[#D4A017]/10 border border-[#D4A017]/30'
+                          ? 'bg-gradient-to-br from-gold/30 to-gold/10 border border-primary/30'
                           : 'bg-white/5 border border-white/10'
                       }`}
                       style={{ transitionDelay: `${i * 30}ms` }}
                     >
                       {i < uploadCount && (
                         <div className="w-full h-full flex items-center justify-center">
-                          <svg className="w-3 h-3 text-[#D4A017]" fill="currentColor" viewBox="0 0 20 20">
+                          <svg className="w-3 h-3 text-primary" fill="currentColor" viewBox="0 0 20 20">
                             <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                           </svg>
                         </div>
@@ -239,7 +239,7 @@ export function ProductExplainer() {
                     </div>
                   ))}
                   {uploadCount > 15 && (
-                    <div className="aspect-square rounded-lg bg-[#D4A017]/20 border border-[#D4A017]/30 flex items-center justify-center text-[#D4A017] text-xs font-bold">
+                    <div className="aspect-square rounded-lg bg-accent-gold/20 border border-primary/30 flex items-center justify-center text-primary text-xs font-bold">
                       +{uploadCount - 15}
                     </div>
                   )}
@@ -254,9 +254,9 @@ export function ProductExplainer() {
                   <h3 className="text-xl md:text-3xl font-bold text-white mb-2">{scene.title}</h3>
                   <p className="text-white/50 text-sm md:text-base mb-4">{scene.subtitle}</p>
                   {/* Current AI tool */}
-                  <div className="inline-flex items-center gap-2 px-3 py-2 bg-[#D4A017]/10 border border-[#D4A017]/30 rounded-lg mb-3">
-                    <div className="w-5 h-5 border-2 border-[#D4A017] border-t-transparent rounded-full animate-spin" />
-                    <span className="text-sm text-[#D4A017] font-medium">{AI_TOOLS[aiToolIndex]}</span>
+                  <div className="inline-flex items-center gap-2 px-3 py-2 bg-accent-gold/10 border border-primary/30 rounded-lg mb-3">
+                    <div className="w-5 h-5 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                    <span className="text-sm text-primary font-medium">{AI_TOOLS[aiToolIndex]}</span>
                   </div>
                   {/* Tool dots */}
                   <div className="flex gap-1 flex-wrap justify-center md:justify-start">
@@ -264,14 +264,14 @@ export function ProductExplainer() {
                       <div
                         key={i}
                         className={`w-2 h-2 rounded-full transition-all duration-200 ${
-                          i <= aiToolIndex ? 'bg-[#D4A017]' : 'bg-white/20'
+                          i <= aiToolIndex ? 'bg-accent-gold' : 'bg-white/20'
                         } ${i === aiToolIndex ? 'scale-150' : ''}`}
                       />
                     ))}
                   </div>
                 </div>
                 {/* Before/After slider */}
-                <div className="relative aspect-[4/3] rounded-xl overflow-hidden border-2 border-[#D4A017]/40">
+                <div className="relative aspect-[4/3] rounded-xl overflow-hidden border-2 border-primary/40">
                   {/* Before */}
                   <div className="absolute inset-0 bg-gradient-to-br from-gray-500/60 to-gray-700/60">
                     <div className="absolute inset-0 flex items-center justify-center text-white/20 text-xs">
@@ -283,7 +283,7 @@ export function ProductExplainer() {
                     className="absolute inset-0 bg-gradient-to-br from-sky-400/30 via-amber-500/20 to-orange-400/30 transition-all duration-700"
                     style={{ clipPath: `inset(0 ${100 - sliderPos}% 0 0)` }}
                   >
-                    <div className="absolute inset-0 flex items-center justify-center text-[#D4A017] text-sm font-semibold">
+                    <div className="absolute inset-0 flex items-center justify-center text-primary text-sm font-semibold">
                       Enhanced
                     </div>
                   </div>
@@ -299,7 +299,7 @@ export function ProductExplainer() {
                     </div>
                   </div>
                   <div className="absolute bottom-2 left-2 px-2 py-0.5 bg-black/60 rounded text-[10px] text-white/70">Before</div>
-                  <div className="absolute bottom-2 right-2 px-2 py-0.5 bg-[#D4A017] rounded text-[10px] text-black font-semibold">After</div>
+                  <div className="absolute bottom-2 right-2 px-2 py-0.5 bg-accent-gold rounded text-[10px] text-black font-semibold">After</div>
                 </div>
               </div>
             )}
@@ -331,13 +331,13 @@ export function ProductExplainer() {
                   </div>
                   <p className="text-white/70 text-sm leading-relaxed font-serif min-h-[60px]">
                     {typedText}
-                    <span className="inline-block w-0.5 h-4 bg-[#D4A017] animate-pulse ml-0.5 align-middle" />
+                    <span className="inline-block w-0.5 h-4 bg-accent-gold animate-pulse ml-0.5 align-middle" />
                   </p>
                   {typedText.length > 80 && (
                     <div className="flex gap-2 mt-3">
-                      <span className="px-2 py-0.5 bg-[#D4A017]/20 text-[#D4A017] rounded text-[10px] font-bold">4 Bed</span>
-                      <span className="px-2 py-0.5 bg-[#D4A017]/20 text-[#D4A017] rounded text-[10px] font-bold">3 Bath</span>
-                      <span className="px-2 py-0.5 bg-[#D4A017]/20 text-[#D4A017] rounded text-[10px] font-bold">Pool</span>
+                      <span className="px-2 py-0.5 bg-accent-gold/20 text-primary rounded text-[10px] font-bold">4 Bed</span>
+                      <span className="px-2 py-0.5 bg-accent-gold/20 text-primary rounded text-[10px] font-bold">3 Bath</span>
+                      <span className="px-2 py-0.5 bg-accent-gold/20 text-primary rounded text-[10px] font-bold">Pool</span>
                     </div>
                   )}
                 </div>
@@ -350,7 +350,7 @@ export function ProductExplainer() {
                 <div className="text-center md:text-left">
                   <h3 className="text-xl md:text-3xl font-bold text-white mb-2">{scene.title}</h3>
                   <p className="text-white/50 text-sm md:text-base mb-4">{scene.subtitle}</p>
-                  <div className="inline-flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-[#D4A017] to-[#B8860B] rounded-xl text-black font-semibold text-sm shadow-lg shadow-[#D4A017]/20">
+                  <div className="inline-flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-gold to-gold-dark rounded-xl text-black font-semibold text-sm shadow-lg shadow-gold/20">
                     <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
                     </svg>
@@ -408,7 +408,7 @@ export function ProductExplainer() {
                     <p className="text-white/40 text-xs mt-1">Views</p>
                     <div className="mt-2 h-1 bg-white/10 rounded-full overflow-hidden">
                       <div
-                        className="h-full bg-[#D4A017] rounded-full transition-all duration-100"
+                        className="h-full bg-accent-gold rounded-full transition-all duration-100"
                         style={{ width: `${Math.min((statsValues.views / 2847) * 100, 100)}%` }}
                       />
                     </div>
@@ -447,7 +447,7 @@ export function ProductExplainer() {
             {/* Progress bar */}
             <div className="h-1 bg-white/10 rounded-full overflow-hidden mb-3">
               <div
-                className="h-full bg-gradient-to-r from-[#D4A017] to-[#B8860B] rounded-full transition-all duration-100"
+                className="h-full bg-gradient-to-r from-gold to-gold-dark rounded-full transition-all duration-100"
                 style={{ width: `${progress}%` }}
               />
             </div>
@@ -459,9 +459,9 @@ export function ProductExplainer() {
                   onClick={() => setSceneIndex(i)}
                   className={`w-2 h-2 rounded-full transition-all duration-300 ${
                     i === sceneIndex
-                      ? 'bg-[#D4A017] scale-150'
+                      ? 'bg-accent-gold scale-150'
                       : i < sceneIndex
-                      ? 'bg-[#D4A017]/50'
+                      ? 'bg-accent-gold/50'
                       : 'bg-white/20'
                   }`}
                 />
@@ -473,9 +473,9 @@ export function ProductExplainer() {
 
       {/* Bottom tagline */}
       <div className="flex justify-center mt-4">
-        <div className="inline-flex items-center gap-3 px-4 py-2 bg-[#1A1A1A]/80 border border-white/10 rounded-full">
+        <div className="inline-flex items-center gap-3 px-4 py-2 bg-surface-container-high/80 border border-white/10 rounded-full">
           <div className="flex items-center gap-1.5">
-            <div className="w-2 h-2 rounded-full bg-[#D4A017] animate-pulse" />
+            <div className="w-2 h-2 rounded-full bg-accent-gold animate-pulse" />
             <span className="text-white/50 text-xs">Interactive Demo</span>
           </div>
           <div className="w-px h-3 bg-white/20" />

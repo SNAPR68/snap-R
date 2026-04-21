@@ -180,12 +180,12 @@ export default function ListingIntelligenceDashboard({ onApplyEnhancement, onApp
   };
 
   return (
-    <div className="min-h-screen bg-[#0A0A0F] text-white">
-      <div className="border-b border-white/10 bg-gradient-to-r from-[#0A0A0F] via-[#1a1a2e] to-[#0A0A0F]">
+    <div className="min-h-screen bg-surface text-white">
+      <div className="border-b border-white/10 bg-gradient-to-r from-surface via-surface-raised to-surface">
         <div className="max-w-7xl mx-auto px-6 py-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#D4A017] to-[#B8860B] flex items-center justify-center">
+              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-gold to-gold-dark flex items-center justify-center">
                 <Brain className="w-6 h-6 text-black" />
               </div>
               <div>
@@ -207,11 +207,11 @@ export default function ListingIntelligenceDashboard({ onApplyEnhancement, onApp
         {!analysisResult && (
           <div className="space-y-6">
             {preloadedPhotos.length === 0 && (
-            <div {...getRootProps()} className={`border-2 border-dashed rounded-2xl p-12 text-center cursor-pointer transition-all ${isDragActive ? 'border-[#D4A017] bg-[#D4A017]/10' : 'border-white/20 hover:border-white/40 bg-white/5'}`}>
+            <div {...getRootProps()} className={`border-2 border-dashed rounded-2xl p-12 text-center cursor-pointer transition-all ${isDragActive ? 'border-primary bg-accent-gold/10' : 'border-white/20 hover:border-white/40 bg-white/5'}`}>
               <input {...getInputProps()} />
               <div className="flex flex-col items-center gap-4">
-                <div className="w-16 h-16 rounded-full bg-[#D4A017]/20 flex items-center justify-center">
-                  <Upload className="w-8 h-8 text-[#D4A017]" />
+                <div className="w-16 h-16 rounded-full bg-accent-gold/20 flex items-center justify-center">
+                  <Upload className="w-8 h-8 text-primary" />
                 </div>
                 <div>
                   <p className="text-lg font-semibold">{isDragActive ? 'Drop photos here' : 'Drag & drop listing photos'}</p>
@@ -227,7 +227,7 @@ export default function ListingIntelligenceDashboard({ onApplyEnhancement, onApp
                     <h3 className="font-semibold">{selectedPhotos.size} of {photos.length} Selected</h3>
                     <button 
                       onClick={() => setSelectedPhotos(new Set(photos.map((_, i) => i)))} 
-                      className="text-sm text-[#D4A017] hover:text-[#F4D03F]"
+                      className="text-sm text-primary hover:text-accent-gold"
                     >
                       Select All
                     </button>
@@ -255,10 +255,10 @@ export default function ListingIntelligenceDashboard({ onApplyEnhancement, onApp
                         }
                         setSelectedPhotos(newSelected);
                       }}
-                      className={`aspect-square rounded-lg overflow-hidden bg-white/10 cursor-pointer relative border-2 transition-all ${selectedPhotos.has(idx) ? 'border-[#D4A017] ring-2 ring-[#D4A017]/50' : 'border-transparent hover:border-white/30'}`}
+                      className={`aspect-square rounded-lg overflow-hidden bg-white/10 cursor-pointer relative border-2 transition-all ${selectedPhotos.has(idx) ? 'border-primary ring-2 ring-accent-gold/50' : 'border-transparent hover:border-white/30'}`}
                     >
                       <Image src={photo} alt={`Photo ${idx + 1}`} className="w-full h-full object-cover" width={400} height={300} unoptimized />
-                      <div className={`absolute top-2 right-2 w-6 h-6 rounded-full flex items-center justify-center ${selectedPhotos.has(idx) ? 'bg-[#D4A017] text-black' : 'bg-black/60 text-white'}`}>
+                      <div className={`absolute top-2 right-2 w-6 h-6 rounded-full flex items-center justify-center ${selectedPhotos.has(idx) ? 'bg-accent-gold text-black' : 'bg-black/60 text-white'}`}>
                         {selectedPhotos.has(idx) ? <CheckCircle2 className="w-4 h-4" /> : <span className="text-xs font-medium">{idx + 1}</span>}
                       </div>
                     </div>
@@ -274,23 +274,23 @@ export default function ListingIntelligenceDashboard({ onApplyEnhancement, onApp
               </div>
             )}
 
-            <button onClick={runAnalysis} disabled={selectedPhotos.size === 0 || isAnalyzing} className={`w-full py-4 rounded-xl font-semibold text-lg flex items-center justify-center gap-3 transition ${photos.length > 0 && !isAnalyzing ? 'bg-gradient-to-r from-[#D4A017] to-[#B8860B] text-black hover:opacity-90' : 'bg-white/10 text-white/40 cursor-not-allowed'}`}>
+            <button onClick={runAnalysis} disabled={selectedPhotos.size === 0 || isAnalyzing} className={`w-full py-4 rounded-xl font-semibold text-lg flex items-center justify-center gap-3 transition ${photos.length > 0 && !isAnalyzing ? 'bg-gradient-to-r from-gold to-gold-dark text-black hover:opacity-90' : 'bg-white/10 text-white/40 cursor-not-allowed'}`}>
               {isAnalyzing ? (<><Loader2 className="w-5 h-5 animate-spin" />Analyzing {selectedPhotos.size} photos...</>) : (<><Brain className="w-5 h-5" />Analyze {selectedPhotos.size} Photo{selectedPhotos.size !== 1 ? 's' : ''}</>)}
             </button>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-8">
               <div className="p-4 bg-white/5 rounded-xl border border-white/10">
-                <BarChart3 className="w-8 h-8 text-[#D4A017] mb-3" />
+                <BarChart3 className="w-8 h-8 text-primary mb-3" />
                 <h4 className="font-semibold mb-1">Photo Scoring</h4>
                 <p className="text-sm text-white/60">AI scores each photo on lighting, composition, clarity & appeal</p>
               </div>
               <div className="p-4 bg-white/5 rounded-xl border border-white/10">
-                <Crown className="w-8 h-8 text-[#D4A017] mb-3" />
+                <Crown className="w-8 h-8 text-primary mb-3" />
                 <h4 className="font-semibold mb-1">Hero Selection</h4>
                 <p className="text-sm text-white/60">Identifies the best photo to lead your MLS listing</p>
               </div>
               <div className="p-4 bg-white/5 rounded-xl border border-white/10">
-                <Target className="w-8 h-8 text-[#D4A017] mb-3" />
+                <Target className="w-8 h-8 text-primary mb-3" />
                 <h4 className="font-semibold mb-1">Smart Recommendations</h4>
                 <p className="text-sm text-white/60">Specific enhancements to maximize buyer engagement</p>
               </div>
@@ -301,7 +301,7 @@ export default function ListingIntelligenceDashboard({ onApplyEnhancement, onApp
         {analysisResult && (
           <div className="space-y-6">
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              <div className="lg:col-span-2 p-6 bg-gradient-to-br from-[#1a1a2e] to-[#0d0d15] rounded-2xl border border-white/10">
+              <div className="lg:col-span-2 p-6 bg-gradient-to-br from-surface-raised to-surface rounded-2xl border border-white/10">
                 <div className="flex items-start justify-between mb-6">
                   <div>
                     <h3 className="text-lg font-semibold text-white/60 mb-1">Overall Listing Score</h3>
@@ -315,15 +315,15 @@ export default function ListingIntelligenceDashboard({ onApplyEnhancement, onApp
                   </div>
                 </div>
                 <div className="h-3 bg-white/10 rounded-full overflow-hidden mb-4">
-                  <div className="h-full bg-gradient-to-r from-[#D4A017] to-[#F4D03F] rounded-full transition-all duration-1000" style={{ width: `${analysisResult.overallScore}%` }} />
+                  <div className="h-full bg-gradient-to-r from-gold to-accent-gold rounded-full transition-all duration-1000" style={{ width: `${analysisResult.overallScore}%` }} />
                 </div>
                 <p className="text-white/60">{analysisResult.analysisSummary}</p>
                 <p className="text-white/40 text-sm mt-2">{analysisResult.competitiveBenchmark}</p>
               </div>
 
-              <div className="p-6 bg-gradient-to-br from-[#1a1a2e] to-[#0d0d15] rounded-2xl border border-white/10">
+              <div className="p-6 bg-gradient-to-br from-surface-raised to-surface rounded-2xl border border-white/10">
                 <div className="flex items-center gap-2 mb-4">
-                  <Clock className="w-5 h-5 text-[#D4A017]" />
+                  <Clock className="w-5 h-5 text-primary" />
                   <h3 className="font-semibold">Days on Market Prediction</h3>
                 </div>
                 <div className="space-y-4">
@@ -331,7 +331,7 @@ export default function ListingIntelligenceDashboard({ onApplyEnhancement, onApp
                     <p className="text-sm text-white/60 mb-1">Current Photos</p>
                     <p className="text-3xl font-bold text-orange-400">~{analysisResult.estimatedDomCurrent} days</p>
                   </div>
-                  <div className="flex items-center gap-2 text-[#D4A017]">
+                  <div className="flex items-center gap-2 text-primary">
                     <TrendingUp className="w-4 h-4" />
                     <span className="text-sm">With AI Enhancements</span>
                   </div>
@@ -343,14 +343,14 @@ export default function ListingIntelligenceDashboard({ onApplyEnhancement, onApp
               </div>
             </div>
 
-            <div className="p-6 bg-gradient-to-br from-[#1a1a2e] to-[#0d0d15] rounded-2xl border border-[#D4A017]/30">
+            <div className="p-6 bg-gradient-to-br from-surface-raised to-surface rounded-2xl border border-primary/30">
               <div className="flex items-center gap-2 mb-4">
-                <Crown className="w-5 h-5 text-[#D4A017]" />
+                <Crown className="w-5 h-5 text-primary" />
                 <h3 className="font-semibold">Recommended Hero Image</h3>
-                <span className="px-2 py-0.5 bg-[#D4A017]/20 text-[#D4A017] text-xs rounded-full">Photo #{analysisResult.heroImageIndex + 1}</span>
+                <span className="px-2 py-0.5 bg-accent-gold/20 text-primary text-xs rounded-full">Photo #{analysisResult.heroImageIndex + 1}</span>
               </div>
               <div className="flex gap-6">
-                <div className="w-48 h-32 rounded-xl overflow-hidden border-2 border-[#D4A017]">
+                <div className="w-48 h-32 rounded-xl overflow-hidden border-2 border-primary">
                   <Image src={analysisResult.heroImageUrl} alt="Hero image" className="w-full h-full object-cover" width={400} height={300} unoptimized />
                 </div>
                 <div className="flex-1">
@@ -365,14 +365,14 @@ export default function ListingIntelligenceDashboard({ onApplyEnhancement, onApp
               </div>
             </div>
 
-            <div className="p-6 bg-gradient-to-br from-[#1a1a2e] to-[#0d0d15] rounded-2xl border border-white/10">
+            <div className="p-6 bg-gradient-to-br from-surface-raised to-surface rounded-2xl border border-white/10">
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-2">
-                  <Zap className="w-5 h-5 text-[#D4A017]" />
+                  <Zap className="w-5 h-5 text-primary" />
                   <h3 className="font-semibold">Top Enhancement Recommendations</h3>
                 </div>
                 {onApplyAll && recommendations.filter(r => !r.applied).length > 0 && (
-                  <button onClick={handleApplyAll} className="px-4 py-2 bg-gradient-to-r from-[#D4A017] to-[#B8860B] text-black rounded-lg font-medium text-sm hover:opacity-90 transition flex items-center gap-2">
+                  <button onClick={handleApplyAll} className="px-4 py-2 bg-gradient-to-r from-gold to-gold-dark text-black rounded-lg font-medium text-sm hover:opacity-90 transition flex items-center gap-2">
                     <Sparkles className="w-4 h-4" />
                     Apply All ({recommendations.filter(r => !r.applied).length})
                   </button>
@@ -401,7 +401,7 @@ export default function ListingIntelligenceDashboard({ onApplyEnhancement, onApp
                         <span className="text-sm">Applied</span>
                       </div>
                     ) : (
-                      <button onClick={() => handleApplyEnhancement(rec)} className="px-3 py-2 bg-[#D4A017] text-black rounded-lg font-medium text-sm hover:opacity-90 transition flex items-center gap-1">
+                      <button onClick={() => handleApplyEnhancement(rec)} className="px-3 py-2 bg-accent-gold text-black rounded-lg font-medium text-sm hover:opacity-90 transition flex items-center gap-1">
                         Apply<ChevronRight className="w-4 h-4" />
                       </button>
                     )}
@@ -410,21 +410,21 @@ export default function ListingIntelligenceDashboard({ onApplyEnhancement, onApp
               </div>
             </div>
 
-            <div className="p-6 bg-gradient-to-br from-[#1a1a2e] to-[#0d0d15] rounded-2xl border border-white/10">
+            <div className="p-6 bg-gradient-to-br from-surface-raised to-surface rounded-2xl border border-white/10">
               <div className="flex items-center gap-2 mb-4">
-                <ImageIcon className="w-5 h-5 text-[#D4A017]" />
+                <ImageIcon className="w-5 h-5 text-primary" />
                 <h3 className="font-semibold">All Photo Scores</h3>
                 <span className="text-white/40 text-sm">({photoScores.length} photos)</span>
               </div>
               <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
                 {photoScores.map((photo, idx) => (
-                  <div key={photo.id || idx} onClick={() => setSelectedPhoto(photo)} className={`relative rounded-xl overflow-hidden cursor-pointer transition group ${selectedPhoto?.photoIndex === photo.photoIndex ? 'ring-2 ring-[#D4A017]' : 'hover:ring-1 hover:ring-white/30'}`}>
+                  <div key={photo.id || idx} onClick={() => setSelectedPhoto(photo)} className={`relative rounded-xl overflow-hidden cursor-pointer transition group ${selectedPhoto?.photoIndex === photo.photoIndex ? 'ring-2 ring-accent-gold' : 'hover:ring-1 hover:ring-white/30'}`}>
                     <div className="aspect-[4/3]">
                       <Image src={photo.photoUrl} alt={`Photo ${photo.photoIndex + 1}`} className="w-full h-full object-cover" width={400} height={300} unoptimized />
                     </div>
                     <div className={`absolute top-2 right-2 px-2 py-1 rounded-lg text-sm font-bold ${getScoreBg(photo.overallScore)}`}>{photo.overallScore}</div>
                     {photo.photoIndex === analysisResult.heroImageIndex && (
-                      <div className="absolute top-2 left-2 px-2 py-1 bg-[#D4A017] text-black rounded-lg text-xs font-bold flex items-center gap-1">
+                      <div className="absolute top-2 left-2 px-2 py-1 bg-accent-gold text-black rounded-lg text-xs font-bold flex items-center gap-1">
                         <Crown className="w-3 h-3" />HERO
                       </div>
                     )}
@@ -438,7 +438,7 @@ export default function ListingIntelligenceDashboard({ onApplyEnhancement, onApp
             </div>
 
             {selectedPhoto && (
-              <div className="p-6 bg-gradient-to-br from-[#1a1a2e] to-[#0d0d15] rounded-2xl border border-[#D4A017]/30">
+              <div className="p-6 bg-gradient-to-br from-surface-raised to-surface rounded-2xl border border-primary/30">
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="font-semibold">Photo #{selectedPhoto.photoIndex + 1} Details</h3>
                   <button onClick={() => setSelectedPhoto(null)} className="text-white/60 hover:text-white">Close</button>
@@ -462,7 +462,7 @@ export default function ListingIntelligenceDashboard({ onApplyEnhancement, onApp
                           <div key={item.label} className="flex items-center gap-3">
                             <span className="text-sm text-white/60 w-24">{item.label}</span>
                             <div className="flex-1 h-2 bg-white/10 rounded-full overflow-hidden">
-                              <div className="h-full bg-gradient-to-r from-[#D4A017] to-[#F4D03F] rounded-full" style={{ width: `${item.score}%` }} />
+                              <div className="h-full bg-gradient-to-r from-gold to-accent-gold rounded-full" style={{ width: `${item.score}%` }} />
                             </div>
                             <span className={`text-sm font-medium w-8 ${getScoreColor(item.score)}`}>{item.score}</span>
                           </div>
@@ -472,9 +472,9 @@ export default function ListingIntelligenceDashboard({ onApplyEnhancement, onApp
                     <div>
                       <p className="text-sm text-white/60 mb-1">Hero Image Potential</p>
                       <div className="flex items-center gap-2">
-                        <span className="text-2xl font-bold text-[#D4A017]">{selectedPhoto.heroPotential}</span>
+                        <span className="text-2xl font-bold text-primary">{selectedPhoto.heroPotential}</span>
                         <span className="text-white/40">/10</span>
-                        {selectedPhoto.isHeroCandidate && <span className="px-2 py-0.5 bg-[#D4A017]/20 text-[#D4A017] text-xs rounded-full">Strong Candidate</span>}
+                        {selectedPhoto.isHeroCandidate && <span className="px-2 py-0.5 bg-accent-gold/20 text-primary text-xs rounded-full">Strong Candidate</span>}
                       </div>
                     </div>
                     <div>

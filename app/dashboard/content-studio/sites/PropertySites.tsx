@@ -172,8 +172,8 @@ export default function PropertySitesClient() {
   const selectedListing = listings.find(l => l.id === selectedListingId)
 
   return (
-    <div className="min-h-screen bg-[#0A0A0A] text-white">
-      <header className="h-14 bg-[#111] border-b border-white/5 flex items-center px-4 gap-4">
+    <div className="min-h-screen bg-surface text-white">
+      <header className="h-14 bg-surface border-b border-white/5 flex items-center px-4 gap-4">
         <Link href="/dashboard/content-studio" className="flex items-center gap-2 text-white/50 hover:text-white transition-colors">
           <ArrowLeft className="w-4 h-4" />
           <span className="text-sm">Back</span>
@@ -191,7 +191,7 @@ export default function PropertySitesClient() {
         {/* Create new site */}
         <div className="glass-luxury glossy-top rounded-2xl p-6 mb-8">
           <h2 className="text-lg font-bold mb-1 flex items-center gap-2">
-            <Plus className="w-5 h-5 text-[#D4A017]" /> Create New Property Site
+            <Plus className="w-5 h-5 text-primary" /> Create New Property Site
           </h2>
           <p className="text-white/40 text-sm mb-5">Select a listing and theme — we&apos;ll generate a public landing page instantly.</p>
 
@@ -225,7 +225,7 @@ export default function PropertySitesClient() {
                 </button>
 
                 {showDropdown && (
-                  <div className="absolute top-full left-0 right-0 mt-2 bg-[#1A1A1A] border border-white/10 rounded-xl overflow-hidden z-20 max-h-64 overflow-y-auto">
+                  <div className="absolute top-full left-0 right-0 mt-2 bg-surface-container-high border border-white/10 rounded-xl overflow-hidden z-20 max-h-64 overflow-y-auto">
                     {loading ? (
                       <div className="p-4 flex justify-center"><Loader2 className="w-5 h-5 animate-spin text-cyan-400" /></div>
                     ) : listings.length === 0 ? (
@@ -262,7 +262,7 @@ export default function PropertySitesClient() {
                   <button
                     key={t}
                     onClick={() => setTheme(t)}
-                    className={`p-2.5 rounded-xl border-2 transition-all text-left ${theme === t ? 'border-[#D4A017]' : 'border-white/10 hover:border-white/20'}`}
+                    className={`p-2.5 rounded-xl border-2 transition-all text-left ${theme === t ? 'border-primary' : 'border-white/10 hover:border-white/20'}`}
                   >
                     <div className={`h-6 rounded-lg mb-1.5 flex items-center justify-center ${themeStyles[t].bg}`}>
                       <div className={`w-8 h-1.5 rounded ${themeStyles[t].accent}`} />
@@ -277,7 +277,7 @@ export default function PropertySitesClient() {
           <button
             onClick={createSite}
             disabled={!selectedListingId || creating}
-            className="mt-5 flex items-center gap-2 px-6 py-3 bg-[#D4A017] text-black font-bold rounded-xl hover:bg-[#B8860B] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+            className="mt-5 flex items-center gap-2 px-6 py-3 bg-accent-gold text-black font-bold rounded-xl hover:bg-accent-gold transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
           >
             {creating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
             {creating ? 'Creating...' : 'Create & Edit Site'}
@@ -300,7 +300,7 @@ export default function PropertySitesClient() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {sites.map(site => (
               <div key={site.id} className="glass-luxury glossy-top rounded-2xl overflow-hidden">
-                <div className="h-36 bg-[#1A1A1A] relative">
+                <div className="h-36 bg-surface-container-high relative">
                   {site.listing?.thumbnail ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <Image src={site.listing.thumbnail} alt="" className="w-full h-full object-cover" width={400} height={300} unoptimized />
@@ -328,7 +328,7 @@ export default function PropertySitesClient() {
                   <div className="flex gap-2">
                     <Link
                       href={`/dashboard/content-studio/sites/${site.id}`}
-                      className="flex-1 flex items-center justify-center gap-2 py-2 bg-[#D4A017] text-black rounded-lg text-sm font-bold hover:bg-[#B8860B] transition-colors"
+                      className="flex-1 flex items-center justify-center gap-2 py-2 bg-accent-gold text-black rounded-lg text-sm font-bold hover:bg-accent-gold transition-colors"
                     >
                       <Pencil className="w-3.5 h-3.5" /> Edit
                     </Link>

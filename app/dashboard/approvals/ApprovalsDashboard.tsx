@@ -35,20 +35,20 @@ export default function ApprovalsDashboard({ listings, overallStats }: { listing
   const formatDate = (d: string) => new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })
 
   return (
-    <div className="min-h-screen bg-[#0A0A0A] text-white">
-      <header className="bg-[#111] border-b border-white/10">
+    <div className="min-h-screen bg-surface text-white">
+      <header className="bg-surface border-b border-white/10">
         <div className="max-w-7xl mx-auto px-4 py-6 flex items-center justify-between">
-          <div><h1 className="text-2xl font-bold">Client Approvals</h1><p className="text-white/50 mt-1">Track photo approvals across all listings</p></div>
+          <div><h1 className="text-2xl font-bold editorial-headline">Client Approvals</h1><p className="text-white/50 mt-1">Track photo approvals across all listings</p></div>
           <Link href="/dashboard" className="px-4 py-2 bg-white/10 rounded-lg hover:bg-white/20">← Back to Dashboard</Link>
         </div>
       </header>
       <div className="max-w-7xl mx-auto px-4 py-8">
         <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
-          <div className="bg-[#111] border border-white/10 rounded-xl p-4"><div className="flex items-center gap-3"><div className="p-2 bg-blue-500/20 rounded-lg"><BarChart3 className="w-5 h-5 text-blue-400" /></div><div><p className="text-2xl font-bold">{overallStats.totalPhotos}</p><p className="text-xs text-white/50">Total Photos</p></div></div></div>
-          <div className="bg-[#111] border border-white/10 rounded-xl p-4"><div className="flex items-center gap-3"><div className="p-2 bg-green-500/20 rounded-lg"><CheckCircle2 className="w-5 h-5 text-green-400" /></div><div><p className="text-2xl font-bold text-green-400">{overallStats.totalApproved}</p><p className="text-xs text-white/50">Approved</p></div></div></div>
-          <div className="bg-[#111] border border-white/10 rounded-xl p-4"><div className="flex items-center gap-3"><div className="p-2 bg-red-500/20 rounded-lg"><XCircle className="w-5 h-5 text-red-400" /></div><div><p className="text-2xl font-bold text-red-400">{overallStats.totalRejected}</p><p className="text-xs text-white/50">Rejected</p></div></div></div>
-          <div className="bg-[#111] border border-white/10 rounded-xl p-4"><div className="flex items-center gap-3"><div className="p-2 bg-amber-500/20 rounded-lg"><Clock className="w-5 h-5 text-amber-400" /></div><div><p className="text-2xl font-bold text-amber-400">{overallStats.totalPending}</p><p className="text-xs text-white/50">Pending</p></div></div></div>
-          <div className="bg-[#111] border border-white/10 rounded-xl p-4"><div className="flex items-center gap-3"><div className="p-2 bg-purple-500/20 rounded-lg"><AlertTriangle className="w-5 h-5 text-purple-400" /></div><div><p className="text-2xl font-bold text-purple-400">{overallStats.listingsWithRejected}</p><p className="text-xs text-white/50">Need Attention</p></div></div></div>
+          <div className="bg-surface border border-white/10 rounded-xl p-4"><div className="flex items-center gap-3"><div className="p-2 bg-blue-500/20 rounded-lg"><BarChart3 className="w-5 h-5 text-blue-400" /></div><div><p className="text-2xl font-bold editorial-headline">{overallStats.totalPhotos}</p><p className="text-xs text-white/50">Total Photos</p></div></div></div>
+          <div className="bg-surface border border-white/10 rounded-xl p-4"><div className="flex items-center gap-3"><div className="p-2 bg-green-500/20 rounded-lg"><CheckCircle2 className="w-5 h-5 text-green-400" /></div><div><p className="text-2xl font-bold text-green-400">{overallStats.totalApproved}</p><p className="text-xs text-white/50">Approved</p></div></div></div>
+          <div className="bg-surface border border-white/10 rounded-xl p-4"><div className="flex items-center gap-3"><div className="p-2 bg-red-500/20 rounded-lg"><XCircle className="w-5 h-5 text-red-400" /></div><div><p className="text-2xl font-bold text-red-400">{overallStats.totalRejected}</p><p className="text-xs text-white/50">Rejected</p></div></div></div>
+          <div className="bg-surface border border-white/10 rounded-xl p-4"><div className="flex items-center gap-3"><div className="p-2 bg-amber-500/20 rounded-lg"><Clock className="w-5 h-5 text-amber-400" /></div><div><p className="text-2xl font-bold text-amber-400">{overallStats.totalPending}</p><p className="text-xs text-white/50">Pending</p></div></div></div>
+          <div className="bg-surface border border-white/10 rounded-xl p-4"><div className="flex items-center gap-3"><div className="p-2 bg-purple-500/20 rounded-lg"><AlertTriangle className="w-5 h-5 text-purple-400" /></div><div><p className="text-2xl font-bold text-purple-400">{overallStats.listingsWithRejected}</p><p className="text-xs text-white/50">Need Attention</p></div></div></div>
         </div>
         <div className="flex flex-col md:flex-row gap-4 mb-6">
           <div className="relative flex-1"><Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-white/30" /><input type="text" placeholder="Search listings..." value={search} onChange={e => setSearch(e.target.value)} className="w-full pl-10 pr-4 py-3 bg-white/5 border border-white/10 rounded-xl focus:outline-none focus:border-amber-500" /></div>
@@ -63,7 +63,7 @@ export default function ApprovalsDashboard({ listings, overallStats }: { listing
         ) : (
           <div className="space-y-4">
             {filteredListings.map(listing => (
-              <div key={listing.id} className={`bg-[#111] border rounded-xl overflow-hidden transition-all ${getStatusColor(listing)}`}>
+              <div key={listing.id} className={`bg-surface border rounded-xl overflow-hidden transition-all ${getStatusColor(listing)}`}>
                 <div className="p-4 cursor-pointer hover:bg-white/5 transition-colors" onClick={() => setExpandedListing(expandedListing === listing.id ? null : listing.id)}>
                   <div className="flex items-center gap-4">
                     <div className="w-20 h-14 rounded-lg overflow-hidden bg-white/5 flex-shrink-0">{listing.thumbnail ? <Image src={listing.thumbnail} alt="" className="w-full h-full object-cover" width={400} height={300} unoptimized /> : <div className="w-full h-full flex items-center justify-center"><Home className="w-6 h-6 text-white/20" /></div>}</div>

@@ -123,7 +123,7 @@ export function ChatWidget({ propertySiteId, listingId }: ChatWidgetProps) {
     return (
       <button
         onClick={() => setIsOpen(true)}
-        className="fixed bottom-6 right-6 w-14 h-14 rounded-full bg-[#D4A017] shadow-lg hover:bg-[#B8860B] transition-all flex items-center justify-center z-50"
+        className="fixed bottom-6 right-6 w-14 h-14 rounded-full bg-accent-gold shadow-lg hover:bg-accent-gold transition-all flex items-center justify-center z-50"
         aria-label="Open chat"
       >
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2">
@@ -134,9 +134,9 @@ export function ChatWidget({ propertySiteId, listingId }: ChatWidgetProps) {
   }
 
   return (
-    <div className="fixed bottom-6 right-6 w-[380px] h-[520px] bg-[#111] rounded-2xl shadow-2xl border border-white/10 flex flex-col z-50 overflow-hidden">
+    <div className="fixed bottom-6 right-6 w-[380px] h-[520px] bg-surface rounded-2xl shadow-2xl border border-white/10 flex flex-col z-50 overflow-hidden">
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3 bg-[#0A0A0A] border-b border-white/10">
+      <div className="flex items-center justify-between px-4 py-3 bg-surface border-b border-white/10">
         <div className="flex items-center gap-2">
           <div className="w-2 h-2 rounded-full bg-green-500" />
           <span className="text-white font-semibold text-sm">Property Assistant</span>
@@ -179,7 +179,7 @@ export function ChatWidget({ propertySiteId, listingId }: ChatWidgetProps) {
             <div
               className={`max-w-[80%] px-3 py-2 rounded-xl text-sm ${
                 msg.role === 'user'
-                  ? 'bg-[#D4A017] text-white'
+                  ? 'bg-accent-gold text-white'
                   : 'bg-white/10 text-white/90'
               }`}
             >
@@ -211,13 +211,13 @@ export function ChatWidget({ propertySiteId, listingId }: ChatWidgetProps) {
             onChange={(e) => setInput(e.target.value)}
             placeholder="Type a message..."
             disabled={isStreaming}
-            className="flex-1 px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white text-sm placeholder:text-white/30 focus:outline-none focus:border-[#D4A017] disabled:opacity-50"
+            className="flex-1 px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white text-sm placeholder:text-white/30 focus:outline-none focus:border-primary disabled:opacity-50"
             aria-label="Chat message"
           />
           <button
             type="submit"
             disabled={isStreaming || !input.trim()}
-            className="px-3 py-2 bg-[#D4A017] rounded-lg text-white font-semibold text-sm hover:bg-[#B8860B] disabled:opacity-50 disabled:cursor-not-allowed"
+            className="px-3 py-2 bg-accent-gold rounded-lg text-white font-semibold text-sm hover:bg-accent-gold disabled:opacity-50 disabled:cursor-not-allowed"
           >
             Send
           </button>

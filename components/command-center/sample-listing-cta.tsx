@@ -36,7 +36,7 @@ export function SampleListingCTA() {
         {/* Preview thumbnails */}
         <div className="flex -space-x-3 flex-shrink-0">
           {['/gallery/sky-before.jpg', '/gallery/staging-before.jpg', '/gallery/twilight-before.jpg'].map((src, i) => (
-            <div key={i} className="relative w-16 h-16 rounded-xl overflow-hidden border-2 border-[#D4A017]/30 shadow-lg">
+            <div key={i} className="relative w-16 h-16 rounded-xl overflow-hidden border-2 border-primary/30 shadow-lg">
               <Image src={src} alt="" fill className="object-cover" />
             </div>
           ))}
@@ -55,7 +55,7 @@ export function SampleListingCTA() {
           <button
             onClick={handleCreateSample}
             disabled={loading}
-            className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-[#D4A017] to-[#B8860B] text-black font-bold text-sm rounded-xl hover:opacity-90 hover:scale-105 transition-all disabled:opacity-50 disabled:scale-100"
+            className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-gold to-gold-dark text-black font-bold text-sm rounded-xl hover:opacity-90 hover:scale-105 transition-all disabled:opacity-50 disabled:scale-100"
           >
             {loading ? (
               <Loader2 className="w-4 h-4 animate-spin" />

@@ -28,7 +28,7 @@ export function PlatformSelector({ selected, onChange }: PlatformSelectorProps) 
               relative p-4 rounded-xl border-2 transition-all duration-200
               flex flex-col items-center gap-2
               ${isSelected 
-                ? 'border-[#D4AF37] bg-[#D4AF37]/10' 
+                ? 'border-accent-gold bg-accent-gold/10' 
                 : 'border-white/10 bg-white/5 hover:border-white/30'
               }
             `}
@@ -39,11 +39,11 @@ export function PlatformSelector({ selected, onChange }: PlatformSelectorProps) 
             `}>
               <Icon className="w-5 h-5 text-white" />
             </div>
-            <span className={`text-sm font-medium ${isSelected ? 'text-[#D4AF37]' : 'text-white/80'}`}>
+            <span className={`text-sm font-medium ${isSelected ? 'text-accent-gold' : 'text-white/80'}`}>
               {platform.name}
             </span>
             {isSelected && (
-              <div className="absolute top-2 right-2 w-2 h-2 rounded-full bg-[#D4AF37]" />
+              <div className="absolute top-2 right-2 w-2 h-2 rounded-full bg-accent-gold" />
             )}
           </button>
         )

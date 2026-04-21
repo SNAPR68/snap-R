@@ -62,7 +62,7 @@ export function ListingsCollapsed({ listings }: ListingsContainerProps) {
           <p className="text-sm text-white/40 mb-3">No listings yet</p>
           <Link
             href="/listings/new"
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#D4A017] text-black rounded-lg text-xs font-semibold"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-accent-gold text-black rounded-lg text-xs font-semibold"
             onClick={(e) => e.stopPropagation()}
           >
             <Plus className="w-3 h-3" /> Create Listing
@@ -111,7 +111,7 @@ export function ListingsExpanded({ listings }: ListingsContainerProps) {
         <p className="text-sm text-white/50">{listings.length} listing{listings.length !== 1 ? 's' : ''}</p>
         <Link
           href="/listings/new"
-          className="inline-flex items-center gap-1.5 px-4 py-2 bg-[#D4A017] text-black rounded-lg text-sm font-semibold hover:bg-[#B8960C] transition-colors"
+          className="inline-flex items-center gap-1.5 px-4 py-2 bg-accent-gold text-black rounded-lg text-sm font-semibold hover:bg-accent-gold transition-colors"
         >
           <Plus className="w-4 h-4" /> New Listing
         </Link>
@@ -127,7 +127,7 @@ export function ListingsExpanded({ listings }: ListingsContainerProps) {
           <p className="text-white/40 mb-4">Upload your first property photos</p>
           <Link
             href="/listings/new"
-            className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#D4A017] text-black rounded-lg font-semibold text-sm"
+            className="inline-flex items-center gap-2 px-5 py-2.5 bg-accent-gold text-black rounded-lg font-semibold text-sm"
           >
             <Plus className="w-4 h-4" /> Create First Listing
           </Link>

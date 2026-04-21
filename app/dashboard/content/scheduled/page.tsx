@@ -98,14 +98,14 @@ export default function ScheduledPostsPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#0F0F0F] flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-[#D4A017]" />
+      <div className="min-h-screen bg-charcoal-deep flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#0F0F0F] text-white p-6">
+    <div className="min-h-screen bg-charcoal-deep text-white p-6">
       <div className="max-w-6xl mx-auto">
         <div className="flex items-center justify-between mb-8">
           <div>
@@ -114,7 +114,7 @@ export default function ScheduledPostsPage() {
           </div>
           <Link
             href="/dashboard/content"
-            className="px-4 py-2 bg-[#D4A017] text-black rounded-lg font-medium hover:bg-[#B8860B] transition-all"
+            className="px-4 py-2 bg-accent-gold text-black rounded-lg font-medium hover:bg-accent-gold transition-all"
           >
             Create New Post
           </Link>
@@ -146,7 +146,7 @@ export default function ScheduledPostsPage() {
               key={f}
               onClick={() => setFilter(f)}
               className={`px-4 py-2 rounded-lg text-sm font-medium capitalize ${
-                filter === f ? 'bg-[#D4A017] text-black' : 'bg-white/5 text-white/60 hover:bg-white/10'
+                filter === f ? 'bg-accent-gold text-black' : 'bg-white/5 text-white/60 hover:bg-white/10'
               }`}
             >
               {f}
@@ -168,7 +168,7 @@ export default function ScheduledPostsPage() {
               const colorClass = PLATFORM_COLORS[post.platform] || 'text-white';
               
               return (
-                <div key={post.id} className="bg-[#1A1A1A] border border-white/10 rounded-xl p-4">
+                <div key={post.id} className="bg-surface-container-high border border-white/10 rounded-xl p-4">
                   <div className="flex items-start gap-4">
                     <div className={`w-10 h-10 bg-white/5 rounded-lg flex items-center justify-center ${colorClass}`}>
                       <Icon className="w-5 h-5" />
@@ -210,7 +210,7 @@ export default function ScheduledPostsPage() {
                       {post.status === 'pending' && (
                         <button
                           onClick={() => handlePublishNow(post)}
-                          className="p-2 bg-[#D4A017]/20 hover:bg-[#D4A017]/30 rounded-lg text-[#D4A017]"
+                          className="p-2 bg-accent-gold/20 hover:bg-accent-gold/30 rounded-lg text-primary"
                           title="Publish Now"
                         >
                           <Send className="w-4 h-4" />

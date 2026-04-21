@@ -245,7 +245,7 @@ export default function HomePage() {
             </p>
 
             {/* Tagline */}
-            <p className="text-2xl md:text-3xl lg:text-4xl text-primary font-bold mb-8">
+            <p className="text-2xl md:text-3xl lg:text-4xl font-bold mb-8 shimmer-text">
               Upload. Enhance. Publish.
             </p>
             
@@ -305,7 +305,7 @@ export default function HomePage() {
       {/* Trust & Social Proof Section */}
       <section className="py-10 px-6 bg-surface">
         <div className="max-w-5xl mx-auto">
-          <div className="bg-surface-container-low p-8 rounded-lg">
+          <div className="glass-luxury glossy-top p-8 rounded-2xl">
             <p className="text-center text-on-surface-muted text-sm mb-6">
               Trusted by real estate professionals to enhance listings faster and market properties with less effort
             </p>
@@ -332,6 +332,8 @@ export default function HomePage() {
         </div>
       </section>
 
+      <div className="h-px mx-6 bg-outline-variant" />
+
       {/* Problem → Solution Section - Luxury */}
       <section className="py-16 px-6 bg-surface">
         <div className="max-w-5xl mx-auto">
@@ -342,7 +344,7 @@ export default function HomePage() {
             </h2>
           </div>
 
-          <div className="bg-surface-container-low overflow-hidden rounded-lg">
+          <div className="glass-luxury overflow-hidden rounded-2xl">
             {[
               { problem: '24-48 hour wait for edited photos', solution: 'Enhanced in 30-60 seconds by AI' },
               { problem: '$400+/month on photo editing alone', solution: 'Unlimited edits from $20/listing' },
@@ -366,6 +368,8 @@ export default function HomePage() {
         </div>
       </section>
 
+      <div className="h-px mx-6 bg-outline-variant" />
+
       {/* How It Works - Luxury Bento */}
       <section className="py-16 px-6 bg-gradient-to-b from-surface to-surface-container-low">
         <div className="max-w-5xl mx-auto">
@@ -382,7 +386,7 @@ export default function HomePage() {
           {/* Bento Grid */}
           <div className="bento-grid">
             {/* STEP 1 — wide */}
-            <div className="bento-span-2 bg-surface-container-low p-6 rounded-lg">
+            <div className="bento-span-2 glass-luxury p-6 rounded-2xl">
               <div className="flex items-center gap-3 mb-4">
                 <div className="w-10 h-10 flex items-center justify-center text-black font-bold text-sm shrink-0 rounded-full" style={{ background: 'linear-gradient(135deg,#D4A017,#B8860B)' }}>1</div>
                 <h3 className="text-lg font-bold">Upload Your Photos</h3>
@@ -397,7 +401,7 @@ export default function HomePage() {
             </div>
 
             {/* STEP 2 — tall right side spanning 2 rows */}
-            <div className="bento-row-2 bg-surface-container-low p-6 flex flex-col rounded-lg">
+            <div className="bento-row-2 glow-card p-6 flex flex-col rounded-2xl">
               <div className="flex items-center gap-3 mb-4">
                 <div className="w-10 h-10 flex items-center justify-center text-black font-bold text-sm shrink-0 rounded-full" style={{ background: 'linear-gradient(135deg,#D4A017,#B8860B)' }}>2</div>
                 <h3 className="text-lg font-bold">AI Prepares Everything</h3>
@@ -437,7 +441,7 @@ export default function HomePage() {
             </div>
 
             {/* STEP 3 — spans 2 cols bottom */}
-            <div className="bento-span-2 bg-surface-container-low p-6 rounded-lg">
+            <div className="bento-span-2 glass-luxury p-6 rounded-2xl">
               <div className="flex items-center gap-3 mb-3">
                 <div className="w-10 h-10 flex items-center justify-center text-black font-bold text-sm shrink-0 rounded-full" style={{ background: 'linear-gradient(135deg,#D4A017,#B8860B)' }}>3</div>
                 <h3 className="text-lg font-bold">Review & Publish</h3>
@@ -451,7 +455,7 @@ export default function HomePage() {
                   { icon: '🌐', label: 'Property Site', sub: 'Shareable link' },
                   { icon: '✉️', label: 'Email Campaign', sub: 'Ready to send' },
                 ].map(({ icon, label, sub }) => (
-                  <div key={label} className="bg-surface-container-low p-3 text-center hover:-translate-y-1 transition-transform rounded-lg">
+                  <div key={label} className="glass-card p-3 text-center hover:-translate-y-1 transition-transform rounded-xl">
                     <div className="text-2xl mb-2">{icon}</div>
                     <div className="font-semibold text-on-surface text-xs mb-1">{label}</div>
                     <div className="text-[10px] text-primary">{sub}</div>
@@ -463,6 +467,8 @@ export default function HomePage() {
           </div>
         </div>
       </section>
+
+      <div className="h-px mx-6 bg-outline-variant" />
 
       {/* Gallery Section */}
       <section id="features" className="py-10 px-6">
@@ -527,7 +533,7 @@ export default function HomePage() {
           
           <div className="grid md:grid-cols-2 gap-8">
             {/* Pay Per Service */}
-            <div className="bg-surface-container-low p-8 rounded-lg">
+            <div className="glass-luxury glossy-top p-8 rounded-2xl">
               <div className="flex items-center justify-between mb-6">
                 <h3 className="text-xl font-bold text-on-surface/60">Pay-Per-Service</h3>
                 <span className="text-xs text-on-surface-muted/60">Industry Average</span>
@@ -582,7 +588,7 @@ export default function HomePage() {
             </div>
             
             {/* SnapR Gold */}
-            <div className="bg-surface-container-low p-8 relative rounded-lg">
+            <div className="glass-gold-luxury glossy-top p-8 relative rounded-2xl">
               <div className="absolute -top-3 right-6 px-4 py-1 bg-gradient-to-r from-primary to-primary-container text-black text-xs font-bold rounded-sm">BEST VALUE</div>
               <div className="flex items-center justify-between mb-6">
                 <h3 className="text-xl font-bold text-primary">SnapR Gold</h3>
@@ -675,7 +681,7 @@ export default function HomePage() {
       {/* Free Marketing Guide */}
       <section className="py-16 px-6 bg-gradient-to-b from-surface-container-low/30 to-surface">
         <div className="max-w-4xl mx-auto">
-          <div className="bg-surface-container-low p-8 md:p-12 rounded-lg">
+          <div className="glass-gold-luxury glossy-top p-8 md:p-12 rounded-2xl">
             <div className="grid md:grid-cols-2 gap-8 items-center">
               <div>
                 <p className="text-primary uppercase tracking-wide text-[0.6875rem] font-semibold mb-2">Free Guide</p>
@@ -709,6 +715,8 @@ export default function HomePage() {
           </div>
         </div>
       </section>
+
+      <div className="h-px mx-6 bg-outline-variant" />
 
       {/* Pricing Section */}
       <section className="py-12 px-6 bg-surface" id="pricing">
@@ -782,7 +790,7 @@ export default function HomePage() {
       {showSnapEnhanceModal && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4" onClick={(e) => { if (e.target === e.currentTarget) setShowSnapEnhanceModal(false); }}>
           <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" />
-          <div className="relative bg-surface-container-low p-8 max-w-lg w-full shadow-2xl">
+          <div className="relative glass-luxury p-8 max-w-lg w-full rounded-2xl shadow-ambient">
             <button onClick={() => setShowSnapEnhanceModal(false)} className="absolute top-4 right-4 text-on-surface-muted hover:text-on-surface">
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
             </button>
@@ -820,7 +828,7 @@ export default function HomePage() {
       {showIOSNotifyModal && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4" onClick={(e) => { if (e.target === e.currentTarget) setShowIOSNotifyModal(false); }}>
           <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" />
-          <div className="relative bg-surface-container-low p-8 max-w-md w-full shadow-2xl">
+          <div className="relative glass-luxury p-8 max-w-md w-full rounded-2xl shadow-ambient">
             <button onClick={() => setShowIOSNotifyModal(false)} className="absolute top-4 right-4 text-on-surface-muted hover:text-on-surface">
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
             </button>

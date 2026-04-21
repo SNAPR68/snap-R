@@ -76,7 +76,7 @@ export default function CheckInForm({ event, listing }: CheckInFormProps) {
   const addressLine = [listing.address, listing.city, listing.state].filter(Boolean).join(', ')
   const isFull = event.max_attendees !== null && event.checkin_count >= event.max_attendees
 
-  const inputCls = 'w-full bg-[#0F0F0F] border border-white/10 rounded-xl px-4 py-3.5 text-base text-white placeholder-white/30 focus:outline-none focus:border-[#D4A017]/60 transition-colors'
+  const inputCls = 'w-full bg-charcoal-deep border border-white/10 rounded-xl px-4 py-3.5 text-base text-white placeholder-white/30 focus:outline-none focus:border-primary/60 transition-colors'
   const labelCls = 'text-xs text-white/50 uppercase tracking-wider block mb-1.5'
 
   const handleCheckin = async (e: React.FormEvent) => {
@@ -138,18 +138,18 @@ export default function CheckInForm({ event, listing }: CheckInFormProps) {
   // Welcome Screen
   if (step === 'welcome') {
     return (
-      <div className="min-h-screen bg-[#0A0A0A] text-white flex flex-col">
+      <div className="min-h-screen bg-surface text-white flex flex-col">
         {listing.hero_photo_url && (
           <div className="relative w-full h-56 sm:h-72">
             <Image src={listing.hero_photo_url} alt={addressLine || 'Property'} fill className="object-cover" priority />
-            <div className="absolute inset-0 bg-gradient-to-t from-[#0A0A0A] via-[#0A0A0A]/40 to-transparent" />
+            <div className="absolute inset-0 bg-gradient-to-t from-surface via-surface/40 to-transparent" />
           </div>
         )}
         <div className="flex-1 flex flex-col items-center px-6 pb-8">
           <div className="w-full max-w-md -mt-12 relative z-10">
-            <div className="bg-[#1A1A1A] border border-white/10 rounded-2xl p-6 mb-6">
-              <div className="w-12 h-12 rounded-xl bg-[#D4A017]/20 flex items-center justify-center mb-4">
-                <Home className="w-6 h-6 text-[#D4A017]" />
+            <div className="bg-surface-container-high border border-white/10 rounded-2xl p-6 mb-6">
+              <div className="w-12 h-12 rounded-xl bg-accent-gold/20 flex items-center justify-center mb-4">
+                <Home className="w-6 h-6 text-primary" />
               </div>
               <h1 className="text-2xl font-bold mb-2">{event.title}</h1>
               {addressLine && (
@@ -173,7 +173,7 @@ export default function CheckInForm({ event, listing }: CheckInFormProps) {
                 <p className="text-red-400 font-semibold">This open house has reached capacity.</p>
               </div>
             ) : (
-              <button onClick={() => setStep('form')} className="w-full py-4 bg-gradient-to-r from-[#FFD700] via-[#D4A017] to-[#B8860B] text-black font-bold rounded-2xl text-lg flex items-center justify-center gap-2 hover:opacity-90 transition-opacity active:scale-[0.98]">
+              <button onClick={() => setStep('form')} className="w-full py-4 bg-gradient-to-r from-accent-gold via-accent-gold to-gold-dark text-black font-bold rounded-2xl text-lg flex items-center justify-center gap-2 hover:opacity-90 transition-opacity active:scale-[0.98]">
                 Check In<ChevronRight className="w-5 h-5" />
               </button>
             )}
@@ -186,7 +186,7 @@ export default function CheckInForm({ event, listing }: CheckInFormProps) {
   // Check-in Form
   if (step === 'form') {
     return (
-      <div className="min-h-screen bg-[#0A0A0A] text-white flex flex-col">
+      <div className="min-h-screen bg-surface text-white flex flex-col">
         <div className="flex-1 flex flex-col items-center px-6 py-8">
           <div className="w-full max-w-md">
             <button onClick={() => setStep('welcome')} className="flex items-center gap-1.5 text-white/40 hover:text-white text-sm mb-6 transition-colors">
@@ -211,7 +211,7 @@ export default function CheckInForm({ event, listing }: CheckInFormProps) {
                 <label className={labelCls}>I am a...</label>
                 <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
                   {CONTACT_TYPES.map(ct => (
-                    <button key={ct.value} type="button" onClick={() => setFormData(d => ({ ...d, contactType: ct.value }))} className={`py-2.5 px-3 rounded-xl border-2 text-sm font-medium transition-all ${formData.contactType === ct.value ? 'border-[#D4A017] bg-[#D4A017]/10 text-[#D4A017]' : 'border-white/10 text-white/50 hover:border-white/20'}`}>
+                    <button key={ct.value} type="button" onClick={() => setFormData(d => ({ ...d, contactType: ct.value }))} className={`py-2.5 px-3 rounded-xl border-2 text-sm font-medium transition-all ${formData.contactType === ct.value ? 'border-primary bg-accent-gold/10 text-primary' : 'border-white/10 text-white/50 hover:border-white/20'}`}>
                       {ct.label}
                     </button>
                   ))}
@@ -230,7 +230,7 @@ export default function CheckInForm({ event, listing }: CheckInFormProps) {
                 </select>
               </div>
               {error && <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-3 text-sm text-red-400">{error}</div>}
-              <button type="submit" disabled={submitting} className="w-full py-4 bg-gradient-to-r from-[#FFD700] via-[#D4A017] to-[#B8860B] text-black font-bold rounded-2xl text-lg flex items-center justify-center gap-2 hover:opacity-90 transition-opacity disabled:opacity-60 active:scale-[0.98]">
+              <button type="submit" disabled={submitting} className="w-full py-4 bg-gradient-to-r from-accent-gold via-accent-gold to-gold-dark text-black font-bold rounded-2xl text-lg flex items-center justify-center gap-2 hover:opacity-90 transition-opacity disabled:opacity-60 active:scale-[0.98]">
                 {submitting ? <><Loader2 className="w-5 h-5 animate-spin" />Checking In...</> : <><Check className="w-5 h-5" />Check In</>}
               </button>
             </form>
@@ -243,15 +243,15 @@ export default function CheckInForm({ event, listing }: CheckInFormProps) {
   // Success Screen
   if (step === 'success') {
     return (
-      <div className="min-h-screen bg-[#0A0A0A] text-white flex flex-col items-center justify-center px-6">
+      <div className="min-h-screen bg-surface text-white flex flex-col items-center justify-center px-6">
         <div className="w-full max-w-md text-center">
-          <div className="w-20 h-20 rounded-full bg-[#D4A017]/20 flex items-center justify-center mx-auto mb-6">
-            <Check className="w-10 h-10 text-[#D4A017]" />
+          <div className="w-20 h-20 rounded-full bg-accent-gold/20 flex items-center justify-center mx-auto mb-6">
+            <Check className="w-10 h-10 text-primary" />
           </div>
           <h2 className="text-3xl font-bold mb-2">Welcome!</h2>
           <p className="text-lg text-white/60 mb-2">You&apos;re checked in.</p>
           <p className="text-sm text-white/40 mb-8">Enjoy your tour of <span className="text-white/60">{addressLine || event.title}</span></p>
-          <div className="bg-[#1A1A1A] border border-white/10 rounded-2xl p-5 mb-8 text-left">
+          <div className="bg-surface-container-high border border-white/10 rounded-2xl p-5 mb-8 text-left">
             <h3 className="font-semibold text-sm mb-3 text-white/70">{event.title}</h3>
             {addressLine && <p className="flex items-center gap-2 text-white/50 text-sm mb-2"><MapPin className="w-4 h-4 flex-shrink-0" />{addressLine}</p>}
             <p className="flex items-center gap-2 text-white/50 text-sm"><Clock className="w-4 h-4 flex-shrink-0" />{formatTime(event.start_time)} &ndash; {formatTime(event.end_time)}</p>
@@ -268,10 +268,10 @@ export default function CheckInForm({ event, listing }: CheckInFormProps) {
   if (step === 'feedback') {
     if (feedbackDone) {
       return (
-        <div className="min-h-screen bg-[#0A0A0A] text-white flex flex-col items-center justify-center px-6">
+        <div className="min-h-screen bg-surface text-white flex flex-col items-center justify-center px-6">
           <div className="w-full max-w-md text-center">
-            <div className="w-16 h-16 rounded-full bg-[#D4A017]/20 flex items-center justify-center mx-auto mb-6">
-              <Star className="w-8 h-8 text-[#D4A017]" />
+            <div className="w-16 h-16 rounded-full bg-accent-gold/20 flex items-center justify-center mx-auto mb-6">
+              <Star className="w-8 h-8 text-primary" />
             </div>
             <h2 className="text-2xl font-bold mb-2">Thank You!</h2>
             <p className="text-white/50">Your feedback has been recorded.</p>
@@ -281,7 +281,7 @@ export default function CheckInForm({ event, listing }: CheckInFormProps) {
     }
 
     return (
-      <div className="min-h-screen bg-[#0A0A0A] text-white flex flex-col items-center px-6 py-8">
+      <div className="min-h-screen bg-surface text-white flex flex-col items-center px-6 py-8">
         <div className="w-full max-w-md">
           <button onClick={() => setStep('success')} className="flex items-center gap-1.5 text-white/40 hover:text-white text-sm mb-6 transition-colors">
             <ArrowLeft className="w-4 h-4" />Back
@@ -292,8 +292,8 @@ export default function CheckInForm({ event, listing }: CheckInFormProps) {
             <label className={labelCls}>Interest Level</label>
             <div className="flex gap-2 mt-1">
               {[1, 2, 3, 4, 5].map(n => (
-                <button key={n} type="button" onClick={() => setInterestLevel(n)} className={`w-12 h-12 rounded-xl border-2 transition-all flex items-center justify-center ${n <= interestLevel ? 'border-[#D4A017] bg-[#D4A017]/20 text-[#D4A017]' : 'border-white/10 text-white/20 hover:border-white/20'}`} aria-label={`Rate interest ${n} out of 5`}>
-                  <Star className={`w-5 h-5 ${n <= interestLevel ? 'fill-[#D4A017]' : ''}`} />
+                <button key={n} type="button" onClick={() => setInterestLevel(n)} className={`w-12 h-12 rounded-xl border-2 transition-all flex items-center justify-center ${n <= interestLevel ? 'border-primary bg-accent-gold/20 text-primary' : 'border-white/10 text-white/20 hover:border-white/20'}`} aria-label={`Rate interest ${n} out of 5`}>
+                  <Star className={`w-5 h-5 ${n <= interestLevel ? 'fill-accent-gold' : ''}`} />
                 </button>
               ))}
             </div>
@@ -306,14 +306,14 @@ export default function CheckInForm({ event, listing }: CheckInFormProps) {
             <textarea id="feedback-text" aria-label="Feedback comments" value={feedbackText} onChange={(e) => setFeedbackText(e.target.value)} rows={4} placeholder="What did you think of the property?" className={inputCls + ' resize-none'} />
           </div>
           <div className="mb-8">
-            <button type="button" onClick={() => setWantsFollowUp(f => !f)} className={`w-full flex items-center justify-between p-4 rounded-xl border-2 transition-all ${wantsFollowUp ? 'border-[#D4A017] bg-[#D4A017]/10' : 'border-white/10 hover:border-white/20'}`}>
+            <button type="button" onClick={() => setWantsFollowUp(f => !f)} className={`w-full flex items-center justify-between p-4 rounded-xl border-2 transition-all ${wantsFollowUp ? 'border-primary bg-accent-gold/10' : 'border-white/10 hover:border-white/20'}`}>
               <span className="text-sm font-medium">I&apos;d like the agent to follow up with me</span>
-              <div className={`w-10 h-6 rounded-full transition-colors flex items-center ${wantsFollowUp ? 'bg-[#D4A017] justify-end' : 'bg-white/10 justify-start'}`}>
+              <div className={`w-10 h-6 rounded-full transition-colors flex items-center ${wantsFollowUp ? 'bg-accent-gold justify-end' : 'bg-white/10 justify-start'}`}>
                 <div className="w-4 h-4 rounded-full bg-white mx-1 shadow-sm" />
               </div>
             </button>
           </div>
-          <button onClick={handleFeedback} disabled={feedbackSubmitting} className="w-full py-4 bg-gradient-to-r from-[#FFD700] via-[#D4A017] to-[#B8860B] text-black font-bold rounded-2xl text-lg flex items-center justify-center gap-2 hover:opacity-90 transition-opacity disabled:opacity-60 active:scale-[0.98]">
+          <button onClick={handleFeedback} disabled={feedbackSubmitting} className="w-full py-4 bg-gradient-to-r from-accent-gold via-accent-gold to-gold-dark text-black font-bold rounded-2xl text-lg flex items-center justify-center gap-2 hover:opacity-90 transition-opacity disabled:opacity-60 active:scale-[0.98]">
             {feedbackSubmitting ? <><Loader2 className="w-5 h-5 animate-spin" />Submitting...</> : 'Submit Feedback'}
           </button>
           <button onClick={() => setStep('success')} className="w-full py-3 text-white/40 text-sm hover:text-white/60 mt-3 transition-colors">Skip for now</button>

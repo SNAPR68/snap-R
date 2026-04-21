@@ -124,7 +124,7 @@ export function BrandForm() {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <Loader2 className="w-8 h-8 animate-spin text-[#D4AF37]" />
+        <Loader2 className="w-8 h-8 animate-spin text-accent-gold" />
       </div>
     )
   }
@@ -468,7 +468,7 @@ export function BrandForm() {
         <Button
           onClick={handleSave}
           disabled={saving}
-          className="bg-gradient-to-r from-[#D4AF37] to-[#B8960C] text-black font-semibold px-8"
+          className="bg-gradient-to-r from-accent-gold to-accent-gold text-black font-semibold px-8"
         >
           {saving ? (
             <>

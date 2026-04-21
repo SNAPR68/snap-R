@@ -168,7 +168,7 @@ export default function EmailListsPage() {
             <Link href="/dashboard/leads" className="text-white/40 hover:text-white transition-colors">Leads</Link>
             <ChevronRight className="w-3 h-3 text-white/20" />
             <span className="text-white font-bold flex items-center gap-2">
-              <Mail className="w-4 h-4 text-[#D4AF37]" />Email Lists &amp; Bulk Send
+              <Mail className="w-4 h-4 text-accent-gold" />Email Lists &amp; Bulk Send
             </span>
           </nav>
           <div className="flex items-center gap-2 text-sm text-white/40">
@@ -192,7 +192,7 @@ export default function EmailListsPage() {
                   onChange={e => setSearch(e.target.value)}
                   placeholder="Search contacts..."
                   aria-label="Search contacts"
-                  className="w-full bg-white/5 border border-white/10 rounded-lg pl-8 pr-3 py-2 text-sm text-white placeholder-white/30 focus:outline-none focus:border-[#D4AF37]/50"
+                  className="w-full bg-white/5 border border-white/10 rounded-lg pl-8 pr-3 py-2 text-sm text-white placeholder-white/30 focus:outline-none focus:border-accent-gold/50"
                 />
                 {search && (
                   <button onClick={() => setSearch('')} className="absolute right-3 top-1/2 -translate-y-1/2">
@@ -236,7 +236,7 @@ export default function EmailListsPage() {
                 </button>
               ))}
               {selected.size > 0 && (
-                <span className="ml-auto text-xs text-[#D4AF37] font-medium">
+                <span className="ml-auto text-xs text-accent-gold font-medium">
                   {selected.size} selected
                 </span>
               )}
@@ -260,12 +260,12 @@ export default function EmailListsPage() {
                   key={lead.id}
                   onClick={() => toggleSelect(lead.id)}
                   className={`w-full flex items-center gap-3 px-5 py-3 border-b border-white/[0.04] hover:bg-white/[0.02] transition-colors text-left ${
-                    selected.has(lead.id) ? 'bg-[#D4AF37]/5' : ''
+                    selected.has(lead.id) ? 'bg-accent-gold/5' : ''
                   }`}
                 >
                   <div className={`w-5 h-5 rounded border flex items-center justify-center flex-shrink-0 transition-colors ${
                     selected.has(lead.id)
-                      ? 'bg-[#D4AF37] border-[#D4AF37]'
+                      ? 'bg-accent-gold border-accent-gold'
                       : 'border-white/20 bg-transparent'
                   }`}>
                     {selected.has(lead.id) && <Check className="w-3 h-3 text-black" />}
@@ -298,7 +298,7 @@ export default function EmailListsPage() {
           {/* Compose */}
           <div className="flex-1 overflow-y-auto px-6 py-5 space-y-4">
             <h2 className="text-sm font-semibold text-white/70 flex items-center gap-2">
-              <Send className="w-4 h-4 text-[#D4AF37]" />
+              <Send className="w-4 h-4 text-accent-gold" />
               Compose Email
             </h2>
 
@@ -325,7 +325,7 @@ export default function EmailListsPage() {
                 onChange={e => setSubject(e.target.value)}
                 placeholder="e.g. Just listed: 123 Main St — Schedule your showing"
                 aria-label="Email subject"
-                className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white placeholder-white/20 focus:outline-none focus:border-[#D4AF37]/50"
+                className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white placeholder-white/20 focus:outline-none focus:border-accent-gold/50"
               />
             </div>
 
@@ -340,14 +340,14 @@ export default function EmailListsPage() {
                 placeholder={`Hi {{first_name}},\n\nI wanted to reach out about...`}
                 rows={12}
                 aria-label="Email body"
-                className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white placeholder-white/20 focus:outline-none focus:border-[#D4AF37]/50 resize-none font-mono"
+                className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white placeholder-white/20 focus:outline-none focus:border-accent-gold/50 resize-none font-mono"
               />
             </div>
 
             <button
               onClick={handleSend}
               disabled={sending || selected.size === 0 || !subject.trim() || !body.trim()}
-              className="w-full flex items-center justify-center gap-2 py-3 rounded-lg bg-[#D4AF37] text-black text-sm font-semibold hover:bg-[#B8960C] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+              className="w-full flex items-center justify-center gap-2 py-3 rounded-lg bg-accent-gold text-black text-sm font-semibold hover:bg-accent-gold transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
             >
               {sending ? (
                 <><Loader2 className="w-4 h-4 animate-spin" />Sending...</>

@@ -844,7 +844,7 @@ export function UnifiedCreator() {
   const currentPlatform = PLATFORMS.find(p => p.id === platform)!
   const isVertical = platform === 'story' || platform === 'tiktok'
 
-  if (loading) return <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-900 flex items-center justify-center"><Loader2 className="w-8 h-8 animate-spin text-[#D4AF37]" /></div>
+  if (loading) return <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-900 flex items-center justify-center"><Loader2 className="w-8 h-8 animate-spin text-accent-gold" /></div>
 
 
   // Save post to library
@@ -962,13 +962,13 @@ export function UnifiedCreator() {
           <div className="bg-white/5 rounded-xl p-3 border border-white/10">
             {currentPlatform.supportsCarousel && (
               <div className="grid grid-cols-2 gap-2 mb-3">
-                <button onClick={() => { setPostMode('single'); setSelectedPhotos([]) }} className={`py-2 rounded-lg text-xs font-medium transition ${postMode === 'single' ? 'bg-[#D4AF37] text-black' : 'bg-white/10 text-white/60'}`}><ImageIcon className="w-3.5 h-3.5 inline mr-1" />Single</button>
-                <button onClick={() => setPostMode('carousel')} className={`py-2 rounded-lg text-xs font-medium transition ${postMode === 'carousel' ? 'bg-[#D4AF37] text-black' : 'bg-white/10 text-white/60'}`}><Images className="w-3.5 h-3.5 inline mr-1" />Carousel</button>
+                <button onClick={() => { setPostMode('single'); setSelectedPhotos([]) }} className={`py-2 rounded-lg text-xs font-medium transition ${postMode === 'single' ? 'bg-accent-gold text-black' : 'bg-white/10 text-white/60'}`}><ImageIcon className="w-3.5 h-3.5 inline mr-1" />Single</button>
+                <button onClick={() => setPostMode('carousel')} className={`py-2 rounded-lg text-xs font-medium transition ${postMode === 'carousel' ? 'bg-accent-gold text-black' : 'bg-white/10 text-white/60'}`}><Images className="w-3.5 h-3.5 inline mr-1" />Carousel</button>
               </div>
             )}
             <div className="grid grid-cols-2 gap-2">
               {TEMPLATE_CATEGORIES.map(c => (
-                <button key={c.id} onClick={() => setCategory(c.id)} className={`py-1.5 rounded-lg text-[11px] font-medium transition ${category === c.id ? 'bg-[#D4AF37] text-black' : 'bg-white/10 text-white/60'}`}>{c.icon} {c.name}</button>
+                <button key={c.id} onClick={() => setCategory(c.id)} className={`py-1.5 rounded-lg text-[11px] font-medium transition ${category === c.id ? 'bg-accent-gold text-black' : 'bg-white/10 text-white/60'}`}>{c.icon} {c.name}</button>
               ))}
             </div>
           </div>
@@ -981,7 +981,7 @@ export function UnifiedCreator() {
                 <button key={t.id} onClick={() => {
                   setTemplates(prev => ({ ...prev, [platform]: t }));
                   trackEvent(SnapREvents.TEMPLATE_SELECTED, { type: t.category });
-                }} className={`aspect-square rounded-lg border-2 transition overflow-hidden ${templates[platform].id === t.id ? 'border-[#D4AF37] ring-2 ring-[#D4AF37]/50' : 'border-white/10 hover:border-white/30'}`}>
+                }} className={`aspect-square rounded-lg border-2 transition overflow-hidden ${templates[platform].id === t.id ? 'border-accent-gold ring-2 ring-accent-gold/50' : 'border-white/10 hover:border-white/30'}`}>
                   <div className="w-full h-full relative overflow-hidden bg-black">
                     <div className="absolute inset-0 scale-[0.12] origin-top-left pointer-events-none" style={{ width: '833%', height: '833%' }}>
                       {platform === 'instagram' && <TemplateRenderer templateId={t.id} photoUrl={photoUrl || DEFAULT_PHOTO} property={prop} brand={brand} headline={headline} />}
@@ -1178,7 +1178,7 @@ export function UnifiedCreator() {
           {/* Headline */}
           <div className="bg-white/5 rounded-xl p-3 border border-white/10">
             <Label className="text-[10px] text-white/40 uppercase mb-2 block">Headline</Label>
-            <Input value={headline} onChange={e => setHeadline(e.target.value.toUpperCase())} className="bg-black/40 border-white/20 h-10 text-sm font-bold text-[#D4AF37]" />
+            <Input value={headline} onChange={e => setHeadline(e.target.value.toUpperCase())} className="bg-black/40 border-white/20 h-10 text-sm font-bold text-accent-gold" />
           </div>
 
           {/* Property */}
@@ -1222,10 +1222,10 @@ export function UnifiedCreator() {
           <div className="bg-white/5 rounded-xl p-3 border border-white/10">
             <div className="flex items-center justify-between mb-2">
               <span className="text-[10px] text-white/40 uppercase">Brand</span>
-              <Link href="/dashboard/brand" className="text-[10px] text-[#D4AF37] hover:underline">Edit →</Link>
+              <Link href="/dashboard/brand" className="text-[10px] text-accent-gold hover:underline">Edit →</Link>
             </div>
             <div className="flex items-center gap-3 p-2 bg-black/30 rounded-lg">
-              <div className="w-10 h-10 rounded-full bg-[#D4AF37] flex items-center justify-center text-black font-bold">{brand.business_name?.[0] || 'A'}</div>
+              <div className="w-10 h-10 rounded-full bg-accent-gold flex items-center justify-center text-black font-bold">{brand.business_name?.[0] || 'A'}</div>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium truncate">{brand.business_name || 'Your Name'}</p>
                 <p className="text-[10px] text-white/50 truncate">{brand.phone || 'Add phone'}</p>
@@ -1234,11 +1234,11 @@ export function UnifiedCreator() {
           </div>
 
           {/* How It Works */}
-          <div className="bg-gradient-to-br from-[#D4AF37]/10 to-[#B8960C]/10 rounded-xl p-3 border border-[#D4AF37]/20">
-            <p className="text-[10px] text-[#D4AF37] font-medium mb-2">📱 How Upload Works</p>
+          <div className="bg-gradient-to-br from-accent-gold/10 to-accent-gold/10 rounded-xl p-3 border border-accent-gold/20">
+            <p className="text-[10px] text-accent-gold font-medium mb-2">📱 How Upload Works</p>
             <ol className="text-[10px] text-white/50 space-y-1">
-              <li><span className="text-[#D4AF37]">Mobile:</span> Opens share sheet → Select app → Post!</li>
-              <li><span className="text-[#D4AF37]">Desktop:</span> Downloads image → Opens platform → Upload & paste caption</li>
+              <li><span className="text-accent-gold">Mobile:</span> Opens share sheet → Select app → Post!</li>
+              <li><span className="text-accent-gold">Desktop:</span> Downloads image → Opens platform → Upload & paste caption</li>
             </ol>
           </div>
         </div>
@@ -1249,7 +1249,7 @@ export function UnifiedCreator() {
         <div className="flex items-center gap-3 flex-shrink-0">
           <span className="text-xs text-white/50 uppercase font-medium">Photos</span>
           <span className="text-xs bg-white/10 px-2 py-0.5 rounded-full">{photos.length}</span>
-          {postMode === 'carousel' && selectedPhotos.length > 0 && <span className="text-xs bg-[#D4AF37] text-black px-2 py-0.5 rounded-full font-medium">{selectedPhotos.length} selected</span>}
+          {postMode === 'carousel' && selectedPhotos.length > 0 && <span className="text-xs bg-accent-gold text-black px-2 py-0.5 rounded-full font-medium">{selectedPhotos.length} selected</span>}
         </div>
         {photos.length > 0 ? (
           <div className="flex-1 flex gap-3 overflow-x-auto py-2">
@@ -1257,11 +1257,11 @@ export function UnifiedCreator() {
               const selected = postMode === 'carousel' ? selectedPhotos.includes(url) : photoUrl === url
               const isRenovated = renovatedImageUrl && url === decodeURIComponent(renovatedImageUrl)
               return (
-                <button key={i} onClick={() => selectPhoto(url)} className={`relative flex-shrink-0 w-16 h-16 rounded-xl overflow-hidden border-2 transition-all ${selected ? 'border-[#D4AF37] ring-2 ring-[#D4AF37]/50 scale-105' : 'border-white/20 hover:border-white/40'}`}>
+                <button key={i} onClick={() => selectPhoto(url)} className={`relative flex-shrink-0 w-16 h-16 rounded-xl overflow-hidden border-2 transition-all ${selected ? 'border-accent-gold ring-2 ring-accent-gold/50 scale-105' : 'border-white/20 hover:border-white/40'}`}>
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   {/* eslint-disable-next-line @next/next/no-img-element */}
 <img src={url} alt="" className="w-full h-full object-cover" />
-                  {postMode === 'carousel' && selected && <div className="absolute top-0 left-0 w-5 h-5 bg-[#D4AF37] rounded-br-lg text-[10px] font-bold text-black flex items-center justify-center">{selectedPhotos.indexOf(url) + 1}</div>}
+                  {postMode === 'carousel' && selected && <div className="absolute top-0 left-0 w-5 h-5 bg-accent-gold rounded-br-lg text-[10px] font-bold text-black flex items-center justify-center">{selectedPhotos.indexOf(url) + 1}</div>}
                   {isRenovated && <div className="absolute bottom-0 inset-x-0 bg-green-500/90 text-[8px] text-white text-center py-0.5">Renovated</div>}
                 </button>
               )

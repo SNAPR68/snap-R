@@ -338,7 +338,7 @@ export default function PropertySiteClient({ photos, listing, agent, brand, vide
   // RENDER
   // ============================================
   return (
-    <div className="min-h-screen bg-[#0A0A0A] text-white">
+    <div className="min-h-screen bg-surface text-white">
       {/* ============================================ */}
       {/* HERO SECTION with Ken Burns Effect */}
       {/* ============================================ */}
@@ -361,7 +361,7 @@ export default function PropertySiteClient({ photos, listing, agent, brand, vide
         ))}
         
         {/* Gradient Overlay */}
-        <div className="absolute inset-0 bg-gradient-to-t from-[#0A0A0A] via-[#0A0A0A]/50 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-surface via-surface/50 to-transparent" />
         
         {/* Content */}
         <div className="absolute inset-0 flex flex-col justify-end p-6 md:p-12">
@@ -445,7 +445,7 @@ export default function PropertySiteClient({ photos, listing, agent, brand, vide
             {/* Share Dropdown */}
             {showShareMenu && (
               <div 
-                className="absolute right-0 mt-2 w-48 bg-[#1A1A1A] border border-white/10 rounded-xl shadow-xl z-50 overflow-hidden"
+                className="absolute right-0 mt-2 w-48 bg-surface-container-high border border-white/10 rounded-xl shadow-xl z-50 overflow-hidden"
                 onClick={(e) => e.stopPropagation()}
               >
                 <button onClick={copyLink} className="w-full flex items-center gap-3 px-4 py-3 hover:bg-white/5 transition">
@@ -534,7 +534,7 @@ export default function PropertySiteClient({ photos, listing, agent, brand, vide
                         alt="More photos available"
                         className="w-full h-full object-cover blur-xl scale-110 opacity-30" width={400} height={300} unoptimized />
                     </div>
-                    <div className="relative z-10 py-12 px-8 text-center bg-gradient-to-b from-[#0A0A0A]/80 to-[#0A0A0A]/95">
+                    <div className="relative z-10 py-12 px-8 text-center bg-gradient-to-b from-surface/80 to-surface/95">
                       <div className="mb-2">
                         <Sparkles className="w-8 h-8 mx-auto mb-3" style={{ color: primaryColor }} />
                       </div>
@@ -552,7 +552,7 @@ export default function PropertySiteClient({ photos, listing, agent, brand, vide
                           onChange={(e) => setLeadForm(prev => ({ ...prev, name: e.target.value }))}
                           required
                           aria-label="Your name"
-                          className="w-full px-4 py-3 bg-[#1A1A1A] border border-white/10 rounded-lg text-white placeholder-white/40 focus:outline-none focus:border-[#D4A017] transition-colors"
+                          className="w-full px-4 py-3 bg-surface-container-high border border-white/10 rounded-lg text-white placeholder-white/40 focus:outline-none focus:border-primary transition-colors"
                           style={{ borderColor: leadForm.name ? primaryColor : undefined }}
                         />
                         <input
@@ -562,7 +562,7 @@ export default function PropertySiteClient({ photos, listing, agent, brand, vide
                           onChange={(e) => setLeadForm(prev => ({ ...prev, email: e.target.value }))}
                           required
                           aria-label="Email address"
-                          className="w-full px-4 py-3 bg-[#1A1A1A] border border-white/10 rounded-lg text-white placeholder-white/40 focus:outline-none focus:border-[#D4A017] transition-colors"
+                          className="w-full px-4 py-3 bg-surface-container-high border border-white/10 rounded-lg text-white placeholder-white/40 focus:outline-none focus:border-primary transition-colors"
                           style={{ borderColor: leadForm.email ? primaryColor : undefined }}
                         />
                         <input
@@ -571,7 +571,7 @@ export default function PropertySiteClient({ photos, listing, agent, brand, vide
                           value={leadForm.phone}
                           onChange={(e) => setLeadForm(prev => ({ ...prev, phone: e.target.value }))}
                           aria-label="Phone number"
-                          className="w-full px-4 py-3 bg-[#1A1A1A] border border-white/10 rounded-lg text-white placeholder-white/40 focus:outline-none focus:border-[#D4A017] transition-colors"
+                          className="w-full px-4 py-3 bg-surface-container-high border border-white/10 rounded-lg text-white placeholder-white/40 focus:outline-none focus:border-primary transition-colors"
                         />
                         {leadError && (
                           <p className="text-red-400 text-sm">{leadError}</p>
@@ -617,7 +617,7 @@ export default function PropertySiteClient({ photos, listing, agent, brand, vide
                   <Play className="w-6 h-6" style={{ color: primaryColor }} />
                   Video Tour
                 </h2>
-                <div className="relative aspect-video rounded-xl overflow-hidden bg-[#1A1A1A]">
+                <div className="relative aspect-video rounded-xl overflow-hidden bg-surface-container-high">
                   <video
                     src={videoUrl}
                     controls
@@ -650,7 +650,7 @@ export default function PropertySiteClient({ photos, listing, agent, brand, vide
               <h2 className="text-2xl font-bold mb-6">Property Details</h2>
               <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                 {listing.property_type && (
-                  <div className="p-4 bg-[#1A1A1A] rounded-xl">
+                  <div className="p-4 bg-surface-container-high rounded-xl">
                     <div className="flex items-center gap-2 text-white/50 text-sm mb-1">
                       <Home className="w-4 h-4" />
                       <span>Property Type</span>
@@ -659,7 +659,7 @@ export default function PropertySiteClient({ photos, listing, agent, brand, vide
                   </div>
                 )}
                 {listing.bedrooms !== null && listing.bedrooms !== undefined && (
-                  <div className="p-4 bg-[#1A1A1A] rounded-xl">
+                  <div className="p-4 bg-surface-container-high rounded-xl">
                     <div className="flex items-center gap-2 text-white/50 text-sm mb-1">
                       <Bed className="w-4 h-4" />
                       <span>Bedrooms</span>
@@ -668,7 +668,7 @@ export default function PropertySiteClient({ photos, listing, agent, brand, vide
                   </div>
                 )}
                 {listing.bathrooms !== null && listing.bathrooms !== undefined && (
-                  <div className="p-4 bg-[#1A1A1A] rounded-xl">
+                  <div className="p-4 bg-surface-container-high rounded-xl">
                     <div className="flex items-center gap-2 text-white/50 text-sm mb-1">
                       <Bath className="w-4 h-4" />
                       <span>Bathrooms</span>
@@ -677,7 +677,7 @@ export default function PropertySiteClient({ photos, listing, agent, brand, vide
                   </div>
                 )}
                 {listing.square_feet && (
-                  <div className="p-4 bg-[#1A1A1A] rounded-xl">
+                  <div className="p-4 bg-surface-container-high rounded-xl">
                     <div className="flex items-center gap-2 text-white/50 text-sm mb-1">
                       <Square className="w-4 h-4" />
                       <span>Square Feet</span>
@@ -686,7 +686,7 @@ export default function PropertySiteClient({ photos, listing, agent, brand, vide
                   </div>
                 )}
                 {listing.lot_size && (
-                  <div className="p-4 bg-[#1A1A1A] rounded-xl">
+                  <div className="p-4 bg-surface-container-high rounded-xl">
                     <div className="flex items-center gap-2 text-white/50 text-sm mb-1">
                       <MapPin className="w-4 h-4" />
                       <span>Lot Size</span>
@@ -695,7 +695,7 @@ export default function PropertySiteClient({ photos, listing, agent, brand, vide
                   </div>
                 )}
                 {listing.year_built && (
-                  <div className="p-4 bg-[#1A1A1A] rounded-xl">
+                  <div className="p-4 bg-surface-container-high rounded-xl">
                     <div className="flex items-center gap-2 text-white/50 text-sm mb-1">
                       <Calendar className="w-4 h-4" />
                       <span>Year Built</span>
@@ -704,7 +704,7 @@ export default function PropertySiteClient({ photos, listing, agent, brand, vide
                   </div>
                 )}
                 {listing.parking && (
-                  <div className="p-4 bg-[#1A1A1A] rounded-xl">
+                  <div className="p-4 bg-surface-container-high rounded-xl">
                     <div className="flex items-center gap-2 text-white/50 text-sm mb-1">
                       <Car className="w-4 h-4" />
                       <span>Parking</span>
@@ -713,7 +713,7 @@ export default function PropertySiteClient({ photos, listing, agent, brand, vide
                   </div>
                 )}
                 {listing.mls_number && (
-                  <div className="p-4 bg-[#1A1A1A] rounded-xl">
+                  <div className="p-4 bg-surface-container-high rounded-xl">
                     <div className="flex items-center gap-2 text-white/50 text-sm mb-1">
                       <Building className="w-4 h-4" />
                       <span>MLS #</span>
@@ -722,7 +722,7 @@ export default function PropertySiteClient({ photos, listing, agent, brand, vide
                   </div>
                 )}
                 {listing.hoa_fees !== null && listing.hoa_fees !== undefined && (
-                  <div className="p-4 bg-[#1A1A1A] rounded-xl">
+                  <div className="p-4 bg-surface-container-high rounded-xl">
                     <div className="flex items-center gap-2 text-white/50 text-sm mb-1">
                       <DollarSign className="w-4 h-4" />
                       <span>HOA Fees</span>
@@ -743,7 +743,7 @@ export default function PropertySiteClient({ photos, listing, agent, brand, vide
                   {(showAllFeatures ? features : features.slice(0, 9)).map((feature, index) => (
                     <div 
                       key={index}
-                      className="flex items-center gap-2 p-3 bg-[#1A1A1A] rounded-lg"
+                      className="flex items-center gap-2 p-3 bg-surface-container-high rounded-lg"
                     >
                       <Sparkles className="w-4 h-4 flex-shrink-0" style={{ color: primaryColor }} />
                       <span className="text-sm">{feature}</span>
@@ -783,7 +783,7 @@ export default function PropertySiteClient({ photos, listing, agent, brand, vide
                   </div>
                   3D Virtual Tour
                 </h2>
-                <div className="aspect-video rounded-2xl overflow-hidden bg-[#1A1A1A] border border-white/10">
+                <div className="aspect-video rounded-2xl overflow-hidden bg-surface-container-high border border-white/10">
                   <iframe
                     src={listing.virtual_tour_url}
                     width="100%"
@@ -807,7 +807,7 @@ export default function PropertySiteClient({ photos, listing, agent, brand, vide
               <section>
                 <h2 className="text-2xl font-bold mb-6">Location</h2>
                 {mapsApiKey ? (
-                  <div className="aspect-[16/9] rounded-xl overflow-hidden bg-[#1A1A1A]">
+                  <div className="aspect-[16/9] rounded-xl overflow-hidden bg-surface-container-high">
                     <iframe
                       width="100%"
                       height="100%"
@@ -819,7 +819,7 @@ export default function PropertySiteClient({ photos, listing, agent, brand, vide
                     />
                   </div>
                 ) : (
-                  <div className="aspect-[16/9] rounded-xl overflow-hidden bg-[#1A1A1A] flex items-center justify-center">
+                  <div className="aspect-[16/9] rounded-xl overflow-hidden bg-surface-container-high flex items-center justify-center">
                     <div className="text-center text-gray-400">
                       <MapPin className="w-12 h-12 mx-auto mb-3 opacity-50" />
                       <p className="text-lg font-medium">{fullAddress}</p>
@@ -846,7 +846,7 @@ export default function PropertySiteClient({ photos, listing, agent, brand, vide
             {/* MORTGAGE CALCULATOR */}
             {/* ============================================ */}
             {listing.price && (
-              <div className="bg-[#1A1A1A] rounded-2xl p-6 border border-white/10 sticky top-6">
+              <div className="glass-luxury rounded-2xl p-6 sticky top-6">
                 <div className="flex items-center gap-2 mb-6">
                   <Calculator className="w-5 h-5" style={{ color: primaryColor }} />
                   <h3 className="text-lg font-bold">Mortgage Calculator</h3>
@@ -948,7 +948,7 @@ export default function PropertySiteClient({ photos, listing, agent, brand, vide
             {/* AGENT CONTACT CARD */}
             {/* ============================================ */}
             {agent && (
-              <div className="bg-[#1A1A1A] rounded-2xl p-6 border border-white/10">
+              <div className="glass-luxury rounded-2xl p-6">
                 <div className="flex items-center gap-4 mb-6">
                   {agent.avatar ? (
                     <Image src={agent.avatar} 

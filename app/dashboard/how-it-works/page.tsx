@@ -75,7 +75,7 @@ export default function HowItWorksPage() {
 
   return (
 
-    <div className="min-h-screen bg-[#0F0F0F] text-white p-6">
+    <div className="min-h-screen bg-charcoal-deep text-white p-6">
 
       <div className="max-w-4xl mx-auto">
 
@@ -89,15 +89,15 @@ export default function HowItWorksPage() {
 
         <div className="flex items-center gap-3 mb-8">
 
-          <div className="p-3 bg-[#D4A017]/20 rounded-xl">
+          <div className="p-3 bg-accent-gold/20 rounded-xl">
 
-            <HelpCircle className="w-8 h-8 text-[#D4A017]" />
+            <HelpCircle className="w-8 h-8 text-primary" />
 
           </div>
 
           <div>
 
-            <h1 className="text-3xl font-bold">How It Works</h1>
+            <h1 className="text-3xl font-bold editorial-headline">How It Works</h1>
 
             <p className="text-white/50">Get started with SnapR in minutes</p>
 
@@ -113,13 +113,13 @@ export default function HowItWorksPage() {
 
           {steps.map((step, index) => (
 
-            <div key={index} className="bg-[#1A1A1A] rounded-xl p-6 border border-white/10">
+            <div key={index} className="glass-luxury rounded-xl p-6">
 
               <div className="flex items-start gap-4">
 
-                <div className="p-3 bg-[#D4A017]/10 rounded-lg">
+                <div className="p-3 bg-accent-gold/10 rounded-lg">
 
-                  <step.icon className="w-6 h-6 text-[#D4A017]" />
+                  <step.icon className="w-6 h-6 text-primary" />
 
                 </div>
 
@@ -143,7 +143,7 @@ export default function HowItWorksPage() {
 
         {/* Credit Info */}
 
-        <div className="bg-[#1A1A1A] rounded-xl p-6 border border-white/10 mb-8">
+        <div className="glass-luxury rounded-xl p-6 mb-8">
 
           <h2 className="text-xl font-bold mb-4">Credit Usage</h2>
 
@@ -157,7 +157,7 @@ export default function HowItWorksPage() {
 
                 <span className="text-white/80">{item.tool}</span>
 
-                <span className="text-[#D4A017] font-semibold">{item.credits} cr</span>
+                <span className="text-primary font-semibold">{item.credits} cr</span>
 
               </div>
 
@@ -171,7 +171,7 @@ export default function HowItWorksPage() {
 
         {/* Tips */}
 
-        <div className="bg-gradient-to-r from-[#D4A017]/10 to-transparent rounded-xl p-6 border border-[#D4A017]/20">
+        <div className="bg-gradient-to-r from-gold/10 to-transparent rounded-xl p-6 border border-primary/20">
 
           <h2 className="text-xl font-bold mb-4">Pro Tips</h2>
 
@@ -199,7 +199,7 @@ export default function HowItWorksPage() {
 
           <Link href="/dashboard">
 
-            <button className="px-8 py-3 bg-gradient-to-r from-[#D4A017] to-[#B8860B] rounded-xl text-black font-semibold hover:opacity-90">
+            <button className="px-8 py-3 bg-gradient-to-r from-gold to-gold-dark rounded-xl text-black font-semibold hover:opacity-90">
 
               Start Enhancing Photos
 

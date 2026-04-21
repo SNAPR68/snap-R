@@ -55,7 +55,7 @@ interface Listing {
 
 function ListingSelector({ listings, onSelect }: { listings: Listing[]; onSelect: (id: string) => void }) {
   return (
-    <div className="min-h-screen bg-[#0F0F0F] text-white p-6">
+    <div className="min-h-screen bg-charcoal-deep text-white p-6">
       <div className="max-w-4xl mx-auto">
         {/* Header with explanation */}
         <div className="flex items-center gap-3 mb-4">
@@ -63,7 +63,7 @@ function ListingSelector({ listings, onSelect }: { listings: Listing[]; onSelect
             <Scissors className="w-8 h-8 text-purple-400" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold">Smart Photo Culling</h1>
+            <h1 className="text-2xl font-bold editorial-headline">Smart Photo Culling</h1>
             <p className="text-white/50">AI selects your best shots from large batches</p>
           </div>
         </div>
@@ -357,7 +357,7 @@ function CullingResults({
   };
 
   return (
-    <div className="min-h-screen bg-[#0F0F0F] text-white p-6">
+    <div className="min-h-screen bg-charcoal-deep text-white p-6">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
@@ -366,7 +366,7 @@ function CullingResults({
               <CheckCircle className="w-8 h-8 text-green-400" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold">Culling Complete</h1>
+              <h1 className="text-2xl font-bold editorial-headline">Culling Complete</h1>
               <p className="text-white/50">
                 {localSelected.size} of {result.summary.totalPhotos} photos selected
               </p>
@@ -543,7 +543,7 @@ function CullingInterface({
   }
 
   return (
-    <div className="min-h-screen bg-[#0F0F0F] text-white p-6">
+    <div className="min-h-screen bg-charcoal-deep text-white p-6">
       <div className="max-w-4xl mx-auto">
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
@@ -552,7 +552,7 @@ function CullingInterface({
               <Scissors className="w-8 h-8 text-purple-400" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold">Smart Photo Culling</h1>
+              <h1 className="text-2xl font-bold editorial-headline">Smart Photo Culling</h1>
               <p className="text-white/50">{listingTitle}</p>
             </div>
           </div>
@@ -768,7 +768,7 @@ function PhotoCullingContent() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#0F0F0F] flex items-center justify-center">
+      <div className="min-h-screen bg-charcoal-deep flex items-center justify-center">
         <Loader2 className="w-8 h-8 animate-spin text-purple-400" />
       </div>
     );
@@ -791,7 +791,7 @@ function PhotoCullingContent() {
 export default function PhotoCullingPage() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen bg-[#0F0F0F] flex items-center justify-center">
+      <div className="min-h-screen bg-charcoal-deep flex items-center justify-center">
         <Loader2 className="w-8 h-8 animate-spin text-purple-400" />
       </div>
     }>

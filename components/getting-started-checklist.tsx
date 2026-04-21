@@ -82,7 +82,7 @@ export function GettingStartedChecklist({ hasListings, hasBrand, hasSocials, has
         onClick={() => setIsOpen(!isOpen)}
         className="flex items-center gap-3 px-4 py-3 glass-gold-luxury glossy-top rounded-xl cursor-pointer hover:opacity-90 transition-opacity"
       >
-        <div className="w-8 h-8 rounded-lg bg-[#D4A017] flex items-center justify-center flex-shrink-0">
+        <div className="w-8 h-8 rounded-lg bg-accent-gold flex items-center justify-center flex-shrink-0">
           <Sparkles className="w-4 h-4 text-black" />
         </div>
         <div className="flex-1 min-w-0">
@@ -94,7 +94,7 @@ export function GettingStartedChecklist({ hasListings, hasBrand, hasSocials, has
           {items.map((item, i) => (
             <div
               key={i}
-              className={`w-2 h-2 rounded-full transition-colors ${item.done ? 'bg-[#D4A017]' : 'bg-white/15'}`}
+              className={`w-2 h-2 rounded-full transition-colors ${item.done ? 'bg-accent-gold' : 'bg-white/15'}`}
             />
           ))}
         </div>

@@ -71,3 +71,26 @@ public/explainer-video.mp4
 public/explainer-frames/
 public/explainer-voiceover.mp3
 docs/EXPLAINER_VIDEO_SCRIPT.md
+
+# Financial models and local documents
+*.xlsx
+*.~lock.*
+
+# Graphify output (generated artifact)
+graphify-out/
+
+# Auth state (Playwright e2e)
+e2e/.auth/
+
+# Backup and archive files
+*.bak
+*.bak2
+*.archive
+
+# Docs images (generated)
+docs/*.png
+docs/*.jpg
+
+# Playwright reports and test results
+playwright-report/
+test-results/

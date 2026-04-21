@@ -11,7 +11,7 @@ export default function Article() {
           <p><strong className="text-on-surface">2.</strong> Enter the property address and name</p>
           <p><strong className="text-on-surface">3.</strong> Drag & drop photos (JPG, PNG, HEIC up to 50MB)</p>
           <p><strong className="text-on-surface">4.</strong> Click any photo to open the Studio</p>
-          <div className="bg-surface-container-low rounded-xl p-4 border border-[#D4A017]/30 mt-6">
+          <div className="bg-surface-container-low rounded-xl p-4 border border-primary/30 mt-6">
             <p className="text-primary">💡 Upload high-resolution photos for best AI results.</p>
           </div>
         </div>

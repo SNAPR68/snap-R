@@ -659,18 +659,18 @@ export function StudioClient({ listingId, userRole, showMlsFeatures = false, cre
   return (
     <>
     {/* Mobile gate — studio requires desktop */}
-    <div className="md:hidden flex flex-col items-center justify-center min-h-screen bg-[#0A0A0A] p-6 text-center">
-      <Monitor className="w-16 h-16 text-[#D4A017] mb-4" />
+    <div className="md:hidden flex flex-col items-center justify-center min-h-screen bg-surface p-6 text-center">
+      <Monitor className="w-16 h-16 text-primary mb-4" />
       <h2 className="text-xl font-bold text-white mb-2">Desktop Required</h2>
       <p className="text-white/60 mb-6 max-w-sm">
         The photo editing studio requires a desktop or tablet screen for the best experience.
       </p>
-      <Link href="/dashboard" className="px-6 py-3 bg-[#D4A017] text-black font-semibold rounded-lg hover:bg-[#B8860B] transition-colors">
+      <Link href="/dashboard" className="px-6 py-3 bg-accent-gold text-black font-semibold rounded-lg hover:bg-accent-gold transition-colors">
         Back to Dashboard
       </Link>
     </div>
 
-    <div className="hidden md:flex h-screen bg-[#0F0F0F] text-white flex-col overflow-hidden">
+    <div className="hidden md:flex h-screen bg-charcoal-deep text-white flex-col overflow-hidden">
       {prepareProgress && (
         <div className="fixed inset-0 z-50 bg-black/90 backdrop-blur-sm flex items-center justify-center">
           <div className="glass-luxury glossy-top rounded-2xl p-8 max-w-md w-full mx-4 text-center">
@@ -722,7 +722,7 @@ export function StudioClient({ listingId, userRole, showMlsFeatures = false, cre
       )}
       <header className="h-14 border-b border-white/10 flex items-center justify-between px-4 flex-shrink-0" style={{ background: 'linear-gradient(90deg, rgba(15,15,15,0.98) 0%, rgba(20,20,20,0.98) 100%)', backdropFilter: 'blur(24px)' }}>
         <div className="flex items-center gap-3">
-          <Link href="/" className="flex items-center gap-2"><div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#D4A017] to-[#B8860B] flex items-center justify-center font-bold text-black text-sm">S</div></Link>
+          <Link href="/" className="flex items-center gap-2"><div className="w-8 h-8 rounded-lg bg-gradient-to-br from-gold to-gold-dark flex items-center justify-center font-bold text-black text-sm">S</div></Link>
           <div className="h-6 w-px bg-white/20 mx-1" />
           <nav className="flex items-center gap-1 text-sm text-white/40">
             <Link href="/dashboard" className="hover:text-white transition-colors">Dashboard</Link>
@@ -732,10 +732,10 @@ export function StudioClient({ listingId, userRole, showMlsFeatures = false, cre
             <span className="text-white truncate max-w-[180px]">{listing?.title || 'Studio'}</span>
           </nav>
           {listingStyle && (
-            <button onClick={() => setListingStyle(null)} className="flex items-center gap-2 ml-2 px-2 py-1 bg-[#D4A017]/20 border border-[#D4A017]/40 rounded-lg hover:bg-[#D4A017]/30 transition-colors group">
-              <div className="w-2 h-2 bg-[#D4A017] rounded-full"></div>
-              <span className="text-xs text-[#D4A017]">Style Applied</span>
-              <span className="text-xs text-[#D4A017]/60 group-hover:text-[#D4A017]">✕</span>
+            <button onClick={() => setListingStyle(null)} className="flex items-center gap-2 ml-2 px-2 py-1 bg-accent-gold/20 border border-primary/40 rounded-lg hover:bg-accent-gold/30 transition-colors group">
+              <div className="w-2 h-2 bg-accent-gold rounded-full"></div>
+              <span className="text-xs text-primary">Style Applied</span>
+              <span className="text-xs text-primary/60 group-hover:text-primary">✕</span>
             </button>
           )}
         </div>
@@ -746,7 +746,7 @@ export function StudioClient({ listingId, userRole, showMlsFeatures = false, cre
                 <CheckCircle className="w-4 h-4" />
                 <span>Prepared</span>
                 <span className="text-xs opacity-70">{listingStatus.confidence}%</span>
-                <div className="absolute top-full left-0 mt-2 p-3 bg-[#1A1A1A] border border-white/10 rounded-lg shadow-xl opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50">
+                <div className="absolute top-full left-0 mt-2 p-3 bg-surface-container-high border border-white/10 rounded-lg shadow-xl opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50">
                   <p className="text-xs text-white/60 mb-1">AI Confidence Score</p>
                   <p className="text-sm font-bold text-green-400">{listingStatus.confidence}% Match</p>
                   <p className="text-xs text-white/40 mt-1">MLS export enabled</p>
@@ -766,7 +766,7 @@ export function StudioClient({ listingId, userRole, showMlsFeatures = false, cre
             <div className="relative">
               {showGuidedTip && !preparingListing && photos.length > 0 && (
                 <div className="absolute -top-2 left-1/2 -translate-x-1/2 -translate-y-full z-20 w-64">
-                  <div className="bg-gradient-to-r from-[#D4A017] to-[#B8860B] text-black rounded-xl p-3 shadow-lg shadow-[#D4A017]/20 relative">
+                  <div className="bg-gradient-to-r from-gold to-gold-dark text-black rounded-xl p-3 shadow-lg shadow-gold/20 relative">
                     <div className="flex items-start gap-2">
                       <Sparkles className="w-4 h-4 mt-0.5 flex-shrink-0" />
                       <p className="text-sm font-medium">Click here to AI-prepare your listing — it enhances all photos automatically!</p>
@@ -775,13 +775,13 @@ export function StudioClient({ listingId, userRole, showMlsFeatures = false, cre
                       <X className="w-3.5 h-3.5" />
                     </button>
                     <div className="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-full">
-                      <div className="w-0 h-0 border-l-[8px] border-l-transparent border-r-[8px] border-r-transparent border-t-[8px] border-t-[#B8860B]" />
+                      <div className="w-0 h-0 border-l-[8px] border-l-transparent border-r-[8px] border-r-transparent border-t-[8px] border-t-accent-gold-dark" />
                     </div>
                   </div>
                 </div>
               )}
               <div className="flex items-center">
-                <button onClick={() => { handlePrepareListing(); setShowGuidedTip(false); }} disabled={preparingListing || photos.length === 0} className={`flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 rounded-l-lg text-sm text-white font-medium disabled:opacity-50 disabled:cursor-not-allowed ${showGuidedTip && photos.length > 0 ? 'ring-2 ring-[#D4A017]/50 ring-offset-1 ring-offset-[#0A0A0A]' : ''}`}>
+                <button onClick={() => { handlePrepareListing(); setShowGuidedTip(false); }} disabled={preparingListing || photos.length === 0} className={`flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 rounded-l-lg text-sm text-white font-medium disabled:opacity-50 disabled:cursor-not-allowed ${showGuidedTip && photos.length > 0 ? 'ring-2 ring-accent-gold/50 ring-offset-1 ring-offset-surface' : ''}`}>
                   {preparingListing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Rocket className="w-4 h-4" />}
                   {preparingListing ? 'Preparing...' : 'AI Prepare'}
                 </button>
@@ -796,15 +796,15 @@ export function StudioClient({ listingId, userRole, showMlsFeatures = false, cre
             value={marketingStatus || ''} 
             onChange={(e) => handleMarketingStatusChange(e.target.value)}
             disabled={changingStatus}
-            className="px-3 py-2 bg-[#D4A017]/20 border border-[#D4A017]/40 rounded-lg text-sm text-[#D4A017] cursor-pointer hover:bg-[#D4A017]/30 transition-colors disabled:opacity-50"
+            className="px-3 py-2 bg-accent-gold/20 border border-primary/40 rounded-lg text-sm text-primary cursor-pointer hover:bg-accent-gold/30 transition-colors disabled:opacity-50"
           >
-            <option value="" className="bg-[#1A1A1A] text-white">Set Status</option>
-            <option value="coming_soon" className="bg-[#1A1A1A] text-white">Coming Soon</option>
-            <option value="active" className="bg-[#1A1A1A] text-white">Active</option>
-            <option value="price_drop" className="bg-[#1A1A1A] text-white">Price Drop</option>
-            <option value="open_house" className="bg-[#1A1A1A] text-white">Open House</option>
-            <option value="under_contract" className="bg-[#1A1A1A] text-white">Under Contract</option>
-            <option value="sold" className="bg-[#1A1A1A] text-white">Sold</option>
+            <option value="" className="bg-surface-container-high text-white">Set Status</option>
+            <option value="coming_soon" className="bg-surface-container-high text-white">Coming Soon</option>
+            <option value="active" className="bg-surface-container-high text-white">Active</option>
+            <option value="price_drop" className="bg-surface-container-high text-white">Price Drop</option>
+            <option value="open_house" className="bg-surface-container-high text-white">Open House</option>
+            <option value="under_contract" className="bg-surface-container-high text-white">Under Contract</option>
+            <option value="sold" className="bg-surface-container-high text-white">Sold</option>
           </select>
           <a href={`/dashboard/listing-intelligence?listing=${listingId}`} className="flex items-center gap-2 px-3 py-2 bg-purple-500/20 border border-purple-500/40 rounded-lg text-sm text-purple-300"><Brain className="w-4 h-4" /> AI Analysis</a>
           <button onClick={() => setShowMlsExport(true)} style={showMlsFeatures ? {} : {display: "none"}} disabled={completedPhotos.length === 0 || (listingStatus?.status !== 'prepared' && listingStatus?.status !== 'needs_review')} className="flex items-center gap-2 px-3 py-2 bg-white/10 hover:bg-white/20 rounded-lg text-sm disabled:opacity-50" title={listingStatus?.status !== 'prepared' ? 'Prepare listing first' : ''}><FileArchive className="w-4 h-4" /> MLS Export</button>
@@ -817,7 +817,7 @@ export function StudioClient({ listingId, userRole, showMlsFeatures = false, cre
           {marketingListingStatus === 'completed' && (
             <Link href={`/dashboard/content-studio/create-all?listing=${listingId}&prefill=marketing`} className="flex items-center gap-2 px-3 py-2 bg-emerald-500/20 border border-emerald-500/40 rounded-lg text-sm text-emerald-300 hover:bg-emerald-500/30 transition-colors"><Sparkles className="w-4 h-4" /> Create Social Post</Link>
           )}
-          <label className="flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-[#D4A017] to-[#B8860B] rounded-lg cursor-pointer text-black font-medium text-sm"><Upload className="w-4 h-4" /> Upload<input type="file" multiple accept="image/*" onChange={handleUpload} className="hidden" /></label>
+          <label className="flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-gold to-gold-dark rounded-lg cursor-pointer text-black font-medium text-sm"><Upload className="w-4 h-4" /> Upload<input type="file" multiple accept="image/*" onChange={handleUpload} className="hidden" /></label>
         </div>
       </header>
 
@@ -830,10 +830,10 @@ export function StudioClient({ listingId, userRole, showMlsFeatures = false, cre
       <div className="flex-1 flex min-h-0">
         <aside className="w-[240px] border-r border-white/10 flex flex-col flex-shrink-0" style={{ background: 'linear-gradient(180deg, rgba(18,18,18,0.99) 0%, rgba(12,12,12,1) 100%)', backdropFilter: 'blur(24px)' }}>
           <div className="flex-1 overflow-y-auto p-3">
-            <h2 className="text-base font-bold text-[#D4A017] mb-4 tracking-wider">AI TOOLS</h2>
+            <h2 className="text-base font-bold text-primary mb-4 tracking-wider">AI TOOLS</h2>
             {categories.map(category => (
               <div key={category} className="mb-3">
-                <button onClick={() => setExpandedCategories(prev => prev.includes(category) ? prev.filter(c => c !== category) : [...prev, category])} className="flex items-center justify-between w-full text-sm font-bold text-[#D4A017] mb-2 tracking-wide">
+                <button onClick={() => setExpandedCategories(prev => prev.includes(category) ? prev.filter(c => c !== category) : [...prev, category])} className="flex items-center justify-between w-full text-sm font-bold text-primary mb-2 tracking-wide">
                   {category}
                   {expandedCategories.includes(category) ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
                 </button>
@@ -850,11 +850,11 @@ export function StudioClient({ listingId, userRole, showMlsFeatures = false, cre
                             <p className="text-[10px] text-white/40 mb-2 uppercase">Select Style</p>
                             <div className="grid grid-cols-2 gap-1.5">
                               {currentPresets.map(preset => (
-                                <button key={preset.id} onClick={() => setSelectedPreset(preset)} className={`relative aspect-[4/3] rounded overflow-hidden border-2 transition-all ${selectedPreset?.id === preset.id ? 'border-[#D4A017] ring-1 ring-[#D4A017]/50' : 'border-transparent hover:border-white/30'}`}>
+                                <button key={preset.id} onClick={() => setSelectedPreset(preset)} className={`relative aspect-[4/3] rounded overflow-hidden border-2 transition-all ${selectedPreset?.id === preset.id ? 'border-primary ring-1 ring-accent-gold/50' : 'border-transparent hover:border-white/30'}`}>
                                   <Image src={preset.thumbnail || ''} alt={preset.name} className="w-full h-full object-cover" width={400} height={300} unoptimized />
                                   <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent" />
                                   <span className="absolute bottom-0.5 left-0.5 right-0.5 text-[9px] font-medium text-white truncate">{preset.name}</span>
-                                  {selectedPreset?.id === preset.id && <div className="absolute top-0.5 right-0.5 w-4 h-4 bg-[#D4A017] rounded-full flex items-center justify-center"><Check className="w-2.5 h-2.5 text-black" /></div>}
+                                  {selectedPreset?.id === preset.id && <div className="absolute top-0.5 right-0.5 w-4 h-4 bg-accent-gold rounded-full flex items-center justify-center"><Check className="w-2.5 h-2.5 text-black" /></div>}
                                 </button>
                               ))}
                             </div>
@@ -868,11 +868,11 @@ export function StudioClient({ listingId, userRole, showMlsFeatures = false, cre
             ))}
           </div>
           <div className="p-3 border-t border-white/10 space-y-2">
-            <button onClick={() => selectedTool && handleEnhance(selectedTool)} disabled={!selectedPhoto || !selectedTool || processing || (currentTool?.hasPresets && !selectedPreset)} className="w-full flex items-center justify-center gap-2 px-3 py-3 bg-gradient-to-r from-[#D4A017] to-[#B8860B] rounded-lg text-sm text-black font-bold disabled:opacity-50 disabled:cursor-not-allowed">
+            <button onClick={() => selectedTool && handleEnhance(selectedTool)} disabled={!selectedPhoto || !selectedTool || processing || (currentTool?.hasPresets && !selectedPreset)} className="w-full flex items-center justify-center gap-2 px-3 py-3 bg-gradient-to-r from-gold to-gold-dark rounded-lg text-sm text-black font-bold disabled:opacity-50 disabled:cursor-not-allowed">
               {processing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
               {!selectedTool ? 'Select Tool' : currentTool?.hasPresets && !selectedPreset ? 'Select Style' : selectedPreset ? `Apply ${selectedPreset.name}` : 'Enhance Now'}
             </button>
-            <button onClick={() => setShowHumanEditModal(true)} disabled={!selectedPhoto} className="w-full flex items-center justify-center gap-2 px-3 py-2 bg-[#D4A017]/10 hover:bg-[#D4A017]/20 border border-[#D4A017]/30 rounded-lg text-sm text-[#D4A017] disabled:opacity-50 disabled:cursor-not-allowed"><UserCheck className="w-4 h-4" /> Request Human Edit</button>
+            <button onClick={() => setShowHumanEditModal(true)} disabled={!selectedPhoto} className="w-full flex items-center justify-center gap-2 px-3 py-2 bg-accent-gold/10 hover:bg-accent-gold/20 border border-primary/30 rounded-lg text-sm text-primary disabled:opacity-50 disabled:cursor-not-allowed"><UserCheck className="w-4 h-4" /> Request Human Edit</button>
             <button onClick={handleDeleteListing} className="w-full flex items-center justify-center gap-2 px-3 py-2 text-red-400 hover:bg-red-500/10 rounded-lg text-sm"><Trash2 className="w-4 h-4" /> Delete Listing</button>
             <button onClick={async () => { await supabase.auth.signOut(); window.location.href = '/'; }} className="w-full flex items-center justify-center gap-2 px-3 py-2 bg-white/5 hover:bg-white/10 rounded-lg text-sm text-white/60"><LogOut className="w-4 h-4" /> Sign Out</button>
           </div>
@@ -881,7 +881,7 @@ export function StudioClient({ listingId, userRole, showMlsFeatures = false, cre
         <main className="flex-1 flex flex-col p-4 min-w-0">
           {selectedPhoto ? (
             <>
-              <div className="flex-1 relative flex items-center justify-center bg-[#060606] rounded-xl overflow-hidden min-h-0 border border-white/5">
+              <div className="flex-1 relative flex items-center justify-center bg-surface rounded-xl overflow-hidden min-h-0 border border-white/5">
                 {pendingEnhancement ? (
                   <div className="absolute inset-0 cursor-ew-resize select-none" onMouseDown={(e) => { const rect = e.currentTarget.getBoundingClientRect(); const updatePosition = (clientX: number) => { const x = Math.max(0, Math.min(clientX - rect.left, rect.width)); setSliderPosition((x / rect.width) * 100); }; updatePosition(e.clientX); const onMouseMove = (event: MouseEvent) => updatePosition(event.clientX); const onMouseUp = () => { window.removeEventListener('mousemove', onMouseMove); window.removeEventListener('mouseup', onMouseUp); }; window.addEventListener('mousemove', onMouseMove); window.addEventListener('mouseup', onMouseUp); }}>
                     <Image src={pendingEnhancement.enhancedUrl || ''} alt="Enhanced" className="absolute inset-0 w-full h-full object-contain" style={{ filter: filterStyle, opacity: adjustments.intensity / 100 }} draggable={false} width={400} height={300} unoptimized />
@@ -900,13 +900,13 @@ export function StudioClient({ listingId, userRole, showMlsFeatures = false, cre
                 ) : (
                   <Image src={selectedPhoto.signedRawUrl || ''} alt="Selected" className="max-w-full max-h-full object-contain" width={400} height={300} unoptimized />
                 )}
-                {processing && <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center"><Loader2 className="w-10 h-10 animate-spin text-[#D4A017] mb-2" /><p>Processing...</p></div>}
+                {processing && <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center"><Loader2 className="w-10 h-10 animate-spin text-primary mb-2" /><p>Processing...</p></div>}
               </div>
               {pendingEnhancement && <AdjustmentPanel adjustments={adjustments} setAdjustments={setAdjustments} showFineTune={showFineTune} setShowFineTune={setShowFineTune} onDiscard={() => { setPendingEnhancement(null); setAdjustments({ intensity: 100, brightness: 0, contrast: 0, saturation: 0, warmth: 0 }); }} onAccept={handleAcceptEnhancement} onDownload={handleDownloadPending} />}
               <div className="flex gap-2 mt-3 overflow-x-auto py-1 flex-shrink-0">
                 {photos.map(photo => (
                   <div key={photo.id} className="relative flex-shrink-0 group">
-                    <button onClick={() => { setSelectedPhoto(photo); setPendingEnhancement(null); setAdjustments({ intensity: 100, brightness: 0, contrast: 0, saturation: 0, warmth: 0 }); }} className={`w-16 h-16 rounded-lg overflow-hidden border-2 ${selectedPhoto?.id === photo.id ? 'border-[#D4A017]' : 'border-transparent hover:border-white/30'} relative`}><Image src={photo.signedRawUrl || ''} alt="" className="w-full h-full object-cover" style={{ filter: listingStyleFilter }} width={400} height={300} unoptimized />{listingStatus?.heroPhotoId === photo.id && <div className="absolute -top-1 -left-1 w-5 h-5 bg-[#D4A017] rounded-full flex items-center justify-center" title="AI-selected hero photo"><Star className="w-3 h-3 text-black fill-black" /></div>}</button>
+                    <button onClick={() => { setSelectedPhoto(photo); setPendingEnhancement(null); setAdjustments({ intensity: 100, brightness: 0, contrast: 0, saturation: 0, warmth: 0 }); }} className={`w-16 h-16 rounded-lg overflow-hidden border-2 ${selectedPhoto?.id === photo.id ? 'border-primary' : 'border-transparent hover:border-white/30'} relative`}><Image src={photo.signedRawUrl || ''} alt="" className="w-full h-full object-cover" style={{ filter: listingStyleFilter }} width={400} height={300} unoptimized />{listingStatus?.heroPhotoId === photo.id && <div className="absolute -top-1 -left-1 w-5 h-5 bg-accent-gold rounded-full flex items-center justify-center" title="AI-selected hero photo"><Star className="w-3 h-3 text-black fill-black" /></div>}</button>
                     <button onClick={e => { e.stopPropagation(); handleDeletePhoto(photo.id, photo.raw_url); }} className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 rounded-full items-center justify-center text-white hidden group-hover:flex"><X className="w-3 h-3" /></button>
                   </div>
                 ))}
@@ -929,7 +929,7 @@ export function StudioClient({ listingId, userRole, showMlsFeatures = false, cre
             <div className="flex items-center justify-between mb-3">
               <h2 className="text-xs font-semibold text-white/40">READY FOR DOWNLOAD</h2>
               {completedPhotos.length > 1 && (
-                <button onClick={handleDownloadAll} disabled={zipLoading} className="flex items-center gap-1 px-2 py-1 bg-[#D4A017] hover:bg-[#B8860B] rounded text-[10px] text-black font-bold disabled:opacity-50">
+                <button onClick={handleDownloadAll} disabled={zipLoading} className="flex items-center gap-1 px-2 py-1 bg-accent-gold hover:bg-accent-gold rounded text-[10px] text-black font-bold disabled:opacity-50">
                   {zipLoading ? <Loader2 className="w-3 h-3 animate-spin" /> : <FileArchive className="w-3 h-3" />} ZIP
                 </button>
               )}
@@ -944,12 +944,12 @@ export function StudioClient({ listingId, userRole, showMlsFeatures = false, cre
                     <div className="aspect-video relative">
                       <Image src={photo.signedProcessedUrl || ''} alt="" className="w-full h-full object-cover" width={400} height={300} unoptimized />
                       {photo.variant && (
-                        <div className="absolute top-1 left-1 px-1.5 py-0.5 bg-[#D4A017] rounded text-[10px] text-black capitalize">
+                        <div className="absolute top-1 left-1 px-1.5 py-0.5 bg-accent-gold rounded text-[10px] text-black capitalize">
                           {photo.variant.replace(/-/g, ' ')}
                         </div>
                       )}
                     </div>
-                    <button onClick={() => handleDownload(photo.id, `enhanced-${photo.variant || 'photo'}-${photo.id.slice(0,6)}.jpg`)} className="w-full flex items-center justify-center gap-1 px-2 py-1.5 bg-gradient-to-r from-[#D4A017] to-[#B8860B] text-black text-xs font-medium"><Download className="w-3 h-3" /> Download</button>
+                    <button onClick={() => handleDownload(photo.id, `enhanced-${photo.variant || 'photo'}-${photo.id.slice(0,6)}.jpg`)} className="w-full flex items-center justify-center gap-1 px-2 py-1.5 bg-gradient-to-r from-gold to-gold-dark text-black text-xs font-medium"><Download className="w-3 h-3" /> Download</button>
                   </div>
                 ))}
               </div>
@@ -965,11 +965,11 @@ export function StudioClient({ listingId, userRole, showMlsFeatures = false, cre
             <p className="text-white/60 text-sm mb-4">Send this link to get instant approval before downloading.</p>
             <div className="flex gap-2 mb-4">
               <input type="text" value={shareLink} readOnly placeholder={shareLoading ? 'Generating link...' : 'Share link will appear here'} className="flex-1 px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-sm" />
-              <button onClick={copyLink} disabled={!shareLink} className="px-4 py-3 bg-[#D4A017] rounded-xl text-black disabled:opacity-50">{copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}</button>
+              <button onClick={copyLink} disabled={!shareLink} className="px-4 py-3 bg-accent-gold rounded-xl text-black disabled:opacity-50">{copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}</button>
             </div>
             <div className="space-y-2 text-sm">
-              <label className="flex items-center gap-3 p-3 bg-white/5 rounded-lg cursor-pointer"><input type="checkbox" checked={shareOptions.allowDownload} onChange={(e) => setShareOptions((prev) => ({ ...prev, allowDownload: e.target.checked }))} className="accent-[#D4A017]" /><span>Allow client to download</span></label>
-              <label className="flex items-center gap-3 p-3 bg-white/5 rounded-lg cursor-pointer"><input type="checkbox" checked={shareOptions.showComparison} onChange={(e) => setShareOptions((prev) => ({ ...prev, showComparison: e.target.checked }))} className="accent-[#D4A017]" /><span>Show before/after comparison</span></label>
+              <label className="flex items-center gap-3 p-3 bg-white/5 rounded-lg cursor-pointer"><input type="checkbox" checked={shareOptions.allowDownload} onChange={(e) => setShareOptions((prev) => ({ ...prev, allowDownload: e.target.checked }))} className="accent-accent-gold" /><span>Allow client to download</span></label>
+              <label className="flex items-center gap-3 p-3 bg-white/5 rounded-lg cursor-pointer"><input type="checkbox" checked={shareOptions.showComparison} onChange={(e) => setShareOptions((prev) => ({ ...prev, showComparison: e.target.checked }))} className="accent-accent-gold" /><span>Show before/after comparison</span></label>
             </div>
             <button onClick={() => setShowShareModal(false)} className="w-full mt-4 py-3 border border-white/20 rounded-xl">Close</button>
           </div>

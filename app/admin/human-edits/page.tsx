@@ -36,7 +36,7 @@ export default async function AdminHumanEdits() {
         </div>
       </div>
 
-      <div className="bg-[#1A1A1A] border border-white/10 rounded-xl overflow-hidden">
+      <div className="bg-surface-container-high border border-white/10 rounded-xl overflow-hidden">
         <table className="w-full">
           <thead className="bg-white/5">
             <tr>
@@ -60,7 +60,7 @@ export default async function AdminHumanEdits() {
                   </td>
                   <td className="p-4">
                     {order.photo_url && (
-                      <a href={order.photo_url} target="_blank" className="text-[#D4A017] hover:underline text-sm">
+                      <a href={order.photo_url} target="_blank" className="text-primary hover:underline text-sm">
                         View Photo →
                       </a>
                     )}

@@ -70,7 +70,7 @@ export function GuideRequestForm({ source, variant = 'card' }: GuideRequestFormP
     return (
       <div className="max-w-md mx-auto text-center">
         <p className="text-white/60 text-sm mb-3 flex items-center justify-center gap-2">
-          <BookOpen className="w-4 h-4 text-[#D4A017]" />
+          <BookOpen className="w-4 h-4 text-primary" />
           Get our free Real Estate Marketing Guide
         </p>
         <form onSubmit={handleSubmit} className="flex gap-2">
@@ -81,12 +81,12 @@ export function GuideRequestForm({ source, variant = 'card' }: GuideRequestFormP
             placeholder="Enter your email"
             required
             aria-label="Email address"
-            className="flex-1 px-4 py-2.5 bg-white/5 border border-white/20 rounded-lg text-white text-sm placeholder-white/40 focus:border-[#D4A017] focus:outline-none transition-colors"
+            className="flex-1 px-4 py-2.5 bg-white/5 border border-white/20 rounded-lg text-white text-sm placeholder-white/40 focus:border-primary focus:outline-none transition-colors"
           />
           <button
             type="submit"
             disabled={loading}
-            className="px-5 py-2.5 bg-gradient-to-r from-[#D4A017] to-[#B8860B] text-black font-semibold text-sm rounded-lg hover:opacity-90 transition-opacity whitespace-nowrap disabled:opacity-50"
+            className="px-5 py-2.5 bg-gradient-to-r from-gold to-gold-dark text-black font-semibold text-sm rounded-lg hover:opacity-90 transition-opacity whitespace-nowrap disabled:opacity-50"
           >
             {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Send Guide'}
           </button>
@@ -100,8 +100,8 @@ export function GuideRequestForm({ source, variant = 'card' }: GuideRequestFormP
   return (
     <div className="glass-luxury glossy-top rounded-2xl p-6 md:p-8">
       <div className="flex items-center gap-3 mb-4">
-        <div className="w-10 h-10 rounded-xl bg-[#D4A017]/20 flex items-center justify-center">
-          <BookOpen className="w-5 h-5 text-[#D4A017]" />
+        <div className="w-10 h-10 rounded-xl bg-accent-gold/20 flex items-center justify-center">
+          <BookOpen className="w-5 h-5 text-primary" />
         </div>
         <div>
           <p className="text-white font-semibold text-sm">Free Download</p>
@@ -116,7 +116,7 @@ export function GuideRequestForm({ source, variant = 'card' }: GuideRequestFormP
           onChange={(e) => setName(e.target.value)}
           placeholder="Your name (optional)"
           aria-label="Your name"
-          className="w-full px-4 py-3 bg-white/5 border border-white/20 rounded-xl text-white text-sm placeholder-white/40 focus:border-[#D4A017] focus:outline-none transition-colors"
+          className="w-full px-4 py-3 bg-white/5 border border-white/20 rounded-xl text-white text-sm placeholder-white/40 focus:border-primary focus:outline-none transition-colors"
         />
         <input
           type="email"
@@ -125,12 +125,12 @@ export function GuideRequestForm({ source, variant = 'card' }: GuideRequestFormP
           placeholder="Your email address"
           required
           aria-label="Email address"
-          className="w-full px-4 py-3 bg-white/5 border border-white/20 rounded-xl text-white text-sm placeholder-white/40 focus:border-[#D4A017] focus:outline-none transition-colors"
+          className="w-full px-4 py-3 bg-white/5 border border-white/20 rounded-xl text-white text-sm placeholder-white/40 focus:border-primary focus:outline-none transition-colors"
         />
         <button
           type="submit"
           disabled={loading}
-          className="w-full py-3 bg-gradient-to-r from-[#D4A017] to-[#B8860B] text-black font-bold text-sm rounded-xl hover:opacity-90 transition-opacity disabled:opacity-50 flex items-center justify-center gap-2"
+          className="w-full py-3 bg-gradient-to-r from-gold to-gold-dark text-black font-bold text-sm rounded-xl hover:opacity-90 transition-opacity disabled:opacity-50 flex items-center justify-center gap-2"
         >
           {loading ? (
             <>

@@ -348,23 +348,23 @@ export default function StatusPage() {
         <h3 className="text-white font-semibold">About This Page</h3>
         <ul className="space-y-2 text-white/60 text-sm">
           <li className="flex gap-2">
-            <span className="text-[#D4A017]">•</span>
+            <span className="text-primary">•</span>
             <span>Status updates automatically every 30 seconds</span>
           </li>
           <li className="flex gap-2">
-            <span className="text-[#D4A017]">•</span>
+            <span className="text-primary">•</span>
             <span>Green: Service is operating normally</span>
           </li>
           <li className="flex gap-2">
-            <span className="text-[#D4A017]">•</span>
+            <span className="text-primary">•</span>
             <span>Yellow: Service has degraded performance or partial outage</span>
           </li>
           <li className="flex gap-2">
-            <span className="text-[#D4A017]">•</span>
+            <span className="text-primary">•</span>
             <span>Red: Service is down or unavailable</span>
           </li>
           <li className="flex gap-2">
-            <span className="text-[#D4A017]">•</span>
+            <span className="text-primary">•</span>
             <span>Gray: Service status cannot be determined or is not monitored</span>
           </li>
         </ul>

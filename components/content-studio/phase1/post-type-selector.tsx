@@ -93,8 +93,8 @@ export const POST_TYPES: PostTypeConfig[] = [
     name: 'Just Sold',
     icon: PartyPopper,
     description: 'Celebrate a closed deal',
-    color: 'text-[#D4AF37]',
-    bgColor: 'bg-[#D4AF37]/20 border-[#D4AF37]/30',
+    color: 'text-accent-gold',
+    bgColor: 'bg-accent-gold/20 border-accent-gold/30',
     captionPrefix: '🎉 JUST SOLD',
     hashtagSuffix: ['JustSold', 'Sold', 'ClosedDeal', 'AnotherOneSOLD']
   }
@@ -143,8 +143,8 @@ export const TONE_TYPES: ToneConfig[] = [
     name: 'Luxury',
     icon: Crown,
     description: 'Exclusive, sophisticated',
-    color: 'text-[#D4AF37]',
-    bgColor: 'bg-[#D4AF37]/20 border-[#D4AF37]/30',
+    color: 'text-accent-gold',
+    bgColor: 'bg-accent-gold/20 border-accent-gold/30',
     promptModifier: 'luxurious, sophisticated, and exclusive tone. Use elevated vocabulary. Emphasize prestige, craftsmanship, and exclusivity. Avoid common phrases.',
     examplePhrase: 'A rare offering of unparalleled elegance...'
   },

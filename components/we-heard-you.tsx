@@ -42,7 +42,7 @@ const VOICES = [
     quote: 'Only 35% of agents use professional photographers — yet properties with professional photos sell 50% faster and get 118% more online views.',
     source: 'NAR Research',
     platform: 'Survey',
-    platformClass: 'bg-[#D4A017]/15 text-[#D4A017]',
+    platformClass: 'bg-accent-gold/15 text-primary',
     category: 'Photography Gap',
   },
   {
@@ -63,7 +63,7 @@ const VOICES = [
     quote: 'Listings with video receive 403% more inquiries compared to those without.',
     source: 'Digital Agency Network',
     platform: 'Survey',
-    platformClass: 'bg-[#D4A017]/15 text-[#D4A017]',
+    platformClass: 'bg-accent-gold/15 text-primary',
     category: 'Video Gap',
   },
   {
@@ -77,7 +77,7 @@ const VOICES = [
     quote: '73% of homeowners prefer agents who use video marketing — yet only 63% of agents use video at all, and just 26% use YouTube.',
     source: 'NAR Research',
     platform: 'Survey',
-    platformClass: 'bg-[#D4A017]/15 text-[#D4A017]',
+    platformClass: 'bg-accent-gold/15 text-primary',
     category: 'Video Gap',
   },
   {
@@ -142,16 +142,16 @@ export function WeHeardYou() {
   const voice = VOICES[current];
 
   return (
-    <section className="py-16 px-6 bg-[#0A0A0A]">
+    <section className="py-16 px-6 bg-surface">
       <div className="max-w-4xl mx-auto">
         {/* Header */}
         <div className="text-center mb-8">
-          <p className="text-[#D4A017] text-xs font-semibold tracking-widest uppercase mb-2">
+          <p className="text-primary text-xs font-semibold tracking-widest uppercase mb-2">
             The Industry Problem
           </p>
           <h2 className="text-3xl md:text-4xl font-bold text-white mb-3">
             We Heard You.{' '}
-            <span className="text-[#D4A017]">That&apos;s Why We Built SnapR.</span>
+            <span className="text-primary">That&apos;s Why We Built SnapR.</span>
           </h2>
           <p className="text-white/50 text-base max-w-xl mx-auto">
             From Reddit threads to industry surveys — photographers and agents have been screaming about the same problems for years.
@@ -166,11 +166,11 @@ export function WeHeardYou() {
         >
           {/* Main quote card */}
           <div
-            className="relative rounded-2xl overflow-hidden border border-white/10 bg-[#111111] shadow-2xl transition-opacity duration-300 ease-in-out"
+            className="relative rounded-2xl overflow-hidden border border-white/10 bg-surface-container-low shadow-2xl transition-opacity duration-300 ease-in-out"
             style={{ opacity: isFading ? 0 : 1 }}
           >
             {/* Top bar */}
-            <div className="flex items-center justify-between px-5 py-3 bg-[#1A1A1A] border-b border-white/10">
+            <div className="flex items-center justify-between px-5 py-3 bg-surface-container-high border-b border-white/10">
               <div className="flex items-center gap-2">
                 <span className="text-lg">{CATEGORY_ICONS[voice.category] ?? '\uD83D\uDCAC'}</span>
                 <span className="text-white/60 text-xs font-medium uppercase tracking-wider">
@@ -185,7 +185,7 @@ export function WeHeardYou() {
             {/* Quote body */}
             <div className="px-8 py-10 md:px-12 md:py-12 min-h-[200px] flex items-center">
               <div>
-                <svg className="w-8 h-8 text-[#D4A017]/30 mb-4" fill="currentColor" viewBox="0 0 24 24">
+                <svg className="w-8 h-8 text-primary/30 mb-4" fill="currentColor" viewBox="0 0 24 24">
                   <path d="M14.017 21v-7.391c0-5.704 3.731-9.57 8.983-10.609l.995 2.151c-2.432.917-3.995 3.638-3.995 5.849h4v10H14.017zM0 21v-7.391c0-5.704 3.731-9.57 8.983-10.609l.995 2.151C7.546 6.068 5.983 8.789 5.983 11H10v10H0z" />
                 </svg>
                 <p className="text-white text-lg md:text-xl leading-relaxed font-light">
@@ -195,7 +195,7 @@ export function WeHeardYou() {
             </div>
 
             {/* Source bar */}
-            <div className="px-5 py-3 flex items-center justify-between bg-[#0D0D0D] border-t border-white/10">
+            <div className="px-5 py-3 flex items-center justify-between bg-surface border-t border-white/10">
               <p className="text-white/40 text-sm">
                 — {voice.source}
               </p>
@@ -209,7 +209,7 @@ export function WeHeardYou() {
           <button
             onClick={prev}
             aria-label="Previous quote"
-            className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-4 w-8 h-8 rounded-full bg-[#1A1A1A] border border-white/10 flex items-center justify-center text-white/60 hover:text-white hover:border-[#D4A017]/50 transition-all shadow-lg"
+            className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-4 w-8 h-8 rounded-full bg-surface-container-high border border-white/10 flex items-center justify-center text-white/60 hover:text-white hover:border-primary/50 transition-all shadow-lg"
           >
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
@@ -218,7 +218,7 @@ export function WeHeardYou() {
           <button
             onClick={next}
             aria-label="Next quote"
-            className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-4 w-8 h-8 rounded-full bg-[#1A1A1A] border border-white/10 flex items-center justify-center text-white/60 hover:text-white hover:border-[#D4A017]/50 transition-all shadow-lg"
+            className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-4 w-8 h-8 rounded-full bg-surface-container-high border border-white/10 flex items-center justify-center text-white/60 hover:text-white hover:border-primary/50 transition-all shadow-lg"
           >
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
@@ -234,7 +234,7 @@ export function WeHeardYou() {
                 aria-label={`Go to quote ${i + 1}`}
                 className={`h-1 rounded-full transition-all duration-300 ${
                   i === current
-                    ? 'w-5 bg-[#D4A017]'
+                    ? 'w-5 bg-accent-gold'
                     : 'w-1 bg-white/20 hover:bg-white/40'
                 }`}
               />
@@ -245,15 +245,15 @@ export function WeHeardYou() {
         {/* Bottom stat strip */}
         <div className="mt-8 grid grid-cols-3 gap-4 text-center">
           <div className="bg-white/[0.03] border border-white/8 rounded-xl p-4">
-            <div className="text-2xl font-bold text-[#D4A017] mb-0.5">24–48h</div>
+            <div className="text-2xl font-bold text-primary mb-0.5">24–48h</div>
             <div className="text-white/50 text-xs">Avg. editing turnaround agents wait</div>
           </div>
           <div className="bg-white/[0.03] border border-white/8 rounded-xl p-4">
-            <div className="text-2xl font-bold text-[#D4A017] mb-0.5">5+ tools</div>
+            <div className="text-2xl font-bold text-primary mb-0.5">5+ tools</div>
             <div className="text-white/50 text-xs">Juggled per listing just to market it</div>
           </div>
           <div className="bg-white/[0.03] border border-white/8 rounded-xl p-4">
-            <div className="text-2xl font-bold text-[#D4A017] mb-0.5">$400+/mo</div>
+            <div className="text-2xl font-bold text-primary mb-0.5">$400+/mo</div>
             <div className="text-white/50 text-xs">Spent on editing, Canva & scheduling</div>
           </div>
         </div>

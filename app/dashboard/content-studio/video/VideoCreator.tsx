@@ -541,9 +541,9 @@ export default function VideoCreatorClient() {
   // ============================================
 
   return (
-    <div className="min-h-screen bg-[#0A0A0A] text-white">
+    <div className="min-h-screen bg-surface text-white">
       {/* Header */}
-      <header className="h-14 bg-[#111] border-b border-white/5 flex items-center px-4">
+      <header className="h-14 bg-surface border-b border-white/5 flex items-center px-4">
         <Link href="/dashboard/content-studio" className="flex items-center gap-2 hover:opacity-80">
           <ArrowLeft className="w-4 h-4 text-white/50" />
           <span className="text-white/50 text-sm">Back</span>
@@ -571,7 +571,7 @@ export default function VideoCreatorClient() {
 
       <div className="flex h-[calc(100vh-56px)]">
         {/* Preview */}
-        <div className="flex-1 flex items-center justify-center bg-[#080808] p-8">
+        <div className="flex-1 flex items-center justify-center bg-surface p-8">
           <div className={`relative w-full max-w-[600px] ${getPreviewAspectClass()} bg-black rounded-2xl overflow-hidden shadow-2xl border-4 border-gray-800`}>
             {loading ? (
               <div className="absolute inset-0 flex items-center justify-center">
@@ -634,7 +634,7 @@ export default function VideoCreatorClient() {
                     {listingTitle}
                   </div>
                   {listingPrice && (
-                    <div className="text-[#D4A017] font-bold text-3xl">
+                    <div className="text-primary font-bold text-3xl">
                       ${listingPrice.toLocaleString()}
                     </div>
                   )}
@@ -649,7 +649,7 @@ export default function VideoCreatorClient() {
         </div>
 
         {/* Controls Sidebar */}
-        <div className="w-[420px] bg-[#111] border-l border-white/5 flex flex-col overflow-hidden">
+        <div className="w-[420px] bg-surface border-l border-white/5 flex flex-col overflow-hidden">
           {/* Tabs */}
           <div className="flex border-b border-white/10">
             <button
@@ -713,7 +713,7 @@ export default function VideoCreatorClient() {
                     })}
                   </div>
                   {template === 'short-form' && (
-                    <p className="text-xs text-[#D4A017]/70">Locked to 9:16 vertical for TikTok/Reels/Shorts</p>
+                    <p className="text-xs text-primary/70">Locked to 9:16 vertical for TikTok/Reels/Shorts</p>
                   )}
                 </div>
 
@@ -736,7 +736,7 @@ export default function VideoCreatorClient() {
                           disabled={isGenerating}
                           className={`w-full p-3 rounded-lg border transition-all text-left ${
                             template === tmpl
-                              ? 'bg-[#D4A017]/15 border-[#D4A017] text-white'
+                              ? 'bg-accent-gold/15 border-primary text-white'
                               : 'bg-white/5 border-white/10 text-white/50 hover:bg-white/10'
                           } disabled:opacity-50 disabled:cursor-not-allowed`}
                         >
@@ -761,7 +761,7 @@ export default function VideoCreatorClient() {
                       onChange={(e) => setOpenHouseDate(e.target.value)}
                       placeholder="e.g. Saturday, March 1st · 1-4 PM"
                       disabled={isGenerating}
-                      className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white text-sm placeholder:text-white/30 focus:outline-none focus:border-[#D4A017] disabled:opacity-50"
+                      className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white text-sm placeholder:text-white/30 focus:outline-none focus:border-primary disabled:opacity-50"
                     />
                   </div>
                 )}
@@ -778,7 +778,7 @@ export default function VideoCreatorClient() {
                       onChange={(e) => setPreviousPrice(e.target.value)}
                       placeholder="e.g. 2500000"
                       disabled={isGenerating}
-                      className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white text-sm placeholder:text-white/30 focus:outline-none focus:border-[#D4A017] disabled:opacity-50"
+                      className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white text-sm placeholder:text-white/30 focus:outline-none focus:border-primary disabled:opacity-50"
                     />
                     <p className="text-xs text-white/40">Enter the original listing price before the reduction</p>
                   </div>
@@ -796,7 +796,7 @@ export default function VideoCreatorClient() {
                       onChange={(e) => setDaysOnMarket(e.target.value)}
                       placeholder="e.g. 12"
                       disabled={isGenerating}
-                      className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white text-sm placeholder:text-white/30 focus:outline-none focus:border-[#D4A017] disabled:opacity-50"
+                      className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white text-sm placeholder:text-white/30 focus:outline-none focus:border-primary disabled:opacity-50"
                     />
                     <p className="text-xs text-white/40">Optional — shows social proof in the video</p>
                   </div>
@@ -1164,7 +1164,7 @@ export default function VideoCreatorClient() {
       {/* Share Modal */}
       {showShareModal && videoUrl && (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4" role="dialog" aria-modal="true" aria-label="Share video">
-          <div className="bg-[#111] rounded-2xl p-6 max-w-md w-full space-y-4">
+          <div className="bg-surface rounded-2xl p-6 max-w-md w-full space-y-4">
             <div className="flex items-center justify-between">
               <h3 className="text-xl font-bold">Video Ready!</h3>
               <button

@@ -142,14 +142,14 @@ export default function PortfolioEditPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#0A0A0A] flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-[#D4A017]" />
+      <div className="min-h-screen bg-surface flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#0A0A0A] text-white">
+    <div className="min-h-screen bg-surface text-white">
       <div className="max-w-2xl mx-auto px-4 py-8">
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
@@ -160,7 +160,7 @@ export default function PortfolioEditPage() {
             >
               <ArrowLeft className="w-5 h-5" />
             </Link>
-            <h1 className="text-2xl font-bold">Edit Portfolio</h1>
+            <h1 className="text-2xl font-bold editorial-headline">Edit Portfolio</h1>
           </div>
           <div className="flex items-center gap-2">
             <Link
@@ -202,7 +202,7 @@ export default function PortfolioEditPage() {
               type="text"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              className="w-full px-4 py-3 bg-[#1A1A1A] border border-white/10 rounded-lg text-white placeholder-white/30 focus:outline-none focus:border-[#D4A017]/50"
+              className="w-full px-4 py-3 bg-surface-container-high border border-white/10 rounded-lg text-white placeholder-white/30 focus:outline-none focus:border-primary/50"
               placeholder="My Portfolio"
               aria-label="Portfolio title"
             />
@@ -215,7 +215,7 @@ export default function PortfolioEditPage() {
               type="text"
               value={tagline}
               onChange={(e) => setTagline(e.target.value)}
-              className="w-full px-4 py-3 bg-[#1A1A1A] border border-white/10 rounded-lg text-white placeholder-white/30 focus:outline-none focus:border-[#D4A017]/50"
+              className="w-full px-4 py-3 bg-surface-container-high border border-white/10 rounded-lg text-white placeholder-white/30 focus:outline-none focus:border-primary/50"
               placeholder="Professional real estate photography"
               aria-label="Portfolio tagline"
             />
@@ -228,7 +228,7 @@ export default function PortfolioEditPage() {
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               rows={4}
-              className="w-full px-4 py-3 bg-[#1A1A1A] border border-white/10 rounded-lg text-white placeholder-white/30 focus:outline-none focus:border-[#D4A017]/50 resize-none"
+              className="w-full px-4 py-3 bg-surface-container-high border border-white/10 rounded-lg text-white placeholder-white/30 focus:outline-none focus:border-primary/50 resize-none"
               placeholder="Tell visitors about your work..."
               aria-label="Portfolio description"
             />
@@ -241,7 +241,7 @@ export default function PortfolioEditPage() {
               <select
                 value={theme}
                 onChange={(e) => setTheme(e.target.value)}
-                className="w-full px-4 py-3 bg-[#1A1A1A] border border-white/10 rounded-lg text-white focus:outline-none focus:border-[#D4A017]/50"
+                className="w-full px-4 py-3 bg-surface-container-high border border-white/10 rounded-lg text-white focus:outline-none focus:border-primary/50"
                 aria-label="Portfolio theme"
               >
                 <option value="dark">Dark</option>
@@ -263,7 +263,7 @@ export default function PortfolioEditPage() {
                   type="text"
                   value={accentColor}
                   onChange={(e) => setAccentColor(e.target.value)}
-                  className="flex-1 px-4 py-3 bg-[#1A1A1A] border border-white/10 rounded-lg text-white font-mono text-sm focus:outline-none focus:border-[#D4A017]/50"
+                  className="flex-1 px-4 py-3 bg-surface-container-high border border-white/10 rounded-lg text-white font-mono text-sm focus:outline-none focus:border-primary/50"
                   aria-label="Accent color hex value"
                 />
               </div>
@@ -271,7 +271,7 @@ export default function PortfolioEditPage() {
           </div>
 
           {/* Public Toggle */}
-          <div className="flex items-center justify-between p-4 bg-[#1A1A1A] border border-white/10 rounded-lg">
+          <div className="flex items-center justify-between p-4 bg-surface-container-high border border-white/10 rounded-lg">
             <div className="flex items-center gap-3">
               <Globe className="w-5 h-5 text-white/40" />
               <div>
@@ -282,7 +282,7 @@ export default function PortfolioEditPage() {
             <button
               onClick={() => setIsPublic(!isPublic)}
               className={`relative w-12 h-6 rounded-full transition-colors ${
-                isPublic ? 'bg-[#D4A017]' : 'bg-white/20'
+                isPublic ? 'bg-accent-gold' : 'bg-white/20'
               }`}
               role="switch"
               aria-checked={isPublic}
@@ -297,7 +297,7 @@ export default function PortfolioEditPage() {
           {/* Slug (read-only) */}
           <div>
             <label className="block text-sm font-medium text-white/70 mb-2">URL Slug</label>
-            <div className="flex items-center gap-2 px-4 py-3 bg-[#1A1A1A] border border-white/10 rounded-lg text-white/40 text-sm">
+            <div className="flex items-center gap-2 px-4 py-3 bg-surface-container-high border border-white/10 rounded-lg text-white/40 text-sm">
               <span>/portfolio/</span>
               <span className="text-white">{slug}</span>
             </div>
@@ -316,7 +316,7 @@ export default function PortfolioEditPage() {
             <button
               onClick={handleSave}
               disabled={saving}
-              className="flex items-center gap-2 px-6 py-2.5 bg-[#D4A017] text-black rounded-lg text-sm font-semibold hover:bg-[#D4A017]/90 transition-colors disabled:opacity-50"
+              className="flex items-center gap-2 px-6 py-2.5 bg-accent-gold text-black rounded-lg text-sm font-semibold hover:bg-accent-gold/90 transition-colors disabled:opacity-50"
             >
               {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
               Save Changes

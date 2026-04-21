@@ -82,7 +82,7 @@ export default async function AdminStatus() {
 
       {/* Quick Stats */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-        <div className="bg-[#1A1A1A] border border-white/10 rounded-xl p-4">
+        <div className="bg-surface-container-high border border-white/10 rounded-xl p-4">
           <div className="flex items-center gap-2 text-white/50 mb-2">
             <AlertTriangle className="w-4 h-4" />
             Errors (24h)
@@ -91,7 +91,7 @@ export default async function AdminStatus() {
             {errorCount24h || 0}
           </p>
         </div>
-        <div className="bg-[#1A1A1A] border border-white/10 rounded-xl p-4">
+        <div className="bg-surface-container-high border border-white/10 rounded-xl p-4">
           <div className="flex items-center gap-2 text-white/50 mb-2">
             <Zap className="w-4 h-4" />
             API Success Rate
@@ -100,7 +100,7 @@ export default async function AdminStatus() {
             {successRate}%
           </p>
         </div>
-        <div className="bg-[#1A1A1A] border border-white/10 rounded-xl p-4">
+        <div className="bg-surface-container-high border border-white/10 rounded-xl p-4">
           <div className="flex items-center gap-2 text-white/50 mb-2">
             <Server className="w-4 h-4" />
             Services
@@ -109,7 +109,7 @@ export default async function AdminStatus() {
             {services.filter(s => s.status === 'healthy').length}/{services.length}
           </p>
         </div>
-        <div className="bg-[#1A1A1A] border border-white/10 rounded-xl p-4">
+        <div className="bg-surface-container-high border border-white/10 rounded-xl p-4">
           <div className="flex items-center gap-2 text-white/50 mb-2">
             <Clock className="w-4 h-4" />
             Avg Latency
@@ -122,9 +122,9 @@ export default async function AdminStatus() {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {/* Services */}
-        <div className="bg-[#1A1A1A] border border-white/10 rounded-xl p-6">
+        <div className="bg-surface-container-high border border-white/10 rounded-xl p-6">
           <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
-            <Database className="w-5 h-5 text-[#D4A017]" />
+            <Database className="w-5 h-5 text-primary" />
             Core Services
           </h2>
           <div className="space-y-3">
@@ -150,9 +150,9 @@ export default async function AdminStatus() {
         </div>
 
         {/* API Integrations */}
-        <div className="bg-[#1A1A1A] border border-white/10 rounded-xl p-6">
+        <div className="bg-surface-container-high border border-white/10 rounded-xl p-6">
           <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
-            <Server className="w-5 h-5 text-[#D4A017]" />
+            <Server className="w-5 h-5 text-primary" />
             API Integrations
           </h2>
           <div className="space-y-3">
@@ -175,9 +175,9 @@ export default async function AdminStatus() {
         </div>
 
         {/* Recent Errors */}
-        <div className="bg-[#1A1A1A] border border-white/10 rounded-xl p-6 lg:col-span-2">
+        <div className="bg-surface-container-high border border-white/10 rounded-xl p-6 lg:col-span-2">
           <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
-            <AlertTriangle className="w-5 h-5 text-[#D4A017]" />
+            <AlertTriangle className="w-5 h-5 text-primary" />
             Recent Errors
           </h2>
           {recentErrors?.length ? (

@@ -67,7 +67,7 @@ export default function CommandCenter({
   }))
 
   return (
-    <div className="min-h-screen bg-[#080808] text-white">
+    <div className="min-h-screen bg-surface text-white">
       <div className="max-w-7xl mx-auto px-4 md:px-6 py-6">
         {/* Header */}
         {!expandedCard && (
@@ -95,7 +95,7 @@ export default function CommandCenter({
                   id="listings"
                   title="My Listings"
                   icon={Home}
-                  color="bg-[#D4A017]"
+                  color="bg-accent-gold"
                   badge={listings.length}
                   isExpanded
                   onExpand={() => {}}
@@ -233,7 +233,7 @@ export default function CommandCenter({
                   id="listings"
                   title="My Listings"
                   icon={Home}
-                  color="bg-[#D4A017]"
+                  color="bg-accent-gold"
                   badge={listings.length}
                   isExpanded={false}
                   onExpand={() => handleExpand('listings')}

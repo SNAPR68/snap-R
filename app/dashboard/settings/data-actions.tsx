@@ -133,7 +133,7 @@ export function DataPrivacyActions({ userId, userEmail, deleteOnly = false }: Da
         <button
           onClick={handleExport}
           disabled={exportLoading}
-          className="flex items-center gap-2 px-4 py-2 bg-[#D4A017] text-black rounded-lg hover:opacity-90 disabled:opacity-50"
+          className="flex items-center gap-2 px-4 py-2 bg-accent-gold text-black rounded-lg hover:opacity-90 disabled:opacity-50"
         >
           {exportLoading ? (
             <Loader2 className="w-4 h-4 animate-spin" />

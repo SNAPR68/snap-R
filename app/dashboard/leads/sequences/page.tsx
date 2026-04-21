@@ -76,7 +76,7 @@ function StepEditor({
             max={365}
             value={step.delay_days}
             onChange={e => onChange({ ...step, delay_days: Math.max(0, parseInt(e.target.value) || 0) })}
-            className="w-14 bg-black/40 border border-white/20 rounded px-2 py-1 text-xs text-white text-center focus:outline-none focus:border-[#D4A017]/60"
+            className="w-14 bg-black/40 border border-white/20 rounded px-2 py-1 text-xs text-white text-center focus:outline-none focus:border-primary/60"
             aria-label={`Step ${index + 1} delay days`}
           />
           <span className="text-xs text-white/40">days after enroll</span>
@@ -97,7 +97,7 @@ function StepEditor({
           value={step.subject_template}
           onChange={e => onChange({ ...step, subject_template: e.target.value })}
           placeholder="Subject: {{name}}, just listed — {{address}}"
-          className="w-full bg-black/40 border border-white/20 rounded-lg px-3 py-2 text-sm text-white placeholder-white/25 focus:outline-none focus:border-[#D4A017]/60"
+          className="w-full bg-black/40 border border-white/20 rounded-lg px-3 py-2 text-sm text-white placeholder-white/25 focus:outline-none focus:border-primary/60"
           aria-label={`Step ${index + 1} subject`}
         />
         <textarea
@@ -105,7 +105,7 @@ function StepEditor({
           onChange={e => onChange({ ...step, body_template: e.target.value })}
           placeholder={'Hi {{name}},\n\nJust wanted to follow up about {{address}}...\n\nBest,\n{{agent_name}}'}
           rows={5}
-          className="w-full bg-black/40 border border-white/20 rounded-lg px-3 py-2 text-sm text-white placeholder-white/25 focus:outline-none focus:border-[#D4A017]/60 resize-y"
+          className="w-full bg-black/40 border border-white/20 rounded-lg px-3 py-2 text-sm text-white placeholder-white/25 focus:outline-none focus:border-primary/60 resize-y"
           aria-label={`Step ${index + 1} body`}
         />
       </div>
@@ -161,7 +161,7 @@ function SequenceForm({
             value={name}
             onChange={e => setName(e.target.value)}
             placeholder="e.g. New Lead Follow-Up"
-            className="w-full bg-black/40 border border-white/20 rounded-lg px-3 py-2 text-sm text-white placeholder-white/30 focus:outline-none focus:border-[#D4A017]/60"
+            className="w-full bg-black/40 border border-white/20 rounded-lg px-3 py-2 text-sm text-white placeholder-white/30 focus:outline-none focus:border-primary/60"
             aria-label="Sequence name"
           />
         </div>
@@ -170,7 +170,7 @@ function SequenceForm({
           <select
             value={triggerEvent}
             onChange={e => setTriggerEvent(e.target.value)}
-            className="w-full bg-black/40 border border-white/20 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-[#D4A017]/60"
+            className="w-full bg-black/40 border border-white/20 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-primary/60"
             aria-label="Trigger event"
           >
             {Object.entries(TRIGGER_LABELS).map(([v, l]) => (
@@ -186,7 +186,7 @@ function SequenceForm({
           value={description}
           onChange={e => setDescription(e.target.value)}
           placeholder="Short description for your reference"
-          className="w-full bg-black/40 border border-white/20 rounded-lg px-3 py-2 text-sm text-white placeholder-white/30 focus:outline-none focus:border-[#D4A017]/60"
+          className="w-full bg-black/40 border border-white/20 rounded-lg px-3 py-2 text-sm text-white placeholder-white/30 focus:outline-none focus:border-primary/60"
           aria-label="Sequence description"
         />
       </div>
@@ -204,7 +204,7 @@ function SequenceForm({
         {showVars && (
           <div className="mt-2 flex flex-wrap gap-1.5">
             {TEMPLATE_VARS.map(v => (
-              <code key={v} className="px-2 py-0.5 bg-white/5 border border-white/10 rounded text-[11px] text-[#D4A017]/80 font-mono">{v}</code>
+              <code key={v} className="px-2 py-0.5 bg-white/5 border border-white/10 rounded text-[11px] text-primary/80 font-mono">{v}</code>
             ))}
           </div>
         )}
@@ -241,7 +241,7 @@ function SequenceForm({
         <button
           onClick={() => onSave({ name: name.trim(), description: description.trim(), triggerEvent, steps })}
           disabled={saving || !valid}
-          className="flex items-center gap-2 px-5 py-2 bg-[#D4A017] text-black font-semibold rounded-lg hover:bg-[#B8860B] disabled:opacity-50 text-sm"
+          className="flex items-center gap-2 px-5 py-2 bg-accent-gold text-black font-semibold rounded-lg hover:bg-accent-gold disabled:opacity-50 text-sm"
         >
           {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
           {saving ? 'Saving…' : 'Save Sequence'}
@@ -369,8 +369,8 @@ export default function SequencesPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#0F0F0F] text-white">
-      <header className="h-14 bg-[#1A1A1A] border-b border-white/10 flex items-center px-6">
+    <div className="min-h-screen bg-charcoal-deep text-white">
+      <header className="h-14 bg-surface-container-high border-b border-white/10 flex items-center px-6">
         <Link href="/dashboard/leads" className="flex items-center gap-2 text-white/60 hover:text-white">
           <ArrowLeft className="w-4 h-4" /> Back to Leads
         </Link>
@@ -380,15 +380,15 @@ export default function SequencesPage() {
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div className="flex items-center gap-3">
-            <Mail className="w-7 h-7 text-[#D4A017]" />
+            <Mail className="w-7 h-7 text-primary" />
             <div>
-              <h1 className="text-2xl font-bold">Email Drip Sequences</h1>
+              <h1 className="text-2xl font-bold editorial-headline">Email Drip Sequences</h1>
               <p className="text-white/50 text-sm mt-0.5">Automated follow-up sequences enrolled per lead</p>
             </div>
           </div>
           <button
             onClick={() => { setShowCreate(v => !v); setEditingId(null) }}
-            className="flex items-center gap-2 px-4 py-2 bg-[#D4A017] text-black font-semibold rounded-lg hover:bg-[#B8860B] text-sm"
+            className="flex items-center gap-2 px-4 py-2 bg-accent-gold text-black font-semibold rounded-lg hover:bg-accent-gold text-sm"
           >
             <Plus className="w-4 h-4" /> New Sequence
           </button>
@@ -400,7 +400,7 @@ export default function SequencesPage() {
 
         {/* Create Form */}
         {showCreate && (
-          <div className="bg-[#1A1A1A] border border-[#D4A017]/40 rounded-xl p-6 mb-6">
+          <div className="bg-surface-container-high border border-primary/40 rounded-xl p-6 mb-6">
             <h2 className="text-lg font-semibold mb-4">New Sequence</h2>
             <SequenceForm
               onSave={handleCreate}
@@ -414,7 +414,7 @@ export default function SequencesPage() {
         {loading ? (
           <div className="text-white/40 text-sm py-12 text-center">Loading sequences…</div>
         ) : sequences.length === 0 ? (
-          <div className="bg-[#1A1A1A] border border-white/10 rounded-xl p-12 text-center">
+          <div className="bg-surface-container-high border border-white/10 rounded-xl p-12 text-center">
             <Mail className="w-10 h-10 text-white/20 mx-auto mb-3" />
             <p className="text-white/50 text-sm">No sequences yet. Create one to start automating lead follow-up.</p>
           </div>
@@ -423,7 +423,7 @@ export default function SequencesPage() {
             {sequences.map(seq => (
               <div
                 key={seq.id}
-                className={`bg-[#1A1A1A] border rounded-xl overflow-hidden transition-colors ${seq.is_active ? 'border-white/10' : 'border-white/5 opacity-60'}`}
+                className={`bg-surface-container-high border rounded-xl overflow-hidden transition-colors ${seq.is_active ? 'border-white/10' : 'border-white/5 opacity-60'}`}
               >
                 {editingId === seq.id ? (
                   <div className="p-5">
@@ -532,11 +532,11 @@ export default function SequencesPage() {
         )}
 
         {/* Info callout */}
-        <div className="mt-8 bg-[#1A1A1A] border border-white/10 rounded-xl p-5">
+        <div className="mt-8 bg-surface-container-high border border-white/10 rounded-xl p-5">
           <h3 className="text-sm font-semibold mb-2">How drip sequences work</h3>
           <p className="text-xs text-white/50 leading-relaxed">
             Enroll a lead from the Leads page — that schedules all emails in the sequence based on their delay days.
-            Use template variables like <code className="text-[#D4A017]">{'{{name}}'}</code> and <code className="text-[#D4A017]">{'{{agent_name}}'}</code> for personalization.
+            Use template variables like <code className="text-primary">{'{{name}}'}</code> and <code className="text-primary">{'{{agent_name}}'}</code> for personalization.
             System sequences are read-only; create your own to customize the messaging.
           </p>
         </div>

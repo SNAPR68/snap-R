@@ -55,7 +55,7 @@ function CreatePortfolioModal({
   return (
     <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4" onClick={onClose}>
       <div 
-        className="bg-[#1A1A1A] rounded-2xl p-6 max-w-md w-full border border-white/10"
+        className="bg-surface-container-high rounded-2xl p-6 max-w-md w-full border border-white/10"
         onClick={e => e.stopPropagation()}
       >
         <h2 className="text-xl font-bold mb-6">Create Portfolio</h2>
@@ -275,14 +275,14 @@ function PortfolioContent() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#0F0F0F] flex items-center justify-center">
+      <div className="min-h-screen bg-charcoal-deep flex items-center justify-center">
         <Loader2 className="w-8 h-8 animate-spin text-amber-400" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#0F0F0F] text-white p-6">
+    <div className="min-h-screen bg-charcoal-deep text-white p-6">
       <div className="max-w-6xl mx-auto">
         {/* Header */}
         <div className="flex items-center justify-between mb-4">
@@ -292,7 +292,7 @@ function PortfolioContent() {
               <Image className="w-8 h-8 text-amber-400" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold">Before/After Portfolios</h1>
+              <h1 className="text-2xl font-bold editorial-headline">Before/After Portfolios</h1>
               <p className="text-white/50">Showcase your work to win new clients</p>
             </div>
           </div>
@@ -432,7 +432,7 @@ function PortfolioContent() {
 export default function PortfolioDashboardPage() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen bg-[#0F0F0F] flex items-center justify-center">
+      <div className="min-h-screen bg-charcoal-deep flex items-center justify-center">
         <Loader2 className="w-8 h-8 animate-spin text-amber-400" />
       </div>
     }>

@@ -55,7 +55,7 @@ export default function ShowingFeedbackForm({ showingId, contactName, propertyLa
   if (submitted) {
     return (
       <div className="w-full max-w-md text-center">
-        <div className="bg-[#1A1A1A] border border-white/10 rounded-2xl p-10">
+        <div className="bg-surface-container-high border border-white/10 rounded-2xl p-10">
           <CheckCircle className="w-14 h-14 text-green-400 mx-auto mb-4" />
           <h1 className="text-2xl font-bold text-white mb-2">Thanks, {contactName.split(' ')[0]}!</h1>
           <p className="text-white/50 text-sm">Your feedback has been sent to the listing agent.</p>
@@ -69,14 +69,14 @@ export default function ShowingFeedbackForm({ showingId, contactName, propertyLa
       {/* Header */}
       <div className="text-center mb-8">
         <div className="inline-flex items-center gap-2 mb-4">
-          <span className="text-[#D4A017] font-bold text-xl tracking-tight">SnapR</span>
+          <span className="text-primary font-bold text-xl tracking-tight">SnapR</span>
         </div>
         <h1 className="text-2xl font-bold text-white mb-1">How was the showing?</h1>
         <p className="text-white/50 text-sm">{propertyLabel}</p>
         <p className="text-white/30 text-xs mt-1">{showingDate}</p>
       </div>
 
-      <form onSubmit={handleSubmit} className="bg-[#1A1A1A] border border-white/10 rounded-2xl p-6">
+      <form onSubmit={handleSubmit} className="bg-surface-container-high border border-white/10 rounded-2xl p-6">
         {/* Star Rating */}
         <div className="mb-6">
           <p className="text-sm text-white/60 mb-3 text-center">How interested are you in this property?</p>
@@ -93,7 +93,7 @@ export default function ShowingFeedbackForm({ showingId, contactName, propertyLa
               >
                 <Star
                   className={`w-10 h-10 transition-colors ${
-                    i <= displayRating ? 'text-[#D4A017] fill-[#D4A017]' : 'text-white/20'
+                    i <= displayRating ? 'text-primary fill-accent-gold' : 'text-white/20'
                   }`}
                 />
               </button>
@@ -118,7 +118,7 @@ export default function ShowingFeedbackForm({ showingId, contactName, propertyLa
             rows={3}
             maxLength={2000}
             placeholder="What did you like or dislike? Any questions for the agent?"
-            className="w-full bg-black/40 border border-white/20 rounded-xl px-4 py-3 text-sm text-white placeholder-white/30 focus:outline-none focus:border-[#D4A017]/50 resize-none"
+            className="w-full bg-black/40 border border-white/20 rounded-xl px-4 py-3 text-sm text-white placeholder-white/30 focus:outline-none focus:border-primary/50 resize-none"
           />
         </div>
 
@@ -128,7 +128,7 @@ export default function ShowingFeedbackForm({ showingId, contactName, propertyLa
             type="checkbox"
             checked={wantsFollowUp}
             onChange={e => setWantsFollowUp(e.target.checked)}
-            className="w-4 h-4 accent-[#D4A017]"
+            className="w-4 h-4 accent-accent-gold"
           />
           <span className="text-sm text-white/60 group-hover:text-white">I&apos;d like the agent to follow up with me</span>
         </label>
@@ -140,7 +140,7 @@ export default function ShowingFeedbackForm({ showingId, contactName, propertyLa
         <button
           type="submit"
           disabled={submitting || rating === 0}
-          className="w-full py-3 bg-[#D4A017] text-black font-semibold rounded-xl hover:bg-[#B8860B] disabled:opacity-50 transition-colors"
+          className="w-full py-3 bg-accent-gold text-black font-semibold rounded-xl hover:bg-accent-gold disabled:opacity-50 transition-colors"
         >
           {submitting ? 'Submitting...' : 'Submit Feedback'}
         </button>

@@ -292,21 +292,21 @@ export default function VirtualRenovationPage() {
   // ============================================
   if (!selectedListing && !uploadMode) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-[#0D0D0D] via-[#1A1A1A] to-[#0D0D0D] text-white p-6">
+      <div className="min-h-screen bg-gradient-to-br from-surface via-surface-raised to-surface text-white p-6">
         <div className="max-w-6xl mx-auto">
           <Link href="/dashboard" className="inline-flex items-center gap-2 text-gray-400 hover:text-white mb-6">
             <ArrowLeft className="w-4 h-4" /> Back
           </Link>
 
-          <h1 className="text-3xl font-bold bg-gradient-to-r from-[#D4A017] to-[#FFD700] bg-clip-text text-transparent mb-2">
+          <h1 className="text-3xl font-bold bg-gradient-to-r from-gold to-accent-gold bg-clip-text text-transparent mb-2">
             Virtual Renovation
           </h1>
           <p className="text-gray-400 mb-8">Transform your space with AI-powered renovations</p>
 
           {/* Upload Option */}
           <label className="block mb-8 cursor-pointer">
-            <div className="border-2 border-dashed border-[#D4A017]/40 rounded-2xl p-10 text-center hover:border-[#D4A017] hover:bg-[#D4A017]/5 transition-all">
-              <Upload className="w-12 h-12 mx-auto mb-4 text-[#D4A017]" />
+            <div className="border-2 border-dashed border-primary/40 rounded-2xl p-10 text-center hover:border-primary hover:bg-accent-gold/5 transition-all">
+              <Upload className="w-12 h-12 mx-auto mb-4 text-primary" />
               <p className="text-xl font-medium mb-2">Upload a Photo</p>
               <p className="text-gray-500">PNG, JPG up to 10MB</p>
               <input type="file" accept="image/*" onChange={handleFileUpload} className="hidden" />
@@ -320,12 +320,12 @@ export default function VirtualRenovationPage() {
           </div>
 
           {loadingListings ? (
-            <div className="flex justify-center py-16"><Loader2 className="w-8 h-8 animate-spin text-[#D4A017]" /></div>
+            <div className="flex justify-center py-16"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>
           ) : listings.length === 0 ? (
             <div className="text-center py-16 bg-black/30 rounded-2xl border border-white/10">
               <Building className="w-16 h-16 mx-auto mb-4 text-gray-600" />
               <p className="text-gray-400 mb-3">No listings found</p>
-              <Link href="/listings/new" className="text-[#D4A017] hover:underline">Create your first listing</Link>
+              <Link href="/listings/new" className="text-primary hover:underline">Create your first listing</Link>
             </div>
           ) : (
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
@@ -333,7 +333,7 @@ export default function VirtualRenovationPage() {
                 <button
                   key={listing.id}
                   onClick={() => handleSelectListing(listing)}
-                  className="bg-black/40 border border-white/10 rounded-xl overflow-hidden text-left hover:border-[#D4A017]/50 transition-all group"
+                  className="bg-black/40 border border-white/10 rounded-xl overflow-hidden text-left hover:border-primary/50 transition-all group"
                 >
                   <div className="aspect-[4/3] bg-black/50 relative">
                     {getCoverPhoto(listing) ? (
@@ -343,7 +343,7 @@ export default function VirtualRenovationPage() {
                     )}
                   </div>
                   <div className="p-3">
-                    <p className="font-medium text-sm truncate group-hover:text-[#D4A017]">{listing.address}</p>
+                    <p className="font-medium text-sm truncate group-hover:text-primary">{listing.address}</p>
                     <p className="text-xs text-gray-500 mt-1">{listing.city}, {listing.state}</p>
                   </div>
                 </button>
@@ -359,7 +359,7 @@ export default function VirtualRenovationPage() {
   // RENDER: Renovation Editor
   // ============================================
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#0D0D0D] via-[#1A1A1A] to-[#0D0D0D] text-white">
+    <div className="min-h-screen bg-gradient-to-br from-surface via-surface-raised to-surface text-white">
       {/* Header */}
       <div className="border-b border-white/10 bg-black/40 backdrop-blur-sm sticky top-0 z-10">
         <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
@@ -368,14 +368,14 @@ export default function VirtualRenovationPage() {
               <ArrowLeft className="w-5 h-5" />
             </button>
             <div>
-              <h1 className="text-xl font-bold text-[#D4A017]">Virtual Renovation</h1>
+              <h1 className="text-xl font-bold text-primary">Virtual Renovation</h1>
               {selectedListing && <p className="text-sm text-gray-400">{selectedListing.address}</p>}
             </div>
           </div>
           <button
             onClick={handleRenovate}
             disabled={loading || !selectedPhoto || selectedRenovations.length === 0}
-            className="px-6 py-2.5 rounded-lg font-semibold bg-gradient-to-r from-[#D4A017] to-[#FFD700] text-black disabled:opacity-50 flex items-center gap-2"
+            className="px-6 py-2.5 rounded-lg font-semibold bg-gradient-to-r from-gold to-accent-gold text-black disabled:opacity-50 flex items-center gap-2"
           >
             {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
             {loading ? 'Processing...' : 'Generate'}
@@ -392,7 +392,7 @@ export default function VirtualRenovationPage() {
               <h3 className="text-sm font-medium text-gray-400 mb-3">SELECT PHOTO</h3>
 
               {loadingPhotos ? (
-                <div className="flex justify-center py-8"><Loader2 className="w-6 h-6 animate-spin text-[#D4A017]" /></div>
+                <div className="flex justify-center py-8"><Loader2 className="w-6 h-6 animate-spin text-primary" /></div>
               ) : (
                 <div className="grid grid-cols-2 gap-2">
                   {listingPhotos.map((url, idx) => (
@@ -400,7 +400,7 @@ export default function VirtualRenovationPage() {
                       key={idx}
                       onClick={() => { setSelectedPhoto(url); setResultUrl(null); }}
                       className={`aspect-square rounded-lg overflow-hidden border-2 transition-all relative ${
-                        selectedPhoto === url ? 'border-[#D4A017] ring-2 ring-[#D4A017]/30' : 'border-transparent hover:border-white/30'
+                        selectedPhoto === url ? 'border-primary ring-2 ring-accent-gold/30' : 'border-transparent hover:border-white/30'
                       }`}
                     >
                       <Image src={url} alt="" fill className="object-cover" unoptimized />
@@ -410,7 +410,7 @@ export default function VirtualRenovationPage() {
               )}
 
               <label className="block mt-3">
-                <div className="border border-dashed border-white/20 rounded-lg p-3 text-center cursor-pointer hover:border-[#D4A017]/50 transition-colors">
+                <div className="border border-dashed border-white/20 rounded-lg p-3 text-center cursor-pointer hover:border-primary/50 transition-colors">
                   <Upload className="w-4 h-4 mx-auto mb-1 text-gray-500" />
                   <p className="text-xs text-gray-500">Upload different</p>
                 </div>
@@ -441,7 +441,7 @@ export default function VirtualRenovationPage() {
                   <div className="aspect-[4/3] bg-black/50 rounded-lg overflow-hidden relative">
                     {loading ? (
                       <div className="w-full h-full flex flex-col items-center justify-center">
-                        <Loader2 className="w-8 h-8 animate-spin text-[#D4A017] mb-2" />
+                        <Loader2 className="w-8 h-8 animate-spin text-primary mb-2" />
                         <p className="text-xs text-gray-500">Processing...</p>
                       </div>
                     ) : resultUrl ? (
@@ -457,7 +457,7 @@ export default function VirtualRenovationPage() {
 
               {resultUrl && (
                 <div className="mt-4 flex gap-2">
-                  <button onClick={handleDownload} className="flex-1 py-2 bg-[#D4A017] text-black rounded-lg text-sm font-medium flex items-center justify-center gap-2">
+                  <button onClick={handleDownload} className="flex-1 py-2 bg-accent-gold text-black rounded-lg text-sm font-medium flex items-center justify-center gap-2">
                     <Download className="w-4 h-4" /> Download
                   </button>
                   <button onClick={() => { setResultUrl(null); setSteps([]); }} className="flex-1 py-2 bg-white/10 rounded-lg text-sm font-medium flex items-center justify-center gap-2 hover:bg-white/20">
@@ -476,7 +476,7 @@ export default function VirtualRenovationPage() {
                     <div key={idx} className="flex items-center gap-2">
                       {step.startsWith('Completed') ? <CheckCircle className="w-3 h-3 text-green-500" /> :
                        step.startsWith('Failed') ? <XCircle className="w-3 h-3 text-red-500" /> :
-                       <div className="w-3 h-3 rounded-full bg-[#D4A017]/30" />}
+                       <div className="w-3 h-3 rounded-full bg-accent-gold/30" />}
                       <span className={step.startsWith('Completed') ? 'text-green-400' : step.startsWith('Failed') ? 'text-red-400' : 'text-gray-400'}>{step}</span>
                     </div>
                   ))}
@@ -502,7 +502,7 @@ export default function VirtualRenovationPage() {
                     key={type}
                     onClick={() => { setRoomType(type); setSelectedRenovations([]); }}
                     className={`flex-1 py-2.5 rounded-lg text-sm font-medium transition-all ${
-                      roomType === type ? 'bg-[#D4A017] text-black' : 'bg-white/5 text-gray-400 hover:bg-white/10'
+                      roomType === type ? 'bg-accent-gold text-black' : 'bg-white/5 text-gray-400 hover:bg-white/10'
                     }`}
                   >
                     {type.charAt(0).toUpperCase() + type.slice(1)}
@@ -520,7 +520,7 @@ export default function VirtualRenovationPage() {
                     key={s}
                     onClick={() => setStyle(s)}
                     className={`py-1.5 px-2 rounded text-xs font-medium transition-all ${
-                      style === s ? 'bg-[#D4A017] text-black' : 'bg-white/5 text-gray-400 hover:bg-white/10'
+                      style === s ? 'bg-accent-gold text-black' : 'bg-white/5 text-gray-400 hover:bg-white/10'
                     }`}
                   >
                     {s}
@@ -540,15 +540,15 @@ export default function VirtualRenovationPage() {
                   const isExpanded = expandedOptions === reno.id && isSelected;
 
                   return (
-                    <div key={reno.id} className={`rounded-lg overflow-hidden transition-all ${isSelected ? 'bg-[#D4A017]/10 ring-1 ring-[#D4A017]/30' : 'bg-white/5'}`}>
+                    <div key={reno.id} className={`rounded-lg overflow-hidden transition-all ${isSelected ? 'bg-accent-gold/10 ring-1 ring-accent-gold/30' : 'bg-white/5'}`}>
                       <button
                         onClick={() => toggleRenovation(reno.id)}
                         className="w-full flex items-center gap-2 p-2.5 text-left"
                       >
-                        <div className={`w-4 h-4 rounded border flex items-center justify-center ${isSelected ? 'border-[#D4A017] bg-[#D4A017]' : 'border-gray-600'}`}>
+                        <div className={`w-4 h-4 rounded border flex items-center justify-center ${isSelected ? 'border-primary bg-accent-gold' : 'border-gray-600'}`}>
                           {isSelected && <CheckCircle className="w-3 h-3 text-black" />}
                         </div>
-                        <Icon className="w-4 h-4 text-[#D4A017]" />
+                        <Icon className="w-4 h-4 text-primary" />
                         <span className="flex-1 text-sm">{reno.name}</span>
                         {hasOptions && isSelected && (
                           <ChevronRight className={`w-4 h-4 text-gray-500 transition-transform ${isExpanded ? 'rotate-90' : ''}`} />
@@ -584,8 +584,8 @@ export default function VirtualRenovationPage() {
             </div>
 
             {/* Info */}
-            <div className="bg-[#D4A017]/5 border border-[#D4A017]/20 rounded-xl p-4">
-              <h3 className="text-sm font-medium text-[#D4A017] mb-2">How it works</h3>
+            <div className="bg-accent-gold/5 border border-primary/20 rounded-xl p-4">
+              <h3 className="text-sm font-medium text-primary mb-2">How it works</h3>
               <ul className="text-xs text-gray-400 space-y-1">
                 <li>• AI segments the element (wall, floor, cabinets)</li>
                 <li>• Only that element changes — rest stays intact</li>

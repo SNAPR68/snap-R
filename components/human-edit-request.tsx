@@ -59,11 +59,11 @@ export function HumanEditRequestModal({ listingId, photoUrl, onClose, initialIns
 
   return (
     <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4" onClick={onClose}>
-      <div className="bg-[#1A1A1A] rounded-2xl p-6 w-full max-w-lg" onClick={(e) => e.stopPropagation()}>
+      <div className="bg-surface-container-high rounded-2xl p-6 w-full max-w-lg" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-[#D4A017]/20 rounded-lg">
-              <UserCheck className="w-5 h-5 text-[#D4A017]" />
+            <div className="p-2 bg-accent-gold/20 rounded-lg">
+              <UserCheck className="w-5 h-5 text-primary" />
             </div>
             <div>
               <h2 className="text-xl font-bold text-white">Request Human Editor</h2>
@@ -87,7 +87,7 @@ export function HumanEditRequestModal({ listingId, photoUrl, onClose, initialIns
             value={instructions}
             onChange={(e) => setInstructions(e.target.value)}
             placeholder="e.g., Remove the car from the driveway, fix the lighting in the kitchen, add more vibrant sky..."
-            className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl focus:border-[#D4A017] outline-none text-white resize-none h-28"
+            className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl focus:border-primary outline-none text-white resize-none h-28"
           />
         </div>
 
@@ -99,7 +99,7 @@ export function HumanEditRequestModal({ listingId, photoUrl, onClose, initialIns
               onClick={() => setIsUrgent(false)}
               className={`flex-1 py-3 rounded-xl border transition-colors flex items-center justify-center gap-2 ${
                 !isUrgent
-                  ? 'border-[#D4A017] bg-[#D4A017]/10 text-[#D4A017]'
+                  ? 'border-primary bg-accent-gold/10 text-primary'
                   : 'border-white/10 text-white/60 hover:bg-white/5'
               }`}
             >
@@ -134,7 +134,7 @@ export function HumanEditRequestModal({ listingId, photoUrl, onClose, initialIns
           )}
           <div className="border-t border-white/10 mt-2 pt-2 flex justify-between font-semibold">
             <span className="text-white">Total</span>
-            <span className="text-[#D4A017]">${isUrgent ? '15.00' : '5.00'}</span>
+            <span className="text-primary">${isUrgent ? '15.00' : '5.00'}</span>
           </div>
         </div>
 
@@ -146,7 +146,7 @@ export function HumanEditRequestModal({ listingId, photoUrl, onClose, initialIns
             type="button"
             onClick={handleSubmit}
             disabled={!instructions.trim() || loading}
-            className="flex-1 py-3 bg-gradient-to-r from-[#D4A017] to-[#B8860B] rounded-xl text-black font-medium hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+            className="flex-1 py-3 bg-gradient-to-r from-gold to-gold-dark rounded-xl text-black font-medium hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
           >
             {loading ? (
               <>

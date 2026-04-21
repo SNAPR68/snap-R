@@ -83,45 +83,45 @@ export default async function AdminUsers() {
           <h1 className="text-3xl font-bold">Users</h1>
           <p className="text-white/50">Manage users and track activity</p>
         </div>
-        <a href="/api/admin/users/export" className="flex items-center gap-2 px-4 py-2 bg-[#D4A017] text-black rounded-lg font-medium hover:bg-[#B8860B]">
+        <a href="/api/admin/users/export" className="flex items-center gap-2 px-4 py-2 bg-accent-gold text-black rounded-lg font-medium hover:bg-accent-gold">
           <Download className="w-4 h-4" /> Export CSV
         </a>
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-8">
-        <div className="bg-[#1A1A1A] border border-white/10 rounded-xl p-4">
-          <Users className="w-5 h-5 text-[#D4A017] mb-2" />
+        <div className="bg-surface-container-high border border-white/10 rounded-xl p-4">
+          <Users className="w-5 h-5 text-primary mb-2" />
           <p className="text-2xl font-bold">{totalUsers}</p>
           <p className="text-white/50 text-xs">Total</p>
         </div>
-        <div className="bg-[#1A1A1A] border border-white/10 rounded-xl p-4">
+        <div className="bg-surface-container-high border border-white/10 rounded-xl p-4">
           <TrendingUp className="w-5 h-5 text-green-400 mb-2" />
           <p className="text-2xl font-bold">{newUsers30d}</p>
           <p className="text-white/50 text-xs">New (30d)</p>
         </div>
-        <div className="bg-[#1A1A1A] border border-white/10 rounded-xl p-4">
+        <div className="bg-surface-container-high border border-white/10 rounded-xl p-4">
           <Zap className="w-5 h-5 text-blue-400 mb-2" />
           <p className="text-2xl font-bold">{activeUsers7d}</p>
           <p className="text-white/50 text-xs">Active (7d)</p>
         </div>
-        <div className="bg-[#1A1A1A] border border-white/10 rounded-xl p-4">
+        <div className="bg-surface-container-high border border-white/10 rounded-xl p-4">
           <Crown className="w-5 h-5 text-purple-400 mb-2" />
           <p className="text-2xl font-bold">{paidUsers}</p>
           <p className="text-white/50 text-xs">Paid</p>
         </div>
-        <div className="bg-[#1A1A1A] border border-white/10 rounded-xl p-4">
+        <div className="bg-surface-container-high border border-white/10 rounded-xl p-4">
           <DollarSign className="w-5 h-5 text-red-400 mb-2" />
           <p className="text-2xl font-bold">${(totalCost / 100).toFixed(2)}</p>
           <p className="text-white/50 text-xs">Total Cost</p>
         </div>
-        <div className="bg-[#1A1A1A] border border-white/10 rounded-xl p-4">
-          <Zap className="w-5 h-5 text-[#D4A017] mb-2" />
+        <div className="bg-surface-container-high border border-white/10 rounded-xl p-4">
+          <Zap className="w-5 h-5 text-primary mb-2" />
           <p className="text-2xl font-bold">{totalCreditsUsed}</p>
           <p className="text-white/50 text-xs">Credits Used</p>
         </div>
       </div>
 
-      <div className="bg-[#1A1A1A] border border-white/10 rounded-xl overflow-hidden">
+      <div className="bg-surface-container-high border border-white/10 rounded-xl overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead className="bg-white/5">
@@ -145,7 +145,7 @@ export default async function AdminUsers() {
                   <tr key={user.id} className="border-t border-white/5 hover:bg-white/5">
                     <td className="p-4">
                       <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#D4A017] to-[#B8860B] flex items-center justify-center text-black font-semibold text-sm">
+                        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-gold to-gold-dark flex items-center justify-center text-black font-semibold text-sm">
                           {(user.full_name || user.email || '?')[0].toUpperCase()}
                         </div>
                         <div>
@@ -165,7 +165,7 @@ export default async function AdminUsers() {
                       }`}>{plan}</span>
                     </td>
                     <td className="p-4">
-                      <span className="text-[#D4A017] font-medium">{user.credits || 0}</span>
+                      <span className="text-primary font-medium">{user.credits || 0}</span>
                       <span className="text-white/30 text-sm ml-1">left</span>
                     </td>
                     <td className="p-4">
@@ -196,7 +196,7 @@ export default async function AdminUsers() {
                             <option value="pro">Pro</option>
                             <option value="team">Team</option>
                           </select>
-                          <button className="px-2 py-1 bg-[#D4A017]/20 text-[#D4A017] rounded text-xs hover:bg-[#D4A017]/30">Set</button>
+                          <button className="px-2 py-1 bg-accent-gold/20 text-primary rounded text-xs hover:bg-accent-gold/30">Set</button>
                         </form>
                         <form action={addCredits} className="flex items-center gap-1">
                           <input type="hidden" name="userId" value={user.id} />
@@ -213,7 +213,7 @@ export default async function AdminUsers() {
         </div>
       </div>
 
-      <div className="mt-6 p-4 bg-[#1A1A1A] border border-white/10 rounded-xl">
+      <div className="mt-6 p-4 bg-surface-container-high border border-white/10 rounded-xl">
         <p className="text-white/50 text-sm">Showing {totalUsers} users • Sorted by highest cost to you</p>
       </div>
     </div>

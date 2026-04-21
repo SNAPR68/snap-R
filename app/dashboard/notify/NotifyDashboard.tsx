@@ -135,11 +135,11 @@ export default function NotifyDashboard() {
   const selected = listings.find(l => l.id === selectedId)
 
   return (
-    <div className="min-h-screen bg-[#0A0A0A] text-white">
+    <div className="min-h-screen bg-surface text-white">
       {/* Header */}
-      <header className="h-14 bg-[#111] border-b border-white/5 flex items-center px-6 gap-3">
-        <div className="w-8 h-8 rounded-lg bg-[#D4A017]/20 flex items-center justify-center">
-          <MessageSquare className="w-4 h-4 text-[#D4A017]" />
+      <header className="h-14 bg-surface border-b border-white/5 flex items-center px-6 gap-3">
+        <div className="w-8 h-8 rounded-lg bg-accent-gold/20 flex items-center justify-center">
+          <MessageSquare className="w-4 h-4 text-primary" />
         </div>
         <span className="font-bold">Notify</span>
       </header>
@@ -163,7 +163,7 @@ export default function NotifyDashboard() {
                 onClick={() => setChannel(id)}
                 className={`flex items-center gap-2 px-5 py-2.5 rounded-xl border-2 text-sm font-medium transition-all ${
                   channel === id
-                    ? 'border-[#D4A017] bg-[#D4A017]/10 text-white'
+                    ? 'border-primary bg-accent-gold/10 text-white'
                     : 'border-white/10 text-white/50 hover:border-white/20'
                 }`}
               >
@@ -195,7 +195,7 @@ export default function NotifyDashboard() {
               <ChevronDown className="w-4 h-4 text-white/40 flex-shrink-0" />
             </button>
             {showDropdown && (
-              <div className="absolute top-full left-0 right-0 mt-2 bg-[#1A1A1A] border border-white/10 rounded-xl overflow-hidden z-20 max-h-56 overflow-y-auto">
+              <div className="absolute top-full left-0 right-0 mt-2 bg-surface-container-high border border-white/10 rounded-xl overflow-hidden z-20 max-h-56 overflow-y-auto">
                 <button
                   onClick={() => { setSelectedId(''); setShowDropdown(false) }}
                   className="w-full flex items-center gap-3 p-3 hover:bg-white/5 text-left text-white/40 text-sm"
@@ -203,12 +203,12 @@ export default function NotifyDashboard() {
                   No listing
                 </button>
                 {loading ? (
-                  <div className="p-4 flex justify-center"><Loader2 className="w-5 h-5 animate-spin text-[#D4A017]" /></div>
+                  <div className="p-4 flex justify-center"><Loader2 className="w-5 h-5 animate-spin text-primary" /></div>
                 ) : listings.map(l => (
                   <button
                     key={l.id}
                     onClick={() => { setSelectedId(l.id); setShowDropdown(false) }}
-                    className={`w-full flex items-center gap-3 p-3 hover:bg-white/5 text-left ${selectedId === l.id ? 'bg-[#D4A017]/10' : ''}`}
+                    className={`w-full flex items-center gap-3 p-3 hover:bg-white/5 text-left ${selectedId === l.id ? 'bg-accent-gold/10' : ''}`}
                   >
                     <div className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center flex-shrink-0">
                       <Home className="w-4 h-4 text-white/30" />
@@ -239,7 +239,7 @@ export default function NotifyDashboard() {
                 }}
                 className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-all ${
                   templateId === t.id
-                    ? 'border-[#D4A017] bg-[#D4A017]/10 text-[#D4A017]'
+                    ? 'border-primary bg-accent-gold/10 text-primary'
                     : 'border-white/10 text-white/50 hover:border-white/20'
                 }`}
               >
@@ -254,7 +254,7 @@ export default function NotifyDashboard() {
             rows={5}
             placeholder="Type your message..."
             aria-label="Message body"
-            className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white placeholder-white/30 resize-none focus:outline-none focus:border-[#D4A017]/50"
+            className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white placeholder-white/30 resize-none focus:outline-none focus:border-primary/50"
           />
           <p className="text-xs text-white/30 mt-1 text-right">{message.length} chars</p>
         </div>
@@ -272,13 +272,13 @@ export default function NotifyDashboard() {
                 onChange={e => setTo(e.target.value)}
                 placeholder="+1 555 000 0000"
                 aria-label="Recipient phone number"
-                className="w-full bg-white/5 border border-white/10 rounded-xl pl-10 pr-4 py-3 text-sm text-white placeholder-white/30 focus:outline-none focus:border-[#D4A017]/50"
+                className="w-full bg-white/5 border border-white/10 rounded-xl pl-10 pr-4 py-3 text-sm text-white placeholder-white/30 focus:outline-none focus:border-primary/50"
               />
             </div>
             <button
               onClick={send}
               disabled={!to || !message || sending}
-              className="flex items-center gap-2 px-6 py-3 bg-[#D4A017] text-black font-bold rounded-xl hover:bg-[#B8860B] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+              className="flex items-center gap-2 px-6 py-3 bg-accent-gold text-black font-bold rounded-xl hover:bg-accent-gold transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
             >
               {sending ? (
                 <><Loader2 className="w-4 h-4 animate-spin" /> Sending...</>

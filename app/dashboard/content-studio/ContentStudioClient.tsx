@@ -55,12 +55,12 @@ export default function ContentStudioClient({
       label: 'Social Post',
       desc: 'All platforms & templates',
       icon: Image,
-      color: 'from-[#D4AF37] to-[#B8860B]',
-      textColor: 'text-[#D4AF37]',
-      bgColor: 'bg-[#D4AF37]',
-      hoverBorder: 'hover:border-[#D4AF37]/50',
-      activeBorder: 'border-[#D4AF37]/30',
-      activeBg: 'from-[#D4AF37]/15 to-[#B8860B]/10',
+      color: 'from-accent-gold to-gold-dark',
+      textColor: 'text-accent-gold',
+      bgColor: 'bg-accent-gold',
+      hoverBorder: 'hover:border-accent-gold/50',
+      activeBorder: 'border-accent-gold/30',
+      activeBg: 'from-accent-gold/15 to-gold-dark/10',
       route: '/dashboard/content-studio/create-all'
     },
     {
@@ -127,14 +127,14 @@ export default function ContentStudioClient({
   }
 
   return (
-    <div className="min-h-screen bg-[#0A0A0A] text-white flex flex-col">
+    <div className="min-h-screen bg-surface text-white flex flex-col">
       {/* Header */}
-      <header className="bg-[#111] border-b border-white/5 px-6 pt-6 pb-0 flex-shrink-0">
+      <header className="bg-surface border-b border-white/5 px-6 pt-6 pb-0 flex-shrink-0">
         <div className="max-w-6xl mx-auto">
           {/* Top Row: Title + Credits */}
           <div className="flex items-center justify-between mb-5">
             <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#D4AF37] to-[#B8860B] flex items-center justify-center">
+              <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-accent-gold to-gold-dark flex items-center justify-center">
                 <Sparkles className="w-4.5 h-4.5 text-black" />
               </div>
               <div>
@@ -157,7 +157,7 @@ export default function ContentStudioClient({
               </div>
               <div className="h-5 w-px bg-white/10" />
               <div className="flex items-center gap-1 bg-white/5 rounded-lg px-2.5 py-1.5">
-                <Coins className="w-3.5 h-3.5 text-[#D4AF37]" />
+                <Coins className="w-3.5 h-3.5 text-accent-gold" />
                 <span className="text-sm font-semibold">{credits}</span>
               </div>
             </div>
@@ -174,7 +174,7 @@ export default function ContentStudioClient({
                   onClick={() => setSelectedTab(tab.id)}
                   className={`flex items-center gap-2 px-4 py-2.5 rounded-t-lg border-b-2 transition-all ${
                     isActive
-                      ? `bg-[#0A0A0A] border-[#D4AF37] ${tab.textColor}`
+                      ? `bg-surface border-accent-gold ${tab.textColor}`
                       : 'bg-transparent border-transparent text-white/50 hover:text-white/70 hover:bg-white/5'
                   }`}
                 >
@@ -201,11 +201,11 @@ export default function ContentStudioClient({
           </div>
 
           {listings.length === 0 ? (
-            <div className="text-center py-16 bg-[#111] rounded-xl border border-white/5">
+            <div className="text-center py-16 bg-surface rounded-xl border border-white/5">
               <Home className="w-12 h-12 text-white/10 mx-auto mb-3" />
               <h3 className="font-medium mb-2">No Listings Yet</h3>
               <p className="text-white/40 text-sm mb-4">Create a listing and enhance photos first</p>
-              <Link href="/listings/new" className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#D4AF37] text-black rounded-lg font-semibold text-sm">
+              <Link href="/listings/new" className="inline-flex items-center gap-2 px-5 py-2.5 bg-accent-gold text-black rounded-lg font-semibold text-sm">
                 Create Listing
               </Link>
             </div>
@@ -215,7 +215,7 @@ export default function ContentStudioClient({
                 <button
                   key={listing.id}
                   onClick={() => handleListingClick(listing.id)}
-                  className={`group bg-[#111] rounded-xl border border-white/5 transition-all overflow-hidden text-left ${activeTab.hoverBorder}`}
+                  className={`group bg-surface rounded-xl border border-white/5 transition-all overflow-hidden text-left ${activeTab.hoverBorder}`}
                 >
                   <div className="aspect-[4/3] relative">
                     {listing.thumbnail ? (
@@ -235,7 +235,7 @@ export default function ContentStudioClient({
                           <span className="text-[10px] bg-green-500/80 px-1.5 py-0.5 rounded">{listing.enhancedCount} ready</span>
                         )}
                         {marketingStatuses?.[listing.id]?.status === 'completed' && (
-                          <span className="text-[10px] bg-[#D4AF37]/90 text-black font-semibold px-1.5 py-0.5 rounded flex items-center gap-0.5">
+                          <span className="text-[10px] bg-accent-gold/90 text-black font-semibold px-1.5 py-0.5 rounded flex items-center gap-0.5">
                             <Sparkles className="w-2.5 h-2.5" /> AI Content Ready
                           </span>
                         )}
@@ -290,7 +290,7 @@ export default function ContentStudioClient({
       </main>
 
       {/* Bottom Stats Band */}
-      <div className="bg-[#111] border-t border-white/5 px-6 py-3 flex-shrink-0">
+      <div className="bg-surface border-t border-white/5 px-6 py-3 flex-shrink-0">
         <div className="max-w-6xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-6">
             <div className="flex items-center gap-2">
@@ -311,7 +311,7 @@ export default function ContentStudioClient({
             </div>
             <div className="h-4 w-px bg-white/10" />
             <div className="flex items-center gap-1.5 text-sm">
-              <Download className="w-3.5 h-3.5 text-[#D4AF37]" />
+              <Download className="w-3.5 h-3.5 text-accent-gold" />
               <span className="text-white/50">Download & Share Anywhere</span>
             </div>
           </div>

@@ -36,14 +36,14 @@ interface EnhancementRecommendation {
 
 function ListingSelector({ listings, onSelect }: { listings: Listing[]; onSelect: (id: string) => void }) {
   return (
-    <div className="min-h-screen bg-[#0F0F0F] text-white p-6">
+    <div className="min-h-screen bg-charcoal-deep text-white p-6">
       <div className="max-w-4xl mx-auto">
         <div className="flex items-center gap-3 mb-8">
           <div className="p-3 bg-purple-500/20 rounded-xl">
             <Brain className="w-8 h-8 text-purple-400" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold">Listing Intelligence AI</h1>
+            <h1 className="text-2xl font-bold editorial-headline">Listing Intelligence AI</h1>
             <p className="text-white/50">Select a listing to analyze with AI</p>
           </div>
         </div>
@@ -206,8 +206,8 @@ function ListingIntelligenceContent() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#0F0F0F] flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-[#D4A017]" />
+      <div className="min-h-screen bg-charcoal-deep flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
       </div>
     );
   }
@@ -231,8 +231,8 @@ function ListingIntelligenceContent() {
 export default function ListingIntelligencePage() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen bg-[#0F0F0F] flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-[#D4A017]" />
+      <div className="min-h-screen bg-charcoal-deep flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
       </div>
     }>
       <ListingIntelligenceContent />

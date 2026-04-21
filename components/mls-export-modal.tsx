@@ -115,13 +115,13 @@ export function MlsExportModal({ photos, listingTitle, listingAddress, onClose }
   return (
     <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4" onClick={onClose}>
       <div 
-        className="bg-[#1A1A1A] rounded-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto" 
+        className="bg-surface-container-high rounded-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto" 
         onClick={e => e.stopPropagation()}
       >
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-white/10">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-gradient-to-br from-[#D4A017] to-[#B8860B] rounded-xl flex items-center justify-center">
+            <div className="w-10 h-10 bg-gradient-to-br from-gold to-gold-dark rounded-xl flex items-center justify-center">
               <FileArchive className="w-5 h-5 text-black" />
             </div>
             <div>
@@ -148,10 +148,10 @@ export function MlsExportModal({ photos, listingTitle, listingAddress, onClose }
               <select
                 value={selectedMls}
                 onChange={(e) => setSelectedMls(e.target.value)}
-                className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white focus:border-[#D4A017] focus:outline-none"
+                className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white focus:border-primary focus:outline-none"
               >
                 {mlsOptions.map(option => (
-                  <option key={option.value} value={option.value} className="bg-[#1A1A1A]">
+                  <option key={option.value} value={option.value} className="bg-surface-container-high">
                     {option.label} ({option.region})
                   </option>
                 ))}
@@ -168,7 +168,7 @@ export function MlsExportModal({ photos, listingTitle, listingAddress, onClose }
                 value={agentName}
                 onChange={(e) => setAgentName(e.target.value)}
                 placeholder="John Doe"
-                className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder:text-white/30 focus:border-[#D4A017] focus:outline-none"
+                className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder:text-white/30 focus:border-primary focus:outline-none"
               />
             </div>
             <div>
@@ -178,7 +178,7 @@ export function MlsExportModal({ photos, listingTitle, listingAddress, onClose }
                 value={mlsNumber}
                 onChange={(e) => setMlsNumber(e.target.value)}
                 placeholder="123456789"
-                className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder:text-white/30 focus:border-[#D4A017] focus:outline-none"
+                className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder:text-white/30 focus:border-primary focus:outline-none"
               />
             </div>
           </div>
@@ -248,7 +248,7 @@ export function MlsExportModal({ photos, listingTitle, listingAddress, onClose }
             <button
               onClick={handleExport}
               disabled={loading || !selectedMls || photos.length === 0}
-              className="w-full py-4 bg-gradient-to-r from-[#D4A017] to-[#B8860B] rounded-xl text-black font-semibold flex items-center justify-center gap-2 disabled:opacity-50"
+              className="w-full py-4 bg-gradient-to-r from-gold to-gold-dark rounded-xl text-black font-semibold flex items-center justify-center gap-2 disabled:opacity-50"
             >
               {loading ? (
                 <>

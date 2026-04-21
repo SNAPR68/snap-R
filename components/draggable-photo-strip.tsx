@@ -119,13 +119,13 @@ export function DraggablePhotoStrip({
           onTouchStart={() => handleTouchStart(photo.id)}
           onTouchEnd={handleTouchEnd}
           className={`relative flex-shrink-0 group transition-all duration-150 ${
-            dragOverId === photo.id ? 'scale-105 ring-2 ring-[#D4A017]' : ''
+            dragOverId === photo.id ? 'scale-105 ring-2 ring-accent-gold' : ''
           } ${draggedId === photo.id ? 'opacity-40 scale-95' : ''} ${
             touchDragId === photo.id ? 'scale-105' : ''
           }`}
         >
           {/* Order badge */}
-          <div className="absolute -top-1.5 -left-1.5 w-5 h-5 bg-gradient-to-br from-[#D4A017] to-[#B8860B] rounded-full flex items-center justify-center z-10 shadow-lg">
+          <div className="absolute -top-1.5 -left-1.5 w-5 h-5 bg-gradient-to-br from-gold to-gold-dark rounded-full flex items-center justify-center z-10 shadow-lg">
             <span className="text-[10px] font-bold text-black">{index + 1}</span>
           </div>
           
@@ -153,7 +153,7 @@ export function DraggablePhotoStrip({
             onClick={() => onSelect(photo)}
             className={`w-16 h-16 rounded-lg overflow-hidden border-2 transition-all cursor-grab active:cursor-grabbing ${
               selectedPhotoId === photo.id 
-                ? 'border-[#D4A017] shadow-lg shadow-[#D4A017]/20' 
+                ? 'border-primary shadow-lg shadow-gold/20' 
                 : 'border-transparent hover:border-white/30'
             } ${photo.status === 'completed' ? 'ring-1 ring-green-500/30' : ''}`}
           >

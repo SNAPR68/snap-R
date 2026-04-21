@@ -197,7 +197,7 @@ export default function BookingsDashboard() {
     { label: 'Total Bookings', value: stats.total, icon: Camera, color: 'text-blue-400', bg: 'bg-blue-500/10' },
     { label: 'Pending', value: stats.pending, icon: Clock, color: 'text-yellow-400', bg: 'bg-yellow-500/10' },
     { label: 'Confirmed', value: stats.confirmed, icon: CheckCircle2, color: 'text-green-400', bg: 'bg-green-500/10' },
-    { label: 'Revenue', value: stats.revenue > 0 ? formatPrice(stats.revenue) : '$0', icon: DollarSign, color: 'text-[#D4A017]', bg: 'bg-[#D4A017]/10' },
+    { label: 'Revenue', value: stats.revenue > 0 ? formatPrice(stats.revenue) : '$0', icon: DollarSign, color: 'text-primary', bg: 'bg-accent-gold/10' },
   ]
 
   const TABS: { value: FilterTab; label: string }[] = [
@@ -213,7 +213,7 @@ export default function BookingsDashboard() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[50vh]">
-        <div className="w-8 h-8 border-2 border-[#D4A017] border-t-transparent rounded-full animate-spin" />
+        <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
       </div>
     )
   }
@@ -229,7 +229,7 @@ export default function BookingsDashboard() {
       {/* Stats Grid */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {STAT_CARDS.map(s => (
-          <div key={s.label} className="bg-[#1A1A1A] border border-white/5 rounded-xl p-4">
+          <div key={s.label} className="bg-surface-container-high border border-white/5 rounded-xl p-4">
             <div className="flex items-center justify-between mb-3">
               <div className={`w-10 h-10 rounded-lg ${s.bg} flex items-center justify-center`}>
                 <s.icon className={`w-5 h-5 ${s.color}`} />
@@ -249,7 +249,7 @@ export default function BookingsDashboard() {
             onClick={() => setActiveTab(tab.value)}
             className={`px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-colors ${
               activeTab === tab.value
-                ? 'bg-[#D4A017]/20 text-[#D4A017]'
+                ? 'bg-accent-gold/20 text-primary'
                 : 'text-white/40 hover:text-white/60 hover:bg-white/5'
             }`}
           >
@@ -287,7 +287,7 @@ export default function BookingsDashboard() {
           const canAdvance = currentFlowIdx >= 0 && currentFlowIdx < STATUS_FLOW.length - 1
 
           return (
-            <div key={booking.id} className="bg-[#1A1A1A] border border-white/5 rounded-xl overflow-hidden">
+            <div key={booking.id} className="bg-surface-container-high border border-white/5 rounded-xl overflow-hidden">
               {/* Booking Header */}
               <div className="p-4">
                 <div className="flex items-start justify-between gap-3">
@@ -354,7 +354,7 @@ export default function BookingsDashboard() {
                     <button
                       onClick={() => handleAdvanceStatus(booking)}
                       disabled={updating === booking.id}
-                      className="px-3 py-1.5 bg-gradient-to-r from-[#D4A017] to-[#B8860B] text-black text-xs font-bold rounded-lg hover:opacity-90 disabled:opacity-50 flex items-center gap-1.5 transition-opacity"
+                      className="px-3 py-1.5 bg-gradient-to-r from-gold to-gold-dark text-black text-xs font-bold rounded-lg hover:opacity-90 disabled:opacity-50 flex items-center gap-1.5 transition-opacity"
                     >
                       {updating === booking.id ? (
                         <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -472,7 +472,7 @@ export default function BookingsDashboard() {
       {/* Confirm Booking Modal */}
       {confirmModal && (
         <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4" role="dialog" aria-modal="true" aria-label="Confirm booking">
-          <div className="bg-[#1A1A1A] rounded-2xl p-6 w-full max-w-md" onClick={e => e.stopPropagation()}>
+          <div className="bg-surface-container-high rounded-2xl p-6 w-full max-w-md" onClick={e => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-xl font-bold text-white">Confirm Booking</h2>
               <button onClick={() => { setConfirmModal(null); setConfirmDate(''); setConfirmTime('') }} className="p-2 hover:bg-white/10 rounded-lg" aria-label="Close">
@@ -489,7 +489,7 @@ export default function BookingsDashboard() {
                   onChange={e => setConfirmDate(e.target.value)}
                   required
                   aria-label="Confirmed date"
-                  className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white focus:border-[#D4A017]/60 outline-none"
+                  className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white focus:border-primary/60 outline-none"
                 />
               </div>
               <div>
@@ -499,7 +499,7 @@ export default function BookingsDashboard() {
                   value={confirmTime}
                   onChange={e => setConfirmTime(e.target.value)}
                   aria-label="Confirmed time"
-                  className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white focus:border-[#D4A017]/60 outline-none"
+                  className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white focus:border-primary/60 outline-none"
                 />
               </div>
 
@@ -513,7 +513,7 @@ export default function BookingsDashboard() {
                 <button
                   onClick={() => updateStatus(confirmModal, 'confirmed')}
                   disabled={!confirmDate || updating === confirmModal}
-                  className="flex-1 py-3 bg-gradient-to-r from-[#D4A017] to-[#B8860B] rounded-xl text-black font-bold hover:opacity-90 disabled:opacity-50 flex items-center justify-center gap-2"
+                  className="flex-1 py-3 bg-gradient-to-r from-gold to-gold-dark rounded-xl text-black font-bold hover:opacity-90 disabled:opacity-50 flex items-center justify-center gap-2"
                 >
                   {updating === confirmModal ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />}
                   Confirm

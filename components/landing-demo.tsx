@@ -147,12 +147,12 @@ export function LandingDemo() {
     <div className="w-full max-w-5xl mx-auto px-4">
       {/* Main Container */}
       <div 
-        className="relative rounded-2xl md:rounded-3xl overflow-hidden border-2 border-[#D4A017]/40 bg-gradient-to-br from-[#1A1A1A] to-[#0A0A0A] shadow-2xl shadow-[#D4A017]/10"
+        className="relative rounded-2xl md:rounded-3xl overflow-hidden border-2 border-primary/40 bg-gradient-to-br from-surface-raised to-surface shadow-2xl shadow-gold/10"
         style={{ aspectRatio: '16/9', minHeight: '400px' }}
       >
         {/* Glowing border effect */}
         <div className="absolute inset-0 rounded-2xl md:rounded-3xl pointer-events-none">
-          <div className="absolute inset-[-2px] rounded-2xl md:rounded-3xl bg-gradient-to-r from-[#D4A017]/0 via-[#D4A017]/30 to-[#D4A017]/0 animate-pulse" />
+          <div className="absolute inset-[-2px] rounded-2xl md:rounded-3xl bg-gradient-to-r from-gold/0 via-accent-gold/30 to-gold/0 animate-pulse" />
         </div>
 
         {/* Content */}
@@ -162,12 +162,12 @@ export function LandingDemo() {
           <div className="flex items-center justify-between mb-4 md:mb-6">
             <div className="flex items-center gap-2">
               <div className="w-3 h-3 rounded-full bg-[#FF5F57]" />
-              <div className="w-3 h-3 rounded-full bg-[#FFBD2E]" />
+              <div className="w-3 h-3 rounded-full bg-accent-gold" />
               <div className="w-3 h-3 rounded-full bg-[#28C840]" />
             </div>
             <div className={`px-3 py-1.5 rounded-full text-xs font-semibold flex items-center gap-2 transition-all duration-300 ${
               phase === 'upload' ? 'bg-white/10 text-white/70' :
-              phase === 'processing' ? 'bg-[#D4A017]/20 text-[#D4A017] border border-[#D4A017]/30' :
+              phase === 'processing' ? 'bg-accent-gold/20 text-primary border border-primary/30' :
               'bg-green-500/20 text-green-400 border border-green-500/30'
             }`}>
               {phase === 'upload' && (
@@ -178,7 +178,7 @@ export function LandingDemo() {
               )}
               {phase === 'processing' && (
                 <>
-                  <span className="w-2 h-2 rounded-full bg-[#D4A017] animate-pulse" />
+                  <span className="w-2 h-2 rounded-full bg-accent-gold animate-pulse" />
                   <span>Step 2: AI Processing</span>
                 </>
               )}
@@ -200,8 +200,8 @@ export function LandingDemo() {
             {phase === 'upload' && (
               <div className="text-center w-full max-w-md animate-fadeIn">
                 {/* Upload icon */}
-                <div className="w-20 h-20 md:w-24 md:h-24 mx-auto mb-4 md:mb-6 rounded-2xl border-2 border-dashed border-[#D4A017]/50 flex items-center justify-center bg-[#D4A017]/5 animate-bounce-slow">
-                  <svg className="w-10 h-10 md:w-12 md:h-12 text-[#D4A017]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                <div className="w-20 h-20 md:w-24 md:h-24 mx-auto mb-4 md:mb-6 rounded-2xl border-2 border-dashed border-primary/50 flex items-center justify-center bg-accent-gold/5 animate-bounce-slow">
+                  <svg className="w-10 h-10 md:w-12 md:h-12 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
                   </svg>
                 </div>
@@ -212,7 +212,7 @@ export function LandingDemo() {
                 {/* Progress bar */}
                 <div className="h-2 md:h-3 bg-white/10 rounded-full overflow-hidden mb-4">
                   <div 
-                    className="h-full bg-gradient-to-r from-[#D4A017] to-[#B8860B] rounded-full transition-all duration-100"
+                    className="h-full bg-gradient-to-r from-gold to-gold-dark rounded-full transition-all duration-100"
                     style={{ width: `${uploadProgress}%` }}
                   />
                 </div>
@@ -227,7 +227,7 @@ export function LandingDemo() {
                     />
                   ))}
                   {uploadedCount > 12 && (
-                    <div className="w-8 h-8 md:w-10 md:h-10 rounded-lg bg-[#D4A017]/20 border border-[#D4A017]/30 flex items-center justify-center text-[#D4A017] text-xs font-bold">
+                    <div className="w-8 h-8 md:w-10 md:h-10 rounded-lg bg-accent-gold/20 border border-primary/30 flex items-center justify-center text-primary text-xs font-bold">
                       +{uploadedCount - 12}
                     </div>
                   )}
@@ -254,11 +254,11 @@ export function LandingDemo() {
                   <div className="mb-3">
                     <div className="flex justify-between text-xs md:text-sm mb-1">
                       <span className="text-white/50">Overall Progress</span>
-                      <span className="text-[#D4A017] font-semibold">{overallProgress}%</span>
+                      <span className="text-primary font-semibold">{overallProgress}%</span>
                     </div>
                     <div className="h-2 md:h-3 bg-white/10 rounded-full overflow-hidden">
                       <div 
-                        className="h-full bg-gradient-to-r from-[#D4A017] to-[#B8860B] rounded-full transition-all duration-300"
+                        className="h-full bg-gradient-to-r from-gold to-gold-dark rounded-full transition-all duration-300"
                         style={{ width: `${overallProgress}%` }}
                       />
                     </div>
@@ -270,8 +270,8 @@ export function LandingDemo() {
                       <div 
                         key={i}
                         className={`w-2 h-2 rounded-full transition-all duration-200 ${
-                          i < aiStepIndex ? 'bg-[#D4A017]' : 
-                          i === aiStepIndex ? 'bg-[#D4A017] animate-pulse scale-125' : 
+                          i < aiStepIndex ? 'bg-accent-gold' : 
+                          i === aiStepIndex ? 'bg-accent-gold animate-pulse scale-125' : 
                           'bg-white/20'
                         }`}
                       />
@@ -293,19 +293,19 @@ export function LandingDemo() {
                       <div 
                         key={i}
                         className={`aspect-square rounded-xl overflow-hidden border-2 transition-all duration-300 ${
-                          isComplete ? 'border-[#D4A017] bg-[#D4A017]/10' :
-                          isActive ? 'border-[#D4A017]/50 bg-white/5' :
+                          isComplete ? 'border-primary bg-accent-gold/10' :
+                          isActive ? 'border-primary/50 bg-white/5' :
                           'border-white/10 bg-white/5'
                         }`}
                       >
                         <div className="w-full h-full flex items-center justify-center">
                           {isComplete && (
-                            <svg className="w-8 h-8 text-[#D4A017]" fill="currentColor" viewBox="0 0 20 20">
+                            <svg className="w-8 h-8 text-primary" fill="currentColor" viewBox="0 0 20 20">
                               <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                             </svg>
                           )}
                           {isActive && (
-                            <div className="w-8 h-8 border-2 border-[#D4A017] border-t-transparent rounded-full animate-spin" />
+                            <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
                           )}
                         </div>
                       </div>
@@ -321,7 +321,7 @@ export function LandingDemo() {
                 {/* Left: Before/After */}
                 <div>
                   <p className="text-white/40 text-xs font-semibold tracking-wider mb-2 text-center md:text-left">BEFORE → AFTER</p>
-                  <div className="relative aspect-[4/3] rounded-xl overflow-hidden border-2 border-[#D4A017]/50 bg-gradient-to-br from-gray-700 to-gray-900">
+                  <div className="relative aspect-[4/3] rounded-xl overflow-hidden border-2 border-primary/50 bg-gradient-to-br from-gray-700 to-gray-900">
                     {/* Before side */}
                     <div className="absolute inset-0 bg-gradient-to-br from-gray-500 to-gray-700">
                       <div className="absolute inset-0 flex items-center justify-center text-white/20 text-sm">
@@ -334,7 +334,7 @@ export function LandingDemo() {
                       className="absolute inset-0 bg-gradient-to-br from-sky-400/30 via-amber-500/20 to-orange-400/30 transition-all duration-500"
                       style={{ clipPath: `inset(0 ${100 - sliderPos}% 0 0)` }}
                     >
-                      <div className="absolute inset-0 flex items-center justify-center text-[#D4A017] text-sm font-semibold">
+                      <div className="absolute inset-0 flex items-center justify-center text-primary text-sm font-semibold">
                         ✨ Enhanced
                       </div>
                     </div>
@@ -353,7 +353,7 @@ export function LandingDemo() {
 
                     {/* Labels */}
                     <div className="absolute bottom-2 left-2 px-2 py-1 bg-black/60 rounded text-[10px] md:text-xs text-white/70">Before</div>
-                    <div className="absolute bottom-2 right-2 px-2 py-1 bg-[#D4A017] rounded text-[10px] md:text-xs text-black font-semibold">After</div>
+                    <div className="absolute bottom-2 right-2 px-2 py-1 bg-accent-gold rounded text-[10px] md:text-xs text-black font-semibold">After</div>
                   </div>
                 </div>
 
@@ -375,7 +375,7 @@ export function LandingDemo() {
                         </div>
                         <div className="flex items-center gap-2">
                           {item.count > 1 && (
-                            <span className="px-2 py-0.5 bg-[#D4A017]/20 text-[#D4A017] rounded text-xs font-bold">
+                            <span className="px-2 py-0.5 bg-accent-gold/20 text-primary rounded text-xs font-bold">
                               ×{item.count}
                             </span>
                           )}
@@ -389,7 +389,7 @@ export function LandingDemo() {
 
                   {/* CTA */}
                   <div className="mt-4 text-center">
-                    <div className="inline-flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-[#D4A017] to-[#B8860B] rounded-xl text-black font-semibold text-sm md:text-base shadow-lg shadow-[#D4A017]/20">
+                    <div className="inline-flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-gold to-gold-dark rounded-xl text-black font-semibold text-sm md:text-base shadow-lg shadow-gold/20">
                       <span>One-Click Publish</span>
                       <svg className="w-4 h-4 md:w-5 md:h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                         <path strokeLinecap="round" strokeLinejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
@@ -415,7 +415,7 @@ export function LandingDemo() {
 
       {/* Live indicator */}
       <div className="flex justify-center mt-4">
-        <div className="inline-flex items-center gap-3 px-4 py-2 bg-[#1A1A1A]/80 border border-white/10 rounded-full">
+        <div className="inline-flex items-center gap-3 px-4 py-2 bg-surface-container-high/80 border border-white/10 rounded-full">
           <div className="flex items-center gap-1.5">
             <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
             <span className="text-white/50 text-xs">Live Demo</span>

@@ -265,7 +265,7 @@ function VirtualStagingStudio({
   // Result View
   if (result?.success && result?.stagedUrl) {
     return (
-      <div className="min-h-screen bg-[#0F0F0F] text-white p-6">
+      <div className="min-h-screen bg-charcoal-deep text-white p-6">
         <div className="max-w-5xl mx-auto">
           {/* Header */}
           <div className="flex items-center justify-between mb-6">
@@ -274,7 +274,7 @@ function VirtualStagingStudio({
                 <Check className="w-8 h-8 text-green-400" />
               </div>
               <div>
-                <h1 className="text-2xl font-bold">Staging Complete!</h1>
+                <h1 className="text-2xl font-bold editorial-headline">Staging Complete!</h1>
                 <p className="text-white/50">
                   {FURNITURE_STYLES[furnitureStyle as keyof typeof FURNITURE_STYLES]?.label} -
                   {ROOM_TYPES[roomType as keyof typeof ROOM_TYPES]?.label} -
@@ -368,7 +368,7 @@ function VirtualStagingStudio({
   }
 
   return (
-    <div className="min-h-screen bg-[#0F0F0F] text-white p-6">
+    <div className="min-h-screen bg-charcoal-deep text-white p-6">
       <div className="max-w-6xl mx-auto">
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
@@ -377,7 +377,7 @@ function VirtualStagingStudio({
               <Sofa className="w-8 h-8 text-amber-400" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold">Virtual Staging Studio</h1>
+              <h1 className="text-2xl font-bold editorial-headline">Virtual Staging Studio</h1>
               <p className="text-white/50">{listingTitle || 'Stage your photos'}</p>
             </div>
           </div>
@@ -775,14 +775,14 @@ function ListingSelector({
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#0F0F0F] flex items-center justify-center">
+      <div className="min-h-screen bg-charcoal-deep flex items-center justify-center">
         <Loader2 className="w-8 h-8 animate-spin text-amber-400" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#0F0F0F] text-white p-6">
+    <div className="min-h-screen bg-charcoal-deep text-white p-6">
       <div className="max-w-4xl mx-auto">
         {/* Header */}
         <div className="flex items-center gap-3 mb-6">
@@ -790,7 +790,7 @@ function ListingSelector({
             <Sofa className="w-8 h-8 text-amber-400" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold">Virtual Staging</h1>
+            <h1 className="text-2xl font-bold editorial-headline">Virtual Staging</h1>
             <p className="text-white/50">Transform empty rooms into beautifully staged spaces</p>
           </div>
         </div>
@@ -881,7 +881,7 @@ function VirtualStagingContent() {
 export default function VirtualStagingPage() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen bg-[#0F0F0F] flex items-center justify-center">
+      <div className="min-h-screen bg-charcoal-deep flex items-center justify-center">
         <Loader2 className="w-8 h-8 animate-spin text-amber-400" />
       </div>
     }>

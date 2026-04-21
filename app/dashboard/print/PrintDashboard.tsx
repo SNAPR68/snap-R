@@ -135,11 +135,11 @@ export default function PrintDashboard() {
   const selected = listings.find(l => l.id === selectedId)
 
   return (
-    <div className="min-h-screen bg-[#0A0A0A] text-white">
+    <div className="min-h-screen bg-surface text-white">
       {/* Header */}
-      <header className="h-14 bg-[#111] border-b border-white/5 flex items-center px-6 gap-3">
-        <div className="w-8 h-8 rounded-lg bg-[#D4A017]/20 flex items-center justify-center">
-          <Printer className="w-4 h-4 text-[#D4A017]" />
+      <header className="h-14 bg-surface border-b border-white/5 flex items-center px-6 gap-3">
+        <div className="w-8 h-8 rounded-lg bg-accent-gold/20 flex items-center justify-center">
+          <Printer className="w-4 h-4 text-primary" />
         </div>
         <span className="font-bold">Print Materials</span>
       </header>
@@ -183,9 +183,9 @@ export default function PrintDashboard() {
             </button>
 
             {showDropdown && (
-              <div className="absolute top-full left-0 right-0 mt-2 bg-[#1A1A1A] border border-white/10 rounded-xl overflow-hidden z-20 max-h-64 overflow-y-auto">
+              <div className="absolute top-full left-0 right-0 mt-2 bg-surface-container-high border border-white/10 rounded-xl overflow-hidden z-20 max-h-64 overflow-y-auto">
                 {loading ? (
-                  <div className="p-4 flex justify-center"><Loader2 className="w-5 h-5 animate-spin text-[#D4A017]" /></div>
+                  <div className="p-4 flex justify-center"><Loader2 className="w-5 h-5 animate-spin text-primary" /></div>
                 ) : listings.length === 0 ? (
                   <div className="flex flex-col items-center py-8 text-center px-4">
                     <div className="text-3xl mb-2">🏠</div>
@@ -196,7 +196,7 @@ export default function PrintDashboard() {
                   <button
                     key={l.id}
                     onClick={() => { setSelectedId(l.id); setShowDropdown(false) }}
-                    className={`w-full flex items-center gap-3 p-3 hover:bg-white/5 transition-colors text-left ${selectedId === l.id ? 'bg-[#D4A017]/10' : ''}`}
+                    className={`w-full flex items-center gap-3 p-3 hover:bg-white/5 transition-colors text-left ${selectedId === l.id ? 'bg-accent-gold/10' : ''}`}
                   >
                     {l.thumbnail ? (
                       // eslint-disable-next-line @next/next/no-img-element
@@ -228,11 +228,11 @@ export default function PrintDashboard() {
               <button
                 key={type}
                 onClick={() => setSelectedType(type)}
-                className={`p-4 rounded-xl border-2 text-left transition-all ${selectedType === type ? 'border-[#D4A017] bg-[#D4A017]/5' : 'border-white/10 hover:border-white/20'}`}
+                className={`p-4 rounded-xl border-2 text-left transition-all ${selectedType === type ? 'border-primary bg-accent-gold/5' : 'border-white/10 hover:border-white/20'}`}
               >
                 <div className="flex items-center gap-3 mb-2">
-                  <div className={`w-9 h-9 rounded-lg flex items-center justify-center ${selectedType === type ? 'bg-[#D4A017]/20' : 'bg-white/5'}`}>
-                    <Icon className={`w-5 h-5 ${selectedType === type ? 'text-[#D4A017]' : 'text-white/40'}`} />
+                  <div className={`w-9 h-9 rounded-lg flex items-center justify-center ${selectedType === type ? 'bg-accent-gold/20' : 'bg-white/5'}`}>
+                    <Icon className={`w-5 h-5 ${selectedType === type ? 'text-primary' : 'text-white/40'}`} />
                   </div>
                   <span className="font-semibold text-sm">{label}</span>
                 </div>
@@ -275,7 +275,7 @@ export default function PrintDashboard() {
             <button
               onClick={generate}
               disabled={!selectedId || generating}
-              className="flex items-center gap-2 px-6 py-3 bg-[#D4A017] text-black font-bold rounded-xl hover:bg-[#B8860B] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+              className="flex items-center gap-2 px-6 py-3 bg-accent-gold text-black font-bold rounded-xl hover:bg-accent-gold transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
             >
               {generating ? (
                 <><Loader2 className="w-4 h-4 animate-spin" /> Generating PDF...</>
@@ -289,7 +289,7 @@ export default function PrintDashboard() {
 
           <p className="text-xs text-white/30 mt-3">
             PDFs are branded with your logo and contact info from your{' '}
-            <a href="/dashboard/brand" className="text-[#D4A017] hover:underline">Brand Profile</a>.
+            <a href="/dashboard/brand" className="text-primary hover:underline">Brand Profile</a>.
             Generation takes ~10–20 seconds.
           </p>
         </div>
@@ -301,8 +301,8 @@ export default function PrintDashboard() {
             { icon: Layout, label: 'Auto-Branded', desc: 'Your logo, colors, and contact info auto-applied' },
             { icon: Printer, label: 'Instant Download', desc: 'No watermarks, no subscription required' },
           ].map(({ icon: Icon, label, desc }) => (
-            <div key={label} className="bg-[#111] border border-white/5 rounded-xl p-4">
-              <Icon className="w-5 h-5 text-[#D4A017] mb-2" />
+            <div key={label} className="bg-surface border border-white/5 rounded-xl p-4">
+              <Icon className="w-5 h-5 text-primary mb-2" />
               <p className="text-sm font-semibold mb-1">{label}</p>
               <p className="text-xs text-white/40">{desc}</p>
             </div>

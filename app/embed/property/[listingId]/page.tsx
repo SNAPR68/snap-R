@@ -51,23 +51,23 @@ export default function PropertyEmbed({ params }: { params: Promise<{ listingId:
   }, [resolvedId, property])
 
   if (loading) {
-    return <div className="flex items-center justify-center h-48 bg-[#0A0A0A] text-gray-500">Loading...</div>
+    return <div className="flex items-center justify-center h-48 bg-surface text-gray-500">Loading...</div>
   }
 
   if (!property) {
-    return <div className="flex items-center justify-center h-48 bg-[#0A0A0A] text-gray-500">Property not available</div>
+    return <div className="flex items-center justify-center h-48 bg-surface text-gray-500">Property not available</div>
   }
 
   const formatPrice = (price: number) =>
     new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(price)
 
   return (
-    <div className="bg-[#0A0A0A] p-2">
+    <div className="bg-surface p-2">
       <a
         href={property.property_site_url ?? 'https://snap-r.com'}
         target="_blank"
         rel="noopener noreferrer"
-        className="block glass-luxury rounded-xl overflow-hidden hover:ring-1 hover:ring-[#D4A017]/30 transition-all group"
+        className="block glass-luxury rounded-xl overflow-hidden hover:ring-1 hover:ring-accent-gold/30 transition-all group"
       >
         {/* Hero image */}
         {property.hero_url && (
@@ -84,7 +84,7 @@ export default function PropertyEmbed({ params }: { params: Promise<{ listingId:
         {/* Details */}
         <div className="p-4">
           {property.price != null && (
-            <p className="text-[#D4A017] text-xl font-bold mb-1">{formatPrice(property.price)}</p>
+            <p className="text-primary text-xl font-bold mb-1">{formatPrice(property.price)}</p>
           )}
           <h3 className="text-white font-semibold text-sm mb-1 line-clamp-1">{property.title}</h3>
           <p className="text-gray-400 text-xs mb-3 line-clamp-1">{property.address}</p>

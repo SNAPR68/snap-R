@@ -218,8 +218,8 @@ export default function CameraPage() {
   const filteredTools = AI_TOOLS.filter(t => t.category === activeCategory);
 
   return (
-    <div className="min-h-screen bg-[#0F0F0F] text-white">
-      <header className="h-14 bg-[#1A1A1A] border-b border-white/10 flex items-center justify-between px-4">
+    <div className="min-h-screen bg-charcoal-deep text-white">
+      <header className="h-14 bg-surface-container-high border-b border-white/10 flex items-center justify-between px-4">
         <Link href="/dashboard" className="flex items-center gap-2 text-white/60 hover:text-white">
           <ArrowLeft className="w-5 h-5" />
         </Link>
@@ -237,8 +237,8 @@ export default function CameraPage() {
 
         {step === 'capture' && (
           <label className="block">
-            <div className="w-full py-20 border-2 border-dashed border-[#D4A017]/50 rounded-2xl flex flex-col items-center justify-center gap-4 cursor-pointer hover:border-[#D4A017] transition-colors">
-              <div className="w-20 h-20 rounded-full bg-gradient-to-br from-[#D4A017] to-[#B8860B] flex items-center justify-center">
+            <div className="w-full py-20 border-2 border-dashed border-primary/50 rounded-2xl flex flex-col items-center justify-center gap-4 cursor-pointer hover:border-primary transition-colors">
+              <div className="w-20 h-20 rounded-full bg-gradient-to-br from-gold to-gold-dark flex items-center justify-center">
                 <Camera className="w-10 h-10 text-black" />
               </div>
               <p className="text-lg font-semibold">Take Photo</p>
@@ -261,7 +261,7 @@ export default function CameraPage() {
                   onClick={() => setActiveCategory(cat)}
                   className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
                     activeCategory === cat 
-                      ? 'bg-[#D4A017] text-black' 
+                      ? 'bg-accent-gold text-black' 
                       : 'bg-white/10 text-white/60 hover:bg-white/20'
                   }`}
                 >
@@ -275,9 +275,9 @@ export default function CameraPage() {
                 <button
                   key={tool.id}
                   onClick={() => handleToolSelect(tool)}
-                  className="flex flex-col items-center gap-1.5 p-3 bg-white/5 hover:bg-[#D4A017]/20 border border-white/10 hover:border-[#D4A017]/50 rounded-xl transition-colors"
+                  className="flex flex-col items-center gap-1.5 p-3 bg-white/5 hover:bg-accent-gold/20 border border-white/10 hover:border-primary/50 rounded-xl transition-colors"
                 >
-                  <tool.icon className="w-5 h-5 text-[#D4A017]" />
+                  <tool.icon className="w-5 h-5 text-primary" />
                   <span className="text-xs text-center leading-tight">{tool.name}</span>
                   <span className="text-[10px] text-white/40">{tool.credits} cr</span>
                 </button>
@@ -298,7 +298,7 @@ export default function CameraPage() {
                 <button
                   key={preset.id}
                   onClick={() => handlePresetSelect(preset.name)}
-                  className="p-4 bg-white/5 hover:bg-[#D4A017]/20 border border-white/10 hover:border-[#D4A017]/50 rounded-xl transition-colors"
+                  className="p-4 bg-white/5 hover:bg-accent-gold/20 border border-white/10 hover:border-primary/50 rounded-xl transition-colors"
                 >
                   <span className="text-sm">{preset.name}</span>
                 </button>
@@ -310,7 +310,7 @@ export default function CameraPage() {
 
         {step === 'processing' && (
           <div className="flex flex-col items-center justify-center py-20 space-y-4">
-            <Loader2 className="w-12 h-12 text-[#D4A017] animate-spin" />
+            <Loader2 className="w-12 h-12 text-primary animate-spin" />
             <p className="text-lg font-semibold">Enhancing...</p>
             <p className="text-white/50 text-sm">{selectedTool?.name}{selectedPreset ? ` - ${selectedPreset}` : ''}</p>
           </div>
@@ -326,7 +326,7 @@ export default function CameraPage() {
             </div>
             <button
               onClick={handleDownload}
-              className="w-full py-4 bg-gradient-to-r from-[#D4A017] to-[#B8860B] text-black rounded-xl font-semibold flex items-center justify-center gap-2"
+              className="w-full py-4 bg-gradient-to-r from-gold to-gold-dark text-black rounded-xl font-semibold flex items-center justify-center gap-2"
             >
               <Download className="w-5 h-5" /> Download
             </button>

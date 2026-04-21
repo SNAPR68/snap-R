@@ -40,12 +40,12 @@ export function ExplainerVideoPlayer() {
         <button
           type="button"
           onClick={handlePlay}
-          className="absolute inset-0 z-[100] flex items-center justify-center cursor-pointer group focus:outline-none focus:ring-2 focus:ring-[#D4A017] focus:ring-inset"
+          className="absolute inset-0 z-[100] flex items-center justify-center cursor-pointer group focus:outline-none focus:ring-2 focus:ring-accent-gold focus:ring-inset"
           aria-label="Play video"
         >
           <span className="w-20 h-20 rounded-full bg-black/60 flex items-center justify-center group-hover:bg-black/80 transition-colors">
             <svg
-              className="w-10 h-10 text-[#D4A017] ml-1"
+              className="w-10 h-10 text-primary ml-1"
               fill="currentColor"
               viewBox="0 0 24 24"
               aria-hidden

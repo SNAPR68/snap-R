@@ -31,18 +31,18 @@ export default function ForgotPasswordPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#0F0F0F] flex">
+    <div className="min-h-screen bg-charcoal-deep flex">
       {/* Left Panel */}
-      <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-[#D4A017] to-[#B8860B] p-12 flex-col justify-between">
+      <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-gold to-gold-dark p-12 flex-col justify-between">
         <Link href="/" className="flex items-center gap-3">
-          <div className="w-12 h-12 rounded-xl bg-[#0F0F0F]/20 flex items-center justify-center font-bold text-[#0F0F0F] text-xl">S</div>
-          <span className="text-2xl font-bold text-[#0F0F0F]">Snap<span className="text-[#0F0F0F]/80">R</span></span>
+          <div className="w-12 h-12 rounded-xl bg-charcoal-deep/20 flex items-center justify-center font-bold text-surface text-xl">S</div>
+          <span className="text-2xl font-bold text-surface">Snap<span className="text-surface/80">R</span></span>
         </Link>
         <div>
-          <h1 className="text-4xl font-bold text-[#0F0F0F] mb-4">Reset Your Password</h1>
-          <p className="text-[#0F0F0F]/70 text-lg">We&apos;ll send you a secure link to create a new password.</p>
+          <h1 className="text-4xl font-bold text-surface mb-4">Reset Your Password</h1>
+          <p className="text-surface/70 text-lg">We&apos;ll send you a secure link to create a new password.</p>
         </div>
-        <p className="text-[#0F0F0F]/50 text-sm">© 2026 SnapR</p>
+        <p className="text-surface/50 text-sm">© 2026 SnapR</p>
       </div>
 
       {/* Right Panel */}
@@ -50,21 +50,21 @@ export default function ForgotPasswordPage() {
         <div className="w-full max-w-md">
           {/* Mobile Logo */}
           <div className="lg:hidden flex items-center justify-center gap-3 mb-8">
-            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#D4A017] to-[#B8860B] flex items-center justify-center font-bold text-black text-xl">S</div>
-            <span className="text-2xl font-bold">Snap<span className="text-[#D4A017]">R</span></span>
+            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-gold to-gold-dark flex items-center justify-center font-bold text-black text-xl">S</div>
+            <span className="text-2xl font-bold">Snap<span className="text-primary">R</span></span>
           </div>
 
           {sent ? (
             <div className="text-center">
-              <div className="w-16 h-16 rounded-full bg-[#D4A017]/10 border border-[#D4A017]/30 flex items-center justify-center mx-auto mb-6">
-                <MailCheck className="w-8 h-8 text-[#D4A017]" />
+              <div className="w-16 h-16 rounded-full bg-accent-gold/10 border border-primary/30 flex items-center justify-center mx-auto mb-6">
+                <MailCheck className="w-8 h-8 text-primary" />
               </div>
               <h2 className="text-2xl font-bold text-white mb-3">Check your email</h2>
               <p className="text-white/50 mb-8">
                 We sent a password reset link to <span className="text-white">{email}</span>.
                 The link expires in 1 hour.
               </p>
-              <Link href="/auth/login" className="flex items-center justify-center gap-2 text-[#D4A017] hover:underline">
+              <Link href="/auth/login" className="flex items-center justify-center gap-2 text-primary hover:underline">
                 <ArrowLeft className="w-4 h-4" />
                 Back to Sign In
               </Link>
@@ -89,13 +89,13 @@ export default function ForgotPasswordPage() {
                   aria-label="Email address"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white focus:outline-none focus:border-[#D4A017]"
+                  className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white focus:outline-none focus:border-primary"
                   required
                 />
                 <button
                   type="submit"
                   disabled={loading}
-                  className="w-full py-3 rounded-xl font-semibold bg-gradient-to-r from-[#D4A017] to-[#B8860B] text-black disabled:opacity-50 flex items-center justify-center"
+                  className="w-full py-3 rounded-xl font-semibold bg-gradient-to-r from-gold to-gold-dark text-black disabled:opacity-50 flex items-center justify-center"
                 >
                   {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Send Reset Link'}
                 </button>

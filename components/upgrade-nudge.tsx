@@ -49,15 +49,15 @@ export function UpgradeNudge({
 
   if (variant === 'inline') {
     return (
-      <div className="flex items-center gap-3 p-3 bg-[#D4A017]/10 border border-[#D4A017]/20 rounded-xl">
-        <Sparkles className="w-4 h-4 text-[#D4A017] flex-shrink-0" />
+      <div className="flex items-center gap-3 p-3 bg-accent-gold/10 border border-primary/20 rounded-xl">
+        <Sparkles className="w-4 h-4 text-primary flex-shrink-0" />
         <p className="text-sm text-white/70 flex-1">
-          <span className="text-[#D4A017] font-medium">{feature}</span> — {description}
+          <span className="text-primary font-medium">{feature}</span> — {description}
         </p>
         <Link
           href="/dashboard/billing"
           onClick={handleUpgradeClick}
-          className="flex items-center gap-1 px-3 py-1.5 bg-[#D4A017] hover:bg-[#B8860B] text-black text-xs font-semibold rounded-lg transition-colors whitespace-nowrap"
+          className="flex items-center gap-1 px-3 py-1.5 bg-accent-gold hover:bg-accent-gold text-black text-xs font-semibold rounded-lg transition-colors whitespace-nowrap"
         >
           <Zap className="w-3 h-3" />
           Upgrade
@@ -70,7 +70,7 @@ export function UpgradeNudge({
     return (
       <div className="fixed inset-0 z-50 flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-label={`Upgrade to ${requiredTier}`}>
         <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={handleDismiss} />
-        <div className="relative bg-[#1A1A1A] border border-white/10 rounded-2xl p-8 max-w-md w-full">
+        <div className="relative bg-surface-container-high border border-white/10 rounded-2xl p-8 max-w-md w-full">
           <button
             onClick={handleDismiss}
             className="absolute top-4 right-4 text-white/40 hover:text-white"
@@ -79,7 +79,7 @@ export function UpgradeNudge({
             <X className="w-5 h-5" />
           </button>
 
-          <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#D4A017] to-[#B8860B] flex items-center justify-center mb-6">
+          <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-gold to-gold-dark flex items-center justify-center mb-6">
             <Sparkles className="w-7 h-7 text-black" />
           </div>
 
@@ -94,7 +94,7 @@ export function UpgradeNudge({
               'Lead management & CRM',
             ].map((perk, i) => (
               <div key={i} className="flex items-center gap-2 text-sm text-white/70">
-                <Zap className="w-3.5 h-3.5 text-[#D4A017] flex-shrink-0" />
+                <Zap className="w-3.5 h-3.5 text-primary flex-shrink-0" />
                 <span>{perk}</span>
               </div>
             ))}
@@ -103,7 +103,7 @@ export function UpgradeNudge({
           <Link
             href="/dashboard/billing"
             onClick={handleUpgradeClick}
-            className="flex items-center justify-center gap-2 w-full py-3 bg-gradient-to-r from-[#D4A017] to-[#B8860B] text-black font-semibold rounded-xl hover:opacity-90 transition-all"
+            className="flex items-center justify-center gap-2 w-full py-3 bg-gradient-to-r from-gold to-gold-dark text-black font-semibold rounded-xl hover:opacity-90 transition-all"
           >
             Upgrade to {requiredTier}
             <ChevronRight className="w-4 h-4" />
@@ -119,8 +119,8 @@ export function UpgradeNudge({
 
   // Default: banner variant
   return (
-    <div className="bg-gradient-to-r from-[#D4A017]/10 via-[#D4A017]/5 to-transparent border border-[#D4A017]/20 rounded-xl px-4 py-3 flex items-center gap-3">
-      <Sparkles className="w-5 h-5 text-[#D4A017] flex-shrink-0" />
+    <div className="bg-gradient-to-r from-gold/10 via-accent-gold/5 to-transparent border border-primary/20 rounded-xl px-4 py-3 flex items-center gap-3">
+      <Sparkles className="w-5 h-5 text-primary flex-shrink-0" />
       <div className="flex-1 min-w-0">
         <p className="text-sm font-medium text-white">{feature}</p>
         <p className="text-xs text-white/50 truncate">{description}</p>
@@ -128,7 +128,7 @@ export function UpgradeNudge({
       <Link
         href="/dashboard/billing"
         onClick={handleUpgradeClick}
-        className="flex items-center gap-1.5 px-4 py-2 bg-[#D4A017] hover:bg-[#B8860B] text-black text-sm font-semibold rounded-lg transition-colors whitespace-nowrap"
+        className="flex items-center gap-1.5 px-4 py-2 bg-accent-gold hover:bg-accent-gold text-black text-sm font-semibold rounded-lg transition-colors whitespace-nowrap"
       >
         Upgrade to {requiredTier}
         <ChevronRight className="w-3.5 h-3.5" />

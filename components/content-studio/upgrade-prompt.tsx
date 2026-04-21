@@ -14,8 +14,8 @@ export function UpgradePrompt({ feature, currentPlan, requiredPlan = 'Starter' }
   return (
     <div className="min-h-[60vh] flex items-center justify-center p-4">
       <div className="max-w-md text-center space-y-6">
-        <div className="w-16 h-16 mx-auto bg-gradient-to-br from-[#D4AF37]/20 to-[#D4AF37]/5 rounded-2xl flex items-center justify-center">
-          <Lock className="w-8 h-8 text-[#D4AF37]" />
+        <div className="w-16 h-16 mx-auto bg-gradient-to-br from-accent-gold/20 to-accent-gold/5 rounded-2xl flex items-center justify-center">
+          <Lock className="w-8 h-8 text-accent-gold" />
         </div>
         
         <div className="space-y-2">
@@ -27,7 +27,7 @@ export function UpgradePrompt({ feature, currentPlan, requiredPlan = 'Starter' }
 
         <div className="bg-white/5 rounded-xl p-4 border border-white/10">
           <div className="flex items-center gap-3 text-left">
-            <Sparkles className="w-5 h-5 text-[#D4AF37] flex-shrink-0" />
+            <Sparkles className="w-5 h-5 text-accent-gold flex-shrink-0" />
             <div>
               <p className="text-white font-medium">What you&apos;ll get:</p>
               <ul className="text-white/60 text-sm mt-1 space-y-1">
@@ -42,7 +42,7 @@ export function UpgradePrompt({ feature, currentPlan, requiredPlan = 'Starter' }
 
         <div className="space-y-3">
           <Link href="/dashboard/billing">
-            <Button className="w-full bg-gradient-to-r from-[#D4AF37] to-[#B8960C] text-black font-semibold">
+            <Button className="w-full bg-gradient-to-r from-accent-gold to-accent-gold text-black font-semibold">
               Upgrade to {requiredPlan}
               <ArrowRight className="w-4 h-4 ml-2" />
             </Button>

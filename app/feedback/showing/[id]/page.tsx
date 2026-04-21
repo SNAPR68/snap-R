@@ -25,7 +25,7 @@ export default async function ShowingFeedbackPage({ params }: Props) {
 
   if (!showing) {
     return (
-      <div className="min-h-screen bg-[#0A0A0A] flex items-center justify-center text-white">
+      <div className="min-h-screen bg-surface flex items-center justify-center text-white">
         <div className="text-center">
           <p className="text-white/50 text-lg">This feedback link is invalid or expired.</p>
         </div>
@@ -39,7 +39,7 @@ export default async function ShowingFeedbackPage({ params }: Props) {
     : 'the property';
 
   return (
-    <div className="min-h-screen bg-[#0A0A0A] flex items-center justify-center p-4">
+    <div className="min-h-screen bg-surface flex items-center justify-center p-4">
       <ShowingFeedbackForm
         showingId={showing.id}
         contactName={showing.contact_name}

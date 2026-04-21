@@ -26,7 +26,7 @@ const ICON_COLOR = {
   caption: 'text-pink-400',
   site: 'text-emerald-400',
   post: 'text-orange-400',
-  complete: 'text-[#D4A017]',
+  complete: 'text-primary',
 }
 
 /**
@@ -74,7 +74,7 @@ export function ProcessingToasts() {
               animate={{ opacity: 1, x: 0, scale: 1 }}
               exit={{ opacity: 0, x: 50, scale: 0.95 }}
               transition={{ type: 'spring', damping: 25 }}
-              className="flex items-center gap-3 px-4 py-3 bg-[#1A1A1A]/95 backdrop-blur-md border border-white/10 rounded-xl shadow-xl pointer-events-auto min-w-[250px]"
+              className="flex items-center gap-3 px-4 py-3 bg-surface-container-high/95 backdrop-blur-md border border-white/10 rounded-xl shadow-xl pointer-events-auto min-w-[250px]"
             >
               <div className={`flex-shrink-0 ${iconColor}`}>
                 <IconComponent className="w-4 h-4" />

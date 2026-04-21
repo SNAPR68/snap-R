@@ -56,7 +56,7 @@ export function TourEditor({ tour, onClose, onSave }: TourEditorProps) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
-      <div className="bg-[#1A1A1A] rounded-2xl border border-white/10 w-full max-w-3xl max-h-[90vh] overflow-hidden flex flex-col">
+      <div className="bg-surface-container-high rounded-2xl border border-white/10 w-full max-w-3xl max-h-[90vh] overflow-hidden flex flex-col">
         {/* Header */}
         <div className="p-4 border-b border-white/10 flex items-center justify-between">
           <h2 className="text-xl font-bold">{tour ? 'Edit Gallery' : 'Create Gallery'}</h2>

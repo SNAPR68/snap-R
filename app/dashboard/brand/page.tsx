@@ -8,10 +8,10 @@ export default function BrandProfilePage() {
         {/* Header */}
         <div className="mb-8">
           <div className="flex items-center gap-3 mb-2">
-            <div className="w-10 h-10 bg-gradient-to-r from-[#D4AF37] to-[#B8960C] rounded-lg flex items-center justify-center">
+            <div className="w-10 h-10 bg-gradient-to-r from-accent-gold to-accent-gold rounded-lg flex items-center justify-center">
               <Palette className="w-5 h-5 text-black" />
             </div>
-            <h1 className="text-2xl font-bold">Brand Profile</h1>
+            <h1 className="text-2xl font-bold editorial-headline">Brand Profile</h1>
           </div>
           <p className="text-white/60">
             Set up your brand identity for auto-generated marketing content. Your logo, colors, and contact info will be applied to all social posts, flyers, and marketing materials.

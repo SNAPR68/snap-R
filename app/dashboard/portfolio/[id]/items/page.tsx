@@ -343,14 +343,14 @@ export default function PortfolioItemsPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#0A0A0A] flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-[#D4A017]" />
+      <div className="min-h-screen bg-surface flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#0A0A0A] text-white">
+    <div className="min-h-screen bg-surface text-white">
       <div className="max-w-6xl mx-auto px-4 py-8">
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
@@ -359,7 +359,7 @@ export default function PortfolioItemsPage() {
               <ArrowLeft className="w-5 h-5" />
             </Link>
             <div>
-              <h1 className="text-2xl font-bold">{portfolio?.title ?? 'Portfolio'} — Items</h1>
+              <h1 className="text-2xl font-bold editorial-headline">{portfolio?.title ?? 'Portfolio'} — Items</h1>
               <p className="text-sm text-white/40">{items.length} item{items.length !== 1 ? 's' : ''}</p>
             </div>
           </div>
@@ -374,7 +374,7 @@ export default function PortfolioItemsPage() {
             </button>
             <button
               onClick={() => setShowAddModal(true)}
-              className="flex items-center gap-2 px-4 py-2.5 bg-[#D4A017] text-black rounded-lg text-sm font-semibold hover:bg-[#D4A017]/90 transition-colors"
+              className="flex items-center gap-2 px-4 py-2.5 bg-accent-gold text-black rounded-lg text-sm font-semibold hover:bg-accent-gold/90 transition-colors"
             >
               <Plus className="w-4 h-4" />
               Add Item
@@ -410,7 +410,7 @@ export default function PortfolioItemsPage() {
               </button>
               <button
                 onClick={() => setShowAddModal(true)}
-                className="flex items-center gap-2 px-4 py-2.5 bg-[#D4A017] text-black rounded-lg text-sm font-semibold hover:bg-[#D4A017]/90 transition-colors"
+                className="flex items-center gap-2 px-4 py-2.5 bg-accent-gold text-black rounded-lg text-sm font-semibold hover:bg-accent-gold/90 transition-colors"
               >
                 <Plus className="w-4 h-4" />
                 Add Manually
@@ -425,7 +425,7 @@ export default function PortfolioItemsPage() {
             {items.map((item, index) => (
               <div
                 key={item.id}
-                className="flex items-center gap-4 p-4 bg-[#1A1A1A] border border-white/10 rounded-lg hover:border-white/20 transition-colors"
+                className="flex items-center gap-4 p-4 bg-surface-container-high border border-white/10 rounded-lg hover:border-white/20 transition-colors"
               >
                 {/* Order controls */}
                 <div className="flex flex-col gap-1">
@@ -466,7 +466,7 @@ export default function PortfolioItemsPage() {
                       type="text"
                       value={editTitle}
                       onChange={(e) => setEditTitle(e.target.value)}
-                      className="w-full px-2 py-1 bg-white/10 border border-white/20 rounded text-sm text-white focus:outline-none focus:border-[#D4A017]/50"
+                      className="w-full px-2 py-1 bg-white/10 border border-white/20 rounded text-sm text-white focus:outline-none focus:border-primary/50"
                       autoFocus
                       onKeyDown={(e) => { if (e.key === 'Enter') handleInlineEdit(item); if (e.key === 'Escape') setEditingId(null); }}
                       aria-label="Edit item title"
@@ -492,7 +492,7 @@ export default function PortfolioItemsPage() {
                   <button
                     onClick={() => handleToggleFeatured(item)}
                     className={`p-2 rounded-lg transition-colors ${
-                      item.is_featured ? 'text-[#D4A017] bg-[#D4A017]/10' : 'text-white/30 hover:bg-white/10'
+                      item.is_featured ? 'text-primary bg-accent-gold/10' : 'text-white/30 hover:bg-white/10'
                     }`}
                     title={item.is_featured ? 'Remove from featured' : 'Mark as featured'}
                     aria-label={item.is_featured ? 'Remove from featured' : 'Mark as featured'}
@@ -526,7 +526,7 @@ export default function PortfolioItemsPage() {
       {showAddModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60" onClick={() => setShowAddModal(false)}>
           <div
-            className="bg-[#1A1A1A] border border-white/10 rounded-xl w-full max-w-lg mx-4 p-6 max-h-[85vh] overflow-y-auto"
+            className="bg-surface-container-high border border-white/10 rounded-xl w-full max-w-lg mx-4 p-6 max-h-[85vh] overflow-y-auto"
             onClick={(e) => e.stopPropagation()}
             role="dialog"
             aria-modal="true"
@@ -546,7 +546,7 @@ export default function PortfolioItemsPage() {
                   type="url"
                   value={addForm.beforeUrl}
                   onChange={(e) => setAddForm(prev => ({ ...prev, beforeUrl: e.target.value }))}
-                  className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-sm text-white focus:outline-none focus:border-[#D4A017]/50"
+                  className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-sm text-white focus:outline-none focus:border-primary/50"
                   placeholder="https://..."
                   aria-label="Before image URL"
                 />
@@ -557,7 +557,7 @@ export default function PortfolioItemsPage() {
                   type="url"
                   value={addForm.afterUrl}
                   onChange={(e) => setAddForm(prev => ({ ...prev, afterUrl: e.target.value }))}
-                  className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-sm text-white focus:outline-none focus:border-[#D4A017]/50"
+                  className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-sm text-white focus:outline-none focus:border-primary/50"
                   placeholder="https://..."
                   aria-label="After image URL"
                 />
@@ -568,7 +568,7 @@ export default function PortfolioItemsPage() {
                   type="text"
                   value={addForm.title}
                   onChange={(e) => setAddForm(prev => ({ ...prev, title: e.target.value }))}
-                  className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-sm text-white focus:outline-none focus:border-[#D4A017]/50"
+                  className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-sm text-white focus:outline-none focus:border-primary/50"
                   placeholder="Living Room Staging"
                   aria-label="Item title"
                 />
@@ -579,7 +579,7 @@ export default function PortfolioItemsPage() {
                   value={addForm.description}
                   onChange={(e) => setAddForm(prev => ({ ...prev, description: e.target.value }))}
                   rows={2}
-                  className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-sm text-white resize-none focus:outline-none focus:border-[#D4A017]/50"
+                  className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-sm text-white resize-none focus:outline-none focus:border-primary/50"
                   aria-label="Item description"
                 />
               </div>
@@ -590,7 +590,7 @@ export default function PortfolioItemsPage() {
                     type="text"
                     value={addForm.enhancementType}
                     onChange={(e) => setAddForm(prev => ({ ...prev, enhancementType: e.target.value }))}
-                    className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-sm text-white focus:outline-none focus:border-[#D4A017]/50"
+                    className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-sm text-white focus:outline-none focus:border-primary/50"
                     placeholder="virtual-staging"
                     aria-label="Enhancement type"
                   />
@@ -601,7 +601,7 @@ export default function PortfolioItemsPage() {
                     type="text"
                     value={addForm.roomType}
                     onChange={(e) => setAddForm(prev => ({ ...prev, roomType: e.target.value }))}
-                    className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-sm text-white focus:outline-none focus:border-[#D4A017]/50"
+                    className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-sm text-white focus:outline-none focus:border-primary/50"
                     placeholder="living-room"
                     aria-label="Room type"
                   />
@@ -613,7 +613,7 @@ export default function PortfolioItemsPage() {
                   type="text"
                   value={addForm.tags}
                   onChange={(e) => setAddForm(prev => ({ ...prev, tags: e.target.value }))}
-                  className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-sm text-white focus:outline-none focus:border-[#D4A017]/50"
+                  className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-sm text-white focus:outline-none focus:border-primary/50"
                   placeholder="luxury, modern, staging"
                   aria-label="Tags"
                 />
@@ -639,7 +639,7 @@ export default function PortfolioItemsPage() {
               <button
                 onClick={handleAddItem}
                 disabled={adding || !addForm.beforeUrl || !addForm.afterUrl}
-                className="flex items-center gap-2 px-4 py-2 bg-[#D4A017] text-black rounded-lg text-sm font-semibold hover:bg-[#D4A017]/90 transition-colors disabled:opacity-50"
+                className="flex items-center gap-2 px-4 py-2 bg-accent-gold text-black rounded-lg text-sm font-semibold hover:bg-accent-gold/90 transition-colors disabled:opacity-50"
               >
                 {adding && <Loader2 className="w-4 h-4 animate-spin" />}
                 Add Item
@@ -653,7 +653,7 @@ export default function PortfolioItemsPage() {
       {showImportModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60" onClick={() => setShowImportModal(false)}>
           <div
-            className="bg-[#1A1A1A] border border-white/10 rounded-xl w-full max-w-3xl mx-4 p-6 max-h-[85vh] overflow-y-auto"
+            className="bg-surface-container-high border border-white/10 rounded-xl w-full max-w-3xl mx-4 p-6 max-h-[85vh] overflow-y-auto"
             onClick={(e) => e.stopPropagation()}
             role="dialog"
             aria-modal="true"
@@ -680,7 +680,7 @@ export default function PortfolioItemsPage() {
                       onClick={() => togglePhotoSelection(photo.id)}
                       className={`relative aspect-square rounded-lg overflow-hidden border-2 transition-colors ${
                         selectedPhotos.has(photo.id)
-                          ? 'border-[#D4A017]'
+                          ? 'border-primary'
                           : 'border-transparent hover:border-white/20'
                       }`}
                     >
@@ -692,7 +692,7 @@ export default function PortfolioItemsPage() {
                         sizes="200px"
                       />
                       {selectedPhotos.has(photo.id) && (
-                        <div className="absolute top-1 right-1 w-6 h-6 bg-[#D4A017] rounded-full flex items-center justify-center">
+                        <div className="absolute top-1 right-1 w-6 h-6 bg-accent-gold rounded-full flex items-center justify-center">
                           <Check className="w-4 h-4 text-black" />
                         </div>
                       )}
@@ -719,7 +719,7 @@ export default function PortfolioItemsPage() {
                     <button
                       onClick={handleBulkImport}
                       disabled={importing || selectedPhotos.size === 0}
-                      className="flex items-center gap-2 px-4 py-2 bg-[#D4A017] text-black rounded-lg text-sm font-semibold hover:bg-[#D4A017]/90 transition-colors disabled:opacity-50"
+                      className="flex items-center gap-2 px-4 py-2 bg-accent-gold text-black rounded-lg text-sm font-semibold hover:bg-accent-gold/90 transition-colors disabled:opacity-50"
                     >
                       {importing && <Loader2 className="w-4 h-4 animate-spin" />}
                       Import {selectedPhotos.size} Photo{selectedPhotos.size !== 1 ? 's' : ''}

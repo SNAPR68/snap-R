@@ -44,7 +44,7 @@ export function AdjustmentPanel({
     adjustments.warmth !== 0;
 
   return (
-    <div className="mt-2 p-3 bg-[#1A1A1A] rounded-xl border border-white/10 flex-shrink-0">
+    <div className="mt-2 p-3 bg-surface-container-high rounded-xl border border-white/10 flex-shrink-0">
       {/* Main Row: Adjust Button + Actions */}
       <div className="flex items-center justify-between gap-3">
         {/* Adjust Settings Button */}
@@ -52,14 +52,14 @@ export function AdjustmentPanel({
           onClick={() => setShowFineTune(!showFineTune)}
           className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm transition-all ${
             showFineTune 
-              ? 'bg-[#D4A017]/20 text-[#D4A017] border border-[#D4A017]/40' 
+              ? 'bg-accent-gold/20 text-primary border border-primary/40' 
               : 'bg-white/5 text-white/70 border border-white/10 hover:bg-white/10 hover:text-white'
           }`}
         >
           <SlidersHorizontal className="w-4 h-4" />
           <span>Adjust Settings</span>
           {hasChanges && !showFineTune && (
-            <span className="w-2 h-2 bg-[#D4A017] rounded-full"></span>
+            <span className="w-2 h-2 bg-accent-gold rounded-full"></span>
           )}
           {showFineTune ? <ChevronUp className="w-3 h-3 ml-1" /> : <ChevronDown className="w-3 h-3 ml-1" />}
         </button>
@@ -93,9 +93,9 @@ export function AdjustmentPanel({
                 max="100" 
                 value={adjustments.intensity} 
                 onChange={(e) => setAdjustments({ ...adjustments, intensity: Number(e.target.value) })} 
-                className="flex-1 h-1.5 bg-white/10 rounded appearance-none cursor-pointer accent-[#D4A017]" 
+                className="flex-1 h-1.5 bg-white/10 rounded appearance-none cursor-pointer accent-accent-gold" 
               />
-              <span className="text-xs text-[#D4A017] font-mono w-10 text-right">{adjustments.intensity}%</span>
+              <span className="text-xs text-primary font-mono w-10 text-right">{adjustments.intensity}%</span>
             </div>
             <div className="flex justify-between text-[9px] text-white/30 mt-1 ml-20 mr-10">
               <span>Subtle</span>
@@ -107,25 +107,25 @@ export function AdjustmentPanel({
           <div className="grid grid-cols-2 gap-x-6 gap-y-2">
             <div className="flex items-center gap-2">
               <label className="text-[10px] text-white/50 w-16">Brightness</label>
-              <input type="range" min="-50" max="50" value={adjustments.brightness} onChange={(e) => setAdjustments({ ...adjustments, brightness: Number(e.target.value) })} className="flex-1 h-1 bg-white/10 rounded appearance-none cursor-pointer accent-[#D4A017]" />
+              <input type="range" min="-50" max="50" value={adjustments.brightness} onChange={(e) => setAdjustments({ ...adjustments, brightness: Number(e.target.value) })} className="flex-1 h-1 bg-white/10 rounded appearance-none cursor-pointer accent-accent-gold" />
               <span className="text-[10px] text-white/40 font-mono w-7 text-right">{adjustments.brightness > 0 ? '+' : ''}{adjustments.brightness}</span>
             </div>
             
             <div className="flex items-center gap-2">
               <label className="text-[10px] text-white/50 w-16">Contrast</label>
-              <input type="range" min="-50" max="50" value={adjustments.contrast} onChange={(e) => setAdjustments({ ...adjustments, contrast: Number(e.target.value) })} className="flex-1 h-1 bg-white/10 rounded appearance-none cursor-pointer accent-[#D4A017]" />
+              <input type="range" min="-50" max="50" value={adjustments.contrast} onChange={(e) => setAdjustments({ ...adjustments, contrast: Number(e.target.value) })} className="flex-1 h-1 bg-white/10 rounded appearance-none cursor-pointer accent-accent-gold" />
               <span className="text-[10px] text-white/40 font-mono w-7 text-right">{adjustments.contrast > 0 ? '+' : ''}{adjustments.contrast}</span>
             </div>
             
             <div className="flex items-center gap-2">
               <label className="text-[10px] text-white/50 w-16">Saturation</label>
-              <input type="range" min="-50" max="50" value={adjustments.saturation} onChange={(e) => setAdjustments({ ...adjustments, saturation: Number(e.target.value) })} className="flex-1 h-1 bg-white/10 rounded appearance-none cursor-pointer accent-[#D4A017]" />
+              <input type="range" min="-50" max="50" value={adjustments.saturation} onChange={(e) => setAdjustments({ ...adjustments, saturation: Number(e.target.value) })} className="flex-1 h-1 bg-white/10 rounded appearance-none cursor-pointer accent-accent-gold" />
               <span className="text-[10px] text-white/40 font-mono w-7 text-right">{adjustments.saturation > 0 ? '+' : ''}{adjustments.saturation}</span>
             </div>
             
             <div className="flex items-center gap-2">
               <label className="text-[10px] text-white/50 w-16">Warmth</label>
-              <input type="range" min="-50" max="50" value={adjustments.warmth} onChange={(e) => setAdjustments({ ...adjustments, warmth: Number(e.target.value) })} className="flex-1 h-1 bg-white/10 rounded appearance-none cursor-pointer accent-[#D4A017]" />
+              <input type="range" min="-50" max="50" value={adjustments.warmth} onChange={(e) => setAdjustments({ ...adjustments, warmth: Number(e.target.value) })} className="flex-1 h-1 bg-white/10 rounded appearance-none cursor-pointer accent-accent-gold" />
               <span className="text-[10px] text-white/40 font-mono w-7 text-right">{adjustments.warmth > 0 ? '+' : ''}{adjustments.warmth}</span>
             </div>
           </div>

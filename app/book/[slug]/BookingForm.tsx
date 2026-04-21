@@ -170,7 +170,7 @@ export default function BookingForm({ photographer, brand, packages }: BookingFo
 
   if (submitted) {
     return (
-      <div className="min-h-screen bg-[#0A0A0A] text-white flex items-center justify-center p-4">
+      <div className="min-h-screen bg-surface text-white flex items-center justify-center p-4">
         <div className="max-w-md w-full text-center">
           <div className="w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6" style={{ background: `${pc}22` }}>
             <CheckCircle className="w-10 h-10" style={{ color: pc }} />
@@ -208,9 +208,9 @@ export default function BookingForm({ photographer, brand, packages }: BookingFo
   }
 
   return (
-    <div className="min-h-screen bg-[#0A0A0A] text-white" style={{ ['--brand' as string]: pc }}>
+    <div className="min-h-screen bg-surface text-white" style={{ ['--brand' as string]: pc }}>
       {/* Header */}
-      <header className="border-b border-white/10 sticky top-0 bg-[#0A0A0A]/95 backdrop-blur z-50">
+      <header className="border-b border-white/10 sticky top-0 bg-surface/95 backdrop-blur z-50">
         <div className="max-w-2xl mx-auto px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
             {brand.logo ? (
@@ -555,7 +555,7 @@ export default function BookingForm({ photographer, brand, packages }: BookingFo
       </div>
 
       {/* Bottom Navigation */}
-      <div className="fixed bottom-0 left-0 right-0 bg-[#0A0A0A]/95 backdrop-blur border-t border-white/10 p-4 z-50">
+      <div className="fixed bottom-0 left-0 right-0 bg-surface/95 backdrop-blur border-t border-white/10 p-4 z-50">
         <div className="max-w-2xl mx-auto flex items-center justify-between gap-4">
           {step > 0 ? (
             <button

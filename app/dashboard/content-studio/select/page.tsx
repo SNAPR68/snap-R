@@ -90,7 +90,7 @@ export default async function SelectPlatformPage({
         </nav>
 
         {/* Selected Listing Card */}
-        <div className="bg-gradient-to-r from-[#D4AF37]/10 to-[#D4AF37]/5 rounded-xl border border-[#D4AF37]/30 p-6 mb-6">
+        <div className="bg-gradient-to-r from-accent-gold/10 to-accent-gold/5 rounded-xl border border-accent-gold/30 p-6 mb-6">
           <div className="flex items-start gap-6">
             <div className="w-24 h-20 rounded-lg overflow-hidden bg-white/10 flex-shrink-0 relative">
               {validPhotos[0] ? (
@@ -179,7 +179,7 @@ export default async function SelectPlatformPage({
 
         {/* MAIN CTA - Create All Posts */}
         <Link href={`/dashboard/content-studio/create-all?listing=${listingId}`}>
-          <div className="bg-gradient-to-r from-[#D4AF37] to-[#B8960C] rounded-xl p-6 mb-8 hover:shadow-lg hover:shadow-[#D4AF37]/20 transition-all cursor-pointer group">
+          <div className="bg-gradient-to-r from-accent-gold to-accent-gold rounded-xl p-6 mb-8 hover:shadow-lg hover:shadow-gold/20 transition-all cursor-pointer group">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-4">
                 <div className="w-14 h-14 bg-black/20 rounded-xl flex items-center justify-center">

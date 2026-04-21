@@ -128,7 +128,7 @@ export default async function AdminNotificationsPage() {
       {/* Header */}
       <div className="mb-8">
         <h1 className="text-3xl font-bold flex items-center gap-3">
-          <MessageCircle className="w-8 h-8 text-[#D4A017]" />
+          <MessageCircle className="w-8 h-8 text-primary" />
           Notifications Admin
         </h1>
         <p className="text-white/50 mt-1">
@@ -138,22 +138,22 @@ export default async function AdminNotificationsPage() {
 
       {/* Stats Grid */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-        <div className="bg-[#1A1A1A] border border-white/10 rounded-xl p-4">
-          <Bell className="w-5 h-5 text-[#D4A017] mb-2" />
+        <div className="bg-surface-container-high border border-white/10 rounded-xl p-4">
+          <Bell className="w-5 h-5 text-primary mb-2" />
           <p className="text-2xl font-bold">{totalLogs}</p>
           <p className="text-white/50 text-xs">Total Logged (last 50)</p>
         </div>
-        <div className="bg-[#1A1A1A] border border-green-500/30 rounded-xl p-4">
+        <div className="bg-surface-container-high border border-green-500/30 rounded-xl p-4">
           <Users className="w-5 h-5 text-green-400 mb-2" />
           <p className="text-2xl font-bold text-green-400">{whatsappEnabledCount}</p>
           <p className="text-white/50 text-xs">WhatsApp Enabled Users</p>
         </div>
-        <div className="bg-[#1A1A1A] border border-blue-500/30 rounded-xl p-4">
+        <div className="bg-surface-container-high border border-blue-500/30 rounded-xl p-4">
           <Mail className="w-5 h-5 text-blue-400 mb-2" />
           <p className="text-2xl font-bold text-blue-400">{emailLogs24h}</p>
           <p className="text-white/50 text-xs">Emails (24h)</p>
         </div>
-        <div className="bg-[#1A1A1A] border border-emerald-500/30 rounded-xl p-4">
+        <div className="bg-surface-container-high border border-emerald-500/30 rounded-xl p-4">
           <MessageCircle className="w-5 h-5 text-emerald-400 mb-2" />
           <p className="text-2xl font-bold text-emerald-400">{whatsappLogs24h}</p>
           <p className="text-white/50 text-xs">WhatsApp (24h)</p>
@@ -163,9 +163,9 @@ export default async function AdminNotificationsPage() {
       {/* Config Status + Send Test */}
       <div className="grid md:grid-cols-2 gap-4 mb-8">
         {/* Config Status */}
-        <div className="bg-[#1A1A1A] border border-white/10 rounded-xl p-6">
+        <div className="bg-surface-container-high border border-white/10 rounded-xl p-6">
           <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
-            <Shield className="w-5 h-5 text-[#D4A017]" />
+            <Shield className="w-5 h-5 text-primary" />
             Service Configuration
           </h2>
           <div className="space-y-3">
@@ -208,7 +208,7 @@ export default async function AdminNotificationsPage() {
                 <Phone className="w-4 h-4 text-white/50" />
                 <span className="text-sm">WhatsApp From</span>
               </div>
-              <code className="text-xs text-[#D4A017] bg-[#D4A017]/10 px-2 py-1 rounded">
+              <code className="text-xs text-primary bg-accent-gold/10 px-2 py-1 rounded">
                 {twilioFrom}
               </code>
             </div>
@@ -216,9 +216,9 @@ export default async function AdminNotificationsPage() {
         </div>
 
         {/* Send Test */}
-        <div className="bg-[#1A1A1A] border border-white/10 rounded-xl p-6">
+        <div className="bg-surface-container-high border border-white/10 rounded-xl p-6">
           <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
-            <Send className="w-5 h-5 text-[#D4A017]" />
+            <Send className="w-5 h-5 text-primary" />
             Send Test Notification
           </h2>
           <form action={sendTestNotification} className="space-y-3">
@@ -229,7 +229,7 @@ export default async function AdminNotificationsPage() {
                 name="email"
                 placeholder="test@example.com"
                 required
-                className="w-full px-3 py-2 bg-white/5 border border-white/20 rounded-lg text-sm text-white placeholder:text-white/30 focus:outline-none focus:border-[#D4A017]/50"
+                className="w-full px-3 py-2 bg-white/5 border border-white/20 rounded-lg text-sm text-white placeholder:text-white/30 focus:outline-none focus:border-primary/50"
               />
             </div>
             <p className="text-white/40 text-xs">
@@ -237,7 +237,7 @@ export default async function AdminNotificationsPage() {
             </p>
             <button
               type="submit"
-              className="w-full px-4 py-2 bg-[#D4A017] text-black rounded-lg text-sm font-medium hover:bg-[#B8860B] transition"
+              className="w-full px-4 py-2 bg-accent-gold text-black rounded-lg text-sm font-medium hover:bg-accent-gold transition"
             >
               Send Test Email
             </button>
@@ -249,10 +249,10 @@ export default async function AdminNotificationsPage() {
       {whatsappUsers.length > 0 && (
         <div className="mb-8">
           <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
-            <Phone className="w-5 h-5 text-[#D4A017]" />
+            <Phone className="w-5 h-5 text-primary" />
             Users with Phone Numbers ({whatsappUsers.length})
           </h2>
-          <div className="bg-[#1A1A1A] border border-white/10 rounded-xl overflow-hidden">
+          <div className="bg-surface-container-high border border-white/10 rounded-xl overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead className="bg-white/5">
@@ -336,14 +336,14 @@ export default async function AdminNotificationsPage() {
       {/* Recent Notification Logs */}
       <div>
         <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
-          <Bell className="w-5 h-5 text-[#D4A017]" />
+          <Bell className="w-5 h-5 text-primary" />
           Recent Notification Logs
         </h2>
 
         {recentLogs.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-16 bg-[#1A1A1A] border border-white/10 rounded-xl">
-            <div className="w-16 h-16 rounded-full bg-[#D4A017]/20 flex items-center justify-center mb-4">
-              <Bell className="w-8 h-8 text-[#D4A017]" />
+          <div className="flex flex-col items-center justify-center py-16 bg-surface-container-high border border-white/10 rounded-xl">
+            <div className="w-16 h-16 rounded-full bg-accent-gold/20 flex items-center justify-center mb-4">
+              <Bell className="w-8 h-8 text-primary" />
             </div>
             <p className="text-white font-medium">No notification logs yet</p>
             <p className="text-white/40 text-sm mt-1">
@@ -351,7 +351,7 @@ export default async function AdminNotificationsPage() {
             </p>
           </div>
         ) : (
-          <div className="bg-[#1A1A1A] border border-white/10 rounded-xl overflow-hidden">
+          <div className="bg-surface-container-high border border-white/10 rounded-xl overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead className="bg-white/5">

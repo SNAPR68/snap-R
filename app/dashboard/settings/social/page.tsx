@@ -149,21 +149,21 @@ function SocialSettingsContent() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#0F0F0F] flex items-center justify-center">
+      <div className="min-h-screen bg-charcoal-deep flex items-center justify-center">
         <Loader2 className="w-8 h-8 animate-spin text-amber-400" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#0F0F0F] text-white p-6">
+    <div className="min-h-screen bg-charcoal-deep text-white p-6">
       <div className="max-w-3xl mx-auto">
         <div className="flex items-center gap-3 mb-6">
           <div className="p-3 bg-gradient-to-br from-blue-500/20 to-cyan-500/20 rounded-xl">
             <Link2 className="w-8 h-8 text-blue-400" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold">Social Connections</h1>
+            <h1 className="text-2xl font-bold editorial-headline">Social Connections</h1>
             <p className="text-white/50">Weekend launch supports Facebook, Instagram, and LinkedIn only.</p>
           </div>
         </div>
@@ -319,7 +319,7 @@ function SocialSettingsContent() {
 export default function SocialSettingsPage() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen bg-[#0F0F0F] flex items-center justify-center">
+      <div className="min-h-screen bg-charcoal-deep flex items-center justify-center">
         <Loader2 className="w-8 h-8 animate-spin text-amber-400" />
       </div>
     }>

@@ -106,7 +106,7 @@ function HoverSlider({ item }: { item: typeof GALLERY_ITEMS[0] }) {
       </div>
 
       <div className="absolute top-3 left-3 px-2 py-1 bg-black/70 rounded text-xs text-white font-medium">Before</div>
-      <div className="absolute top-3 right-3 px-2 py-1 bg-[#D4A017] rounded text-xs text-black font-semibold">After</div>
+      <div className="absolute top-3 right-3 px-2 py-1 bg-accent-gold rounded text-xs text-black font-semibold">After</div>
     </div>
   );
 }

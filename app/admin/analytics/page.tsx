@@ -127,22 +127,22 @@ export default async function AdminAnalytics() {
 
       {/* Top Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-        <div className="bg-[#1A1A1A] border border-white/10 rounded-xl p-5">
+        <div className="bg-surface-container-high border border-white/10 rounded-xl p-5">
           <DollarSign className="w-6 h-6 text-red-400 mb-2" />
           <p className="text-3xl font-bold text-red-400">${(totalCostCents / 100).toFixed(2)}</p>
           <p className="text-white/50 text-sm">Total AI Cost (30d)</p>
         </div>
-        <div className="bg-[#1A1A1A] border border-white/10 rounded-xl p-5">
-          <Zap className="w-6 h-6 text-[#D4A017] mb-2" />
+        <div className="bg-surface-container-high border border-white/10 rounded-xl p-5">
+          <Zap className="w-6 h-6 text-primary mb-2" />
           <p className="text-3xl font-bold">{costs?.length || 0}</p>
           <p className="text-white/50 text-sm">API Calls</p>
         </div>
-        <div className="bg-[#1A1A1A] border border-white/10 rounded-xl p-5">
+        <div className="bg-surface-container-high border border-white/10 rounded-xl p-5">
           <Activity className="w-6 h-6 text-blue-400 mb-2" />
           <p className="text-3xl font-bold">{totalCreditsCharged}</p>
           <p className="text-white/50 text-sm">Credits Charged</p>
         </div>
-        <div className="bg-[#1A1A1A] border border-white/10 rounded-xl p-5">
+        <div className="bg-surface-container-high border border-white/10 rounded-xl p-5">
           <BarChart3 className="w-6 h-6 text-green-400 mb-2" />
           <p className="text-3xl font-bold">${totalCreditsCharged > 0 ? ((totalCostCents / 100) / totalCreditsCharged).toFixed(3) : '0'}</p>
           <p className="text-white/50 text-sm">Cost per Credit</p>
@@ -150,7 +150,7 @@ export default async function AdminAnalytics() {
       </div>
 
       {/* Daily Cost Chart */}
-      <div className="bg-[#1A1A1A] border border-white/10 rounded-xl p-6 mb-8">
+      <div className="bg-surface-container-high border border-white/10 rounded-xl p-6 mb-8">
         <h2 className="text-xl font-semibold mb-2">Daily Costs (14 days)</h2>
         <p className="text-white/40 text-sm mb-4">Hover for details</p>
         <div className="flex items-end justify-between h-48 gap-1">
@@ -166,7 +166,7 @@ export default async function AdminAnalytics() {
                   </div>
                 </div>
                 <div
-                  className="w-full bg-gradient-to-t from-[#D4A017] to-[#B8860B] rounded-t transition-all hover:opacity-80"
+                  className="w-full bg-gradient-to-t from-gold to-gold-dark rounded-t transition-all hover:opacity-80"
                   style={{ height: `${height}%`, minHeight: data.cost > 0 ? '4px' : '0' }}
                 />
                 <span className="text-white/40 text-[10px] truncate w-full text-center">{day.split(' ')[1]}</span>
@@ -178,9 +178,9 @@ export default async function AdminAnalytics() {
 
       {/* Two Column: Provider & Tool */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-        <div className="bg-[#1A1A1A] border border-white/10 rounded-xl p-6">
+        <div className="bg-surface-container-high border border-white/10 rounded-xl p-6">
           <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
-            <Server className="w-5 h-5 text-[#D4A017]" />Cost by Provider
+            <Server className="w-5 h-5 text-primary" />Cost by Provider
           </h2>
           {Object.keys(costByProvider).length > 0 ? (
             <div className="space-y-4">
@@ -209,22 +209,22 @@ export default async function AdminAnalytics() {
           )}
         </div>
 
-        <div className="bg-[#1A1A1A] border border-white/10 rounded-xl p-6">
+        <div className="bg-surface-container-high border border-white/10 rounded-xl p-6">
           <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
-            <Wrench className="w-5 h-5 text-[#D4A017]" />Top Tools by Usage
+            <Wrench className="w-5 h-5 text-primary" />Top Tools by Usage
           </h2>
           {sortedTools.length > 0 ? (
             <div className="space-y-3">
               {sortedTools.map(([tool, data], i) => (
                 <div key={tool} className="flex items-center gap-3">
-                  <span className="w-6 h-6 rounded-full bg-[#D4A017]/20 text-[#D4A017] text-xs flex items-center justify-center font-bold">{i + 1}</span>
+                  <span className="w-6 h-6 rounded-full bg-accent-gold/20 text-primary text-xs flex items-center justify-center font-bold">{i + 1}</span>
                   <div className="flex-1">
                     <div className="flex justify-between mb-1">
                       <span className="text-white text-sm capitalize">{tool.replace(/-/g, ' ')}</span>
                       <span className="text-white/50 text-sm">{data.count} uses</span>
                     </div>
                     <div className="h-1.5 bg-white/10 rounded-full">
-                      <div className="h-full bg-[#D4A017] rounded-full" style={{ width: `${(data.count / (sortedTools[0]?.[1]?.count || 1)) * 100}%` }} />
+                      <div className="h-full bg-accent-gold rounded-full" style={{ width: `${(data.count / (sortedTools[0]?.[1]?.count || 1)) * 100}%` }} />
                     </div>
                   </div>
                   <span className="text-white/60 text-sm w-16 text-right">${(data.cost / 100).toFixed(2)}</span>
@@ -238,9 +238,9 @@ export default async function AdminAnalytics() {
       </div>
 
       {/* Top Users by Cost */}
-      <div className="bg-[#1A1A1A] border border-white/10 rounded-xl p-6 mb-8">
+      <div className="bg-surface-container-high border border-white/10 rounded-xl p-6 mb-8">
         <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
-          <Users className="w-5 h-5 text-[#D4A017]" />Top Users by Cost
+          <Users className="w-5 h-5 text-primary" />Top Users by Cost
         </h2>
         {sortedUsers.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -249,7 +249,7 @@ export default async function AdminAnalytics() {
               const userPct = totalCostCents > 0 ? (data.cost / totalCostCents) * 100 : 0;
               return (
                 <div key={userId} className={`flex items-center gap-3 p-3 rounded-lg ${i === 0 ? 'bg-red-500/10 border border-red-500/30' : 'bg-white/5'}`}>
-                  <span className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${i === 0 ? 'bg-red-500 text-white' : 'bg-[#D4A017]/20 text-[#D4A017]'}`}>{i + 1}</span>
+                  <span className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${i === 0 ? 'bg-red-500 text-white' : 'bg-accent-gold/20 text-primary'}`}>{i + 1}</span>
                   <div className="flex-1 min-w-0">
                     <p className="text-white text-sm truncate" title={userName}>{userName}</p>
                     <p className="text-white/40 text-xs">{data.count} calls</p>
@@ -270,37 +270,37 @@ export default async function AdminAnalytics() {
       {/* User Analytics */}
       {events && events.length > 0 && (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="bg-[#1A1A1A] border border-white/10 rounded-xl p-6">
+          <div className="bg-surface-container-high border border-white/10 rounded-xl p-6">
             <h2 className="text-lg font-semibold mb-4">Events by Type</h2>
             <div className="space-y-2">
               {Object.entries(eventsByType).sort((a, b) => b[1] - a[1]).map(([type, count]) => (
                 <div key={type} className="flex justify-between items-center">
                   <span className="text-white/70 capitalize">{type.replace('_', ' ')}</span>
-                  <span className="text-[#D4A017] font-medium">{count}</span>
+                  <span className="text-primary font-medium">{count}</span>
                 </div>
               ))}
             </div>
           </div>
 
-          <div className="bg-[#1A1A1A] border border-white/10 rounded-xl p-6">
+          <div className="bg-surface-container-high border border-white/10 rounded-xl p-6">
             <h2 className="text-lg font-semibold mb-4">Top Pages</h2>
             <div className="space-y-2">
               {Object.entries(eventsByPage).sort((a, b) => b[1] - a[1]).slice(0, 8).map(([page, count]) => (
                 <div key={page} className="flex justify-between items-center">
                   <span className="text-white/70 truncate" title={page}>{page}</span>
-                  <span className="text-[#D4A017] font-medium">{count}</span>
+                  <span className="text-primary font-medium">{count}</span>
                 </div>
               ))}
             </div>
           </div>
 
-          <div className="bg-[#1A1A1A] border border-white/10 rounded-xl p-6">
+          <div className="bg-surface-container-high border border-white/10 rounded-xl p-6">
             <h2 className="text-lg font-semibold mb-4">Devices</h2>
             <div className="space-y-2">
               {Object.entries(eventsByDevice).sort((a, b) => b[1] - a[1]).map(([device, count]) => (
                 <div key={device} className="flex justify-between items-center">
                   <span className="text-white/70 capitalize">{device}</span>
-                  <span className="text-[#D4A017] font-medium">{count}</span>
+                  <span className="text-primary font-medium">{count}</span>
                 </div>
               ))}
             </div>

@@ -31,7 +31,7 @@ export default function UnderstandingListingsPage() {
         <div className="space-y-6 mb-8">
           <div className="bg-surface-container-low border border-white/10 rounded-xl p-6">
             <div className="flex items-start gap-4">
-              <div className="w-10 h-10 bg-[#D4A017]/20 rounded-full flex items-center justify-center flex-shrink-0">
+              <div className="w-10 h-10 bg-accent-gold/20 rounded-full flex items-center justify-center flex-shrink-0">
                 <span className="text-primary font-bold">1</span>
               </div>
               <div>
@@ -43,7 +43,7 @@ export default function UnderstandingListingsPage() {
           
           <div className="bg-surface-container-low border border-white/10 rounded-xl p-6">
             <div className="flex items-start gap-4">
-              <div className="w-10 h-10 bg-[#D4A017]/20 rounded-full flex items-center justify-center flex-shrink-0">
+              <div className="w-10 h-10 bg-accent-gold/20 rounded-full flex items-center justify-center flex-shrink-0">
                 <span className="text-primary font-bold">2</span>
               </div>
               <div>
@@ -55,7 +55,7 @@ export default function UnderstandingListingsPage() {
           
           <div className="bg-surface-container-low border border-white/10 rounded-xl p-6">
             <div className="flex items-start gap-4">
-              <div className="w-10 h-10 bg-[#D4A017]/20 rounded-full flex items-center justify-center flex-shrink-0">
+              <div className="w-10 h-10 bg-accent-gold/20 rounded-full flex items-center justify-center flex-shrink-0">
                 <span className="text-primary font-bold">3</span>
               </div>
               <div>
@@ -67,7 +67,7 @@ export default function UnderstandingListingsPage() {
           
           <div className="bg-surface-container-low border border-white/10 rounded-xl p-6">
             <div className="flex items-start gap-4">
-              <div className="w-10 h-10 bg-[#D4A017]/20 rounded-full flex items-center justify-center flex-shrink-0">
+              <div className="w-10 h-10 bg-accent-gold/20 rounded-full flex items-center justify-center flex-shrink-0">
                 <span className="text-primary font-bold">4</span>
               </div>
               <div>

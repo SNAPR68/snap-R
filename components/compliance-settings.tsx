@@ -64,7 +64,7 @@ export function ComplianceSettings({ initialSettings }: ComplianceSettingsProps)
           aria-pressed={autoWatermark}
           onClick={() => setAutoWatermark(!autoWatermark)}
           className={`relative w-14 h-8 rounded-full transition-colors ${
-            autoWatermark ? 'bg-[#D4A017]' : 'bg-white/20'
+            autoWatermark ? 'bg-accent-gold' : 'bg-white/20'
           }`}
         >
           <span
@@ -86,10 +86,10 @@ export function ComplianceSettings({ initialSettings }: ComplianceSettingsProps)
           aria-label="Compliance level"
           value={defaultMls}
           onChange={(e) => setDefaultMls(e.target.value)}
-          className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white focus:border-[#D4A017] focus:outline-none"
+          className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white focus:border-primary focus:outline-none"
         >
           {mlsOptions.map(option => (
-            <option key={option.value} value={option.value} className="bg-[#1A1A1A]">
+            <option key={option.value} value={option.value} className="bg-surface-container-high">
               {option.label}
             </option>
           ))}
@@ -110,7 +110,7 @@ export function ComplianceSettings({ initialSettings }: ComplianceSettingsProps)
       <button
         onClick={handleSave}
         disabled={saving}
-        className="w-full py-3 bg-gradient-to-r from-[#D4A017] to-[#B8860B] rounded-xl text-black font-semibold flex items-center justify-center gap-2 disabled:opacity-50"
+        className="w-full py-3 bg-gradient-to-r from-gold to-gold-dark rounded-xl text-black font-semibold flex items-center justify-center gap-2 disabled:opacity-50"
       >
         {saving ? (
           <>

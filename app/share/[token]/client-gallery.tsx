@@ -62,7 +62,7 @@ export function ClientGallery({ photos, listingTitle, shareToken, allowDownload,
   const pending = photos.length - approvalCounts.approved - approvalCounts.rejected;
 
   return (
-    <div className="min-h-screen bg-[#0F0F0F] text-white">
+    <div className="min-h-screen bg-charcoal-deep text-white">
       {/* Review Complete Banner */}
       {allReviewed && (
         <div className="bg-gradient-to-r from-emerald-900/60 to-emerald-800/40 border-b border-emerald-500/30 px-4 py-3">
@@ -76,7 +76,7 @@ export function ClientGallery({ photos, listingTitle, shareToken, allowDownload,
       )}
 
       {/* Header */}
-      <header className="sticky top-0 z-10 bg-[#1A1A1A] border-b border-white/10 px-4 py-3">
+      <header className="sticky top-0 z-10 bg-surface-container-high border-b border-white/10 px-4 py-3">
         <div className="max-w-6xl mx-auto flex items-center justify-between">
           <div>
             <h1 className="text-lg font-bold">{listingTitle}</h1>
@@ -103,7 +103,7 @@ export function ClientGallery({ photos, listingTitle, shareToken, allowDownload,
         <div className="grid lg:grid-cols-[1fr,300px] gap-6">
           {/* Main Image */}
           <div className="relative">
-            <div className="aspect-[4/3] bg-[#1A1A1A] rounded-xl overflow-hidden relative">
+            <div className="aspect-[4/3] bg-surface-container-high rounded-xl overflow-hidden relative">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <Image src={showBefore && showComparison && selectedPhoto.originalUrl ? selectedPhoto.originalUrl : selectedPhoto.url}
                 alt=""
@@ -128,13 +128,13 @@ export function ClientGallery({ photos, listingTitle, shareToken, allowDownload,
                 <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex bg-black/70 rounded-lg overflow-hidden">
                   <button
                     onClick={() => setShowBefore(false)}
-                    className={`px-4 py-2 text-sm font-medium transition-colors ${!showBefore ? 'bg-[#D4A017] text-black' : 'text-white/60'}`}
+                    className={`px-4 py-2 text-sm font-medium transition-colors ${!showBefore ? 'bg-accent-gold text-black' : 'text-white/60'}`}
                   >
                     After
                   </button>
                   <button
                     onClick={() => setShowBefore(true)}
-                    className={`px-4 py-2 text-sm font-medium transition-colors ${showBefore ? 'bg-[#D4A017] text-black' : 'text-white/60'}`}
+                    className={`px-4 py-2 text-sm font-medium transition-colors ${showBefore ? 'bg-accent-gold text-black' : 'text-white/60'}`}
                   >
                     Before
                   </button>
@@ -148,7 +148,7 @@ export function ClientGallery({ photos, listingTitle, shareToken, allowDownload,
 
               {/* Variant tag */}
               {selectedPhoto.variant && (
-                <div className="absolute top-4 left-4 px-3 py-1 bg-[#D4A017] rounded-lg text-sm text-black font-medium">
+                <div className="absolute top-4 left-4 px-3 py-1 bg-accent-gold rounded-lg text-sm text-black font-medium">
                   {selectedPhoto.variant}
                 </div>
               )}
@@ -186,7 +186,7 @@ export function ClientGallery({ photos, listingTitle, shareToken, allowDownload,
                   key={photo.id}
                   onClick={() => setSelectedIndex(index)}
                   className={`relative aspect-square rounded-lg overflow-hidden border-2 transition-all ${
-                    selectedIndex === index ? 'border-[#D4A017]' : 'border-transparent hover:border-white/30'
+                    selectedIndex === index ? 'border-primary' : 'border-transparent hover:border-white/30'
                   }`}
                 >
                   <Image src={photo.url} alt="" fill className="object-cover" />

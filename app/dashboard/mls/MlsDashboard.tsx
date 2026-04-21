@@ -138,11 +138,11 @@ export default function MlsDashboard() {
   const selected = listings.find(l => l.id === selectedId)
 
   return (
-    <div className="min-h-screen bg-[#0A0A0A] text-white">
+    <div className="min-h-screen bg-surface text-white">
       {/* Header */}
-      <header className="h-14 bg-[#111] border-b border-white/5 flex items-center px-6 gap-3">
-        <div className="w-8 h-8 rounded-lg bg-[#D4A017]/20 flex items-center justify-center">
-          <FileJson className="w-4 h-4 text-[#D4A017]" />
+      <header className="h-14 bg-surface border-b border-white/5 flex items-center px-6 gap-3">
+        <div className="w-8 h-8 rounded-lg bg-accent-gold/20 flex items-center justify-center">
+          <FileJson className="w-4 h-4 text-primary" />
         </div>
         <span className="font-bold">MLS Submission</span>
       </header>
@@ -182,16 +182,16 @@ export default function MlsDashboard() {
             </button>
 
             {showDropdown && (
-              <div className="absolute top-full left-0 right-0 mt-2 bg-[#1A1A1A] border border-white/10 rounded-xl overflow-hidden z-20 max-h-64 overflow-y-auto">
+              <div className="absolute top-full left-0 right-0 mt-2 bg-surface-container-high border border-white/10 rounded-xl overflow-hidden z-20 max-h-64 overflow-y-auto">
                 {loading ? (
-                  <div className="p-4 flex justify-center"><Loader2 className="w-5 h-5 animate-spin text-[#D4A017]" /></div>
+                  <div className="p-4 flex justify-center"><Loader2 className="w-5 h-5 animate-spin text-primary" /></div>
                 ) : listings.length === 0 ? (
                   <div className="p-4 text-center text-white/40 text-sm">No listings found</div>
                 ) : listings.map(l => (
                   <button
                     key={l.id}
                     onClick={() => { setSelectedId(l.id); setShowDropdown(false) }}
-                    className={`w-full flex items-center gap-3 p-3 hover:bg-white/5 transition-colors text-left ${selectedId === l.id ? 'bg-[#D4A017]/10' : ''}`}
+                    className={`w-full flex items-center gap-3 p-3 hover:bg-white/5 transition-colors text-left ${selectedId === l.id ? 'bg-accent-gold/10' : ''}`}
                   >
                     <div className="w-10 h-8 rounded-lg bg-white/10 flex items-center justify-center flex-shrink-0">
                       <Home className="w-4 h-4 text-white/30" />
@@ -219,11 +219,11 @@ export default function MlsDashboard() {
               <button
                 key={type}
                 onClick={() => setFormat(type)}
-                className={`p-4 rounded-xl border-2 text-left transition-all ${format === type ? 'border-[#D4A017] bg-[#D4A017]/5' : 'border-white/10 hover:border-white/20'}`}
+                className={`p-4 rounded-xl border-2 text-left transition-all ${format === type ? 'border-primary bg-accent-gold/5' : 'border-white/10 hover:border-white/20'}`}
               >
                 <div className="flex items-center gap-3 mb-2">
-                  <div className={`w-9 h-9 rounded-lg flex items-center justify-center ${format === type ? 'bg-[#D4A017]/20' : 'bg-white/5'}`}>
-                    <Icon className={`w-5 h-5 ${format === type ? 'text-[#D4A017]' : 'text-white/40'}`} />
+                  <div className={`w-9 h-9 rounded-lg flex items-center justify-center ${format === type ? 'bg-accent-gold/20' : 'bg-white/5'}`}>
+                    <Icon className={`w-5 h-5 ${format === type ? 'text-primary' : 'text-white/40'}`} />
                   </div>
                   <span className="font-semibold text-sm">{label}</span>
                 </div>
@@ -241,7 +241,7 @@ export default function MlsDashboard() {
                   <button
                     key={spec.id}
                     onClick={() => setMlsSpec(spec.id)}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-all ${mlsSpec === spec.id ? 'border-[#D4A017] bg-[#D4A017]/10 text-[#D4A017]' : 'border-white/10 text-white/50 hover:border-white/20'}`}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-all ${mlsSpec === spec.id ? 'border-primary bg-accent-gold/10 text-primary' : 'border-white/10 text-white/50 hover:border-white/20'}`}
                   >
                     {spec.name}
                     <span className="ml-1 text-white/30">{spec.region}</span>
@@ -292,7 +292,7 @@ export default function MlsDashboard() {
             <button
               onClick={exportListing}
               disabled={!selectedId || exporting}
-              className="flex items-center gap-2 px-6 py-3 bg-[#D4A017] text-black font-bold rounded-xl hover:bg-[#B8860B] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+              className="flex items-center gap-2 px-6 py-3 bg-accent-gold text-black font-bold rounded-xl hover:bg-accent-gold transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
             >
               {exporting ? (
                 <><Loader2 className="w-4 h-4 animate-spin" /> Exporting...</>
@@ -316,8 +316,8 @@ export default function MlsDashboard() {
             { icon: FileText, label: 'RESO 2.0', desc: 'Data Dictionary 2.0 field mapping for any modern MLS platform' },
             { icon: ExternalLink, label: 'Direct Submit', desc: 'Download once and upload directly to your MLS portal' },
           ].map(({ icon: Icon, label, desc }) => (
-            <div key={label} className="bg-[#111] border border-white/5 rounded-xl p-4">
-              <Icon className="w-5 h-5 text-[#D4A017] mb-2" />
+            <div key={label} className="bg-surface border border-white/5 rounded-xl p-4">
+              <Icon className="w-5 h-5 text-primary mb-2" />
               <p className="text-sm font-semibold mb-1">{label}</p>
               <p className="text-xs text-white/40">{desc}</p>
             </div>

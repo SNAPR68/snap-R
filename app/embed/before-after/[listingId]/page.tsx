@@ -59,22 +59,22 @@ export default function BeforeAfterEmbed({ params }: { params: Promise<{ listing
   }, [resolvedId, photos])
 
   if (loading) {
-    return <div className="flex items-center justify-center h-64 bg-[#0A0A0A] text-gray-500">Loading...</div>
+    return <div className="flex items-center justify-center h-64 bg-surface text-gray-500">Loading...</div>
   }
 
   if (photos.length === 0 || !photo) {
-    return <div className="flex items-center justify-center h-64 bg-[#0A0A0A] text-gray-500">No enhanced photos available</div>
+    return <div className="flex items-center justify-center h-64 bg-surface text-gray-500">No enhanced photos available</div>
   }
 
   const beforeUrl = photo.raw_url
   const afterUrl = photo.processed_url
 
   if (!beforeUrl || !afterUrl) {
-    return <div className="flex items-center justify-center h-64 bg-[#0A0A0A] text-gray-500">Photo not available</div>
+    return <div className="flex items-center justify-center h-64 bg-surface text-gray-500">Photo not available</div>
   }
 
   return (
-    <div className="bg-[#0A0A0A] p-2">
+    <div className="bg-surface p-2">
       <div
         ref={containerRef}
         className="relative w-full aspect-[4/3] overflow-hidden rounded-lg cursor-col-resize select-none"
@@ -119,7 +119,7 @@ export default function BeforeAfterEmbed({ params }: { params: Promise<{ listing
             <button
               key={i}
               onClick={() => { setCurrent(i); setSliderPos(50) }}
-              className={`w-2 h-2 rounded-full transition-colors ${i === current ? 'bg-[#D4A017]' : 'bg-gray-600'}`}
+              className={`w-2 h-2 rounded-full transition-colors ${i === current ? 'bg-accent-gold' : 'bg-gray-600'}`}
               aria-label={`Photo ${i + 1}`}
             />
           ))}

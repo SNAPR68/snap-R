@@ -54,17 +54,17 @@ export default function GalleryEmbed({ params }: { params: Promise<{ listingId: 
   }, [resolvedId, photos])
 
   if (loading) {
-    return <div className="flex items-center justify-center h-64 bg-[#0A0A0A] text-gray-500">Loading...</div>
+    return <div className="flex items-center justify-center h-64 bg-surface text-gray-500">Loading...</div>
   }
 
   if (photos.length === 0) {
-    return <div className="flex items-center justify-center h-64 bg-[#0A0A0A] text-gray-500">No photos available</div>
+    return <div className="flex items-center justify-center h-64 bg-surface text-gray-500">No photos available</div>
   }
 
   const photo = photos[current] ?? photos[0]
 
   return (
-    <div className="bg-[#0A0A0A] p-2">
+    <div className="bg-surface p-2">
       {/* Main image */}
       <div className="relative w-full aspect-[4/3] overflow-hidden rounded-lg">
         {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -108,7 +108,7 @@ export default function GalleryEmbed({ params }: { params: Promise<{ listingId: 
               key={p.id}
               onClick={() => setCurrent(i)}
               className={`flex-shrink-0 w-14 h-10 rounded overflow-hidden border-2 transition-colors ${
-                i === current ? 'border-[#D4A017]' : 'border-transparent opacity-60 hover:opacity-100'
+                i === current ? 'border-primary' : 'border-transparent opacity-60 hover:opacity-100'
               }`}
               aria-label={`Photo ${i + 1}`}
             >

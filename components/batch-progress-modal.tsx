@@ -46,7 +46,7 @@ export function BatchProgressModal({
 
   return (
     <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50" role="dialog" aria-modal="true" aria-label={title}>
-      <div className="bg-[#1A1A1A] rounded-2xl p-6 w-full max-w-md border border-white/10 shadow-2xl">
+      <div className="bg-surface-container-high rounded-2xl p-6 w-full max-w-md border border-white/10 shadow-2xl">
         {/* Header */}
         <div className="flex items-center gap-3 mb-6">
           {isComplete ? (
@@ -54,8 +54,8 @@ export function BatchProgressModal({
               <Check className="w-5 h-5 text-green-400" />
             </div>
           ) : (
-            <div className="w-10 h-10 bg-[#D4A017]/20 rounded-full flex items-center justify-center">
-              <Loader2 className="w-5 h-5 text-[#D4A017] animate-spin" />
+            <div className="w-10 h-10 bg-accent-gold/20 rounded-full flex items-center justify-center">
+              <Loader2 className="w-5 h-5 text-primary animate-spin" />
             </div>
           )}
           <div>
@@ -70,7 +70,7 @@ export function BatchProgressModal({
         <div className="mb-4">
           <div className="h-2 bg-white/10 rounded-full overflow-hidden">
             <div 
-              className="h-full bg-gradient-to-r from-[#D4A017] to-[#B8860B] transition-all duration-300 ease-out"
+              className="h-full bg-gradient-to-r from-gold to-gold-dark transition-all duration-300 ease-out"
               style={{ width: `${progress}%` }}
             />
           </div>
@@ -108,7 +108,7 @@ export function BatchProgressModal({
           {isComplete ? (
             <button
               onClick={onComplete}
-              className="flex-1 py-3 bg-gradient-to-r from-[#D4A017] to-[#B8860B] rounded-xl text-black font-bold"
+              className="flex-1 py-3 bg-gradient-to-r from-gold to-gold-dark rounded-xl text-black font-bold"
             >
               Done
             </button>

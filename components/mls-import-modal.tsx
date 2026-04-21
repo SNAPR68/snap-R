@@ -99,7 +99,7 @@ export function MLSImportModal({ onImport, onClose }: MLSImportModalProps) {
       aria-label="Import from MLS"
     >
       <div
-        className="bg-[#1A1A1A] rounded-2xl p-6 w-full max-w-lg max-h-[80vh] overflow-y-auto"
+        className="bg-surface-container-high rounded-2xl p-6 w-full max-w-lg max-h-[80vh] overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
@@ -184,7 +184,7 @@ export function MLSImportModal({ onImport, onClose }: MLSImportModalProps) {
               {result.price && (
                 <div className="flex justify-between">
                   <span className="text-white/50">Price</span>
-                  <span className="text-[#D4A017] font-bold">${result.price.toLocaleString()}</span>
+                  <span className="text-primary font-bold">${result.price.toLocaleString()}</span>
                 </div>
               )}
               <div className="flex justify-between">
@@ -214,7 +214,7 @@ export function MLSImportModal({ onImport, onClose }: MLSImportModalProps) {
             {/* Use Button */}
             <button
               onClick={handleUseData}
-              className="w-full py-3 bg-gradient-to-r from-[#D4A017] to-[#B8860B] rounded-xl text-black font-medium hover:opacity-90 flex items-center justify-center gap-2"
+              className="w-full py-3 bg-gradient-to-r from-gold to-gold-dark rounded-xl text-black font-medium hover:opacity-90 flex items-center justify-center gap-2"
             >
               <CheckCircle className="w-4 h-4" />
               Use This Listing Data

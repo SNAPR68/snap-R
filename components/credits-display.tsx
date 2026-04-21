@@ -21,7 +21,7 @@ export function CreditsDisplay({ credits, requiredCredits = 0, showWarning = tru
       {isInsufficient || (isLow && showWarning) ? (
         <AlertTriangle className={`w-4 h-4 ${isInsufficient ? 'text-red-400' : 'text-yellow-400'}`} />
       ) : (
-        <Coins className="w-4 h-4 text-[#D4A017]" />
+        <Coins className="w-4 h-4 text-primary" />
       )}
       <span className={`text-sm font-medium ${
         isInsufficient ? 'text-red-400' :

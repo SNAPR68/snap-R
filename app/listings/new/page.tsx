@@ -11,7 +11,7 @@ import Image from 'next/image';
 function GuidedTooltip({ text, step, onDismiss }: { text: string; step: number; onDismiss: () => void }) {
   return (
     <div className="absolute -top-2 left-0 right-0 -translate-y-full z-10 animate-fadeIn">
-      <div className="bg-gradient-to-r from-[#D4A017] to-[#B8860B] text-black rounded-xl p-3 shadow-lg shadow-[#D4A017]/20 relative">
+      <div className="bg-gradient-to-r from-gold to-gold-dark text-black rounded-xl p-3 shadow-lg shadow-gold/20 relative">
         <div className="flex items-start gap-2">
           <Sparkles className="w-4 h-4 mt-0.5 flex-shrink-0" />
           <div className="flex-1">
@@ -24,7 +24,7 @@ function GuidedTooltip({ text, step, onDismiss }: { text: string; step: number; 
         </div>
         {/* Arrow pointing down */}
         <div className="absolute bottom-0 left-8 translate-y-full">
-          <div className="w-0 h-0 border-l-[8px] border-l-transparent border-r-[8px] border-r-transparent border-t-[8px] border-t-[#B8860B]" />
+          <div className="w-0 h-0 border-l-[8px] border-l-transparent border-r-[8px] border-r-transparent border-t-[8px] border-t-accent-gold-dark" />
         </div>
       </div>
     </div>
@@ -169,13 +169,13 @@ function NewListingContent() {
   };
 
   return (
-    <div className="min-h-screen bg-[#0A0A0A] text-white">
+    <div className="min-h-screen bg-surface text-white">
       <header className="border-b border-white/10 px-6 py-4">
         <div className="max-w-3xl mx-auto flex items-center gap-4">
           <Link href="/dashboard" className="p-2 hover:bg-white/10 rounded-lg"><ArrowLeft className="w-5 h-5" /></Link>
           <h1 className="text-xl font-bold">Create New Listing</h1>
           {isGuided && (
-            <span className="ml-auto text-xs px-3 py-1 bg-[#D4A017]/20 text-[#D4A017] rounded-full font-medium">
+            <span className="ml-auto text-xs px-3 py-1 bg-accent-gold/20 text-primary rounded-full font-medium">
               Guided Tour
             </span>
           )}
@@ -198,27 +198,27 @@ function NewListingContent() {
               value={title}
               onChange={(e) => { setTitle(e.target.value); if (guidedStep === 1 && e.target.value.length > 2) setGuidedStep(2); }}
               placeholder="e.g., 123 Main Street"
-              className={`w-full px-4 py-3 bg-white/5 border rounded-xl text-white placeholder:text-white/30 focus:outline-none focus:border-[#D4A017] ${guidedStep === 1 ? 'border-[#D4A017]/50 ring-1 ring-[#D4A017]/30' : 'border-white/10'}`}
+              className={`w-full px-4 py-3 bg-white/5 border rounded-xl text-white placeholder:text-white/30 focus:outline-none focus:border-primary ${guidedStep === 1 ? 'border-primary/50 ring-1 ring-accent-gold/30' : 'border-white/10'}`}
               required
             />
           </div>
           <div>
             <label className="block text-sm font-medium text-white/70 mb-2">Address</label>
-            <input type="text" value={address} onChange={(e) => setAddress(e.target.value)} placeholder="Full property address" className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder:text-white/30 focus:outline-none focus:border-[#D4A017]" />
+            <input type="text" value={address} onChange={(e) => setAddress(e.target.value)} placeholder="Full property address" className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder:text-white/30 focus:outline-none focus:border-primary" />
           </div>
           {/* City / State / ZIP row */}
           <div className="grid grid-cols-3 gap-3">
             <div>
               <label className="block text-sm font-medium text-white/70 mb-2">City</label>
-              <input type="text" value={city} onChange={(e) => setCity(e.target.value)} placeholder="City" className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder:text-white/30 focus:outline-none focus:border-[#D4A017]" />
+              <input type="text" value={city} onChange={(e) => setCity(e.target.value)} placeholder="City" className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder:text-white/30 focus:outline-none focus:border-primary" />
             </div>
             <div>
               <label className="block text-sm font-medium text-white/70 mb-2">State</label>
-              <input type="text" value={state} onChange={(e) => setState(e.target.value)} placeholder="State" className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder:text-white/30 focus:outline-none focus:border-[#D4A017]" />
+              <input type="text" value={state} onChange={(e) => setState(e.target.value)} placeholder="State" className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder:text-white/30 focus:outline-none focus:border-primary" />
             </div>
             <div>
               <label className="block text-sm font-medium text-white/70 mb-2">ZIP Code</label>
-              <input type="text" value={postalCode} onChange={(e) => setPostalCode(e.target.value)} placeholder="ZIP" className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder:text-white/30 focus:outline-none focus:border-[#D4A017]" />
+              <input type="text" value={postalCode} onChange={(e) => setPostalCode(e.target.value)} placeholder="ZIP" className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder:text-white/30 focus:outline-none focus:border-primary" />
             </div>
           </div>
 
@@ -226,29 +226,29 @@ function NewListingContent() {
           <div className="grid grid-cols-4 gap-3">
             <div>
               <label className="block text-sm font-medium text-white/70 mb-2">Price ($)</label>
-              <input type="number" value={price} onChange={(e) => setPrice(e.target.value)} placeholder="499000" className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder:text-white/30 focus:outline-none focus:border-[#D4A017]" />
+              <input type="number" value={price} onChange={(e) => setPrice(e.target.value)} placeholder="499000" className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder:text-white/30 focus:outline-none focus:border-primary" />
             </div>
             <div>
               <label className="block text-sm font-medium text-white/70 mb-2">Beds</label>
-              <input type="number" value={bedrooms} onChange={(e) => setBedrooms(e.target.value)} placeholder="3" className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder:text-white/30 focus:outline-none focus:border-[#D4A017]" />
+              <input type="number" value={bedrooms} onChange={(e) => setBedrooms(e.target.value)} placeholder="3" className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder:text-white/30 focus:outline-none focus:border-primary" />
             </div>
             <div>
               <label className="block text-sm font-medium text-white/70 mb-2">Baths</label>
-              <input type="number" step="0.5" value={bathrooms} onChange={(e) => setBathrooms(e.target.value)} placeholder="2.5" className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder:text-white/30 focus:outline-none focus:border-[#D4A017]" />
+              <input type="number" step="0.5" value={bathrooms} onChange={(e) => setBathrooms(e.target.value)} placeholder="2.5" className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder:text-white/30 focus:outline-none focus:border-primary" />
             </div>
             <div>
               <label className="block text-sm font-medium text-white/70 mb-2">Sq Ft</label>
-              <input type="number" value={squareFeet} onChange={(e) => setSquareFeet(e.target.value)} placeholder="2400" className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder:text-white/30 focus:outline-none focus:border-[#D4A017]" />
+              <input type="number" value={squareFeet} onChange={(e) => setSquareFeet(e.target.value)} placeholder="2400" className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder:text-white/30 focus:outline-none focus:border-primary" />
             </div>
           </div>
 
           <div>
             <label className="block text-sm font-medium text-white/70 mb-2">Description</label>
-            <textarea value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Property description (optional — AI will generate one if blank)" rows={3} className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder:text-white/30 focus:outline-none focus:border-[#D4A017] resize-none" />
+            <textarea value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Property description (optional — AI will generate one if blank)" rows={3} className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder:text-white/30 focus:outline-none focus:border-primary resize-none" />
           </div>
 
           {/* Expandable: More Details */}
-          <button type="button" onClick={() => setShowDetails(!showDetails)} className="flex items-center gap-2 text-sm text-[#D4A017] hover:text-[#D4A017]/80 transition-colors">
+          <button type="button" onClick={() => setShowDetails(!showDetails)} className="flex items-center gap-2 text-sm text-primary hover:text-primary/80 transition-colors">
             {showDetails ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
             {showDetails ? 'Hide' : 'Show'} additional details
           </button>
@@ -258,7 +258,7 @@ function NewListingContent() {
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-sm font-medium text-white/70 mb-2">Property Type</label>
-                  <select value={propertyType} onChange={(e) => setPropertyType(e.target.value)} className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:border-[#D4A017]">
+                  <select value={propertyType} onChange={(e) => setPropertyType(e.target.value)} className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:border-primary">
                     <option value="">Select type</option>
                     <option value="single_family">Single Family</option>
                     <option value="condo">Condo</option>
@@ -270,32 +270,32 @@ function NewListingContent() {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-white/70 mb-2">Year Built</label>
-                  <input type="number" value={yearBuilt} onChange={(e) => setYearBuilt(e.target.value)} placeholder="2005" className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder:text-white/30 focus:outline-none focus:border-[#D4A017]" />
+                  <input type="number" value={yearBuilt} onChange={(e) => setYearBuilt(e.target.value)} placeholder="2005" className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder:text-white/30 focus:outline-none focus:border-primary" />
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-sm font-medium text-white/70 mb-2">Lot Size</label>
-                  <input type="text" value={lotSize} onChange={(e) => setLotSize(e.target.value)} placeholder="0.25 acres" className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder:text-white/30 focus:outline-none focus:border-[#D4A017]" />
+                  <input type="text" value={lotSize} onChange={(e) => setLotSize(e.target.value)} placeholder="0.25 acres" className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder:text-white/30 focus:outline-none focus:border-primary" />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-white/70 mb-2">Parking</label>
-                  <input type="text" value={parking} onChange={(e) => setParking(e.target.value)} placeholder="2-car garage" className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder:text-white/30 focus:outline-none focus:border-[#D4A017]" />
+                  <input type="text" value={parking} onChange={(e) => setParking(e.target.value)} placeholder="2-car garage" className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder:text-white/30 focus:outline-none focus:border-primary" />
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-sm font-medium text-white/70 mb-2">MLS Number</label>
-                  <input type="text" value={mlsNumber} onChange={(e) => setMlsNumber(e.target.value)} placeholder="MLS-12345" className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder:text-white/30 focus:outline-none focus:border-[#D4A017]" />
+                  <input type="text" value={mlsNumber} onChange={(e) => setMlsNumber(e.target.value)} placeholder="MLS-12345" className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder:text-white/30 focus:outline-none focus:border-primary" />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-white/70 mb-2">HOA Fees ($/mo)</label>
-                  <input type="number" value={hoaFees} onChange={(e) => setHoaFees(e.target.value)} placeholder="250" className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder:text-white/30 focus:outline-none focus:border-[#D4A017]" />
+                  <input type="number" value={hoaFees} onChange={(e) => setHoaFees(e.target.value)} placeholder="250" className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder:text-white/30 focus:outline-none focus:border-primary" />
                 </div>
               </div>
               <div>
                 <label className="block text-sm font-medium text-white/70 mb-2">Virtual Tour URL</label>
-                <input type="url" value={virtualTourUrl} onChange={(e) => setVirtualTourUrl(e.target.value)} placeholder="https://my.matterport.com/show/?m=..." className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder:text-white/30 focus:outline-none focus:border-[#D4A017]" />
+                <input type="url" value={virtualTourUrl} onChange={(e) => setVirtualTourUrl(e.target.value)} placeholder="https://my.matterport.com/show/?m=..." className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder:text-white/30 focus:outline-none focus:border-primary" />
                 <p className="text-xs text-white/30 mt-1">Paste a Matterport, iGUIDE, or other 3D tour URL</p>
               </div>
             </div>
@@ -309,7 +309,7 @@ function NewListingContent() {
               />
             )}
             <label className="block text-sm font-medium text-white/70 mb-2">Photos *</label>
-            <div className={`border-2 border-dashed rounded-xl p-8 text-center hover:border-[#D4A017]/50 transition-colors ${guidedStep === 2 ? 'border-[#D4A017]/50 ring-1 ring-[#D4A017]/30' : 'border-white/20'}`}>
+            <div className={`border-2 border-dashed rounded-xl p-8 text-center hover:border-primary/50 transition-colors ${guidedStep === 2 ? 'border-primary/50 ring-1 ring-accent-gold/30' : 'border-white/20'}`}>
               <input type="file" multiple accept="image/jpeg,image/png,image/webp,image/heic" onChange={handleFileChange} className="hidden" id="photo-upload" />
               <label htmlFor="photo-upload" className="cursor-pointer">
                 <Upload className="w-12 h-12 text-white/30 mx-auto mb-4" />
@@ -337,7 +337,7 @@ function NewListingContent() {
                 onDismiss={() => setGuidedStep(0)}
               />
             )}
-            <button type="submit" disabled={uploading} className={`w-full py-4 bg-gradient-to-r from-[#D4A017] to-[#B8860B] text-black font-bold rounded-xl disabled:opacity-50 flex items-center justify-center gap-2 ${guidedStep === 3 ? 'ring-2 ring-[#D4A017]/50 ring-offset-2 ring-offset-[#0A0A0A]' : ''}`}>
+            <button type="submit" disabled={uploading} className={`w-full py-4 bg-gradient-to-r from-gold to-gold-dark text-black font-bold rounded-xl disabled:opacity-50 flex items-center justify-center gap-2 ${guidedStep === 3 ? 'ring-2 ring-accent-gold/50 ring-offset-2 ring-offset-surface' : ''}`}>
               {uploading ? <><Loader2 className="w-5 h-5 animate-spin" />Uploading... {uploadProgress}%</> : <><ImageIcon className="w-5 h-5" />Create Listing and Upload Photos</>}
             </button>
           </div>
@@ -350,8 +350,8 @@ function NewListingContent() {
 export default function NewListingPage() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen bg-[#0A0A0A] flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-[#D4A017]" />
+      <div className="min-h-screen bg-surface flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
       </div>
     }>
       <NewListingContent />

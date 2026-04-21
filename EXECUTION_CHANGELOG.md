@@ -1,5 +1,17 @@
 # SnapR Execution Changelog
 ==========================
+## 2026-04-21 — Design: Warm Obsidian design system migration (Phase 1–3 + hex cleanup)
+
+### What changed
+- **Phase 1**: globals.css and tailwind.config.ts migrated to Warm Obsidian palette (antique gold #C9A84C, warm off-white #F5F0EB, obsidian surfaces). All hardcoded hex Tailwind arbitrary values replaced with semantic tokens (bg-surface, text-primary, border-primary, from-accent-gold, etc.) across app/ and components/.
+- **Phase 2**: 58 cards upgraded to `glass-luxury`; dashboard headings use `editorial-headline` (Newsreader serif); hero tagline uses `shimmer-text` animation.
+- **Phase 3**: Bento Step 2 card gets `glow-card` rotating border; Pricing card and free guide CTA get `glass-gold-luxury`; 4 hairline section dividers added; modals get `glass-luxury` + `shadow-ambient`.
+- **Cleanup**: Targeted grep+replace of 1,270 remaining hardcoded hex values. Only social brand colors (#0A66C2 LinkedIn, #1877F2 Facebook, #E4405F/#833AB4 Instagram) and macOS traffic-light colors remain as intentional arbitrary values.
+- **chore**: Expanded .gitignore to cover *.xlsx, graphify-out/, e2e/.auth/, playwright-report/, test-results/, *.bak, *.archive, docs/*.png.
+
+### TypeScript
+Clean (`npx tsc --noEmit` passes with zero errors).
+
 ## 2026-04-17 — HOTFIX: Env validation crashed all requests in production
 
 ### Root cause

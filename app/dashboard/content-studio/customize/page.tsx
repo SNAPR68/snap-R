@@ -92,7 +92,7 @@ function TemplateCustomizerContent() {
               </Button>
             </Link>
             <h1 className="text-xl font-bold flex items-center gap-2">
-              <Palette className="w-5 h-5 text-[#D4AF37]" />
+              <Palette className="w-5 h-5 text-accent-gold" />
               Customize Template
             </h1>
           </div>
@@ -100,7 +100,7 @@ function TemplateCustomizerContent() {
             <Button onClick={resetDefaults} variant="ghost" className="text-white/60">
               <RotateCcw className="w-4 h-4 mr-2" />Reset
             </Button>
-            <Button onClick={saveCustomization} disabled={saving} className="bg-[#D4AF37] hover:bg-[#B8960C] text-black font-bold">
+            <Button onClick={saveCustomization} disabled={saving} className="bg-accent-gold hover:bg-accent-gold text-black font-bold">
               {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : saved ? <><Check className="w-4 h-4 mr-2" />Saved!</> : <><Save className="w-4 h-4 mr-2" />Save</>}
             </Button>
           </div>
@@ -120,7 +120,7 @@ function TemplateCustomizerContent() {
                   <div className="text-xs font-bold uppercase tracking-wider mb-2" style={{ color: colors.primary }}>Just Listed</div>
                   <div className="text-2xl font-bold mb-1" style={{ color: colors.accent }}>{property.address}</div>
                   <div className="text-sm opacity-80 mb-3" style={{ color: colors.accent }}>{property.city}, {property.state}</div>
-                  <div className="text-3xl font-bold" style={{ color: colors.primary }}>${property.price.toLocaleString()}</div>
+                  <div className="text-3xl font-bold editorial-headline" style={{ color: colors.primary }}>${property.price.toLocaleString()}</div>
                   <div className="flex gap-4 mt-3 text-sm" style={{ color: colors.accent }}>
                     <span>{property.bedrooms} Beds</span>
                     <span>{property.bathrooms} Baths</span>
@@ -134,7 +134,7 @@ function TemplateCustomizerContent() {
                   <div className="text-xs font-bold uppercase tracking-wider mb-2" style={{ color: colors.primary }}>Just Listed</div>
                   <div className="text-xl font-bold mb-1" style={{ color: colors.accent }}>{property.address}</div>
                   <div className="text-sm opacity-80 mb-3" style={{ color: colors.accent }}>{property.city}, {property.state}</div>
-                  <div className="text-2xl font-bold" style={{ color: colors.primary }}>${property.price.toLocaleString()}</div>
+                  <div className="text-2xl font-bold editorial-headline" style={{ color: colors.primary }}>${property.price.toLocaleString()}</div>
                   <div className="flex flex-col gap-1 mt-3 text-sm" style={{ color: colors.accent }}>
                     <span>{property.bedrooms} Beds • {property.bathrooms} Baths</span>
                     <span>{property.sqft.toLocaleString()} Sqft</span>
@@ -150,7 +150,7 @@ function TemplateCustomizerContent() {
                       <div className="text-lg font-bold" style={{ color: colors.accent }}>{property.address}</div>
                     </div>
                     <div className="text-right">
-                      <div className="text-2xl font-bold" style={{ color: colors.primary }}>${property.price.toLocaleString()}</div>
+                      <div className="text-2xl font-bold editorial-headline" style={{ color: colors.primary }}>${property.price.toLocaleString()}</div>
                       <div className="text-sm" style={{ color: colors.accent }}>{property.bedrooms}bd • {property.bathrooms}ba • {property.sqft.toLocaleString()}sf</div>
                     </div>
                   </div>
@@ -182,7 +182,7 @@ function TemplateCustomizerContent() {
                   <button
                     key={preset.id}
                     onClick={() => handleColorPreset(preset)}
-                    className={`p-3 rounded-lg text-left transition ${colorPreset === preset.id ? 'bg-white/10 ring-2 ring-[#D4AF37]' : 'bg-white/5 hover:bg-white/10'}`}
+                    className={`p-3 rounded-lg text-left transition ${colorPreset === preset.id ? 'bg-white/10 ring-2 ring-accent-gold' : 'bg-white/5 hover:bg-white/10'}`}
                   >
                     <div className="flex gap-1 mb-2">
                       <div className="w-4 h-4 rounded-full" style={{ backgroundColor: preset.primary }} />
@@ -222,7 +222,7 @@ function TemplateCustomizerContent() {
                   <button
                     key={f.id}
                     onClick={() => setFont(f.id)}
-                    className={`p-3 rounded-lg text-left transition ${font === f.id ? 'bg-white/10 ring-2 ring-[#D4AF37]' : 'bg-white/5 hover:bg-white/10'}`}
+                    className={`p-3 rounded-lg text-left transition ${font === f.id ? 'bg-white/10 ring-2 ring-accent-gold' : 'bg-white/5 hover:bg-white/10'}`}
                   >
                     <div className="text-lg mb-1" style={{ fontFamily: f.family }}>{f.name}</div>
                     <div className="text-xs text-white/40" style={{ fontFamily: f.family }}>Aa Bb Cc 123</div>
@@ -241,7 +241,7 @@ function TemplateCustomizerContent() {
                   <button
                     key={l.id}
                     onClick={() => setLayout(l.id)}
-                    className={`p-3 rounded-lg text-left transition ${layout === l.id ? 'bg-white/10 ring-2 ring-[#D4AF37]' : 'bg-white/5 hover:bg-white/10'}`}
+                    className={`p-3 rounded-lg text-left transition ${layout === l.id ? 'bg-white/10 ring-2 ring-accent-gold' : 'bg-white/5 hover:bg-white/10'}`}
                   >
                     <div className="font-medium mb-1">{l.name}</div>
                     <div className="text-xs text-white/40">{l.desc}</div>
@@ -252,7 +252,7 @@ function TemplateCustomizerContent() {
 
             {/* Apply Button */}
             <Link href={`/dashboard/content-studio/create-all?customColors=${encodeURIComponent(JSON.stringify(colors))}&customFont=${font}&customLayout=${layout}`}>
-              <Button className="w-full bg-gradient-to-r from-[#D4AF37] to-[#B8960C] text-black font-bold h-12">
+              <Button className="w-full bg-gradient-to-r from-accent-gold to-accent-gold text-black font-bold h-12">
                 Apply to Content Creator
               </Button>
             </Link>
@@ -264,5 +264,5 @@ function TemplateCustomizerContent() {
 }
 
 export default function TemplateCustomizer() {
-  return <Suspense fallback={<div className="min-h-screen bg-gray-900 flex items-center justify-center"><Loader2 className="w-8 h-8 animate-spin text-[#D4AF37]" /></div>}><TemplateCustomizerContent /></Suspense>
+  return <Suspense fallback={<div className="min-h-screen bg-gray-900 flex items-center justify-center"><Loader2 className="w-8 h-8 animate-spin text-accent-gold" /></div>}><TemplateCustomizerContent /></Suspense>
 }
