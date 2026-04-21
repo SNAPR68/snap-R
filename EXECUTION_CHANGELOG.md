@@ -15,3 +15,5 @@ Archive: see EXECUTION_CHANGELOG.md.archive for history
 - Glassmorphism classes unchanged — now resolve from richer token values automatically
 
 **Risk:** Low — visual-only changes, no logic or API changes
+
+**Files modified (implementation commit):** `app/globals.css`, `components/ui/button.tsx`, `components/ui/card.tsx`, `components/ui/input.tsx`, `tailwind.config.ts`

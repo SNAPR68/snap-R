@@ -9,23 +9,80 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        // Legacy (dashboard)
-        quartz: {
-          light: "#FAFAFA",
-          white: "#FFFFFF",
-          soft: "#F2F2F2",
-          gray: "#E5E7EB",
+        // shadcn semantic tokens — resolved from CSS custom properties
+        background: "var(--surface)",
+        foreground: "var(--on-surface)",
+        card: {
+          DEFAULT: "var(--surface-container-low)",
+          foreground: "var(--on-surface)",
         },
+        popover: {
+          DEFAULT: "var(--surface-container-high)",
+          foreground: "var(--on-surface)",
+        },
+        primary: {
+          DEFAULT: "var(--gold)",
+          foreground: "#0E0E0E",
+          container: "var(--gold-warm)",
+        },
+        secondary: {
+          DEFAULT: "var(--surface-container)",
+          foreground: "var(--on-surface)",
+        },
+        muted: {
+          DEFAULT: "var(--surface-container)",
+          foreground: "var(--on-surface-muted)",
+        },
+        accent: {
+          DEFAULT: "var(--surface-container-high)",
+          foreground: "var(--on-surface)",
+        },
+        destructive: {
+          DEFAULT: "hsl(0 62.8% 30.6%)",
+          foreground: "hsl(0 0% 98%)",
+        },
+        border: "rgba(211, 197, 174, 0.12)",
+        input: "rgba(211, 197, 174, 0.15)",
+        ring: "var(--gold)",
+
+        // Design system surface tokens (used directly in components)
+        surface: {
+          DEFAULT: "var(--surface)",
+          base: "var(--surface-base)",
+          "container-low": "var(--surface-container-low)",
+          container: "var(--surface-container)",
+          "container-high": "var(--surface-container-high)",
+          "container-highest": "var(--surface-container-highest)",
+        },
+
+        // Gold palette
+        gold: {
+          DEFAULT: "var(--gold)",
+          bright: "var(--gold-bright)",
+          warm: "var(--gold-warm)",
+          muted: "var(--gold-muted)",
+        },
+
+        // On-surface text
+        "on-surface": {
+          DEFAULT: "var(--on-surface)",
+          muted: "var(--on-surface-muted)",
+        },
+
+        "outline-variant": "rgba(211, 197, 174, 0.15)",
+
+        // Legacy aliases (keep for backwards compat with existing components)
         charcoal: {
           DEFAULT: "#1A1A1A",
           soft: "#2C2C2C",
           deep: "#0F0F0F",
           black: "#0B0B0B",
         },
-        gold: {
-          DEFAULT: "#F3C969",
-          dark: "#E9B949",
-          deep: "#D9A93C",
+        quartz: {
+          light: "#FAFAFA",
+          white: "#FFFFFF",
+          soft: "#F2F2F2",
+          gray: "#E5E7EB",
         },
         mint: {
           DEFAULT: "#86E3C3",
@@ -34,40 +91,28 @@ const config: Config = {
         },
         carbon: "#111111",
         cloud: "#6B7280",
-        "accent-gold": "var(--accent-gold)",
-        "accent-gold-soft": "var(--accent-gold-soft)",
-        "accent-gold-dark": "var(--accent-gold-dark)",
+        "accent-gold": "var(--gold)",
+        "accent-gold-soft": "var(--gold-bright)",
+        "accent-gold-dark": "var(--gold-warm)",
         "mint-soft": "var(--mint-soft)",
         "mint-dark": "var(--mint-dark)",
-        background: "var(--background)",
-        "text-main": "var(--text-main)",
-        "text-soft": "var(--text-soft)",
-
-        // Editorial "Digital Curator" tokens
-        surface: {
-          DEFAULT: "#131313",
-          "container-low": "#1C1B1B",
-          "container-high": "#2A2A2A",
-          "container-highest": "#353534",
-        },
-        primary: {
-          DEFAULT: "#F6BE39",
-          container: "#D4A017",
-        },
-        "on-surface": {
-          DEFAULT: "#D3C5AE",
-          muted: "rgba(211, 197, 174, 0.5)",
-        },
-        "outline-variant": "rgba(211, 197, 174, 0.15)",
+        "text-main": "var(--on-surface)",
+        "text-soft": "var(--on-surface-muted)",
       },
 
       boxShadow: {
+        sm: "0 1px 3px rgba(0,0,0,0.3)",
+        md: "0 4px 12px rgba(0,0,0,0.4)",
+        lg: "0 8px 24px rgba(0,0,0,0.5)",
+        xl: "0 16px 40px rgba(0,0,0,0.6)",
+        gold: "0 4px 16px rgba(232,168,32,0.35)",
+        "gold-lg": "0 8px 32px rgba(232,168,32,0.45)",
+        ambient: "0px 24px 48px -12px rgba(0, 0, 0, 0.5)",
+        "glow-gold": "0px 8px 32px rgba(232, 168, 32, 0.28)",
+        // legacy
         quartz: "0 4px 20px rgba(0,0,0,0.04)",
-        gold: "0 4px 12px rgba(243, 201, 105, 0.3)",
         mint: "0 4px 12px rgba(134, 227, 195, 0.25)",
         card: "0 2px 14px rgba(0,0,0,0.06)",
-        ambient: "0px 24px 48px -12px rgba(0, 0, 0, 0.5)",
-        "glow-gold": "0px 8px 32px rgba(246, 190, 57, 0.25)",
       },
 
       borderRadius: {
