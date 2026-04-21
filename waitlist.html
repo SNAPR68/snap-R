@@ -1,0 +1,1139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SnapR — Join the Waitlist | AI-Powered Real Estate Marketing</title>
+  <meta name="description" content="Transform ordinary property photos into luxury showcases and automate your entire marketing pipeline. Join thousands of real estate professionals on the SnapR waitlist." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@400;600;700&display=swap" rel="stylesheet" />
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --gold: #D4A017;
+      --gold-light: #F0C040;
+      --gold-dim: rgba(212, 160, 23, 0.15);
+      --bg-0: #080808;
+      --bg-1: #0F0F0F;
+      --bg-2: #161616;
+      --bg-3: #1E1E1E;
+      --text-primary: #F5F5F5;
+      --text-secondary: #A0A0A0;
+      --text-muted: #666;
+      --border: rgba(255,255,255,0.08);
+      --border-gold: rgba(212,160,23,0.3);
+      --radius: 16px;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: var(--bg-0);
+      color: var(--text-primary);
+      line-height: 1.6;
+      overflow-x: hidden;
+    }
+
+    /* ─── NOISE TEXTURE ─── */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* ─── NAV ─── */
+    nav {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 18px 48px;
+      background: rgba(8,8,8,0.8);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .nav-logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+    }
+
+    .nav-logo-mark {
+      width: 32px; height: 32px;
+      border-radius: 8px;
+      background: linear-gradient(135deg, var(--gold), #8B6010);
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 700;
+      font-size: 14px;
+      color: #000;
+    }
+
+    .nav-logo-text {
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--text-primary);
+      letter-spacing: -0.3px;
+    }
+
+    .nav-badge {
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--gold);
+      background: var(--gold-dim);
+      border: 1px solid var(--border-gold);
+      padding: 4px 10px;
+      border-radius: 100px;
+      letter-spacing: 0.3px;
+    }
+
+    /* ─── HERO ─── */
+    .hero {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 120px 24px 80px;
+      position: relative;
+    }
+
+    /* Radial glow backgrounds */
+    .hero::after {
+      content: '';
+      position: absolute;
+      top: 10%;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 800px;
+      height: 500px;
+      background: radial-gradient(ellipse at center, rgba(212,160,23,0.08) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    .hero-eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+      font-weight: 500;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: var(--gold);
+      background: var(--gold-dim);
+      border: 1px solid var(--border-gold);
+      padding: 8px 16px;
+      border-radius: 100px;
+      margin-bottom: 32px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .hero-eyebrow .dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--gold);
+      animation: pulse 2s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.5; transform: scale(0.8); }
+    }
+
+    .hero h1 {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(40px, 6vw, 80px);
+      font-weight: 700;
+      line-height: 1.1;
+      letter-spacing: -1px;
+      max-width: 860px;
+      margin-bottom: 24px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .hero h1 .shimmer {
+      background: linear-gradient(90deg, var(--gold) 0%, var(--gold-light) 40%, var(--gold) 80%);
+      background-size: 200% auto;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      animation: shimmer 3s linear infinite;
+    }
+
+    @keyframes shimmer {
+      0% { background-position: 0% center; }
+      100% { background-position: 200% center; }
+    }
+
+    .hero-sub {
+      font-size: clamp(16px, 2vw, 20px);
+      color: var(--text-secondary);
+      max-width: 580px;
+      margin-bottom: 48px;
+      line-height: 1.7;
+      position: relative;
+      z-index: 1;
+    }
+
+    /* ─── WAITLIST FORM ─── */
+    .waitlist-form {
+      display: flex;
+      gap: 12px;
+      max-width: 480px;
+      width: 100%;
+      position: relative;
+      z-index: 1;
+      margin-bottom: 20px;
+    }
+
+    .waitlist-form input[type="email"] {
+      flex: 1;
+      padding: 16px 20px;
+      font-size: 15px;
+      font-family: 'Inter', sans-serif;
+      color: var(--text-primary);
+      background: rgba(255,255,255,0.05);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      outline: none;
+      transition: border-color 0.2s, background 0.2s;
+    }
+
+    .waitlist-form input[type="email"]::placeholder { color: var(--text-muted); }
+
+    .waitlist-form input[type="email"]:focus {
+      border-color: var(--border-gold);
+      background: rgba(255,255,255,0.07);
+    }
+
+    .btn-gold {
+      padding: 16px 28px;
+      font-size: 15px;
+      font-weight: 600;
+      font-family: 'Inter', sans-serif;
+      color: #000;
+      background: linear-gradient(135deg, var(--gold-light) 0%, var(--gold) 100%);
+      border: none;
+      border-radius: var(--radius);
+      cursor: pointer;
+      white-space: nowrap;
+      transition: opacity 0.2s, transform 0.15s;
+      letter-spacing: -0.2px;
+    }
+
+    .btn-gold:hover { opacity: 0.9; transform: translateY(-1px); }
+    .btn-gold:active { transform: translateY(0); }
+
+    .form-note {
+      font-size: 13px;
+      color: var(--text-muted);
+      position: relative;
+      z-index: 1;
+    }
+
+    /* Success state */
+    .success-msg {
+      display: none;
+      align-items: center;
+      gap: 10px;
+      font-size: 15px;
+      color: #4ade80;
+      background: rgba(74, 222, 128, 0.08);
+      border: 1px solid rgba(74, 222, 128, 0.25);
+      padding: 14px 20px;
+      border-radius: var(--radius);
+      position: relative;
+      z-index: 1;
+    }
+
+    /* ─── STATS BAR ─── */
+    .stats-bar {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 48px;
+      padding: 32px 24px;
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+      background: var(--bg-1);
+      flex-wrap: wrap;
+    }
+
+    .stat-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .stat-number {
+      font-size: 28px;
+      font-weight: 700;
+      color: var(--gold);
+      font-variant-numeric: tabular-nums;
+      letter-spacing: -0.5px;
+    }
+
+    .stat-label {
+      font-size: 13px;
+      color: var(--text-secondary);
+    }
+
+    .stat-divider {
+      width: 1px;
+      height: 36px;
+      background: var(--border);
+    }
+
+    /* ─── SECTIONS ─── */
+    .section {
+      padding: 96px 24px;
+      max-width: 1120px;
+      margin: 0 auto;
+    }
+
+    .section-eyebrow {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--gold);
+      margin-bottom: 16px;
+    }
+
+    .section-title {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(28px, 3.5vw, 44px);
+      font-weight: 700;
+      line-height: 1.2;
+      letter-spacing: -0.5px;
+      margin-bottom: 16px;
+      max-width: 620px;
+    }
+
+    .section-desc {
+      font-size: 16px;
+      color: var(--text-secondary);
+      max-width: 540px;
+      line-height: 1.7;
+      margin-bottom: 56px;
+    }
+
+    /* ─── FEATURE GRID ─── */
+    .feature-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 20px;
+    }
+
+    .feature-card {
+      background: var(--bg-2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 32px;
+      position: relative;
+      overflow: hidden;
+      transition: border-color 0.3s, transform 0.3s;
+    }
+
+    .feature-card:hover {
+      border-color: var(--border-gold);
+      transform: translateY(-3px);
+    }
+
+    .feature-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--gold-dim), transparent);
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+
+    .feature-card:hover::before { opacity: 1; }
+
+    .feature-icon {
+      width: 48px; height: 48px;
+      border-radius: 12px;
+      background: var(--gold-dim);
+      border: 1px solid var(--border-gold);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 22px;
+      margin-bottom: 20px;
+    }
+
+    .feature-card h3 {
+      font-size: 17px;
+      font-weight: 600;
+      margin-bottom: 10px;
+      letter-spacing: -0.2px;
+    }
+
+    .feature-card p {
+      font-size: 14px;
+      color: var(--text-secondary);
+      line-height: 1.65;
+    }
+
+    .feature-tag {
+      display: inline-block;
+      margin-top: 16px;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+      color: var(--gold);
+      background: var(--gold-dim);
+      padding: 3px 10px;
+      border-radius: 100px;
+    }
+
+    /* ─── HOW IT WORKS ─── */
+    .steps-section {
+      background: var(--bg-1);
+      padding: 96px 24px;
+    }
+
+    .steps-inner {
+      max-width: 1120px;
+      margin: 0 auto;
+    }
+
+    .steps-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 0;
+      position: relative;
+    }
+
+    .steps-grid::before {
+      content: '';
+      position: absolute;
+      top: 36px;
+      left: 10%;
+      right: 10%;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--border-gold), var(--border-gold), transparent);
+    }
+
+    .step {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      padding: 0 24px;
+      position: relative;
+    }
+
+    .step-num {
+      width: 72px; height: 72px;
+      border-radius: 50%;
+      background: var(--bg-2);
+      border: 1px solid var(--border-gold);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--gold);
+      margin-bottom: 24px;
+      position: relative;
+      z-index: 1;
+      background: linear-gradient(135deg, var(--bg-3), var(--bg-2));
+      box-shadow: 0 0 24px rgba(212,160,23,0.1);
+    }
+
+    .step h3 {
+      font-size: 16px;
+      font-weight: 600;
+      margin-bottom: 10px;
+    }
+
+    .step p {
+      font-size: 13px;
+      color: var(--text-secondary);
+      line-height: 1.6;
+    }
+
+    /* ─── TESTIMONIALS ─── */
+    .testimonials-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 20px;
+    }
+
+    .testimonial-card {
+      background: var(--bg-2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 28px;
+      transition: border-color 0.3s;
+    }
+
+    .testimonial-card:hover { border-color: var(--border-gold); }
+
+    .stars {
+      color: var(--gold);
+      font-size: 14px;
+      letter-spacing: 2px;
+      margin-bottom: 14px;
+    }
+
+    .testimonial-text {
+      font-size: 15px;
+      line-height: 1.7;
+      color: var(--text-secondary);
+      margin-bottom: 20px;
+      font-style: italic;
+    }
+
+    .testimonial-author {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .author-avatar {
+      width: 40px; height: 40px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 15px;
+      color: #000;
+      flex-shrink: 0;
+    }
+
+    .author-name {
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    .author-role {
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    /* ─── PRICING TEASER ─── */
+    .pricing-section {
+      background: var(--bg-1);
+      padding: 96px 24px;
+    }
+
+    .pricing-inner {
+      max-width: 1120px;
+      margin: 0 auto;
+    }
+
+    .pricing-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 20px;
+      max-width: 900px;
+    }
+
+    .pricing-card {
+      background: var(--bg-2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 28px;
+      position: relative;
+      transition: border-color 0.3s;
+    }
+
+    .pricing-card.featured {
+      border-color: var(--border-gold);
+      background: linear-gradient(160deg, rgba(212,160,23,0.05) 0%, var(--bg-2) 100%);
+    }
+
+    .pricing-card.featured::after {
+      content: 'Most Popular';
+      position: absolute;
+      top: -12px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+      color: #000;
+      background: var(--gold);
+      padding: 3px 12px;
+      border-radius: 100px;
+      white-space: nowrap;
+    }
+
+    .pricing-tier {
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 8px;
+    }
+
+    .pricing-price {
+      font-size: 32px;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: 4px;
+      letter-spacing: -1px;
+    }
+
+    .pricing-price span {
+      font-size: 14px;
+      font-weight: 400;
+      color: var(--text-muted);
+      letter-spacing: 0;
+    }
+
+    .pricing-desc {
+      font-size: 13px;
+      color: var(--text-secondary);
+      margin-bottom: 20px;
+      line-height: 1.5;
+      padding-bottom: 20px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .pricing-features {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .pricing-features li {
+      font-size: 13px;
+      color: var(--text-secondary);
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+    }
+
+    .pricing-features li::before {
+      content: '✓';
+      color: var(--gold);
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+
+    .early-access-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      font-weight: 500;
+      color: #4ade80;
+      background: rgba(74,222,128,0.08);
+      border: 1px solid rgba(74,222,128,0.2);
+      padding: 4px 10px;
+      border-radius: 100px;
+      margin-top: 16px;
+    }
+
+    /* ─── BOTTOM CTA ─── */
+    .cta-section {
+      padding: 96px 24px;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .cta-section::before {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 600px;
+      height: 400px;
+      background: radial-gradient(ellipse, rgba(212,160,23,0.06) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    /* Rotating border card */
+    .cta-card {
+      max-width: 680px;
+      margin: 0 auto;
+      padding: 64px 48px;
+      background: var(--bg-2);
+      border-radius: 24px;
+      border: 1px solid var(--border-gold);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .cta-card::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, rgba(212,160,23,0.04) 0%, transparent 60%);
+      pointer-events: none;
+    }
+
+    .cta-card h2 {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(26px, 4vw, 40px);
+      font-weight: 700;
+      line-height: 1.2;
+      margin-bottom: 16px;
+      letter-spacing: -0.5px;
+    }
+
+    .cta-card p {
+      font-size: 16px;
+      color: var(--text-secondary);
+      margin-bottom: 36px;
+      line-height: 1.6;
+    }
+
+    .cta-form {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+    }
+
+    .cta-form input[type="email"] {
+      flex: 1;
+      max-width: 300px;
+      padding: 15px 20px;
+      font-size: 15px;
+      font-family: 'Inter', sans-serif;
+      color: var(--text-primary);
+      background: rgba(255,255,255,0.05);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .cta-form input[type="email"]::placeholder { color: var(--text-muted); }
+    .cta-form input[type="email"]:focus { border-color: var(--border-gold); }
+
+    /* ─── FOOTER ─── */
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 32px 48px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+
+    .footer-logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+    }
+
+    .footer-copy {
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+
+    .footer-links {
+      display: flex;
+      gap: 24px;
+    }
+
+    .footer-links a {
+      font-size: 13px;
+      color: var(--text-muted);
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+
+    .footer-links a:hover { color: var(--gold); }
+
+    /* ─── SCROLL ANIMATION ─── */
+    .reveal {
+      opacity: 0;
+      transform: translateY(20px);
+      transition: opacity 0.6s ease, transform 0.6s ease;
+    }
+
+    .reveal.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* ─── RESPONSIVE ─── */
+    @media (max-width: 768px) {
+      nav { padding: 16px 20px; }
+      .waitlist-form { flex-direction: column; }
+      .waitlist-form input[type="email"] { width: 100%; }
+      .steps-grid::before { display: none; }
+      footer { flex-direction: column; text-align: center; }
+      .cta-form { flex-direction: column; align-items: center; }
+      .cta-form input[type="email"] { max-width: 100%; width: 100%; }
+      .stat-divider { display: none; }
+      .stats-bar { gap: 28px; }
+      .cta-card { padding: 40px 24px; }
+      nav { padding: 14px 20px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- NAV -->
+  <nav>
+    <a href="#" class="nav-logo" aria-label="SnapR home">
+      <div class="nav-logo-mark">S</div>
+      <span class="nav-logo-text">SnapR</span>
+    </a>
+    <span class="nav-badge">✦ Early Access Open</span>
+  </nav>
+
+  <!-- HERO -->
+  <section class="hero" aria-labelledby="hero-heading">
+    <div class="hero-eyebrow">
+      <span class="dot"></span>
+      Launching for Real Estate Professionals
+    </div>
+
+    <h1 id="hero-heading">
+      Your Properties Deserve<br />
+      <span class="shimmer">Luxury Marketing</span>
+    </h1>
+
+    <p class="hero-sub">
+      SnapR transforms ordinary property photos into stunning luxury showcases, then auto-generates your entire marketing pipeline — descriptions, captions, MLS packages, and scheduled social posts — in minutes.
+    </p>
+
+    <form class="waitlist-form" id="hero-form" onsubmit="handleSubmit(event, 'hero-success')">
+      <input type="email" placeholder="your@email.com" required aria-label="Email address" />
+      <button type="submit" class="btn-gold">Join the Waitlist →</button>
+    </form>
+
+    <div class="success-msg" id="hero-success" role="alert">
+      <span>✓</span> You're on the list! We'll be in touch soon.
+    </div>
+
+    <p class="form-note">No credit card required &nbsp;·&nbsp; Free early-access tier available</p>
+  </section>
+
+  <!-- STATS BAR -->
+  <div class="stats-bar" aria-label="Key metrics">
+    <div class="stat-item">
+      <span class="stat-number">2,400+</span>
+      <span class="stat-label">Agents on waitlist</span>
+    </div>
+    <div class="stat-divider" aria-hidden="true"></div>
+    <div class="stat-item">
+      <span class="stat-number">50k+</span>
+      <span class="stat-label">Photos enhanced</span>
+    </div>
+    <div class="stat-divider" aria-hidden="true"></div>
+    <div class="stat-item">
+      <span class="stat-number">18 min</span>
+      <span class="stat-label">Avg. time to full listing</span>
+    </div>
+    <div class="stat-divider" aria-hidden="true"></div>
+    <div class="stat-item">
+      <span class="stat-number">4 platforms</span>
+      <span class="stat-label">Auto-published to</span>
+    </div>
+  </div>
+
+  <!-- FEATURES -->
+  <section class="section" aria-labelledby="features-heading">
+    <p class="section-eyebrow reveal">What SnapR Does</p>
+    <h2 class="section-title reveal" id="features-heading">One platform to prepare, market, and distribute every listing</h2>
+    <p class="section-desc reveal">From raw photos to fully scheduled social campaigns — without the back-and-forth with designers, copywriters, or social managers.</p>
+
+    <div class="feature-grid">
+
+      <div class="feature-card reveal">
+        <div class="feature-icon" aria-hidden="true">🏡</div>
+        <h3>AI Photo Enhancement</h3>
+        <p>Sky replacement, virtual staging, twilight effects, HDR correction, and 15+ more tools. Your photos transformed into luxury showcases in seconds.</p>
+        <span class="feature-tag">15 enhancement tools</span>
+      </div>
+
+      <div class="feature-card reveal">
+        <div class="feature-icon" aria-hidden="true">✍️</div>
+        <h3>Auto-Generated Copy</h3>
+        <p>MLS-quality property descriptions and platform-tailored social captions — complete with hashtags — generated by GPT-4o from your listing details.</p>
+        <span class="feature-tag">Powered by GPT-4o</span>
+      </div>
+
+      <div class="feature-card reveal">
+        <div class="feature-icon" aria-hidden="true">📅</div>
+        <h3>Scheduled Social Publishing</h3>
+        <p>Connect Facebook, Instagram, and LinkedIn. SnapR queues and auto-posts your content at peak engagement times — zero manual posting.</p>
+        <span class="feature-tag">4 platforms</span>
+      </div>
+
+      <div class="feature-card reveal">
+        <div class="feature-icon" aria-hidden="true">🌐</div>
+        <h3>Instant Property Sites</h3>
+        <p>Every listing gets a beautiful, branded property site with your photos, description, and MLS data — ready to share with buyers in seconds.</p>
+        <span class="feature-tag">Custom domains</span>
+      </div>
+
+      <div class="feature-card reveal">
+        <div class="feature-icon" aria-hidden="true">📊</div>
+        <h3>Lead & Analytics Tracking</h3>
+        <p>Built-in CRM with drip sequences, Kanban pipeline, and engagement analytics synced from all social platforms. Know exactly what's working.</p>
+        <span class="feature-tag">Full CRM included</span>
+      </div>
+
+      <div class="feature-card reveal">
+        <div class="feature-icon" aria-hidden="true">🎬</div>
+        <h3>Property Showcase Videos</h3>
+        <p>Automatically rendered listing videos with Ken Burns effects, captions, and voiceover — ready for Reels, TikTok, and YouTube Shorts.</p>
+        <span class="feature-tag">AI voiceover</span>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- HOW IT WORKS -->
+  <section class="steps-section" aria-labelledby="how-heading">
+    <div class="steps-inner">
+      <div style="margin-bottom: 56px; text-align: center;">
+        <p class="section-eyebrow reveal" style="text-align:center;">How It Works</p>
+        <h2 class="section-title reveal" id="how-heading" style="margin: 0 auto 16px; text-align: center;">Upload once. Get everything.</h2>
+        <p class="section-desc reveal" style="margin: 0 auto; text-align: center;">Our automation pipeline runs the moment your photos land. No setup, no waiting on vendors.</p>
+      </div>
+
+      <div class="steps-grid">
+
+        <div class="step reveal">
+          <div class="step-num" aria-hidden="true">1</div>
+          <h3>Upload Photos</h3>
+          <p>Drag and drop your raw listing photos. SnapR accepts up to 50MB per image.</p>
+        </div>
+
+        <div class="step reveal">
+          <div class="step-num" aria-hidden="true">2</div>
+          <h3>AI Enhancement</h3>
+          <p>Our pipeline auto-selects the best enhancement for each photo type — interior, exterior, aerial.</p>
+        </div>
+
+        <div class="step reveal">
+          <div class="step-num" aria-hidden="true">3</div>
+          <h3>Marketing Generated</h3>
+          <p>Descriptions, captions, MLS package, and property site created automatically — ready in under 20 minutes.</p>
+        </div>
+
+        <div class="step reveal">
+          <div class="step-num" aria-hidden="true">4</div>
+          <h3>Published & Tracked</h3>
+          <p>Posts go out on schedule. Engagement syncs back to your dashboard. Loop repeats with every status change.</p>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- TESTIMONIALS -->
+  <section class="section" aria-labelledby="testimonials-heading">
+    <p class="section-eyebrow reveal">Early Access Feedback</p>
+    <h2 class="section-title reveal" id="testimonials-heading">What agents are saying</h2>
+    <p class="section-desc reveal">From solo agents to brokerages — the time savings speak for themselves.</p>
+
+    <div class="testimonials-grid">
+
+      <div class="testimonial-card reveal">
+        <div class="stars" aria-label="5 stars">★★★★★</div>
+        <p class="testimonial-text">"I used to spend an entire day on marketing every new listing. With SnapR, it's fully done before I even leave the property. The AI-enhanced photos alone are worth it."</p>
+        <div class="testimonial-author">
+          <div class="author-avatar" style="background: linear-gradient(135deg, #D4A017, #8B6010);" aria-hidden="true">S</div>
+          <div>
+            <div class="author-name">Sarah M.</div>
+            <div class="author-role">Luxury Real Estate Agent, Miami</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="testimonial-card reveal">
+        <div class="stars" aria-label="5 stars">★★★★★</div>
+        <p class="testimonial-text">"We manage 40+ active listings across our team. SnapR replaced our photographer editor, copywriter, and social media manager. The ROI was obvious in the first week."</p>
+        <div class="testimonial-author">
+          <div class="author-avatar" style="background: linear-gradient(135deg, #4A90E2, #1a5fa8);" aria-hidden="true">J</div>
+          <div>
+            <div class="author-name">James R.</div>
+            <div class="author-role">Broker-Owner, Dallas</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="testimonial-card reveal">
+        <div class="stars" aria-label="5 stars">★★★★★</div>
+        <p class="testimonial-text">"As a photographer I use SnapR to offer enhanced packages to my clients. The sky replacement and virtual staging tools are genuinely impressive — and it took 10 minutes to set up."</p>
+        <div class="testimonial-author">
+          <div class="author-avatar" style="background: linear-gradient(135deg, #9B59B6, #6C3483);" aria-hidden="true">A</div>
+          <div>
+            <div class="author-name">Alex K.</div>
+            <div class="author-role">Real Estate Photographer, NYC</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- PRICING TEASER -->
+  <section class="pricing-section" aria-labelledby="pricing-heading">
+    <div class="pricing-inner">
+      <p class="section-eyebrow reveal">Pricing</p>
+      <h2 class="section-title reveal" id="pricing-heading">Plans for every stage of your business</h2>
+      <p class="section-desc reveal">Early access members lock in founding rates. Pricing increases at public launch.</p>
+
+      <div class="pricing-grid">
+
+        <div class="pricing-card reveal">
+          <p class="pricing-tier">Starter</p>
+          <p class="pricing-price">$49<span>/mo</span></p>
+          <p class="pricing-desc">Perfect for solo agents getting started with AI marketing.</p>
+          <ul class="pricing-features">
+            <li>5 listings/month</li>
+            <li>10 AI captions</li>
+            <li>Photo enhancement suite</li>
+            <li>Property site generator</li>
+          </ul>
+          <div class="early-access-badge">✦ Early access: $29/mo</div>
+        </div>
+
+        <div class="pricing-card featured reveal">
+          <p class="pricing-tier">Pro</p>
+          <p class="pricing-price">$149<span>/mo</span></p>
+          <p class="pricing-desc">Full automation for active agents with 30+ listings.</p>
+          <ul class="pricing-features">
+            <li>30 listings/month</li>
+            <li>50 AI captions</li>
+            <li>Auto social publishing</li>
+            <li>Video generation</li>
+            <li>Lead CRM</li>
+          </ul>
+          <div class="early-access-badge">✦ Early access: $89/mo</div>
+        </div>
+
+        <div class="pricing-card reveal">
+          <p class="pricing-tier">Agency</p>
+          <p class="pricing-price">$299<span>/mo</span></p>
+          <p class="pricing-desc">Unlimited power for brokerages and teams.</p>
+          <ul class="pricing-features">
+            <li>Unlimited listings</li>
+            <li>Unlimited captions</li>
+            <li>Team dashboard</li>
+            <li>Embeddable widgets</li>
+            <li>Broker analytics</li>
+          </ul>
+          <div class="early-access-badge">✦ Early access: $179/mo</div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- BOTTOM CTA -->
+  <section class="cta-section" aria-labelledby="cta-heading">
+    <div class="cta-card reveal">
+      <h2 id="cta-heading">Ready to transform your listings?</h2>
+      <p>Join 2,400+ real estate professionals already on the waitlist. Early access members get founding pricing — locked in for life.</p>
+
+      <form class="cta-form" id="cta-form" onsubmit="handleSubmit(event, 'cta-success')">
+        <input type="email" placeholder="your@email.com" required aria-label="Email address" />
+        <button type="submit" class="btn-gold">Secure My Spot →</button>
+      </form>
+
+      <div class="success-msg" id="cta-success" role="alert" style="justify-content:center; margin-top:16px;">
+        <span>✓</span> You're on the list! Check your inbox for a confirmation.
+      </div>
+
+      <p class="form-note" style="margin-top:16px;">No spam. No commitment. Cancel anytime.</p>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer>
+    <a href="#" class="footer-logo" aria-label="SnapR home">
+      <div class="nav-logo-mark">S</div>
+      <span class="nav-logo-text">SnapR</span>
+    </a>
+    <p class="footer-copy">© 2026 SnapR. All rights reserved.</p>
+    <nav class="footer-links" aria-label="Footer navigation">
+      <a href="mailto:rajesh@snap-r.com">Contact</a>
+      <a href="#">Privacy</a>
+      <a href="#">Terms</a>
+    </nav>
+  </footer>
+
+  <script>
+    // ─── FORM SUBMISSION ───
+    function handleSubmit(e, successId) {
+      e.preventDefault();
+      const form = e.target;
+      const emailInput = form.querySelector('input[type="email"]');
+      const email = emailInput.value.trim();
+
+      // In production: POST to /api/waitlist or your email platform
+      console.log('Waitlist signup:', email);
+
+      // Show success state
+      form.style.display = 'none';
+      const success = document.getElementById(successId);
+      success.style.display = 'flex';
+    }
+
+    // ─── SCROLL REVEAL ───
+    const revealEls = document.querySelectorAll('.reveal');
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach((entry, i) => {
+        if (entry.isIntersecting) {
+          setTimeout(() => {
+            entry.target.classList.add('visible');
+          }, i * 60);
+          observer.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
+
+    revealEls.forEach(el => observer.observe(el));
+
+    // ─── ANIMATED COUNTER ───
+    function animateCounter(el, target, suffix='', duration=2000) {
+      const start = performance.now();
+      const update = (now) => {
+        const progress = Math.min((now - start) / duration, 1);
+        const eased = 1 - Math.pow(1 - progress, 3);
+        const current = Math.floor(eased * target);
+        el.textContent = current.toLocaleString() + suffix;
+        if (progress < 1) requestAnimationFrame(update);
+        else el.textContent = target.toLocaleString() + suffix;
+      };
+      requestAnimationFrame(update);
+    }
+
+    const statsEl = document.querySelector('.stats-bar');
+    const statsObserver = new IntersectionObserver((entries) => {
+      if (entries[0].isIntersecting) {
+        const nums = statsEl.querySelectorAll('.stat-number');
+        animateCounter(nums[0], 2400, '+');
+        animateCounter(nums[1], 50000, '+');
+        statsObserver.disconnect();
+      }
+    }, { threshold: 0.5 });
+    statsObserver.observe(statsEl);
+  </script>
+
+</body>
+</html>

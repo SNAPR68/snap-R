@@ -1,0 +1,43 @@
+name: Claude Implement from Issue
+
+on:
+  issues:
+    types: [assigned]
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+
+jobs:
+  implement:
+    if: contains(github.event.issue.labels.*.name, 'claude-implement')
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: anthropics/claude-code-action@v1
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          model: claude-sonnet-4-6
+          prompt: |
+            Read this GitHub issue and implement it following the project's CLAUDE.md conventions.
+
+            Project conventions to follow:
+            - TypeScript strict mode, no `any` types
+            - Next.js 14 App Router patterns (Server Components by default, 'use client' only when needed)
+            - Tailwind CSS with the luxury glassmorphism design system (see app/globals.css)
+            - All API routes must validate inputs with Zod (lib/validation/schemas.ts)
+            - Error handling: catch (error: unknown) with instanceof Error guard
+            - Run `npx tsc --noEmit` before finishing to verify no type errors
+
+            Steps:
+            1. Read CLAUDE.md for full project context
+            2. Identify affected files and plan changes
+            3. Create a new branch named `feat/issue-{issue_number}`
+            4. Implement the feature with appropriate tests
+            5. Run `npx tsc --noEmit` and fix any type errors
+            6. Create a PR back to main with a clear description

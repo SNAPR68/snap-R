@@ -53,8 +53,10 @@ app/api/admin/create-test-account/
 .agent/
 .agents/
 .claude/
+!.claude/rules/
 .cursor/
 .planning/
+CLAUDE.local.md
 
 # Vercel env snapshots
 .env.vercel-*
